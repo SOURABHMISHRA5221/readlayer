@@ -47,16 +47,19 @@ from app.ingest.urls import normalize_url
 from app.log import configure_logging
 from app.store.blob_repo import write_bytes
 from app.store.content_repo import get_content_store
-from scripts import build_report
+from scripts import build_projection, build_report
 from scripts.build_cache import BuildCache
 from scripts.collect_corpus import QIDS_FILE, parse_wiki_page, wiki_url
 from scripts.ingest_corpus import CORPUS_FILE, DATA_DIR, WIKI_SOURCE, parse_corpus
 
 CONCEPTS_FILE = DATA_DIR / "concepts.json"
+PREV_CONCEPTS_FILE = DATA_DIR / "concepts.prev.json"
+PREV_LINKS_FILE = DATA_DIR / "links.prev.json"
 CACHE_DIR = DATA_DIR / "build_cache"
 GCS_URI = "gs://readlayer-sourabh-26-graph/concepts.json"
+GCS_PREV_URI = "gs://readlayer-sourabh-26-graph/concepts.prev.json"
+PROJECTION_LIMIT_USD = 8.0
 
-MIN_DOC_GROUPS = 2
 MERGE_TOP_K = 5
 BAND_LOW, BAND_SAMPLE = 0.84, 40
 PREREQ_NEIGHBOURS, PREREQ_BASICS = 20, 20
@@ -147,7 +150,7 @@ def collect_candidates(corpus: Corpus, seeds: dict[str, dict]) -> dict[str, Cand
         key = build.normalize_label(info["title"])
         c = cands.setdefault(key, Candidate(key))
         c.seed_title, c.seed_qid = info["title"], info["qid"]
-    return {k: c for k, c in cands.items() if len(c.groups) >= MIN_DOC_GROUPS or c.seed_title}
+    return {k: c for k, c in cands.items() if c.groups or c.seed_title}
 
 
 # ---------------------------------------------------------------- dedupe
@@ -372,6 +375,7 @@ class LinkRun:
     links: dict[str, list[Link]]  # content_id -> links
     changed_docs: int
     questions: int
+    label_vecs: dict[str, list[float]]  # demand label -> embedding
 
 
 async def label_vectors(docs: list[ContentDoc], cache: BuildCache) -> dict[str, list[float]]:
@@ -471,6 +475,7 @@ async def calibrate_and_link(
         links,
         changed,
         len(all_qs),
+        vecs,
     )
 
 
@@ -489,28 +494,31 @@ async def build_graph(
     settings = get_settings()
     seeds = json.loads(QIDS_FILE.read_text(encoding="utf-8"))
     cands = sorted(collect_candidates(corpus, seeds).values(), key=lambda c: -len(c.groups))
-    print(f"candidates (≥{MIN_DOC_GROUPS} doc groups or seed): {len(cands)}")
+    single = sum(1 for c in cands if len(c.groups) < build.MIN_DOC_GROUPS and not c.seed_title)
+    print(f"candidates: {len(cands)} ({single} single-doc, admitted only if specialized)")
 
     dd = await dedupe(cands, cache, settings.dedupe_threshold, ledger)
     merged = sorted(dd.merged, key=lambda m: -len(m.groups))
     print(f"after merge: {len(merged)} concepts")
 
     infos = await enrich.define_concepts([m.entry() for m in merged], cache.run, ledger)
-    kept = [
-        (m, infos[i])
-        for i, m in enumerate(merged)
-        if i in infos and build.apply_keep(infos[i].kind, m.is_seed)
-    ]
-    dropped = Counter(
-        infos[i].kind
-        for i, m in enumerate(merged)
-        if i in infos and not build.apply_keep(infos[i].kind, m.is_seed)
-    )
-    print(
-        f"kept {len(kept)}; dropped by kind {dict(dropped)}; undefined {len(merged) - len(infos)}"
-    )
+
+    def keep(i: int, m: Merged) -> bool:
+        info = infos[i]
+        return build.apply_keep(info.kind, m.is_seed, len(m.groups), info.specialization)
+
+    kept = [(m, infos[i]) for i, m in enumerate(merged) if i in infos and keep(i, m)]
+    dropped: Counter[str] = Counter()
+    for i, m in enumerate(merged):
+        if i in infos and not keep(i, m):
+            in_keep_kinds = infos[i].kind in build.KEEP_KINDS
+            dropped["single-doc, specialization 1" if in_keep_kinds else infos[i].kind] += 1
+    print(f"kept {len(kept)}; dropped {dict(dropped)}; undefined {len(merged) - len(infos)}")
 
     ids = build.slug_ids([m.label for m, _ in kept])
+    fates = candidate_fates(
+        merged, infos, {id(m): cid for (m, _), cid in zip(kept, ids, strict=True)}
+    )
     qids = {cid: m.qid for cid, (m, _) in zip(ids, kept, strict=True) if m.qid}
     seed_qids = len(qids)
     non_seed = [(cid, m, info) for cid, (m, info) in zip(ids, kept, strict=True) if not m.qid]
@@ -548,7 +556,58 @@ async def build_graph(
     ]
     graph_file = ConceptGraphFile(version=datetime.now(UTC).date().isoformat(), concepts=concepts)
     return build_report.BuildResult(
-        graph_file, dict(zip(ids, freq, strict=True)), dd, dict(dropped), removed, len(qids)
+        graph_file,
+        dict(zip(ids, freq, strict=True)),
+        dd,
+        dict(dropped),
+        removed,
+        len(qids),
+        fates,
+    )
+
+
+def candidate_fates(
+    merged: list[Merged], infos: dict[int, enrich.ConceptInfo], kept_ids: dict[int, str]
+) -> dict[str, str]:
+    """Normalised candidate label -> what the build did with it (for the unlinked report)."""
+    fates: dict[str, str] = {}
+    for i, m in enumerate(merged):
+        if (cid := kept_ids.get(id(m))) is not None:
+            fate = f"kept as {cid}"
+        elif i not in infos:
+            fate = "undefined (model skipped it)"
+        elif infos[i].kind in build.KEEP_KINDS:
+            fate = (
+                f"dropped: single doc, specialization {infos[i].specialization} "
+                f"(kind {infos[i].kind})"
+            )
+        else:
+            fate = f"dropped: kind {infos[i].kind}"
+        for c in m.members:
+            fates[c.key] = fate
+    return fates
+
+
+def snapshot_previous(docs: list[ContentDoc]) -> build_report.Previous:
+    """Keep the graph and links this build replaces, for the before/after report and GCS.
+
+    Written once: a rerun after a crash reuses the snapshot instead of mistaking a half-new
+    state for the previous one. Delete both files to start a fresh comparison.
+    """
+    if not PREV_CONCEPTS_FILE.exists() and CONCEPTS_FILE.exists():
+        PREV_CONCEPTS_FILE.write_bytes(CONCEPTS_FILE.read_bytes())
+        print(f"saved previous graph to {PREV_CONCEPTS_FILE}")
+    if not PREV_LINKS_FILE.exists():
+        links = {doc.content_id: {d.id: d.target_id for d in doc.demands} for doc in docs}
+        PREV_LINKS_FILE.write_text(json.dumps(links), encoding="utf-8")
+        print(f"saved previous links to {PREV_LINKS_FILE}")
+    graph_bytes = PREV_CONCEPTS_FILE.read_bytes() if PREV_CONCEPTS_FILE.exists() else None
+    return build_report.Previous(
+        graph=ConceptGraph(ConceptGraphFile.model_validate_json(graph_bytes))
+        if graph_bytes
+        else None,
+        graph_bytes=graph_bytes,
+        links=json.loads(PREV_LINKS_FILE.read_text(encoding="utf-8")),
     )
 
 
@@ -572,6 +631,17 @@ async def main(args: argparse.Namespace) -> int:
         dup.pairs,
     )
 
+    if args.project:
+        current = ConceptGraph(ConceptGraphFile.model_validate_json(CONCEPTS_FILE.read_bytes()))
+        seeds = json.loads(QIDS_FILE.read_text(encoding="utf-8"))
+        cands = list(collect_candidates(corpus, seeds).values())
+        projection = await build_projection.project(cands, docs, current, cache)
+        print(projection.render())
+        ok = projection.total <= PROJECTION_LIMIT_USD
+        print(f"limit ${PROJECTION_LIMIT_USD:.2f}: {'OK' if ok else 'EXCEEDED — do not run'}")
+        return 0 if ok else 2
+
+    prev = snapshot_previous(docs)
     if args.relink_only:
         graph_file = ConceptGraphFile.model_validate_json(CONCEPTS_FILE.read_bytes())
         result = None
@@ -586,6 +656,9 @@ async def main(args: argparse.Namespace) -> int:
     link_run = await calibrate_and_link(graph, docs, cache, ledger, write=True)
     update_env_example(link_run.threshold)
     if args.upload:
+        if prev.graph_bytes is not None:
+            await write_bytes(GCS_PREV_URI, prev.graph_bytes)
+            print(f"uploaded previous graph to {GCS_PREV_URI}")
         await write_bytes(GCS_URI, CONCEPTS_FILE.read_bytes())
         print(f"uploaded {GCS_URI}")
 
@@ -597,6 +670,7 @@ async def main(args: argparse.Namespace) -> int:
         link_run=link_run,
         cache=cache,
         ledger=ledger,
+        prev=prev,
     )
     (DATA_DIR / "m2_report.md").write_text(report, encoding="utf-8")
     print(report)
@@ -611,6 +685,11 @@ if __name__ == "__main__":
         type=float,
         default=WIKI_BUDGET_S,
         help="seconds allowed for Wikidata lookups",
+    )
+    parser.add_argument(
+        "--project",
+        action="store_true",
+        help=f"project the build cost (no LLM calls); exit 2 above ${PROJECTION_LIMIT_USD:.0f}",
     )
     parser.add_argument(
         "--relink-only",

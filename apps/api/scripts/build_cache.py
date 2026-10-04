@@ -50,11 +50,29 @@ class BuildCache:
 
     # ---------------------------------------------------------------- LLM
 
+    @staticmethod
+    def _llm_key(task: str, prompt_vars: dict[str, Any]) -> str:
+        version = llm.load_prompt(task).version
+        return _key(task, version, json.dumps(prompt_vars, sort_keys=True))
+
+    def has(self, task: str, prompt_vars: dict[str, Any]) -> bool:
+        """True when this exact call is cached with a non-fallback answer (it will cost $0)."""
+        hit = self._llm.data.get(self._llm_key(task, prompt_vars))
+        return hit is not None and not hit["meta"]["fell_back"]
+
+    def cost_per_call(self, task: str) -> float:
+        """Mean cost of cached, non-fallback calls for `task` (0.0 if none are cached)."""
+        costs = [
+            v["meta"]["cost_usd"]
+            for v in self._llm.data.values()
+            if v["meta"]["task"] == task and not v["meta"]["fell_back"]
+        ]
+        return sum(costs) / len(costs) if costs else 0.0
+
     async def run(
         self, task: str, schema: type[BaseModel], prompt_vars: dict[str, Any]
     ) -> llm.LLMResult[Any]:
-        version = llm.load_prompt(task).version
-        key = _key(task, version, json.dumps(prompt_vars, sort_keys=True))
+        key = self._llm_key(task, prompt_vars)
         hit = self._llm.data.get(key)
         if hit is not None and not hit["meta"]["fell_back"]:  # a fallback answer is re-asked
             meta = llm.CallMeta(**hit["meta"])
@@ -82,6 +100,9 @@ class BuildCache:
 
     def wiki_get(self, label: str) -> dict[str, Any] | None:
         return self._wiki.data.get(label)
+
+    def wiki_cached(self) -> int:
+        return len(self._wiki.data)
 
     def wiki_put(self, label: str, value: dict[str, Any]) -> None:
         self._wiki.put(label, value)

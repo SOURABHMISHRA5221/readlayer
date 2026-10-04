@@ -140,17 +140,45 @@ def duplicate_pairs(
 # ---------------------------------------------------------------- concept attributes
 
 KEEP_KINDS = frozenset(
-    {"idea", "jargon", "institution", "regulator", "committee", "index", "tax", "policy", "scheme"}
+    {
+        "idea",
+        "jargon",
+        "institution",
+        "regulator",
+        "committee",
+        "index",
+        "tax",
+        "policy",
+        "scheme",
+        "instrument",
+        "entity_type",
+        "market_event",
+        "unit",
+    }
 )
 DROP_KINDS = frozenset({"company", "person", "place", "event", "generic"})
 KINDS = KEEP_KINDS | DROP_KINDS
 
+MIN_DOC_GROUPS = 2
+SINGLE_DOC_MIN_SPEC = 2
 
-def apply_keep(kind: str, is_seed: bool = False) -> bool:
-    """Keep ideas, jargon and named institutions/indices/taxes/policies/schemes; drop companies,
-    people, places, one-off events and everyday words. Wikipedia seed concepts always stay.
+
+def apply_keep(
+    kind: str,
+    is_seed: bool = False,
+    doc_groups: int = MIN_DOC_GROUPS,
+    specialization: int = 5,
+) -> bool:
+    """Keep ideas, jargon, instruments, types of firm, market phenomena, units and named
+    institutions/indices/taxes/policies/schemes; drop companies, people, places, one-off events
+    and everyday words. A concept seen in fewer than MIN_DOC_GROUPS duplicate groups also needs
+    specialization ≥ SINGLE_DOC_MIN_SPEC. Wikipedia seed concepts always stay.
     """
-    return is_seed or kind in KEEP_KINDS
+    if is_seed:
+        return True
+    if kind not in KEEP_KINDS:
+        return False
+    return doc_groups >= MIN_DOC_GROUPS or specialization >= SINGLE_DOC_MIN_SPEC
 
 
 def difficulty(specialization: int, zipf: float) -> float:
