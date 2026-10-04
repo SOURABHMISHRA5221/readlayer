@@ -1,0 +1,76 @@
+/* Design tokens. Editorial direction: warm paper, iron-gall ink, notes in a pencil sienna. */
+:root {
+  --paper: oklch(97.2% 0.012 82);
+  --paper-raised: oklch(98.8% 0.008 82);
+  --paper-sunk: oklch(94.5% 0.016 80);
+  --ink: oklch(23% 0.018 60);
+  --ink-soft: oklch(42% 0.018 60);
+  --ink-faint: oklch(58% 0.015 65);
+  --rule: oklch(86% 0.018 75);
+  --note: oklch(53% 0.12 40);
+  --note-soft: oklch(53% 0.12 40 / 0.1);
+  --focus: oklch(50% 0.14 250);
+  --grain-opacity: 0.05;
+
+  --tone-0: oklch(52% 0.09 40);
+  --tone-1: oklch(48% 0.08 160);
+  --tone-2: oklch(48% 0.09 250);
+  --tone-3: oklch(50% 0.09 320);
+  --tone-4: oklch(52% 0.08 95);
+
+  --font-read: "Newsreader", "Iowan Old Style", "Charter", Georgia, serif;
+  --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-body: clamp(1.125rem, 1.04rem + 0.35vw, 1.3125rem);
+  --text-title: clamp(2.1rem, 1.3rem + 3.2vw, 3.6rem);
+  --text-mast: clamp(3rem, 1.4rem + 4.5vw, 4.75rem);
+
+  --measure: 34em;
+  --gutter: 16px;
+  --space-section: clamp(2.5rem, 1.8rem + 3vw, 5rem);
+
+  --duration-fast: 140ms;
+  --duration-normal: 280ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Annotator theme (packages/annotator reads --rl-*). Quieter than the text by design. */
+  --rl-mark: color-mix(in oklab, var(--note) 55%, transparent);
+  --rl-mark-known: color-mix(in oklab, var(--ink) 14%, transparent);
+  --rl-mark-hover-bg: var(--note-soft);
+  --rl-accent: var(--note);
+  --rl-accent-soft: var(--note-soft);
+  --rl-focus: var(--focus);
+  --rl-card-bg: var(--paper-raised);
+  --rl-card-fg: var(--ink);
+  --rl-card-border: var(--rule);
+  --rl-muted: var(--ink-faint);
+  --rl-font-ui: var(--font-ui);
+  --rl-font-title: var(--font-read);
+  --rl-debug-bg: var(--paper-sunk);
+  --rl-action-hover-bg: var(--paper-sunk);
+  --rl-shadow: 0 1px 1px oklch(23% 0.02 60 / 0.06), 0 18px 40px -14px oklch(23% 0.03 60 / 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: oklch(19.5% 0.012 65);
+    --paper-raised: oklch(24% 0.014 65);
+    --paper-sunk: oklch(16.5% 0.01 65);
+    --ink: oklch(91% 0.014 80);
+    --ink-soft: oklch(76% 0.014 78);
+    --ink-faint: oklch(62% 0.014 75);
+    --rule: oklch(32% 0.014 70);
+    --note: oklch(72% 0.11 50);
+    --note-soft: oklch(72% 0.11 50 / 0.13);
+    --focus: oklch(72% 0.12 250);
+    --grain-opacity: 0.035;
+    --tone-0: oklch(75% 0.09 40);
+    --tone-1: oklch(74% 0.08 160);
+    --tone-2: oklch(74% 0.08 250);
+    --tone-3: oklch(75% 0.08 320);
+    --tone-4: oklch(78% 0.08 95);
+    --rl-shadow: 0 1px 1px oklch(0% 0 0 / 0.3), 0 18px 40px -14px oklch(0% 0 0 / 0.6);
+  }
+}

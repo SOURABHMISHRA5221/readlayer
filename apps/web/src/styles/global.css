@@ -1,0 +1,99 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background-color: var(--paper);
+  color: var(--ink);
+  font: 400 1rem/1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Paper grain: a fixed noise layer, never on top of text contrast. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-fast) ease;
+}
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--note) 24%, transparent);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.state {
+  max-width: var(--measure);
+  margin: var(--space-section) auto;
+  padding: 0 var(--gutter);
+  font: italic 400 1.25rem/1.5 var(--font-read);
+  color: var(--ink-soft);
+}
+.state--error {
+  color: var(--note);
+  font-style: normal;
+}
+
+.source-badge {
+  --tone: var(--tone-0);
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15em 0.55em 0.18em;
+  border-radius: 3px;
+  background: color-mix(in oklab, var(--tone) 12%, transparent);
+  color: var(--tone);
+  font: 600 0.6875rem/1.2 var(--font-ui);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.source-badge[data-tone="1"] { --tone: var(--tone-1); }
+.source-badge[data-tone="2"] { --tone: var(--tone-2); }
+.source-badge[data-tone="3"] { --tone: var(--tone-3); }
+.source-badge[data-tone="4"] { --tone: var(--tone-4); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

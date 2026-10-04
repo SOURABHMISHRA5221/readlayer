@@ -9,6 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI, Request, Response
 
 from app.config import get_settings
+from app.content.router import router as read_router
 from app.graph.loader import load_graph, set_graph
 from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
@@ -74,4 +75,5 @@ async def healthz() -> dict[str, str]:
 
 
 v1.include_router(content_router)
+v1.include_router(read_router)
 app.include_router(v1)
