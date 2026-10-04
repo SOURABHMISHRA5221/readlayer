@@ -21,3 +21,5 @@ data/m2_report.md
 data/build_cache/
 data/concepts.prev.json
 data/links.prev.json
+data/heldout_state.jsonl
+data/heldout_report.md

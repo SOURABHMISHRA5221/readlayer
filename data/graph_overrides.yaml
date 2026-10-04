@@ -1,0 +1,22 @@
+# Hand corrections to the concept graph. scripts/build_concepts.py applies them on every
+# rebuild; scripts/apply_overrides.py patches an already-built graph. Labels match after
+# normalisation (case, punctuation, trailing plural).
+#
+# never_merge: pairs of labels dedupe must never join.
+# split:       pull `label` (and `aliases`) out of the concept `from` into its own concept.
+#              A split also implies never_merge between each of its labels and `from`.
+# rename:      replace a concept's label; its id follows the new label.
+
+never_merge:
+  - [Notional amount, Denomination]
+
+split:
+  # M2.1: notional amount (the reference principal of a derivative) is not a denomination.
+  - label: Notional amount
+    from: Denomination
+    aliases: [notional value, notional, notional principal]
+
+rename:
+  # M2.1: label copied from a typo in a source article.
+  - from: Bimallic coin
+    to: Bimetallic coin

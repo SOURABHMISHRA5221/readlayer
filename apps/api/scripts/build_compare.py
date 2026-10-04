@@ -16,6 +16,11 @@ if TYPE_CHECKING:
     from scripts.build_report import BuildResult
 
 METHODS = ("alias", "confirmed", "unlinked")
+INFLATED_NOTE = (
+    "**In-corpus coverage is inflated:** single-doc concepts are built from these same "
+    "mentions, so they match themselves. Quote the held-out number in "
+    "data/heldout_report.md (scripts.eval_heldout) instead."
+)
 METHOD_NAMES = {"alias": "exact-name", "confirmed": "model", "unlinked": "unlinked"}
 
 
@@ -66,7 +71,7 @@ def _coverage_table(corpus: "Corpus", link_run: "LinkRun", prev: Previous) -> li
                 continue
             after[link.method] += 1
             before[_before_method(prev, doc.content_id, d)] += 1
-    out = ["", "Linking coverage, concept and term demands in the corpus:", ""]
+    out = ["", "Linking coverage, concept and term demands in the corpus:", "", INFLATED_NOTE, ""]
     out += ["| | total | " + " | ".join(METHOD_NAMES[m] for m in METHODS) + " |"]
     out += ["|---|---|---|---|---|"]
     for name, c in (("before", before), ("after", after)):

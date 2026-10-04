@@ -10,7 +10,7 @@ from app.graph import build
 from app.graph.graph import ConceptGraph
 from app.graph.linking import EMBED_TYPES, Link, sentence_around
 from app.graph.models import ConceptGraphFile
-from scripts.build_compare import Previous, render_comparison
+from scripts.build_compare import INFLATED_NOTE, Previous, render_comparison
 from scripts.ingest_corpus import STATE_FILE, load_state
 
 __all__ = ["BuildResult", "DupResult", "Previous", "render"]
@@ -201,6 +201,7 @@ def _coverage(corpus: "Corpus", link_run: "LinkRun") -> list[str]:
             if link.method == "unlinked":
                 unlinked[d.label] += 1
     out = _section("Linking coverage (concept and term demands)")
+    out += [INFLATED_NOTE, ""]
     out += ["| source | total | alias | confirmed | unlinked |", "|---|---|---|---|---|"]
     for source in [*sorted(s for s in counts if s != "ALL"), "ALL"]:
         c = counts[source]

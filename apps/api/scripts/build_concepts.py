@@ -11,6 +11,7 @@ every content doc → report. LLM and embedding results are cached under data/bu
 
 import argparse
 import asyncio
+import dataclasses
 import json
 import math
 import random
@@ -41,6 +42,7 @@ from app.graph.linking import (
     sentence_around,
 )
 from app.graph.models import Concept, ConceptGraphFile
+from app.graph.overrides import Overrides, filter_pairs, split_groups
 from app.ingest.models import ContentDoc, Demand
 from app.ingest.safe_fetch import FetchError, SafeFetcher
 from app.ingest.urls import normalize_url
@@ -53,6 +55,8 @@ from scripts.collect_corpus import QIDS_FILE, parse_wiki_page, wiki_url
 from scripts.ingest_corpus import CORPUS_FILE, DATA_DIR, WIKI_SOURCE, parse_corpus
 
 CONCEPTS_FILE = DATA_DIR / "concepts.json"
+OVERRIDES_FILE = DATA_DIR / "graph_overrides.yaml"
+HELDOUT_FILE = DATA_DIR / "heldout_urls.txt"
 PREV_CONCEPTS_FILE = DATA_DIR / "concepts.prev.json"
 PREV_LINKS_FILE = DATA_DIR / "links.prev.json"
 CACHE_DIR = DATA_DIR / "build_cache"
@@ -91,9 +95,20 @@ async def load_docs() -> list[ContentDoc]:
     return [d async for d in get_content_store().iter_all()]
 
 
+def heldout_urls() -> set[str]:
+    """Held-out evaluation articles: ingested and linked, never used to build the graph."""
+    if not HELDOUT_FILE.exists():
+        return set()
+    entries = parse_corpus(HELDOUT_FILE.read_text(encoding="utf-8").splitlines())
+    return {normalize_url(e.url) for e in entries}
+
+
 def corpus_sources() -> dict[str, str]:
     entries = parse_corpus(CORPUS_FILE.read_text(encoding="utf-8").splitlines())
-    return {normalize_url(e.url): e.source for e in entries}
+    sources = {normalize_url(e.url): e.source for e in entries}
+    if overlap := sources.keys() & heldout_urls():
+        raise SystemExit(f"held-out URLs also in the corpus: {sorted(overlap)[:3]}")
+    return sources
 
 
 async def find_duplicates(docs: list[ContentDoc], cache: BuildCache) -> build_report.DupResult:
@@ -156,9 +171,12 @@ def collect_candidates(corpus: Corpus, seeds: dict[str, dict]) -> dict[str, Cand
 # ---------------------------------------------------------------- dedupe
 
 
-@dataclass
+@dataclass(frozen=True)
 class Merged:
     members: list[Candidate]
+    label_override: str | None = None  # graph_overrides.yaml rename
+    hidden: frozenset[str] = frozenset()  # normalised labels never shown as aliases
+    forced: bool = False  # a graph_overrides.yaml split: always kept, like a seed
 
     @property
     def is_seed(self) -> bool:
@@ -175,6 +193,8 @@ class Merged:
         fragments like "yields". Falls back to the model's label, and to the Wikipedia title only
         when no article used the concept at all.
         """
+        if self.label_override:
+            return self.label_override
         return (
             news_surface_form(self.members)
             or max(
@@ -195,7 +215,7 @@ class Merged:
             if m.seed_title:
                 counts[m.seed_title] += 10**6  # Wikipedia title always kept as an alias
         own = build.normalize_label(self.label)
-        seen, out = {own}, []
+        seen, out = {own} | self.hidden, []
         for text, _ in counts.most_common():
             key = build.normalize_label(text)
             if key and key not in seen:
@@ -232,9 +252,30 @@ class DedupeResult:
     band_rejected: list[float]
 
 
+def apply_overrides(merged: list[Merged], overrides: Overrides) -> list[Merged]:
+    """graph_overrides.yaml renames, and split groups marked to keep (dedupe has already
+    applied never-merge and split to the groups).
+    """
+    out = []
+    for m in merged:
+        keys = {c.key for c in m.members}
+        if any(keys <= s.keys for s in overrides.split):
+            m = dataclasses.replace(m, forced=True)
+        if (to := overrides.renamed(m.label)) is not None:
+            hidden = frozenset({build.normalize_label(m.label)})
+            m = dataclasses.replace(m, label_override=to, hidden=hidden)
+        out.append(m)
+    return out
+
+
 async def dedupe(
-    cands: list[Candidate], cache: BuildCache, threshold: float, ledger: list
+    cands: list[Candidate],
+    cache: BuildCache,
+    threshold: float,
+    ledger: list,
+    overrides: Overrides | None = None,
 ) -> DedupeResult:
+    overrides = overrides or Overrides()
     vectors = np.asarray(await cache.embed([c.display for c in cands], "SEMANTIC_SIMILARITY"))
     pairs = build.candidate_pairs(vectors, threshold, top_k=MERGE_TOP_K)
     entries = [
@@ -243,15 +284,18 @@ async def dedupe(
     decisions = await enrich.check_merges(
         [(entries[i], entries[j]) for i, j, _ in pairs], cache.run, ledger
     )
-    accepted = [(i, j) for k, (i, j, _) in enumerate(pairs) if decisions.get(k)]
+    keys = [c.key for c in cands]
+    accepted = filter_pairs(
+        [(i, j) for k, (i, j, _) in enumerate(pairs) if decisions.get(k)], keys, overrides
+    )
     band = build.candidate_pairs(vectors, BAND_LOW, high=threshold, top_k=MERGE_TOP_K)
     band = random.Random(SEED).sample(band, min(BAND_SAMPLE, len(band)))
     band_dec = await enrich.check_merges(
         [(entries[i], entries[j]) for i, j, _ in band], cache.run, ledger
     )
-    groups = build.clusters(len(cands), accepted)
+    groups = split_groups(build.clusters(len(cands), accepted), keys, overrides)
     return DedupeResult(
-        merged=[Merged([cands[i] for i in g]) for g in groups],
+        merged=apply_overrides([Merged([cands[i] for i in g]) for g in groups], overrides),
         accepted=[s for k, (*_, s) in enumerate(pairs) if decisions.get(k)],
         rejected=[s for k, (*_, s) in enumerate(pairs) if not decisions.get(k)],
         band_accepted=[s for k, (*_, s) in enumerate(band) if band_dec.get(k)],
@@ -440,6 +484,34 @@ async def calibrate_and_link(
         pick = picks.get(i)
         counts["none" if pick is None else "correct" if pick == target else "wrong"] += 1
 
+    links, changed, questions = await link_docs(graph, docs, vecs, floor, cache, ledger, write)
+    return LinkRun(
+        floor,
+        positives,
+        hard,
+        sum(in_topk) / max(len(in_topk), 1),
+        counts,
+        links,
+        changed,
+        questions,
+        vecs,
+    )
+
+
+async def link_docs(
+    graph: ConceptGraph,
+    docs: list[ContentDoc],
+    vecs: dict[str, list[float]],
+    floor: float,
+    cache: BuildCache,
+    ledger: list,
+    write: bool,
+) -> tuple[dict[str, list[Link]], int, int]:
+    """Link every doc's demands (alias, else model pick among candidates ≥ floor).
+
+    Returns links per content id, docs whose targets changed (stored when `write`), and the
+    number of mentions sent to the model.
+    """
     plans = {}
     for doc in docs:
         paragraphs = {p.id: p.text for p in doc.paragraphs}
@@ -466,17 +538,7 @@ async def calibrate_and_link(
             if write:
                 demands = [d.model_copy(update={"target_id": targets[d.id]}) for d in doc.demands]
                 await store.put(doc.model_copy(update={"demands": demands}))
-    return LinkRun(
-        floor,
-        positives,
-        hard,
-        sum(in_topk) / max(len(in_topk), 1),
-        counts,
-        links,
-        changed,
-        len(all_qs),
-        vecs,
-    )
+    return links, changed, len(all_qs)
 
 
 def update_env_example(threshold: float) -> None:
@@ -497,7 +559,8 @@ async def build_graph(
     single = sum(1 for c in cands if len(c.groups) < build.MIN_DOC_GROUPS and not c.seed_title)
     print(f"candidates: {len(cands)} ({single} single-doc, admitted only if specialized)")
 
-    dd = await dedupe(cands, cache, settings.dedupe_threshold, ledger)
+    overrides = Overrides.load(OVERRIDES_FILE)
+    dd = await dedupe(cands, cache, settings.dedupe_threshold, ledger, overrides)
     merged = sorted(dd.merged, key=lambda m: -len(m.groups))
     print(f"after merge: {len(merged)} concepts")
 
@@ -505,7 +568,8 @@ async def build_graph(
 
     def keep(i: int, m: Merged) -> bool:
         info = infos[i]
-        return build.apply_keep(info.kind, m.is_seed, len(m.groups), info.specialization)
+        pinned = m.is_seed or m.forced
+        return build.apply_keep(info.kind, pinned, len(m.groups), info.specialization)
 
     kept = [(m, infos[i]) for i, m in enumerate(merged) if i in infos and keep(i, m)]
     dropped: Counter[str] = Counter()

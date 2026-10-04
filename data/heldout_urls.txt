@@ -1,0 +1,17 @@
+# ReadLayer held-out linker evaluation set (M2.1). NEVER add these to the corpus;
+# build_concepts refuses any overlap. format: url<TAB>source
+https://www.livemint.com/economy/gst-arrest-powers-may-be-removed-council-to-discuss-decriminalisation-on-wednesday-law-change-likely-in-winter-session-11791112867891.html	mint
+https://www.livemint.com/market/stock-market-news/sensex-nifty-bank-nifty-prediction-what-will-happen-in-the-indian-stock-market-on-monday-3-reasons-tell-the-scene-11791107343487.html	mint
+https://www.livemint.com/companies/dlf-sells-out-maiden-senior-living-project-aureva-in-gurugram-for-rs-1985-crore-11791098745562.html	mint
+https://www.thehindubusinessline.com/economy/india-chile-struggle-to-clear-critical-mineral-hurdle-in-cepa-talks/article71543542.ece	businessline
+https://www.thehindubusinessline.com/markets/from-a-nation-of-savers-to-a-nation-of-investors-nse-bets-on-technology-financialisation-and-market-depth/article71543414.ece	businessline
+https://www.thehindubusinessline.com/companies/kudankulam-npp-to-add-1000-mw-capacity-next-year-with-unit-3-start-up-rosatom/article71543479.ece	businessline
+https://economictimes.indiatimes.com/news/economy/indicators/indias-growth-is-making-the-world-rewrite-its-forecast-mospi-secretary-saurabh-garg/articleshow/134674032.cms	et
+https://economictimes.indiatimes.com/markets/stocks/news/ahead-of-market-10-things-that-will-decide-stock-market-action-on-monday/articleshow/134673452.cms	et
+https://economictimes.indiatimes.com/markets/stocks/news/valuations-of-it-stocks-already-capture-most-of-ai-disruption-risk-chintan-haria/articleshow/134673144.cms	et
+https://www.bbc.co.uk/news/articles/c689jqvnqw9jo	bbc
+https://www.bbc.co.uk/news/articles/cwp93jp4p7xpo	bbc
+https://www.bbc.co.uk/news/articles/clyl18x4734o	bbc
+https://www.theguardian.com/business/2026/oct/04/andy-burnham-plans-social-care-workers-changes	guardian
+https://www.theguardian.com/business/2026/oct/04/costa-coffee-shops-return-profit-iced-drinks-matcha	guardian
+https://www.livemint.com/money/personal-finance/is-your-sbi-hdfc-bank-other-bank-branch-closing-or-shifting-will-ifsc-cheque-book-details-change-know-here-11791114000086.html	mint
