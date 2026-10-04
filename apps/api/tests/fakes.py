@@ -34,3 +34,6 @@ class FakeLLM:
             raise self.error
         output = DemandExtraction.model_validate(self.reply(prompt_vars))
         return llm.LLMResult(output, meta())
+
+
+from tests.fake_auth import FakeAuthAdmin, auth, token  # noqa: E402,F401  (re-export)

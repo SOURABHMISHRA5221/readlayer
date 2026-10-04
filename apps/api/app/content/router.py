@@ -3,22 +3,26 @@
 Annotations come from the PLACEHOLDER scorer (app/scoring/placeholder.py) until M4.
 """
 
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from app.auth import current_uid
+from app import ratelimit
 from app.config import Settings, get_settings
 from app.content import catalog
 from app.content.summary import article_domain
+from app.context import ReaderContext, reader_context
 from app.graph.loader import get_graph
 from app.ingest.models import ContentDoc
 from app.scoring import placeholder
-from app.scoring.placeholder import DENSITY_THRESHOLDS, PERSONAS, Density, PersonaKey
+from app.scoring.placeholder import DENSITY_THRESHOLDS, Density, PersonaKey
 from app.store.content_repo import get_content_store
+from app.store.docstore import get_doc_store
+from app.store.reader_repo import ReaderRepo
 
-router = APIRouter(dependencies=[Depends(current_uid)])
+router = APIRouter()
 
 MAX_QUERY_CHARS = 200
 
@@ -88,15 +92,17 @@ class AnnotationOut(BaseModel):
 
 class AnnotationsResponse(BaseModel):
     content_id: str
-    persona: PersonaKey
+    persona: PersonaKey | None  # demo persona; None for a signed-in reader
     density: Density
     count: int
     annotations: list[AnnotationOut]
 
 
-# Library rows per (catalog version, persona, density): pure computation over the shared
-# catalog, cached because the list endpoint is hit on every library view.
-_rows: dict[tuple[int, PersonaKey, Density], list[ContentSummary]] = {}
+# Library rows per (catalog version, reader view, density): pure computation over the shared
+# catalog, cached because the list endpoint is hit on every library view. Bounded: signed-in
+# readers each have their own θ, so keys can grow with readers.
+_rows: dict[tuple[int, str, Density], list[ContentSummary]] = {}
+MAX_CACHED_VIEWS = 64
 
 
 def reset_catalog() -> None:
@@ -104,12 +110,14 @@ def reset_catalog() -> None:
     _rows.clear()
 
 
-async def _summaries(persona: PersonaKey, density: Density) -> list[ContentSummary]:
+async def _summaries(ctx: ReaderContext, density: Density) -> list[ContentSummary]:
     docs = await catalog.all_docs()
-    key = (catalog.version(), persona, density)
+    key = (catalog.version(), ctx.view_key, density)
     if key not in _rows:
         graph = get_graph()
-        theta, threshold = PERSONAS[persona].theta, DENSITY_THRESHOLDS[density]
+        theta, threshold = ctx.theta, DENSITY_THRESHOLDS[density]
+        if len(_rows) >= MAX_CACHED_VIEWS:
+            _rows.pop(next(iter(_rows)))
         _rows[key] = [
             _summary(
                 d, article_domain(d, graph), len(placeholder.annotate(d, graph, theta, threshold))
@@ -143,12 +151,12 @@ async def _doc_or_404(content_id: str) -> ContentDoc:
 
 @router.get("/content", response_model=list[ContentSummary])
 async def list_content(
+    ctx: Annotated[ReaderContext, Depends(reader_context)],
     q: Annotated[str, Query(max_length=MAX_QUERY_CHARS)] = "",
-    persona: PersonaKey = "newcomer",
     density: Density = "balanced",
 ) -> list[ContentSummary]:
     needle = q.strip().casefold()
-    items = await _summaries(persona, density)
+    items = await _summaries(ctx, density)
     if not needle:
         return items
     return [s for s in items if needle in s.title.casefold() or needle in s.site.casefold()]
@@ -172,23 +180,29 @@ async def get_content(content_id: str) -> ContentDetail:
     )
 
 
-@router.get("/content/{content_id}/annotations", response_model=AnnotationsResponse)
+@router.get(
+    "/content/{content_id}/annotations",
+    response_model=AnnotationsResponse,
+    dependencies=[Depends(ratelimit.annotations)],
+)
 async def get_annotations(
     content_id: str,
     settings: Annotated[Settings, Depends(get_settings)],
-    persona: PersonaKey = "newcomer",
+    ctx: Annotated[ReaderContext, Depends(reader_context)],
     density: Density = "balanced",
     debug: bool = False,
 ) -> AnnotationsResponse:
     doc = await _doc_or_404(content_id)
-    spans = placeholder.annotate(
-        doc, get_graph(), PERSONAS[persona].theta, DENSITY_THRESHOLDS[density]
-    )
+    spans = placeholder.annotate(doc, get_graph(), ctx.theta, DENSITY_THRESHOLDS[density])
     with_debug = debug and settings.env == "dev"
     items = [_annotation_out(s, with_debug) for s in spans]
+    # Annotation trend (DESIGN §15.2): once per content per week, skipped while paused.
+    await ReaderRepo(get_doc_store()).record_annotations_shown(
+        ctx.uid, doc.content_id, len(items), datetime.now(UTC)
+    )
     return AnnotationsResponse(
         content_id=doc.content_id,
-        persona=persona,
+        persona=ctx.persona,
         density=density,
         count=len(items),
         annotations=items,

@@ -12,7 +12,8 @@ import { useAnnotator } from "../hooks/useAnnotator";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { api, errorKind, type AnnotationsResponse, type ApiErrorKind, type ContentDetail } from "../lib/api";
 import { domainLabel, formatByline, formatDate, readingMinutes, sourceName } from "../lib/format";
-import { DEFAULT_DENSITY, DEFAULT_PERSONA, parseDensity, parsePersona } from "../lib/personas";
+import { useIsDemo } from "../lib/auth";
+import { DEFAULT_DENSITY, DEFAULT_PERSONA, parseDensity, personaParam, readerPersona } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
 
 type Load<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; kind: ApiErrorKind };
@@ -20,7 +21,7 @@ type Load<T> = { status: "loading" } | { status: "ready"; data: T } | { status: 
 const RAIL_QUERY = "(min-width: 1200px)";
 
 export function ReaderPage({ id, url }: { id: string; url: URL }) {
-  const persona = parsePersona(url.searchParams.get("persona"));
+  const persona = readerPersona(url, useIsDemo());
   const density = parseDensity(url.searchParams.get("density"));
   // Scoring internals on the card: dev builds only; the API also refuses outside ENV=dev.
   const debug = import.meta.env.DEV && url.searchParams.get("debug") === "1";
@@ -96,7 +97,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   const article = content.status === "ready" ? content.data : null;
   const annotations =
     article && notes.status === "ready" && notes.data.content_id === id ? notes.data.annotations : null;
-  const handle = useAnnotator(articleRef, article?.id ?? null, annotations);
+  const handle = useAnnotator(articleRef, article?.id ?? null, annotations, persona);
 
   const marked = useMemo<CardAnnotation[]>(() => {
     if (!annotations || !handle.resolved) return [];
@@ -106,9 +107,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
 
   const setParam = (key: string, value: string, fallback: string) =>
     navigate(withParams(url, { [key]: value === fallback ? null : value }), { replace: true });
-  const libraryHref = withParams(new URL("/", window.location.origin), {
-    persona: persona === DEFAULT_PERSONA ? null : persona,
-  });
+  const libraryHref = withParams(new URL("/", window.location.origin), { persona: personaParam(persona) });
   const link = {
     hovered: handle.hovered,
     active: handle.active,

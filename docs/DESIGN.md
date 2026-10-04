@@ -249,7 +249,7 @@ with `verified: true`, model ids, created_at.
 | DELETE | /v1/me | delete all of the caller's data and their Auth user |
 | GET | /v1/content/{id}/annotations | ranked, budgeted annotations for the caller |
 | POST | /v1/explain | `{content_id, demand_id?, paragraph_id?}` → explanation (cached/verified) |
-| POST | /v1/events | batch of interaction events → graph updates (sync, idempotent by event id) |
+| POST | /v1/events | `{events: [{id, type, at, concept_id?, content_id?, paragraph_id?, words?, ms?}], persona?}` → `{applied, events_applied, events_ignored}`; sync, idempotent by event id (stored at `users/{uid}/events/{id}` with `expire_at` for the 90-day TTL); `applied: false` and no writes while learning is paused |
 | GET | /v1/me/graph | concepts by domain with band, plus stats (concepts learned, annotation trend); `?domain=X[&q=]` → capped subgraph for the knowledge map (§15.2) |
 | PATCH | /v1/me/graph/{concept_id} | user correction ("I know this" / "I don't") → strong evidence |
 | GET | /v1/me/profile | reading profile page data: summary, domains, THINKS_IN, weekly band changes, trend (§15.2) |
@@ -372,7 +372,18 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 - CORS: only the web app origin and the extension origin.
 - Secrets in Secret Manager; nothing secret in the extension bundle.
 - Rate limits per uid: 60 annotation reads/min, 30 explain calls/min, 20 new URLs/day,
-  10 profile-edit parses/day (§15.3).
+  10 profile-edit parses/day (§15.3), 120 requests/min overall, 30 event batches/min.
+  Per-minute limits are in memory per instance (≤ 3 instances); daily caps are in Firestore,
+  reserved in a transaction before the work and refunded if it fails.
+- **Anonymous (demo) readers** (Firebase Anonymous sign-in, M3): 30 annotation reads/min,
+  60 requests/min, 3 new URLs/day per uid, and shared caps across *all* anonymous readers so
+  minting accounts can't multiply them: 30 new URLs/day (`ops/ingest/days/{day}`) and 100
+  uncached web-search calls/day (`ANON_SEARCH_DAILY_CAP`, counted in `ops/search/days/{day}`).
+  Anonymous readers always get cached web results; past the search cap they trigger no new
+  searches, so concepts without a cache entry give them library items only.
+- Auth: every `/v1` route needs a Firebase ID token (Google or Anonymous providers only; others
+  get 403). Only `/health` is public. A deleted user's still-valid token is refused for an hour
+  on the instance that deleted it.
 
 ## 12. Evaluation (what we show judges)
 1. **Gap-scorer quality**: 30 articles × 2 personas (engineer, commerce student). For each, a
@@ -581,7 +592,7 @@ score = relevance × relation_weight × format_affinity × freshness × not_seen
   M6.
 - Events `rec_shown`, `rec_clicked`, `rec_dismissed`, `rec_completed` (a recommended library
   article read to the end) update format stats, relation dismissals and seen items.
-- Storage: until M3 these signals and the ingest counter live in API memory per (uid, persona),
-  because every user-data collection must be covered by export and delete. M3 moves them to
-  `users/{uid}/rec_signals` and `users/{uid}/ingest_counts` (§4) with export and delete.
+- Storage (M3): `users/{uid}/rec_signals/{persona|default}` and `users/{uid}/ingest_counts/{day}`
+  (§4), covered by export and delete. Personas apply to anonymous demo readers only; signed-in
+  readers use `default` and a neutral format prior until onboarding (M7).
 

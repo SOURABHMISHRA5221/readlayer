@@ -13,9 +13,12 @@ import socket  # noqa: E402
 import pytest  # noqa: E402
 from tenacity import wait_none  # noqa: E402
 
-from app import config, llm  # noqa: E402
+from app import auth, config, llm, ratelimit  # noqa: E402
 from app.config import Settings  # noqa: E402
+from app.store import docstore  # noqa: E402
+from app.store.docstore import InMemoryDocStore  # noqa: E402
 from app.store.spend_repo import InMemorySpendStore  # noqa: E402
+from tests.fakes import FakeAuthAdmin  # noqa: E402
 
 Settings.model_config["env_file"] = None
 
@@ -72,6 +75,26 @@ def _isolate(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(socket, "getaddrinfo", getaddrinfo)
     yield
     config.get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
+def docs() -> InMemoryDocStore:
+    """Per-user state in memory and a fake Firebase token verifier for every test."""
+    store = InMemoryDocStore()
+    docstore.set_doc_store(store)
+    auth.set_auth_admin(FakeAuthAdmin())
+    ratelimit.reset()
+    yield store
+    docstore.set_doc_store(None)
+    auth.set_auth_admin(None)
+    ratelimit.reset()
+
+
+@pytest.fixture
+def auth_admin() -> FakeAuthAdmin:
+    admin = auth.get_auth_admin()
+    assert isinstance(admin, FakeAuthAdmin)
+    return admin
 
 
 @pytest.fixture

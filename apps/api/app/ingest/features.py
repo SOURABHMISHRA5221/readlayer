@@ -1,11 +1,15 @@
 """CPU-only text features: word frequency (wordfreq) and syntactic structure (spaCy)."""
 
+import logging
+import time
 from functools import lru_cache
 
 import spacy
 from spacy.language import Language
 from spacy.tokens import Token
 from wordfreq import zipf_frequency
+
+log = logging.getLogger("app.ingest")
 
 # Normalisers for parse_structure; values at or above these count as maximally dense.
 MAX_PARSE_DEPTH = 12
@@ -18,7 +22,11 @@ def zipf(text: str) -> float:
 
 @lru_cache
 def _nlp() -> Language:
-    return spacy.load("en_core_web_sm", disable=["ner", "lemmatizer"])
+    """Loaded on the first new article, not at startup, so cold starts stay short."""
+    start = time.perf_counter()
+    nlp = spacy.load("en_core_web_sm", disable=["ner", "lemmatizer"])
+    log.info("spacy loaded", extra={"load_ms": round((time.perf_counter() - start) * 1000, 1)})
+    return nlp
 
 
 def _depth(token: Token) -> int:

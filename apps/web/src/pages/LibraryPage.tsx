@@ -9,7 +9,9 @@ import { ThemeToggle } from "../components/ThemeToggle";
 import { Wordmark } from "../components/Wordmark";
 import { api, errorKind, type ApiErrorKind, type ContentSummary } from "../lib/api";
 import { DOMAINS, domainLabel, formatDate, plural, readingMinutes, sourceName } from "../lib/format";
-import { DEFAULT_PERSONA, parseDensity, parsePersona, personaOf, type PersonaKey } from "../lib/personas";
+import { AccountMenu } from "../components/AccountMenu";
+import { useIsDemo } from "../lib/auth";
+import { DEFAULT_PERSONA, parseDensity, personaOf, personaParam, readerPersona, type PersonaKey } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
 
 const SEARCH_DEBOUNCE_MS = 180;
@@ -24,7 +26,7 @@ export function LibraryPage({ url }: { url: URL }) {
   const q = url.searchParams.get("q") ?? "";
   const topic = url.searchParams.get("topic");
   const source = url.searchParams.get("source");
-  const persona = parsePersona(url.searchParams.get("persona"));
+  const persona = readerPersona(url, useIsDemo());
   const density = parseDensity(url.searchParams.get("density"));
   const [draft, setDraft] = useState(q);
   const [load, setLoad] = useState<Load>({ status: "loading" });
@@ -76,7 +78,7 @@ export function LibraryPage({ url }: { url: URL }) {
   const setParam = (key: string, value: string | null) => navigate(withParams(url, { [key]: value }), { replace: true });
   const readerHref = (id: string) =>
     withParams(new URL(`/read/${id}`, window.location.origin), {
-      persona: persona === DEFAULT_PERSONA ? null : persona,
+      persona: personaParam(persona),
       density: url.searchParams.get("density"),
     });
   const filtered = Boolean(q || topic || source);
@@ -101,8 +103,11 @@ export function LibraryPage({ url }: { url: URL }) {
         <div className="masthead__bar">
           <Wordmark size="lg" />
           <div className="masthead__tools">
-            <PersonaPicker value={persona} onChange={(k: PersonaKey) => setParam("persona", k === DEFAULT_PERSONA ? null : k)} />
+            {persona && (
+              <PersonaPicker value={persona} onChange={(k: PersonaKey) => setParam("persona", k === DEFAULT_PERSONA ? null : k)} />
+            )}
             <ThemeToggle />
+            <AccountMenu />
           </div>
         </div>
         <div className="masthead__hero">
@@ -111,7 +116,15 @@ export function LibraryPage({ url }: { url: URL }) {
           </h1>
           <p className="masthead__lede">
             Business and economy writing with quiet notes, only on the ideas{" "}
-            <span className="masthead__persona">{personaOf(persona).label.toLowerCase()}s</span> tend to miss.
+            {persona ? (
+              <>
+                <span className="masthead__persona">{personaOf(persona).label.toLowerCase()}s</span> tend to miss.
+              </>
+            ) : (
+              <>
+                <span className="masthead__persona">you</span> are likely to miss.
+              </>
+            )}
             The author's words stay exactly as written.
           </p>
           <label className="search">

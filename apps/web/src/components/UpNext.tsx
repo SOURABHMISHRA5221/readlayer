@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, errorKind, ApiError, type RecEventType, type RecFormat, type RecItem } from "../lib/api";
 import { sourceMonogram, sourceName } from "../lib/format";
-import { DEFAULT_PERSONA, type PersonaKey } from "../lib/personas";
+import { personaParam, type PersonaKey } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
 import { ArticleIcon, Close, External, HeadphonesIcon, PlayIcon } from "./Icons";
 
@@ -21,25 +21,25 @@ type Load =
   | { status: "ready"; items: RecItem[]; pending: boolean }
   | { status: "error" };
 
-function readPref(persona: PersonaKey): RecFormat | null {
+function readPref(persona: PersonaKey | null): RecFormat | null {
   try {
-    const v = window.localStorage.getItem(PREF_KEY + persona);
+    const v = window.localStorage.getItem(PREF_KEY + (persona ?? "me"));
     return v === "article" || v === "video" || v === "podcast" ? v : null;
   } catch {
     return null;
   }
 }
 
-function writePref(persona: PersonaKey, pref: RecFormat | null): void {
+function writePref(persona: PersonaKey | null, pref: RecFormat | null): void {
   try {
-    if (pref) window.localStorage.setItem(PREF_KEY + persona, pref);
-    else window.localStorage.removeItem(PREF_KEY + persona);
+    if (pref) window.localStorage.setItem(PREF_KEY + (persona ?? "me"), pref);
+    else window.localStorage.removeItem(PREF_KEY + (persona ?? "me"));
   } catch {
     // Storage blocked: the preference lasts for this page only.
   }
 }
 
-export function sendRecEvent(persona: PersonaKey, type: RecEventType, itemId: string): void {
+export function sendRecEvent(persona: PersonaKey | null, type: RecEventType, itemId: string): void {
   api.recEvents(persona, [{ id: crypto.randomUUID(), type, item_id: itemId }]).catch(() => {
     // Signals are best-effort; a lost one only makes ranking slightly less personal.
   });
@@ -55,7 +55,7 @@ export function formatLength(item: Pick<RecItem, "format" | "duration_or_read_ti
 }
 
 /** End-of-article recommendations for this reader, mixing our library with the web. */
-export function UpNext({ contentId, persona }: { contentId: string; persona: PersonaKey }) {
+export function UpNext({ contentId, persona }: { contentId: string; persona: PersonaKey | null }) {
   const [pref, setPref] = useState<RecFormat | null>(() => readPref(persona));
   const [load, setLoad] = useState<Load>({ status: "loading" });
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
@@ -164,7 +164,7 @@ const FORMAT_NAME: Record<RecFormat, string> = { article: "Article", video: "Vid
 
 interface RecCardProps {
   item: RecItem;
-  persona: PersonaKey;
+  persona: PersonaKey | null;
   fromId: string;
   onDismiss: (item: RecItem) => void;
 }
@@ -200,7 +200,7 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
 
   const readerHref = (id: string) =>
     withParams(new URL(`/read/${id}`, window.location.origin), {
-      persona: persona === DEFAULT_PERSONA ? null : persona,
+      persona: personaParam(persona),
       rec: item.id,
       from: fromId,
     });

@@ -7,7 +7,6 @@ needs a label and definition. No paragraph markers, pre-read or uncertainty prom
 Pure: no I/O, no SDK imports.
 """
 
-import math
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Literal
@@ -15,6 +14,7 @@ from typing import Literal
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
 from app.ingest.models import Anchor, ContentDoc, Demand
+from app.reader.model import prior, sigmoid
 
 PersonaKey = Literal["newcomer", "trader", "policy_student"]
 Density = Literal["minimal", "balanced", "guided"]
@@ -70,15 +70,6 @@ class SpanAnnotation:
     p_know: float
     salience: float
     score: float
-
-
-def sigmoid(x: float) -> float:
-    return 1.0 / (1.0 + math.exp(-x))
-
-
-def prior(theta: float, difficulty: float) -> float:
-    """DESIGN §4 IRT prior: σ(θ_domain − b)."""
-    return sigmoid(theta - difficulty)
 
 
 def p_know(

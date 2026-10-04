@@ -25,8 +25,8 @@ export const ERROR_COPY: Record<ApiErrorKind, { title: string; body: string }> =
     body: "It may have been removed from the library, or the link is incomplete.",
   },
   unauthorized: {
-    title: "ReadLayer wants you to sign in",
-    body: "Sign-in isn't built yet. Run the app with `make dev`, which uses the local dev identity.",
+    title: "Your session has ended",
+    body: "Sign in again to keep reading. Your notes and progress are where you left them.",
   },
   server: {
     title: "Something went wrong on our side",
@@ -34,6 +34,6 @@ export const ERROR_COPY: Record<ApiErrorKind, { title: string; body: string }> =
   },
   offline: {
     title: "ReadLayer can't reach its API",
-    body: "Check that `make dev` is running, then try again.",
+    body: "Check your connection, then try again.",
   },
 };

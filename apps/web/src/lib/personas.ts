@@ -51,3 +51,13 @@ export function parseDensity(value: string | null): Density {
 export function personaOf(key: PersonaKey): Persona {
   return PERSONAS.find((p) => p.key === key) ?? PERSONAS[0];
 }
+
+/** The persona a reader views as: demo (anonymous) readers only; signed-in readers are themselves. */
+export function readerPersona(url: URL, isDemo: boolean): PersonaKey | null {
+  return isDemo ? parsePersona(url.searchParams.get("persona")) : null;
+}
+
+/** URL value for a persona: omitted for the default and for signed-in readers. */
+export function personaParam(persona: PersonaKey | null): string | null {
+  return persona && persona !== DEFAULT_PERSONA ? persona : null;
+}

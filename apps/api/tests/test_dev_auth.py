@@ -53,22 +53,26 @@ def test_read_routes_require_auth_without_bypass():
     assert TestClient(app).get("/v1/content").status_code == 401
 
 
-def test_bypass_injects_the_dev_uid(monkeypatch):
-    from app.auth import current_uid
+def test_bypass_acts_as_the_dev_uid_only_without_a_token(monkeypatch, docs):
     from app.main import app
 
     monkeypatch.setenv("DEV_AUTH_BYPASS", "true")
     config.get_settings.cache_clear()
-    seen = []
+    client = TestClient(app)
+    assert client.get("/v1/content").status_code == 200
+    assert f"users/{DEV_UID}" in docs.docs
+    # A token, even a bad one, always goes through verification.
+    bad = client.get("/v1/content", headers={"Authorization": "Bearer nonsense"})
+    assert bad.status_code == 401
 
-    async def spy() -> str:
-        uid = await current_uid(config.get_settings())
-        seen.append(uid)
-        return uid
 
-    app.dependency_overrides[current_uid] = spy
-    try:
-        assert TestClient(app).get("/v1/content").status_code == 200
-    finally:
-        app.dependency_overrides.clear()
-    assert seen == [DEV_UID]
+def test_bypass_is_rechecked_per_request(monkeypatch):
+    """Even if settings were somehow built with the flag, a Cloud Run env disables it."""
+    from app.main import app
+
+    monkeypatch.setenv("DEV_AUTH_BYPASS", "true")
+    config.get_settings.cache_clear()
+    settings = config.get_settings()
+    object.__setattr__(settings, "k_service", "readlayer-api")
+    assert settings.bypass_allowed is False
+    assert TestClient(app).get("/v1/content").status_code == 401

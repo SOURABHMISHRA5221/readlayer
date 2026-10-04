@@ -9,7 +9,7 @@ from app.ingest import safe_fetch as sf
 from app.ingest.safe_fetch import FetchedPage, FetchError
 from app.main import app
 from app.store.content_repo import InMemoryContentStore, set_content_store
-from tests.fakes import FakeLLM
+from tests.fakes import FakeLLM, auth
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "article_business.html").read_bytes()
 URL = "https://news.example/rbi"
@@ -70,7 +70,7 @@ def fake_llm(monkeypatch):
     return fake
 
 
-client = TestClient(app)
+client = TestClient(app, headers=auth("writer"))
 
 
 def test_url_shape_ingests_and_stores(store, fetcher, fake_llm):

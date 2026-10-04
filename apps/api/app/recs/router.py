@@ -3,7 +3,9 @@
 Triggers are the concepts this reader was shown as new (the PLACEHOLDER scorer's spans, at
 balanced density); the reader graph replaces them in M4. Library items are computed on the
 spot; web items come from the per-concept cache, and misses are fetched in the background
-(`pending: true` tells the client to poll briefly).
+(`pending: true` tells the client to poll briefly). Anonymous (demo) readers always get cached
+web results, but the uncached searches they trigger share ANON_SEARCH_DAILY_CAP; past it they
+trigger none, so concepts without a cache entry give them library items only.
 """
 
 import hashlib
@@ -16,23 +18,30 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from app import llm
-from app.auth import current_uid
+from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
+from app.context import ReaderContext, reader_context
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph
+from app.ingest import quota
 from app.ingest.models import ContentDoc
-from app.ingest.router import FETCH_ERROR_STATUS, MAX_URL_CHARS, _error
+from app.ingest.router import (
+    FETCH_ERROR_STATUS,
+    MAX_URL_CHARS,
+    _error,
+    _ingest_error,
+    ingest_url,  # lazy: loads the ingestion pipeline on first use
+)
 from app.ingest.safe_fetch import FetchError, validate_url
-from app.ingest.service import ingest_url
 from app.ingest.urls import url_hash
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
 from app.recs.rank import PERSONA_FORMAT_PRIORS, RELATION_LABEL, Candidate, select
-from app.recs.state import RecEventType, Served, get_rec_state
+from app.recs.state import RecEventType, Served, get_rec_signals
 from app.recs.web_search import build_query, get_web_search
 from app.scoring import placeholder
-from app.scoring.placeholder import DENSITY_THRESHOLDS, PERSONAS, PersonaKey
+from app.scoring.placeholder import DENSITY_THRESHOLDS, PersonaKey
 from app.store.content_repo import get_content_store
 
 log = logging.getLogger("app.recs")
@@ -70,7 +79,7 @@ class RecItem(BaseModel):
 
 class RecsResponse(BaseModel):
     content_id: str
-    persona: PersonaKey
+    persona: PersonaKey | None  # demo persona; None for a signed-in reader
     prefer: Format | None
     items: list[RecItem]
     pending: bool  # web lookups still running: poll again shortly
@@ -86,7 +95,7 @@ class RecEvent(BaseModel):
 
 class RecEventsRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    persona: PersonaKey
+    persona: PersonaKey | None = None  # honoured for anonymous readers only
     events: list[RecEvent] = Field(max_length=MAX_EVENTS)
 
 
@@ -200,15 +209,14 @@ def _web_item(r: WebResult, trigger_id: str, graph: ConceptGraph, score: float) 
 @router.get("/content/{content_id}/recommendations", response_model=RecsResponse)
 async def recommendations(
     content_id: str,
-    uid: Annotated[str, Depends(current_uid)],
-    persona: PersonaKey = "newcomer",
+    ctx: Annotated[ReaderContext, Depends(reader_context)],
     prefer: Format | None = None,
 ) -> RecsResponse:
     doc = await get_content_store().get(content_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="content not found")
     graph = get_graph()
-    theta = PERSONAS[persona].theta
+    theta = ctx.theta
     spans = placeholder.annotate(doc, graph, theta, DENSITY_THRESHOLDS["balanced"])
     triggers = [s.concept_id for s in spans]  # highest score first
 
@@ -219,14 +227,16 @@ async def recommendations(
     known_urls = {d.final_url or d.url for d in index.docs.values()}
     web_results: dict[str, tuple[WebResult, str, float]] = {}
     pending = False
+    anonymous = ctx.caller.is_anonymous
+    may_search = not anonymous or await web.anonymous_allowance_left()
     top = spans[:WEB_TRIGGERS]
     best = top[0].score if top else 1.0
     for span in top:
         for fmt in sorted(web.formats):
             query = build_query(span.label, fmt, span.domain)
             results, fresh = await web.cached(span.concept_id, fmt, query)
-            if not fresh:
-                web.refresh(span.concept_id, span.label, fmt, span.domain)
+            if not fresh and may_search:
+                web.refresh(span.concept_id, span.label, fmt, span.domain, anonymous=anonymous)
             pending = pending or web.pending(span.concept_id, fmt)
             for rank, r in enumerate(results[:WEB_PER_QUERY]):
                 if r.url in known_urls:
@@ -258,12 +268,13 @@ async def recommendations(
         )
         for r, _, rel in web_results.values()
     ]
-    state = get_rec_state()
+    signals = get_rec_signals()
+    now = datetime.now(UTC)
     chosen = select(
         candidates,
-        state.signals(uid, persona),
-        PERSONA_FORMAT_PRIORS[persona],
-        datetime.now(UTC),
+        await signals.signals(ctx.uid, ctx.rec_key),
+        PERSONA_FORMAT_PRIORS[ctx.rec_key],
+        now,
         prefer,
     )
 
@@ -276,10 +287,12 @@ async def recommendations(
         else:
             r, trigger_id, _ = web_by_id[cand.id]
             items.append(_web_item(r, trigger_id, graph, s))
-    state.remember_served(uid, persona, {i.id: Served(i.format, i.relation) for i in items})
+    await signals.remember_served(
+        ctx.uid, ctx.rec_key, {i.id: Served(i.format, i.relation) for i in items}, now
+    )
     return RecsResponse(
         content_id=content_id,
-        persona=persona,
+        persona=ctx.persona,
         prefer=prefer,
         items=items,
         pending=pending,
@@ -289,17 +302,20 @@ async def recommendations(
 
 @router.post("/recs/events")
 async def rec_events(
-    body: RecEventsRequest, uid: Annotated[str, Depends(current_uid)]
+    body: RecEventsRequest, caller: Annotated[Caller, Depends(current_caller)]
 ) -> dict[str, int]:
-    state = get_rec_state()
-    applied = sum(state.apply(uid, body.persona, e.id, e.type, e.item_id) for e in body.events)
+    """Idempotent by event id; only items we served to this reader count."""
+    ctx = await reader_context(caller, body.persona)
+    applied = await get_rec_signals().apply(
+        ctx.uid, ctx.rec_key, [(e.id, e.type, e.item_id) for e in body.events]
+    )
     return {"applied": applied, "ignored": len(body.events) - applied}
 
 
 @router.post("/recs/open", response_model=OpenResponse)
 async def open_web_article(
     body: OpenRequest,
-    uid: Annotated[str, Depends(current_uid)],
+    caller: Annotated[Caller, Depends(current_caller)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> OpenResponse | JSONResponse:
     """Ingest a web article through safe_fetch and the normal pipeline, within the daily cap."""
@@ -307,27 +323,18 @@ async def open_web_article(
         validate_url(body.url)
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
-    state = get_rec_state()
     known = await get_content_store().get(url_hash(body.url)) is not None
-    if not known and state.ingests_today(uid) >= settings.ingest_daily_cap:
-        return _error(
-            429,
-            "ingest_cap_reached",
-            f"You can open {settings.ingest_daily_cap} new articles a day here. "
-            "Use “Open original” for this one, or try again tomorrow.",
-        )
+    if not known and not await quota.reserve(caller, settings):
+        return quota.cap_reached(caller, settings, "Use “Open original” for this one.")
     try:
         doc = await ingest_url(body.url, source="user_ingested")
-    except FetchError as exc:
-        return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
-    except llm.BudgetExceeded:
-        return _error(503, "llm_budget_exceeded", "Today's analysis budget is used up.")
-    except llm.LLMUnavailable:
-        return _error(503, "llm_unavailable", "The analysis model is busy. Try again in a minute.")
-    except llm.LLMRejected:
-        return _error(502, "llm_rejected", "The analysis request failed. This has been logged.")
+    except Exception as exc:
+        if not known:
+            await quota.refund(caller)
+        if isinstance(exc, FetchError | llm.BudgetExceeded | llm.LLMUnavailable | llm.LLMRejected):
+            return _ingest_error(exc)
+        raise
     if not known:
-        state.count_ingest(uid)
         catalog.add(doc)
     log.info("rec opened", extra={"content_id": doc.content_id, "new": not known})
     return OpenResponse(content_id=doc.content_id, new=not known)

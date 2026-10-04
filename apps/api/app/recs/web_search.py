@@ -299,10 +299,13 @@ class RecCacheStore(Protocol):
     ) -> None: ...
 
 
+ANONYMOUS = "anonymous"  # counter of calls triggered by anonymous (demo) readers
+
+
 class SearchCallStore(Protocol):
     async def count_today(self, provider: str | None = None) -> int: ...
 
-    async def add(self, provider: str, calls: int) -> None: ...
+    async def add(self, provider: str, calls: int, anonymous: bool = False) -> None: ...
 
 
 class FirestoreRecCache:
@@ -338,7 +341,8 @@ class FirestoreRecCache:
 
 
 class FirestoreSearchCalls:
-    """ops/search/days/{yyyy-mm-dd}: calls per provider and in total (UTC)."""
+    """ops/search/days/{yyyy-mm-dd}: calls per provider, in total, and those triggered by
+    anonymous readers (UTC)."""
 
     def __init__(self, project: str) -> None:
         self._db = firestore.AsyncClient(project=project or None)
@@ -353,15 +357,15 @@ class FirestoreSearchCalls:
         data = (snap.to_dict() or {}) if snap.exists else {}
         return int(data.get(provider or "calls", 0))
 
-    async def add(self, provider: str, calls: int) -> None:
-        await self._doc().set(
-            {
-                "calls": firestore.Increment(calls),
-                provider: firestore.Increment(calls),
-                "updated_at": firestore.SERVER_TIMESTAMP,
-            },
-            merge=True,
-        )
+    async def add(self, provider: str, calls: int, anonymous: bool = False) -> None:
+        fields = {
+            "calls": firestore.Increment(calls),
+            provider: firestore.Increment(calls),
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        }
+        if anonymous:
+            fields[ANONYMOUS] = firestore.Increment(calls)
+        await self._doc().set(fields, merge=True)
 
 
 class InMemoryRecCache:
@@ -378,14 +382,19 @@ class InMemoryRecCache:
 class InMemorySearchCalls:
     def __init__(self) -> None:
         self.calls: dict[str, int] = {}
+        self.anonymous = 0
 
     async def count_today(self, provider: str | None = None) -> int:
+        if provider == ANONYMOUS:
+            return self.anonymous
         if provider:
             return self.calls.get(provider, 0)
         return sum(self.calls.values())
 
-    async def add(self, provider: str, calls: int) -> None:
+    async def add(self, provider: str, calls: int, anonymous: bool = False) -> None:
         self.calls[provider] = self.calls.get(provider, 0) + calls
+        if anonymous:
+            self.anonymous += calls
 
 
 # ---------------------------------------------------------------- service
@@ -432,19 +441,38 @@ class WebSearch:
         task = self._inflight.get((concept_id, fmt))
         return task is not None and not task.done()
 
+    async def anonymous_allowance_left(self) -> bool:
+        """Whether anonymous readers may still trigger uncached searches today."""
+        used = await self._calls.count_today(ANONYMOUS)
+        return used < self._settings.anon_search_daily_cap
+
     def refresh(
-        self, concept_id: str, label: str, fmt: Format, domain: str | None = None
+        self,
+        concept_id: str,
+        label: str,
+        fmt: Format,
+        domain: str | None = None,
+        *,
+        anonymous: bool = False,
     ) -> asyncio.Task[list[WebResult]]:
         """Start (or join) a background fetch; the caller doesn't wait for it."""
         key = (concept_id, fmt)
         task = self._inflight.get(key)
         if task is None or task.done():
-            task = asyncio.create_task(self.fetch(concept_id, label, fmt, domain))
+            task = asyncio.create_task(
+                self.fetch(concept_id, label, fmt, domain, anonymous=anonymous)
+            )
             self._inflight[key] = task
         return task
 
     async def fetch(
-        self, concept_id: str, label: str, fmt: Format, domain: str | None = None
+        self,
+        concept_id: str,
+        label: str,
+        fmt: Format,
+        domain: str | None = None,
+        *,
+        anonymous: bool = False,
     ) -> list[WebResult]:
         provider = self._providers.get(fmt)
         if provider is None:
@@ -453,8 +481,8 @@ class WebSearch:
         try:
             # Check and reserve together, so concurrent lookups can't overshoot the cap.
             async with self._reserve_lock:
-                await self._check_cap(provider.name)
-                await self._calls.add(provider.name, calls)
+                await self._check_cap(provider.name, calls, anonymous)
+                await self._calls.add(provider.name, calls, anonymous)
         except SearchCapReached:
             stale, _ = await self.cached(concept_id, fmt)
             return stale
@@ -487,7 +515,12 @@ class WebSearch:
         )
         return clean
 
-    async def _check_cap(self, provider: str) -> None:
+    async def _check_cap(self, provider: str, calls: int = 1, anonymous: bool = False) -> None:
+        if anonymous:
+            used = await self._calls.count_today(ANONYMOUS)
+            if used + calls > self._settings.anon_search_daily_cap:
+                log.warning("anonymous search cap reached", extra={"anonymous_today": used})
+                raise SearchCapReached("daily anonymous search cap reached")
         total = await self._calls.count_today()
         if total >= self._settings.search_daily_cap:  # attempted calls, failures included
             log.warning("search cap reached", extra={"calls_today": total})

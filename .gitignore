@@ -23,3 +23,5 @@ data/concepts.prev.json
 data/links.prev.json
 data/heldout_state.jsonl
 data/heldout_report.md
+firestore-debug.log
+ui-debug.log
