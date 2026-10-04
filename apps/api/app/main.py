@@ -1,0 +1,66 @@
+"""FastAPI app: middleware, health check and the /v1 router."""
+
+import logging
+import time
+import uuid
+from collections.abc import Awaitable, Callable
+
+from fastapi import APIRouter, FastAPI, Request, Response
+
+from app.config import get_settings
+from app.log import configure_logging, request_id_var
+
+settings = get_settings()
+configure_logging(settings.log_level)
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+log = logging.getLogger("app.http")
+
+app = FastAPI(title="ReadLayer API", version="0.1.0")
+v1 = APIRouter(prefix="/v1")
+
+
+def _request_id(request: Request) -> str:
+    if rid := request.headers.get("x-request-id"):
+        return rid[:64]
+    # Cloud Run sets "TRACE_ID/SPAN_ID;o=1".
+    if trace := request.headers.get("x-cloud-trace-context"):
+        return trace.split("/", 1)[0][:64]
+    return uuid.uuid4().hex
+
+
+@app.middleware("http")
+async def request_context(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    rid = _request_id(request)
+    token = request_id_var.set(rid)
+    start = time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        log.exception("unhandled error", extra={"method": request.method, "path": request.url.path})
+        raise
+    else:
+        response.headers["X-Request-ID"] = rid
+        log.info(
+            "request",
+            extra={
+                "method": request.method,
+                "path": request.url.path,
+                "status": response.status_code,
+                "latency_ms": round((time.perf_counter() - start) * 1000, 1),
+            },
+        )
+        return response
+    finally:
+        request_id_var.reset(token)
+
+
+# Cloud Run's front end reserves /healthz (returns its own 404), so /health is the public probe.
+@app.get("/health")
+@app.get("/healthz")
+async def healthz() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+app.include_router(v1)

@@ -29,7 +29,11 @@
       "Bash(gsutil rm *)",
       "Bash(gcloud secrets *)",
       "Bash(firebase deploy *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(make setup-gcp*)",
+      "Bash(make deploy-api*)",
+      "Bash(make deploy-web*)",
+      "Bash(pnpm exec firebase deploy *)"
     ]
   }
 }

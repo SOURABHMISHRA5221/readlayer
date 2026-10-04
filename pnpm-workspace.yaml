@@ -1,0 +1,8 @@
+packages:
+  - apps/web
+  - apps/extension
+  - packages/annotator
+allowBuilds:
+  esbuild: true
+  protobufjs: false
+  re2: false

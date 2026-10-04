@@ -1,0 +1,13 @@
+{
+  "name": "readlayer",
+  "private": true,
+  "packageManager": "pnpm@12.9.1",
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm -r build"
+  },
+  "devDependencies": {
+    "firebase-tools": "^14.0.0",
+    "typescript": "^5.9.0"
+  }
+}
