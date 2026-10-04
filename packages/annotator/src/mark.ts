@@ -42,10 +42,10 @@ export function wrapRange(root: HTMLElement, range: TextRange, id: string): HTML
     });
 }
 
-/** Removes every mark under root, restoring the original text nodes. */
-export function unwrapAll(root: HTMLElement): void {
+/** Removes the given marks (or every mark under root), restoring the original text nodes. */
+export function unwrap(root: HTMLElement, marks?: readonly Element[]): void {
   const parents = new Set<Node>();
-  for (const mark of Array.from(root.querySelectorAll(`.${MARK_CLASS}`))) {
+  for (const mark of marks ?? Array.from(root.querySelectorAll(`.${MARK_CLASS}`))) {
     const parent = mark.parentNode;
     if (!parent) continue;
     parents.add(parent);

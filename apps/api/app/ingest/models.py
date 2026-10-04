@@ -53,6 +53,12 @@ class ContentDoc(BaseModel):
     site: str
     source: Literal["fetch", "extension"]
     fetched_at: str
+    # Publisher metadata (description = standfirst). None when the page declares none, or for
+    # docs ingested before it was stored and not yet backfilled (scripts/backfill_metadata.py).
+    description: str | None = None
+    author: str | None = None
+    published: str | None = None
+    image: str | None = None  # publisher's og:image URL; the UI hotlinks it with no referrer
     paragraphs: list[StoredParagraph]
     demands: list[Demand]
     demands_dropped: int

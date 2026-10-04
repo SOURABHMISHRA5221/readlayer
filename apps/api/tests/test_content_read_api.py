@@ -40,7 +40,18 @@ def client(monkeypatch):
 def test_list_and_search(client):
     body = client.get("/v1/content").json()
     assert [i["id"] for i in body] == ["a1", "a2"]
-    assert body[0] == {"id": "a1", "title": "Bond yields climb", "site": "mint", "word_count": 400}
+    assert body[0] == {
+        "id": "a1",
+        "title": "Bond yields climb",
+        "site": "mint",
+        "word_count": 400,
+        "description": None,
+        "author": None,
+        "published": None,
+        "image": None,
+        "domain": "finance",
+        "concepts_new": 1,
+    }
     assert [i["id"] for i in client.get("/v1/content?q=DEFICIT").json()] == ["a2"]
     assert [i["id"] for i in client.get("/v1/content?q=businessline").json()] == ["a2"]
 
@@ -60,6 +71,7 @@ def test_annotations_shape(client):
     assert body["persona"] == "newcomer" and body["density"] == "guided" and body["count"] == 1
     item = body["annotations"][0]
     assert item["kind"] == "span" and item["concept_id"] == "c_yield_curve"
+    assert item["domain"] == "finance"
     assert item["prerequisites"] == ["Bond"] and item["anchor"]["exact"] == "yield_curve"
     assert item["debug"] is None
 
@@ -89,3 +101,29 @@ def test_debug_only_in_dev(client, monkeypatch):
 def test_empty_graph_gives_no_annotations(client):
     set_graph(ConceptGraph(ConceptGraphFile(version="e", concepts=[])))
     assert client.get("/v1/content/a1/annotations").json()["count"] == 0
+
+
+def test_list_counts_are_per_persona_and_density(client):
+    def new_for(query):
+        return client.get(f"/v1/content?{query}").json()[0]["concepts_new"]
+
+    # yield curve (finance, b=1, prereq bond): newcomer misses it, the trader knows it
+    assert new_for("persona=newcomer") == 1
+    assert new_for("persona=trader&density=minimal") == 0
+    assert client.get("/v1/content?persona=nobody").status_code == 422
+
+
+def test_detail_carries_publisher_metadata(client):
+    from app.store.content_repo import get_content_store
+
+    store = get_content_store()
+    store.docs["a1"] = store.docs["a1"].model_copy(
+        update={"description": "Standfirst.", "author": "A. Writer", "published": "2026-10-01"}
+    )
+    body = client.get("/v1/content/a1").json()
+    assert (body["description"], body["author"], body["published"]) == (
+        "Standfirst.",
+        "A. Writer",
+        "2026-10-01",
+    )
+    assert body["domain"] == "finance"

@@ -7,10 +7,25 @@ export interface ContentSummary {
   title: string;
   site: string;
   word_count: number;
+  description: string | null;
+  author: string | null;
+  published: string | null;
+  image: string | null;
+  domain: string | null;
+  concepts_new: number;
 }
 
-export interface ContentDetail extends ContentSummary {
+export interface ContentDetail {
+  id: string;
+  title: string;
+  site: string;
   url: string;
+  word_count: number;
+  description: string | null;
+  author: string | null;
+  published: string | null;
+  image: string | null;
+  domain: string | null;
   paragraphs: { id: string; text: string }[];
 }
 
@@ -22,48 +37,47 @@ export interface AnnotationsResponse {
   annotations: CardAnnotation[];
 }
 
+export type ApiErrorKind = "not_found" | "unauthorized" | "server" | "offline";
+
 export class ApiError extends Error {
   constructor(
-    readonly status: number,
-    message: string,
+    readonly kind: ApiErrorKind,
+    readonly status: number | null,
   ) {
-    super(message);
+    super(`api ${kind}${status ? ` ${status}` : ""}`);
   }
 }
 
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const res = await fetch(path, { signal, headers: { Accept: "application/json" } });
+  let res: Response;
+  try {
+    res = await fetch(path, { signal, headers: { Accept: "application/json" } });
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    throw new ApiError("offline", null);
+  }
   if (!res.ok) {
-    const message =
-      res.status === 404
-        ? "That article isn't in the library."
-        : res.status === 401
-          ? "The API wants a sign-in. Run it with `make dev` (dev auth bypass)."
-          : `The API answered ${res.status}.`;
-    throw new ApiError(res.status, message);
+    const kind = res.status === 404 ? "not_found" : res.status === 401 ? "unauthorized" : "server";
+    throw new ApiError(kind, res.status);
   }
   return (await res.json()) as T;
 }
 
+export function errorKind(error: unknown): ApiErrorKind {
+  return error instanceof ApiError ? error.kind : "offline";
+}
+
 export const api = {
-  library: (q: string, signal?: AbortSignal) =>
-    get<ContentSummary[]>(`/v1/content?q=${encodeURIComponent(q)}`, signal),
+  library: (q: string, persona: PersonaKey, density: Density, signal?: AbortSignal) =>
+    get<ContentSummary[]>(
+      `/v1/content?q=${encodeURIComponent(q)}&persona=${persona}&density=${density}`,
+      signal,
+    ),
   content: (id: string, signal?: AbortSignal) =>
     get<ContentDetail>(`/v1/content/${encodeURIComponent(id)}`, signal),
-  annotations: (
-    id: string,
-    persona: PersonaKey,
-    density: Density,
-    debug: boolean,
-    signal?: AbortSignal,
-  ) =>
+  annotations: (id: string, persona: PersonaKey, density: Density, debug: boolean, signal?: AbortSignal) =>
     get<AnnotationsResponse>(
       `/v1/content/${encodeURIComponent(id)}/annotations?persona=${persona}&density=${density}${debug ? "&debug=1" : ""}`,
       signal,
     ),
 };
-
-export function errorMessage(error: unknown): string {
-  if (error instanceof ApiError) return error.message;
-  return "Couldn't reach the API. Is `make dev` running?";
-}

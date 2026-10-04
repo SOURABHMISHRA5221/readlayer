@@ -14,7 +14,7 @@ from app.graph.linking import link_demands
 from app.graph.loader import get_graph
 from app.ingest import safe_fetch as fetch
 from app.ingest.demands import extract_demands
-from app.ingest.extract import build_paragraphs, clean_paragraphs, extract
+from app.ingest.extract import Metadata, build_paragraphs, clean_paragraphs, extract
 from app.ingest.features import parse_structure, structure
 from app.ingest.models import ContentDoc, StoredParagraph
 from app.ingest.urls import normalize_url, url_hash
@@ -35,7 +35,14 @@ async def ingest_url(url: str) -> ContentDoc:
     extracted = await asyncio.to_thread(extract, html, page.url)
     title = extracted.title or extracted.site or page.url
     return await _build(
-        content_id, url, page.url, title, extracted.site, extracted.paragraphs, "fetch"
+        content_id,
+        url,
+        page.url,
+        title,
+        extracted.site,
+        extracted.paragraphs,
+        "fetch",
+        extracted.metadata,
     )
 
 
@@ -64,6 +71,7 @@ async def _build(
     site: str,
     texts: list[str],
     source: Literal["fetch", "extension"],
+    metadata: Metadata | None = None,
 ) -> ContentDoc:
     if sum(len(t.split()) for t in texts) < MIN_ARTICLE_WORDS:
         raise fetch.FetchError(
@@ -87,6 +95,10 @@ async def _build(
         site=site[:120],
         source=source,
         fetched_at=datetime.now(UTC).isoformat(),
+        description=metadata.description if metadata else None,
+        author=metadata.author if metadata else None,
+        published=metadata.published if metadata else None,
+        image=metadata.image if metadata else None,
         paragraphs=[
             StoredParagraph(
                 id=p.id, text=p.text, structure=structure(score, result.dense.get(p.id, False))

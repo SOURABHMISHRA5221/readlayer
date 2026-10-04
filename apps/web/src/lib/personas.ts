@@ -3,21 +3,31 @@ export const PERSONAS = [
   {
     key: "newcomer",
     label: "Newcomer",
-    blurb: "A software engineer. New to economics and finance.",
+    short: "Newcomer",
+    initials: "NC",
+    blurb: "A software engineer meeting economics and finance for the first time.",
+    strengths: ["Software", "Business basics"],
   },
   {
     key: "trader",
-    label: "Trader",
-    blurb: "Fluent in markets and business. Policy is a blind spot.",
+    label: "Markets trader",
+    short: "Trader",
+    initials: "MT",
+    blurb: "Lives in markets and company results; policy is a blind spot.",
+    strengths: ["Finance", "Business"],
   },
   {
     key: "policy_student",
     label: "Policy student",
-    blurb: "At home in economics and policy. Markets jargon is new.",
+    short: "Policy",
+    initials: "PS",
+    blurb: "Reads central banks and budgets for fun; markets jargon is new.",
+    strengths: ["Policy", "Economics"],
   },
 ] as const;
 
-export type PersonaKey = (typeof PERSONAS)[number]["key"];
+export type Persona = (typeof PERSONAS)[number];
+export type PersonaKey = Persona["key"];
 
 export const DENSITIES = [
   { key: "minimal", label: "Minimal" },
@@ -27,10 +37,17 @@ export const DENSITIES = [
 
 export type Density = (typeof DENSITIES)[number]["key"];
 
+export const DEFAULT_PERSONA: PersonaKey = "newcomer";
+export const DEFAULT_DENSITY: Density = "balanced";
+
 export function parsePersona(value: string | null): PersonaKey {
-  return PERSONAS.find((p) => p.key === value)?.key ?? "newcomer";
+  return PERSONAS.find((p) => p.key === value)?.key ?? DEFAULT_PERSONA;
 }
 
 export function parseDensity(value: string | null): Density {
-  return DENSITIES.find((d) => d.key === value)?.key ?? "balanced";
+  return DENSITIES.find((d) => d.key === value)?.key ?? DEFAULT_DENSITY;
+}
+
+export function personaOf(key: PersonaKey): Persona {
+  return PERSONAS.find((p) => p.key === key) ?? PERSONAS[0];
 }

@@ -31,6 +31,8 @@ export interface AnnotationDebug {
 /** What a span card shows. Explanations (DESIGN §7) will add fields here in M5. */
 export interface CardAnnotation extends Annotation {
   definition: string;
+  /** Graph domain, shown as the card's small-caps label. */
+  domain?: string;
   prerequisites: string[];
   debug?: AnnotationDebug | null;
 }

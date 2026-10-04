@@ -1,0 +1,44 @@
+/*
+ * Metric-matched local fallbacks so the swap to the web fonts doesn't move a line
+ * (font-display: swap comes from the Google Fonts URL). Each face is measured against the
+ * real font in Chrome (canvas measureText, the same sentence at 100px): upright, medium and
+ * italic Newsreader differ enough from Georgia to need their own overrides.
+ */
+@font-face {
+  font-family: "Newsreader Fallback";
+  src: local("Georgia");
+  font-weight: 300 450;
+  size-adjust: 100.7%;
+  ascent-override: 73.5%;
+  descent-override: 25.8%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback";
+  src: local("Georgia");
+  font-weight: 451 700;
+  size-adjust: 103.5%;
+  ascent-override: 71.5%;
+  descent-override: 25.1%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Newsreader Fallback";
+  src: local("Georgia Italic"), local("Georgia-Italic");
+  font-style: italic;
+  size-adjust: 90.6%;
+  ascent-override: 81.7%;
+  descent-override: 28.7%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial");
+  size-adjust: 106.6%;
+  ascent-override: 91%;
+  descent-override: 22.5%;
+  line-gap-override: 0%;
+}

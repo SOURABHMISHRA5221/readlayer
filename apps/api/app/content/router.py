@@ -11,6 +11,7 @@ from pydantic import BaseModel
 
 from app.auth import current_uid
 from app.config import Settings, get_settings
+from app.content.summary import article_domain
 from app.graph.loader import get_graph
 from app.ingest.models import ContentDoc
 from app.scoring import placeholder
@@ -27,6 +28,13 @@ class ContentSummary(BaseModel):
     title: str
     site: str
     word_count: int
+    description: str | None
+    author: str | None
+    published: str | None
+    image: str | None
+    domain: str | None
+    # Span annotations this persona would get at this density: "N concepts new to you".
+    concepts_new: int
 
 
 class ParagraphOut(BaseModel):
@@ -40,6 +48,11 @@ class ContentDetail(BaseModel):
     site: str
     url: str
     word_count: int
+    description: str | None
+    author: str | None
+    published: str | None
+    image: str | None
+    domain: str | None
     paragraphs: list[ParagraphOut]
 
 
@@ -68,6 +81,7 @@ class AnnotationOut(BaseModel):
     concept_id: str
     label: str
     definition: str
+    domain: str
     prerequisites: list[str]
     debug: AnnotationDebug | None = None
 
@@ -80,28 +94,53 @@ class AnnotationsResponse(BaseModel):
     annotations: list[AnnotationOut]
 
 
-# Library summaries, built once per process from every stored doc (dev slice; fine at ~300).
-_catalog: list[ContentSummary] | None = None
-_catalog_lock = asyncio.Lock()
+# Every stored doc, loaded once per process (dev slice; ~300 docs). Library rows per
+# (persona, density) are pure computation over these and cached alongside.
+_docs: list[ContentDoc] | None = None
+_rows: dict[tuple[PersonaKey, Density], list[ContentSummary]] = {}
+_lock = asyncio.Lock()
 
 
 def reset_catalog() -> None:
-    global _catalog
-    _catalog = None
+    global _docs
+    _docs = None
+    _rows.clear()
 
 
-async def _summaries() -> list[ContentSummary]:
-    global _catalog
-    async with _catalog_lock:
-        if _catalog is None:
+async def _summaries(persona: PersonaKey, density: Density) -> list[ContentSummary]:
+    global _docs
+    async with _lock:
+        if _docs is None:
             docs = [doc async for doc in get_content_store().iter_all()]
-            _catalog = sorted((_summary(d) for d in docs), key=lambda s: (s.title.casefold(), s.id))
-        return _catalog
+            _docs = sorted(docs, key=lambda d: (d.title.casefold(), d.content_id))
+            _rows.clear()
+        key = (persona, density)
+        if key not in _rows:
+            graph = get_graph()
+            theta, threshold = PERSONAS[persona].theta, DENSITY_THRESHOLDS[density]
+            _rows[key] = [
+                _summary(
+                    d,
+                    article_domain(d, graph),
+                    len(placeholder.annotate(d, graph, theta, threshold)),
+                )
+                for d in _docs
+            ]
+        return _rows[key]
 
 
-def _summary(doc: ContentDoc) -> ContentSummary:
+def _summary(doc: ContentDoc, domain: str | None, concepts_new: int) -> ContentSummary:
     return ContentSummary(
-        id=doc.content_id, title=doc.title, site=doc.site, word_count=placeholder.word_count(doc)
+        id=doc.content_id,
+        title=doc.title,
+        site=doc.site,
+        word_count=placeholder.word_count(doc),
+        description=doc.description,
+        author=doc.author,
+        published=doc.published,
+        image=doc.image,
+        domain=domain,
+        concepts_new=concepts_new,
     )
 
 
@@ -115,9 +154,11 @@ async def _doc_or_404(content_id: str) -> ContentDoc:
 @router.get("/content", response_model=list[ContentSummary])
 async def list_content(
     q: Annotated[str, Query(max_length=MAX_QUERY_CHARS)] = "",
+    persona: PersonaKey = "newcomer",
+    density: Density = "balanced",
 ) -> list[ContentSummary]:
     needle = q.strip().casefold()
-    items = await _summaries()
+    items = await _summaries(persona, density)
     if not needle:
         return items
     return [s for s in items if needle in s.title.casefold() or needle in s.site.casefold()]
@@ -132,6 +173,11 @@ async def get_content(content_id: str) -> ContentDetail:
         site=doc.site,
         url=doc.final_url or doc.url,
         word_count=placeholder.word_count(doc),
+        description=doc.description,
+        author=doc.author,
+        published=doc.published,
+        image=doc.image,
+        domain=article_domain(doc, get_graph()),
         paragraphs=[ParagraphOut(id=p.id, text=p.text) for p in doc.paragraphs],
     )
 
@@ -168,6 +214,7 @@ def _annotation_out(s: placeholder.SpanAnnotation, with_debug: bool) -> Annotati
         concept_id=s.concept_id,
         label=s.label,
         definition=s.definition,
+        domain=s.domain,
         prerequisites=list(s.prerequisites),
         debug=AnnotationDebug(
             p_know=round(s.p_know, 4),

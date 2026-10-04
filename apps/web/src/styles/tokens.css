@@ -1,76 +1,147 @@
-/* Design tokens. Editorial direction: warm paper, iron-gall ink, notes in a pencil sienna. */
+/*
+ * ReadLayer design tokens. Calm editorial: paper and ink, one deep ink-teal accent that only
+ * ever means "a note for you". Light by default; dark via the OS or the manual toggle
+ * (data-theme on <html>, set before first paint in index.html).
+ */
 :root {
-  --paper: oklch(97.2% 0.012 82);
-  --paper-raised: oklch(98.8% 0.008 82);
-  --paper-sunk: oklch(94.5% 0.016 80);
-  --ink: oklch(23% 0.018 60);
-  --ink-soft: oklch(42% 0.018 60);
-  --ink-faint: oklch(58% 0.015 65);
-  --rule: oklch(86% 0.018 75);
-  --note: oklch(53% 0.12 40);
-  --note-soft: oklch(53% 0.12 40 / 0.1);
-  --focus: oklch(50% 0.14 250);
-  --grain-opacity: 0.05;
+  color-scheme: light;
 
-  --tone-0: oklch(52% 0.09 40);
-  --tone-1: oklch(48% 0.08 160);
-  --tone-2: oklch(48% 0.09 250);
-  --tone-3: oklch(50% 0.09 320);
-  --tone-4: oklch(52% 0.08 95);
+  /* Colour: light */
+  --paper: #fbf8f3;
+  --surface: #fffdf9; /* floating layers sit a touch brighter than paper */
+  --ink: #1c1b19;
+  --ink-soft: #3a3833;
+  --muted: #6b675f;
+  --hairline: #e7e1d6;
+  --accent: #1f5f5b;
+  --accent-wash: #e6f0ee;
+  --on-accent: #fbf8f3;
+  --skeleton: #efe9df;
+  --scrim: rgb(28 27 25 / 0.28);
+  --persona-newcomer: #8a5a2b;
+  --persona-trader: #1f5f5b;
+  --persona-policy: #5b4a7a;
 
-  --font-read: "Newsreader", "Iowan Old Style", "Charter", Georgia, serif;
-  --font-ui: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  /* Type */
+  --font-read: "Newsreader", "Newsreader Fallback", Georgia, serif;
+  --font-ui: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+  --text-body: 18px;
+  --leading-body: 1.62;
+  /* ~66 characters of the reading face at body size, fixed so it means the same width on
+     every element (a ch unit would scale with each element's own font size). */
+  --measure: calc(var(--text-body) * 36.4);
+  --text-headline: 34px;
+  --text-display: 40px;
+  --text-ui: 14px;
+  --text-ui-sm: 13px;
+  --text-micro: 11px;
+  --tracking-tight: -0.018em;
+  --tracking-caps: 0.08em;
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-body: clamp(1.125rem, 1.04rem + 0.35vw, 1.3125rem);
-  --text-title: clamp(2.1rem, 1.3rem + 3.2vw, 3.6rem);
-  --text-mast: clamp(3rem, 1.4rem + 4.5vw, 4.75rem);
+  /* Space: 4px scale */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 20px;
+  --s6: 24px;
+  --s8: 32px;
+  --s10: 40px;
+  --s12: 48px;
+  --s16: 64px;
+  --s20: 80px;
+  --s24: 96px;
+  --gutter: var(--s4);
 
-  --measure: 34em;
-  --gutter: 16px;
-  --space-section: clamp(2.5rem, 1.8rem + 3vw, 5rem);
+  /* Shape and depth: one shadow, for floating layers only */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-pill: 999px;
+  --shadow-float: 0 1px 2px rgb(28 27 25 / 0.06), 0 16px 40px -12px rgb(28 27 25 / 0.22);
 
-  --duration-fast: 140ms;
-  --duration-normal: 280ms;
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Motion */
+  --dur-fast: 150ms;
+  --dur: 180ms;
+  --dur-slow: 220ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-  /* Annotator theme (packages/annotator reads --rl-*). Quieter than the text by design. */
-  --rl-mark: color-mix(in oklab, var(--note) 55%, transparent);
-  --rl-mark-known: color-mix(in oklab, var(--ink) 14%, transparent);
-  --rl-mark-hover-bg: var(--note-soft);
-  --rl-accent: var(--note);
-  --rl-accent-soft: var(--note-soft);
-  --rl-focus: var(--focus);
-  --rl-card-bg: var(--paper-raised);
-  --rl-card-fg: var(--ink);
-  --rl-card-border: var(--rule);
-  --rl-muted: var(--ink-faint);
+  /* Layout */
+  --bar-h: 104px; /* fixed top bar, two rows on phones */
+  --bar-tuck: 52px; /* how far it slides up when scrolled */
+  --rail-w: 232px;
+
+  /* packages/annotator theme */
+  --rl-accent: var(--accent);
+  --rl-accent-wash: var(--accent-wash);
+  --rl-surface: var(--surface);
+  --rl-paper: var(--paper);
+  --rl-ink: var(--ink);
+  --rl-ink-soft: var(--ink-soft);
+  --rl-muted: var(--muted);
+  --rl-hairline: var(--hairline);
+  --rl-radius: var(--radius);
+  --rl-shadow: var(--shadow-float);
+  --rl-focus: var(--accent);
   --rl-font-ui: var(--font-ui);
-  --rl-font-title: var(--font-read);
-  --rl-debug-bg: var(--paper-sunk);
-  --rl-action-hover-bg: var(--paper-sunk);
-  --rl-shadow: 0 1px 1px oklch(23% 0.02 60 / 0.06), 0 18px 40px -14px oklch(23% 0.03 60 / 0.3);
+  --rl-font-read: var(--font-read);
+  --rl-duration: var(--dur);
+  --rl-scrim: var(--scrim);
+  --rl-ease: var(--ease);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --text-body: 20px;
+    --text-headline: 44px;
+    --text-display: 56px;
+    --gutter: var(--s8);
+    --bar-h: 64px;
+    --bar-tuck: 12px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --gutter: var(--s12);
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: oklch(19.5% 0.012 65);
-    --paper-raised: oklch(24% 0.014 65);
-    --paper-sunk: oklch(16.5% 0.01 65);
-    --ink: oklch(91% 0.014 80);
-    --ink-soft: oklch(76% 0.014 78);
-    --ink-faint: oklch(62% 0.014 75);
-    --rule: oklch(32% 0.014 70);
-    --note: oklch(72% 0.11 50);
-    --note-soft: oklch(72% 0.11 50 / 0.13);
-    --focus: oklch(72% 0.12 250);
-    --grain-opacity: 0.035;
-    --tone-0: oklch(75% 0.09 40);
-    --tone-1: oklch(74% 0.08 160);
-    --tone-2: oklch(74% 0.08 250);
-    --tone-3: oklch(75% 0.08 320);
-    --tone-4: oklch(78% 0.08 95);
-    --rl-shadow: 0 1px 1px oklch(0% 0 0 / 0.3), 0 18px 40px -14px oklch(0% 0 0 / 0.6);
+    color-scheme: dark;
+    --paper: #141412;
+    --surface: #1b1b18;
+    --ink: #ece7dd;
+    --ink-soft: #d6d0c4;
+    --muted: #a39e93;
+    --hairline: #2a2925;
+    --accent: #6fb3aa;
+    --accent-wash: #1c2a28;
+    --on-accent: #141412;
+    --skeleton: #22211e;
+    --scrim: rgb(0 0 0 / 0.62);
+    --persona-newcomer: #d4a373;
+    --persona-trader: #6fb3aa;
+    --persona-policy: #b3a1d6;
+    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 44px -12px rgb(0 0 0 / 0.7);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #141412;
+  --surface: #1b1b18;
+  --ink: #ece7dd;
+  --ink-soft: #d6d0c4;
+  --muted: #a39e93;
+  --hairline: #2a2925;
+  --accent: #6fb3aa;
+  --accent-wash: #1c2a28;
+  --on-accent: #141412;
+  --skeleton: #22211e;
+  --scrim: rgb(0 0 0 / 0.62);
+  --persona-newcomer: #d4a373;
+  --persona-trader: #6fb3aa;
+  --persona-policy: #b3a1d6;
+  --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 44px -12px rgb(0 0 0 / 0.7);
 }
