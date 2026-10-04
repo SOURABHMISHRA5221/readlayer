@@ -1,0 +1,13 @@
+CLAUDE.local.md
+.claude/settings.local.json
+.env
+.env.*
+!.env.example
+*service-account*.json
+node_modules/
+dist/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+firebase-debug.log

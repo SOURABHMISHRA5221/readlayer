@@ -1,0 +1,6 @@
+{
+  "env": {
+    "CLOUDSDK_CONFIG": "/ABSOLUTE/PATH/TO/YOUR/HOME/.config/gcloud-readlayer",
+    "CLOUDSDK_CORE_PROJECT": "YOUR-PROJECT-ID"
+  }
+}

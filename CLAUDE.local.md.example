@@ -1,0 +1,10 @@
+# Local, not committed (copy to CLAUDE.local.md)
+
+## GCP identity for this project
+- The only Google account allowed for this project: <your personal account email>
+- GCP project id: <project-id> · region: asia-south1 (Cloud Run, Firestore) · Vertex location: <set in M0>
+- Before ANY gcloud, firebase or deploy command, run
+  `gcloud config list --format="value(core.account,core.project)"` and stop if the account or
+  project differs from the values above. Never switch accounts yourself.
+- If a command needs credentials that aren't present, ask me to run the login command; don't try
+  another account or credential file.

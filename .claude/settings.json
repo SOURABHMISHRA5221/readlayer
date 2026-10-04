@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(gcloud projects delete *)",
+      "Bash(gcloud organizations *)",
+      "Bash(gcloud resource-manager *)",
+      "Bash(gcloud billing *)",
+      "Bash(gcloud beta billing *)",
+      "Bash(gcloud iam service-accounts keys create *)",
+      "Bash(gcloud config set account *)",
+      "Bash(gcloud auth revoke *)",
+      "Bash(gcloud firestore databases delete *)",
+      "Bash(gcloud ai endpoints deploy-model *)",
+      "Bash(gcloud compute instances create *)",
+      "Bash(gcloud container clusters create *)",
+      "Bash(gcloud sql instances create *)",
+      "Bash(firebase projects:delete *)",
+      "Read(**/.env)",
+      "Read(**/*service-account*.json)"
+    ],
+    "ask": [
+      "Bash(gcloud auth *)",
+      "Bash(gcloud projects add-iam-policy-binding *)",
+      "Bash(gcloud projects remove-iam-policy-binding *)",
+      "Bash(gcloud run deploy *)",
+      "Bash(gcloud run services delete *)",
+      "Bash(gcloud run services update *)",
+      "Bash(gcloud storage rm *)",
+      "Bash(gsutil rm *)",
+      "Bash(gcloud secrets *)",
+      "Bash(firebase deploy *)",
+      "Bash(git push *)"
+    ]
+  }
+}
