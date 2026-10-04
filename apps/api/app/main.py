@@ -8,6 +8,7 @@ from collections.abc import Awaitable, Callable
 from fastapi import APIRouter, FastAPI, Request, Response
 
 from app.config import get_settings
+from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
 
 settings = get_settings()
@@ -63,4 +64,5 @@ async def healthz() -> dict[str, str]:
     return {"status": "ok"}
 
 
+v1.include_router(content_router)
 app.include_router(v1)
