@@ -68,6 +68,12 @@ class ConceptGraph:
             return []
         return [self._by_id[p] for p in self._dag.predecessors(concept_id)]
 
+    def dependents(self, concept_id: str) -> list[Concept]:
+        """Concepts that list this one as a prerequisite (they build on it)."""
+        if concept_id not in self._dag:
+            return []
+        return [self._by_id[s] for s in self._dag.successors(concept_id)]
+
     def prerequisite_chain(self, concept_id: str) -> list[Concept]:
         """Longest prerequisite path ending at the concept, most basic first."""
         if concept_id not in self._dag:

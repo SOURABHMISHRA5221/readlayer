@@ -26,7 +26,7 @@ from app.graph.graph import ConceptGraph
 from app.graph.linking import EMBED_TYPES, alias_target, sentence_around
 from app.graph.loader import set_graph
 from app.graph.models import ConceptGraphFile
-from app.ingest.models import ContentDoc
+from app.ingest.models import USER_INGESTED, ContentDoc
 from app.ingest.safe_fetch import SafeFetcher
 from app.ingest.urls import normalize_url, url_hash
 from app.log import configure_logging
@@ -179,7 +179,11 @@ async def main(args: argparse.Namespace) -> int:
 
     sources = {url_hash(e.url): e.source for e in entries}
     content = get_content_store()
-    docs = [d for cid in sources if (d := await content.get(cid)) is not None]
+    docs = [
+        d
+        for cid in sources
+        if (d := await content.get(cid)) is not None and d.source != USER_INGESTED
+    ]
     cache = BuildCache(CACHE_DIR, get_settings())
     cost = await store.get_today() - spent_before
     text = await report(graph, docs, sources, cache, floor, cost + cache.embed_cost_new)

@@ -1,0 +1,20 @@
+# Domains never shown as recommendations (one per line; subdomains are blocked too).
+# Content farms, AI-spun aggregators and sites we can't vouch for. Comments start with #.
+quora.com
+pinterest.com
+scribd.com
+coursehero.com
+chegg.com
+studocu.com
+brainly.com
+medium.com
+substack.com
+linkedin.com
+facebook.com
+x.com
+twitter.com
+tiktok.com
+instagram.com
+reddit.com
+answers.com
+ehow.com

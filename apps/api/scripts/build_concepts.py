@@ -43,7 +43,7 @@ from app.graph.linking import (
 )
 from app.graph.models import Concept, ConceptGraphFile
 from app.graph.overrides import Overrides, filter_pairs, split_groups
-from app.ingest.models import ContentDoc, Demand
+from app.ingest.models import USER_INGESTED, ContentDoc, Demand
 from app.ingest.safe_fetch import FetchError, SafeFetcher
 from app.ingest.urls import normalize_url
 from app.log import configure_logging
@@ -101,6 +101,11 @@ def heldout_urls() -> set[str]:
         return set()
     entries = parse_corpus(HELDOUT_FILE.read_text(encoding="utf-8").splitlines())
     return {normalize_url(e.url) for e in entries}
+
+
+def select_corpus(docs: list[ContentDoc], sources: dict[str, str]) -> list[ContentDoc]:
+    """Docs listed in the corpus file, never reader-ingested ones (even if the URL is listed)."""
+    return [d for d in docs if d.url in sources and d.source != USER_INGESTED]
 
 
 def corpus_sources() -> dict[str, str]:
@@ -685,7 +690,7 @@ async def main(args: argparse.Namespace) -> int:
     ledger: list = []
     docs = await load_docs()
     sources = corpus_sources()
-    corpus_docs = [d for d in docs if d.url in sources]
+    corpus_docs = select_corpus(docs, sources)
     print(f"{len(docs)} content docs, {len(corpus_docs)} from the corpus")
     dup = await find_duplicates(corpus_docs, cache)
     corpus = Corpus(

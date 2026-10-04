@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 DemandType = Literal["concept", "term", "context"]
+USER_INGESTED = "user_ingested"
 
 
 class Anchor(BaseModel):
@@ -51,8 +52,16 @@ class ContentDoc(BaseModel):
     final_url: str
     title: str
     site: str
-    source: Literal["fetch", "extension"]
+    # user_ingested: opened by a reader from a web recommendation ("Open here"). Never corpus
+    # or held-out data: build_concepts and eval_heldout skip it even if its URL is listed.
+    source: Literal["fetch", "extension", "user_ingested"]
     fetched_at: str
+    # Publisher metadata (description = standfirst). None when the page declares none, or for
+    # docs ingested before it was stored and not yet backfilled (scripts/backfill_metadata.py).
+    description: str | None = None
+    author: str | None = None
+    published: str | None = None
+    image: str | None = None  # publisher's og:image URL; the UI hotlinks it with no referrer
     paragraphs: list[StoredParagraph]
     demands: list[Demand]
     demands_dropped: int

@@ -12,14 +12,23 @@ export GOOGLE_APPLICATION_CREDENTIALS := $(CLOUDSDK_CONFIG)/application_default_
 
 API := cd apps/api &&
 
-.PHONY: dev-api test smoke check-gcp setup-gcp deploy-api deploy-web
+.PHONY: dev dev-api dev-web test smoke check-gcp setup-gcp deploy-api deploy-web
+
+# Local only: API (:8000, dev auth bypass, reads Firestore + graph with this project's ADC) and
+# web (:5173, proxies /v1). Ctrl-C stops both. The API refuses the bypass on Cloud Run.
+dev: check-gcp
+	DEV_AUTH_BYPASS=true $(MAKE) -j2 dev-api dev-web
 
 dev-api:
 	$(API) uv run fastapi dev app/main.py
 
+dev-web:
+	pnpm --filter web dev
+
 test:
 	$(API) uv run ruff check . && uv run ruff format --check . && uv run pytest -q
 	pnpm -r typecheck
+	pnpm -r test
 
 smoke:
 	$(API) uv run python -m scripts.smoke_llm

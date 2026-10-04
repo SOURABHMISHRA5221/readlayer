@@ -157,3 +157,16 @@ def test_heldout_urls_may_not_overlap_the_corpus(tmp_path, monkeypatch):
         build_concepts.corpus_sources()
     heldout.write_text("https://x.test/b\tmint\n")
     assert set(build_concepts.corpus_sources()) == {"https://x.test/a"}
+
+
+def test_user_ingested_docs_are_never_corpus(tmp_path):
+    from tests.test_placeholder_scorer import doc
+
+    listed = doc([]).model_copy(update={"content_id": "a", "url": "https://x.test/a"})
+    reader = listed.model_copy(
+        update={"content_id": "b", "url": "https://x.test/b", "source": "user_ingested"}
+    )
+    unlisted = listed.model_copy(update={"content_id": "c", "url": "https://x.test/c"})
+    sources = {"https://x.test/a": "mint", "https://x.test/b": "mint"}
+    picked = build_concepts.select_corpus([listed, reader, unlisted], sources)
+    assert [d.content_id for d in picked] == ["a"]
