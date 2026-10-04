@@ -208,7 +208,8 @@ Annotation response item:
 - Structured output: pass the Pydantic JSON schema as `response_format`; always re-validate
   locally with Pydantic.
 - Budget: per-call cost from LiteLLM's cost tracking (or token × configured price when the model
-  isn't in its price map) summed in Firestore `ops/spend/{yyyy-mm-dd}`; refuse new non-cached
+  isn't in its price map) summed in Firestore `ops/spend/days/{yyyy-mm-dd}` (UTC; `ops/spend/{date}`
+  would be an invalid odd-segment path); refuse new non-cached
   calls past `LLM_DAILY_BUDGET_USD` and return cached or degraded output.
 - Every response stored with `{model, prompt_version, task, tokens_in, tokens_out, cost_usd}`.
 - Open models: Gemma through Vertex AI Model-as-a-Service (pay-per-token) as `MODEL_FALLBACK`,

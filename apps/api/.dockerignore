@@ -1,0 +1,9 @@
+.venv
+.env
+.env.*
+!.env.example
+tests
+scripts
+__pycache__
+.pytest_cache
+.ruff_cache
