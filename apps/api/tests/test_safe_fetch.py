@@ -170,6 +170,18 @@ async def test_non_html_rejected():
     assert err.value.code == "not_html"
 
 
+async def test_other_content_types_allowed_only_when_requested():
+    feed = httpx.Response(200, content=b"<rss/>", headers={"content-type": "application/xml"})
+    f, _ = fetcher({("news.example", "/feed.xml"): feed})
+    with pytest.raises(FetchError) as err:
+        await f.fetch("http://news.example/feed.xml")
+    assert err.value.code == "not_html"
+    page = await f.fetch(
+        "http://news.example/feed.xml", content_types=frozenset({"application/xml"})
+    )
+    assert page.body == b"<rss/>"
+
+
 async def test_declared_oversize_body_rejected():
     big = html(b"x", **{"content-length": str(sf.MAX_BODY_BYTES + 1)})
     f, _ = fetcher({("news.example", "/big"): big})
@@ -217,6 +229,7 @@ async def test_upstream_error_status_reported():
     with pytest.raises(FetchError) as err:
         await f.fetch("http://news.example/gone")
     assert err.value.code == "upstream_error"
+    assert err.value.status == 410
 
 
 async def test_timeout_mapped():

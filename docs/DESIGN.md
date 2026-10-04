@@ -32,11 +32,26 @@ One domain for the hackathon: business & economy news.
 ```
 - `base_difficulty` b is on the logit scale, initial range roughly [-2, 2]; seeded by Gemini
   ("how specialized is this for a general news reader", 1–5 mapped to -2..2) plus word frequency.
-- Build script: ingest corpus → collect extracted concepts → dedupe by embedding cosine ≥ 0.88
-  plus a Gemini merge check → Gemini prerequisite pass (max 3 prereqs, must exist in graph,
-  reject cycles) → write JSON.
-- Entity linking at ingest: embed candidate mention + sentence, nearest concept by cosine;
-  accept ≥ 0.80, else mark `unlinked` (still usable as a term demand).
+- Build script (`scripts/build_concepts.py`): ingest corpus → group near-duplicate docs
+  (syndicated copies count once for doc frequency) → collect extracted concepts (≥ 2 distinct
+  doc groups, plus Wikipedia explainer titles as seeds) → dedupe by embedding cosine ≥ 0.88
+  plus a Gemini merge check → Gemini definition, kind and specialization (keep ideas, jargon,
+  institutions, regulators, committees, indices, taxes, policies and schemes; drop companies,
+  people, places, one-off events) → Wikidata ids → Gemini prerequisite pass (max 3 prereqs,
+  must exist in graph, reject cycles) → write JSON.
+- Labels: the most frequent surface form in news articles ("Repo rate"), with the Wikipedia
+  title kept as an alias.
+- Wikidata ids: robots.txt disallows the Wikipedia/Wikidata APIs for our agent, so ids come from
+  the `/wiki/` article page (`wgWikibaseItemId`). Seeds get theirs at corpus collection; other
+  concepts best-effort (≤ 1 request/s, 10-minute cap, Gemini confirms the page matches).
+- Embeddings: `MODEL_EMBED` (gemini-embedding-001, 256 dims), no fallback model.
+- Entity linking at ingest: exact label/alias match first (any demand type); then, for concept
+  and term demands only, embed the demand label; concepts whose label embeddings reach
+  `LINK_THRESHOLD` as candidates (top 5 by label-embedding cosine; the threshold is calibrated
+  to keep 95% of true matches), and `link_confirm` picks one or none. Embedding similarity alone
+  can't separate a concept from its near neighbours (M2: 95% precision would need cosine 0.98),
+  so the model decides; MODEL_QUALITY measured 95% precision vs 89% for MODEL_FAST.
+  Anything else is `unlinked` (still usable as a term demand).
 
 ## 3. Demand profile (Firestore `contents/{url_hash}`)
 ```json
@@ -201,8 +216,9 @@ Annotation response item:
 - Routes (env-driven):
   | task | primary | fallback |
   |---|---|---|
-  | extract_demands, build_concepts, link_merge | MODEL_FAST | MODEL_FALLBACK |
-  | explain | MODEL_QUALITY | MODEL_FAST |
+  | extract_demands, link_merge, concept_define, concept_prereqs, concept_wikidata | MODEL_FAST | MODEL_FALLBACK |
+  | embed (`llm.embed`) | MODEL_EMBED | none: vectors from another model aren't comparable |
+  | explain, link_confirm (timeout 45 s, batches of 10) | MODEL_QUALITY | MODEL_FAST |
   | verify | MODEL_QUALITY | none: if the verifier is unavailable, show definition gloss only |
 - Error handling per model (`classify_error` in `llm.py`):
   - retry the same model with backoff (max `LLM_MAX_RETRIES`), then fall back: timeout (20 s),

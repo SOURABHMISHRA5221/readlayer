@@ -95,7 +95,9 @@ apps/api/scripts/    corpus ingestion, concept-graph build, demo persona seeding
 - Cloud Run: min instances 0 (except during judging), max instances ≤ 3.
 - Per-user daily cap on ingesting new URLs (default 20). Cache everything by URL hash.
 - Explanation cache key: `(span_hash, knowledge_band, thinks_in_domain)`.
-- Prefer `MODEL_FAST` unless the output is user-visible prose.
+- Prefer `MODEL_FAST` unless the output is user-visible prose. Exception: `link_confirm`
+  (entity linking) uses `MODEL_QUALITY`, which met the 95% precision target where `MODEL_FAST`
+  did not (M2: 97% vs 89%).
 - `llm.py` refuses calls once the daily spend estimate passes `LLM_DAILY_BUDGET_USD` (default 8).
 - Never deploy GPU endpoints or self-host open models; use managed, pay-per-token models only.
 

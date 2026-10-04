@@ -13,3 +13,9 @@ __pycache__/
 firebase-debug.log
 .serena/
 .firebase/
+
+# M2 generated data (corpus_urls.txt and wikipedia_qids.json are committed)
+data/ingest_state.jsonl
+data/concepts.json
+data/m2_report.md
+data/build_cache/

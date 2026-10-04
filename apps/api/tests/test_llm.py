@@ -295,3 +295,10 @@ def test_render_missing_var_raises():
 
 def test_settings_type_for_routes():
     assert all(hasattr(Settings(_env_file=None), r.primary) for r in llm.ROUTES.values())
+
+
+async def test_route_timeout_overrides_default(monkeypatch, settings, spend):
+    fake = FakeLiteLLM(monkeypatch, {"vertex_ai/quality": [VALID]})
+    monkeypatch.setitem(llm.ROUTES, "smoke", llm.Route("model_quality", None, timeout_s=45.0))
+    await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=settings)
+    assert fake.calls[0]["timeout"] == 45.0

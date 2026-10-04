@@ -3,11 +3,13 @@
 import logging
 import time
 import uuid
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, Request, Response
 
 from app.config import get_settings
+from app.graph.loader import load_graph, set_graph
 from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
 
@@ -16,7 +18,14 @@ configure_logging(settings.log_level)
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 log = logging.getLogger("app.http")
 
-app = FastAPI(title="ReadLayer API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    set_graph(await load_graph(settings.concepts_uri))
+    yield
+
+
+app = FastAPI(title="ReadLayer API", version="0.1.0", lifespan=lifespan)
 v1 = APIRouter(prefix="/v1")
 
 
