@@ -30,28 +30,66 @@ One domain for the hackathon: business & economy news.
   }]
 }
 ```
-- `base_difficulty` b is on the logit scale, initial range roughly [-2, 2]; seeded by Gemini
-  ("how specialized is this for a general news reader", 1–5 mapped to -2..2) plus word frequency.
-- Build script (`scripts/build_concepts.py`): ingest corpus → group near-duplicate docs
-  (syndicated copies count once for doc frequency) → collect extracted concepts (≥ 2 distinct
-  doc groups, plus Wikipedia explainer titles as seeds) → dedupe by embedding cosine ≥ 0.88
-  plus a Gemini merge check → Gemini definition, kind and specialization (keep ideas, jargon,
-  institutions, regulators, committees, indices, taxes, policies and schemes; drop companies,
-  people, places, one-off events) → Wikidata ids → Gemini prerequisite pass (max 3 prereqs,
-  must exist in graph, reject cycles) → write JSON.
-- Labels: the most frequent surface form in news articles ("Repo rate"), with the Wikipedia
-  title kept as an alias.
+- `base_difficulty` b is on the logit scale, range [-2, 2]: 0.75 × (specialization 1–5 mapped
+  to -2..2) + 0.25 × word-frequency term (4 − zipf, clamped), so rarer words are harder.
+- Build script (`scripts/build_concepts.py`), in order:
+  1. **Near-duplicate docs.** Syndicated or near-identical articles form one group: 5-word-shingle
+     Jaccard ≥ 0.5, or title+lead embedding cosine ≥ 0.92 confirmed by Jaccard ≥ 0.15. Doc
+     frequency (`doc_freq`) counts distinct groups, so a syndicated story counts once.
+  2. **Candidates.** Every demand label from the corpus, normalised (casefold, punctuation and
+     parentheticals removed, trailing plural folded), plus Wikipedia explainer titles as seeds.
+     Single-article labels are candidates too; the keep rule in step 4 filters them.
+  3. **Dedupe.** Label embeddings; pairs with cosine ≥ `DEDUPE_THRESHOLD` (0.88, top 5 per label)
+     go to a `link_merge` check; accepted pairs are merged transitively, then the overrides
+     file (below) is applied.
+  4. **Define and keep.** `concept_define` returns definition, domain, specialization and kind.
+     Kept kinds: idea, jargon, instrument (bond, ETF, derivative), entity_type (a *type* of firm
+     or fund: hedge fund, brokerage firm, subsidiary, NBFC), market_event (a recurring
+     phenomenon: bank run, bond sell-off), unit (crore, lakh), institution, regulator,
+     committee, index, tax, policy, scheme. Dropped kinds: company (a specific named firm),
+     person, place, event (a specific dated occurrence), generic. **Single-article rule:** a
+     concept seen in fewer than 2 doc groups is kept only if its specialization is ≥ 2.
+     Wikipedia seeds and override splits are always kept.
+  5. **Wikidata ids** (best effort, below).
+  6. **Prerequisites.** Per concept, `concept_prereqs` chooses from a pool of its 20 nearest
+     concepts (label + definition embeddings) plus the 20 most frequent basic concepts
+     (b ≤ 0). At most 3 prerequisites, existing ids only; cycles are broken by dropping the least
+     confident edge (on a tie, the one whose prerequisite is harder than its dependent), and the
+     result is asserted to be a DAG.
+  7. Write `concepts.json`, calibrate `LINK_THRESHOLD` and re-link every content doc (below).
+  LLM and embedding results are cached under `data/build_cache/`, so reruns only pay for what
+  changed. `--project` estimates a full run's cost without LLM calls (exit code 2 above $8);
+  a full run starts only if that projection is ≤ $8. The previous graph is kept as `concepts.prev.json` locally and in GCS.
+- **Canonical labels.** The most frequent surface form in news articles ("Repo rate", "GDP"),
+  counting only complete names and acronyms, never fragments; else the model's label; the
+  Wikipedia title only when no article used the concept. The Wikipedia title is always kept as
+  an alias.
+- **Overrides** (`data/graph_overrides.yaml`, committed, applied on every build):
+  `never_merge` label pairs are never joined by dedupe; `split` entries are pulled out of
+  whatever concept they merged into (even transitively) and become their own, always-kept
+  concept; `rename` replaces a label (the id follows it, the old label is hidden from aliases).
+  `scripts.apply_overrides` patches an already-built graph the same way and re-links only the
+  affected docs, without a rebuild.
 - Wikidata ids: robots.txt disallows the Wikipedia/Wikidata APIs for our agent, so ids come from
   the `/wiki/` article page (`wgWikibaseItemId`). Seeds get theirs at corpus collection; other
   concepts best-effort (≤ 1 request/s, 10-minute cap, Gemini confirms the page matches).
 - Embeddings: `MODEL_EMBED` (gemini-embedding-001, 256 dims), no fallback model.
-- Entity linking at ingest: exact label/alias match first (any demand type); then, for concept
-  and term demands only, embed the demand label; concepts whose label embeddings reach
-  `LINK_THRESHOLD` as candidates (top 5 by label-embedding cosine; the threshold is calibrated
-  to keep 95% of true matches), and `link_confirm` picks one or none. Embedding similarity alone
-  can't separate a concept from its near neighbours (M2: 95% precision would need cosine 0.98),
-  so the model decides; MODEL_QUALITY measured 95% precision vs 89% for MODEL_FAST.
+- **Entity linking** (at ingest and in the build's re-link): exact label/alias match first (any
+  demand type). Otherwise, for concept and term demands only, embed the demand label; concepts
+  whose label embedding reaches `LINK_THRESHOLD` become candidates (top 5), and `link_confirm`
+  (MODEL_QUALITY) picks one or none. The threshold is recalibrated on every build to keep 95% of
+  true matches, measured on exact-alias matches whose wording differs from the concept label,
+  and written to `.env.example` (0.865 after M2.1). Embedding similarity alone can't separate
+  a concept from its near neighbours (95% precision would need cosine 0.98), so the model
+  decides; MODEL_QUALITY measured 95% precision vs 89% for MODEL_FAST.
   Anything else is `unlinked` (still usable as a term demand).
+- **Held-out evaluation.** Coverage on the corpus the graph was built from is inflated
+  (single-article concepts are made from those very mentions), so linker quality is measured on
+  `data/heldout_urls.txt`: 15 fresh articles from the same feeds, ingested through the production
+  path and reported by `scripts.eval_heldout`. **Rule:** held-out articles are never added to the
+  corpus or used to build the graph; `build_concepts` refuses to run if the two lists overlap.
+  The held-out number is the one to quote (M2.1: 57% exact-name, 5% model-confirmed, 38%
+  unlinked).
 
 ## 3. Demand profile (Firestore `contents/{url_hash}`)
 ```json
