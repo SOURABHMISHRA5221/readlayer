@@ -12,11 +12,11 @@ import time
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import litellm
 from pydantic import BaseModel, ValidationError
-from tenacity import AsyncRetrying, retry_if_exception_type, stop_after_attempt, wait_exponential
+from tenacity import AsyncRetrying, retry_if_exception, stop_after_attempt, wait_exponential
 
 from app.config import Settings, get_settings
 from app.store.spend_repo import FirestoreSpendStore, SpendStore
@@ -33,13 +33,8 @@ SYSTEM_PREAMBLE = (
     "Reply with a single JSON object only."
 )
 
-TRANSIENT_ERRORS = (
-    litellm.RateLimitError,
-    litellm.Timeout,
-    litellm.InternalServerError,
-    litellm.ServiceUnavailableError,
-    litellm.APIConnectionError,
-)
+# Vertex reports an unknown model as a 500 whose message carries the real 501/404.
+_MODEL_NOT_FOUND = re.compile(r"\b501\b|status: 404")
 # Patched to tenacity.wait_none() in tests.
 retry_wait = wait_exponential(multiplier=0.5, max=4)
 
@@ -54,6 +49,32 @@ class BudgetExceeded(LLMError):
 
 class LLMUnavailable(LLMError):
     pass
+
+
+class LLMRejected(LLMError):
+    """The provider refused the request (400/401/403, or an unclassified error); no fallback."""
+
+
+ErrorAction = Literal["retry", "fallback", "raise"]
+
+
+def classify_error(exc: BaseException) -> ErrorAction:
+    """DESIGN §10: fall back only on timeout, 429, 5xx, model-not-found or invalid output.
+
+    "retry" means retry the same model with backoff, then fall back once retries run out.
+    """
+    if isinstance(exc, ValidationError | ValueError):  # invalid output after the repair retry
+        return "fallback"
+    if isinstance(exc, litellm.Timeout | litellm.RateLimitError):
+        return "retry"
+    status = getattr(exc, "status_code", None)
+    if not isinstance(status, int):
+        return "raise"
+    if status in (404, 501) or (status == 500 and _MODEL_NOT_FOUND.search(str(exc))):
+        return "fallback"  # model not found: retrying the same id cannot help
+    if status >= 500:
+        return "retry"
+    return "raise"
 
 
 @dataclass(frozen=True)
@@ -185,18 +206,35 @@ async def run_with_meta[T: BaseModel](
     ]
     chain = _model_chain(route, settings)
     ledger = _Ledger()
-    failures: list[str] = []
     for index, model in enumerate(chain):
         try:
             output = await _run_on_model(model, schema, messages, prompt, settings, store, ledger)
-        except Exception as exc:  # any failure moves down the chain; reasons are surfaced below
-            failures.append(f"{model}: {type(exc).__name__}: {str(exc)[:200]}")
-            log.warning(
-                "llm model failed", extra={"task": task, "model": model, "error": failures[-1]}
-            )
+        except Exception as exc:
+            next_model = chain[index + 1] if index + 1 < len(chain) else None
+            await _handle_failure(task, model, next_model, exc, store)
             continue
         return LLMResult(output, ledger.meta(task, model, prompt.version, fell_back=index > 0))
-    raise LLMUnavailable(f"all models failed for {task}: " + " | ".join(failures))
+    raise LLMUnavailable(f"no model left for {task}")  # unreachable: last failure raises
+
+
+async def _handle_failure(
+    task: str, model: str, next_model: str | None, exc: Exception, store: SpendStore
+) -> None:
+    """Return to fall back to next_model; otherwise raise."""
+    fields = {"task": task, "model": model, "error_class": type(exc).__name__}
+    if classify_error(exc) == "raise":
+        log.error("llm request rejected", extra={**fields, "status": _status(exc)})
+        raise LLMRejected(f"{task} on {model}: {type(exc).__name__}") from exc
+    if next_model is None:
+        log.error("llm unavailable, no fallback", extra=fields)
+        raise LLMUnavailable(f"{task} on {model}: {type(exc).__name__}") from exc
+    log.warning("llm fallback", extra={**fields, "fallback_model": next_model})
+    await store.add_fallback()
+
+
+def _status(exc: BaseException) -> int | None:
+    status = getattr(exc, "status_code", None)
+    return status if isinstance(status, int) else None
 
 
 # ---------------------------------------------------------------- internals
@@ -292,7 +330,7 @@ async def _call(
 
     start = time.perf_counter()
     async for attempt in AsyncRetrying(
-        retry=retry_if_exception_type(TRANSIENT_ERRORS),
+        retry=retry_if_exception(lambda e: classify_error(e) == "retry"),
         stop=stop_after_attempt(settings.llm_max_retries + 1),
         wait=retry_wait,
         reraise=True,

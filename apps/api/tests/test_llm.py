@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 
+import httpx
 import litellm
 import pytest
 from pydantic import BaseModel
@@ -53,6 +54,43 @@ def not_found() -> litellm.NotFoundError:
     return litellm.NotFoundError("no such model", llm_provider="vertex_ai", model="x")
 
 
+def unavailable() -> litellm.ServiceUnavailableError:
+    return litellm.ServiceUnavailableError("503 overloaded", llm_provider="vertex_ai", model="x")
+
+
+def timeout() -> litellm.Timeout:
+    return litellm.Timeout("timed out", model="x", llm_provider="vertex_ai")
+
+
+def vertex_unknown_model() -> litellm.InternalServerError:
+    # What LiteLLM actually raises for a bad Vertex model id (checked live).
+    return litellm.InternalServerError(
+        "501 Received http2 header with status: 404", llm_provider="vertex_ai", model="x"
+    )
+
+
+def unauthorized() -> litellm.AuthenticationError:
+    return litellm.AuthenticationError("401 bad credentials", llm_provider="vertex_ai", model="x")
+
+
+def bad_request() -> litellm.BadRequestError:
+    return litellm.BadRequestError("400 invalid argument", model="x", llm_provider="vertex_ai")
+
+
+def forbidden() -> litellm.PermissionDeniedError:
+    return litellm.PermissionDeniedError(
+        "403 permission denied", llm_provider="vertex_ai", model="x", response=_fake_http(403)
+    )
+
+
+def _fake_http(status: int) -> httpx.Response:
+    return httpx.Response(status, request=httpx.Request("POST", "https://vertex.test"))
+
+
+def fallback_records(caplog) -> list:
+    return [r for r in caplog.records if r.getMessage() == "llm fallback"]
+
+
 async def test_budget_guard_refuses_past_limit(monkeypatch, settings):
     llm.set_spend_store(InMemorySpendStore(initial_usd=1.0))  # == budget
     fake = FakeLiteLLM(monkeypatch, {"vertex_ai/fast": [VALID]})
@@ -92,13 +130,46 @@ async def test_run_returns_bare_model(monkeypatch, settings, spend):
     assert isinstance(await llm.run("smoke", Out, {"text": "x"}), Out)
 
 
-async def test_bad_primary_falls_back(monkeypatch, settings, spend):
+@pytest.mark.parametrize("error", [unavailable, timeout], ids=["503", "timeout"])
+async def test_persistent_transient_error_falls_back(monkeypatch, settings, spend, caplog, error):
+    retries = settings.llm_max_retries + 1
     fake = FakeLiteLLM(
-        monkeypatch, {"vertex_ai/fast": [not_found()], "vertex_ai/fallback": [VALID]}
+        monkeypatch,
+        {"vertex_ai/fast": [error() for _ in range(retries)], "vertex_ai/fallback": [VALID]},
     )
     result = await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=settings)
     assert result.meta.fell_back and result.meta.model == "vertex_ai/fallback"
+    assert fake.models_called() == ["vertex_ai/fast"] * retries + ["vertex_ai/fallback"]
+    [record] = fallback_records(caplog)
+    assert record.levelname == "WARNING"
+    assert (record.task, record.model, record.fallback_model) == (
+        "smoke",
+        "vertex_ai/fast",
+        "vertex_ai/fallback",
+    )
+    assert record.error_class == error().__class__.__name__
+    assert spend.fallbacks == 1
+
+
+@pytest.mark.parametrize("error", [not_found, vertex_unknown_model], ids=["404", "vertex-501"])
+async def test_model_not_found_falls_back_without_retry(monkeypatch, settings, spend, error):
+    fake = FakeLiteLLM(monkeypatch, {"vertex_ai/fast": [error()], "vertex_ai/fallback": [VALID]})
+    result = await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=settings)
+    assert result.meta.fell_back
     assert fake.models_called() == ["vertex_ai/fast", "vertex_ai/fallback"]
+    assert spend.fallbacks == 1
+
+
+@pytest.mark.parametrize("error", [unauthorized, bad_request, forbidden], ids=["401", "400", "403"])
+async def test_client_errors_raise_without_fallback(monkeypatch, settings, spend, caplog, error):
+    fake = FakeLiteLLM(monkeypatch, {"vertex_ai/fast": [error()], "vertex_ai/fallback": [VALID]})
+    with pytest.raises(llm.LLMRejected):
+        await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=settings)
+    assert fake.models_called() == ["vertex_ai/fast"]
+    assert spend.fallbacks == 0 and not fallback_records(caplog)
+    [record] = [r for r in caplog.records if r.getMessage() == "llm request rejected"]
+    assert record.levelname == "ERROR"
+    assert (record.task, record.model) == ("smoke", "vertex_ai/fast")
 
 
 async def test_transient_error_retries_same_model(monkeypatch, settings, spend):
@@ -108,7 +179,7 @@ async def test_transient_error_retries_same_model(monkeypatch, settings, spend):
     assert fake.models_called() == ["vertex_ai/fast", "vertex_ai/fast"]
 
 
-async def test_persistent_rate_limit_falls_back(monkeypatch, settings, spend):
+async def test_persistent_rate_limit_falls_back(monkeypatch, settings, spend):  # 429
     fake = FakeLiteLLM(
         monkeypatch,
         {"vertex_ai/fast": [rate_limit()] * 3, "vertex_ai/fallback": [VALID]},
@@ -134,19 +205,41 @@ async def test_invalid_json_twice_falls_back(monkeypatch, settings, spend):
     result = await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=settings)
     assert result.meta.fell_back
     assert fake.models_called() == ["vertex_ai/fast", "vertex_ai/fast", "vertex_ai/fallback"]
+    assert spend.fallbacks == 1
 
 
-async def test_verify_has_no_fallback(monkeypatch, settings, spend, tmp_path):
+def test_verify_route_has_no_fallback():
+    assert llm.ROUTES["verify"].fallback is None
+
+
+@pytest.mark.parametrize(
+    ("error", "raised"),
+    [
+        (not_found, llm.LLMUnavailable),
+        (unavailable, llm.LLMUnavailable),
+        (timeout, llm.LLMUnavailable),
+        ("invalid", llm.LLMUnavailable),
+        (bad_request, llm.LLMRejected),
+    ],
+    ids=["404", "503", "timeout", "invalid-json", "400"],
+)
+async def test_verify_never_falls_back(monkeypatch, settings, spend, tmp_path, error, raised):
     (tmp_path / "verify.md").write_text("---\nversion: v-test\n---\n# user\n{{text}}\n")
     monkeypatch.setattr(llm, "PROMPTS_DIR", tmp_path)
     llm.load_prompt.cache_clear()
-    fake = FakeLiteLLM(monkeypatch, {"vertex_ai/quality": [not_found()]})
+    replies = ["bad", "bad"] if error == "invalid" else [error() for _ in range(5)]
+    # Every other model would succeed, so any fallback would turn this into a pass.
+    fake = FakeLiteLLM(
+        monkeypatch,
+        {"vertex_ai/quality": replies, "vertex_ai/fast": [VALID], "vertex_ai/fallback": [VALID]},
+    )
     try:
-        with pytest.raises(llm.LLMUnavailable):
+        with pytest.raises(raised):
             await llm.run_with_meta("verify", Out, {"text": "x"}, settings=settings)
     finally:
         llm.load_prompt.cache_clear()
-    assert fake.models_called() == ["vertex_ai/quality"]
+    assert set(fake.models_called()) == {"vertex_ai/quality"}
+    assert spend.fallbacks == 0
 
 
 async def test_inline_schema_and_fenced_json_for_non_schema_models(monkeypatch, settings, spend):
