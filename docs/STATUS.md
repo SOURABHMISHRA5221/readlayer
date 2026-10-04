@@ -1,6 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-04, end of day (IST). Branch `m6-slice`, PR #9 open, not merged.
+Last updated: 2026-10-04, end of day (IST). PR #9 squash-merged into `main` as
+`M6-slice: vertical slice, redesign, recommendations` (decision 1, §10).
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -22,10 +23,10 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 | docs | merged | #7 | Reading profile page spec (DESIGN §15) |
 | docs | merged | #8 | DESIGN §2 brought up to date with the M2.1 build |
 | M2.2 | **open issue** | #6 | Online concept growth + linker tuning, target ≥ 75% held-out linking. Not started |
-| M6 slice + redesign + M6.5 | **open, not merged** | #9 | See below. CI green on `807e263` (+ today's handoff commit) |
+| M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3, M4, M5, rest of M6, M7, M8, M9 | not started | — | See "Next actions" |
 
-**PR #9 (`m6-slice`) contains four commits of work, all local-only (nothing deployed):**
+**PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
 1. `e7c131c` M6 local vertical slice: `DEV_AUTH_BYPASS` (refuses to start on Cloud Run / ENV=prod),
    GET /v1/content (list + search), GET /v1/content/{id}, GET /v1/content/{id}/annotations with a
    PLACEHOLDER scorer (`app/scoring/placeholder.py`, DESIGN §5–6 math, prior-only, demo personas),
@@ -39,7 +40,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 3. `807e263` M6.5 "Up next and explore": web search (Tavily, YouTube), corpus recommendations,
    ranking, GET /v1/content/{id}/recommendations, POST /v1/recs/events, POST /v1/recs/open
    ("Open here"), Up next UI with Read / Watch / Listen.
-4. Handoff commit: format mix 3/2/1, `user_ingested` source, this file.
+4. Handoff: format mix 3/2/1, `user_ingested` source, image fallback on Up next thumbnails,
+   `deploy.env.yaml` LINK_THRESHOLD 0.865, DESIGN §3/§8/§16, BUILD_PLAN M3 update, this file.
 
 ---
 
@@ -102,14 +104,14 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 |---|---|---|
 | `link_confirm` runs on MODEL_QUALITY, not MODEL_FAST (CLAUDE.md prefers FAST) | FAST measured 89% precision, QUALITY 97% against the 95% target (M2). Recorded in CLAUDE.md and DESIGN §2/§10 | Keep |
 | Placeholder scorer: prior-only p_know, hard-coded persona θ, no KNOWS edges, no `threshold_offset`, spans only (no paragraph markers, pre-read, uncertainty prompt), only graph-linked demands shown, strict first occurrence | No reader model yet (M3); the slice needed something to see | M4 |
-| Personas instead of real readers (newcomer, trader, policy_student); "software" θ is unused because the graph has no software domain | Demo before auth and onboarding exist | M3/M4/M7 |
+| Personas instead of real readers (newcomer, trader, policy_student); "software" θ is unused because the graph has no software domain | Demo before auth and onboarding exist | Decision 7: demo mode via Anonymous sign-in in M3, seeded reader graphs after M4 |
 | `DEV_AUTH_BYPASS` instead of Firebase auth on the new GET routes; POST /v1/content still unauthenticated | M3 not built | M3 |
 | Recommendation reader state (format affinity, dismissals, seen items) and the "Open here" daily ingest counter live **in API memory** per (uid, persona) | CLAUDE.md: any Firestore collection with user data must be covered by export/delete, which arrive in M3 | M3/M4 → Firestore + export/delete |
-| Web search queries are `label + graph domain + format suffix`, not label + suffix only | Bare labels were ambiguous ("separation principle" returned a marine-engineering video). Domain is concept data, never reader data | Keep (documented in `web_search.py`) |
+| Web search queries are `label + graph domain + format suffix`, not label + suffix only | Bare labels were ambiguous ("separation principle" returned a marine-engineering video). Domain is concept data, never reader data | Accepted as the rule (decision 4, DESIGN §16.3) |
 | Web results must name the concept (relevance gate); results normalized and cached per (concept, format) with a cache version | Off-topic podcasts and stale thumbnails in the first live run | Keep |
 | Up next format mix: preferred format 3 slots, then 2 and 1 by affinity; spare slots pass to the next format; at least one library and one web item when both exist | 2-per-format forced 2/2/2 for every reader, hiding preferences | Keep |
-| Recommendations (M6.5), GET content routes, `/v1/recs/*` and publisher metadata (`description`, `author`, `published`, `image`) are not in DESIGN.md §3/§8 | Built ahead of the spec | Write DESIGN §16 + §3/§8 updates |
-| Publisher lead images are hotlinked with `referrerpolicy=no-referrer` | Fast demo; no image proxy | Decide (see Open decisions) |
+| Recommendations (M6.5), GET content routes, `/v1/recs/*` and publisher metadata were built ahead of the spec | Needed for the slice | Now documented: DESIGN §3, §4, §8, §16 (decision 9) |
+| Publisher lead images are hotlinked with `referrerpolicy=no-referrer`, typographic tile on error | Fast demo; no image proxy | Keep (decision 3) |
 | Content `source` adds `user_ingested`; build and held-out scripts exclude it | Reader-opened pages must never become corpus or held-out data | Keep |
 | Annotator card shows the concept definition + prerequisites, not the two-part verified explanation; no "This is wrong" button; events go to the console, not POST /v1/events | M5 (explanations) and M3 (events) not built | M5 / M3 / M6 rest |
 | Annotation response carries `definition`, `domain`, `prerequisites`, `debug` beyond the §8 shape | The card needs them until explanations exist | Revisit in M5 |
@@ -120,20 +122,19 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 
 | Severity | Issue |
 |---|---|
-| **High** | Cloud Run and Hosting are still the M0 build. Nothing from M1 onward has been deployed or tested on Cloud Run (CORS, Firestore IAM, GCS graph load, cold start with spaCy) |
-| **High** | POST /v1/content has no auth and no per-user cap (TODO M3). If deployed as is, anyone can trigger paid ingestion up to the daily LLM budget |
-| **High** | Local `LLM_DAILY_BUDGET_USD` is **25** (raised for M2 builds). Guardrail is 8. Today's spend was $10.67 |
-| Medium | "Open here" takes 24–55 s for a new article (fetch + extract_demands + linking incl. link_confirm). UI says "up to a minute" and shows elapsed time |
+| **High** | Cloud Run and Hosting are still the M0 build. Nothing from M1 onward has been deployed or tested on Cloud Run (CORS, Firestore IAM, GCS graph load, cold start with spaCy). First full deploy is the end of M3 (decision 10) |
+| **High** | POST /v1/content has no auth and no per-user cap (TODO M3). It stays disabled in prod until both are on it (decision 10) |
+| **High** | Local `LLM_DAILY_BUDGET_USD` is **25** (raised for M2 builds); you are setting it back to 8 (decision 2). Today's spend was $10.67 |
+| Medium | "Open here" takes 24–55 s for a new article (fetch + extract_demands + linking incl. link_confirm). UI says "up to a minute" and shows elapsed time. Two-phase loading in the rest of M6 (decision 6) |
 | Medium | In-memory reader state: lost on restart, wrong with >1 instance, no export/delete |
 | Medium | Placeholder scorer and invented persona/format priors drive everything a reader sees |
 | Medium | Held-out linking 62% (target ≥ 75%), Chancellor→Treasury Secretary and levy over-generalisation (issue #6) |
 | Medium | No explanations yet (M5): cards show only the graph definition |
-| Medium | `deploy.env.yaml` has `LINK_THRESHOLD "0.87"`; the calibrated value is 0.865 (`.env.example`) |
-| Low | Publisher images set third-party cookies (Lighthouse best-practices 96 on the library); hotlinks can break |
+| Low | Publisher images set third-party cookies (Lighthouse best-practices 96 on the library). Broken hotlinks fall back to the typographic tile everywhere |
 | Low | Web result quality varies (some generic podcasts, an exam-prep video); 21 of 87 cache entries empty |
 | Low | Headlines keep publisher SEO suffixes (" \| Stock Market News"); we don't alter publisher text |
 | Low | In-process catalog cache: docs ingested by another process need an API restart to appear (Open here appends directly) |
-| Low | Tavily and YouTube keys exist only in the local `.env`; not in Secret Manager or Cloud Run |
+| Low | Tavily and YouTube keys exist only in the local `.env`; they go to Secret Manager at the first deploy (decision 5) |
 | Low | Rec event idempotency is in memory only |
 | Low | StarletteDeprecationWarning (httpx TestClient) in pytest output |
 
@@ -148,11 +149,11 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | MODEL_FAST, MODEL_QUALITY, MODEL_FALLBACK | LLM routes | `.env` | yes | — |
 | MODEL_EMBED, EMBED_DIM | embeddings | `.env` | in `deploy.env.yaml`, not in deployed revision | — |
 | CONCEPTS_URI | graph location | `.env` | in `deploy.env.yaml`, not in deployed revision | — |
-| LINK_THRESHOLD, DEDUPE_THRESHOLD | linker tuning | `.env` | LINK_THRESHOLD in `deploy.env.yaml` | — |
+| LINK_THRESHOLD, DEDUPE_THRESHOLD | linker tuning (calibrated 0.865) | `.env` | LINK_THRESHOLD 0.865 in `deploy.env.yaml`, not in deployed revision | — |
 | LLM_DAILY_BUDGET_USD, LLM_TIMEOUT_S, LLM_MAX_RETRIES, MODEL_PRICE_OVERRIDES | LLM guardrails | `.env` | budget only | — |
 | UID_HASH_SALT | log pseudonymisation | `.env` | yes, from secret | `uid-hash-salt` |
-| TAVILY_API_KEY | web articles + podcasts | `.env` | **no** | not yet |
-| YOUTUBE_API_KEY | videos | `.env` | **no** | not yet |
+| TAVILY_API_KEY | web articles + podcasts | `.env` | **no** | at first deploy (end of M3) |
+| YOUTUBE_API_KEY | videos | `.env` | **no** | at first deploy (end of M3) |
 | SEARCH_DAILY_CAP, YOUTUBE_SEARCH_DAILY_CAP, SEARCH_TIMEOUT_S, RECS_CACHE_TTL_H | search guardrails | defaults in `config.py`, overridable in `.env` | no | — |
 | INGEST_DAILY_CAP | new URLs per reader per day | default 20 | no | — |
 | DEV_AUTH_BYPASS | local dev identity | set by `make dev` only | **must never be set**; app refuses to start if K_SERVICE is present | — |
@@ -197,7 +198,7 @@ about 12 calls for a new article (3 concepts × 3 formats; YouTube counts 2), 0 
 | M7 profile edits, onboarding | < $1 |
 | M8 extension ingestion (~$0.0075 per new article) | < $2 |
 | M9 gold-set evals (30 articles × 2 personas) and demo pre-ingest | $3–6 |
-| Cloud Run min-instances 1 during judging (Oct 19 – Nov 6) | ~$15–25 |
+| Hosting after submission: Cloud Run min-instances 1 during judging (Oct 19 – Nov 6) | ~$15–25 |
 | **Total remaining** | **≈ $25–45 of the $300 credit** |
 
 Tavily cost depends on the plan in use (check the free monthly credit before M9); YouTube
@@ -207,8 +208,9 @@ quota is free within the daily buckets.
 
 ## 8. Guardrails in force
 
-- **LLM budget:** `llm.py` refuses non-cached calls past `LLM_DAILY_BUDGET_USD` (guardrail 8;
-  local is currently 25, see Next actions). Spend ledger in `ops/spend/days`.
+- **LLM budget:** `llm.py` refuses non-cached calls past `LLM_DAILY_BUDGET_USD` = 8. It is raised
+  only for a specific run, with the reason recorded (here or in the PR), and set back after
+  (decision 2). Spend ledger in `ops/spend/days`.
 - **Search cap:** `SEARCH_DAILY_CAP` 300 calls/day across providers, `YOUTUBE_SEARCH_DAILY_CAP`
   90 searches/day; calls are reserved under a lock before they're made; past the cap the API
   serves cached (even stale) results and makes no call.
@@ -233,12 +235,12 @@ quota is free within the daily buckets.
 
 | When | Action |
 |---|---|
-| Oct 5 | **Merge decision for PR #9** (one PR or split; see Open decisions). Then **set `LLM_DAILY_BUDGET_USD` back to 8** in `apps/api/.env` |
-| Oct 5–6 | **M3** reader model, Firebase auth, rate limits, events, export/delete, reading-profile API. Move rec signals and the ingest counter to Firestore under `users/{uid}` with export/delete. Put auth + cap on POST /v1/content |
-| Oct 6–7 | **M4** real gap scorer: replace `app/scoring/placeholder.py` and the persona θ; replace in-memory rec state; worked-example test; p95 < 150 ms |
-| Oct 7–8 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
-| Oct 8–9 | **Rest of M6:** two-phase loading for "Open here" (show the article as soon as it's extracted, annotate after), "This is wrong" button, paragraph markers, pre-read card, event batching to /v1/events. Deploy API + web to Cloud Run / Hosting for the first time since M0 (CORS, secrets, env) |
-| Oct 9–10 | **M2.2** (issue #6): online concept growth, jurisdiction, link_confirm strictness; target ≥ 75% held-out linking |
+| Oct 5 | Set `LLM_DAILY_BUDGET_USD` back to 8 in `apps/api/.env` (you, by hand) |
+| Oct 5–7 | **M3** (updated prompt in BUILD_PLAN): reader model, Firebase Google + **Anonymous** sign-in (personas as demo mode), rate limits, events, export/delete, reading-profile API; rec signals and the ingest counter to Firestore under `users/{uid}` with export/delete; auth + per-user cap on POST /v1/content and /v1/recs/open; **first full deploy** (API + web, UID_HASH_SALT / TAVILY_API_KEY / YOUTUBE_API_KEY from Secret Manager, CORS) with live verification |
+| Oct 7–8 | **M4** real gap scorer: replace `app/scoring/placeholder.py`; personas become seeded reader graphs; worked-example test; p95 < 150 ms |
+| Oct 8–9 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
+| Oct 9 | **Rest of M6:** two-phase loading for "Open here", "This is wrong" button, paragraph markers, pre-read card, event batching to /v1/events |
+| Oct 9–10 | **M2.2** (issue #6): online concept growth, jurisdiction, link_confirm strictness; held-out set grows to 30; target ≥ 75% linked |
 | Oct 10–11 | **M7** onboarding, consent, calibration, reading profile page, profile edits. **Team lock Oct 11** (gate: if M6–M7 aren't solid, skip M8) |
 | Oct 12–14 | **M8** Chrome extension with privacy guards (only if the gate passed) |
 | Oct 15–17 | **M9** evals, hardening, WIF deploy, dashboard, demo personas, README, video, deck |
@@ -246,22 +248,19 @@ quota is free within the daily buckets.
 
 ---
 
-## 10. Open decisions waiting on you
+## 10. Decisions (all decided 2026-10-04)
 
-1. **PR #9:** merge as one PR (slice + redesign + recommendations + handoff) or split? Its
-   commits don't follow the `M<n>:` convention because they span milestones; keep or squash
-   to `M6: …` and `M6.5: …`?
-2. **Budget cap:** back to 8 tomorrow, or hold a higher cap for the M2.2 / M5 eval runs?
-3. **Publisher images:** keep hotlinking for the demo, proxy them, or drop images on the public
-   build (cookies, copyright, breakage)?
-4. **Search queries with the concept's domain:** accept as the rule (it departs from your
-   "label + format suffix" spec)?
-5. **Search keys for deploy:** move Tavily and YouTube keys into Secret Manager, and confirm the
-   Tavily plan's monthly credit.
-6. **"Open here" latency:** two-phase loading (recommended) vs accept 24–55 s.
-7. **Persona θ and format priors** are invented for the demo: keep them for the judges' video,
-   or replace with seeded accounts in M9 only?
-8. **Held-out set:** grow from 15 to 30 articles for M2.2 measurements (issue #6 suggests it)?
-9. **DESIGN.md updates:** write §16 for recommendations and the §3/§8 additions now, or after M4?
-10. **First real deploy:** when to deploy M1–M6.5 to Cloud Run (currently M0), and whether
-    POST /v1/content stays disabled in prod until M3 auth lands.
+| # | Topic | Decision |
+|---|---|---|
+| 1 | PR #9 | Squash-merged as one commit `M6-slice: vertical slice, redesign, recommendations`, body listing the four parts |
+| 2 | LLM budget cap | Back to 8 (edited by hand in `.env`). Raised only per run, with the reason recorded |
+| 3 | Publisher images | Keep hotlinking with `no-referrer`; typographic tile when an image fails (done for library, reader and Up next) |
+| 4 | Search queries | Concept label + graph domain + format suffix is the rule (DESIGN §16.3) |
+| 5 | Search keys | Tavily and YouTube keys move to Secret Manager at the first deploy |
+| 6 | "Open here" latency | Two-phase loading, in the rest of M6 |
+| 7 | Personas | Demo mode served through Firebase Anonymous sign-in once M3 auth exists; after M4 they are seeded reader graphs instead of hand-set θ |
+| 8 | Held-out set | Grows from 15 to 30 articles in M2.2 |
+| 9 | DESIGN.md | §16 (recommendations) and the §3/§4/§8 additions written now |
+| 10 | First real deploy | Moves to the end of M3; POST /v1/content stays disabled in prod until auth is on it |
+
+No decisions are open.

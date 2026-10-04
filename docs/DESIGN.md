@@ -95,6 +95,9 @@ One domain for the hackathon: business & economy news.
 ```json
 {
   "url": "...", "title": "...", "site": "...", "fetched_at": "...",
+  "source": "fetch | extension | user_ingested",
+  "description": "publisher standfirst | null", "author": "Name; Name | null",
+  "published": "2026-10-03 | null", "image": "https://… (og:image) | null",
   "paragraphs": [{"id": "p3", "text": "...", "structure": 0.35}],
   "demands": [{
     "id": "d17", "paragraph_id": "p3",
@@ -111,6 +114,15 @@ One domain for the hackathon: business & economy news.
   concepts (surface text, assumed vs explained, salience), context references, structure flags.
 - `structure` per paragraph ∈ [0,1] = 0.5·normalized parse depth/length (spaCy) + 0.5·LLM flag.
 - Anchors must be verified: `exact` must occur in the paragraph text; drop demands that don't.
+- **Publisher metadata** (`description`, `author`, `published`, `image`) comes from the page's own
+  metadata via trafilatura at ingest, shown as-is and never generated or rewritten. `image` must
+  be an absolute http(s) URL; the UI hotlinks it with `referrerpolicy=no-referrer` and falls back
+  to a typographic tile when it is missing or fails to load. `scripts.backfill_metadata` fills
+  docs ingested before these fields existed (safe_fetch, no LLM).
+- **`source`**: `fetch` (server fetched a submitted URL), `extension` (text extracted and redacted
+  client-side), `user_ingested` (a reader opened a web recommendation with "Open here", §16).
+  `user_ingested` docs are readable like any other but are never corpus or held-out data:
+  `build_concepts` and `eval_heldout` skip them even if their URL is listed.
 
 ## 4. Reader model (Firestore)
 ```
@@ -123,6 +135,9 @@ users/{uid}/knows/{concept_id}    alpha, beta, last_seen, evidence: [{type, w, a
 users/{uid}/events/{auto}         raw interaction events (append-only)
 users/{uid}/weekly/{iso_week}     words_read, annotations_shown (annotation trend, §15)
 users/{uid}/profile_edits/{id}    applied profile edits with their deltas, for undo (§15.3)
+users/{uid}/rec_signals/{persona_or_default}   Up next signals (§16): format stats, relation
+                                  dismissals, seen items, recent event ids
+users/{uid}/ingest_counts/{utc_day}            new URLs ingested that day (per-user cap)
 ```
 
 ### Prior (IRT, 1-parameter logistic)
@@ -224,7 +239,12 @@ with `verified: true`, model ids, created_at.
 ## 8. API (FastAPI, `/v1`, Firebase ID token in `Authorization: Bearer`)
 | method | path | purpose |
 |---|---|---|
-| POST | /v1/content | `{url}` (server fetches via safe_fetch) or `{url, title, paragraphs[]}` (extension, already extracted and redacted) → `{content_id, title, paragraphs}`; ingests if new |
+| POST | /v1/content | `{url}` (server fetches via safe_fetch) or `{url, title, paragraphs[]}` (extension, already extracted and redacted) → `{content_id, title, paragraphs}`; ingests if new. Requires auth and the per-user daily cap; disabled in prod until both are in place |
+| GET | /v1/content?q=&persona=&density= | library list: `{id, title, site, word_count, description, author, published, image, domain, concepts_new}`; `domain` = graph domain with the most linked salience; `concepts_new` = span annotations this reader would get |
+| GET | /v1/content/{id} | article for rendering: metadata + `paragraphs[{id, text}]` |
+| GET | /v1/content/{id}/recommendations?prefer= | Up next (§16): up to 6 items, `pending` while web lookups run |
+| POST | /v1/recs/events | `{events: [{id, type: rec_shown\|rec_clicked\|rec_dismissed\|rec_completed, item_id}]}` → `{applied, ignored}`; idempotent by event id |
+| POST | /v1/recs/open | `{url}` → `{content_id, new}`: ingest a web recommendation via safe_fetch as `user_ingested`, within the per-user daily cap (429 past it) |
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
 | DELETE | /v1/me | delete all of the caller's data and their Auth user |
 | GET | /v1/content/{id}/annotations | ranked, budgeted annotations for the caller |
@@ -247,6 +267,9 @@ Annotation response item:
  "anchor": {"exact": "...", "prefix": "...", "suffix": "..."},
  "paragraph_id": "p3", "score": 0.68, "concept_id": "c_yield_curve", "label": "Yield curve"}
 ```
+Until explanations exist (M5), span items also carry `definition`, `domain` and up to 3
+`prerequisites` labels for the card, plus `debug {p_know, salience, span_score, domain,
+base_difficulty}` when `?debug=1` and `ENV=dev`.
 
 ## 9. Client behavior (`packages/annotator`)
 - Anchor resolution: find `exact` with matching prefix/suffix inside the article root; fall back
@@ -488,3 +511,77 @@ to update your settings. It is not stored."
   smuggled through instructions in the reader text: all rejected), unresolved concepts reported
   and dropped, apply then undo restores α/β/θ and settings exactly, rate limit (11th parse
   request that day → 429).
+
+## 16. Up next and explore (recommendations)
+End-of-article suggestions in this reader's frame: what to read, watch or listen to next,
+mixing our own corpus with the web. Built in M6.5 with demo personas standing in for readers
+(the reader graph replaces them in M4, exactly as for the placeholder scorer).
+
+### 16.1 Triggers
+The concepts this reader was shown as new in the article (the span annotations at balanced
+density, highest score first). Every recommendation names the concept that triggered it.
+
+### 16.2 Library candidates (`app/recs/library.py`, pure, no API calls)
+| relation | label | rule |
+|---|---|---|
+| same_story | Same story elsewhere | Syndicated text (5-gram shingle Jaccard ≥ 0.5), or the same event from another source: headline-word Jaccard ≥ 0.3, linked-concept Jaccard ≥ 0.2, published within 4 days |
+| primer | Simpler primer | For each trigger, its prerequisites with prior < 0.6 for this reader (else the trigger itself); docs that explain that concept in their own text. A Wikipedia article whose title is the concept scores 1.0, other Wikipedia pages 0.8 × salience, explaining news 0.7 × salience |
+| deeper | Go deeper | Concepts that list a trigger as a prerequisite; docs where that concept has salience ≥ 0.6 |
+| angle | Different angle | ≥ 40% of the article's 5 most salient concepts, from another source; × 1.15 if from another country |
+Wikipedia pages are evergreen (no freshness decay) and never count as same_story or angle.
+
+### 16.3 Web candidates (`app/recs/web_search.py`)
+- Providers behind one interface: **Tavily** for articles and for podcast episodes
+  (`include_domains` = podcast directories), **YouTube Data API v3** for videos (search, then
+  videos.list for durations). Keys are server-side secrets, never sent to the client.
+- **Query = concept label + its graph domain + a format suffix** ("Repo rate policy explained",
+  "… podcast episode"). The domain disambiguates labels; nothing about the reader (uid, persona,
+  history, the current article) is ever part of a query (tested).
+- Every result is normalized to `{url, title, source, format: article|video|podcast,
+  duration_or_read_time (s), snippet, thumbnail, published_at}`, filtered by the domain
+  blocklist (`app/recs/blocklist.txt`, subdomains included) and a relevance gate (the title or
+  snippet must name the concept), then cached in Firestore `rec_cache/{concept_id}__{format}`
+  for 48 h, keyed on a versioned query so a changed query refetches.
+- Up to 3 triggers × 3 formats per article. Misses are fetched in the background; the first
+  response may hold library items only, with `pending: true`, and the client polls briefly.
+- **Daily cap** `SEARCH_DAILY_CAP` (300 calls, all providers) plus `YOUTUBE_SEARCH_DAILY_CAP`
+  (90 searches; each costs 2 calls). Calls are reserved under a lock before they are made. Past
+  a cap, no call is made and cached (even stale) results are served, as with the LLM budget.
+
+### 16.4 Ranking (`app/recs/rank.py`, pure)
+```
+score = relevance × relation_weight × format_affinity × freshness × not_seen
+```
+- relation_weight: primer 1.0, explainer (web) 0.95, deeper 0.9, angle 0.85, same_story 0.8;
+  × 0.6 per dismissal of that relation by this reader, floored at 0.3.
+- format_affinity = 0.5 + α/(α+β): Beta prior of strength 4 at the reader's default mean per
+  format, α += clicks + 2 × completions, β += dismissals + 0.1 × shown-without-click. An
+  explicit Read / Watch / Listen choice sets that format's mean to 0.9 and scales the others by
+  0.6. Articles get × 1.2 when their length matches the reader's preference (short ≤ 5 min,
+  long ≥ 8 min) and × 0.85 when it opposes it. Demo defaults: newcomer prefers video, trader
+  short articles, policy_student long reads.
+- freshness = 0.6 + 0.4 × 0.5^(age_days / 30); undated or evergreen 0.85.
+- not_seen: 0 if completed or dismissed, 0.3 if clicked, 0.8 if shown 3+ times, else 1.
+
+### 16.5 Selection
+- 6 items. The reader's preferred format (explicit choice, else highest affinity) gets 3 slots,
+  the next two formats 2 and 1 by affinity. A format with too few qualifying results passes its
+  spare slots to the next format in order.
+- When both kinds qualify, at least one library item and one web item: a missing kind replaces
+  the weakest pick of its own format. Final order is by score.
+- Each item: relation label, format, title, source, length, a "why this" line from a template
+  that names the triggering concept ("Because ‘yield curve’ was new to you"), the trigger ids,
+  and "From the web" for web items.
+
+### 16.6 Opening items and signals
+- Library items open in the ReadLayer reader. Web articles offer **Open here** (POST
+  /v1/recs/open: safe_fetch and the normal ingestion pipeline, `source: user_ingested`, within
+  the per-user daily cap) and **Open original**. Videos and podcasts open the original in a new
+  tab. "Open here" moves to two-phase loading (article first, annotations after) in the rest of
+  M6.
+- Events `rec_shown`, `rec_clicked`, `rec_dismissed`, `rec_completed` (a recommended library
+  article read to the end) update format stats, relation dismissals and seen items.
+- Storage: until M3 these signals and the ingest counter live in API memory per (uid, persona),
+  because every user-data collection must be covered by export and delete. M3 moves them to
+  `users/{uid}/rec_signals` and `users/{uid}/ingest_counts` (§4) with export and delete.
+

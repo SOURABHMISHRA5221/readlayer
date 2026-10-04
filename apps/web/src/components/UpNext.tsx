@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, errorKind, ApiError, type RecEventType, type RecFormat, type RecItem } from "../lib/api";
-import { sourceName } from "../lib/format";
+import { sourceMonogram, sourceName } from "../lib/format";
 import { DEFAULT_PERSONA, type PersonaKey } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
 import { ArticleIcon, Close, External, HeadphonesIcon, PlayIcon } from "./Icons";
@@ -223,6 +223,7 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
     }
   };
 
+  const [thumbFailed, setThumbFailed] = useState(false);
   const isWeb = item.kind === "web";
   const source = isWeb ? item.source : sourceName(item.source);
   const titleId = `rec-${item.id.replace(/[^a-z0-9]/gi, "")}`;
@@ -230,8 +231,22 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
   return (
     <article className="rec" ref={ref} aria-labelledby={titleId} data-format={item.format}>
       <div className="rec__media">
-        {item.thumbnail ? (
-          <img src={item.thumbnail} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" width={480} height={270} />
+        {item.thumbnail && !thumbFailed ? (
+          <img
+            src={item.thumbnail}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            width={480}
+            height={270}
+            onError={() => setThumbFailed(true)}
+          />
+        ) : item.kind === "library" ? (
+          // A hotlinked image that fails (or none) becomes the same typographic tile as the library.
+          <div className="media__tile" aria-hidden="true">
+            <span className="media__monogram">{sourceMonogram(item.source)}</span>
+          </div>
         ) : (
           <span className="rec__media-icon" aria-hidden="true">
             <FormatIcon format={item.format} size={28} />

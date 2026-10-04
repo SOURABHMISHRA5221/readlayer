@@ -97,6 +97,18 @@ folded into the milestones it belongs to, not saved for the end.
 > (summary from the deterministic template in §15.1, no LLM call), GET /v1/me/graph?domain=X
 > (≤ 60-node subgraph: most relevant concepts plus prerequisite closure; `q` search),
 > PATCH /v1/me/settings, and `learning_paused` honoured in POST /v1/events.
+> Auth covers Google sign-in and **Firebase Anonymous sign-in**: the demo personas (newcomer,
+> trader, policy_student) become a demo mode served through anonymous accounts, each carrying
+> its persona until M4 replaces hand-set θ with seeded reader graphs. Remove `DEV_AUTH_BYPASS`
+> from every path that a deployed build can reach (keep the K_SERVICE refusal and its test).
+> Move the M6.5 recommendation state (format affinity, relation dismissals, seen items, event
+> ids) and the "Open here" daily ingest counter out of API memory into Firestore under
+> `users/{uid}/rec_signals` and `users/{uid}/ingest_counts`, covered by GET /v1/me/export and
+> DELETE /v1/me. Put the auth dependency and the per-user daily cap (INGEST_DAILY_CAP, default
+> 20) on POST /v1/content and POST /v1/recs/open; POST /v1/content stays disabled in prod until
+> both are in place. Finish with the **first full deploy since M0**: API to Cloud Run (env from
+> `deploy.env.yaml`, UID_HASH_SALT, TAVILY_API_KEY and YOUTUBE_API_KEY from Secret Manager, CORS
+> for the web origin only, min 0 / max 3 instances) and web to Firebase Hosting, then verify live.
 
 **Acceptance**
 - `reader/` fully covered by tests; replaying an event twice changes nothing the second time.
@@ -109,6 +121,19 @@ folded into the milestones it belongs to, not saved for the end.
   node set, and the subgraph is acyclic.
 - With `learning_paused` set, POST /v1/events returns `applied: false` and changes no document;
   PATCH /v1/me/graph still applies.
+- An anonymous demo session for each persona gets the same annotations and recommendations as
+  the local slice did; rec signals and ingest counts survive an API restart, appear in export
+  and are gone after delete.
+- POST /v1/content and POST /v1/recs/open return 401 without a token and 429 on the 21st new URL
+  of the day for one user.
+- Live deploy verified: `/health` 200; the web app on Hosting signs in anonymously, opens a
+  corpus article with annotations and Up next (web items present, so the Secret Manager keys
+  work); no Tavily or YouTube key appears in the web bundle, the browser or the logs; a request
+  from another origin is refused by CORS; the deployed revision refuses to start with
+  `DEV_AUTH_BYPASS=true` set.
+
+**You do by hand:** enable the Anonymous and Google providers in Firebase Authentication;
+approve the Secret Manager and deploy commands when asked.
 
 ---
 
