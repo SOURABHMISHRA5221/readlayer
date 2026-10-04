@@ -26,9 +26,14 @@ from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph
 from app.ingest import quota
 from app.ingest.models import ContentDoc
-from app.ingest.router import FETCH_ERROR_STATUS, MAX_URL_CHARS, _error, _ingest_error
+from app.ingest.router import (
+    FETCH_ERROR_STATUS,
+    MAX_URL_CHARS,
+    _error,
+    _ingest_error,
+    ingest_url,  # lazy: loads the ingestion pipeline on first use
+)
 from app.ingest.safe_fetch import FetchError, validate_url
-from app.ingest.service import ingest_url
 from app.ingest.urls import url_hash
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult

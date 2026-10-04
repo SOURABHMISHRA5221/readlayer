@@ -1,7 +1,7 @@
 """POST /v1/content (DESIGN §8): both input shapes, with explicit error statuses."""
 
 from datetime import UTC, datetime, timedelta
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -14,7 +14,6 @@ from app.content import catalog
 from app.ingest import quota
 from app.ingest.models import ContentDoc
 from app.ingest.safe_fetch import FetchError, validate_url
-from app.ingest.service import ingest_submitted, ingest_url
 from app.ingest.urls import url_hash
 from app.store.content_repo import get_content_store
 
@@ -66,6 +65,20 @@ class ContentResponse(BaseModel):
 def _error(status: int, code: str, message: str, retry_after: int | None = None) -> JSONResponse:
     headers = {"Retry-After": str(retry_after)} if retry_after is not None else None
     return JSONResponse({"error": code, "message": message}, status_code=status, headers=headers)
+
+
+async def ingest_url(url: str, source: Literal["fetch", "user_ingested"] = "fetch") -> ContentDoc:
+    """The ingestion pipeline (spaCy, trafilatura, wordfreq, LiteLLM) loads on the first new
+    article, so read-only requests and cold starts never import it."""
+    from app.ingest import service
+
+    return await service.ingest_url(url, source=source)
+
+
+async def ingest_submitted(url: str, title: str, paragraphs: list[str]) -> ContentDoc:
+    from app.ingest import service
+
+    return await service.ingest_submitted(url, title, paragraphs)
 
 
 def _seconds_to_utc_midnight(now: datetime | None = None) -> int:

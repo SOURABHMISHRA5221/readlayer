@@ -76,10 +76,11 @@ print('\n'.join(f'VITE_FIREBASE_{k}={c[v]}' for k,v in [('API_KEY','apiKey'),('A
 	@echo "wrote apps/web/.env.local and apps/web/.env.production.local (gitignored)"
 
 # Hosting origins only for CORS; secrets from Secret Manager, never env files or the image.
+# Startup CPU boost: extra CPU while an instance starts, which roughly halves cold starts.
 deploy-api: check-gcp
 	gcloud run deploy $(SERVICE) --source apps/api --region $(REGION) \
 		--service-account $(SA) --allow-unauthenticated \
-		--min-instances 0 --max-instances 3 --cpu 1 --memory 1Gi \
+		--min-instances 0 --max-instances 3 --cpu 1 --memory 1Gi --cpu-boost \
 		--env-vars-file apps/api/deploy.env.yaml \
 		--set-secrets $(SECRETS)
 

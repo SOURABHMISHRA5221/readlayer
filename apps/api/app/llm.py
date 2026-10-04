@@ -12,9 +12,9 @@ import time
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from types import ModuleType
 from typing import Any, Literal
 
-import litellm
 import numpy as np
 from pydantic import BaseModel, ValidationError
 from tenacity import AsyncRetrying, retry_if_exception, stop_after_attempt, wait_exponential
@@ -23,7 +23,6 @@ from app.config import Settings, get_settings
 from app.store.spend_repo import FirestoreSpendStore, SpendStore
 
 log = logging.getLogger("app.llm")
-litellm.suppress_debug_info = True
 
 PROMPTS_DIR = Path(__file__).parent / "prompts"
 
@@ -38,6 +37,16 @@ SYSTEM_PREAMBLE = (
 _MODEL_NOT_FOUND = re.compile(r"\b501\b|status: 404")
 # Patched to tenacity.wait_none() in tests.
 retry_wait = wait_exponential(multiplier=0.5, max=4)
+
+
+@lru_cache(maxsize=1)
+def _litellm() -> ModuleType:
+    """LiteLLM loads on the first model call, not at import: it is the slowest import in the
+    API (≈ 1 s locally, much more on a cold Cloud Run CPU) and no read path calls a model."""
+    import litellm
+
+    litellm.suppress_debug_info = True
+    return litellm
 
 
 class LLMError(Exception):
@@ -66,7 +75,7 @@ def classify_error(exc: BaseException) -> ErrorAction:
     """
     if isinstance(exc, ValidationError | ValueError):  # invalid output after the repair retry
         return "fallback"
-    if isinstance(exc, litellm.Timeout | litellm.RateLimitError):
+    if isinstance(exc, _litellm().Timeout | _litellm().RateLimitError):
         return "retry"
     status = getattr(exc, "status_code", None)
     if not isinstance(status, int):
@@ -304,14 +313,14 @@ async def _embed_call(model: str, batch: list[str], task_type: str, settings: Se
         reraise=True,
     ):
         with attempt:
-            return await litellm.aembedding(**kwargs)
+            return await _litellm().aembedding(**kwargs)
     raise LLMUnavailable("unreachable")
 
 
 def _embed_cost(response: Any, model: str, tokens: int, settings: Settings) -> float:
     try:
         return float(
-            litellm.completion_cost(
+            _litellm().completion_cost(
                 completion_response=response, model=model, call_type="aembedding"
             )
         )
@@ -449,7 +458,7 @@ async def _call(
     ):
         with attempt:
             ledger.attempts += 1
-            response = await litellm.acompletion(**kwargs)
+            response = await _litellm().acompletion(**kwargs)
 
     usage = getattr(response, "usage", None)
     tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0)
@@ -477,7 +486,7 @@ async def _call(
 def _cost(response: Any, model: str, tokens_in: int, tokens_out: int, settings: Settings) -> float:
     # Price by the routed id: the response's own model name can differ from the price-map key.
     try:
-        return float(litellm.completion_cost(completion_response=response, model=model))
+        return float(_litellm().completion_cost(completion_response=response, model=model))
     except Exception:
         pass
     if model in settings.model_price_overrides:
@@ -489,7 +498,7 @@ def _cost(response: Any, model: str, tokens_in: int, tokens_out: int, settings: 
 
 def _supports_schema(model: str) -> bool:
     try:
-        return bool(litellm.supports_response_schema(model=model))
+        return bool(_litellm().supports_response_schema(model=model))
     except Exception:
         return False
 
