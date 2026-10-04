@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     model_fast: str = ""
     model_quality: str = ""
     model_fallback: str = ""
+    # Embeddings have no fallback: vectors from another model aren't comparable.
+    model_embed: str = ""
+    embed_dim: int = 256
+
+    # Concept graph (DESIGN §2): gs:// URI or local path. Empty = no graph (dev and tests).
+    concepts_uri: str = ""
+    link_threshold: float = 0.80  # calibrated by scripts/build_concepts.py
+    dedupe_threshold: float = 0.88
 
     llm_daily_budget_usd: float = 8.0
     llm_timeout_s: float = 20.0

@@ -1,0 +1,282 @@
+{
+ "https://en.wikipedia.org/wiki/Inflation": {
+  "title": "Inflation",
+  "qid": "Q35865"
+ },
+ "https://en.wikipedia.org/wiki/Consumer_price_index": {
+  "title": "Consumer price index",
+  "qid": "Q180687"
+ },
+ "https://en.wikipedia.org/wiki/Wholesale_price_index": {
+  "title": "Wholesale price index",
+  "qid": "Q3630992"
+ },
+ "https://en.wikipedia.org/wiki/Core_inflation": {
+  "title": "Core inflation",
+  "qid": "Q1739354"
+ },
+ "https://en.wikipedia.org/wiki/Repurchase_agreement": {
+  "title": "Repurchase agreement",
+  "qid": "Q169357"
+ },
+ "https://en.wikipedia.org/wiki/Monetary_policy": {
+  "title": "Monetary policy",
+  "qid": "Q178476"
+ },
+ "https://en.wikipedia.org/wiki/Central_bank": {
+  "title": "Central bank",
+  "qid": "Q66344"
+ },
+ "https://en.wikipedia.org/wiki/Interest_rate": {
+  "title": "Interest rate",
+  "qid": "Q179179"
+ },
+ "https://en.wikipedia.org/wiki/Inflation_targeting": {
+  "title": "Inflation targeting",
+  "qid": "Q1193759"
+ },
+ "https://en.wikipedia.org/wiki/Monetary_Policy_Committee_(India)": {
+  "title": "Monetary Policy Committee (India)",
+  "qid": "Q30689094"
+ },
+ "https://en.wikipedia.org/wiki/Reserve_Bank_of_India": {
+  "title": "Reserve Bank of India",
+  "qid": "Q944085"
+ },
+ "https://en.wikipedia.org/wiki/Yield_(finance)": {
+  "title": "Yield (finance)",
+  "qid": "Q2383321"
+ },
+ "https://en.wikipedia.org/wiki/Yield_curve": {
+  "title": "Yield curve",
+  "qid": "Q205257"
+ },
+ "https://en.wikipedia.org/wiki/Bond_(finance)": {
+  "title": "Bond (finance)",
+  "qid": "Q11693"
+ },
+ "https://en.wikipedia.org/wiki/Government_bond": {
+  "title": "Government bond",
+  "qid": "Q2324820"
+ },
+ "https://en.wikipedia.org/wiki/Government_budget_balance": {
+  "title": "Government budget balance",
+  "qid": "Q2598003"
+ },
+ "https://en.wikipedia.org/wiki/Fiscal_policy": {
+  "title": "Fiscal policy",
+  "qid": "Q187021"
+ },
+ "https://en.wikipedia.org/wiki/Current_account_(balance_of_payments)": {
+  "title": "Current account (balance of payments)",
+  "qid": "Q746687"
+ },
+ "https://en.wikipedia.org/wiki/Balance_of_payments": {
+  "title": "Balance of payments",
+  "qid": "Q140845"
+ },
+ "https://en.wikipedia.org/wiki/Balance_of_trade": {
+  "title": "Balance of trade",
+  "qid": "Q192796"
+ },
+ "https://en.wikipedia.org/wiki/Gross_domestic_product": {
+  "title": "Gross domestic product",
+  "qid": "Q12638"
+ },
+ "https://en.wikipedia.org/wiki/Gross_value_added": {
+  "title": "Gross value added",
+  "qid": "Q994873"
+ },
+ "https://en.wikipedia.org/wiki/Foreign_exchange_reserves": {
+  "title": "Foreign exchange reserves",
+  "qid": "Q317617"
+ },
+ "https://en.wikipedia.org/wiki/Currency_appreciation_and_depreciation": {
+  "title": "Currency appreciation and depreciation",
+  "qid": "Q9206162"
+ },
+ "https://en.wikipedia.org/wiki/Exchange_rate": {
+  "title": "Exchange rate",
+  "qid": "Q66100"
+ },
+ "https://en.wikipedia.org/wiki/Indian_rupee": {
+  "title": "Indian rupee",
+  "qid": "Q80524"
+ },
+ "https://en.wikipedia.org/wiki/Quantitative_easing": {
+  "title": "Quantitative easing",
+  "qid": "Q874727"
+ },
+ "https://en.wikipedia.org/wiki/Stagflation": {
+  "title": "Stagflation",
+  "qid": "Q185245"
+ },
+ "https://en.wikipedia.org/wiki/Deflation": {
+  "title": "Deflation",
+  "qid": "Q161081"
+ },
+ "https://en.wikipedia.org/wiki/Recession": {
+  "title": "Recession",
+  "qid": "Q176494"
+ },
+ "https://en.wikipedia.org/wiki/Purchasing_Managers%27_Index": {
+  "title": "Purchasing Managers' Index",
+  "qid": "Q2033951"
+ },
+ "https://en.wikipedia.org/wiki/Index_of_industrial_production": {
+  "title": "Index of industrial production",
+  "qid": "Q3632401"
+ },
+ "https://en.wikipedia.org/wiki/Goods_and_Services_Tax_(India)": {
+  "title": "Goods and Services Tax (India)",
+  "qid": "Q27679782"
+ },
+ "https://en.wikipedia.org/wiki/Tariff": {
+  "title": "Tariff",
+  "qid": "Q52389"
+ },
+ "https://en.wikipedia.org/wiki/Foreign_direct_investment": {
+  "title": "Foreign direct investment",
+  "qid": "Q490513"
+ },
+ "https://en.wikipedia.org/wiki/Foreign_portfolio_investment": {
+  "title": "Foreign portfolio investment",
+  "qid": "Q5468447"
+ },
+ "https://en.wikipedia.org/wiki/Non-performing_loan": {
+  "title": "Non-performing loan",
+  "qid": "Q494128"
+ },
+ "https://en.wikipedia.org/wiki/Basis_point": {
+  "title": "Basis point",
+  "qid": "Q750178"
+ },
+ "https://en.wikipedia.org/wiki/Market_capitalization": {
+  "title": "Market capitalization",
+  "qid": "Q471719"
+ },
+ "https://en.wikipedia.org/wiki/Price%E2%80%93earnings_ratio": {
+  "title": "Price\u2013earnings ratio",
+  "qid": "Q127473"
+ },
+ "https://en.wikipedia.org/wiki/Initial_public_offering": {
+  "title": "Initial public offering",
+  "qid": "Q185142"
+ },
+ "https://en.wikipedia.org/wiki/Mutual_fund": {
+  "title": "Mutual fund",
+  "qid": "Q791974"
+ },
+ "https://en.wikipedia.org/wiki/Derivative_(finance)": {
+  "title": "Derivative (finance)",
+  "qid": "Q66295"
+ },
+ "https://en.wikipedia.org/wiki/Futures_contract": {
+  "title": "Futures contract",
+  "qid": "Q183984"
+ },
+ "https://en.wikipedia.org/wiki/Option_(finance)": {
+  "title": "Option (finance)",
+  "qid": "Q187860"
+ },
+ "https://en.wikipedia.org/wiki/Dividend": {
+  "title": "Dividend",
+  "qid": "Q181201"
+ },
+ "https://en.wikipedia.org/wiki/Earnings_before_interest,_taxes,_depreciation_and_amortization": {
+  "title": "Earnings before interest, taxes, depreciation and amortization",
+  "qid": "Q5322573"
+ },
+ "https://en.wikipedia.org/wiki/Reserve_requirement": {
+  "title": "Reserve requirement",
+  "qid": "Q1058762"
+ },
+ "https://en.wikipedia.org/wiki/Statutory_liquidity_ratio": {
+  "title": "Statutory liquidity ratio",
+  "qid": "Q17082698"
+ },
+ "https://en.wikipedia.org/wiki/Open_market_operation": {
+  "title": "Open market operation",
+  "qid": "Q667481"
+ },
+ "https://en.wikipedia.org/wiki/Money_supply": {
+  "title": "Money supply",
+  "qid": "Q842206"
+ },
+ "https://en.wikipedia.org/wiki/Government_debt": {
+  "title": "Government debt",
+  "qid": "Q3024789"
+ },
+ "https://en.wikipedia.org/wiki/Credit_rating": {
+  "title": "Credit rating",
+  "qid": "Q372765"
+ },
+ "https://en.wikipedia.org/wiki/Credit_rating_agency": {
+  "title": "Credit rating agency",
+  "qid": "Q765517"
+ },
+ "https://en.wikipedia.org/wiki/Securities_and_Exchange_Board_of_India": {
+  "title": "Securities and Exchange Board of India",
+  "qid": "Q2615692"
+ },
+ "https://en.wikipedia.org/wiki/Stock_market_index": {
+  "title": "Stock market index",
+  "qid": "Q223371"
+ },
+ "https://en.wikipedia.org/wiki/BSE_SENSEX": {
+  "title": "BSE SENSEX",
+  "qid": "Q796994"
+ },
+ "https://en.wikipedia.org/wiki/NIFTY_50": {
+  "title": "NIFTY 50",
+  "qid": "Q1853402"
+ },
+ "https://en.wikipedia.org/wiki/Federal_Reserve": {
+  "title": "Federal Reserve",
+  "qid": "Q53536"
+ },
+ "https://en.wikipedia.org/wiki/Real_interest_rate": {
+  "title": "Real interest rate",
+  "qid": "Q1140421"
+ },
+ "https://en.wikipedia.org/wiki/Real_and_nominal_value": {
+  "title": "Real and nominal value",
+  "qid": "Q311198"
+ },
+ "https://en.wikipedia.org/wiki/Unemployment": {
+  "title": "Unemployment",
+  "qid": "Q41171"
+ },
+ "https://en.wikipedia.org/wiki/Phillips_curve": {
+  "title": "Phillips curve",
+  "qid": "Q220841"
+ },
+ "https://en.wikipedia.org/wiki/Purchasing_power_parity": {
+  "title": "Purchasing power parity",
+  "qid": "Q82135"
+ },
+ "https://en.wikipedia.org/wiki/Capital_account": {
+  "title": "Capital account",
+  "qid": "Q1728567"
+ },
+ "https://en.wikipedia.org/wiki/Twin_deficits_hypothesis": {
+  "title": "Twin deficits hypothesis",
+  "qid": "Q244771"
+ },
+ "https://en.wikipedia.org/wiki/Crowding_out_(economics)": {
+  "title": "Crowding out (economics)",
+  "qid": "Q1071788"
+ },
+ "https://en.wikipedia.org/wiki/Fiscal_multiplier": {
+  "title": "Fiscal multiplier",
+  "qid": "Q18907327"
+ },
+ "https://en.wikipedia.org/wiki/Austerity": {
+  "title": "Austerity",
+  "qid": "Q2814650"
+ },
+ "https://en.wikipedia.org/wiki/Stimulus_(economics)": {
+  "title": "Stimulus (economics)",
+  "qid": "Q3559147"
+ }
+}

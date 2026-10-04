@@ -1,5 +1,6 @@
 """Demand profiles, Firestore `contents/{url_hash}` (DESIGN §3). Shared by all readers."""
 
+from collections.abc import AsyncIterator
 from typing import Protocol
 
 from google.cloud import firestore
@@ -15,6 +16,8 @@ class ContentStore(Protocol):
 
     async def put(self, doc: ContentDoc) -> None: ...
 
+    def iter_all(self) -> AsyncIterator[ContentDoc]: ...
+
 
 class FirestoreContentStore:
     def __init__(self, project: str) -> None:
@@ -26,6 +29,10 @@ class FirestoreContentStore:
 
     async def put(self, doc: ContentDoc) -> None:
         await self._db.collection(COLLECTION).document(doc.content_id).set(doc.model_dump())
+
+    async def iter_all(self) -> AsyncIterator[ContentDoc]:
+        async for snap in self._db.collection(COLLECTION).stream():
+            yield ContentDoc.model_validate(snap.to_dict())
 
 
 class InMemoryContentStore:
@@ -39,6 +46,10 @@ class InMemoryContentStore:
 
     async def put(self, doc: ContentDoc) -> None:
         self.docs[doc.content_id] = doc
+
+    async def iter_all(self) -> AsyncIterator[ContentDoc]:
+        for doc in list(self.docs.values()):
+            yield doc
 
 
 _store: ContentStore | None = None

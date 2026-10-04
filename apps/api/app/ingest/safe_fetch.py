@@ -29,7 +29,7 @@ FETCH_TIMEOUT_S = 10.0
 MAX_BODY_BYTES = 3 * 1024 * 1024
 MAX_ROBOTS_BYTES = 500 * 1024
 ROBOTS_TTL_S = 3600.0
-HTML_TYPES = {"text/html", "application/xhtml+xml"}
+HTML_TYPES = frozenset({"text/html", "application/xhtml+xml"})
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
 
 # Ranges `is_global` doesn't already exclude, or that we want named explicitly.
@@ -58,10 +58,11 @@ FetchErrorCode = Literal[
 
 
 class FetchError(Exception):
-    def __init__(self, code: FetchErrorCode, message: str) -> None:
+    def __init__(self, code: FetchErrorCode, message: str, status: int | None = None) -> None:
         super().__init__(message)
         self.code = code
         self.message = message
+        self.status = status  # upstream HTTP status, when the failure was one
 
 
 IPAddress = ipaddress.IPv4Address | ipaddress.IPv6Address
@@ -155,14 +156,18 @@ class SafeFetcher:
     transport: httpx.AsyncBaseTransport | None = None  # injected in tests
     _robots: dict[str, tuple[float, RobotFileParser | None]] = field(default_factory=dict)
 
-    async def fetch(self, url: str) -> FetchedPage:
-        """Fetch an HTML page, honouring robots.txt. Raises FetchError."""
+    async def fetch(self, url: str, *, content_types: frozenset[str] = HTML_TYPES) -> FetchedPage:
+        """Fetch a page of one of `content_types` (HTML by default), honouring robots.txt.
+
+        Raises FetchError. Scripts pass XML/JSON types for feeds and public APIs so every
+        outbound fetch goes through the same guard.
+        """
         validate_url(url)
         if not await self.robots_allowed(url):
             raise FetchError("robots_disallowed", "the site's robots.txt disallows fetching")
-        final_url, resp = await self._get(url, max_bytes=MAX_BODY_BYTES, html_only=True)
+        final_url, resp = await self._get(url, max_bytes=MAX_BODY_BYTES, types=content_types)
         if not 200 <= resp.status < 300:
-            raise FetchError("upstream_error", f"site returned HTTP {resp.status}")
+            raise FetchError("upstream_error", f"site returned HTTP {resp.status}", resp.status)
         return FetchedPage(final_url, resp.body, resp.encoding)
 
     async def robots_allowed(self, url: str) -> bool:
@@ -179,7 +184,7 @@ class SafeFetcher:
         """None means no usable rules: allow."""
         try:
             _, resp = await self._get(
-                f"{origin}/robots.txt", max_bytes=MAX_ROBOTS_BYTES, html_only=False
+                f"{origin}/robots.txt", max_bytes=MAX_ROBOTS_BYTES, types=None
             )
         except FetchError as exc:
             if exc.code == "unsafe_url":
@@ -195,8 +200,13 @@ class SafeFetcher:
         parser.parse(resp.body.decode(resp.encoding or "utf-8", errors="replace").splitlines())
         return parser
 
-    async def _get(self, url: str, *, max_bytes: int, html_only: bool) -> tuple[str, _Response]:
-        """GET with manual redirects; every hop re-validated and pinned. Returns final URL."""
+    async def _get(
+        self, url: str, *, max_bytes: int, types: frozenset[str] | None
+    ) -> tuple[str, _Response]:
+        """GET with manual redirects; every hop re-validated and pinned. Returns final URL.
+
+        `types` limits the accepted Content-Type of a 2xx response; None accepts any.
+        """
         try:
             async with (
                 asyncio.timeout(FETCH_TIMEOUT_S),
@@ -209,7 +219,7 @@ class SafeFetcher:
             ):
                 current = url
                 for _ in range(MAX_REDIRECTS + 1):
-                    resp, location = await self._hop(client, current, max_bytes, html_only)
+                    resp, location = await self._hop(client, current, max_bytes, types)
                     if location is None:
                         return current, resp
                     current = str(httpx.URL(current).join(location))
@@ -220,7 +230,11 @@ class SafeFetcher:
             raise FetchError("upstream_error", f"fetch failed: {type(exc).__name__}") from exc
 
     async def _hop(
-        self, client: httpx.AsyncClient, url: str, max_bytes: int, html_only: bool
+        self,
+        client: httpx.AsyncClient,
+        url: str,
+        max_bytes: int,
+        types: frozenset[str] | None,
     ) -> tuple[_Response, str | None]:
         parsed = validate_url(url)
         host = parsed.host.rstrip(".").lower()
@@ -245,8 +259,9 @@ class SafeFetcher:
                 return _Response(response.status_code, "", None, b""), location
             content_type = response.headers.get("content-type", "").split(";")[0].strip().lower()
             ok = 200 <= response.status_code < 300
-            if ok and html_only and content_type not in HTML_TYPES:
-                raise FetchError("not_html", f"expected an HTML page, got {content_type or '?'}")
+            if ok and types is not None and content_type not in types:
+                wanted = "an HTML page" if types == HTML_TYPES else "/".join(sorted(types))
+                raise FetchError("not_html", f"expected {wanted}, got {content_type or '?'}")
             body = await _read_capped(response, max_bytes)
             return _Response(
                 response.status_code, content_type, response.charset_encoding, body

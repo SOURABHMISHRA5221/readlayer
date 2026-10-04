@@ -9,6 +9,9 @@ import logging
 from datetime import UTC, datetime
 from typing import Literal
 
+from app.config import get_settings
+from app.graph.linking import link_demands
+from app.graph.loader import get_graph
 from app.ingest import safe_fetch as fetch
 from app.ingest.demands import extract_demands
 from app.ingest.extract import build_paragraphs, clean_paragraphs, extract
@@ -70,6 +73,12 @@ async def _build(
     paragraphs = build_paragraphs(texts)
     parse_scores = await asyncio.to_thread(lambda: [parse_structure(p.text) for p in paragraphs])
     result = await extract_demands(paragraphs)
+    demands, _ = await link_demands(
+        get_graph(),
+        result.demands,
+        {p.id: p.text for p in paragraphs},
+        get_settings().link_threshold,
+    )
     doc = ContentDoc(
         content_id=content_id,
         url=normalize_url(url),
@@ -84,7 +93,7 @@ async def _build(
             )
             for p, score in zip(paragraphs, parse_scores, strict=True)
         ],
-        demands=result.demands,
+        demands=demands,
         demands_dropped=result.dropped,
         llm_calls=result.calls,
     )
@@ -95,7 +104,8 @@ async def _build(
             "content_id": content_id,
             "source": source,
             "paragraphs": len(paragraphs),
-            "demands": len(result.demands),
+            "demands": len(demands),
+            "demands_linked": sum(d.target_id is not None for d in demands),
             "demands_dropped": result.dropped,
             "cost_usd": round(sum(c.cost_usd for c in result.calls), 6),
             "models": sorted({c.model for c in result.calls}),

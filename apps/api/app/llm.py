@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import litellm
+import numpy as np
 from pydantic import BaseModel, ValidationError
 from tenacity import AsyncRetrying, retry_if_exception, stop_after_attempt, wait_exponential
 
@@ -83,12 +84,18 @@ class Route:
 
     primary: str
     fallback: str | None
+    timeout_s: float | None = None  # overrides LLM_TIMEOUT_S for this task
 
 
 ROUTES: dict[str, Route] = {
     "extract_demands": Route("model_fast", "model_fallback"),
-    "build_concepts": Route("model_fast", "model_fallback"),
     "link_merge": Route("model_fast", "model_fallback"),
+    # Quality model: fast reached 89% precision on the M2 eval set, quality 95% (DESIGN §2).
+    # 45 s: the quality model's p90 latency was ~33 s per 10 mentions, so 20 s fell back often.
+    "link_confirm": Route("model_quality", "model_fast", timeout_s=45.0),
+    "concept_define": Route("model_fast", "model_fallback"),
+    "concept_prereqs": Route("model_fast", "model_fallback"),
+    "concept_wikidata": Route("model_fast", "model_fallback"),
     "smoke": Route("model_fast", "model_fallback"),
     "explain": Route("model_quality", "model_fast"),
     # No fallback: if the verifier is down, callers show the definition gloss only.
@@ -194,10 +201,7 @@ async def run_with_meta[T: BaseModel](
     if route is None:
         raise ValueError(f"unknown LLM task: {task}")
     store = get_spend_store()
-    spent = await store.get_today()
-    if spent >= settings.llm_daily_budget_usd:
-        log.warning("llm budget exceeded", extra={"task": task, "spent_usd": spent})
-        raise BudgetExceeded(f"daily LLM budget ${settings.llm_daily_budget_usd} reached")
+    await _check_budget(task, settings, store)
 
     prompt = load_prompt(task)
     messages = [
@@ -205,6 +209,8 @@ async def run_with_meta[T: BaseModel](
         {"role": "user", "content": render(prompt.user, prompt_vars)},
     ]
     chain = _model_chain(route, settings)
+    if route.timeout_s:
+        settings = settings.model_copy(update={"llm_timeout_s": route.timeout_s})
     ledger = _Ledger()
     for index, model in enumerate(chain):
         try:
@@ -215,6 +221,112 @@ async def run_with_meta[T: BaseModel](
             continue
         return LLMResult(output, ledger.meta(task, model, prompt.version, fell_back=index > 0))
     raise LLMUnavailable(f"no model left for {task}")  # unreachable: last failure raises
+
+
+async def _check_budget(task: str, settings: Settings, store: SpendStore) -> None:
+    spent = await store.get_today()
+    if spent >= settings.llm_daily_budget_usd:
+        log.warning("llm budget exceeded", extra={"task": task, "spent_usd": spent})
+        raise BudgetExceeded(f"daily LLM budget ${settings.llm_daily_budget_usd} reached")
+
+
+# ---------------------------------------------------------------- embeddings
+
+EmbedTaskType = Literal["SEMANTIC_SIMILARITY", "RETRIEVAL_QUERY", "RETRIEVAL_DOCUMENT"]
+EMBED_BATCH = 100
+
+
+@dataclass(frozen=True)
+class EmbedResult:
+    vectors: list[list[float]]  # L2-normalised, so a dot product is the cosine
+    model: str
+    tokens: int
+    cost_usd: float
+
+
+async def embed(
+    texts: list[str], *, task_type: EmbedTaskType, settings: Settings | None = None
+) -> EmbedResult:
+    """Embed texts with MODEL_EMBED. Never falls back: another model's vectors aren't comparable.
+
+    Raises BudgetExceeded, LLMUnavailable (transient errors after retries) or LLMRejected.
+    """
+    settings = settings or get_settings()
+    model = settings.model_embed
+    if not model:
+        raise LLMUnavailable("MODEL_EMBED is not configured")
+    store = get_spend_store()
+    await _check_budget("embed", settings, store)
+    vectors: list[list[float]] = []
+    tokens = 0
+    cost = 0.0
+    for start in range(0, len(texts), EMBED_BATCH):
+        batch = texts[start : start + EMBED_BATCH]
+        try:
+            response = await _embed_call(model, batch, task_type, settings)
+        except Exception as exc:
+            fields = {"task": "embed", "model": model, "error_class": type(exc).__name__}
+            if classify_error(exc) == "retry":
+                log.error("embedding unavailable", extra=fields)
+                raise LLMUnavailable(f"embed on {model}: {type(exc).__name__}") from exc
+            log.error("embedding rejected", extra={**fields, "status": _status(exc)})
+            raise LLMRejected(f"embed on {model}: {type(exc).__name__}") from exc
+        batch_tokens = int(getattr(response.usage, "prompt_tokens", 0) or 0)
+        batch_cost = _embed_cost(response, model, batch_tokens, settings)
+        tokens += batch_tokens
+        cost += batch_cost
+        await store.add(batch_cost, batch_tokens, 0)
+        vectors.extend(_normalise([d["embedding"] for d in response.data]))
+    log.info(
+        "llm embed",
+        extra={"model": model, "texts": len(texts), "tokens": tokens, "cost_usd": round(cost, 8)},
+    )
+    return EmbedResult(vectors, model, tokens, round(cost, 8))
+
+
+async def _embed_call(model: str, batch: list[str], task_type: str, settings: Settings) -> Any:
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "input": batch,
+        "dimensions": settings.embed_dim,
+        "task_type": task_type,
+        "timeout": settings.llm_timeout_s,
+    }
+    if model.startswith("vertex_ai/"):
+        kwargs |= {
+            "vertex_project": settings.gcp_project,
+            "vertex_location": settings.vertex_location,
+        }
+    async for attempt in AsyncRetrying(
+        retry=retry_if_exception(lambda e: classify_error(e) == "retry"),
+        stop=stop_after_attempt(settings.llm_max_retries + 1),
+        wait=retry_wait,
+        reraise=True,
+    ):
+        with attempt:
+            return await litellm.aembedding(**kwargs)
+    raise LLMUnavailable("unreachable")
+
+
+def _embed_cost(response: Any, model: str, tokens: int, settings: Settings) -> float:
+    try:
+        return float(
+            litellm.completion_cost(
+                completion_response=response, model=model, call_type="aembedding"
+            )
+        )
+    except Exception:
+        pass
+    if model in settings.model_price_overrides:
+        return tokens * settings.model_price_overrides[model][0]
+    log.warning("no price for embedding model; cost logged as 0", extra={"model": model})
+    return 0.0
+
+
+def _normalise(rows: list[list[float]]) -> list[list[float]]:
+    matrix = np.asarray(rows, dtype=np.float64)
+    norms = np.linalg.norm(matrix, axis=1, keepdims=True)
+    return (matrix / np.where(norms == 0, 1, norms)).tolist()
 
 
 async def _handle_failure(
