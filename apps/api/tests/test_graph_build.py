@@ -93,11 +93,23 @@ def test_keep_rule():
         "tax",
         "policy",
         "scheme",
+        "instrument",
+        "entity_type",
+        "market_event",
+        "unit",
     ):
         assert apply_keep(kind)
     for kind in ("company", "person", "place", "event", "generic"):
         assert not apply_keep(kind)
     assert apply_keep("company", is_seed=True)
+
+
+def test_single_doc_concepts_need_specialization_two():
+    assert not apply_keep("jargon", doc_groups=1, specialization=1)
+    assert apply_keep("jargon", doc_groups=1, specialization=2)
+    assert apply_keep("idea", doc_groups=2, specialization=1)  # multi-doc: no floor
+    assert apply_keep("generic", is_seed=True, doc_groups=1, specialization=1)
+    assert not apply_keep("company", doc_groups=1, specialization=5)
 
 
 def test_difficulty_mapping_and_clamp():

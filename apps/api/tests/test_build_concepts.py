@@ -53,9 +53,16 @@ def test_doc_freq_counts_a_duplicate_group_once():
     sources = {"a": "et", "b": "businessline", "c": "mint", "d": "bbc"}
     groups = {"a": 0, "b": 0, "c": 1, "d": 2}
     cands = collect_candidates(corpus(docs, sources, groups), {})
-    # repo rate appears in two docs but one duplicate group -> below the >=2 rule
-    assert "repo rate" not in cands
+    # repo rate appears in two docs but one duplicate group -> doc_freq 1
+    assert len(cands["repo rate"].groups) == 1
     assert len(cands["yield curve"].groups) == 2
+
+
+def test_single_doc_candidates_are_collected():
+    docs = [doc("a", [demand("d0", "Notional amount", "notional amount")])]
+    cands = collect_candidates(corpus(docs, {"a": "et"}, {"a": 0}), {})
+    assert set(cands) == {"notional amount"}
+    assert len(cands["notional amount"].groups) == 1
 
 
 def test_seed_kept_even_without_mentions_and_carries_qid():

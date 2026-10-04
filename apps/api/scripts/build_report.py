@@ -10,7 +10,10 @@ from app.graph import build
 from app.graph.graph import ConceptGraph
 from app.graph.linking import EMBED_TYPES, Link, sentence_around
 from app.graph.models import ConceptGraphFile
+from scripts.build_compare import INFLATED_NOTE, Previous, render_comparison
 from scripts.ingest_corpus import STATE_FILE, load_state
+
+__all__ = ["BuildResult", "DupResult", "Previous", "render"]
 
 if TYPE_CHECKING:
     from scripts.build_concepts import Corpus, DedupeResult, LinkRun
@@ -32,6 +35,7 @@ class BuildResult:
     dropped_kinds: dict[str, int]
     removed_edges: list[tuple[str, str]]
     with_qid: int
+    fates: dict[str, str]  # normalised candidate label -> kept / dropped reason
 
 
 def _pct(scores: list[float]) -> str:
@@ -52,6 +56,7 @@ def render(
     link_run: "LinkRun",
     cache: Any,
     ledger: list,
+    prev: Previous | None = None,
 ) -> str:
     rng = random.Random(SEED)
     out = [f"# M2 concept graph report — graph version {graph.version}"]
@@ -63,6 +68,10 @@ def render(
     out += _coverage(corpus, link_run)
     out += _spot_check(corpus, graph, link_run, rng)
     out += _costs(corpus, cache, ledger)
+    if prev is not None:
+        out += render_comparison(
+            corpus=corpus, graph=graph, result=result, link_run=link_run, prev=prev, rng=rng
+        )
     return "\n".join(out) + "\n"
 
 
@@ -192,6 +201,7 @@ def _coverage(corpus: "Corpus", link_run: "LinkRun") -> list[str]:
             if link.method == "unlinked":
                 unlinked[d.label] += 1
     out = _section("Linking coverage (concept and term demands)")
+    out += [INFLATED_NOTE, ""]
     out += ["| source | total | alias | confirmed | unlinked |", "|---|---|---|---|---|"]
     for source in [*sorted(s for s in counts if s != "ALL"), "ALL"]:
         c = counts[source]

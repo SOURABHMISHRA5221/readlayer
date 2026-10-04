@@ -23,6 +23,12 @@ KEEP_EXAMPLES = (
     "GST",
     "RoDTEP",
     "PLI scheme",
+    "hedge fund",
+    "bank run",
+    "crore",
+    "brokerage firm",
+    "subsidiary",
+    "bond sell-off",
 )
 
 
@@ -35,6 +41,7 @@ def test_prompt_states_the_keep_and_drop_contract():
     for example in KEEP_EXAMPLES:
         assert example in text, example
     assert 'never as "company" or "event"' in text
+    assert 'never "company", "event" or "generic"' in text
     assert "{{concepts}}" in prompt.user and "<<<CONTENT>>>" in prompt.user
 
 
@@ -60,6 +67,12 @@ KINDS_BY_LABEL = {
     "Inflation targeting": "policy",
     "Basis point": "jargon",
     "Repo rate": "idea",
+    "Hedge fund": "entity_type",
+    "Bank run": "market_event",
+    "Crore": "unit",
+    "Brokerage firm": "entity_type",
+    "Subsidiary": "entity_type",
+    "Bond sell-off": "market_event",
     "Tata Motors": "company",
     "Jerome Powell": "person",
     "Kerala": "place",
@@ -101,6 +114,12 @@ async def test_institutions_kept_companies_and_people_dropped():
         "Inflation targeting",
         "Basis point",
         "Repo rate",
+        "Hedge fund",
+        "Bank run",
+        "Crore",
+        "Brokerage firm",
+        "Subsidiary",
+        "Bond sell-off",
     }
     assert len(ledger) == 1 and runner.calls[0]["task"] == "concept_define"
 
