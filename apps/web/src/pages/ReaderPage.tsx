@@ -5,6 +5,7 @@ import { ArticleImage } from "../components/ArticleImage";
 import { ConceptDrawer, ConceptRail, EndBlock } from "../components/ConceptRail";
 import { External } from "../components/Icons";
 import { ReaderBar } from "../components/ReaderBar";
+import { sendRecEvent } from "../components/UpNext";
 import { SourceMark } from "../components/SourceMark";
 import { ERROR_COPY, StateView } from "../components/StateView";
 import { useAnnotator } from "../hooks/useAnnotator";
@@ -31,6 +32,34 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   const articleRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+  const recId = url.searchParams.get("rec");
+  const [endVisible, setEndVisible] = useState(false);
+
+  // The end block lists the same concepts, so the floating drawer steps aside there.
+  useEffect(() => {
+    const el = endRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => setEndVisible(!!entry?.isIntersecting));
+    observer.observe(el);
+    return () => observer.disconnect();
+  });
+  const completedRef = useRef<string | null>(null);
+
+  // A recommended library article read to the end counts as a completion for ranking (once).
+  useEffect(() => {
+    const el = endRef.current;
+    if (!recId || !el || completedRef.current === recId) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting && completedRef.current !== recId) {
+        completedRef.current = recId;
+        sendRecEvent(persona, "rec_completed", recId);
+        observer.disconnect();
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  });
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -144,11 +173,15 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
               <ArticleBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} />
               {wide && annotations && handle.resolved && <ConceptRail items={marked} body={bodyRef} {...link} />}
             </div>
-            {annotations && handle.resolved && <EndBlock items={marked} {...link} />}
+            {annotations && handle.resolved && (
+              <div ref={endRef}>
+                <EndBlock items={marked} contentId={article.id} persona={persona} {...link} />
+              </div>
+            )}
           </div>
         )}
       </main>
-      {!wide && <ConceptDrawer items={marked} {...link} />}
+      {!wide && <ConceptDrawer items={marked} hidden={endVisible} {...link} />}
     </>
   );
 }

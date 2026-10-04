@@ -64,3 +64,22 @@ export const Close = (p: IconProps) => (
     <path d="m5 5 10 10M15 5 5 15" />
   </Icon>
 );
+export const ArticleIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3.5" y="3" width="13" height="14" rx="2" />
+    <path d="M6.5 7h7M6.5 10h7M6.5 13h4" />
+  </Icon>
+);
+export const PlayIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="2.5" y="4" width="15" height="12" rx="3" />
+    <path d="m8.5 7.5 4 2.5-4 2.5z" fill="currentColor" />
+  </Icon>
+);
+export const HeadphonesIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3.5 13v-2.5a6.5 6.5 0 0 1 13 0V13" />
+    <rect x="3" y="12" width="3.5" height="5" rx="1.2" />
+    <rect x="13.5" y="12" width="3.5" height="5" rx="1.2" />
+  </Icon>
+);

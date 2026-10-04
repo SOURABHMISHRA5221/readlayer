@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -36,6 +36,16 @@ class Settings(BaseSettings):
     model_price_overrides: dict[str, tuple[float, float]] = Field(default_factory=dict)
 
     uid_hash_salt: str = ""
+
+    # Recommendations (M6.5). Keys stay server-side; SecretStr keeps them out of reprs and logs.
+    tavily_api_key: SecretStr = SecretStr("")
+    youtube_api_key: SecretStr = SecretStr("")
+    search_daily_cap: int = 300  # outgoing search calls per UTC day, all providers
+    youtube_search_daily_cap: int = 90  # YouTube's search.list has its own 100/day bucket
+    search_timeout_s: float = 10.0
+    recs_cache_ttl_h: float = 48.0
+    # New URLs a reader may ingest per UTC day (CLAUDE.md cost guardrails).
+    ingest_daily_cap: int = 20
 
     # Local dev only: every request is the fixed dev uid, no token check. Set by `make dev`.
     dev_auth_bypass: bool = False

@@ -2,6 +2,8 @@ import type { CardAnnotation } from "@readlayer/annotator";
 import { useLayoutEffect, useRef, useState, type RefObject } from "react";
 
 import { plural } from "../lib/format";
+import type { PersonaKey } from "../lib/personas";
+import { UpNext } from "./UpNext";
 
 interface ConceptLinkProps {
   items: CardAnnotation[];
@@ -90,12 +92,12 @@ export function ConceptChip({
 }
 
 /** Below 1200px: the same concepts behind a bottom "N concepts for you" drawer. */
-export function ConceptDrawer({ items, ...link }: ConceptLinkProps) {
+export function ConceptDrawer({ items, hidden: tucked = false, ...link }: ConceptLinkProps & { hidden?: boolean }) {
   const [open, setOpen] = useState(false);
   if (!items.length) return null;
-  const hidden = link.active !== null;
+  const hidden = tucked || link.active !== null;
   return (
-    <div className="drawer" data-open={open} data-hidden={hidden}>
+    <div className="drawer" data-open={open} data-hidden={hidden} inert={hidden}>
       <button
         type="button"
         className="drawer__toggle"
@@ -137,7 +139,7 @@ export function ConceptDrawer({ items, ...link }: ConceptLinkProps) {
   );
 }
 
-export function EndBlock({ items, ...link }: ConceptLinkProps) {
+export function EndBlock({ items, contentId, persona, ...link }: ConceptLinkProps & { contentId: string; persona: PersonaKey }) {
   return (
     <section className="end" aria-labelledby="end-title">
       <div className="end__met">
@@ -161,12 +163,7 @@ export function EndBlock({ items, ...link }: ConceptLinkProps) {
           </ul>
         )}
       </div>
-      <div className="end__next" aria-label="Up next">
-        <p className="eyebrow">Up next</p>
-        <p className="end__next-body">
-          Reading suggestions that build on what you just met will appear here.
-        </p>
-      </div>
+      <UpNext contentId={contentId} persona={persona} />
     </section>
   );
 }

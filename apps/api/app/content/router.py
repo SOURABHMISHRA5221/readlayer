@@ -3,7 +3,6 @@
 Annotations come from the PLACEHOLDER scorer (app/scoring/placeholder.py) until M4.
 """
 
-import asyncio
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -11,6 +10,7 @@ from pydantic import BaseModel
 
 from app.auth import current_uid
 from app.config import Settings, get_settings
+from app.content import catalog
 from app.content.summary import article_domain
 from app.graph.loader import get_graph
 from app.ingest.models import ContentDoc
@@ -94,39 +94,29 @@ class AnnotationsResponse(BaseModel):
     annotations: list[AnnotationOut]
 
 
-# Every stored doc, loaded once per process (dev slice; ~300 docs). Library rows per
-# (persona, density) are pure computation over these and cached alongside.
-_docs: list[ContentDoc] | None = None
-_rows: dict[tuple[PersonaKey, Density], list[ContentSummary]] = {}
-_lock = asyncio.Lock()
+# Library rows per (catalog version, persona, density): pure computation over the shared
+# catalog, cached because the list endpoint is hit on every library view.
+_rows: dict[tuple[int, PersonaKey, Density], list[ContentSummary]] = {}
 
 
 def reset_catalog() -> None:
-    global _docs
-    _docs = None
+    catalog.reset()
     _rows.clear()
 
 
 async def _summaries(persona: PersonaKey, density: Density) -> list[ContentSummary]:
-    global _docs
-    async with _lock:
-        if _docs is None:
-            docs = [doc async for doc in get_content_store().iter_all()]
-            _docs = sorted(docs, key=lambda d: (d.title.casefold(), d.content_id))
-            _rows.clear()
-        key = (persona, density)
-        if key not in _rows:
-            graph = get_graph()
-            theta, threshold = PERSONAS[persona].theta, DENSITY_THRESHOLDS[density]
-            _rows[key] = [
-                _summary(
-                    d,
-                    article_domain(d, graph),
-                    len(placeholder.annotate(d, graph, theta, threshold)),
-                )
-                for d in _docs
-            ]
-        return _rows[key]
+    docs = await catalog.all_docs()
+    key = (catalog.version(), persona, density)
+    if key not in _rows:
+        graph = get_graph()
+        theta, threshold = PERSONAS[persona].theta, DENSITY_THRESHOLDS[density]
+        _rows[key] = [
+            _summary(
+                d, article_domain(d, graph), len(placeholder.annotate(d, graph, theta, threshold))
+            )
+            for d in docs
+        ]
+    return _rows[key]
 
 
 def _summary(doc: ContentDoc, domain: str | None, concepts_new: int) -> ContentSummary:
