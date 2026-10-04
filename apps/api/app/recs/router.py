@@ -317,7 +317,7 @@ async def open_web_article(
             "Use “Open original” for this one, or try again tomorrow.",
         )
     try:
-        doc = await ingest_url(body.url)
+        doc = await ingest_url(body.url, source="user_ingested")
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
     except llm.BudgetExceeded:

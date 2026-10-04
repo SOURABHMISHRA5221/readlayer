@@ -25,7 +25,8 @@ log = logging.getLogger("app.ingest")
 MIN_ARTICLE_WORDS = 80  # below this it's a paywall stub, a gallery or a failed extraction
 
 
-async def ingest_url(url: str) -> ContentDoc:
+async def ingest_url(url: str, source: Literal["fetch", "user_ingested"] = "fetch") -> ContentDoc:
+    """Fetch, extract and analyse a URL once. A cached doc keeps the source it was made with."""
     fetch.validate_url(url)
     content_id = url_hash(url)
     if cached := await _cached(content_id):
@@ -41,7 +42,7 @@ async def ingest_url(url: str) -> ContentDoc:
         title,
         extracted.site,
         extracted.paragraphs,
-        "fetch",
+        source,
         extracted.metadata,
     )
 
@@ -70,7 +71,7 @@ async def _build(
     title: str,
     site: str,
     texts: list[str],
-    source: Literal["fetch", "extension"],
+    source: Literal["fetch", "extension", "user_ingested"],
     metadata: Metadata | None = None,
 ) -> ContentDoc:
     if sum(len(t.split()) for t in texts) < MIN_ARTICLE_WORDS:

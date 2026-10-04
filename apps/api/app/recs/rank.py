@@ -48,8 +48,9 @@ UNDATED_FRESHNESS = 0.85
 CLICKED_NOT_SEEN = 0.3
 OFTEN_SHOWN = 3
 OFTEN_SHOWN_NOT_SEEN = 0.8
-MAX_ITEMS = 6
-MAX_PER_FORMAT = 2
+# Slots per format, most preferred first; MAX_ITEMS is their sum.
+FORMAT_QUOTAS = (3, 2, 1)
+MAX_ITEMS = sum(FORMAT_QUOTAS)
 
 LengthPref = Literal["short", "long"] | None
 SeenState = Literal["clicked", "completed", "dismissed"]
@@ -165,33 +166,75 @@ def score(
     )
 
 
+def format_order(
+    signals: ReaderSignals, prior: FormatPrior, explicit: Format | None = None
+) -> list[Format]:
+    """Formats from most to least preferred: the explicit choice first when there is one,
+    then by this reader's affinity (ties in FORMATS order, so it is deterministic)."""
+    affinity = {
+        f: format_affinity(f, prior, signals.formats.get(f, FormatStats())) for f in FORMATS
+    }
+    order = sorted(FORMATS, key=lambda f: (-affinity[f], FORMATS.index(f)))
+    if explicit is not None:
+        order = [explicit, *(f for f in order if f != explicit)]
+    return order
+
+
+def format_quotas(order: Sequence[Format], available: Mapping[Format, int]) -> dict[Format, int]:
+    """FORMAT_QUOTAS (3/2/1) down the preference order. A format with too few qualifying
+    results passes its spare slots to the next format in order (wrapping round)."""
+    quotas = {f: min(q, available.get(f, 0)) for f, q in zip(order, FORMAT_QUOTAS, strict=True)}
+    for i, f in enumerate(order):
+        spare = FORMAT_QUOTAS[i] - quotas[f]
+        for step in range(1, len(order)):
+            if spare == 0:
+                break
+            nxt = order[(i + step) % len(order)]
+            extra = min(spare, available.get(nxt, 0) - quotas[nxt])
+            if extra > 0:
+                quotas[nxt] += extra
+                spare -= extra
+    return quotas
+
+
 def select(
     candidates: Sequence[Candidate],
     signals: ReaderSignals,
     prior: FormatPrior,
     now: datetime,
     explicit: Format | None = None,
-    k: int = MAX_ITEMS,
-    per_format: int = MAX_PER_FORMAT,
 ) -> list[tuple[Candidate, float]]:
-    """Greedy: best score first, one entry per id, at most `per_format` of each format.
-    The best library item and the best web item are seated first, so the list mixes both
-    whenever both exist; the final order is by score."""
+    """Up to MAX_ITEMS: the reader's preferred format gets 3 slots, the next two 2 and 1
+    (spare slots move down the order). Within a format, best score first, one entry per id.
+    If the picks lack a library or a web item while one qualifies, it replaces the weakest
+    pick of its own format, so the list mixes both. Final order is by score."""
     scored = sorted(
         ((c, score(c, signals, prior, now, explicit)) for c in candidates),
         key=lambda cs: (-cs[1], cs[0].id),
     )
-    scored = [cs for cs in scored if cs[1] > 0]
-    seeds = [next((cs for cs in scored if cs[0].kind == kind), None) for kind in ("library", "web")]
-    taken: list[tuple[Candidate, float]] = []
-    per: dict[Format, int] = dict.fromkeys(FORMATS, 0)
-    ids: set[str] = set()
-    for c, s in [cs for cs in seeds if cs] + scored:
-        if c.id in ids or per[c.format] >= per_format:
+    best: dict[str, tuple[Candidate, float]] = {}
+    for c, s in scored:
+        if s > 0 and c.id not in best:
+            best[c.id] = (c, s)
+    by_format: dict[Format, list[tuple[Candidate, float]]] = {f: [] for f in FORMATS}
+    for cs in best.values():
+        by_format[cs[0].format].append(cs)
+
+    quotas = format_quotas(
+        format_order(signals, prior, explicit), {f: len(v) for f, v in by_format.items()}
+    )
+    picks = {f: by_format[f][: quotas[f]] for f in FORMATS}
+
+    for kind in ("library", "web"):
+        if any(c.kind == kind for chosen in picks.values() for c, _ in chosen):
             continue
-        taken.append((c, s))
-        ids.add(c.id)
-        per[c.format] += 1
-        if len(taken) == k:
-            break
+        wanted = next((cs for cs in best.values() if cs[0].kind == kind), None)
+        if wanted is None or not picks[wanted[0].format]:
+            continue
+        chosen = picks[wanted[0].format]
+        # lowest score; among ties the one ranked last
+        weakest = max(range(len(chosen)), key=lambda i: (-chosen[i][1], i))
+        chosen[weakest] = wanted
+
+    taken = [cs for chosen in picks.values() for cs in chosen]
     return sorted(taken, key=lambda cs: (-cs[1], cs[0].id))

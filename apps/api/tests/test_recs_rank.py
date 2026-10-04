@@ -76,14 +76,65 @@ def test_not_seen():
     assert [rank.not_seen(i, signals) for i in "abcde"] == [0.0, 0.0, 0.3, 0.8, 1.0]
 
 
-def test_select_caps_per_format_and_total():
+def plenty():
     cands = [cand(f"a{i}", "article", relevance=1 - i / 100) for i in range(5)]
     cands += [cand(f"v{i}", "video", relevance=0.5) for i in range(5)]
     cands += [cand(f"p{i}", "podcast", relevance=0.4) for i in range(5)]
-    chosen = rank.select(cands, ReaderSignals(), NEUTRAL, NOW)
+    return cands
+
+
+def mix(chosen):
     formats = [c.format for c, _ in chosen]
-    assert len(chosen) == 6 and all(formats.count(f) == 2 for f in ("article", "video", "podcast"))
-    assert [c.id for c, _ in chosen][:2] == ["a0", "a1"]
+    return {f: formats.count(f) for f in ("article", "video", "podcast")}
+
+
+def test_preferred_format_gets_three_slots_then_two_then_one():
+    chosen = rank.select(plenty(), ReaderSignals(), NEUTRAL, NOW)  # tie → article, video, podcast
+    assert len(chosen) == 6 and mix(chosen) == {"article": 3, "video": 2, "podcast": 1}
+    assert [c.id for c, _ in chosen][:3] == ["a0", "a1", "a2"]
+
+
+def test_explicit_preference_and_affinity_set_the_order():
+    podcast_first = rank.select(plenty(), ReaderSignals(), NEUTRAL, NOW, explicit="podcast")
+    assert mix(podcast_first)["podcast"] == 3
+    # an affinity order without an explicit choice: video liked, article disliked
+    signals = ReaderSignals(
+        formats={
+            "video": FormatStats(shown=4, clicks=4),
+            "article": FormatStats(shown=4, dismissals=4),
+        }
+    )
+    assert rank.format_order(signals, NEUTRAL) == ["video", "podcast", "article"]
+    assert mix(rank.select(plenty(), signals, NEUTRAL, NOW)) == {
+        "video": 3,
+        "podcast": 2,
+        "article": 1,
+    }
+
+
+def test_short_formats_pass_their_slots_to_the_next_format():
+    order = ["video", "article", "podcast"]
+    assert rank.format_quotas(order, {"video": 1, "article": 9, "podcast": 9}) == {
+        "video": 1,
+        "article": 4,
+        "podcast": 1,
+    }
+    assert rank.format_quotas(order, {"video": 9, "article": 0, "podcast": 9}) == {
+        "video": 3,
+        "article": 0,
+        "podcast": 3,
+    }
+    # the last format's spare wraps round to the most preferred one
+    assert rank.format_quotas(order, {"video": 9, "article": 9, "podcast": 0}) == {
+        "video": 4,
+        "article": 2,
+        "podcast": 0,
+    }
+    assert rank.format_quotas(order, {"video": 1, "article": 1, "podcast": 0}) == {
+        "video": 1,
+        "article": 1,
+        "podcast": 0,
+    }
 
 
 def test_select_skips_seen_and_duplicates_and_reorders_on_dismissal():
@@ -110,8 +161,12 @@ def test_persona_defaults_change_the_order():
 
 
 def test_select_mixes_library_and_web_when_both_exist():
-    lib = [cand(f"l{i}", "article", relevance=0.3) for i in range(3)]
-    web = [Candidate(f"w{i}", "explainer", "article", 0.9, None, None, "web") for i in range(3)]
-    chosen = rank.select(lib + web, ReaderSignals(), NEUTRAL, NOW)
-    assert {c.kind for c, _ in chosen} == {"library", "web"}
-    assert [c.id for c, _ in chosen] == ["w0", "l0"]  # 2 articles max, still ordered by score
+    lib = [cand("l0", "article", relevance=0.3)]
+    web = [Candidate(f"w{i}", "explainer", "article", 0.9, None, None, "web") for i in range(4)]
+    videos = [Candidate(f"v{i}", "explainer", "video", 0.8, None, None, "web") for i in range(3)]
+    chosen = rank.select(lib + web + videos, ReaderSignals(), NEUTRAL, NOW)
+    ids = [c.id for c, _ in chosen]
+    # article 3 + the podcast slot passed on = 4; the library item replaces the weakest article
+    assert mix(chosen) == {"article": 4, "video": 2, "podcast": 0}
+    assert "l0" in ids and "w3" not in ids
+    assert ids == ["w0", "w1", "w2", "v0", "v1", "l0"]  # still ordered by score

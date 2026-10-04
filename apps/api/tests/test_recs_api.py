@@ -96,7 +96,10 @@ def test_first_view_is_library_then_web_after_poll(env):
         get_recs(client, persona=persona)
         assert {i["kind"] for i in get_recs(client, persona=persona)["items"]} == {"library", "web"}
     formats = [i["format"] for i in second["items"]]
-    assert len(formats) <= 6 and all(formats.count(f) <= 2 for f in set(formats))
+    assert len(formats) == 6
+    # newcomer prefers video: it gets up to 3 slots, and whatever it can't fill moves on
+    videos = formats.count("video")
+    assert 1 <= videos <= 3 and all(formats.count(f) <= 6 - videos for f in ("article", "podcast"))
     assert all(q.endswith(("explained", "podcast episode")) for q in provider.queries)
     calls_after = sum(calls.calls.values())
     get_recs(client)
@@ -163,9 +166,12 @@ def test_open_ingests_within_the_daily_cap(env, monkeypatch):
     monkeypatch.setenv("INGEST_DAILY_CAP", "1")
     config.get_settings.cache_clear()
 
-    async def fake_ingest(url):
+    sources = []
+
+    async def fake_ingest(url, source="fetch"):
         from app.ingest.urls import url_hash
 
+        sources.append(source)
         d = doc(url_hash(url), "Opened", "explainer.example", [], url=url)
         store.docs[d.content_id] = d
         return d
@@ -173,6 +179,7 @@ def test_open_ingests_within_the_daily_cap(env, monkeypatch):
     monkeypatch.setattr(recs_router, "ingest_url", fake_ingest)
     first = client.post("/v1/recs/open", json={"url": "https://explainer.example/yield"})
     assert first.status_code == 200 and first.json()["new"] is True
+    assert sources == ["user_ingested"]  # reader-opened pages never become corpus data
     again = client.post("/v1/recs/open", json={"url": "https://explainer.example/yield"})
     assert again.status_code == 200 and again.json()["new"] is False  # cached: free
     capped = client.post("/v1/recs/open", json={"url": "https://explainer.example/other"})
