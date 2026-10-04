@@ -24,7 +24,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 | docs | merged | #8 | DESIGN §2 brought up to date with the M2.1 build |
 | M2.2 | **open issue** | #6 | Online concept growth + linker tuning, target ≥ 75% held-out linking. Not started |
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
-| M3 | done, branch `m3` (not pushed) | — | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
+| M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
 | M4, M5, rest of M6, M7, M8, M9 | not started | — | See "Next actions" |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
@@ -50,7 +50,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 
 | Piece | Where it runs | State |
 |---|---|---|
-| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M3 build**: revision `readlayer-api-00005-kmf` (same image as `-00003-xtw`), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
+| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M3 build**: revision `readlayer-api-00010-tiw` (lazy imports, startup CPU boost), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
 | `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live**: https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
 | `packages/annotator` | Bundled into the web app (and the extension in M8) | Final for spans; no paragraph markers / pre-read yet |
@@ -131,7 +131,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Severity | Issue |
 |---|---|
 | **High** | Local `LLM_DAILY_BUDGET_USD` is **25** (raised for M2 builds); you are setting it back to 8 (decision 2). Cloud Run uses 8 (`deploy.env.yaml`) |
-| **High** | **Cold start ≈ 22 s** on Cloud Run (min instances 0): a reader arriving after scale-to-zero waits that long for the first response. Before judging: startup CPU boost, lazier LiteLLM/spaCy imports, min instances 1 (§11) |
+| Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
 | Medium | `concepts.json` in GCS lacks `doc_freq` until `uv run python -m scripts.add_doc_freq --upload` runs (the auto-mode classifier denied it; your call). Local copy is patched. Without it a new reader's knowledge map seeds from arbitrary concepts instead of the most frequent |
@@ -256,7 +256,7 @@ quota is free within the daily buckets.
 | When | Action |
 |---|---|
 | Oct 5 | Set `LLM_DAILY_BUDGET_USD` back to 8 in `apps/api/.env` (you, by hand) |
-| Oct 5 | Review and merge branch `m3` (commit `M3: …`; push and PR when you say). Optionally run `scripts.add_doc_freq --upload` |
+| Oct 5 | Run `scripts.add_doc_freq --upload` (yours). After 00:00 UTC: measure the spaCy load on a first new article |
 | Oct 7–8 | **M4** real gap scorer: replace `app/scoring/placeholder.py`; personas become seeded reader graphs; worked-example test; p95 < 150 ms |
 | Oct 8–9 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
 | Oct 9 | **Rest of M6:** two-phase loading for "Open here", "This is wrong" button, paragraph markers, pre-read card, event batching to /v1/events |
@@ -294,7 +294,7 @@ No decisions are open.
 ## 11. M3 acceptance (verified 2026-10-04/05)
 
 **Live URLs:** web https://readlayer-sourabh-26.web.app · API
-https://readlayer-api-d2sfihz3za-el.a.run.app (revision `readlayer-api-00005-kmf`).
+https://readlayer-api-d2sfihz3za-el.a.run.app (revision `readlayer-api-00010-tiw`).
 
 | Check | Result |
 |---|---|
@@ -318,13 +318,22 @@ https://readlayer-api-d2sfihz3za-el.a.run.app (revision `readlayer-api-00005-kmf
 | 90-day TTL on raw events | Enabled (`events.expire_at`) |
 | LLM budget guard on the live path | Pass, by accident: "Open here" on a new URL got 503 `llm_budget_exceeded` (today's ledger $10.67 > prod cap $8) and the ingest slot was refunded |
 
-**Cold start.** From Cloud Run's "Starting new instance" to ready: **≈ 22 s** (23.6 s and 21.9 s
-on two deploys). About 21 s of it comes before uvicorn starts (image start + Python imports:
-LiteLLM, Google SDKs, spaCy library) on 1 vCPU; app startup itself is 0.55 s, of which the GCS
-graph load is 0.55 s. Warm `/health` 0.05–0.12 s; first library list per instance ≈ 2.1 s (loads
-309 docs), then 0.15–0.3 s. **spaCy model load not measured yet** (it loads on the first new
-article; the budget refusal stopped that run) — rerun "Open here" on a new URL after 00:00 UTC
-and read the `spacy loaded` log line. Options before judging: Cloud Run startup CPU boost,
-lazier imports of LiteLLM/spaCy, and min instances 1 (already planned for Oct 19 – Nov 6).
+**Cold start** (Cloud Run "Starting new instance" → startup probe succeeded, 1 vCPU):
+
+| Build | Startup CPU boost | Start → ready |
+|---|---|---|
+| M3 first deploy (`-00003`, `-00005`), everything imported at startup | on (gcloud's default; already on) | **23.6 s, 21.9 s** |
+| Same image, boost off (`-00009`, test revision, deleted) | off | 21.3 s |
+| Lazy ingestion imports + LiteLLM (`-00010`, live) | on | **6.0 s** |
+
+The ~21 s was almost all before uvicorn started: reading spaCy, LiteLLM and friends off the image
+the first time, not CPU (boost alone saved < 1 s). Read paths now never import spaCy, trafilatura,
+wordfreq or LiteLLM (`tests/test_lazy_imports.py` checks it in a fresh interpreter); locally
+`import app.main` went from 1.6 s to 0.33 s. App startup (graph load from GCS) is ≈ 0.5 s. Warm
+`/health` 0.05–0.12 s; first library list per instance ≈ 2.1 s (loads 309 docs), then 0.15–0.3 s.
+Trade-off: the first new article on a fresh instance now also pays those imports (on top of the
+24–55 s ingest). **spaCy model load not measured yet**: it loads on the first new article and the
+one attempt hit the LLM budget refusal; rerun "Open here" on a new URL after 00:00 UTC and read
+the `spacy loaded` log line. Min instances 1 during judging (Oct 19 – Nov 6) removes cold starts.
 
 **M3 spend:** $0 LLM (the one ingest attempt was refused). Search: 36 calls, all anonymous.

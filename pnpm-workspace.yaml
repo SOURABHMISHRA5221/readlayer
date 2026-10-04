@@ -4,5 +4,7 @@ packages:
   - packages/annotator
 allowBuilds:
   esbuild: true
+  # Its postinstall only writes auto-init defaults; we pass the Firebase config explicitly.
+  '@firebase/util': false
   protobufjs: false
   re2: false
