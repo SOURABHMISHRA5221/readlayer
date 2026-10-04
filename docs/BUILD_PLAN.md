@@ -92,12 +92,23 @@ folded into the milestones it belongs to, not saved for the end.
 > PATCH /v1/me/graph/{concept_id}, GET /v1/me/export and DELETE /v1/me per DESIGN §11.4. Add
 > Firestore security rules that deny all client access, and a TTL policy on raw events (90 days).
 > Unit-test every formula, including forgetting after 90 days halving the distance to the prior.
+> Then the reading-profile API per DESIGN §15.2: band/band_prev/band_changed_at on KNOWS
+> updates, `users/{uid}/weekly/{iso_week}` stats, `doc_freq` in concepts.json, GET /v1/me/profile
+> (summary from the deterministic template in §15.1, no LLM call), GET /v1/me/graph?domain=X
+> (≤ 60-node subgraph: most relevant concepts plus prerequisite closure; `q` search),
+> PATCH /v1/me/settings, and `learning_paused` honoured in POST /v1/events.
 
 **Acceptance**
 - `reader/` fully covered by tests; replaying an event twice changes nothing the second time.
-- Export returns every user document; delete leaves no document under `users/{uid}` and removes
-  the Auth user (integration test against the Firestore emulator).
+- Export returns every user document (including weekly stats and settings); delete leaves no
+  document under `users/{uid}` and removes the Auth user (integration test against the Firestore
+  emulator).
 - Logs contain `uid_hash` and never an email or token.
+- Summary template: same inputs give the same text; a test asserts no LLM call on the profile path.
+- GET /v1/me/graph?domain=X never returns more than 60 nodes, every edge's endpoints are in the
+  node set, and the subgraph is acyclic.
+- With `learning_paused` set, POST /v1/events returns `applied: false` and changes no document;
+  PATCH /v1/me/graph still applies.
 
 ---
 
@@ -147,18 +158,37 @@ folded into the milestones it belongs to, not saved for the end.
 
 ---
 
-## M7 — Onboarding, consent, calibration, graph page (Oct 11)
+## M7 — Onboarding, consent, calibration, reading profile page (Oct 11)
 **Prompt**
 > Implement /v1/onboarding and /v1/calibration/next|answer per docs/DESIGN.md sections 4 and 8.
 > In apps/web: a consent screen (what we collect, why, export/delete links) per DESIGN §11.4,
 > then a 90-second onboarding flow (field → interests → domain comfort → 8 calibration taps →
-> optional liked links), and a "What I think you know" page grouped by domain with bands, user
-> corrections, an annotations-per-1,000-words trend, and Export / Delete my data buttons.
+> optional liked links). Then the reading profile page per DESIGN §15.1: summary card, ability vs
+> interest bars, per-domain knowledge map (Cytoscape.js + dagre, dynamically imported, ≤ 60
+> nodes, search, node card with last 3 evidence items and I know this / I don't, plus a
+> keyboard-navigable list view of the same subgraph), this week's band changes and the
+> annotations-per-1,000-words trend, editable THINKS_IN domains, Export / Delete / Pause learning.
+> Then "Edit profile with a prompt" per DESIGN §15.3: `profile_edit` route on MODEL_FAST with a
+> versioned prompt file, whitelisted ops only, concept names resolved through the graph linker,
+> preview diff before Apply, profile_edit events with undo, AI-processing notice, no user id in
+> the prompt, 10 edits/day/user. Add `explanation_style` to the explain prompt inputs and the
+> explanation cache key.
 
 **Acceptance**
 - Two fresh accounts (software engineer vs commerce student) get visibly different annotations
   and analogies on the same article.
 - Delete my data signs the user out and a fresh sign-in starts onboarding again.
+- Profile page is fully keyboard accessible: every control reachable and operable with Tab,
+  Enter and Escape; the knowledge map is usable through its list view; node card is a dialog
+  that returns focus; no serious or critical axe violations.
+- Readable on mobile: no horizontal scroll at 320 px; the map falls back to the list view below
+  640 px; tap targets ≥ 44 px.
+- Profile edit tests pass: off-schema or malicious model output rejected as a whole, unknown
+  concept names reported as "couldn't find", apply then undo restores α, β, θ and settings
+  exactly, the 11th parse request in a day returns 429.
+- "I'm a backend engineer, I know options well, keep explanations short" previews and applies the
+  expected ops; nothing changes before Apply; the next explanation is shorter and is a cache
+  miss for the new style.
 
 **Gate:** if M6–M7 are not solid by end of Oct 11, skip M8 and spend Oct 12–14 on polish.
 

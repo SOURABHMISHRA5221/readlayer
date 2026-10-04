@@ -94,7 +94,7 @@ apps/api/scripts/    corpus ingestion, concept-graph build, demo persona seeding
 ## Cost guardrails (GCP budget is $300 total)
 - Cloud Run: min instances 0 (except during judging), max instances ≤ 3.
 - Per-user daily cap on ingesting new URLs (default 20). Cache everything by URL hash.
-- Explanation cache key: `(span_hash, knowledge_band, thinks_in_domain)`.
+- Explanation cache key: `(span_hash, knowledge_band, thinks_in_domain, explanation_style)`.
 - Prefer `MODEL_FAST` unless the output is user-visible prose. Exception: `link_confirm`
   (entity linking) uses `MODEL_QUALITY`, which met the 95% precision target where `MODEL_FAST`
   did not (M2: 97% vs 89%).
