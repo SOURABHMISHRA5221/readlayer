@@ -1,6 +1,7 @@
 """Daily LLM spend ledger used by the budget guard in app/llm.py.
 
-Layout: ops/spend/days/{yyyy-mm-dd} (UTC) with summed cost, tokens and call count.
+Layout: ops/spend/days/{yyyy-mm-dd} (UTC) with summed cost, tokens, call count and
+`llm_fallbacks` (so a silent quality drop shows up).
 """
 
 from datetime import UTC, datetime
@@ -17,6 +18,8 @@ class SpendStore(Protocol):
     async def get_today(self) -> float: ...
 
     async def add(self, cost_usd: float, tokens_in: int, tokens_out: int) -> None: ...
+
+    async def add_fallback(self) -> None: ...
 
 
 class FirestoreSpendStore:
@@ -42,6 +45,9 @@ class FirestoreSpendStore:
             merge=True,
         )
 
+    async def add_fallback(self) -> None:
+        await self._doc().set({"llm_fallbacks": firestore.Increment(1)}, merge=True)
+
 
 class InMemorySpendStore:
     """For tests and local runs without Firestore."""
@@ -49,6 +55,7 @@ class InMemorySpendStore:
     def __init__(self, initial_usd: float = 0.0) -> None:
         self.total = initial_usd
         self.calls = 0
+        self.fallbacks = 0
 
     async def get_today(self) -> float:
         return self.total
@@ -56,3 +63,6 @@ class InMemorySpendStore:
     async def add(self, cost_usd: float, tokens_in: int, tokens_out: int) -> None:
         self.total += cost_usd
         self.calls += 1
+
+    async def add_fallback(self) -> None:
+        self.fallbacks += 1

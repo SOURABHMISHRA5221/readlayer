@@ -204,7 +204,17 @@ Annotation response item:
   | extract_demands, build_concepts, link_merge | MODEL_FAST | MODEL_FALLBACK |
   | explain | MODEL_QUALITY | MODEL_FAST |
   | verify | MODEL_QUALITY | none: if the verifier is unavailable, show definition gloss only |
-- Fallback triggers: timeout (20 s), 429, 5xx, schema validation failure after 1 repair retry.
+- Error handling per model (`classify_error` in `llm.py`):
+  - retry the same model with backoff (max `LLM_MAX_RETRIES`), then fall back: timeout (20 s),
+    429, 5xx;
+  - fall back immediately, no retry: 404 / 501 model not found (Vertex reports an unknown model
+    as a 500 whose message carries the 501/404), and schema validation failure after 1 repair retry;
+  - raise `LLMRejected` immediately, never fall back, logged at ERROR with task and model:
+    400, 401, 403 and any other unclassified error. A bad request or bad credentials would fail
+    the same way on the fallback model and hide a real bug.
+- `verify` never falls back for any error; it raises (`LLMUnavailable` / `LLMRejected`).
+- Every fallback logs a WARNING with task, failed model, error class and fallback model, and
+  increments `llm_fallbacks` in the daily spend doc, so a silent quality drop is visible.
 - Structured output: pass the Pydantic JSON schema as `response_format`; always re-validate
   locally with Pydantic.
 - Budget: per-call cost from LiteLLM's cost tracking (or token × configured price when the model
