@@ -157,7 +157,7 @@ def test_persona_defaults_change_the_order():
         p: rank.select(cands, ReaderSignals(), prior, NOW)[0][0].id
         for p, prior in rank.PERSONA_FORMAT_PRIORS.items()
     }
-    assert top == {"newcomer": "vid", "trader": "art", "policy_student": "art"}
+    assert top == {"newcomer": "vid", "trader": "art", "policy_student": "art", "default": "art"}
 
 
 def test_select_mixes_library_and_web_when_both_exist():

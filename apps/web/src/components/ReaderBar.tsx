@@ -3,6 +3,7 @@ import type { RefObject } from "react";
 import { useScrolled } from "../hooks/useScrolled";
 import { DENSITIES, type Density, type PersonaKey } from "../lib/personas";
 import { navigate } from "../lib/router";
+import { AccountMenu } from "./AccountMenu";
 import { ArrowLeft } from "./Icons";
 import { PersonaPicker } from "./PersonaPicker";
 import { ProgressBar } from "./ProgressBar";
@@ -11,7 +12,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { Wordmark } from "./Wordmark";
 
 interface ReaderBarProps {
-  persona: PersonaKey;
+  persona: PersonaKey | null;
   density: Density;
   onPersona: (key: PersonaKey) => void;
   onDensity: (key: Density) => void;
@@ -43,11 +44,12 @@ export function ReaderBar({ persona, density, onPersona, onDensity, libraryHref,
           {debug && <span className="bar__debug">debug</span>}
         </div>
         <div className="bar__controls">
-          <PersonaPicker value={persona} onChange={onPersona} />
+          {persona && <PersonaPicker value={persona} onChange={onPersona} />}
           <Segmented label="Notes" options={DENSITIES} value={density} onChange={onDensity} />
         </div>
         <div className="bar__end">
           <ThemeToggle />
+          <AccountMenu />
         </div>
       </div>
       <ProgressBar target={article} />

@@ -18,6 +18,7 @@
   --on-accent: #fbf8f3;
   --skeleton: #efe9df;
   --scrim: rgb(28 27 25 / 0.28);
+  --danger: #9b2c2c; /* destructive actions only (delete my data) */
   --persona-newcomer: #8a5a2b;
   --persona-trader: #1f5f5b;
   --persona-policy: #5b4a7a;
@@ -120,6 +121,7 @@
     --on-accent: #141412;
     --skeleton: #22211e;
     --scrim: rgb(0 0 0 / 0.62);
+    --danger: #e08a7e;
     --persona-newcomer: #d4a373;
     --persona-trader: #6fb3aa;
     --persona-policy: #b3a1d6;
@@ -140,6 +142,7 @@
   --on-accent: #141412;
   --skeleton: #22211e;
   --scrim: rgb(0 0 0 / 0.62);
+  --danger: #e08a7e;
   --persona-newcomer: #d4a373;
   --persona-trader: #6fb3aa;
   --persona-policy: #b3a1d6;

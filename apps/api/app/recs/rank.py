@@ -68,6 +68,8 @@ PERSONA_FORMAT_PRIORS: Mapping[str, FormatPrior] = {
     "newcomer": FormatPrior({"video": 0.75, "article": 0.5, "podcast": 0.45}),
     "trader": FormatPrior({"article": 0.7, "video": 0.45, "podcast": 0.4}, "short"),
     "policy_student": FormatPrior({"article": 0.7, "podcast": 0.55, "video": 0.4}, "long"),
+    # Signed-in readers until onboarding (M7) asks: a mild lean to articles, no length pref.
+    "default": FormatPrior({"article": 0.6, "video": 0.5, "podcast": 0.45}),
 }
 
 

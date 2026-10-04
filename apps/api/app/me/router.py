@@ -1,0 +1,336 @@
+"""The reader's own model and data rights (DESIGN §8, §11.4, §15.2).
+
+POST /v1/events applies interaction evidence (idempotent by event id; nothing while learning is
+paused). GET/PATCH /v1/me/graph, GET /v1/me/profile and PATCH /v1/me/settings read and correct
+the model; GET /v1/me/export and DELETE /v1/me are the data rights. No LLM call on any of these.
+"""
+
+from datetime import UTC, datetime
+from typing import Annotated, Any, Literal
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi.encoders import jsonable_encoder
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, ConfigDict, Field
+
+from app import ratelimit
+from app.auth import Caller, current_caller, forget_user, get_auth_admin
+from app.context import ReaderContext, reader_context
+from app.graph.graph import ConceptGraph
+from app.graph.loader import get_graph
+from app.graph.models import DOMAINS, Concept, Domain
+from app.reader import model, profile
+from app.reader.events import ConceptRef, EventType, ReaderEvent
+from app.reader.model import Band, Edge
+from app.reader.subgraph import knowledge_subgraph
+from app.scoring.placeholder import PersonaKey
+from app.store.docstore import get_doc_store
+from app.store.reader_repo import Density, ExplanationStyle, ReaderRepo
+
+router = APIRouter()
+
+MAX_EVENTS = 100
+ID_PATTERN = r"^[A-Za-z0-9_-]+$"
+# Analogy frames explanations may use (DESIGN §7, §15.1 item 5); a reader picks at most 3.
+THINKS_IN = (
+    "software", "engineering", "science", "medicine", "law", "design", "teaching", "music",
+    "cooking", "cricket", "football", "gaming",
+)  # fmt: skip
+ThinksIn = Literal[
+    "software", "engineering", "science", "medicine", "law", "design", "teaching", "music",
+    "cooking", "cricket", "football", "gaming",
+]  # fmt: skip
+
+
+def _repo() -> ReaderRepo:
+    return ReaderRepo(get_doc_store())
+
+
+def _ref(concept: Concept) -> ConceptRef:
+    return ConceptRef(concept.domain, concept.base_difficulty)
+
+
+def _band(concept: Concept, edge: Edge | None, theta: dict[str, float], now: datetime) -> Band:
+    p0 = model.prior(theta.get(concept.domain, 0.0), concept.base_difficulty)
+    return model.band_of(model.current_p_know(edge, p0, now) if edge else p0)
+
+
+# ---------------------------------------------------------------- events
+
+
+class EventIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    id: str = Field(min_length=1, max_length=64, pattern=ID_PATTERN)
+    type: EventType
+    at: datetime
+    concept_id: str | None = Field(default=None, max_length=120)
+    content_id: str | None = Field(default=None, max_length=120)
+    paragraph_id: str | None = Field(default=None, max_length=32)
+    words: int | None = Field(default=None, ge=0, le=100_000)
+    ms: int | None = Field(default=None, ge=0, le=3_600_000)
+
+
+class EventsRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    events: list[EventIn] = Field(max_length=MAX_EVENTS)
+    persona: PersonaKey | None = None  # demo persona (anonymous readers only)
+
+
+class EventsResponse(BaseModel):
+    applied: bool  # false while learning is paused: nothing was stored
+    events_applied: int
+    events_ignored: int
+
+
+@router.post("/events", response_model=EventsResponse, dependencies=[Depends(ratelimit.events)])
+async def post_events(
+    body: EventsRequest, caller: Annotated[Caller, Depends(current_caller)]
+) -> EventsResponse:
+    ctx = await reader_context(caller, body.persona)
+    graph = get_graph()
+    refs = {
+        e.concept_id: _ref(c)
+        for e in body.events
+        if e.concept_id and (c := graph.get(e.concept_id)) is not None
+    }
+    events = [
+        ReaderEvent(e.id, e.type, e.at, e.concept_id, e.content_id, e.paragraph_id, e.words, e.ms)
+        for e in body.events
+    ]
+    result = await _repo().apply_events(
+        ctx.uid, events, refs, ctx.theta, datetime.now(UTC), theta_fixed=ctx.theta_fixed
+    )
+    return EventsResponse(
+        applied=not result.paused,
+        events_applied=result.applied,
+        events_ignored=result.ignored,
+    )
+
+
+# ---------------------------------------------------------------- graph
+
+
+class GraphNodeOut(BaseModel):
+    id: str
+    label: str
+    domain: str
+    band: Band
+    evidence_count: int
+    last_seen: datetime | None
+    depth: int
+
+
+class GraphEdgeOut(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    from_: str = Field(alias="from", serialization_alias="from")
+    to: str
+
+
+class SubgraphOut(BaseModel):
+    domain: str | None
+    nodes: list[GraphNodeOut]
+    edges: list[GraphEdgeOut]
+    truncated: bool
+
+
+class ConceptBandOut(BaseModel):
+    id: str
+    label: str
+    band: Band
+    p_know: float
+
+
+class DomainBandsOut(BaseModel):
+    domain: str
+    theta: float
+    concepts: list[ConceptBandOut]
+
+
+class GraphSummaryOut(BaseModel):
+    domains: list[DomainBandsOut]
+    concepts_tracked: int
+    concepts_understood: int  # band "understands" or "can explain"
+    trend: list[dict[str, Any]]
+
+
+def _summary(
+    graph: ConceptGraph, knows: dict[str, Edge], ctx: ReaderContext, weekly: dict, now: datetime
+) -> GraphSummaryOut:
+    theta = dict(ctx.theta)
+    by_domain: dict[str, list[ConceptBandOut]] = {d: [] for d in DOMAINS}
+    for cid, edge in sorted(knows.items()):
+        c = graph.get(cid)
+        if c is None:
+            continue
+        p0 = model.prior(theta.get(c.domain, 0.0), c.base_difficulty)
+        p = model.current_p_know(edge, p0, now)
+        by_domain[c.domain].append(ConceptBandOut(id=cid, label=c.label, band=model.band_of(p),
+                                                  p_know=round(p, 4)))  # fmt: skip
+    rows = [r for rs in by_domain.values() for r in rs]
+    return GraphSummaryOut(
+        domains=[
+            DomainBandsOut(domain=d, theta=round(theta.get(d, 0.0), 4), concepts=by_domain[d])
+            for d in DOMAINS
+        ],
+        concepts_tracked=len(rows),
+        concepts_understood=sum(r.band in ("understands", "can explain") for r in rows),
+        trend=_trend(weekly),
+    )
+
+
+def _trend(weekly: dict) -> list[dict[str, Any]]:
+    return [
+        {"week": w, "annotations_per_1000_words": v} for w, v in profile.annotation_trend(weekly)
+    ]
+
+
+@router.get("/me/graph", response_model=SubgraphOut | GraphSummaryOut)
+async def get_my_graph(
+    ctx: Annotated[ReaderContext, Depends(reader_context)],
+    domain: Domain | None = None,
+    q: Annotated[str, Query(max_length=100)] = "",
+) -> SubgraphOut | GraphSummaryOut:
+    graph = get_graph()
+    now = datetime.now(UTC)
+    repo = _repo()
+    knows = await repo.get_knows(ctx.uid)
+    if domain is None and not q.strip():
+        return _summary(graph, knows, ctx, await repo.get_weekly(ctx.uid), now)
+    theta = dict(ctx.theta)
+    sub = knowledge_subgraph(
+        graph, knows, lambda c: _band(c, knows.get(c.id), theta, now), now, domain, q
+    )
+    return SubgraphOut(
+        domain=domain,
+        nodes=[GraphNodeOut(**vars(n)) for n in sub.nodes],
+        edges=[GraphEdgeOut(from_=a, to=b) for a, b in sub.edges],
+        truncated=sub.truncated,
+    )
+
+
+class CorrectionIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    state: Literal["known", "unknown"]
+
+
+class CorrectionOut(BaseModel):
+    concept_id: str
+    band: Band
+    p_know: float
+
+
+@router.patch("/me/graph/{concept_id}", response_model=CorrectionOut)
+async def correct_concept(
+    concept_id: str,
+    body: CorrectionIn,
+    ctx: Annotated[ReaderContext, Depends(reader_context)],
+) -> CorrectionOut:
+    """ "I know this" / "I don't": strong evidence, applied even while learning is paused."""
+    concept = get_graph().get(concept_id)
+    if concept is None:
+        raise HTTPException(status_code=404, detail="concept not found")
+    edge = await _repo().correct(
+        ctx.uid,
+        concept_id,
+        _ref(concept),
+        body.state == "known",
+        ctx.theta,
+        datetime.now(UTC),
+        theta_fixed=ctx.theta_fixed,
+    )
+    return CorrectionOut(concept_id=concept_id, band=edge.band, p_know=round(model.p_know(edge), 4))
+
+
+# ---------------------------------------------------------------- profile and settings
+
+
+@router.get("/me/profile")
+async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> dict[str, Any]:
+    """Deterministic (DESIGN §15.1): no LLM call anywhere on this path."""
+    graph = get_graph()
+    now = datetime.now(UTC)
+    repo = _repo()
+    user = await repo.get_user(ctx.uid)
+    domains = await repo.get_domains(ctx.uid)
+    knows = await repo.get_knows(ctx.uid)
+    weekly = await repo.get_weekly(ctx.uid)
+    theta = {d: float(ctx.theta.get(d, 0.0)) for d in DOMAINS}
+    moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
+    return {
+        "summary": {
+            "text": profile.summary_text(theta, user.thinks_in, len(moves)),
+            "top_domain": profile.top_domain(theta),
+            "moved_up_this_week": len(moves),
+            "learning_paused": user.learning_paused,
+        },
+        "domains": [
+            {
+                "domain": d,
+                "theta": round(theta[d], 4),
+                "interest": domains[d].interest if d in domains else 0.0,
+                "thinks_in": domains[d].thinks_in if d in domains else 0.0,
+            }
+            for d in DOMAINS
+        ],
+        "thinks_in": user.thinks_in,
+        "week": {
+            "moved_up": [
+                {
+                    "concept_id": m.concept_id,
+                    "label": graph.get(m.concept_id).label,  # type: ignore[union-attr]
+                    "from": m.from_band,
+                    "to": m.to_band,
+                }
+                for m in moves
+            ],
+            "trend": _trend(weekly),
+        },
+        "settings": {"density": user.density, "explanation_style": user.explanation_style},
+        "persona": ctx.persona,
+    }
+
+
+class SettingsIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    thinks_in: list[ThinksIn] | None = Field(default=None, max_length=3)
+    density: Density | None = None
+    explanation_style: ExplanationStyle | None = None
+    learning_paused: bool | None = None
+
+
+@router.patch("/me/settings")
+async def patch_settings(
+    body: SettingsIn, caller: Annotated[Caller, Depends(current_caller)]
+) -> dict[str, Any]:
+    changes = body.model_dump(exclude_none=True)
+    if "thinks_in" in changes:
+        changes["thinks_in"] = sorted(set(changes["thinks_in"]))
+    user = await _repo().update_settings(caller.uid, changes)
+    return {
+        "thinks_in": user.thinks_in,
+        "density": user.density,
+        "explanation_style": user.explanation_style,
+        "learning_paused": user.learning_paused,
+    }
+
+
+# ---------------------------------------------------------------- data rights
+
+
+@router.get("/me/export")
+async def export_me(caller: Annotated[Caller, Depends(current_caller)]) -> JSONResponse:
+    data = await _repo().export(caller.uid)
+    data["exported_at"] = datetime.now(UTC)
+    return JSONResponse(
+        jsonable_encoder(data),
+        headers={"Content-Disposition": 'attachment; filename="readlayer-export.json"'},
+    )
+
+
+@router.delete("/me", status_code=204)
+async def delete_me(caller: Annotated[Caller, Depends(current_caller)]) -> Response:
+    """Every document under users/{uid}, then the Firebase Auth user. Safe to retry."""
+    await _repo().delete(caller.uid)
+    forget_user(caller.uid, deleted=True)
+    await get_auth_admin().delete_user(caller.uid)
+    return Response(status_code=204)

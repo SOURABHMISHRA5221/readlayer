@@ -139,7 +139,7 @@ export function ConceptDrawer({ items, hidden: tucked = false, ...link }: Concep
   );
 }
 
-export function EndBlock({ items, contentId, persona, ...link }: ConceptLinkProps & { contentId: string; persona: PersonaKey }) {
+export function EndBlock({ items, contentId, persona, ...link }: ConceptLinkProps & { contentId: string; persona: PersonaKey | null }) {
   return (
     <section className="end" aria-labelledby="end-title">
       <div className="end__met">

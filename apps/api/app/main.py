@@ -6,13 +6,17 @@ import uuid
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI, Request, Response
+from fastapi import APIRouter, Depends, FastAPI, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
 
+from app import ratelimit
+from app.auth import get_auth_admin
 from app.config import get_settings
 from app.content.router import router as read_router
 from app.graph.loader import load_graph, set_graph
 from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
+from app.me.router import router as me_router
 from app.recs.router import router as recs_router
 
 settings = get_settings()
@@ -23,12 +27,25 @@ log = logging.getLogger("app.http")
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    start = time.perf_counter()
     set_graph(await load_graph(settings.concepts_uri))
+    graph_ms = (time.perf_counter() - start) * 1000
+    get_auth_admin()
+    log.info(
+        "startup",
+        extra={
+            "graph_load_ms": round(graph_ms, 1),
+            "startup_ms": round((time.perf_counter() - start) * 1000, 1),
+            "cors_origins": settings.cors_origin_list,
+        },
+    )
     yield
 
 
 app = FastAPI(title="ReadLayer API", version="0.1.0", lifespan=lifespan)
-v1 = APIRouter(prefix="/v1")
+# Every /v1 route needs a Firebase ID token (the general limit depends on the caller) and
+# counts against the per-uid general rate limit. Only /health is public.
+v1 = APIRouter(prefix="/v1", dependencies=[Depends(ratelimit.general)])
 
 
 def _request_id(request: Request) -> str:
@@ -61,6 +78,7 @@ async def request_context(
                 "path": request.url.path,
                 "status": response.status_code,
                 "latency_ms": round((time.perf_counter() - start) * 1000, 1),
+                "uid_hash": getattr(request.state, "uid_hash", None),
             },
         )
         return response
@@ -78,4 +96,16 @@ async def healthz() -> dict[str, str]:
 v1.include_router(content_router)
 v1.include_router(read_router)
 v1.include_router(recs_router)
+v1.include_router(me_router)
 app.include_router(v1)
+
+# Added last so it wraps everything: preflights and error responses carry CORS headers too.
+# Only the web app's origins (Hosting in prod); no cookies, so no credentials.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list,
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+    expose_headers=["X-Request-ID", "Retry-After"],
+    max_age=600,
+)

@@ -8,6 +8,7 @@ from app.graph.loader import get_graph, set_graph
 from app.graph.models import ConceptGraphFile
 from app.main import app
 from app.store.content_repo import InMemoryContentStore, set_content_store
+from tests.fakes import auth
 from tests.test_placeholder_scorer import GRAPH, demand, doc, paras
 
 
@@ -19,9 +20,7 @@ def article(cid, title, site, demands):
 
 
 @pytest.fixture
-def client(monkeypatch):
-    monkeypatch.setenv("DEV_AUTH_BYPASS", "true")
-    config.get_settings.cache_clear()
+def client():
     store = InMemoryContentStore()
     store.docs["a1"] = article(
         "a1", "Bond yields climb", "mint", [demand("d1", "c_yield_curve", pid="p0")]
@@ -31,7 +30,7 @@ def client(monkeypatch):
     read_router.reset_catalog()
     previous = get_graph()
     set_graph(GRAPH)
-    yield TestClient(app)
+    yield TestClient(app, headers=auth("demo", anonymous=True))
     set_graph(previous)
     set_content_store(None)
     read_router.reset_catalog()
@@ -86,15 +85,8 @@ def test_debug_only_in_dev(client, monkeypatch):
     assert set(item["debug"]) == {"p_know", "salience", "span_score", "domain", "base_difficulty"}
     assert item["debug"]["domain"] == "finance"
     monkeypatch.setenv("ENV", "prod")
-    monkeypatch.delenv("DEV_AUTH_BYPASS")
     config.get_settings.cache_clear()
-    from app.auth import current_uid
-
-    app.dependency_overrides[current_uid] = lambda: "u1"
-    try:
-        item = client.get("/v1/content/a1/annotations?debug=1").json()["annotations"][0]
-    finally:
-        app.dependency_overrides.clear()
+    item = client.get("/v1/content/a1/annotations?debug=1").json()["annotations"][0]
     assert item["debug"] is None
 
 

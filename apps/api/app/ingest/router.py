@@ -1,15 +1,22 @@
 """POST /v1/content (DESIGN §8): both input shapes, with explicit error statuses."""
 
 from datetime import UTC, datetime, timedelta
+from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
 from app import llm
+from app.auth import Caller, current_caller
+from app.config import Settings, get_settings
+from app.content import catalog
+from app.ingest import quota
 from app.ingest.models import ContentDoc
-from app.ingest.safe_fetch import FetchError
+from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.service import ingest_submitted, ingest_url
+from app.ingest.urls import url_hash
+from app.store.content_repo import get_content_store
 
 router = APIRouter()
 
@@ -67,21 +74,44 @@ def _seconds_to_utc_midnight(now: datetime | None = None) -> int:
     return max(1, int((midnight - now).total_seconds()))
 
 
-# TODO(M3): require a Firebase ID token and enforce the per-user daily cap on new URLs.
 @router.post("/content", response_model=ContentResponse)
-async def post_content(body: SubmittedRequest | UrlRequest) -> ContentResponse | JSONResponse:
+async def post_content(
+    body: SubmittedRequest | UrlRequest,
+    caller: Annotated[Caller, Depends(current_caller)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> ContentResponse | JSONResponse:
+    """Authenticated (router dependency) and within the per-user daily cap on new URLs."""
     if isinstance(body, SubmittedRequest) and any(
         len(p) > MAX_SUBMITTED_PARAGRAPH_CHARS for p in body.paragraphs
     ):
         return _error(422, "paragraph_too_long", "a paragraph exceeds the size limit")
     try:
+        validate_url(body.url)
+    except FetchError as exc:
+        return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
+    known = await get_content_store().get(url_hash(body.url)) is not None
+    if not known and not await quota.reserve(caller, settings):
+        return quota.cap_reached(caller, settings, "Articles already in the library stay free.")
+    try:
         if isinstance(body, SubmittedRequest):
             doc = await ingest_submitted(body.url, body.title, body.paragraphs)
         else:
             doc = await ingest_url(body.url)
-    except FetchError as exc:
+    except Exception as exc:
+        if not known:
+            await quota.refund(caller)
+        if isinstance(exc, FetchError | llm.BudgetExceeded | llm.LLMUnavailable | llm.LLMRejected):
+            return _ingest_error(exc)
+        raise
+    if not known:
+        catalog.add(doc)
+    return _response(doc)
+
+
+def _ingest_error(exc: Exception) -> JSONResponse:
+    if isinstance(exc, FetchError):
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
-    except llm.BudgetExceeded:
+    if isinstance(exc, llm.BudgetExceeded):
         return _error(
             503,
             "llm_budget_exceeded",
@@ -89,16 +119,14 @@ async def post_content(body: SubmittedRequest | UrlRequest) -> ContentResponse |
             "Try again after midnight UTC.",
             retry_after=_seconds_to_utc_midnight(),
         )
-    except llm.LLMUnavailable:
+    if isinstance(exc, llm.LLMUnavailable):
         return _error(
             503,
             "llm_unavailable",
             "The analysis model is temporarily unavailable. Try again in a minute.",
             retry_after=60,
         )
-    except llm.LLMRejected:
-        return _error(502, "llm_rejected", "The analysis request failed. This has been logged.")
-    return _response(doc)
+    return _error(502, "llm_rejected", "The analysis request failed. This has been logged.")
 
 
 def _response(doc: ContentDoc) -> ContentResponse:

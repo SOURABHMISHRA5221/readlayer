@@ -6,10 +6,10 @@ from app.content import router as read_router
 from app.graph.loader import get_graph, set_graph
 from app.main import app
 from app.recs import router as recs_router
-from app.recs import state as rec_state
 from app.recs import web_search as ws
 from app.recs.models import WebResult
 from app.store.content_repo import InMemoryContentStore, set_content_store
+from tests.fakes import auth
 from tests.test_recs_library import DOCS, GRAPH, doc
 
 VIDEO = WebResult(
@@ -49,9 +49,7 @@ class FakeProvider:
 
 
 @pytest.fixture
-def env(monkeypatch):
-    monkeypatch.setenv("DEV_AUTH_BYPASS", "true")
-    config.get_settings.cache_clear()
+def env():
     store = InMemoryContentStore()
     store.docs = {d.content_id: d for d in DOCS}
     set_content_store(store)
@@ -70,8 +68,7 @@ def env(monkeypatch):
             frozenset(),
         )
     )
-    rec_state.set_rec_state(None)
-    yield TestClient(app), provider, calls, store
+    yield TestClient(app, headers=auth("demo", anonymous=True)), provider, calls, store
     ws.set_web_search(None)
     set_graph(previous)
     set_content_store(None)
@@ -156,14 +153,12 @@ def test_events_feed_affinity_and_dismissals(env):
 def test_unknown_content_and_auth(env, monkeypatch):
     client, *_ = env
     assert client.get("/v1/content/nope/recommendations").status_code == 404
-    monkeypatch.delenv("DEV_AUTH_BYPASS")
-    config.get_settings.cache_clear()
-    assert client.get("/v1/content/main/recommendations").status_code == 401
+    assert TestClient(app).get("/v1/content/main/recommendations").status_code == 401
 
 
 def test_open_ingests_within_the_daily_cap(env, monkeypatch):
     client, _, _, store = env
-    monkeypatch.setenv("INGEST_DAILY_CAP", "1")
+    monkeypatch.setenv("ANON_INGEST_DAILY_CAP", "1")
     config.get_settings.cache_clear()
 
     sources = []

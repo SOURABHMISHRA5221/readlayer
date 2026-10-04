@@ -619,6 +619,7 @@ async def build_graph(
             definition=info.definition,
             base_difficulty=diffs[i],
             prerequisites=[p.id for p in edges[cid]],
+            doc_freq=freq[i],
             embedding=[round(float(x), 4) for x in label_vecs[i]],
         )
         for i, (cid, (m, info)) in enumerate(zip(ids, kept, strict=True))

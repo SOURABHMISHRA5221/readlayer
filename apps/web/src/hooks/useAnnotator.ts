@@ -6,6 +6,9 @@ import {
 } from "@readlayer/annotator";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
+import { trackEvent } from "../lib/events";
+import type { PersonaKey } from "../lib/personas";
+
 export interface AnnotatorHandle {
   /** Ids of annotations currently marked, in document order; null until the first update. */
   resolved: string[] | null;
@@ -15,11 +18,6 @@ export interface AnnotatorHandle {
   open: (id: string, focus?: boolean) => void;
 }
 
-const logEvent = (event: AnnotatorEvent) => {
-  // Events go to the console until POST /v1/events exists (M3).
-  console.info("[readlayer] event", event);
-};
-
 /**
  * One annotator per rendered article (keyed by `articleKey`). Annotation changes go through
  * update(), so a persona or density switch animates only the notes that differ.
@@ -28,8 +26,12 @@ export function useAnnotator(
   root: RefObject<HTMLElement | null>,
   articleKey: string | null,
   annotations: CardAnnotation[] | null,
+  persona: PersonaKey | null,
 ): AnnotatorHandle {
   const annotatorRef = useRef<Annotator | null>(null);
+  // Read at event time, so a persona switch doesn't rebuild the annotator.
+  const personaRef = useRef(persona);
+  personaRef.current = persona;
   const [resolved, setResolved] = useState<string[] | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -37,8 +39,10 @@ export function useAnnotator(
   useEffect(() => {
     const el = root.current;
     if (!el || !articleKey) return;
+    const onEvent = (event: AnnotatorEvent) =>
+      trackEvent(event.type, event.concept_id, articleKey, personaRef.current);
     const annotator = createAnnotator(el, {
-      onEvent: logEvent,
+      onEvent,
       onHover: setHovered,
       onActive: setActive,
     });
