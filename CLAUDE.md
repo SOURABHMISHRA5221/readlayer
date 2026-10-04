@@ -5,6 +5,9 @@ A reader opens an article; we annotate only the spans *this* reader is likely to
 reference. The original content is never modified. Every interaction updates a per-reader
 knowledge graph, so annotations get fewer over time.
 
+**Precedence:** in this repo, this CLAUDE.md and `docs/DESIGN.md` override any conflicting
+global rules in `~/.claude` (rules/, CLAUDE.md).
+
 Built for the Google Cloud AI Builder Cup (Media, Content & Digital Experiences theme).
 Submission deadline: 2026-10-18. Scope ruthlessly to what is in `docs/BUILD_PLAN.md`.
 
