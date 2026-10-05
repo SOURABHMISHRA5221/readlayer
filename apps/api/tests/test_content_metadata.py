@@ -8,7 +8,7 @@ from app.ingest.extract import Metadata, extract, extract_metadata
 from app.ingest.safe_fetch import FetchedPage, FetchError
 from app.store.content_repo import InMemoryContentStore
 from scripts import backfill_metadata as bf
-from tests.test_placeholder_scorer import GRAPH, demand, doc
+from tests.test_scorer import GRAPH, demand, doc
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "article_business.html").read_bytes()
 

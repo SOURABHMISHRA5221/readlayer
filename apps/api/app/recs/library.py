@@ -17,8 +17,8 @@ from datetime import date
 from app.graph.build import jaccard, normalize_label, shingles
 from app.graph.graph import ConceptGraph
 from app.ingest.models import ContentDoc
+from app.reader.model import prior
 from app.recs.models import Relation
-from app.scoring.placeholder import prior
 
 WIKIPEDIA_SITE = "Wikimedia Foundation, Inc."
 SOURCE_COUNTRY = {

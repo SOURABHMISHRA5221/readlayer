@@ -160,7 +160,7 @@ def test_heldout_urls_may_not_overlap_the_corpus(tmp_path, monkeypatch):
 
 
 def test_user_ingested_docs_are_never_corpus(tmp_path):
-    from tests.test_placeholder_scorer import doc
+    from tests.test_scorer import doc
 
     listed = doc([]).model_copy(update={"content_id": "a", "url": "https://x.test/a"})
     reader = listed.model_copy(

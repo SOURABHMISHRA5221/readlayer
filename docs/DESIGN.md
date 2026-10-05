@@ -138,7 +138,21 @@ users/{uid}/profile_edits/{id}    applied profile edits with their deltas, for u
 users/{uid}/rec_signals/{persona_or_default}   Up next signals (§16): format stats, relation
                                   dismissals, seen items, recent event ids
 users/{uid}/ingest_counts/{utc_day}            new URLs ingested that day (per-user cap)
+users/{uid}/demo_graphs/{persona}             a demo reader's graph for one persona (below)
+persona_templates/{persona}                   read-only seeded persona graphs (not user data)
 ```
+
+**Demo personas (M4).** Anonymous demo readers pick a persona (newcomer, trader,
+policy_student) and can switch in place, so each (uid, persona) has its own graph in one
+document `demo_graphs/{persona}`: θ per domain, threshold_offset, a `knows` map of edges,
+engaged contents and a `rev` counter. It starts as the persona's template
+(`scripts/seed_personas.py` → `persona_templates/{persona}`): θ per domain plus anchor concepts
+the persona knows (p 0.85, α+β 6) or doesn't (p 0.15, α+β 3), expanded through the
+prerequisite DAG (prerequisites of known anchors p 0.8; up to 40 direct dependents of gaps
+p 0.2). Reads use the template as-is; the first event or correction writes the copy. Demo
+edges keep ≤ 5 evidence entries, and past 800 KB the oldest low-confidence non-seed edges are
+dropped (Firestore's limit is 1 MiB; seeded templates are 14–20 KB). Signed-in readers start
+neutral: θ = 0, no edges.
 
 ### Prior (IRT, 1-parameter logistic)
 ```
@@ -180,10 +194,14 @@ For each demand d:
 - prerequisites (one hop): `p ← min(p, max_{q∈prereq(c)} p_know(q) + 0.1)`
 - term: `p = σ(1.2·(zipf − τ))`, `τ = 3.5 − 0.4·θ_domain`
 - context: `p = 0.8` if reader has an ENGAGED content mentioning the same entity in the last
-  30 days, else `0.2`
+  30 days, else `0.2`; when the reference is linked to a graph concept, see §6.7.
+  ENGAGED = any event on the content.
+- unlinked concept demands aren't scored; unlinked terms use the article's domain for θ
 - `miss = (1 − p)·(0.4 if explained_in_text else 1.0)`
 - `span_score = miss · salience`
-- paragraph: `para_score = 1 − Π(1 − span_score_i) + 0.3·structure·(1 − σ(θ_domain))`, clipped to [0,1]
+- paragraph: `para_score = 1 − Π(1 − span_score_i) + 0.3·structure·(1 − σ(θ_domain))`, clipped to [0,1];
+  each concept/entity counts once per paragraph; θ_domain = the paragraph's dominant linked
+  domain (by salience), else the article's
 
 Thresholds (before per-user `threshold_offset` and density dial):
 | density | span | paragraph | pre-read (mean span_score of assumed concepts) |
@@ -193,18 +211,58 @@ Thresholds (before per-user `threshold_offset` and density dial):
 | guided | 0.30 | 0.65 | 0.35 |
 
 `threshold_offset` adapts: +0.02 per dismissal/knew_this, −0.02 per text_searched or slowdown on
-an unannotated paragraph; clamp to [−0.15, +0.15].
+an unannotated paragraph; clamp to [−0.15, +0.15]. It is added to all three thresholds.
+Dismissal is the `annotation_dismissed` event (no Beta evidence); slowdown waits for dwell
+medians (M6).
+
+**Worked example** (`tests/test_scorer.py::test_design_worked_example`). Balanced density; the
+reader has θ = −0.5 in finance and economics, an edge on *bond yield* (α 0.44, β 1.56 → 0.22)
+and one on *inflation* (α 4.05, β 0.95 → 0.81). One paragraph, structure 0.5:
+- *yield curve* (b −0.7, prerequisite bond yield, salience 1.0): own prior σ(0.2) = 0.55,
+  capped at 0.22 + 0.1 = 0.32 → span_score 0.68 ≥ 0.45 → **shown**.
+- *inflation* (salience 1.0): 1 − 0.81 = 0.19 < 0.45 → **skipped**.
+- paragraph: 1 − 0.32·0.81 = 0.741, below 0.75 on the spans alone; the structure term adds
+  0.3·0.5·(1 − σ(−0.5)) = 0.093 → 0.834 ≥ 0.75 → **paragraph marker**.
 
 ## 6. Selection (annotation budget)
-1. Drop spans below threshold. Rank by `span_score`.
+1. Drop spans below threshold. Rank by `span_score` (ties: reading order).
 2. First occurrence of each `target_id` only.
-3. Caps: ≤ 1 span annotation per 80 words, ≤ 1 paragraph marker per 3 paragraphs,
-   ≤ 2 span annotations in any single paragraph.
-4. Pre-read card if triggered: walk prerequisites backward from weak assumed concepts until a
-   concept with p_know ≥ 0.7; topological order; ≤ 3 steps; each step links to a corpus article
-   where that concept is `explained_in_text` (shortest first), else shows the concept definition.
-5. Uncertainty prompt ("Know this?"): at most one per article, three per day, only when
-   salience ≥ 0.7 and 0.35 ≤ p_know ≤ 0.65 and α+β < 4.
+3. Caps: ≤ 1 span annotation per 80 words (at least 1), ≤ 1 paragraph marker per 3 paragraphs
+   (at least 1), ≤ 2 span annotations in any single paragraph.
+4. Pre-read card if triggered (mean span_score of the assumed, i.e. not `explained_in_text`,
+   concepts ≥ the pre-read threshold): from the highest-scoring assumed concept with
+   p_know < 0.5, step to its weakest prerequisite until one has p_know ≥ 0.7; ≤ 3 steps
+   including the starting concept, most basic first; each step links to a corpus article
+   where that concept is `explained_in_text` (shortest first; never the article being read or
+   a `user_ingested` page), else shows the concept definition.
+5. Uncertainty prompt ("Know this?"): at most one per article, three per day (a reload of an
+   already-prompted article keeps its prompt), only when salience ≥ 0.7 and
+   0.35 ≤ p_know ≤ 0.65 and α+β < 4, only for a concept not already annotated, and never while
+   learning is paused. Highest salience first, then p_know closest to 0.5.
+6. **The reader's word wins:** a concept whose latest explicit evidence is `knew_this` or an
+   "I know this" correction is not annotated, whatever p_know says, until an explain_opened,
+   text_searched or "I don't" says otherwise.
+
+7. **Linked references** (context demands linked to a concept): the reading-history p above is
+   a floor; it rises to the concept's p_know only when the reader has a KNOWS edge for it
+   (seeded or earned) or the prior alone is ≥ 0.8. A generic prior guess from estimated
+   difficulty never hides a reference. Measured on all 310 corpus articles × 3 personas at
+   balanced density (trader vs policy student identical span sets / mean Jaccard): no rule
+   29 / 0.37; any p_know 2 / 0.08 but it hid ~1,450 underlines, ~95% on the prior alone;
+   edge only 25 / 0.33; **edge or prior ≥ 0.8 (chosen) 8 / 0.15**. The five cases it was
+   judged on:
+
+   | Persona | Article | Reference | p_know (source) | Any p_know | Chosen |
+   |---|---|---|---|---|---|
+   | policy_student | Guardian, "Oil price rise creates more pressure on UK policymakers before budget" | Bank of England | 0.92 (prior) | hidden | hidden |
+   | trader | Guardian, "Good news in US inflation report boosts chances Fed won't hike rates" | Dow | 0.95 (prior) | hidden | hidden |
+   | newcomer | ET, "Rate cut cycle near turning point. What lies ahead for Indian bonds?" | RBI | 0.53 (prior) | hidden ("benchmark 10-year bond" took its slot) | shown |
+   | policy_student | Wikipedia, "Central bank" | Network for Greening the Financial System | 0.61 (prior) | hidden | shown |
+   | trader | Wikipedia, "Bond (finance)" | Russell Indexes (mislinked to S&P Dow Jones Indices, issue #6) | 0.79 (prior) | hidden | shown |
+
+Spans only for graph-linked demands (the card needs a definition until M5); the paragraph
+noisy-OR also counts unlinked terms and context references. Scoring p95: 0.2 ms for a
+1,200-word article (synthetic 3,300-concept graph in tests; 0.25 ms on real articles).
 
 ## 7. Explanations
 Request: `{content_id, demand_id | paragraph_id}` + reader's band for the concept, top
@@ -261,7 +319,11 @@ with `verified: true`, model ids, created_at.
 | GET | /v1/calibration/next | next item: concept with b closest to current θ, not yet asked |
 | POST | /v1/calibration/answer | `{concept_id, answer: explain|heard|none}` |
 
-Annotation response item:
+Annotation response items (spans first, ranked; then paragraph markers, the pre-read card,
+the prompt; `count` counts spans). Paragraph: `{id: "para:p3", kind, paragraph_id, score,
+domain}`. Pre-read: `{id: "preread", kind, score, concept_id, label, steps: [{concept_id, label,
+definition, content_id?, title?}]}`. Prompt: `{id: "prompt:d17", kind, anchor, paragraph_id,
+concept_id, label}`. `density` defaults to the reader's setting. Span item:
 ```json
 {"id": "d17", "kind": "span|paragraph|preread|prompt",
  "anchor": {"exact": "...", "prefix": "...", "suffix": "..."},
@@ -278,7 +340,8 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   "Helpful", "This is wrong". Card label: "Explanation — not the author's words".
 - Paragraph: small margin marker → "What this paragraph is saying".
 - Events batched every 5 s and on `visibilitychange`: explain_opened, knew_this, explain_helpful,
-  report_wrong, text_searched (selection + copy or right-click search), paragraph_dwell
+  report_wrong, annotation_dismissed (closing an annotation without acting, M6), text_searched
+  (selection + copy or right-click search), paragraph_dwell
   (IntersectionObserver, ms visible, words).
 
 ## 10. LLM layer (`app/llm.py`)
