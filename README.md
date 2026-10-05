@@ -1,0 +1,292 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/images/wordmark-dark.png">
+  <img src="docs/images/wordmark-light.png" alt="ReadLayer" width="236">
+</picture>
+
+### Read anything. Understand it your way.
+
+[![CI](https://github.com/SOURABHMISHRA5221/readlayer/actions/workflows/ci.yml/badge.svg)](https://github.com/SOURABHMISHRA5221/readlayer/actions/workflows/ci.yml)
+[![Google Cloud](https://img.shields.io/badge/Google%20Cloud-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/)
+[![Gemini on Vertex AI](https://img.shields.io/badge/Gemini-Vertex%20AI-8E75B2?logo=googlegemini&logoColor=white)](https://cloud.google.com/vertex-ai)
+[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-asia--south1-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
+[![License: MIT](https://img.shields.io/badge/license-MIT-2f6f61)](LICENSE)
+
+[**Live demo**](https://readlayer-sourabh-26.web.app) · [How it works](#how-it-works) · [Architecture](#architecture) · [Evaluation](#evaluation)
+
+</div>
+
+<br>
+
+![The ReadLayer reader: a BBC explainer on UK interest rates with a few quiet dotted underlines, an open card explaining "CPI" with its prerequisites, and a margin rail listing the concepts picked for this reader.](docs/images/hero.png)
+
+Business and economy writing assumes a lot, and every reader is missing something different. ReadLayer leaves the article exactly as the author wrote it and adds a quiet, personal overlay: it underlines only the ideas *this* reader is likely to miss and explains them on demand. Every interaction teaches it what the reader already knows, so the notes thin out as they learn.
+
+## See it
+
+![The same four paragraphs about UK mortgages, as three readers see them. The newcomer has four underlines: English Housing Survey, "tracks", standard variable rates and fixed-rate. The markets trader has one: English Housing Survey. The policy student has three: "tracks", standard variable rates and fixed-rate.](docs/images/personas.png)
+
+<sub>The same passage of a live article for the three demo readers. The newcomer gets four notes; the markets trader, strong in finance, gets one; the policy student gets the three mortgage terms but not the government survey. Across all 310 articles in the library, the trader and the policy student get identical underlines on only 8.</sub>
+
+<div align="center">
+  <img src="docs/images/demo.gif" alt="Animated: switching the reader from Newcomer to Markets trader to Policy student. Underlines fade out and re-ink for each reader, the margin rail updates, and finally the card for &quot;Tracker mortgage&quot; opens." width="800">
+</div>
+
+## Features
+
+| Feature | What it does |
+|---|---|
+| **Personal gap detection** | Scores every concept, term and reference in an article against the reader's own knowledge, then shows only the few most likely to be missed, at most one note per 80 words. |
+| **Reader knowledge graph** | Each reader has a graph of what they know: Beta-distributed confidence per concept, ability per domain, and forgetting with a 90-day half-life. "Knew this" removes a note on the next load and nudges related concepts. |
+| **Explanations in your own frame** | Cards show a definition and the prerequisites to read first. Two-part explanations ("Background" and "What the author is saying"), with analogies from the reader's own field, are coming in M5. |
+| **Up next, across formats** | Recommends what to read, watch or listen to next: library articles (the same story elsewhere, primers for a weak prerequisite, deeper reads), plus web articles and podcasts (Tavily) and videos (YouTube Data API). |
+| **Privacy and data rights** | No user identifiers or reading history ever reach a model or a search provider. Export everything we hold, or delete it along with the account, from the account menu. |
+| **Accessibility** | Keyboard-reachable cards with ARIA roles and a focus trap, a bottom sheet on phones, light and dark themes, and a Lighthouse accessibility score of 100 on the reader. |
+
+## How it works
+
+Ingestion runs once per URL and is shared by every reader. Scoring runs on every page view, for one reader, with no model call: it is deterministic math over the reader's graph, so the same reader and article always get the same notes.
+
+```mermaid
+flowchart TB
+    open(["Reader opens an article"]) --> known{"URL seen before?"}
+    known -- "no" --> ingest["<b>Ingest once per URL</b><br/>safe fetch, extract paragraphs,<br/>Gemini finds what the text assumes,<br/>link mentions to the concept graph"]
+    known -- "yes" --> score
+    ingest --> score["<b>Score for this reader</b><br/>no LLM: knowledge graph, prerequisites,<br/>thresholds and budget caps"]
+    score --> notes["<b>Quiet annotations</b><br/>dotted underlines and a margin rail"]
+    notes --> explain["<b>Explain on demand</b><br/>Gemini writes, a verifier checks (M5)"]
+    notes --> signals["<b>Reader signals</b><br/>Knew this, opened a card"]
+    explain --> signals
+    signals --> rgraph[("<b>Update the reader graph</b><br/>Beta evidence, domain ability")]
+    rgraph -. "next page load" .-> score
+
+    classDef llm fill:#ede7f6,stroke:#7e57c2,color:#311b92
+    classDef nollm fill:#e3f2ed,stroke:#2f6f61,color:#123c33
+    class ingest,explain llm
+    class score,notes,signals,rgraph nollm
+```
+
+<sub>Purple steps call a model; green steps never do.</sub>
+
+The scorer, in short (full formulas in [DESIGN §5–6](docs/DESIGN.md#5-scoring-per-reader-deterministic)):
+
+- **How likely the reader knows a concept**: their own evidence for it (fading toward a prior over time), or an item-response prior from their ability in that domain and the concept's difficulty. A concept can't be known much better than its best-known prerequisite.
+- **How much a miss matters**: the chance of missing it times how central it is to the paragraph, discounted when the article explains it in its own words.
+- **What gets shown**: a threshold set by the reader's density choice (minimal, balanced or guided) and adapted by their own behaviour; then budget caps per word count and per paragraph, and each concept only at its first occurrence.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph client["Browser"]
+        direction LR
+        web["Web app<br/>Vite + React on Firebase Hosting"]
+        ann["packages/annotator<br/>anchors, underlines, cards"]
+        web --- ann
+    end
+    auth["Firebase Auth<br/>Google and anonymous demo"]
+
+    subgraph api["Cloud Run: readlayer-api, FastAPI"]
+        direction LR
+        ingestm["ingest<br/>safe_fetch, extraction"]
+        graphm["graph<br/>concepts, linking"]
+        scoring["scoring<br/>gap scorer, no LLM"]
+        reader["reader<br/>knowledge model"]
+        recs["recs<br/>Up next"]
+        llm["llm.py<br/>routes, fallbacks, budget"]
+    end
+
+    subgraph data["Data"]
+        direction LR
+        fs[("Firestore<br/>articles, reader graphs, events")]
+        gcs[("Cloud Storage<br/>concepts.json")]
+        sm["Secret Manager<br/>keys, log salt"]
+    end
+
+    subgraph ai["Vertex AI"]
+        direction LR
+        gemini["Gemini"]
+        gemma["Gemma fallback"]
+        embed["Gemini embeddings"]
+    end
+
+    subgraph search["Search APIs"]
+        direction LR
+        tavily["Tavily<br/>articles, podcasts"]
+        yt["YouTube Data API<br/>videos"]
+    end
+
+    client -- "sign in" --> auth
+    client -- "HTTPS /v1 with ID token" --> api
+    api --> data
+    llm --> ai
+    recs --> search
+```
+
+| Google Cloud service | What it does here |
+|---|---|
+| **Cloud Run** | Runs the FastAPI service in asia-south1, scaling from 0 to at most 3 instances. |
+| **Vertex AI** | Gemini for extraction, linking and (from M5) explanations; Gemma as a pay-per-token fallback; Gemini embeddings for concept linking. |
+| **Firestore** | Article demand profiles, per-reader graphs and events (raw events expire after 90 days), the LLM spend ledger and usage caps. Clients have no direct access. |
+| **Cloud Storage** | The concept graph file, loaded into memory when the API starts. |
+| **Firebase Auth and Hosting** | Google sign-in and anonymous demo sessions; hosting for the web app. |
+| **Secret Manager** | The log-pseudonymisation salt and the search API keys. |
+| **Cloud Build** | Builds the API image from source on each deploy. |
+
+## How Gen AI is used
+
+Every model call goes through one module, [`app/llm.py`](apps/api/app/llm.py), backed by the LiteLLM SDK. It gives each named task a primary model and a fallback, structured output validated against a schema, retries, per-call cost logging, and a hard daily budget. Model IDs come from environment variables, never from code. Prompts are versioned files in [`app/prompts/`](apps/api/app/prompts).
+
+| Task | Model | Why |
+|---|---|---|
+| `extract_demands`: what each paragraph assumes the reader knows | Gemini 3.5 Flash-Lite, Gemma 4 fallback | Runs once per new article; the fast tier keeps a new article at about two cents of model cost |
+| `link_confirm`: is this mention really that concept? | Gemini 3.8 Flash | Measured 97% precision against the 95% target; the fast tier reached 89% |
+| `link_merge`, `concept_define`, `concept_prereqs`, `concept_wikidata` | Gemini 3.5 Flash-Lite, Gemma 4 fallback | Building and growing the concept graph |
+| `embed`: concept and mention vectors | Gemini embedding 001, 256 dimensions | Nearest-concept candidates for linking |
+| `explain` and `verify` (coming in M5) | Gemini 3.8 Flash | User-visible prose and the faithfulness check deserve the stronger model |
+
+**Where we deliberately use no model:** the per-reader scoring path behind every page view, the library list, recommendation ranking and the reading-profile summary. These are deterministic, so they are fast, cheap and testable, and the same input always gives the same result.
+
+## Evaluation
+
+Measured results so far. Each number comes from [docs/STATUS.md](docs/STATUS.md), where the method behind it is recorded.
+
+| What | Result |
+|---|---|
+| Concept graph | 3,327 concepts in 4 domains (finance, economics, policy, business), 4,053 prerequisite edges, no cycles, 680 Wikidata ids |
+| Library | 310 articles, each ingested once and shared by every reader |
+| Linking on unseen articles | 62% of 186 concept mentions in 15 held-out articles linked; target 75% ([#6](https://github.com/SOURABHMISHRA5221/readlayer/issues/6)) |
+| Readers see different notes | Trader and policy student get identical underlines on **8 of 310** articles (mean overlap 0.15) |
+| Scoring latency, p95 | **0.19 ms** for a 1,200-word article (local test); about 1 ms on Cloud Run; budget 150 ms |
+| Annotations endpoint, p95 on Cloud Run | **99 ms** server-side, including the Firestore read; 121 ms measured from a client in India |
+| Accessibility | Lighthouse accessibility **100** on the reader, layout shift 0 |
+| Model cost per new article | About **$0.017**, measured on one new article (Wikipedia "Liquidity trap") |
+| Total model spend to date | About $10.70, nearly all of it ingesting the library and building the concept graph; page views cost nothing in model calls |
+
+## Responsible AI and privacy
+
+- **The author's words are never changed.** Notes are an overlay anchored to exact quotes in the text; nothing is rewritten or summarised, and cards are labelled "Explanation — not the author's words".
+- **Faithfulness verifier (coming in M5).** Explanations will be shown only after they pass deterministic checks (numbers, hedges, attribution and negations preserved) and a Gemini entailment judge; otherwise the card falls back to the plain definition.
+- **Article text is untrusted.** It goes to models inside delimiters, models get no tools, and every response is validated against a schema.
+- **No personal data in prompts or searches.** Models and search providers receive content and concept data only, never user ids, emails or reading history. This is covered by tests. Logs carry a pseudonymous hash instead of a user id.
+- **Your data, your call.** Export everything we hold as JSON, or delete it together with the account. Raw interaction events expire after 90 days, and Firestore rules deny all direct client access.
+- **Safe fetching.** Every user-supplied URL goes through `safe_fetch`. It allows only http and https on ports 80 and 443, rejects private, loopback, link-local and metadata addresses and re-checks them after every redirect, enforces a 10-second timeout and a 3 MB cap, and respects robots.txt.
+- **Cost guards.** A daily LLM budget is enforced in code. Each reader can add at most 20 new URLs a day. Demo sessions get tighter limits, plus shared daily caps so creating accounts can't multiply them. Cloud Run is capped at 3 instances.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="62%" valign="top">
+      <img src="docs/images/library.png" alt="The library front page: a headline, topic filters, a lead story and an Also new column, each labelled with how many concepts are new to this reader.">
+      <p align="center"><sub>Library: each story shows how many concepts are new to you</sub></p>
+      <img src="docs/images/dark.png" alt="The reader in dark theme, with dotted underlines on mortgage terms and the margin rail listing them.">
+      <p align="center"><sub>Dark theme</sub></p>
+    </td>
+    <td width="38%" valign="top">
+      <img src="docs/images/mobile.png" alt="The reader on a phone at 390 pixels wide, with the card for CPI open as a bottom sheet.">
+      <p align="center"><sub>On a phone, cards open as a bottom sheet</sub></p>
+    </td>
+  </tr>
+</table>
+
+## Getting started
+
+**Prerequisites**
+
+- Node.js 22 and pnpm 12
+- Python 3.12+ with [uv](https://docs.astral.sh/uv/)
+- Google Cloud SDK
+- Java 21, for the emulator tests only
+- A Google Cloud project with Vertex AI, Firestore (Native mode), Cloud Storage, Secret Manager and Firebase enabled
+- Firebase Auth with the Google and Anonymous providers turned on
+
+The Makefile names our project and account at the top (`PROJECT`, `ACCOUNT`, `REGION`); change them for your own. Cloud targets check the active gcloud identity before doing anything.
+
+```bash
+git clone https://github.com/SOURABHMISHRA5221/readlayer.git
+cd readlayer
+pnpm install
+(cd apps/api && uv sync)
+
+gcloud auth application-default login
+cp apps/api/.env.example apps/api/.env   # then fill in the values
+make web-config                           # writes the web app's Firebase config
+make dev                                  # API on :8000, web on :5173
+```
+
+**Configuration** (names only; see [`apps/api/.env.example`](apps/api/.env.example)):
+
+| Group | Variables |
+|---|---|
+| Runtime | `ENV`, `LOG_LEVEL`, `GCP_PROJECT`, `VERTEX_LOCATION`, `CORS_ORIGINS` |
+| Models | `MODEL_FAST`, `MODEL_QUALITY`, `MODEL_FALLBACK`, `MODEL_EMBED`, `EMBED_DIM`, `MODEL_PRICE_OVERRIDES` |
+| Concept graph | `CONCEPTS_URI`, `LINK_THRESHOLD`, `DEDUPE_THRESHOLD` |
+| Guardrails | `LLM_DAILY_BUDGET_USD`, `LLM_TIMEOUT_S`, `LLM_MAX_RETRIES`, `INGEST_DAILY_CAP`, `ANON_INGEST_DAILY_CAP`, `ANON_GLOBAL_INGEST_DAILY_CAP`, `ANON_SEARCH_DAILY_CAP`, `SEARCH_DAILY_CAP`, `YOUTUBE_SEARCH_DAILY_CAP` |
+| Secrets (Secret Manager in production) | `UID_HASH_SALT`, `TAVILY_API_KEY`, `YOUTUBE_API_KEY` |
+| Web app (written by `make web-config`) | `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, `VITE_API_BASE` |
+
+**Tests**
+
+```bash
+make test             # ruff, pytest, TypeScript typecheck and package tests
+make test-emulator    # export and delete against the Firestore and Auth emulators
+```
+
+## Repository structure
+
+```text
+readlayer/
+├── apps/
+│   ├── api/                 FastAPI service (Python 3.12, uv)
+│   │   ├── app/
+│   │   │   ├── ingest/      safe_fetch, extraction, demand profiles
+│   │   │   ├── graph/       concept graph, linking, overrides
+│   │   │   ├── reader/      knowledge model, personas, events
+│   │   │   ├── scoring/     gap scorer and annotation budget (no LLM)
+│   │   │   ├── recs/        Up next: library, web search, ranking
+│   │   │   ├── explain/     explanations and verifier (M5)
+│   │   │   ├── me/          reader graph, profile, export, delete
+│   │   │   ├── store/       Firestore repositories
+│   │   │   ├── prompts/     versioned prompt files
+│   │   │   └── llm.py       the one gateway to every model
+│   │   ├── scripts/         corpus ingestion, graph build, persona seeding
+│   │   └── tests/
+│   ├── web/                 Vite + React reader and library
+│   └── extension/           Chrome MV3 client (M8)
+├── packages/
+│   └── annotator/           framework-free annotation layer shared by web and extension
+├── docs/                    DESIGN, BUILD_PLAN, STATUS, images
+├── data/                    corpus URL lists and graph overrides
+├── firestore.rules          deny all client access
+└── Makefile                 dev, test and guarded deploy targets
+```
+
+## Roadmap
+
+- [x] M0–M2.1: scaffold, LLM gateway, safe ingestion, 3,327-concept graph
+- [x] M3: reader model, Google and demo sign-in, data rights, first deploy
+- [x] M4: real gap scorer, seeded demo personas, closed learning loop
+- [x] M6 slice: annotator, library, reader, Up next recommendations
+- [ ] M5: two-part explanations, faithfulness verifier, safety evals
+- [ ] M6: paragraph notes, pre-read path, "Know this?" prompts, "This is wrong"
+- [ ] M2.2: online concept growth and linking above 75% on unseen articles
+- [ ] M7: onboarding, calibration and the reading profile page
+- [ ] M8: Chrome extension with client-side redaction
+- [ ] M9: quality evals on a hand-labelled gold set, hardening, demo video
+
+## Team
+
+| Name | Role | Links |
+|---|---|---|
+| _Name_ | _Role_ | _GitHub · LinkedIn_ |
+| _Name_ | _Role_ | _GitHub · LinkedIn_ |
+
+## License
+
+[MIT](LICENSE)
+
+## Acknowledgements
+
+Built for the **Google Cloud AI Builder Cup 2026** (Media, Content and Digital Experiences). Articles in the demo library belong to their publishers; ReadLayer links to them and never alters their text. Thanks to Google Cloud for Vertex AI, Cloud Run, Firestore and Firebase, and to the open-source projects this builds on, including FastAPI, LiteLLM, trafilatura, spaCy, networkx, React, Vite and Floating UI.
