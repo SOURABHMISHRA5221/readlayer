@@ -80,10 +80,11 @@ def test_paragraph_dwell_counts_words_capped():
     assert out.edges == {}
 
 
-def test_fixed_theta_updates_edges_but_not_theta():
-    out = apply_events([ev("e1", "knew_this")], {}, {"economics": 1.2}, REFS, NOW, theta_fixed=True)
-    assert out.theta == {}
-    assert out.edges["c_repo"].alpha == pytest.approx(2 * model.prior(1.2, 0.5) + 2.0)
+def test_dismissal_counts_for_offset_but_adds_no_evidence():
+    out = apply_events([ev("e1", "annotation_dismissed"), ev("e2", "knew_this")], {}, {}, REFS, NOW)
+    assert out.applied_types == ("annotation_dismissed", "knew_this")
+    assert list(out.edges) == ["c_repo"]
+    assert [e.type for e in out.edges["c_repo"].evidence] == ["knew_this"]
 
 
 def test_existing_edges_are_updated_not_replaced():

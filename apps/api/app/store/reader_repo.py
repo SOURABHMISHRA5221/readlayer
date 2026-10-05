@@ -9,11 +9,15 @@ users/{uid}/weekly/{iso_week}  words_read, annotations_shown, content_ids (dedup
 users/{uid}/profile_edits/{id} M7
 users/{uid}/rec_signals/{key}  app/recs/state.py
 users/{uid}/ingest_counts/{d}  new URLs ingested that UTC day
+users/{uid}/demo_graphs/{p}    a demo reader's graph for persona p: θ, threshold_offset, knows
+                               map, engaged contents. Copied from persona_templates/{p} on the
+                               first event or correction; until then the template is read as-is.
 
 Export and delete both walk USER_SUBCOLLECTIONS; a test fails if anything is written under
 `users/{uid}` outside it.
 """
 
+import asyncio
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -22,9 +26,11 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field
 
 from app.reader import events as reader_events
-from app.reader.events import ConceptRef, ReaderEvent
+from app.reader.events import ConceptRef, EventOutcome, ReaderEvent
 from app.reader.model import Edge, Evidence
 from app.reader.profile import iso_week
+from app.reader.state import PersonaKey, ReaderState, touch_engaged
+from app.scoring.rules import next_offset
 from app.store.docstore import Doc, DocStore, Txn
 
 USER_SUBCOLLECTIONS = (
@@ -35,9 +41,15 @@ USER_SUBCOLLECTIONS = (
     "profile_edits",
     "rec_signals",
     "ingest_counts",
+    "demo_graphs",
 )
 EVENT_TTL = timedelta(days=90)
 MAX_WEEKLY_CONTENT_IDS = 500
+# Demo graphs live in one document (Firestore limit 1 MiB): fewer evidence entries per edge,
+# and the oldest low-confidence non-seed edges are dropped past MAX_DEMO_DOC_BYTES.
+DEMO_MAX_EVIDENCE = 5
+MAX_DEMO_DOC_BYTES = 800_000
+FIRESTORE_DOC_LIMIT = 1_048_576
 
 Density = Literal["minimal", "balanced", "guided"]
 ExplanationStyle = Literal["short", "normal", "detailed"]
@@ -55,6 +67,10 @@ class UserProfile(BaseModel):
     learning_paused: bool = False
     explanation_style: ExplanationStyle = "normal"
     thinks_in: list[str] = Field(default_factory=list)
+    # Scoring state (DESIGN §5–6). Demo readers keep offset and engaged per persona instead.
+    engaged: dict[str, datetime] = Field(default_factory=dict)  # content_id → last engaged
+    prompts: dict[str, list[str]] = Field(default_factory=dict)  # UTC day → prompted contents
+    rev: int = 0  # bumped on every change to the reader's graph; derived caches key on it
 
 
 @dataclass(frozen=True)
@@ -131,6 +147,92 @@ def _event_doc(ev: ReaderEvent, now: datetime) -> Doc:
     }
 
 
+def firestore_size(value: Any) -> int:
+    """Firestore's storage size rules (strings len+1, numbers/timestamps 8, maps sum key+value),
+    close enough to keep a document clear of the 1 MiB limit."""
+    if value is None or isinstance(value, bool):
+        return 1
+    if isinstance(value, str):
+        return len(value.encode()) + 1
+    if isinstance(value, int | float | datetime):
+        return 8
+    if isinstance(value, list | tuple):
+        return sum(firestore_size(v) for v in value)
+    if isinstance(value, dict):
+        return sum(len(str(k).encode()) + 1 + firestore_size(v) for k, v in value.items())
+    return len(str(value).encode()) + 1
+
+
+def fit_demo_doc(
+    doc: Doc, path: str, keep: set[str], limit: int = MAX_DEMO_DOC_BYTES
+) -> tuple[Doc, int]:
+    """Drop the oldest low-confidence non-seed edges (never ones in `keep`) until the document
+    fits. Returns the document and how many edges were dropped."""
+    size = len(path.encode()) + 16 + firestore_size(doc)
+    if size <= limit:
+        return doc, 0
+    knows = dict(doc["knows"])
+    victims = sorted(
+        (
+            (float(e["alpha"]) + float(e["beta"]), e["last_seen"], cid)
+            for cid, e in knows.items()
+            if not e.get("seeded") and cid not in keep
+        ),
+    )
+    dropped = 0
+    for _, _, cid in victims:
+        if size <= limit:
+            break
+        size -= len(cid.encode()) + 1 + firestore_size(knows.pop(cid))
+        dropped += 1
+    return doc | {"knows": knows}, dropped
+
+
+def demo_path(uid: str, persona: PersonaKey) -> str:
+    return sub_path(uid, "demo_graphs", persona)
+
+
+def _theta_map(doc: Mapping[str, Any] | None) -> dict[str, float]:
+    return {d: float(t) for d, t in ((doc or {}).get("theta") or {}).items()}
+
+
+def state_from_demo(uid: str, persona: PersonaKey, doc: Doc, copied: bool) -> ReaderState:
+    rev = f"demo:{uid}:{persona}:{doc.get('rev', 0)}" if copied else f"template:{doc['version']}"
+    return ReaderState(
+        theta=_theta_map(doc),
+        edges={cid: edge_from_doc(e) for cid, e in (doc.get("knows") or {}).items()},
+        threshold_offset=float(doc.get("threshold_offset", 0.0)),
+        engaged=dict(doc.get("engaged") or {}),
+        rev=rev,
+    )
+
+
+def state_from_user(
+    uid: str, user: UserProfile, domains: Mapping[str, "DomainState"], knows: Mapping[str, Edge]
+) -> ReaderState:
+    return ReaderState(
+        theta={d: s.theta for d, s in domains.items()},
+        edges=dict(knows),
+        threshold_offset=user.threshold_offset,
+        engaged=dict(user.engaged),
+        rev=f"user:{uid}:{user.rev}",
+    )
+
+
+def _copy_template(template: Doc, now: datetime) -> Doc:
+    """A demo reader's own graph, started from the persona template."""
+    return {
+        "persona": template["persona"],
+        "template_version": template["version"],
+        "theta": dict(template.get("theta") or {}),
+        "threshold_offset": float(template.get("threshold_offset", 0.0)),
+        "knows": dict(template.get("knows") or {}),
+        "engaged": {},
+        "rev": 0,
+        "created_at": now,
+    }
+
+
 @dataclass(frozen=True)
 class EventsResult:
     applied: int
@@ -175,56 +277,61 @@ class ReaderRepo:
     async def get_weekly(self, uid: str) -> dict[str, Doc]:
         return dict(await self._store.list(f"{user_path(uid)}/weekly"))
 
+    async def _template(self, persona: PersonaKey) -> Doc:
+        from app.store.persona_repo import get_template
+
+        return await get_template(self._store, persona)
+
+    async def load_state(
+        self, uid: str, persona: PersonaKey | None
+    ) -> tuple[ReaderState, UserProfile, dict[str, DomainState]]:
+        """The reader's scoring state: their own graph, or for a demo reader the persona's
+        copy (the template itself until their first event). Reads only; nothing is written."""
+        if persona is not None:
+            user_doc, demo = await asyncio.gather(
+                self._store.get(user_path(uid)), self._store.get(demo_path(uid, persona))
+            )
+            user = UserProfile.model_validate(user_doc or {})
+            copied = demo is not None
+            doc = demo if demo is not None else await self._template(persona)
+            state = state_from_demo(uid, persona, doc, copied)
+            domains = {d: DomainState(theta=t) for d, t in state.theta.items()}
+            return state, user, domains
+        user_doc, domains, knows = await asyncio.gather(
+            self._store.get(user_path(uid)), self.get_domains(uid), self.get_knows(uid)
+        )
+        user = UserProfile.model_validate(user_doc or {})
+        return state_from_user(uid, user, domains, knows), user, domains
+
     # ------------------------------------------------------------ events and corrections
 
     async def apply_events(
         self,
         uid: str,
+        persona: PersonaKey | None,
         events: list[ReaderEvent],
         refs: Mapping[str, ConceptRef],
-        base_theta: Mapping[str, float],
         now: datetime,
-        *,
-        theta_fixed: bool,
     ) -> EventsResult:
-        """One transaction: pause check, idempotency, KNOWS + θ + weekly updates, event log."""
+        """One transaction: pause check, idempotency, KNOWS + θ + threshold_offset + engaged +
+        weekly updates, event log. A demo reader's first event copies the persona template."""
+        template = await self._template(persona) if persona is not None else None
 
         async def body(t: Txn) -> EventsResult:
-            user = UserProfile.model_validate(await t.get(user_path(uid)) or {})
+            user_doc = await t.get(user_path(uid))
+            user = UserProfile.model_validate(user_doc or {})
             if user.learning_paused:
                 return EventsResult(0, len(events), True)
             stored = await t.get_all([sub_path(uid, "events", e.id) for e in events])
             fresh = [e for e in events if stored[sub_path(uid, "events", e.id)] is None]
             cids = sorted({e.concept_id for e in fresh if e.concept_id in refs})
-            domains = sorted({refs[c].domain for c in cids})
             week = iso_week(now)
-            reads = await t.get_all(
-                [sub_path(uid, "knows", c) for c in cids]
-                + [sub_path(uid, "domains", d) for d in domains]
-                + [sub_path(uid, "weekly", week)]
-            )
-            edges = {
-                c: edge_from_doc(doc)
-                for c in cids
-                if (doc := reads[sub_path(uid, "knows", c)]) is not None
-            }
-            stored_domains = {d: reads[sub_path(uid, "domains", d)] for d in domains}
-            theta = dict(base_theta)
-            if not theta_fixed:
-                theta |= {
-                    d: float(doc["theta"])
-                    for d, doc in stored_domains.items()
-                    if doc and "theta" in doc
-                }
-            out = reader_events.apply_events(
-                fresh, edges, theta, refs, now, theta_fixed=theta_fixed
-            )
-            for cid, edge in out.edges.items():
-                t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, refs[cid].domain))
-            for d, th in out.theta.items():
-                t.set(sub_path(uid, "domains", d), (stored_domains.get(d) or {}) | {"theta": th})
+            weekly = (await t.get(sub_path(uid, "weekly", week))) or {}
+            if persona is not None and template is not None:
+                out = await self._demo_events(t, uid, persona, template, fresh, cids, refs, now)
+            else:
+                out = await self._user_events(t, uid, user, fresh, cids, refs, now)
             if out.words_read:
-                weekly = reads[sub_path(uid, "weekly", week)] or {}
                 weekly["words_read"] = int(weekly.get("words_read", 0)) + out.words_read
                 t.set(sub_path(uid, "weekly", week), weekly)
             applied = set(out.applied)
@@ -235,46 +342,154 @@ class ReaderRepo:
 
         return await self._store.run(body)
 
+    async def _user_events(
+        self,
+        t: Txn,
+        uid: str,
+        user: UserProfile,
+        fresh: list[ReaderEvent],
+        cids: list[str],
+        refs: Mapping[str, ConceptRef],
+        now: datetime,
+    ) -> EventOutcome:
+        domains = sorted({refs[c].domain for c in cids})
+        reads = await t.get_all(
+            [sub_path(uid, "knows", c) for c in cids]
+            + [sub_path(uid, "domains", d) for d in domains]
+        )
+        edges = {
+            c: edge_from_doc(doc)
+            for c in cids
+            if (doc := reads[sub_path(uid, "knows", c)]) is not None
+        }
+        stored_domains = {d: reads[sub_path(uid, "domains", d)] for d in domains}
+        theta = {
+            d: float(doc["theta"]) for d, doc in stored_domains.items() if doc and "theta" in doc
+        }
+        out = reader_events.apply_events(fresh, edges, theta, refs, now)
+        for cid, edge in out.edges.items():
+            t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, refs[cid].domain))
+        for d, th in out.theta.items():
+            t.set(sub_path(uid, "domains", d), (stored_domains.get(d) or {}) | {"theta": th})
+        if out.applied:
+            updated = user.model_copy(
+                update={
+                    "threshold_offset": next_offset(user.threshold_offset, out.applied_types),
+                    "engaged": touch_engaged(user.engaged, set(out.content_ids), now),
+                    "rev": user.rev + 1,
+                }
+            )
+            t.set(user_path(uid), updated.model_dump())
+        return out
+
+    async def _demo_events(
+        self,
+        t: Txn,
+        uid: str,
+        persona: PersonaKey,
+        template: Doc,
+        fresh: list[ReaderEvent],
+        cids: list[str],
+        refs: Mapping[str, ConceptRef],
+        now: datetime,
+    ) -> EventOutcome:
+        path = demo_path(uid, persona)
+        doc = (await t.get(path)) or _copy_template(template, now)
+        knows = doc.get("knows") or {}
+        edges = {c: edge_from_doc(knows[c]) for c in cids if c in knows}
+        out = reader_events.apply_events(fresh, edges, _theta_map(doc), refs, now)
+        if not out.applied:
+            return out
+        new_knows = dict(knows)
+        for cid, edge in out.edges.items():
+            trimmed = Edge(**(vars(edge) | {"evidence": edge.evidence[-DEMO_MAX_EVIDENCE:]}))
+            seeded = bool(knows.get(cid, {}).get("seeded"))
+            new_knows[cid] = edge_to_doc(trimmed, refs[cid].domain) | {"seeded": seeded}
+        updated = doc | {
+            "knows": new_knows,
+            "theta": _theta_map(doc) | out.theta,
+            "threshold_offset": next_offset(
+                float(doc.get("threshold_offset", 0.0)), out.applied_types
+            ),
+            "engaged": touch_engaged(doc.get("engaged") or {}, set(out.content_ids), now),
+            "rev": int(doc.get("rev", 0)) + 1,
+            "updated_at": now,
+        }
+        fitted, _ = fit_demo_doc(updated, path, keep=set(out.edges))
+        t.set(path, fitted)
+        return out
+
     async def correct(
         self,
         uid: str,
+        persona: PersonaKey | None,
         concept_id: str,
         ref: ConceptRef,
         known: bool,
-        base_theta: Mapping[str, float],
         now: datetime,
-        *,
-        theta_fixed: bool,
     ) -> Edge:
         """PATCH /v1/me/graph: applies even while learning is paused (the reader asked)."""
+        template = await self._template(persona) if persona is not None else None
 
         async def body(t: Txn) -> Edge:
+            if persona is not None and template is not None:
+                path = demo_path(uid, persona)
+                doc = (await t.get(path)) or _copy_template(template, now)
+                knows = doc.get("knows") or {}
+                current = knows.get(concept_id)
+                edge = reader_events.correction(
+                    edge_from_doc(current) if current else None, ref, _theta_map(doc), known, now
+                )
+                edge = Edge(**(vars(edge) | {"evidence": edge.evidence[-DEMO_MAX_EVIDENCE:]}))
+                seeded = bool((current or {}).get("seeded"))
+                entry = edge_to_doc(edge, ref.domain) | {"seeded": seeded}
+                updated = doc | {
+                    "knows": dict(knows) | {concept_id: entry},
+                    "rev": int(doc.get("rev", 0)) + 1,
+                    "updated_at": now,
+                }
+                fitted, _ = fit_demo_doc(updated, path, keep={concept_id})
+                t.set(path, fitted)
+                return edge
             reads = await t.get_all(
-                [sub_path(uid, "knows", concept_id), sub_path(uid, "domains", ref.domain)]
+                [
+                    user_path(uid),
+                    sub_path(uid, "knows", concept_id),
+                    sub_path(uid, "domains", ref.domain),
+                ]
             )
             doc = reads[sub_path(uid, "knows", concept_id)]
             dom = reads[sub_path(uid, "domains", ref.domain)]
-            theta = dict(base_theta)
-            if not theta_fixed and dom and "theta" in dom:
-                theta[ref.domain] = float(dom["theta"])
+            theta = {ref.domain: float(dom["theta"])} if dom and "theta" in dom else {}
             edge = reader_events.correction(
                 edge_from_doc(doc) if doc else None, ref, theta, known, now
             )
             t.set(sub_path(uid, "knows", concept_id), edge_to_doc(edge, ref.domain))
+            user = UserProfile.model_validate(reads[user_path(uid)] or {})
+            t.set(user_path(uid), user.model_copy(update={"rev": user.rev + 1}).model_dump())
             return edge
 
         return await self._store.run(body)
 
-    async def record_annotations_shown(
-        self, uid: str, content_id: str, count: int, now: datetime
+    async def record_view(
+        self, uid: str, content_id: str, count: int, prompted: bool, now: datetime
     ) -> None:
-        """Once per content per ISO week; nothing while learning is paused."""
+        """A page load: the annotation trend (once per content per ISO week) and, when an
+        uncertainty prompt was shown, today's prompt log (DESIGN §6.5, three per day). Nothing
+        is written while learning is paused (no prompts are shown then either)."""
         week = iso_week(now)
+        day = now.date().isoformat()
 
         async def body(t: Txn) -> None:
             reads = await t.get_all([user_path(uid), sub_path(uid, "weekly", week)])
-            if UserProfile.model_validate(reads[user_path(uid)] or {}).learning_paused:
+            user_doc = reads[user_path(uid)]
+            user = UserProfile.model_validate(user_doc or {})
+            if user.learning_paused:
                 return
+            today = user.prompts.get(day, [])
+            if prompted and content_id not in today:
+                updated = user.model_copy(update={"prompts": {day: [*today, content_id]}})
+                t.set(user_path(uid), updated.model_dump())
             weekly = reads[sub_path(uid, "weekly", week)] or {}
             seen = list(weekly.get("content_ids", []))
             if content_id in seen or len(seen) >= MAX_WEEKLY_CONTENT_IDS:

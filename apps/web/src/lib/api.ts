@@ -1,4 +1,4 @@
-import type { CardAnnotation } from "@readlayer/annotator";
+import type { Annotation, CardAnnotation } from "@readlayer/annotator";
 
 import { idToken } from "./auth";
 import type { Density, PersonaKey } from "./personas";
@@ -35,7 +35,24 @@ export interface AnnotationsResponse {
   persona: PersonaKey | null;
   density: Density;
   count: number;
+  /** Span annotations only, ranked. */
   annotations: CardAnnotation[];
+  /** Paragraph markers, the pre-read path and the "Know this?" prompt: shown from M6. */
+  extras: { id: string; kind: Exclude<Annotation["kind"], "span"> }[];
+}
+
+type RawAnnotations = Omit<AnnotationsResponse, "annotations" | "extras"> & {
+  annotations: (CardAnnotation | AnnotationsResponse["extras"][number])[];
+};
+
+function splitAnnotations(raw: RawAnnotations): AnnotationsResponse {
+  const spans: CardAnnotation[] = [];
+  const extras: AnnotationsResponse["extras"] = [];
+  for (const a of raw.annotations) {
+    if (a.kind === "span") spans.push(a as CardAnnotation);
+    else extras.push(a as AnnotationsResponse["extras"][number]);
+  }
+  return { ...raw, annotations: spans, extras };
 }
 
 export type RecFormat = "article" | "video" | "podcast";
@@ -168,10 +185,10 @@ export const api = {
   openWeb: (url: string, signal?: AbortSignal) =>
     post<{ content_id: string; new: boolean }>("/v1/recs/open", { url }, signal),
   annotations: (id: string, persona: PersonaKey | null, density: Density, debug: boolean, signal?: AbortSignal) =>
-    get<AnnotationsResponse>(
+    get<RawAnnotations>(
       `/v1/content/${encodeURIComponent(id)}/annotations?density=${density}${personaParam(persona)}${debug ? "&debug=1" : ""}`,
       signal,
-    ),
+    ).then(splitAnnotations),
   events: (persona: PersonaKey | null, events: ReaderEvent[]) =>
     post<{ applied: boolean; events_applied: number; events_ignored: number }>("/v1/events", { persona, events }),
   exportMe: async (): Promise<Blob> => {

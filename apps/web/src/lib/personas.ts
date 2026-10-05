@@ -1,4 +1,4 @@
-/** Demo personas mirror app/scoring/placeholder.py (PLACEHOLDER until the reader model, M4). */
+/** Demo personas mirror app/reader/personas.py: each is a seeded reader graph that learns per demo session. */
 export const PERSONAS = [
   {
     key: "newcomer",

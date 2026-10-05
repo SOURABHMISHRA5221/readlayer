@@ -120,8 +120,9 @@ def test_export_then_delete_against_the_emulators(live, monkeypatch):
 
         body = client.get("/v1/me/export").json()
         assert body["user"]["thinks_in"] == ["software"] and body["user"]["is_anonymous"] is True
-        # No domain docs: demo personas keep hand-set θ. profile_edits arrive in M7.
-        for name in ("knows", "events", "weekly", "rec_signals", "ingest_counts"):
+        # A demo reader's graph is their persona's copy (demo_graphs), not knows/domains.
+        # profile_edits arrive in M7.
+        for name in ("demo_graphs", "events", "weekly", "rec_signals", "ingest_counts"):
             assert body[name], name
         stored = all_user_docs(uid)
         assert stored[0] == f"users/{uid}"

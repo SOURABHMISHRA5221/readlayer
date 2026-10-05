@@ -21,7 +21,8 @@ from app import llm
 from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
-from app.context import ReaderContext, reader_context
+from app.content.router import score_for
+from app.context import ReaderContext, reader_context, scope_persona
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph
 from app.ingest import quota
@@ -35,13 +36,13 @@ from app.ingest.router import (
 )
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import url_hash
+from app.reader.state import PersonaKey
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
 from app.recs.rank import PERSONA_FORMAT_PRIORS, RELATION_LABEL, Candidate, select
-from app.recs.state import RecEventType, Served, get_rec_signals
+from app.recs.state import DEFAULT_KEY, RecEventType, Served, get_rec_signals
 from app.recs.web_search import build_query, get_web_search
-from app.scoring import placeholder
-from app.scoring.placeholder import DENSITY_THRESHOLDS, PersonaKey
+from app.scoring.scorer import word_count
 from app.store.content_repo import get_content_store
 
 log = logging.getLogger("app.recs")
@@ -151,7 +152,7 @@ def _published(doc: ContentDoc) -> str | None:
 
 
 def _read_time(doc: ContentDoc) -> int:
-    return placeholder.word_count(doc) * 60 // 230
+    return word_count(doc) * 60 // 230
 
 
 def _library_item(
@@ -217,7 +218,7 @@ async def recommendations(
         raise HTTPException(status_code=404, detail="content not found")
     graph = get_graph()
     theta = ctx.theta
-    spans = placeholder.annotate(doc, graph, theta, DENSITY_THRESHOLDS["balanced"])
+    spans = (await score_for(ctx, doc, "balanced", datetime.now(UTC))).spans
     triggers = [s.concept_id for s in spans]  # highest score first
 
     index = await _library_index()
@@ -305,9 +306,9 @@ async def rec_events(
     body: RecEventsRequest, caller: Annotated[Caller, Depends(current_caller)]
 ) -> dict[str, int]:
     """Idempotent by event id; only items we served to this reader count."""
-    ctx = await reader_context(caller, body.persona)
+    key = scope_persona(caller, body.persona) or DEFAULT_KEY
     applied = await get_rec_signals().apply(
-        ctx.uid, ctx.rec_key, [(e.id, e.type, e.item_id) for e in body.events]
+        caller.uid, key, [(e.id, e.type, e.item_id) for e in body.events]
     )
     return {"applied": applied, "ignored": len(body.events) - applied}
 

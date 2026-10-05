@@ -74,6 +74,12 @@ class ConceptGraph:
             return []
         return [self._by_id[s] for s in self._dag.successors(concept_id)]
 
+    def ancestors(self, concept_id: str) -> set[str]:
+        """Every concept reachable backwards through prerequisites (not the concept itself)."""
+        if concept_id not in self._dag:
+            return set()
+        return set(nx.ancestors(self._dag, concept_id))
+
     def prerequisite_chain(self, concept_id: str) -> list[Concept]:
         """Longest prerequisite path ending at the concept, most basic first."""
         if concept_id not in self._dag:

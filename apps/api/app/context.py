@@ -1,8 +1,10 @@
 """Who is reading, as the scorers and recommenders see it.
 
-Anonymous (demo) readers carry a persona (`?persona=`, default newcomer) whose hand-set θ is
-fixed until M4 replaces personas with seeded reader graphs. Signed-in readers are themselves:
-θ per domain from `users/{uid}/domains` (0 where nothing is known yet), no persona.
+Anonymous (demo) readers carry a persona (`?persona=`, default newcomer). Each persona is a
+seeded reader graph: the read-only template until the reader's first event, then their own copy
+at `users/{uid}/demo_graphs/{persona}`, so one demo session can switch personas and each one
+learns separately. Signed-in readers are themselves: their own graph, neutral (θ = 0, no
+edges) until they read, no persona.
 """
 
 from collections.abc import Mapping
@@ -12,10 +14,10 @@ from typing import Annotated
 from fastapi import Depends, Query
 
 from app.auth import Caller, current_caller
+from app.reader.state import Density, PersonaKey, ReaderState
 from app.recs.state import DEFAULT_KEY
-from app.scoring.placeholder import PERSONAS, PersonaKey
 from app.store.docstore import get_doc_store
-from app.store.reader_repo import ReaderRepo
+from app.store.reader_repo import DomainState, ReaderRepo, UserProfile
 
 DEMO_DEFAULT: PersonaKey = "newcomer"
 
@@ -24,12 +26,21 @@ DEMO_DEFAULT: PersonaKey = "newcomer"
 class ReaderContext:
     caller: Caller
     persona: PersonaKey | None
-    theta: Mapping[str, float]
-    theta_fixed: bool
+    state: ReaderState
+    user: UserProfile
+    domains: Mapping[str, DomainState]
 
     @property
     def uid(self) -> str:
         return self.caller.uid
+
+    @property
+    def theta(self) -> Mapping[str, float]:
+        return self.state.theta
+
+    @property
+    def density(self) -> Density:
+        return self.user.density
 
     @property
     def rec_key(self) -> str:
@@ -39,17 +50,18 @@ class ReaderContext:
     @property
     def view_key(self) -> str:
         """Cache key for derived per-reader views (library rows): equal keys, equal output."""
-        if self.persona:
-            return f"persona:{self.persona}"
-        return "theta:" + ",".join(f"{d}={t:.6f}" for d, t in sorted(self.theta.items()))
+        return self.state.rev
+
+
+def scope_persona(caller: Caller, persona: PersonaKey | None) -> PersonaKey | None:
+    """Personas are for demo (anonymous) readers only; signed-in readers are themselves."""
+    return (persona or DEMO_DEFAULT) if caller.is_anonymous else None
 
 
 async def reader_context(
     caller: Annotated[Caller, Depends(current_caller)],
     persona: Annotated[PersonaKey | None, Query()] = None,
 ) -> ReaderContext:
-    if caller.is_anonymous:
-        key = persona or DEMO_DEFAULT
-        return ReaderContext(caller, key, PERSONAS[key].theta, theta_fixed=True)
-    domains = await ReaderRepo(get_doc_store()).get_domains(caller.uid)
-    return ReaderContext(caller, None, {d: s.theta for d, s in domains.items()}, False)
+    scope = scope_persona(caller, persona)
+    state, user, domains = await ReaderRepo(get_doc_store()).load_state(caller.uid, scope)
+    return ReaderContext(caller, scope, state, user, domains)

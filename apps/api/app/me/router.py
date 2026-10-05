@@ -15,15 +15,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app import ratelimit
 from app.auth import Caller, current_caller, forget_user, get_auth_admin
-from app.context import ReaderContext, reader_context
+from app.context import ReaderContext, reader_context, scope_persona
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph
 from app.graph.models import DOMAINS, Concept, Domain
 from app.reader import model, profile
 from app.reader.events import ConceptRef, EventType, ReaderEvent
 from app.reader.model import Band, Edge
+from app.reader.state import PersonaKey
 from app.reader.subgraph import knowledge_subgraph
-from app.scoring.placeholder import PersonaKey
 from app.store.docstore import get_doc_store
 from app.store.reader_repo import Density, ExplanationStyle, ReaderRepo
 
@@ -86,7 +86,6 @@ class EventsResponse(BaseModel):
 async def post_events(
     body: EventsRequest, caller: Annotated[Caller, Depends(current_caller)]
 ) -> EventsResponse:
-    ctx = await reader_context(caller, body.persona)
     graph = get_graph()
     refs = {
         e.concept_id: _ref(c)
@@ -98,7 +97,7 @@ async def post_events(
         for e in body.events
     ]
     result = await _repo().apply_events(
-        ctx.uid, events, refs, ctx.theta, datetime.now(UTC), theta_fixed=ctx.theta_fixed
+        caller.uid, scope_persona(caller, body.persona), events, refs, datetime.now(UTC)
     )
     return EventsResponse(
         applied=not result.paused,
@@ -193,7 +192,7 @@ async def get_my_graph(
     graph = get_graph()
     now = datetime.now(UTC)
     repo = _repo()
-    knows = await repo.get_knows(ctx.uid)
+    knows = dict(ctx.state.edges)
     if domain is None and not q.strip():
         return _summary(graph, knows, ctx, await repo.get_weekly(ctx.uid), now)
     theta = dict(ctx.theta)
@@ -223,20 +222,20 @@ class CorrectionOut(BaseModel):
 async def correct_concept(
     concept_id: str,
     body: CorrectionIn,
-    ctx: Annotated[ReaderContext, Depends(reader_context)],
+    caller: Annotated[Caller, Depends(current_caller)],
+    persona: Annotated[PersonaKey | None, Query()] = None,
 ) -> CorrectionOut:
     """ "I know this" / "I don't": strong evidence, applied even while learning is paused."""
     concept = get_graph().get(concept_id)
     if concept is None:
         raise HTTPException(status_code=404, detail="concept not found")
     edge = await _repo().correct(
-        ctx.uid,
+        caller.uid,
+        scope_persona(caller, persona),
         concept_id,
         _ref(concept),
         body.state == "known",
-        ctx.theta,
         datetime.now(UTC),
-        theta_fixed=ctx.theta_fixed,
     )
     return CorrectionOut(concept_id=concept_id, band=edge.band, p_know=round(model.p_know(edge), 4))
 
@@ -249,11 +248,10 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     """Deterministic (DESIGN §15.1): no LLM call anywhere on this path."""
     graph = get_graph()
     now = datetime.now(UTC)
-    repo = _repo()
-    user = await repo.get_user(ctx.uid)
-    domains = await repo.get_domains(ctx.uid)
-    knows = await repo.get_knows(ctx.uid)
-    weekly = await repo.get_weekly(ctx.uid)
+    user = ctx.user
+    domains = ctx.domains
+    knows = dict(ctx.state.edges)
+    weekly = await _repo().get_weekly(ctx.uid)
     theta = {d: float(ctx.theta.get(d, 0.0)) for d in DOMAINS}
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
     return {

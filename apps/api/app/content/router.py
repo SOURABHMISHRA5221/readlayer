@@ -1,13 +1,17 @@
 """Read side of content for the reader UI: library list, article body, annotations.
 
-Annotations come from the PLACEHOLDER scorer (app/scoring/placeholder.py) until M4.
+Annotations come from the gap scorer (app/scoring/scorer.py, DESIGN §5–6) over the reader's
+own graph, or the demo persona's. No LLM call on this path.
 """
 
+import logging
+import time
+from collections import deque
 from datetime import UTC, datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app import ratelimit
 from app.config import Settings, get_settings
@@ -16,15 +20,19 @@ from app.content.summary import article_domain
 from app.context import ReaderContext, reader_context
 from app.graph.loader import get_graph
 from app.ingest.models import ContentDoc
-from app.scoring import placeholder
-from app.scoring.placeholder import DENSITY_THRESHOLDS, Density, PersonaKey
+from app.reader.state import Density, PersonaKey
+from app.scoring import scorer
+from app.scoring.scorer import Annotations, ExplainerRef, ScoringInputs
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
 from app.store.reader_repo import ReaderRepo
 
+log = logging.getLogger(__name__)
 router = APIRouter()
 
 MAX_QUERY_CHARS = 200
+LATENCY_WINDOW = 200  # recent scoring times kept for the p95 log line
+LATENCY_LOG_EVERY = 50
 
 
 class ContentSummary(BaseModel):
@@ -78,7 +86,7 @@ class AnnotationDebug(BaseModel):
 
 class AnnotationOut(BaseModel):
     id: str
-    kind: str = "span"
+    kind: Literal["span"] = "span"
     anchor: AnchorOut
     paragraph_id: str
     score: float
@@ -90,24 +98,123 @@ class AnnotationOut(BaseModel):
     debug: AnnotationDebug | None = None
 
 
+class ParagraphMarkerOut(BaseModel):
+    """ "What this paragraph is saying" margin marker (shown from M6)."""
+
+    id: str
+    kind: Literal["paragraph"] = "paragraph"
+    paragraph_id: str
+    score: float
+    domain: str | None
+
+
+class PrereadStepOut(BaseModel):
+    concept_id: str
+    label: str
+    definition: str
+    content_id: str | None  # a corpus article explaining the concept, else show the definition
+    title: str | None
+
+
+class PrereadOut(BaseModel):
+    """Pre-read card: prerequisites to meet first, most basic first (shown from M6)."""
+
+    id: str = "preread"
+    kind: Literal["preread"] = "preread"
+    score: float
+    concept_id: str
+    label: str
+    steps: list[PrereadStepOut]
+
+
+class PromptOut(BaseModel):
+    """ "Know this?" uncertainty prompt (shown from M6)."""
+
+    id: str
+    kind: Literal["prompt"] = "prompt"
+    anchor: AnchorOut
+    paragraph_id: str
+    concept_id: str
+    label: str
+
+
+AnyAnnotation = Annotated[
+    AnnotationOut | ParagraphMarkerOut | PrereadOut | PromptOut, Field(discriminator="kind")
+]
+
+
 class AnnotationsResponse(BaseModel):
     content_id: str
     persona: PersonaKey | None  # demo persona; None for a signed-in reader
     density: Density
-    count: int
-    annotations: list[AnnotationOut]
+    count: int  # span annotations
+    annotations: list[AnyAnnotation]  # spans first (ranked), then paragraphs, pre-read, prompt
 
 
-# Library rows per (catalog version, reader view, density): pure computation over the shared
-# catalog, cached because the list endpoint is hit on every library view. Bounded: signed-in
-# readers each have their own θ, so keys can grow with readers.
+# Library rows per (catalog version, reader state revision, density): pure computation over
+# the shared catalog, cached because the list endpoint is hit on every library view. Demo
+# readers who haven't interacted share their persona template's revision. Bounded.
 _rows: dict[tuple[int, str, Density], list[ContentSummary]] = {}
 MAX_CACHED_VIEWS = 64
+# Catalog-derived scoring inputs, rebuilt when the doc set changes.
+_index: tuple[int, dict[str, ContentDoc], dict[str, ExplainerRef]] | None = None
+_latencies: deque[float] = deque(maxlen=LATENCY_WINDOW)
+_scored = 0
 
 
 def reset_catalog() -> None:
+    global _index
     catalog.reset()
     _rows.clear()
+    _index = None
+
+
+async def _catalog_index() -> tuple[dict[str, ContentDoc], dict[str, ExplainerRef]]:
+    global _index
+    docs = await catalog.all_docs()
+    version = catalog.version()
+    if _index is None or _index[0] != version:
+        _index = (version, {d.content_id: d for d in docs}, scorer.explainer_index(docs))
+    return _index[1], _index[2]
+
+
+async def _inputs(ctx: ReaderContext, doc: ContentDoc, now: datetime) -> ScoringInputs:
+    by_id, explainers = await _catalog_index()
+    return ScoringInputs(
+        engaged_entities=scorer.engaged_entities(
+            by_id, ctx.state.recent_contents(now), doc.content_id
+        ),
+        explainers=explainers,
+        prompted_today=tuple(ctx.user.prompts.get(now.date().isoformat(), [])),
+        prompts_allowed=not ctx.user.learning_paused,
+    )
+
+
+def p95(samples: list[float]) -> float:
+    ordered = sorted(samples)
+    return ordered[min(len(ordered) - 1, int(0.95 * len(ordered)))] if ordered else 0.0
+
+
+def _record_latency(ms: float) -> None:
+    global _scored
+    _latencies.append(ms)
+    _scored += 1
+    if _scored % LATENCY_LOG_EVERY == 0:
+        log.info(
+            "annotation scoring latency",
+            extra={"p95_ms": round(p95(list(_latencies)), 2), "window": len(_latencies)},
+        )
+
+
+async def score_for(
+    ctx: ReaderContext, doc: ContentDoc, density: Density, now: datetime
+) -> Annotations:
+    """The reader's annotations for one article (also the recommender's triggers)."""
+    inputs = await _inputs(ctx, doc, now)
+    started = time.perf_counter()
+    result = scorer.annotate(doc, get_graph(), ctx.state, density, now, inputs)
+    _record_latency((time.perf_counter() - started) * 1000)
+    return result
 
 
 async def _summaries(ctx: ReaderContext, density: Density) -> list[ContentSummary]:
@@ -115,12 +222,16 @@ async def _summaries(ctx: ReaderContext, density: Density) -> list[ContentSummar
     key = (catalog.version(), ctx.view_key, density)
     if key not in _rows:
         graph = get_graph()
-        theta, threshold = ctx.theta, DENSITY_THRESHOLDS[density]
+        now = datetime.now(UTC)
+        _, explainers = await _catalog_index()
+        inputs = ScoringInputs(explainers=explainers)
         if len(_rows) >= MAX_CACHED_VIEWS:
             _rows.pop(next(iter(_rows)))
         _rows[key] = [
             _summary(
-                d, article_domain(d, graph), len(placeholder.annotate(d, graph, theta, threshold))
+                d,
+                article_domain(d, graph),
+                len(scorer.annotate(d, graph, ctx.state, density, now, inputs).spans),
             )
             for d in docs
         ]
@@ -132,7 +243,7 @@ def _summary(doc: ContentDoc, domain: str | None, concepts_new: int) -> ContentS
         id=doc.content_id,
         title=doc.title,
         site=doc.site,
-        word_count=placeholder.word_count(doc),
+        word_count=scorer.word_count(doc),
         description=doc.description,
         author=doc.author,
         published=doc.published,
@@ -153,10 +264,10 @@ async def _doc_or_404(content_id: str) -> ContentDoc:
 async def list_content(
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     q: Annotated[str, Query(max_length=MAX_QUERY_CHARS)] = "",
-    density: Density = "balanced",
+    density: Density | None = None,
 ) -> list[ContentSummary]:
     needle = q.strip().casefold()
-    items = await _summaries(ctx, density)
+    items = await _summaries(ctx, density or ctx.density)
     if not needle:
         return items
     return [s for s in items if needle in s.title.casefold() or needle in s.site.casefold()]
@@ -170,7 +281,7 @@ async def get_content(content_id: str) -> ContentDetail:
         title=doc.title,
         site=doc.site,
         url=doc.final_url or doc.url,
-        word_count=placeholder.word_count(doc),
+        word_count=scorer.word_count(doc),
         description=doc.description,
         author=doc.author,
         published=doc.published,
@@ -189,27 +300,70 @@ async def get_annotations(
     content_id: str,
     settings: Annotated[Settings, Depends(get_settings)],
     ctx: Annotated[ReaderContext, Depends(reader_context)],
-    density: Density = "balanced",
+    density: Density | None = None,
     debug: bool = False,
 ) -> AnnotationsResponse:
     doc = await _doc_or_404(content_id)
-    spans = placeholder.annotate(doc, get_graph(), ctx.theta, DENSITY_THRESHOLDS[density])
+    density = density or ctx.density
+    now = datetime.now(UTC)
+    result = await score_for(ctx, doc, density, now)
     with_debug = debug and settings.env == "dev"
-    items = [_annotation_out(s, with_debug) for s in spans]
-    # Annotation trend (DESIGN §15.2): once per content per week, skipped while paused.
-    await ReaderRepo(get_doc_store()).record_annotations_shown(
-        ctx.uid, doc.content_id, len(items), datetime.now(UTC)
+    items: list[AnyAnnotation] = [_annotation_out(s, with_debug) for s in result.spans]
+    items += [_paragraph_out(m) for m in result.paragraphs]
+    if result.preread is not None:
+        items.append(_preread_out(result.preread))
+    if result.prompt is not None:
+        items.append(_prompt_out(result.prompt))
+    # Annotation trend (DESIGN §15.2) and today's prompt log (§6.5).
+    await ReaderRepo(get_doc_store()).record_view(
+        ctx.uid, doc.content_id, len(result.spans), result.prompt is not None, now
     )
     return AnnotationsResponse(
         content_id=doc.content_id,
         persona=ctx.persona,
         density=density,
-        count=len(items),
+        count=len(result.spans),
         annotations=items,
     )
 
 
-def _annotation_out(s: placeholder.SpanAnnotation, with_debug: bool) -> AnnotationOut:
+def _paragraph_out(m: scorer.ParagraphMarker) -> ParagraphMarkerOut:
+    return ParagraphMarkerOut(
+        id=f"para:{m.paragraph_id}", paragraph_id=m.paragraph_id, score=round(m.score, 4),
+        domain=m.domain,
+    )  # fmt: skip
+
+
+def _preread_out(p: scorer.Preread) -> PrereadOut:
+    target = get_graph().get(p.concept_id)
+    return PrereadOut(
+        score=round(p.score, 4),
+        concept_id=p.concept_id,
+        label=target.label if target else p.concept_id,
+        steps=[
+            PrereadStepOut(
+                concept_id=s.concept_id,
+                label=s.label,
+                definition=s.definition,
+                content_id=s.article.content_id if s.article else None,
+                title=s.article.title if s.article else None,
+            )
+            for s in p.steps
+        ],
+    )
+
+
+def _prompt_out(p: scorer.UncertaintyPrompt) -> PromptOut:
+    return PromptOut(
+        id=f"prompt:{p.demand_id}",
+        anchor=AnchorOut(**p.anchor.model_dump()),
+        paragraph_id=p.paragraph_id,
+        concept_id=p.concept_id,
+        label=p.label,
+    )
+
+
+def _annotation_out(s: scorer.SpanAnnotation, with_debug: bool) -> AnnotationOut:
     return AnnotationOut(
         id=s.demand_id,
         anchor=AnchorOut(**s.anchor.model_dump()),

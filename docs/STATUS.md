@@ -1,7 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-05 (IST), end of M3 on branch `m3`: reader model, Firebase auth (Google +
-Anonymous demo), data rights, and the **first full deploy since M0** (API + web live, §2).
+Last updated: 2026-10-05 (IST), end of M4 on branch `m4`: the real gap scorer (DESIGN §5–6),
+demo personas as seeded reader graphs, and the interaction loop closed (API + web live, §12).
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -25,7 +25,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 | M2.2 | **open issue** | #6 | Online concept growth + linker tuning, target ≥ 75% held-out linking. Not started |
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
-| M4, M5, rest of M6, M7, M8, M9 | not started | — | See "Next actions" |
+| M4 | PR open (this branch) | — | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
+| M5, rest of M6, M7, M8, M9 | not started | — | See "Next actions" |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
 1. `e7c131c` M6 local vertical slice: `DEV_AUTH_BYPASS` (refuses to start on Cloud Run / ENV=prod),
@@ -50,8 +51,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 
 | Piece | Where it runs | State |
 |---|---|---|
-| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M3 build**: revision `readlayer-api-00010-tiw` (lazy imports, startup CPU boost), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
-| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live**: https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
+| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M4 build**: revision `readlayer-api-00009-gkf` (revision names restarted below M3's `-00010-tiw`; gcloud numbers them that way), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
+| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M4 build** (bundle `index-Dfwq_13e.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
 | `packages/annotator` | Bundled into the web app (and the extension in M8) | Final for spans; no paragraph markers / pre-read yet |
 | `apps/extension` | — | MV3 scaffold only (M8) |
@@ -110,9 +111,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Deviation | Why | Resolve in |
 |---|---|---|
 | `link_confirm` runs on MODEL_QUALITY, not MODEL_FAST (CLAUDE.md prefers FAST) | FAST measured 89% precision, QUALITY 97% against the 95% target (M2). Recorded in CLAUDE.md and DESIGN §2/§10 | Keep |
-| Placeholder scorer: prior-only p_know, hard-coded persona θ, no KNOWS edges, no `threshold_offset`, spans only (no paragraph markers, pre-read, uncertainty prompt), only graph-linked demands shown, strict first occurrence | No reader model yet (M3); the slice needed something to see | M4 |
-| Personas only for **anonymous** (demo) readers, via `?persona=` (default newcomer); their hand-set θ is fixed (Elo θ updates are not stored for them, KNOWS edges are). Signed-in Google readers get no persona: θ from `users/{uid}/domains`, 0 until M7 onboarding, and a neutral `default` format prior | Decision 7; one anonymous uid can switch persona, so persona θ can't also be learned per uid | M4 seeded reader graphs |
-| Google readers see the placeholder scorer at θ = 0 everywhere (no onboarding yet) | M7 not built | M4/M7 |
+| Spans only for graph-linked demands (the paragraph noisy-OR does count unlinked terms and context references) | The card needs a label and definition until explanations exist | M5 |
+| Paragraph markers, the pre-read path and the "Know this?" prompt are computed and returned, not shown | Display is part of the rest of M6 | M6 rest |
+| `annotation_dismissed` (threshold_offset +0.02) is accepted by the API but no client emits it; `slowdown` (−0.02) isn't computed | Needs the card's dismiss action and dwell medians | M6 rest |
+| Personas only for **anonymous** (demo) readers, via `?persona=` (default newcomer). Each (uid, persona) learns separately in `demo_graphs/{persona}` (θ too, now). Signed-in readers start neutral (θ = 0, no edges) until M7 onboarding | Decision 15 | M7 onboarding for Google readers |
 | Per-minute rate limits are in memory per instance (≤ 3× a limit in the worst case); daily caps are in Firestore | Cheap; money-protecting caps are exact | Keep |
 | A deleted account's still-valid ID token (≤ 1 h) is refused only on the instance that ran the delete | No per-request revocation check (an extra Auth call per request) | M9 if needed |
 | Web search queries are `label + graph domain + format suffix`, not label + suffix only | Bare labels were ambiguous ("separation principle" returned a marine-engineering video). Domain is concept data, never reader data | Accepted as the rule (decision 4, DESIGN §16.3) |
@@ -135,7 +137,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
 | Medium | "Open here" takes 24–55 s for a new article (fetch + extract_demands + linking incl. link_confirm). UI says "up to a minute" and shows elapsed time. Two-phase loading in the rest of M6 (decision 6) |
-| Medium | Placeholder scorer and invented persona/format priors drive everything a reader sees |
+| Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
+| Medium | Build-time merge error: "Russell Indexes"/"FTSE Russell" are aliases of S&P Dow Jones Indices, so Russell mentions link there by exact name (issue #6 comment) |
+| Low | Persona templates are cached per API process: re-seeding needs a restart (or a deploy) to take effect, and demo readers who already have a copy keep their old one |
+| Low | Recommendation format priors per persona are still the hand-set M6.5 values (`PERSONA_FORMAT_PRIORS`) |
 | Medium | Held-out linking 62% (target ≥ 75%), Chancellor→Treasury Secretary and levy over-generalisation (issue #6) |
 | Medium | No explanations yet (M5): cards show only the graph definition |
 | Low | Publisher images set third-party cookies (Lighthouse best-practices 96 on the library). Broken hotlinks fall back to the typographic tile everywhere |
@@ -206,7 +211,7 @@ about 12 calls for a new article (3 concepts × 3 formats; YouTube counts 2), 0 
 
 | Item | Estimate |
 |---|---|
-| M3, M4 (no LLM on the scoring path) | ~$0 |
+| M3, M4 (no LLM on the scoring path) | $0 LLM (spent: M4 used none) |
 | M5 explanations + verifier + 40-case suite + 10 injection cases | $2–5 |
 | M2.2 online growth (one batched concept_define per article) + held-out re-runs | $2–4 |
 | M7 profile edits, onboarding | < $1 |
@@ -255,10 +260,8 @@ quota is free within the daily buckets.
 | When | Action |
 |---|---|
 | Oct 5 | Set `LLM_DAILY_BUDGET_USD` back to 8 in `apps/api/.env` (you, by hand) |
-| Oct 5 | After 00:00 UTC (05:30 IST): measure the spaCy load on a first new article ("Open here" on a new URL, then the `spacy loaded` log line) |
-| Oct 7–8 | **M4** real gap scorer: replace `app/scoring/placeholder.py`; personas become seeded reader graphs; worked-example test; p95 < 150 ms |
 | Oct 8–9 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
-| Oct 9 | **Rest of M6:** two-phase loading for "Open here", "This is wrong" button, paragraph markers, pre-read card, event batching to /v1/events |
+| Oct 9 | **Rest of M6:** two-phase loading for "Open here", "This is wrong" button; show the paragraph markers, pre-read card and "Know this?" prompt the API already returns; emit `annotation_dismissed` and paragraph_dwell / text_searched; slowdown detection |
 | Oct 9–10 | **M2.2** (issue #6): online concept growth, jurisdiction, link_confirm strictness; held-out set grows to 30; target ≥ 75% linked |
 | Oct 10–11 | **M7** onboarding, consent, calibration, reading profile page, profile edits. **Team lock Oct 11** (gate: if M6–M7 aren't solid, skip M8) |
 | Oct 12–14 | **M8** Chrome extension with privacy guards (only if the gate passed) |
@@ -285,6 +288,12 @@ quota is free within the daily buckets.
 | 12 | Anonymous limits (M3) | 3 new URLs/day per uid, 30/day shared, 100 uncached search calls/day shared, tighter per-minute limits; "End demo" deletes the session's data |
 | 13 | Anonymous web search (M3) | Cached web results always served; new searches count against the shared anonymous cap; past it, library items only |
 | 14 | M9 tech debt (M3) | Firebase App Check (reCAPTCHA) against scripted anonymous sign-ups; scheduled cleanup of anonymous users inactive for 30 days |
+
+| 15 | Demo persona storage (M4) | One doc per (uid, persona), `users/{uid}/demo_graphs/{persona}`, copied from the read-only `persona_templates/{persona}` on the first event (reads use the template). ≤ 5 evidence per edge, 800 KB guard |
+| 16 | "Knew this" (M4) | The reader's latest explicit word wins: a concept last marked knew_this / "I know this" is not annotated until contrary explicit evidence (DESIGN §6.6) |
+| 17 | Linked references (M4) | Option C: a linked context reference uses the concept's p_know only with a KNOWS edge or a prior ≥ 0.8 (DESIGN §6.7, five cases recorded there) |
+| 18 | Prompts while paused (M4) | No "Know this?" prompt while learning is paused, so a paused reader's page loads write nothing |
+| 19 | Deploy guard (M4) | `make deploy-api` / `deploy-web` refuse while a deploy runs on this machine, a Cloud Build is in progress or the API is mid-rollout |
 
 No decisions are open.
 
@@ -339,3 +348,36 @@ LiteLLM's first import, embeddings and linking. Model cost ≈ $0.017. The artic
 annotations (0.28 s); the ingest counter showed 1 and the test user was deleted. Min instances 1 during judging (Oct 19 – Nov 6) removes cold starts.
 
 **M3 spend:** $0 LLM (the one ingest attempt was refused). Search: 36 calls, all anonymous.
+
+---
+
+## 12. M4 acceptance (verified 2026-10-05)
+
+**Live:** API revision `readlayer-api-00009-gkf`, web bundle `index-Dfwq_13e.js`. Persona
+templates seeded to `persona_templates/{newcomer,trader,policy_student}` from graph `2026-10-04`.
+
+| Check | Result |
+|---|---|
+| DESIGN §5 worked example (yield curve 0.68 shown, inflation 0.19 skipped, paragraph 0.741 → 0.834 with the structure term) | Pass (`test_scorer.py::test_design_worked_example`; the example is now written into DESIGN §5) |
+| Same reader + article → identical annotations, whatever the demand order | Pass |
+| Every cap: 1 span / 80 words, ≤ 2 per paragraph, 1 marker / 3 paragraphs, first occurrence, prompt 1/article and 3/day, pre-read ≤ 3 steps stopping at p ≥ 0.7, offset clamp ±0.15 | Pass (`test_scorer.py`, 33 tests) |
+| Loop closed: knew_this / PATCH /v1/me/graph / explain_opened change the next load; personas learn separately; Google readers start neutral | Pass (`test_loop_e2e.py`, API + in-memory store) and the Firestore/Auth emulators |
+| `placeholder.py` deleted; demo personas = seeded graphs, copy-on-write | Done. Reading writes no copy; the first event writes `demo_graphs/{persona}`; export and delete cover it |
+| **Scoring p95** (pure scorer; target < 150 ms for 1,200 words) | Local: **0.19 ms** (synthetic 3,300-concept graph, test) and **0.25 ms** (24 real 1,000–1,400-word articles). Cloud Run: **1.0–1.3 ms** (the API's rolling p95 log line, windows of 50–200) |
+| **Annotations endpoint p95 on Cloud Run**, incl. the Firestore state read and the page-view write (measured on revision `-00008-d7b`, before the option C rule change, which adds one comparison per reference) | Server (request logs, n = 110): median **53 ms**, **p95 99 ms**, max 135 ms. Client in India incl. network (n = 100, 10 demo users × 10): median 95 ms, p95 121 ms |
+| Personas recognisably different (all 310 corpus articles, balanced) | Trader vs policy student identical sets **8/310** (mean Jaccard 0.15); newcomer vs trader 28/310 (0.44); newcomer vs policy student 34/310 (0.46). Mean spans: newcomer 11.9, trader 6.4, policy student 6.3. Before M4 (θ-only placeholder): 27, 35, 92 identical |
+| Live: three personas on one article (UK interest rates explainer, 1,136 words) | Pass: newcomer 12 spans, trader 7, policy student 4, three distinct sets |
+| Live: "Knew this" persists across reloads | Pass: trader tapped *Federal Reserve*; gone on reload 1 and 2; newcomer persona and a separate demo session unaffected. (On the first-draft rule, a tap on *Monetary Policy Committee* also dropped two related policy concepts as policy θ rose) |
+| Template sizes (one Firestore doc each) | newcomer 109 edges **18.3 KB**, trader 86 edges **14.5 KB**, policy student 115 edges **19.3 KB** (≤ 1.9% of 1 MiB) |
+| Demo doc size guard | 500 events over 250+ concepts on one persona stay under 800 KB with ≤ 5 evidence per edge (test); the drop order (oldest low-confidence non-seed first, never this batch's edges) is tested with a lowered limit |
+| Linked-reference rule | Option C (DESIGN §6.7): measured four variants on 310 articles × 3 personas; the five judged cases are recorded in DESIGN. The Russell Indexes mislink went to issue #6 |
+| Deploy guard | `make deploy-guard` (run by both deploy targets): passes when idle; refuses with the process listed when a deploy runs on this machine (tested with a fake process). The Cloud Build and rollout branches ran live and found nothing in flight; not forced |
+
+**Incidents.** (1) Two overlapping `make deploy-api` runs: the first was still uploading and
+invisible in Cloud Build, so a second was started; it was stopped and its build cancelled before
+deploying. The deploy guard came out of this. (2) A live-check script hit the anonymous
+annotations rate limit (30/min) and exited before deleting its 4 test users; they were found by
+creation time and deleted (Firestore tree + Auth user). All later scripts delete in `finally`;
+0 test users remain. One unrelated anonymous browser session from 17:32 UTC was left alone.
+
+**M4 spend:** $0 LLM. Three Cloud Builds (one cancelled), Firestore reads for the corpus analysis.

@@ -170,11 +170,18 @@ def test_unknown_concepts_are_ignored(env, docs):
     assert "users/g1/events/e1" not in docs.docs
 
 
-def test_demo_personas_keep_their_theta(env, docs):
+def test_demo_personas_copy_their_template_on_first_event(env, docs):
     client = client_for("a1", anonymous=True)
+    client.get("/v1/content/main/annotations?persona=trader")
+    assert "users/a1/demo_graphs/trader" not in docs.docs  # reading writes no copy
     client.post("/v1/events", json={"events": [event("e1")], "persona": "trader"})
-    assert "users/a1/knows/c_bond" in docs.docs
-    assert not any(p.startswith("users/a1/domains/") for p in docs.docs)
+    copy = docs.docs["users/a1/demo_graphs/trader"]
+    assert copy["template_version"].startswith("trader@")
+    assert "c_bond" in copy["knows"] and copy["rev"] == 1
+    assert copy["theta"]["finance"] > 1.5  # seeded θ, now learned per persona
+    # the reader's own graph and the other personas are untouched
+    assert not any(p.startswith(("users/a1/knows/", "users/a1/domains/")) for p in docs.docs)
+    assert "users/a1/demo_graphs/newcomer" not in docs.docs
 
 
 def test_paused_learning_applies_nothing_but_corrections_still_apply(env, docs):

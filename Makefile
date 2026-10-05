@@ -17,7 +17,7 @@ JAVA21   := $(HOME)/.sdkman/candidates/java/21.0.12-amzn
 SECRETS  := UID_HASH_SALT=uid-hash-salt:latest,TAVILY_API_KEY=tavily-api-key:latest,YOUTUBE_API_KEY=youtube-api-key:latest
 
 .PHONY: dev dev-api dev-web test test-emulator smoke check-gcp setup-gcp web-config deploy-api \
-	deploy-web deploy-rules
+	deploy-web deploy-rules deploy-guard
 
 # Local only: API (:8000, real Firebase sign-in, reads Firestore + graph with this project's ADC)
 # and web (:5173, proxies /v1). Ctrl-C stops both. Needs apps/web/.env.local (make web-config).
@@ -77,14 +77,30 @@ print('\n'.join(f'VITE_FIREBASE_{k}={c[v]}' for k,v in [('API_KEY','apiKey'),('A
 
 # Hosting origins only for CORS; secrets from Secret Manager, never env files or the image.
 # Startup CPU boost: extra CPU while an instance starts, which roughly halves cold starts.
-deploy-api: check-gcp
+# Refuse to start a deploy while another is in flight: a deploy on this machine (still uploading,
+# so not yet visible in the cloud), a Cloud Build in progress, or a Cloud Run rollout of the API.
+# Two overlapping deploys of the same source happened once in M4; the second only wasted a build.
+deploy-guard: check-gcp
+	@busy=""; \
+	local="$$(pgrep -fl '[g]cloud.* run deploy|[f]irebase.* deploy' || true)"; \
+	[ -z "$$local" ] || busy="$$busy\n  deploy running on this machine:\n$$local"; \
+	builds="$$(gcloud builds list --ongoing --region $(REGION) --format='value(id,status)'; \
+		gcloud builds list --ongoing --format='value(id,status)')"; \
+	[ -z "$$builds" ] || busy="$$busy\n  Cloud Builds in progress:\n$$builds"; \
+	ready="$$(gcloud run services describe $(SERVICE) --region $(REGION) \
+		--format='value(status.conditions[0].status)')"; \
+	[ "$$ready" != "Unknown" ] || busy="$$busy\n  Cloud Run $(SERVICE) is mid-rollout"; \
+	if [ -n "$$busy" ]; then printf "deploy refused:$$busy\n"; exit 1; fi; \
+	echo "deploy guard: nothing in flight"
+
+deploy-api: deploy-guard
 	gcloud run deploy $(SERVICE) --source apps/api --region $(REGION) \
 		--service-account $(SA) --allow-unauthenticated \
 		--min-instances 0 --max-instances 3 --cpu 1 --memory 1Gi --cpu-boost \
 		--env-vars-file apps/api/deploy.env.yaml \
 		--set-secrets $(SECRETS)
 
-deploy-web: check-gcp
+deploy-web: deploy-guard
 	test -f apps/web/.env.local -a -f apps/web/.env.production.local || $(MAKE) web-config
 	pnpm --filter web build
 	pnpm exec firebase deploy --only hosting --project $(PROJECT)

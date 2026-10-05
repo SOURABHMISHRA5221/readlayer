@@ -9,7 +9,7 @@ from app.graph.models import ConceptGraphFile
 from app.main import app
 from app.store.content_repo import InMemoryContentStore, set_content_store
 from tests.fakes import auth
-from tests.test_placeholder_scorer import GRAPH, demand, doc, paras
+from tests.test_scorer import GRAPH, demand, doc, paras
 
 
 def article(cid, title, site, demands):
