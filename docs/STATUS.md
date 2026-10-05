@@ -96,7 +96,7 @@ No LLM call exists on any reader-facing path in PR #9 (annotations, library, rec
 | `user_ingested` ("Open here" testing) | 2: chain.link "Singleness of money", ECB macroprudential explainer |
 | Other | 2 M1 acceptance URLs (BusinessLine RoDTEP, JGU PLI evaluation), source `fetch`, in neither list |
 | Publisher metadata backfilled | 306/306 dates, 273 authors, 236 standfirsts, 271 images (before the 3 docs added later) |
-| Concept graph | version `2026-10-04`, 3,327 concepts (finance 1,279, economics 1,064, policy 557, business 427), 4,053 prerequisite edges, 680 Wikidata ids, acyclic |
+| Concept graph | version `2026-10-04` (+ `doc_freq` on 3,325 concepts, uploaded 2026-10-05), 3,327 concepts (finance 1,279, economics 1,064, policy 557, business 427), 4,053 prerequisite edges, 680 Wikidata ids, acyclic |
 | Held-out linking (M2.1) | 186 concept/term demands: 57% exact-name, 5% model-confirmed, **62% linked**, 38% unlinked. LINK_THRESHOLD 0.865 |
 | Search cache | 87 `rec_cache` entries, 21 of them empty (no result passed the blocklist + relevance gate) |
 
@@ -134,7 +134,6 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
-| Medium | `concepts.json` in GCS lacks `doc_freq` until `uv run python -m scripts.add_doc_freq --upload` runs (the auto-mode classifier denied it; your call). Local copy is patched. Without it a new reader's knowledge map seeds from arbitrary concepts instead of the most frequent |
 | Medium | "Open here" takes 24–55 s for a new article (fetch + extract_demands + linking incl. link_confirm). UI says "up to a minute" and shows elapsed time. Two-phase loading in the rest of M6 (decision 6) |
 | Medium | Placeholder scorer and invented persona/format priors drive everything a reader sees |
 | Medium | Held-out linking 62% (target ≥ 75%), Chancellor→Treasury Secretary and levy over-generalisation (issue #6) |
@@ -256,7 +255,7 @@ quota is free within the daily buckets.
 | When | Action |
 |---|---|
 | Oct 5 | Set `LLM_DAILY_BUDGET_USD` back to 8 in `apps/api/.env` (you, by hand) |
-| Oct 5 | Run `scripts.add_doc_freq --upload` (yours). After 00:00 UTC: measure the spaCy load on a first new article |
+| Oct 5 | After 00:00 UTC (05:30 IST): measure the spaCy load on a first new article ("Open here" on a new URL, then the `spacy loaded` log line) |
 | Oct 7–8 | **M4** real gap scorer: replace `app/scoring/placeholder.py`; personas become seeded reader graphs; worked-example test; p95 < 150 ms |
 | Oct 8–9 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
 | Oct 9 | **Rest of M6:** two-phase loading for "Open here", "This is wrong" button, paragraph markers, pre-read card, event batching to /v1/events |
