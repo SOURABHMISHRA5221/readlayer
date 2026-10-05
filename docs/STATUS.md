@@ -323,16 +323,19 @@ https://readlayer-api-d2sfihz3za-el.a.run.app (revision `readlayer-api-00010-tiw
 |---|---|---|
 | M3 first deploy (`-00003`, `-00005`), everything imported at startup | on (gcloud's default; already on) | **23.6 s, 21.9 s** |
 | Same image, boost off (`-00009`, test revision, deleted) | off | 21.3 s |
-| Lazy ingestion imports + LiteLLM (`-00010`, live) | on | **6.0 s** |
+| Lazy ingestion imports + LiteLLM (`-00010`, live), at deploy rollout | on | **6.0 s** |
+| Same, true scale-from-zero after 11 h idle (2026-10-05 06:22 UTC) | on | **9.2 s** start → ready; client saw 9.7 s for `/health` |
 
 The ~21 s was almost all before uvicorn started: reading spaCy, LiteLLM and friends off the image
 the first time, not CPU (boost alone saved < 1 s). Read paths now never import spaCy, trafilatura,
 wordfreq or LiteLLM (`tests/test_lazy_imports.py` checks it in a fresh interpreter); locally
 `import app.main` went from 1.6 s to 0.33 s. App startup (graph load from GCS) is ≈ 0.5 s. Warm
 `/health` 0.05–0.12 s; first library list per instance ≈ 2.1 s (loads 309 docs), then 0.15–0.3 s.
-Trade-off: the first new article on a fresh instance now also pays those imports (on top of the
-24–55 s ingest). **spaCy model load not measured yet**: it loads on the first new article and the
-one attempt hit the LLM budget refusal; rerun "Open here" on a new URL after 00:00 UTC and read
-the `spacy loaded` log line. Min instances 1 during judging (Oct 19 – Nov 6) removes cold starts.
+**First new article ("Open here") on that cold instance** (2026-10-05, Wikipedia "Liquidity
+trap", POST /v1/recs/open): **42.1 s** end to end (server 42.4 s). **spaCy model load 0.94 s**
+(`spacy loaded` log line), about 9 s into the request, after the fetch, extraction and the
+deferred imports; `extract_demands` 15.3 s (MODEL_FAST), `link_confirm` 3.4 s; the rest is
+LiteLLM's first import, embeddings and linking. Model cost ≈ $0.017. The article then had 27
+annotations (0.28 s); the ingest counter showed 1 and the test user was deleted. Min instances 1 during judging (Oct 19 – Nov 6) removes cold starts.
 
 **M3 spend:** $0 LLM (the one ingest attempt was refused). Search: 36 calls, all anonymous.
