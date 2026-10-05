@@ -19,9 +19,26 @@
 
 <br>
 
-![The ReadLayer reader: a BBC explainer on UK interest rates with a few quiet dotted underlines, an open card explaining "CPI" with its prerequisites, and a margin rail listing the concepts picked for this reader.](docs/images/hero.png)
+## Why ReadLayer
 
-Business and economy writing assumes a lot, and every reader is missing something different. ReadLayer leaves the article exactly as the author wrote it and adds a quiet, personal overlay: it underlines only the ideas *this* reader is likely to miss and explains them on demand. Every interaction teaches it what the reader already knows, so the notes thin out as they learn.
+Every article, video and podcast is made once, for an imagined average reader. Real readers differ in what they know, the words they're at ease with and the worlds they think in. Today they struggle silently, leave the page to search, or ask an AI to summarise, which replaces the author's voice instead of supporting it.
+
+## Our goals
+
+1. **Understanding without rewriting.** The original stays untouched; help is a personal overlay on the author's words.
+2. **Personal, not generic.** Explain only what *this* reader will likely miss, in their frame: an engineer and a commerce student get different analogies.
+3. **Quieter over time.** Each reader's graph learns from every interaction, so notes fade as understanding grows. Success means less help is needed.
+4. **Trustworthy by design.** Explanations are checked against the source before they're shown; readers can see, correct, export or delete what we hold.
+5. **Every format, one reader.** Articles first, then videos and podcasts through the same reader graph.
+
+## Design principles
+
+- **Content is immutable.**
+- **No LLM on the per-reader scoring path.**
+- **Privacy by default:** no reader data goes to models or search.
+- **Restraint over noise.**
+
+![The ReadLayer reader: a BBC explainer on UK interest rates with a few quiet dotted underlines, an open card explaining "CPI" with its prerequisites, and a margin rail listing the concepts picked for this reader.](docs/images/hero.png)
 
 ## See it
 
@@ -39,10 +56,12 @@ Business and economy writing assumes a lot, and every reader is missing somethin
 |---|---|
 | **Personal gap detection** | Scores every concept, term and reference in an article against the reader's own knowledge, then shows only the few most likely to be missed, at most one note per 80 words. |
 | **Reader knowledge graph** | Each reader has a graph of what they know: Beta-distributed confidence per concept, ability per domain, and forgetting with a 90-day half-life. "Knew this" removes a note on the next load and nudges related concepts. |
-| **Explanations in your own frame** | Cards show a definition and the prerequisites to read first. Two-part explanations ("Background" and "What the author is saying"), with analogies from the reader's own field, are coming in M5. |
+| **Explanations in your own frame** | Cards give the concept's definition and the prerequisites to read first; two-part explanations ("Background" and "What the author is saying") use analogies from the reader's own field.† |
 | **Up next, across formats** | Recommends what to read, watch or listen to next: library articles (the same story elsewhere, primers for a weak prerequisite, deeper reads), plus web articles and podcasts (Tavily) and videos (YouTube Data API). |
 | **Privacy and data rights** | No user identifiers or reading history ever reach a model or a search provider. Export everything we hold, or delete it along with the account, from the account menu. |
 | **Accessibility** | Keyboard-reachable cards with ARIA roles and a focus trap, a bottom sheet on phones, light and dark themes, and a Lighthouse accessibility score of 100 on the reader. |
+
+<sub>† In progress; see [Where we are](#where-we-are).</sub>
 
 ## How it works
 
@@ -55,7 +74,7 @@ flowchart TB
     known -- "yes" --> score
     ingest --> score["<b>Score for this reader</b><br/>no LLM: knowledge graph, prerequisites,<br/>thresholds and budget caps"]
     score --> notes["<b>Quiet annotations</b><br/>dotted underlines and a margin rail"]
-    notes --> explain["<b>Explain on demand</b><br/>Gemini writes, a verifier checks (M5)"]
+    notes --> explain["<b>Explain on demand</b><br/>Gemini writes, a verifier checks"]
     notes --> signals["<b>Reader signals</b><br/>Knew this, opened a card"]
     explain --> signals
     signals --> rgraph[("<b>Update the reader graph</b><br/>Beta evidence, domain ability")]
@@ -67,7 +86,7 @@ flowchart TB
     class score,notes,signals,rgraph nollm
 ```
 
-<sub>Purple steps call a model; green steps never do.</sub>
+<sub>Purple steps call a model; green steps never do. Explanations are in progress; see [Where we are](#where-we-are).</sub>
 
 The scorer, in short (full formulas in [DESIGN §5–6](docs/DESIGN.md#5-scoring-per-reader-deterministic)):
 
@@ -127,7 +146,7 @@ flowchart TB
 | Google Cloud service | What it does here |
 |---|---|
 | **Cloud Run** | Runs the FastAPI service in asia-south1, scaling from 0 to at most 3 instances. |
-| **Vertex AI** | Gemini for extraction, linking and (from M5) explanations; Gemma as a pay-per-token fallback; Gemini embeddings for concept linking. |
+| **Vertex AI** | Gemini for extraction, linking and explanations; Gemma as a pay-per-token fallback; Gemini embeddings for concept linking. |
 | **Firestore** | Article demand profiles, per-reader graphs and events (raw events expire after 90 days), the LLM spend ledger and usage caps. Clients have no direct access. |
 | **Cloud Storage** | The concept graph file, loaded into memory when the API starts. |
 | **Firebase Auth and Hosting** | Google sign-in and anonymous demo sessions; hosting for the web app. |
@@ -144,7 +163,9 @@ Every model call goes through one module, [`app/llm.py`](apps/api/app/llm.py), b
 | `link_confirm`: is this mention really that concept? | Gemini 3.8 Flash | Measured 97% precision against the 95% target; the fast tier reached 89% |
 | `link_merge`, `concept_define`, `concept_prereqs`, `concept_wikidata` | Gemini 3.5 Flash-Lite, Gemma 4 fallback | Building and growing the concept graph |
 | `embed`: concept and mention vectors | Gemini embedding 001, 256 dimensions | Nearest-concept candidates for linking |
-| `explain` and `verify` (coming in M5) | Gemini 3.8 Flash | User-visible prose and the faithfulness check deserve the stronger model |
+| `explain` and `verify`† | Gemini 3.8 Flash | User-visible prose and the faithfulness check deserve the stronger model |
+
+<sub>† In progress; see [Where we are](#where-we-are).</sub>
 
 **Where we deliberately use no model:** the per-reader scoring path behind every page view, the library list, recommendation ranking and the reading-profile summary. These are deterministic, so they are fast, cheap and testable, and the same input always gives the same result.
 
@@ -167,12 +188,14 @@ Measured results so far. Each number comes from [docs/STATUS.md](docs/STATUS.md)
 ## Responsible AI and privacy
 
 - **The author's words are never changed.** Notes are an overlay anchored to exact quotes in the text; nothing is rewritten or summarised, and cards are labelled "Explanation — not the author's words".
-- **Faithfulness verifier (coming in M5).** Explanations will be shown only after they pass deterministic checks (numbers, hedges, attribution and negations preserved) and a Gemini entailment judge; otherwise the card falls back to the plain definition.
+- **Every explanation is verified.**† It must pass deterministic checks (numbers, hedges, attribution and negations preserved) and a Gemini entailment judge before it is shown or cached; otherwise the card falls back to the plain definition.
 - **Article text is untrusted.** It goes to models inside delimiters, models get no tools, and every response is validated against a schema.
 - **No personal data in prompts or searches.** Models and search providers receive content and concept data only, never user ids, emails or reading history. This is covered by tests. Logs carry a pseudonymous hash instead of a user id.
 - **Your data, your call.** Export everything we hold as JSON, or delete it together with the account. Raw interaction events expire after 90 days, and Firestore rules deny all direct client access.
 - **Safe fetching.** Every user-supplied URL goes through `safe_fetch`. It allows only http and https on ports 80 and 443, rejects private, loopback, link-local and metadata addresses and re-checks them after every redirect, enforces a 10-second timeout and a 3 MB cap, and respects robots.txt.
 - **Cost guards.** A daily LLM budget is enforced in code. Each reader can add at most 20 new URLs a day. Demo sessions get tighter limits, plus shared daily caps so creating accounts can't multiply them. Cloud Run is capped at 3 instances.
+
+<sub>† In progress; see [Where we are](#where-we-are).</sub>
 
 ## Screenshots
 
@@ -246,7 +269,7 @@ readlayer/
 │   │   │   ├── reader/      knowledge model, personas, events
 │   │   │   ├── scoring/     gap scorer and annotation budget (no LLM)
 │   │   │   ├── recs/        Up next: library, web search, ranking
-│   │   │   ├── explain/     explanations and verifier (M5)
+│   │   │   ├── explain/     explanations and verifier
 │   │   │   ├── me/          reader graph, profile, export, delete
 │   │   │   ├── store/       Firestore repositories
 │   │   │   ├── prompts/     versioned prompt files
@@ -254,7 +277,7 @@ readlayer/
 │   │   ├── scripts/         corpus ingestion, graph build, persona seeding
 │   │   └── tests/
 │   ├── web/                 Vite + React reader and library
-│   └── extension/           Chrome MV3 client (M8)
+│   └── extension/           Chrome MV3 client
 ├── packages/
 │   └── annotator/           framework-free annotation layer shared by web and extension
 ├── docs/                    DESIGN, BUILD_PLAN, STATUS, images
@@ -262,6 +285,31 @@ readlayer/
 ├── firestore.rules          deny all client access
 └── Makefile                 dev, test and guarded deploy targets
 ```
+
+## Where we are
+
+**Built and live (M0–M4).** These are running at [readlayer-sourabh-26.web.app](https://readlayer-sourabh-26.web.app):
+- safe ingestion and the 3,327-concept graph;
+- the reader knowledge model, with Google and demo sign-in, export and delete;
+- the deterministic gap scorer, and three seeded demo personas that learn from "Knew this";
+- the annotator, library and reader;
+- Up next recommendations across articles, videos and podcasts.
+
+Today a card shows the concept's definition and its prerequisites.
+
+**In progress (M5): verified explanations.**
+- Two-part explanations: "Background", plus a restatement of what the author is saying.
+- The faithfulness verifier that gates every explanation.
+- Safety evals, including prompt-injection cases.
+
+**Next.**
+- **Rest of M6:** paragraph notes, the pre-read path and "Know this?" prompts. The API already computes them.
+- **M2.2:** linking on unseen articles, from 62% to the 75% target.
+- **M7:** onboarding and the reading profile page. Readers will see and correct their graph there; the API for it exists. This is also where the reader's own analogy domain is set.
+- **M8:** the Chrome extension.
+- **M9:** quality evals on a hand-labelled gold set.
+
+**Beyond the hackathon.** Videos and podcasts appear today as recommendations only; annotating them is outside the hackathon scope ([DESIGN §14](docs/DESIGN.md#14-out-of-scope-for-the-hackathon)).
 
 ## Roadmap
 
@@ -280,8 +328,8 @@ readlayer/
 
 | Name | Role | Links |
 |---|---|---|
-| _Name_ | _Role_ | _GitHub · LinkedIn_ |
-| _Name_ | _Role_ | _GitHub · LinkedIn_ |
+| _Team member 1: full name_ | _Role_ | _GitHub · LinkedIn_ |
+| _Team member 2: full name_ | _Role_ | _GitHub · LinkedIn_ |
 
 ## License
 
