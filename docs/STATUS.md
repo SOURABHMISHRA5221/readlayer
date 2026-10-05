@@ -1,6 +1,6 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-05 (IST), end of M4 on branch `m4`: the real gap scorer (DESIGN §5–6),
+Last updated: 2026-10-05 (IST), end of M4 (merged as #11): the real gap scorer (DESIGN §5–6),
 demo personas as seeded reader graphs, and the interaction loop closed (API + web live, §12).
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
@@ -25,7 +25,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 | M2.2 | **open issue** | #6 | Online concept growth + linker tuning, target ≥ 75% held-out linking. Not started |
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
-| M4 | PR open (this branch) | — | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
+| M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
 | M5, rest of M6, M7, M8, M9 | not started | — | See "Next actions" |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
