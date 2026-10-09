@@ -1,0 +1,672 @@
+# 25 faithful cards on real corpus paragraphs (20 span, 5 paragraph mode). Cards are
+# hand-written from the source; the verifier must accept >= 90%. Never edit a case to make
+# it pass: a genuinely mislabelled case is fixed only with the reason in evals/changelog.md.
+- id: G01
+  mode: span
+  source:
+    site: The Guardian
+    content_id: d0e4036ca042fcbd55c3bd1db5c5fe6c
+    demand_id: d7
+  span: positive catalyst
+  concept:
+    id: c_market_catalyst
+    label: Market catalyst
+    definition: An event or piece of news that triggers a significant upward movement in financial asset
+      prices or market sentiment.
+    prerequisites:
+    - label: Economic shock
+      definition: An unexpected event that suddenly and significantly alters the supply or demand conditions
+        in an economy.
+  band: unaware
+  thinks_in: null
+  paragraph: “The market had been tracing out a bullish formation, meaning the price pattern suggested
+    that any positive catalyst could trigger a move higher and that’s exactly what happened,” said Sam
+    Stovall, chief investment strategist at CFRA Research.
+  card:
+    background: A market catalyst is a piece of news or an event that sets off a noticeable move in prices
+      or sentiment. A positive catalyst is good news that can push prices up.
+    author_says: Sam Stovall, chief investment strategist at CFRA Research, said the market had been forming
+      a bullish price pattern, which suggested that any positive catalyst could trigger a move higher,
+      and that this is exactly what happened.
+- id: G02
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 454a6f88b5ae325cb3160425c12997f4
+    demand_id: d238
+  span: deflation
+  concept:
+    id: c_deflation
+    label: Deflation
+    definition: A general decline in prices for goods and services, typically associated with a contraction
+      in the supply of money and credit.
+    prerequisites:
+    - label: Inflation
+      definition: The general increase in prices and fall in the purchasing value of money over time.
+  band: heard of
+  thinks_in: software
+  paragraph: 'Freiwirtschaft economists theorize that demurrage currency could eliminate both inflation
+    and deflation. There tends to be some interest cost that is built into the goods and services that
+    consumers tend to purchase,[164]: 4 so if demurrage currency eliminates interest rates, then prices
+    are less likely to increase. Demurrage would also naturally cause the money supply to decrease, thus
+    causing deflation. If a central bank issues and monitors demurrage currency as Gesell originally proposed,
+    then it could replace all the money that disappears due to demurrage by printing money at a similar
+    rate.[165] The money printing could create just enough inflation to cancel out the natural deflation
+    of demurrage, thus achieving an inflation target of 0%.[166]'
+  card:
+    background: Deflation is a general fall in the prices of goods and services. It is usually linked
+      to a shrinking supply of money and credit.
+    author_says: Economists of the Freiwirtschaft school theorize that a demurrage currency could eliminate
+      both inflation and deflation.
+- id: G03
+  mode: span
+  source: &id001
+    site: The Guardian
+    content_id: 884805502db120ccf4594905cfc4ae83
+    demand_id: d24
+  span: confirmation
+  concept: &id002
+    id: c_senate_confirmation
+    label: Senate confirmation
+    definition: The constitutional process by which a legislative body formally reviews and approves or
+      rejects presidential appointments to high public office.
+    prerequisites:
+    - label: Supreme court
+      definition: The highest judicial court in a country's court system, with ultimate authority over
+        constitutional and legal interpretations.
+  band: understands
+  thinks_in: cricket
+  paragraph: The justice department investigation would end up stalling the confirmation of current Fed
+    chair Kevin Warsh, after a key Republican senator said he would be a holdout until the department
+    ended its investigation. In April, the justice department closed the investigation.
+  card:
+    background: Senate confirmation is the process in which senators review a president's nominee for
+      a senior public post and then approve or reject them.
+    author_says: The justice department's investigation would end up stalling Kevin Warsh's confirmation
+      as Fed chair, after a key Republican senator said he would hold out until the department ended its
+      investigation.
+- id: G04
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 802dac829eedef66feaca507db5c9cb7
+    demand_id: d14
+  span: public choice theory
+  concept:
+    id: c_public_choice
+    label: Public choice
+    definition: An economic and political theory that applies economic reasoning to government decision-making,
+      voting, and public administration.
+    prerequisites:
+    - label: Political economy
+      definition: Political economy is an interdisciplinary field studying how political institutions,
+        the political environment, and economic systems influence each other.
+    - label: Microeconomics
+      definition: The branch of economics that examines the behavior, decision-making, and interactions
+        of individual consumers, workers, and firms.
+  band: unaware
+  thinks_in: law
+  paragraph: 'Monetary stimulus is often considered more neutral: decreasing interest rates make additional
+    investments profitable, but yet only the most additional investments, whereas fiscal stimulus where
+    the government decides the investments may lead to populism via public choice theory, or corruption.
+    However, the government can also take externalities into account, such as how new roads or railways
+    benefit users who do not pay for them, and choose investments that are even more beneficial although
+    not profitable.'
+  card:
+    background: 'Public choice theory applies economic reasoning to politics: it treats voters, politicians
+      and officials as people pursuing their own interests.'
+    author_says: Monetary stimulus is often considered more neutral, because lower interest rates make
+      extra investments profitable, while fiscal stimulus, where the government picks the investments,
+      may lead to populism, through the dynamics public choice theory describes, or to corruption.
+- id: G05
+  mode: span
+  source:
+    site: The Economic Times
+    content_id: 628d6fd2aa9fd3b5a99cedb64c70aa93
+    demand_id: d38
+  span: credit spreads
+  concept:
+    id: c_credit_spreads
+    label: Credit spreads
+    definition: Credit spreads are the yield difference between debt securities of similar maturity but
+      different credit quality, typically measuring default risk.
+    prerequisites:
+    - label: Credit risk
+      definition: Credit risk is the probability that a borrower will fail to meet their debt obligations,
+        resulting in a financial loss for the lender.
+    - label: Spread
+      definition: The difference between two contrasting interest rates, yields, or asset prices, commonly
+        used to gauge credit risk or financial market conditions.
+  band: heard of
+  thinks_in: null
+  paragraph: The 11.8–11.5 zone is the immediate support, while 15.2–15.5 remains key resistance. A sustained
+    move above 15.5 could trigger another rise in volatility and keep equities under pressure. In this
+    environment, debit spreads may be preferred over credit spreads because of their defined-risk profile.
+  card:
+    background: In options trading, a spread combines buying and selling options on the same asset. A
+      credit spread brings in money when it is opened, while a debit spread costs money to open.
+    author_says: In the current environment, debit spreads may be preferred over credit spreads because
+      their risk is defined.
+- id: G06
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 089f428cc298bdff12f78433772776f4
+    demand_id: d2
+  span: index fund
+  concept:
+    id: c_index_fund
+    label: Index fund
+    definition: An index fund is a type of mutual fund or exchange-traded fund with a portfolio constructed
+      to match or track the components of a financial market index.
+    prerequisites:
+    - label: Mutual funds
+      definition: Mutual funds are investment vehicles made up of a pool of funds collected from many
+        investors to invest in securities like stocks and bonds.
+    - label: Benchmark index
+      definition: A benchmark index is a statistical measure of the performance of a specific segment
+        of the stock market, used as a standard for portfolio performance.
+  band: understands
+  thinks_in: software
+  paragraph: Two of the primary criteria of an index are that it is investable and transparent:[2] The
+    methods of its construction are specified. Investors may be able to invest in a stock market index
+    by buying an index fund, which is structured as either a mutual fund or an exchange-traded fund, and
+    "tracks" an index. The difference between an index fund's performance and the index, if any, is called
+    tracking error.
+  card:
+    background: A stock market index tracks the combined price of a set of shares to show how a market
+      is doing. An index fund holds those same shares so its value moves with the index.
+    author_says: Investors may be able to invest in a stock market index by buying an index fund, which
+      is set up as either a mutual fund or an exchange-traded fund and tracks the index.
+- id: G07
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 98ac32745f82fea12e5b87055b9e49f4
+    demand_id: d225
+  span: GDP
+  concept:
+    id: c_gdp
+    label: GDP
+    definition: Gross domestic product is the total monetary value of all finished goods and services
+      produced within a country over a specific time period.
+    prerequisites: []
+  band: unaware
+  thinks_in: cricket
+  paragraph: NBER has sometimes declared a recession before a second quarter of GDP shrinkage has been
+    reported, but beginnings and endings can also be declared over a year after they are reckoned to have
+    occurred. In 1947, NBER did not declare a recession despite two quarters of declining GDP, due to
+    strong economic activity reported for employment, industrial production, and consumer spending.[156]
+  card:
+    background: GDP, gross domestic product, is the total value of the goods and services a country produces
+      in a period.
+    author_says: NBER has sometimes declared a recession before a second quarter of shrinking GDP was
+      reported, but it can also declare when a recession began or ended more than a year after the fact.
+- id: G08
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 28a6c1ecbf545a2d47ce4335241cabf4
+    demand_id: d1
+  span: Fisher equation
+  concept:
+    id: c_fisher_equation
+    label: Fisher equation
+    definition: The Fisher equation states that the nominal interest rate is the sum of the real interest
+      rate and the expected inflation rate.
+    prerequisites:
+    - label: Nominal interest rate
+      definition: The nominal interest rate is the stated interest rate of a loan or financial product
+        before taking inflation into account.
+    - label: Real interest rates
+      definition: The nominal interest rate adjusted for the rate of inflation, reflecting the true cost
+        of borrowing and the real yield on investments.
+    - label: Inflation
+      definition: The general increase in prices and fall in the purchasing value of money over time.
+  band: heard of
+  thinks_in: law
+  paragraph: The real interest rate is the rate of interest an investor, saver or lender receives (or
+    expects to receive) after allowing for inflation. It can be described more formally by the Fisher
+    equation, which states that the real interest rate is approximately the nominal interest rate minus
+    the inflation rate.
+  card:
+    background: The nominal interest rate is the rate that is quoted; the real rate adjusts it for inflation,
+      showing how much purchasing power a saver actually gains.
+    author_says: The real interest rate can be described by the Fisher equation, which states that the
+      real rate is approximately the nominal interest rate minus the inflation rate.
+- id: G09
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: abaf673973873cd34cf47095eca28b81
+    demand_id: d27
+  span: stock is split
+  concept:
+    id: c_stock_split
+    label: Stock split
+    definition: A stock split occurs when a company increases the number of its shares to lower the individual
+      stock price without changing its total market value.
+    prerequisites:
+    - label: Share price
+      definition: The current market price at which one share of a company's stock can be bought or sold.
+    - label: Market capitalization
+      definition: The total market value of a company's outstanding shares of stock, calculated by multiplying
+        the total number of shares by the current share price.
+  band: understands
+  thinks_in: null
+  paragraph: Nothing tangible will be gained if the stock is split because the total number of shares
+    increases, lowering the price of each share, without changing the total value of the shares held.
+    (See also Stock dilution.)
+  card:
+    background: In a stock split a company divides each existing share into several new ones. The share
+      count goes up and the price per share goes down in the same proportion.
+    author_says: 'Nothing tangible is gained when a stock is split: the number of shares goes up and each
+      share''s price goes down, without changing the total value of the shares held.'
+- id: G10
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 6988ee7084a191a91f3d30f38f2b6ea4
+    demand_id: d52
+  span: Treasury
+  concept:
+    id: c_united_states_department_of_the_treasury
+    label: United States Department of the Treasury
+    definition: The United States Department of the Treasury is the executive department responsible for
+      managing federal finances, printing currency, and collecting taxes.
+    prerequisites: []
+  band: unaware
+  thinks_in: software
+  paragraph: Although the Treasury can and does hold cash and a special deposit account at the Fed (TGA
+    account), these assets do not count in any of the aggregates. So in essence, money paid in taxes paid
+    to the Federal Government (Treasury) is excluded from the money supply. To counter this, the government
+    created the Treasury Tax and Loan (TT&L) program in which any receipts above a certain threshold are
+    redeposited in private banks. The idea is that tax receipts won't decrease the amount of reserves
+    in the banking system. The TT&L accounts, while demand deposits, do not count toward M1 or any other
+    aggregate either.
+  card:
+    background: The US Treasury manages the federal government's money. Money supply aggregates are official
+      measures of how much money is circulating in the economy.
+    author_says: Although the Treasury holds cash and a special deposit account at the Fed, called the
+      TGA account, these assets do not count in any of the money supply aggregates.
+- id: G11
+  mode: span
+  source: &id003
+    site: Mint
+    content_id: fc8fc736859176c46aa633a1d3e10701
+    demand_id: d8
+  span: EPS service history
+  concept: &id004
+    id: c_eps_service_history
+    label: EPS service history
+    definition: The chronological record of an employee's contributions and service duration under an
+      employee pension scheme across different employers.
+    prerequisites:
+    - label: Eligible service period
+      definition: The minimum duration of employment required for a worker to qualify for pension benefits
+        upon retirement.
+  band: heard of
+  thinks_in: cricket
+  paragraph: When an employee withdraws their EPF balance, their EPS service history does not automatically
+    get transferred. Hence, when you switch jobs, it is important to ensure that your pensionable service
+    from previous employment is properly linked to your current EPF account.
+  card:
+    background: In India, the EPF is a retirement savings fund for salaried workers and the EPS is the
+      pension scheme linked to it. EPS service history records how long a worker has been covered by the
+      scheme.
+    author_says: When an employee withdraws their EPF balance, their EPS service history does not get
+      transferred automatically.
+- id: G12
+  mode: span
+  source:
+    site: The Guardian
+    content_id: 2a6c9cd69d8e85ad444b53d08e1b9aca
+    demand_id: d8
+  span: capital-lite
+  concept:
+    id: c_asset_light_business_model
+    label: Asset-light business model
+    definition: An asset-light business model is a corporate strategy that minimizes owned physical assets
+      to reduce capital requirements and improve operational flexibility.
+    prerequisites: []
+  band: understands
+  thinks_in: law
+  paragraph: It is one reason why the listing should go well, assuming the wider stock market environment
+    remains calm. Airtel Money is capital-lite, converts a chunky proportion of its earnings into cash,
+    carries the buzzy fintech vibe and is growing at about 20% a year. The cash-generative qualities mean
+    no new equity is being raised, so it is really an opportunity for existing shareholders – including
+    minority owners including TPG, Mastercard, the Qatar Investment Authority and Chimetech Holding –
+    to cash in a few chips. As long as they don’t get greedy on price, it looks a relatively easy pitch
+    for the promoters.
+  card:
+    background: An asset-light, or capital-lite, business needs relatively little money tied up in buildings,
+      equipment or other physical assets to grow.
+    author_says: 'The author describes Airtel Money as capital-lite: it turns a large share of its earnings
+      into cash, has a fashionable fintech appeal and is growing at about 20% a year.'
+- id: G13
+  mode: span
+  source: &id005
+    site: The Guardian
+    content_id: e8aa9578974ed73ff4f0b22650cae478
+    demand_id: d7
+  span: yield
+  concept: &id006
+    id: c_bond_yields
+    label: Bond yields
+    definition: The return an investor expects to receive on a bond investment, expressed as a percentage.
+    prerequisites:
+    - label: Bonds
+      definition: Bonds are fixed-income debt instruments where an investor loans money to an entity which
+        borrows the funds for a defined period.
+    - label: Interest rates
+      definition: The proportional cost charged by lenders to borrowers for the use of borrowed funds,
+        typically expressed as an annual percentage of the principal.
+  band: unaware
+  thinks_in: null
+  paragraph: In the UK, where surging borrowing costs are increasing the pressure on the chancellor, John
+    Healey, before his first budget later this month, the yield on 30-year bonds hit 6% for the first
+    time since 1998, before easing slightly later in the day. Yields on five- and 10-year UK bonds were
+    also up.
+  card:
+    background: A bond's yield is the return an investor gets for holding it, shown as a percentage. When
+      yields rise, it costs the government more to borrow.
+    author_says: In the UK, where rising borrowing costs are putting pressure on chancellor John Healey
+      before his first budget later this month, the yield on 30-year bonds hit 6% for the first time since
+      1998, then eased slightly later in the day.
+- id: G14
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 4fc18176ca97d891f88603a505c6e85b
+    demand_id: d91
+  span: spot or cash market
+  concept:
+    id: c_spot_market
+    label: Spot market
+    definition: A financial market where assets are bought or sold for immediate delivery and payment.
+    prerequisites:
+    - label: Cash markets
+      definition: Financial markets where securities are bought and sold for immediate delivery and settlement.
+  band: heard of
+  thinks_in: software
+  paragraph: Trading on commodities began in Japan in the 18th century with the trading of rice and silk,
+    and similarly in Holland with tulip bulbs. Trading in the US began in the mid 19th century when central
+    grain markets were established and a marketplace was created for farmers to bring their commodities
+    and sell them either for immediate delivery (also called spot or cash market) or for forward delivery.
+    These forward contracts were private contracts between buyers and sellers and became the forerunner
+    to today's exchange-traded futures contracts. Although contract trading began with traditional commodities
+    such as grains, meat, and livestock, exchange trading has expanded to include metals, energy, currency
+    and currency indexes, equities and equity indexes, government interest rates, and private interest
+    rates.
+  card:
+    background: In a spot or cash market, goods or assets are paid for and delivered straight away. In
+      a forward deal, the price is agreed now but delivery happens later.
+    author_says: Commodity trading in the US began in the mid-19th century, when central grain markets
+      were set up where farmers could sell their commodities either for immediate delivery, known as the
+      spot or cash market, or for forward delivery.
+- id: G15
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 2af9b33ac4250cfb6d028d593abbf9de
+    demand_id: d98
+  span: BOJ
+  concept:
+    id: c_bank_of_japan
+    label: Bank of Japan
+    definition: The central bank of Japan responsible for issuing currency and implementing monetary policy.
+    prerequisites:
+    - label: Central bank
+      definition: A national financial institution that oversees a country's monetary system, issues currency,
+        and regulates commercial banks.
+    - label: Monetary policy
+      definition: The strategy and actions taken by a central bank to manage the money supply, interest
+        rates, and credit conditions in an economy.
+  band: understands
+  thinks_in: cricket
+  paragraph: On 4 August 2011 the BOJ announced a unilateral move to increase the commercial bank current
+    account balance from ¥40 trillion (US$504 billion) to a total of ¥50 trillion (US$630 billion).[107][108]
+    In October 2011, the bank expanded its asset purchase program by ¥5 trillion ($66bn) to a total of
+    ¥55 trillion.[109]
+  card:
+    background: The Bank of Japan is Japan's central bank. Commercial banks keep current accounts at the
+      central bank, and a higher target for those balances means more money in the banking system.
+    author_says: On 4 August 2011 the BOJ announced a unilateral move to raise commercial banks' current
+      account balances from ¥40 trillion (US$504 billion) to ¥50 trillion (US$630 billion).
+- id: G16
+  mode: span
+  source: &id009
+    site: The Guardian
+    content_id: 5edcef708dc18038a5ce6f94b208223c
+    demand_id: d10
+  span: guidance
+  concept: &id010
+    id: c_profit_forecasts
+    label: Profit forecasts
+    definition: An official projection provided by a company regarding its expected future earnings and
+      financial performance.
+    prerequisites: []
+  band: unaware
+  thinks_in: law
+  paragraph: 'Aarin Chiekrie, an equity analyst at Hargreaves Lansdown, said: “Next delivered its first-half
+    results in style, with sales growth accelerating over the period and breezing past the fashion company’s
+    original guidance. In the UK, hotter-than-expected weather and more effective marketing saw customers
+    logging in to refresh their summer wardrobes online, helping offset a small decline in-store.”'
+  card:
+    background: Guidance is a company's own forecast of its future sales or profits. Beating guidance
+      means results came in better than the company itself had predicted.
+    author_says: Aarin Chiekrie, an equity analyst at Hargreaves Lansdown, said Next delivered strong
+      first-half results, with sales growth speeding up during the period and comfortably beating the
+      fashion company's original guidance.
+- id: G17
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: d0bf856320fc0a25108b8413a5c54836
+    demand_id: d12
+  span: deficit spending
+  concept:
+    id: c_fiscal_deficit
+    label: Fiscal deficit
+    definition: The shortfall that occurs when a government's total expenditures exceed the total revenue
+      it collects within a specific fiscal year.
+    prerequisites:
+    - label: Budget
+      definition: A government budget is an official financial report outlining estimated revenues and
+        proposed expenditures for a specific future period, usually a fiscal year.
+  band: heard of
+  thinks_in: null
+  paragraph: '- Neutral fiscal policy is usually undertaken when an economy is in neither a recession
+    nor an expansion. The amount of government deficit spending (the excess not financed by tax revenue)
+    is roughly the same as it has been on average over time, so no changes to it are occurring that would
+    have an effect on the level of economic activity.'
+  card:
+    background: Deficit spending is when a government spends more than it collects in taxes and borrows
+      to cover the gap.
+    author_says: Under a neutral fiscal policy, government deficit spending, the part not paid for by
+      tax revenue, stays roughly at its long-run average, so no changes to it are occurring that would
+      affect the level of economic activity.
+- id: G18
+  mode: span
+  source:
+    site: The Guardian
+    content_id: 99a2cb53f16256bd275bafd180364134
+    demand_id: d15
+  span: distributed ledger technology
+  concept:
+    id: c_distributed_ledger_technology
+    label: Distributed Ledger Technology
+    definition: A decentralized digital database managed by multiple participants, commonly used for recording
+      transactions securely across a network.
+    prerequisites: []
+  band: understands
+  thinks_in: software
+  paragraph: “Market manipulation and insider trading risks reach new levels in the context of prediction
+    markets, particularly on DLT-based [distributed ledger technology] platforms such as Polymarket, which
+    operate with limited identity verification and where the platform itself may not know who is behind
+    a given wager.”
+  card:
+    background: Distributed ledger technology is a shared digital record of transactions kept by many
+      participants rather than one central authority. Blockchains are the best-known example.
+    author_says: The quoted passage says that risks of market manipulation and insider trading reach new
+      levels in prediction markets, especially on platforms built on distributed ledger technology such
+      as Polymarket, which have limited identity checks and where the platform itself may not know who
+      is behind a given bet.
+- id: G19
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: d5492f22eedde899dd2bf4cdc8022fcb
+    demand_id: d125
+  span: registered bond
+  concept:
+    id: c_registered_bond
+    label: Registered bond
+    definition: A bond for which the issuer or a transfer agent maintains a record of the owner's name
+      and contact details.
+    prerequisites:
+    - label: Bonds
+      definition: Bonds are fixed-income debt instruments where an investor loans money to an entity which
+        borrows the funds for a defined period.
+    - label: Bearer bond
+      definition: A fixed-income security that is owned by whoever physically holds the certificate, rather
+        than being registered in a specific person's name.
+  band: unaware
+  thinks_in: cricket
+  paragraph: '- A registered bond is a bond whose ownership (and any subsequent purchaser) is recorded
+    by the issuer, or by a transfer agent. Interest payments and the principal upon maturity are sent
+    to the registered owner. The owner can continue to receive interest with a duplicated bond in case
+    of a loss. However, the bond is not easily transferable to other people. Registered bonds seldom appeared
+    in the market for trading. The traceability of the bonds means it has a minor effect on bond prices.
+    Once a new owner acquired the bond, the old bond must be sent to the corporation or agent for cancellation
+    and for issuance of a new bond.[1] It is the opposite of a bearer bond.'
+  card:
+    background: A bond is a loan to a company or government that pays interest. With a bearer bond whoever
+      holds the paper owns it; with a registered bond the owner's name is on record.
+    author_says: A registered bond is one whose owner, including any later buyer, is recorded by the issuer
+      or by a transfer agent.
+- id: G20
+  mode: span
+  source: &id007
+    site: The Guardian
+    content_id: 7311a22bfa9f03acabcf86990dfafac6
+    demand_id: d19
+  span: list
+  concept: &id008
+    id: c_ipo
+    label: IPO
+    definition: The process through which a privately held company offers its shares to the public for
+      the first time on a stock exchange.
+    prerequisites:
+    - label: Equities
+      definition: Shares or ownership stakes in companies traded on public stock exchanges.
+    - label: Public company
+      definition: A public company is a business corporation whose ownership is distributed among general
+        shareholders via freely traded shares of stock on public exchanges.
+  band: heard of
+  thinks_in: law
+  paragraph: UK-based Nscale filed papers for its flotation in the US on 18 September and could make its
+    stock market debut before the year end. The company is preparing to list in New York, reflecting its
+    global ambitions and the depth of funding available in the US for expensive AI infrastructure projects.
+  card:
+    background: To list is to have a company's shares admitted to trading on a stock exchange, often through
+      an initial public offering, when shares are first sold to the public.
+    author_says: Nscale is preparing to list its shares in New York, which reflects its global ambitions
+      and how much funding is available in the US for expensive AI infrastructure projects.
+- id: G21
+  mode: paragraph
+  source: *id001
+  span: The justice department investigation would end up stalling the confirmation of current Fed chair
+    Kevin Warsh, after a key Republican senator said he would be a holdout until the department ended
+    its investigation. In April, the justice department closed the investigation.
+  concept: *id002
+  band: unaware
+  thinks_in: software
+  paragraph: The justice department investigation would end up stalling the confirmation of current Fed
+    chair Kevin Warsh, after a key Republican senator said he would be a holdout until the department
+    ended its investigation. In April, the justice department closed the investigation.
+  card:
+    background: Senate confirmation is the process in which senators review a president's nominee for
+      a senior public post and then approve or reject them.
+    author_says: The justice department's investigation would end up stalling the confirmation of Kevin
+      Warsh as Fed chair, after a key Republican senator said he would hold out until the department ended
+      its investigation. The justice department closed the investigation in April.
+- id: G22
+  mode: paragraph
+  source: *id003
+  span: When an employee withdraws their EPF balance, their EPS service history does not automatically
+    get transferred. Hence, when you switch jobs, it is important to ensure that your pensionable service
+    from previous employment is properly linked to your current EPF account.
+  concept: *id004
+  band: heard of
+  thinks_in: cricket
+  paragraph: When an employee withdraws their EPF balance, their EPS service history does not automatically
+    get transferred. Hence, when you switch jobs, it is important to ensure that your pensionable service
+    from previous employment is properly linked to your current EPF account.
+  card:
+    background: In India, the EPF is a retirement savings fund for salaried workers and the EPS is the
+      pension scheme linked to it.
+    author_says: When an employee withdraws their EPF balance, their EPS service history is not transferred
+      automatically. So when you switch jobs, it is important to make sure the pensionable service from
+      your previous employment is properly linked to your current EPF account.
+- id: G23
+  mode: paragraph
+  source: *id005
+  span: In the UK, where surging borrowing costs are increasing the pressure on the chancellor, John Healey,
+    before his first budget later this month, the yield on 30-year bonds hit 6% for the first time since
+    1998, before easing slightly later in the day. Yields on five- and 10-year UK bonds were also up.
+  concept: *id006
+  band: understands
+  thinks_in: law
+  paragraph: In the UK, where surging borrowing costs are increasing the pressure on the chancellor, John
+    Healey, before his first budget later this month, the yield on 30-year bonds hit 6% for the first
+    time since 1998, before easing slightly later in the day. Yields on five- and 10-year UK bonds were
+    also up.
+  card:
+    background: A bond's yield is the return an investor gets for holding it, shown as a percentage. When
+      yields rise, it costs the government more to borrow.
+    author_says: In the UK, rising borrowing costs are increasing the pressure on chancellor John Healey
+      before his first budget later this month. The yield on 30-year bonds hit 6% for the first time since
+      1998, before easing slightly later in the day, and yields on five- and 10-year UK bonds were also
+      up.
+- id: G24
+  mode: paragraph
+  source: *id007
+  span: UK-based Nscale filed papers for its flotation in the US on 18 September and could make its stock
+    market debut before the year end. The company is preparing to list in New York, reflecting its global
+    ambitions and the depth of funding available in the US for expensive AI infrastructure projects.
+  concept: *id008
+  band: unaware
+  thinks_in: null
+  paragraph: UK-based Nscale filed papers for its flotation in the US on 18 September and could make its
+    stock market debut before the year end. The company is preparing to list in New York, reflecting its
+    global ambitions and the depth of funding available in the US for expensive AI infrastructure projects.
+  card:
+    background: To list is to have a company's shares admitted to trading on a stock exchange, often through
+      an initial public offering.
+    author_says: UK-based Nscale filed papers for its flotation in the US on 18 September and could make
+      its stock market debut before the year end. It is preparing to list in New York, which reflects
+      its global ambitions and the depth of funding available in the US for expensive AI infrastructure
+      projects.
+- id: G25
+  mode: paragraph
+  source: *id009
+  span: 'Aarin Chiekrie, an equity analyst at Hargreaves Lansdown, said: “Next delivered its first-half
+    results in style, with sales growth accelerating over the period and breezing past the fashion company’s
+    original guidance. In the UK, hotter-than-expected weather and more effective marketing saw customers
+    logging in to refresh their summer wardrobes online, helping offset a small decline in-store.”'
+  concept: *id010
+  band: heard of
+  thinks_in: software
+  paragraph: 'Aarin Chiekrie, an equity analyst at Hargreaves Lansdown, said: “Next delivered its first-half
+    results in style, with sales growth accelerating over the period and breezing past the fashion company’s
+    original guidance. In the UK, hotter-than-expected weather and more effective marketing saw customers
+    logging in to refresh their summer wardrobes online, helping offset a small decline in-store.”'
+  card:
+    background: Guidance is a company's own forecast of its future sales or profits. Beating guidance
+      means results came in better than the company itself had predicted.
+    author_says: Aarin Chiekrie, an equity analyst at Hargreaves Lansdown, said Next delivered its first-half
+      results in style, with sales growth accelerating over the period and beating the fashion company's
+      original guidance. Chiekrie said that in the UK, hotter-than-expected weather and more effective
+      marketing brought customers online to refresh their summer wardrobes, which helped offset a small
+      decline in stores.
