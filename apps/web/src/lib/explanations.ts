@@ -25,7 +25,13 @@ export function loadExplanation(
   const hit = cache.get(key);
   if (hit) return hit;
   const pending = api.explain(contentId, annotation.id, persona).then(
-    (r): Explanation => ({ id: r.id, kind: r.kind, background: r.background, author_says: r.author_says }),
+    (r): Explanation => ({
+      id: r.id,
+      kind: r.kind,
+      background: r.background,
+      author_says: r.author_says,
+      analogy_domain: r.analogy_domain,
+    }),
   );
   cache.set(key, pending);
   pending.catch(() => cache.delete(key));

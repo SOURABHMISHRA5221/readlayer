@@ -47,6 +47,8 @@ export interface Explanation {
   kind: "verified" | "definition";
   background: string | null;
   author_says: string | null;
+  /** The reader's frame the Background drew an analogy from, if any. */
+  analogy_domain?: string | null;
 }
 
 export type AnnotatorEventType =

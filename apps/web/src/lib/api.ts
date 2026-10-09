@@ -109,6 +109,7 @@ export interface ExplanationResponse {
   definition: string;
   background: string | null;
   author_says: string | null;
+  analogy_domain: string | null;
   cached: boolean;
 }
 

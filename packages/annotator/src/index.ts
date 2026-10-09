@@ -5,13 +5,13 @@
  */
 
 import { indexText, resolveInText, type TextRange } from "./anchor";
-import { Card, SHEET_QUERY, type CardMode } from "./card";
+import { Card, SHEET_QUERY, type CardMode, type SidenoteBox } from "./card";
 import { MARK_CLASS, markId, unwrap, wrapRange } from "./mark";
 import { injectStyles } from "./styles";
 import type { AnnotatorEvent, AnnotatorEventType, CardAnnotation, Explanation } from "./types";
 
 export type * from "./types";
-export { AUTHOR_LABEL, BACKGROUND_LABEL, CARD_LABEL } from "./card";
+export { AUTHOR_LABEL, BACKGROUND_LABEL, CARD_LABEL, type SidenoteBox } from "./card";
 export { normalizeWhitespace, resolveInText } from "./anchor";
 
 export const ANNOTATOR_VERSION = "0.3.0";
@@ -29,6 +29,11 @@ export interface AnnotatorOptions {
    * Hosts cache and prefetch inside this function, so a prefetched card fills at once.
    */
   loadExplanation?: (annotation: CardAnnotation) => Promise<Explanation>;
+  /**
+   * The page's margin column, when there is one (e.g. ≥1200px): the card is then set there as
+   * a sidenote, level with its line, instead of floating over the text. Null = popover.
+   */
+  sidenote?: () => SidenoteBox | null;
   /** Attribute naming a paragraph element, used to scope anchor search. */
   paragraphAttribute?: string;
   hoverDelayMs?: number;
@@ -46,8 +51,16 @@ export interface UpdateResult {
   unresolved: string[];
 }
 
+export interface UpdateOptions {
+  /**
+   * Who is reading (e.g. a demo persona). When it changes, per-note actions (Knew this, This
+   * is wrong) start fresh, and an open card reloads its explanation for the new reader.
+   */
+  reader?: string;
+}
+
 export interface Annotator {
-  update(annotations: readonly CardAnnotation[]): Promise<UpdateResult>;
+  update(annotations: readonly CardAnnotation[], options?: UpdateOptions): Promise<UpdateResult>;
   /** Emphasise one annotation's mark (e.g. while its rail chip is hovered); null clears. */
   highlight(id: string | null): void;
   /** Open an annotation's card, scrolling it into view; `focus` moves focus into the card. */
@@ -91,6 +104,9 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   // Latest explanation per open card; a response for a card no longer open is dropped.
   let loadToken = 0;
   const shown = new Map<string, Explanation>();
+  let reader: string | undefined;
+  // Sidenotes sit away from their mark, so a hover-opened one waits longer before closing.
+  const SIDENOTE_CLOSE_MS = 700;
 
   const card = new Card(doc, {
     onAction: (type) => {
@@ -119,9 +135,11 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     options.onHover?.(id);
   }
 
-  function cardMode(): CardMode {
+  function placement(): { mode: CardMode; box: SidenoteBox | null } {
     const narrow = view?.matchMedia?.(SHEET_QUERY).matches ?? false;
-    return narrow || lastPointer === "touch" ? "sheet" : "float";
+    if (narrow || lastPointer === "touch") return { mode: "sheet", box: null };
+    const box = options.sidenote?.() ?? null;
+    return box ? { mode: "sidenote", box } : { mode: "float", box: null };
   }
 
   function openCard(id: string, pinned: boolean, focus = false): void {
@@ -136,7 +154,8 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     if (changed || !card.isOpen) {
       card.fill(entry.annotation, pressed.get(id) ?? new Set());
       if (!pressed.get(id)?.has("report_wrong")) loadInto(entry.annotation);
-      card.show(mark, cardMode());
+      const { mode, box } = placement();
+      card.show(mark, mode, box);
       mark.setAttribute("aria-expanded", "true");
       emit(event("explain_opened", entry.annotation));
       options.onActive?.(id);
@@ -171,7 +190,8 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
 
   const scheduleClose = () => {
     clearTimeout(closeTimer);
-    closeTimer = setTimeout(() => close(), closeDelay);
+    const wait = card.el.dataset.mode === "sidenote" ? SIDENOTE_CLOSE_MS : closeDelay;
+    closeTimer = setTimeout(() => close(), wait);
   };
 
   const pointerType = (e: Event) => (e as PointerEvent).pointerType || "mouse";
@@ -292,8 +312,20 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     }
   }
 
-  async function update(annotations: readonly CardAnnotation[]): Promise<UpdateResult> {
+  async function update(
+    annotations: readonly CardAnnotation[],
+    { reader: nextReader }: UpdateOptions = {},
+  ): Promise<UpdateResult> {
     const gen = ++generation;
+    const readerChanged = nextReader !== undefined && nextReader !== reader;
+    if (readerChanged) {
+      reader = nextReader;
+      for (const set of pressed.values()) set.clear();
+      shown.clear();
+      for (const entry of entries.values()) {
+        entry.segments.forEach((m) => m.classList.remove(KNOWN_CLASS));
+      }
+    }
     const next = new Map(annotations.filter((a) => a.kind === "span").map((a) => [a.id, a]));
     const leaving = [...entries.keys()].filter((id) => {
       const a = next.get(id);
@@ -322,6 +354,13 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       const a = next.get(id);
       if (a) entry.annotation = a;
       entry.segments.forEach((m) => m.classList.remove(ENTER_CLASS));
+    }
+    // An open card shows the new data, and its explanation for the new reader (hosts cache,
+    // so the same reader's explanation comes back at once).
+    const open = active && entries.get(active.id);
+    if (open && card.isOpen) {
+      card.fill(open.annotation, pressed.get(open.annotation.id) ?? new Set());
+      if (!pressed.get(open.annotation.id)?.has("report_wrong")) loadInto(open.annotation);
     }
 
     const paragraphScopes = scopes();
