@@ -1,5 +1,9 @@
 ---
-version: explain-v1
+version: explain-v3
+# v3: the reader level sets depth and can only shorten the style budget (v2 gave a trader who
+# "can explain" basis points the same beginner Background as a newcomer).
+# v2: word budgets for Background per style, and a tightness rule (cards sit beside the text;
+# v1 Backgrounds ran to ~75 words for "normal" and dominated the card).
 # Two-part explanation card (DESIGN §7). Inputs: span, sentence, paragraph, concept definitions,
 # band, one THINKS_IN frame, style. Never user identifiers or reading history.
 ---
@@ -24,8 +28,13 @@ parts, and they must stay separate:
      not in the source. Do not round, convert or compute.
    - Add no facts, causes, predictions or judgements that the passage does not state.
 
-Write for the reader's level (`band`) and length (`style`). `author_says` should be about as
-long as needed to restate the passage plainly and no longer.
+Write for the reader's level (`band`) and length (`style`). The level sets the depth: follow
+its rule even when that means far fewer words than the style allows (the style budget is a
+ceiling, never a target), and never explain to a reader what their level says they know. The
+card sits beside the article,
+so be tight: respect the Background word budget, make every sentence earn its place, and use at
+most one analogy, in one sentence. `author_says` should be about as long as needed to restate
+the passage plainly and no longer.
 
 `analogy_domain` is the frame you drew an analogy from (the reader's `thinks_in` value), or
 null if you used no analogy.

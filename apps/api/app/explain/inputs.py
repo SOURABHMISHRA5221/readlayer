@@ -25,17 +25,18 @@ MAX_PARAGRAPH_CONCEPTS = 3
 MAX_PREREQUISITES = 3
 
 STYLE_RULES: Mapping[ExplanationStyle, str] = {
-    "short": "Background: one sentence.",
-    "normal": "Background: at most 3 sentences.",
-    "detailed": "Background: at most 5 sentences.",
+    "short": "Background: one sentence, at most 25 words.",
+    "normal": "Background: at most 3 short sentences, about 60 words in all.",
+    "detailed": "Background: at most 5 sentences, about 110 words in all.",
 }
 BAND_RULES: Mapping[Band, str] = {
-    "unaware": "The reader has probably never met this idea. Assume no prior knowledge and "
-    "explain any jargon you use.",
-    "heard of": "The reader has heard the term but could not define it. Give the core idea "
-    "plainly.",
-    "understands": "The reader knows the basics. Be brief and add the nuance that matters here.",
-    "can explain": "The reader knows this well. One line of context is enough.",
+    "unaware": "The reader has probably never met this idea. Assume no prior knowledge, define "
+    "the term plainly and explain any jargon you use.",
+    "heard of": "The reader knows the word but not what it means. Give the core idea plainly.",
+    "understands": "The reader knows the basics. Do not define the term; give only the nuance "
+    "this passage needs, in at most 2 sentences.",
+    "can explain": "The reader knows this well. Do not define the term; one sentence on what "
+    "matters about it here, nothing more.",
 }
 # Sentence boundary: end punctuation, space, then something that can start a sentence.
 _SENTENCE_END = re.compile(r"(?<=[.!?])[\"'”’)]*\s+(?=[\"'“‘(]?[A-Z0-9])")

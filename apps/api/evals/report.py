@@ -34,9 +34,9 @@ def _pct(n: int, d: int) -> str:
 
 def _history(all_runs: list[dict[str, Any]]) -> list[str]:
     lines = [
-        "| Run | Label | Prompts | Judge | Adversarial rejected | Good accepted | Pipeline "
-        "first / retry / definition | Injection safe | Cost |",
-        "|---|---|---|---|---|---|---|---|---|",
+        "| Run | Label | Prompts | Judge | Adversarial rejected | Good accepted | Judge errors | "
+        "Pipeline first / retry / definition | Injection safe | Cost |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for r in all_runs:
         m, s = r["meta"], r["summary"]
@@ -50,7 +50,7 @@ def _history(all_runs: list[dict[str, Any]]) -> list[str]:
         lines.append(
             f"| {m['at']} | {m['label']} | {m['prompt_version']} | `{m['judge_model']}` | "
             f"{_pct(s['adversarial_rejected'], s['adversarial_total'])} | "
-            f"{_pct(s['good_accepted'], s['good_total'])} | {pipe} | {inj} | "
+            f"{_pct(s['good_accepted'], s['good_total'])} | {len(s['errors'])} | {pipe} | {inj} | "
             f"${s['total_cost_usd']:.3f} |"
         )
     return lines
@@ -62,6 +62,17 @@ def _judge_calls_per_explanation(r: dict[str, Any]) -> float:
     s = r["summary"]
     cases = s.get("pipeline_total", 0) + s.get("injection_total", 0)
     return (total - verifier_only) / cases if cases else 1.0
+
+
+def _judge_latency(r: dict[str, Any]) -> str:
+    v = r["cost"].get("verify", {})
+    return f"{v['p50_ms'] / 1000:.1f} s / {v['p95_ms'] / 1000:.1f} s" if "p50_ms" in v else "–"
+
+
+def _pipeline_latency(s: dict[str, Any]) -> str:
+    if "pipeline_p50_ms" not in s:  # runs recorded before latency was measured
+        return "–"
+    return f"{s['pipeline_p50_ms'] / 1000:.1f} s / {s['pipeline_p95_ms'] / 1000:.1f} s"
 
 
 def _comparison(all_runs: list[dict[str, Any]]) -> list[str]:
@@ -76,8 +87,8 @@ def _comparison(all_runs: list[dict[str, Any]]) -> list[str]:
         "",
         "| Judge | Adversarial rejected | Missed | Good accepted | Good rejected | Injection "
         "safe | Judge $/call | Judge calls / explanation | Judge $/explanation | "
-        "Judge $/day at the $8 cap's volume |",
-        "|---|---|---|---|---|---|---|---|---|---|",
+        "Judge $/day at the $8 cap's volume | Judge p50 / p95 per call | Explanation p50 / p95 |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for judge, r in latest.items():
         s = r["summary"]
@@ -92,7 +103,8 @@ def _comparison(all_runs: list[dict[str, Any]]) -> list[str]:
             f"{', '.join(s['adversarial_missed']) or 'none'} | "
             f"{_pct(s['good_accepted'], s['good_total'])} | "
             f"{', '.join(s['good_rejected']) or 'none'} | {inj} | ${per_call:.5f} | "
-            f"{calls:.2f} | ${per_expl:.5f} | ${per_expl * volume:.2f} |"
+            f"{calls:.2f} | ${per_expl:.5f} | ${per_expl * volume:.2f} | {_judge_latency(r)} | "
+            f"{_pipeline_latency(s)} |"
         )
     return lines
 

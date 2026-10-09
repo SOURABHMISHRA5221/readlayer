@@ -15,6 +15,7 @@ evals/results/ and evals/report.md is rebuilt from all saved runs. Exit 1 on a m
 
 import argparse
 import asyncio
+import dataclasses
 import functools
 import json
 import re
@@ -76,6 +77,7 @@ class Meter:
     tokens_out: dict[str, int] = field(default_factory=lambda: defaultdict(int))
     cost: dict[str, float] = field(default_factory=lambda: defaultdict(float))
     models: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
+    latency_ms: dict[str, list[float]] = field(default_factory=lambda: defaultdict(list))
 
     def wrap(self, run: service.RunFn) -> service.RunFn:
         async def metered(task: str, schema: Any, prompt_vars: dict, **kw: Any) -> Any:
@@ -86,6 +88,7 @@ class Meter:
             self.tokens_out[task] += m.tokens_out
             self.cost[task] += m.cost_usd
             self.models[task].add(m.model)
+            self.latency_ms[task].append(m.latency_ms)
             return result
 
         return metered
@@ -98,9 +101,15 @@ class Meter:
                 "tokens_out": self.tokens_out[t],
                 "cost_usd": round(self.cost[t], 6),
                 "models": sorted(self.models[t]),
+                "p50_ms": percentile(self.latency_ms[t], 0.5),
+                "p95_ms": percentile(self.latency_ms[t], 0.95),
             }
             for t in sorted(self.calls)
         }
+
+
+def percentile(samples: list[float], q: float) -> float:
+    return round(service.percentile(samples, q), 1)
 
 
 async def gather_limited(coros: list) -> list:
@@ -144,7 +153,9 @@ def _attempts(outcome: service.Outcome) -> list[dict[str, Any]]:
 
 async def pipeline_case(case: dict[str, Any], run: service.RunFn) -> dict[str, Any]:
     inputs = inputs_for(case)
+    timer = service.Timer()
     outcome = await service.generate_verified(inputs, run=run)
+    elapsed_ms = timer.ms()
     final = outcome.explanation.model_dump() if outcome.explanation else None
     return {
         "id": case["id"],
@@ -156,6 +167,7 @@ async def pipeline_case(case: dict[str, Any], run: service.RunFn) -> dict[str, A
         "final": final,
         "attempts": _attempts(outcome),
         "cost_usd": outcome.cost_usd,
+        "latency_ms": elapsed_ms,
     }
 
 
@@ -186,8 +198,11 @@ async def injection_case(case: dict[str, Any], run: service.RunFn) -> dict[str, 
 # ---------------------------------------------------------------- run
 
 
-async def run_safety(judge: str | None, pipeline: bool) -> dict[str, Any]:
+async def run_safety(judge: str | None, pipeline: bool, effort: str | None) -> dict[str, Any]:
     settings = get_settings()
+    if effort:  # this process only: try a thinking level on both explanation tasks
+        for task in ("explain", "verify"):
+            llm.ROUTES[task] = dataclasses.replace(llm.ROUTES[task], reasoning_effort=effort)
     if judge:
         settings = settings.model_copy(update={"model_judge": judge})
     meter = Meter()
@@ -213,6 +228,8 @@ async def run_safety(judge: str | None, pipeline: bool) -> dict[str, Any]:
         "judge_model": settings.judge_model,
         "explain_model": settings.model_quality,
         "explain_fallback": settings.model_fast,
+        "reasoning_effort": {t: llm.ROUTES[t].reasoning_effort for t in ("explain", "verify")},
+        "verify_timeout_s": llm.ROUTES["verify"].timeout_s or settings.llm_timeout_s,
     }
     return results
 
@@ -229,7 +246,8 @@ def summarise(results: dict[str, Any]) -> dict[str, Any]:
         "adversarial_caught_by_judge": sum(r.get("caught_by_judge", False) for r in adv),
         "good_accepted": sum(r["passed"] is True for r in good),
         "good_total": len(good),
-        "good_rejected": [r["id"] for r in good if r["passed"] is not True],
+        # A judge error (timeout, outage) is not a verdict: reported apart from rejections.
+        "good_rejected": [r["id"] for r in good if r["passed"] is False],
         "errors": [r["id"] for r in v if r.get("error")],
     }
     if "pipeline" in results:
@@ -241,6 +259,10 @@ def summarise(results: dict[str, Any]) -> dict[str, Any]:
             "pipeline_definition": sum(r["kind"] == "definition" for r in p),
             "pipeline_cost_per_case": round(sum(r["cost_usd"] for r in p) / max(1, len(p)), 6),
         }
+        timed = [r["latency_ms"] for r in p if "latency_ms" in r]  # runs before latency: none
+        if timed:
+            s["pipeline_p50_ms"] = percentile(timed, 0.5)
+            s["pipeline_p95_ms"] = percentile(timed, 0.95)
         inj = results["injection"]
         s |= {
             "injection_safe": sum(r["safe"] for r in inj),
@@ -288,11 +310,15 @@ def print_summary(results: dict[str, Any], s: dict[str, Any]) -> None:
             f"pipeline: verified first {s['pipeline_verified_first']}, retry "
             f"{s['pipeline_verified_retry']}, definition {s['pipeline_definition']} of "
             f"{s['pipeline_total']} · ${s['pipeline_cost_per_case']:.4f} per explanation"
+            f" · p50 {s['pipeline_p50_ms'] / 1000:.1f} s, p95 {s['pipeline_p95_ms'] / 1000:.1f} s"
         )
         print(f"injection safe {s['injection_safe']}/{s['injection_total']}"
               f" · followed in a draft: {s['injection_followed_in_draft']}")  # fmt: skip
     for task, c in results["cost"].items():
-        print(f"cost {task}: {c['calls']} calls, ${c['cost_usd']:.4f} ({', '.join(c['models'])})")
+        print(
+            f"cost {task}: {c['calls']} calls, ${c['cost_usd']:.4f}, p50 {c['p50_ms']:.0f} ms,"
+            f" p95 {c['p95_ms']:.0f} ms ({', '.join(c['models'])})"
+        )
     print(f"total ${s['total_cost_usd']:.4f} · targets {'MET' if targets_met(s) else 'MISSED'}")
 
 
@@ -302,11 +328,14 @@ def main() -> int:
     parser.add_argument("--judge", help="judge model id for this run (overrides MODEL_JUDGE)")
     parser.add_argument("--label", default="run", help="name saved with the run")
     parser.add_argument("--no-pipeline", action="store_true", help="verifier cases only")
+    parser.add_argument(
+        "--reasoning-effort", choices=["low", "medium", "high"], help="thinking level to try"
+    )
     args = parser.parse_args()
     if not re.fullmatch(r"[a-z0-9-]+", args.label):
         parser.error("--label: lowercase letters, digits and dashes")
 
-    results = asyncio.run(run_safety(args.judge, not args.no_pipeline))
+    results = asyncio.run(run_safety(args.judge, not args.no_pipeline, args.reasoning_effort))
     results["meta"]["label"] = args.label
     s = summarise(results)
     results["summary"] = s
