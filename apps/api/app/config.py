@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     model_fast: str = ""
     model_quality: str = ""
     model_fallback: str = ""
+    # Faithfulness judge (task `verify`). Empty = MODEL_QUALITY; set to compare judges (M5).
+    model_judge: str = ""
     # Embeddings have no fallback: vectors from another model aren't comparable.
     model_embed: str = ""
     embed_dim: int = 256
@@ -53,12 +55,20 @@ class Settings(BaseSettings):
     # Uncached web searches triggered by anonymous readers, all of them together, per UTC day.
     anon_search_daily_cap: int = 100
 
+    # Explanations (M5): uncached generations per reader per UTC day, and for all anonymous
+    # readers together. Past a cap the card shows the definition only; cached ones stay free.
+    explain_daily_cap: int = 100
+    anon_explain_daily_cap: int = 40
+    anon_global_explain_daily_cap: int = 400
+
     # Per-uid request limits per minute (DESIGN §11.5), in memory per instance.
     rate_general_per_min: int = 120
     rate_general_anon_per_min: int = 60
     rate_annotations_per_min: int = 60
     rate_annotations_anon_per_min: int = 30
     rate_events_per_min: int = 30
+    rate_explain_per_min: int = 60
+    rate_explain_anon_per_min: int = 30
 
     # Firebase Auth project for ID-token verification; defaults to gcp_project.
     firebase_project: str = ""
@@ -80,6 +90,10 @@ class Settings(BaseSettings):
     @property
     def bypass_allowed(self) -> bool:
         return self.dev_auth_bypass and self.env == "dev" and not self.k_service
+
+    @property
+    def judge_model(self) -> str:
+        return self.model_judge or self.model_quality
 
     @property
     def cors_origin_list(self) -> list[str]:

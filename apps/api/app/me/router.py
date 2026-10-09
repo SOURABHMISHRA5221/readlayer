@@ -22,7 +22,7 @@ from app.graph.models import DOMAINS, Concept, Domain
 from app.reader import model, profile
 from app.reader.events import ConceptRef, EventType, ReaderEvent
 from app.reader.model import Band, Edge
-from app.reader.state import PersonaKey
+from app.reader.state import PersonaKey, ThinksIn
 from app.reader.subgraph import knowledge_subgraph
 from app.store.docstore import get_doc_store
 from app.store.reader_repo import Density, ExplanationStyle, ReaderRepo
@@ -31,15 +31,6 @@ router = APIRouter()
 
 MAX_EVENTS = 100
 ID_PATTERN = r"^[A-Za-z0-9_-]+$"
-# Analogy frames explanations may use (DESIGN §7, §15.1 item 5); a reader picks at most 3.
-THINKS_IN = (
-    "software", "engineering", "science", "medicine", "law", "design", "teaching", "music",
-    "cooking", "cricket", "football", "gaming",
-)  # fmt: skip
-ThinksIn = Literal[
-    "software", "engineering", "science", "medicine", "law", "design", "teaching", "music",
-    "cooking", "cricket", "football", "gaming",
-]  # fmt: skip
 
 
 def _repo() -> ReaderRepo:

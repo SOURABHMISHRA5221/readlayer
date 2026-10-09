@@ -8,13 +8,20 @@ event (copy-on-write, app/store/reader_repo.py).
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Literal, get_args
 
 from app.reader.model import Edge
 
 PersonaKey = Literal["newcomer", "trader", "policy_student"]
 PERSONA_KEYS: tuple[PersonaKey, ...] = ("newcomer", "trader", "policy_student")
 Density = Literal["minimal", "balanced", "guided"]
+ExplanationStyle = Literal["short", "normal", "detailed"]
+# Analogy frames explanations may use (DESIGN §7, §15.1 item 5); a reader picks at most 3.
+ThinksIn = Literal[
+    "software", "engineering", "science", "medicine", "law", "design", "teaching", "music",
+    "cooking", "cricket", "football", "gaming",
+]  # fmt: skip
+THINKS_IN: tuple[ThinksIn, ...] = get_args(ThinksIn)
 
 ENGAGED_WINDOW = timedelta(days=30)  # DESIGN §5 context rule
 MAX_ENGAGED = 50  # most recent engaged contents kept per reader

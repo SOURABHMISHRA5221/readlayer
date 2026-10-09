@@ -9,6 +9,7 @@ users/{uid}/weekly/{iso_week}  words_read, annotations_shown, content_ids (dedup
 users/{uid}/profile_edits/{id} M7
 users/{uid}/rec_signals/{key}  app/recs/state.py
 users/{uid}/ingest_counts/{d}  new URLs ingested that UTC day
+users/{uid}/explain_counts/{d} explanations generated (not cached) that UTC day
 users/{uid}/demo_graphs/{p}    a demo reader's graph for persona p: θ, threshold_offset, knows
                                map, engaged contents. Copied from persona_templates/{p} on the
                                first event or correction; until then the template is read as-is.
@@ -29,7 +30,7 @@ from app.reader import events as reader_events
 from app.reader.events import ConceptRef, EventOutcome, ReaderEvent
 from app.reader.model import Edge, Evidence
 from app.reader.profile import iso_week
-from app.reader.state import PersonaKey, ReaderState, touch_engaged
+from app.reader.state import ExplanationStyle, PersonaKey, ReaderState, touch_engaged
 from app.scoring.rules import next_offset
 from app.store.docstore import Doc, DocStore, Txn
 
@@ -42,6 +43,7 @@ USER_SUBCOLLECTIONS = (
     "rec_signals",
     "ingest_counts",
     "demo_graphs",
+    "explain_counts",
 )
 EVENT_TTL = timedelta(days=90)
 MAX_WEEKLY_CONTENT_IDS = 500
@@ -52,7 +54,6 @@ MAX_DEMO_DOC_BYTES = 800_000
 FIRESTORE_DOC_LIMIT = 1_048_576
 
 Density = Literal["minimal", "balanced", "guided"]
-ExplanationStyle = Literal["short", "normal", "detailed"]
 
 
 class UserProfile(BaseModel):
@@ -507,9 +508,25 @@ class ReaderRepo:
     ) -> bool:
         """Count one new URL against the reader's daily cap (and, for anonymous readers, the
         shared anonymous cap at `global_path`) before ingesting. False = over a cap."""
+        return await self.reserve_daily("ingest_counts", uid, day, cap, global_path, global_cap)
+
+    async def refund_ingest(self, uid: str, day: str, global_path: str | None) -> None:
+        await self.refund_daily("ingest_counts", uid, day, global_path)
+
+    async def reserve_daily(
+        self,
+        counter: str,
+        uid: str,
+        day: str,
+        cap: int,
+        global_path: str | None,
+        global_cap: int,
+    ) -> bool:
+        """Count one unit against `users/{uid}/{counter}/{day}` (and the shared anonymous
+        counter at `global_path`) in one transaction. False = over a cap, nothing written."""
 
         async def body(t: Txn) -> bool:
-            mine_path = sub_path(uid, "ingest_counts", day)
+            mine_path = sub_path(uid, counter, day)
             reads = await t.get_all([mine_path] + ([global_path] if global_path else []))
             mine = int((reads[mine_path] or {}).get("count", 0))
             shared = int((reads[global_path] or {}).get("anonymous", 0)) if global_path else 0
@@ -522,9 +539,9 @@ class ReaderRepo:
 
         return await self._store.run(body)
 
-    async def refund_ingest(self, uid: str, day: str, global_path: str | None) -> None:
+    async def refund_daily(self, counter: str, uid: str, day: str, global_path: str | None) -> None:
         async def body(t: Txn) -> None:
-            mine_path = sub_path(uid, "ingest_counts", day)
+            mine_path = sub_path(uid, counter, day)
             reads = await t.get_all([mine_path] + ([global_path] if global_path else []))
             mine = int((reads[mine_path] or {}).get("count", 0))
             t.set(mine_path, {"count": max(0, mine - 1), "day": day})

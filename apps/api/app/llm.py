@@ -108,7 +108,8 @@ ROUTES: dict[str, Route] = {
     "smoke": Route("model_fast", "model_fallback"),
     "explain": Route("model_quality", "model_fast"),
     # No fallback: if the verifier is down, callers show the definition gloss only.
-    "verify": Route("model_quality", None),
+    # judge_model = MODEL_JUDGE, or MODEL_QUALITY when that is empty.
+    "verify": Route("judge_model", None),
 }
 
 
