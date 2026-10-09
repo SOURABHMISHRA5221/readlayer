@@ -24,7 +24,7 @@ from app.store.explain_repo import REPORTS
 
 API = "https://readlayer-api-d2sfihz3za-el.a.run.app"
 PROJECT = "readlayer-sourabh-26"
-WEB_ENV = Path(__file__).resolve().parents[3] / "apps" / "web" / ".env.production.local"
+WEB_ENV = Path(__file__).resolve().parents[3] / "apps" / "web" / ".env.local"  # make web-config
 PERSONAS = ("newcomer", "trader", "policy_student")
 # Economic Times markets preview (same article as scripts/explain_demo.py).
 DEFAULT_CONTENT = "2332418841faa08d5f5e157c2d038d1d"

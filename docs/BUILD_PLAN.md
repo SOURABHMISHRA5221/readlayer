@@ -213,6 +213,11 @@ approve the Secret Manager and deploy commands when asked.
 > emit `paragraph_dwell` (IntersectionObserver), `text_searched` and `annotation_dismissed`
 > alongside the existing card events, 5 s batches and on visibilitychange.
 
+> Carried over from the M5 review (decided 2026-10-10, for the Oct 12 M6 session):
+> (1) generate "What the author is saying" once per (span, style) and personalise only Background:
+> the restatement gets its own cache key and one verifier pass per span, the Background its own
+> per-reader key; (2) label the Helpful button with text instead of a bare thumb icon.
+
 **Acceptance**
 - Markers, pre-read card and prompt render for a persona that triggers them, keyboard reachable,
   no serious axe violations; answering the prompt changes the next load.

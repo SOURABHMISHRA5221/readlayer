@@ -1,7 +1,12 @@
-"""Demo evidence for M5: one concept on one article, explained for the three personas side by
-side, plus one real case where the verifier rejected a draft (from the saved eval runs).
+"""Demo evidence for M5, written to evals/demo.md:
 
-    uv run python -m scripts.explain_demo [--content-id ID --demand-id D]
+1. "Depth adapts": basis points, where the three personas sit at different bands, so the
+   Background changes depth (a trader who can explain it gets nuance, not a definition).
+2. "Three frames": credit default swap, unfamiliar to all three, so each gets a full Background
+   with an analogy from their own frame (software, cricket, law).
+3. One real case where the verifier rejected a draft (from the saved eval runs).
+
+    uv run python -m scripts.explain_demo
 
 Reads the persona templates and the article (read-only), makes up to ~12 model calls through
 app/llm.py (budget guard on), and writes evals/demo.md. Nothing is cached or written to
@@ -28,10 +33,24 @@ from app.store.reader_repo import ReaderRepo
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "evals" / "demo.md"
 RESULTS = ROOT / "evals" / "results"
-# Economic Times markets preview, "bps" (basis points): a span for all three personas, at
-# bands unaware (newcomer), can explain (trader), heard of (policy student).
-DEFAULT_CONTENT = "2332418841faa08d5f5e157c2d038d1d"
-DEFAULT_DEMAND = "d6"
+# (content id, demand id, heading, what it shows). Both spans are annotated for all three
+# personas (checked with the scorer on the seeded templates).
+EXHIBITS = (
+    (
+        "2332418841faa08d5f5e157c2d038d1d",  # Economic Times markets preview, "bps"
+        "d6",
+        "Depth adapts",
+        "Bands differ (newcomer unaware, trader can explain, policy student heard of), so the "
+        "Background changes depth: the trader gets nuance, not a definition.",
+    ),
+    (
+        "99a2cb53f16256bd275bafd180364134",  # The Guardian, Polymarket bets on HSBC
+        "d11",
+        "Three frames",
+        "Unfamiliar to all three (unaware or heard of), so each gets a full Background with an "
+        "analogy from their own frame.",
+    ),
+)
 READ_ONLY_UID = "demo-readonly"  # load_state only reads; nothing is written for this uid
 
 
@@ -39,7 +58,9 @@ def _cell(text: str | None) -> str:
     return (text or "–").replace("|", "\\|").replace("\n", " ")
 
 
-async def personas_side_by_side(content_id: str, demand_id: str) -> list[str]:
+async def personas_side_by_side(
+    content_id: str, demand_id: str, heading: str, shows: str
+) -> list[str]:
     settings = get_settings()
     graph = await load_graph(settings.concepts_uri)
     doc = await FirestoreContentStore(settings.gcp_project).get(content_id)
@@ -58,7 +79,9 @@ async def personas_side_by_side(content_id: str, demand_id: str) -> list[str]:
         rows.append({"persona": persona, "inputs": inputs, "outcome": outcome})
     first = rows[0]["inputs"]
     lines = [
-        f"## One concept, three readers: *{first.label}*",
+        f"## {heading}: *{first.label}*",
+        "",
+        shows,
         "",
         f"Article: **{doc.title}** ({doc.site}). Span: “{demand.anchor.exact}”.",
         "",
@@ -78,55 +101,88 @@ async def personas_side_by_side(content_id: str, demand_id: str) -> list[str]:
             for r in rows
         ]
         lines.append(f"| **{label}** | " + " | ".join(cells) + " |")
+    frames = [r["outcome"].explanation.analogy_domain if r["outcome"].explanation else None
+              for r in rows]  # fmt: skip
+    lines.append("| Analogy used | " + " | ".join(f or "none" for f in frames) + " |")
     cost = sum(r["outcome"].cost_usd for r in rows)
     lines += ["", f"Generated {now:%Y-%m-%d %H:%M} UTC, prompts {service.prompt_version()}, "
               f"cost ${cost:.4f} for the three cards."]  # fmt: skip
     return lines
 
 
-def rejection_example() -> list[str]:
-    """The first pipeline or injection case in the newest run where a draft was rejected."""
-    for path in sorted(RESULTS.glob("*.json"), reverse=True):
+def _rejections() -> list[tuple[int, str, dict[str, Any], dict[str, Any]]]:
+    """(preference, run file, run, case) for every case with a rejected draft. Preferred: the
+    judge caught it on a real-article case (pipeline), the newest run first."""
+    found = []
+    for age, path in enumerate(sorted(RESULTS.glob("*.json"), reverse=True)):
         run = json.loads(path.read_text(encoding="utf-8"))
-        for case in run.get("pipeline", []) + run.get("injection", []):
-            rejected = [a for a in case["attempts"] if a["reasons"]]
-            if not rejected:
-                continue
-            bad = rejected[0]
-            lines = [
-                "## A draft the verifier rejected",
-                "",
-                f"Eval case `{case['id']}` in `{path.name}` (judge `{run['meta']['judge_model']}`)."
-                f" Outcome: **{case['kind']}** ({case['reason']}).",
-                "",
-                "**Rejected draft, What the author is saying:**",
-                "",
-                f"> {bad['draft']['author_says']}",
-                "",
-                "**Why:**",
-                "",
-                *[f"- {r}" for r in bad["reasons"]],
-            ]
-            if case["final"]:
-                lines += [
-                    "",
-                    "**Accepted retry:**",
-                    "",
-                    f"> {case['final']['author_says']}",
-                ]
-            else:
-                lines += ["", "No retry passed, so the reader saw the definition only."]
-            return lines
-    return ["## A draft the verifier rejected", "", "No rejected draft in the saved runs yet."]
+        for part in ("pipeline", "injection"):
+            for case in run.get(part, []):
+                rejected = [a for a in case["attempts"] if a["reasons"]]
+                if not rejected:
+                    continue
+                by_judge = any(r.startswith("judge_") for r in rejected[0]["reasons"])
+                rank = (0 if part == "pipeline" else 2) + (0 if by_judge else 1)
+                found.append((rank * 100 + age, path.name, run, case))
+    return sorted(found, key=lambda f: f[0])
+
+
+def rejection_example() -> list[str]:
+    found = _rejections()
+    if not found:
+        return ["## A draft the verifier rejected", "", "No rejected draft in the saved runs yet."]
+    _, name, run, case = found[0]
+    bad = next(a for a in case["attempts"] if a["reasons"])
+    lines = [
+        "## A draft the verifier rejected",
+        "",
+        f"Eval case `{case['id']}` in `{name}` (judge `{run['meta']['judge_model']}`, prompts "
+        f"`{run['meta']['prompt_version']}`). Outcome: **{case['kind']}** ({case['reason']}).",
+        "",
+        "**Rejected draft, What the author is saying:**",
+        "",
+        f"> {bad['draft']['author_says']}",
+        "",
+        "**Why:**",
+        "",
+        *[f"- {r}" for r in bad["reasons"]],
+    ]
+    if case["final"]:
+        lines += ["", "**Accepted retry:**", "", f"> {case['final']['author_says']}"]
+    else:
+        lines += ["", "No retry passed, so the reader saw the definition only."]
+    return lines
+
+
+async def exhibits() -> list[str]:
+    out: list[str] = []
+    for content_id, demand_id, heading, shows in EXHIBITS:
+        out += [*await personas_side_by_side(content_id, demand_id, heading, shows), ""]
+    return out
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--content-id", default=DEFAULT_CONTENT)
-    parser.add_argument("--demand-id", default=DEFAULT_DEMAND)
-    args = parser.parse_args()
-    side = asyncio.run(personas_side_by_side(args.content_id, args.demand_id))
-    body = ["# Explanation demo (M5)", "", *side, "", *rejection_example(), ""]
+    parser.add_argument(
+        "--rejection-only", action="store_true", help="rewrite only the rejection section"
+    )
+    if parser.parse_args().rejection_only:
+        text = OUT.read_text(encoding="utf-8")
+        head = text.split("## A draft the verifier rejected")[0]
+        OUT.write_text(head + "\n".join(rejection_example()) + "\n", encoding="utf-8")
+        print("\n".join(rejection_example()))
+        return
+    body = [
+        "# Explanation demo (M5)",
+        "",
+        "Generated by `uv run python -m scripts.explain_demo` with the shipped prompts, through "
+        "the same generate → checks → judge pipeline as the API (persona templates read-only, "
+        "nothing cached). Reader bands come from the seeded persona templates.",
+        "",
+        *asyncio.run(exhibits()),
+        *rejection_example(),
+        "",
+    ]
     OUT.write_text("\n".join(body), encoding="utf-8")
     print("\n".join(body))
     print(f"\nwrote {OUT.relative_to(ROOT)}")
