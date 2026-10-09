@@ -1,12 +1,13 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-05 (IST), end of M4 (merged as #11): the real gap scorer (DESIGN §5–6),
-demo personas as seeded reader graphs, and the interaction loop closed (API + web live, §12).
+Last updated: 2026-10-10 (IST): schedule re-planned (§9, decisions 20–22), M5 starting on branch
+`m5`. Last milestone: M4 (merged as #11), the real gap scorer, seeded personas and the closed
+loop (API + web live, §12). README and MIT license merged as #12.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
 
-Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
+Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we submit Oct 17.**
 
 ---
 
@@ -26,7 +27,9 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
 | M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
-| M5, rest of M6, M7, M8, M9 | not started | — | See "Next actions" |
+| docs | merged (squash) | #12 | README with live screenshots, persona GIF, diagrams; MIT license |
+| M5 | in progress (branch `m5`) | — | Explanations, verifier, safety evals (Oct 10) |
+| Rest of M6, M7 (trimmed), M8-local, M9 (+ M2.2 trimmed) | not started | — | See "Next actions" (re-planned 2026-10-10) |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
 1. `e7c131c` M6 local vertical slice: `DEV_AUTH_BYPASS` (refuses to start on Cloud Run / ENV=prod),
@@ -54,8 +57,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 | `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M4 build**: revision `readlayer-api-00009-gkf` (revision names restarted below M3's `-00010-tiw`; gcloud numbers them that way), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
 | `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M4 build** (bundle `index-Dfwq_13e.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
-| `packages/annotator` | Bundled into the web app (and the extension in M8) | Final for spans; no paragraph markers / pre-read yet |
-| `apps/extension` | — | MV3 scaffold only (M8) |
+| `packages/annotator` | Bundled into the web app (and the extension in M8-local) | Final for spans; no paragraph markers / pre-read yet |
+| `apps/extension` | — | MV3 scaffold only (M8-local: unpacked, activeTab only, Oct 14) |
 | Vertex AI (Gemini, Gemma MaaS, embeddings) | `global` endpoint, project `readlayer-sourabh-26` | Live, via ADC locally |
 | Firestore (Native) | asia-south1 | Live |
 | Cloud Storage | `gs://readlayer-sourabh-26-graph/concepts.json` (+ `concepts.prev.json`) | Live, loaded at API start |
@@ -126,6 +129,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Annotator card shows the concept definition + prerequisites, not the two-part verified explanation; no "This is wrong" button. Card events (explain_opened, knew_this, explain_helpful) now go to POST /v1/events (5 s batches + on hide); paragraph_dwell / text_searched not emitted yet | M5 (explanations), rest of M6 (dwell, text search) | M5 / M6 rest |
 | Annotation response carries `definition`, `domain`, `prerequisites`, `debug` beyond the §8 shape | The card needs them until explanations exist | Revisit in M5 |
 
+| Extension (M8-local) is unpacked, activeTab only: no allowlisted-domain activation, no host permissions, no automatic injection; not on the Web Store | Re-plan 2026-10-10 (decision 21): smallest permission set, no store review in the time left. DESIGN §11.3's allowlist activation is not built | Web Store release post-hackathon |
+| M2.2 trimmed to the jurisdiction fix and the Russell mislink; online concept growth and the 30-article held-out set deferred | Re-plan 2026-10-10 (decision 20) | Post-hackathon (issue #6) |
 ---
 
 ## 5. Known issues and tech debt
@@ -215,7 +220,7 @@ about 12 calls for a new article (3 concepts × 3 formats; YouTube counts 2), 0 
 | M5 explanations + verifier + 40-case suite + 10 injection cases | $2–5 |
 | M2.2 online growth (one batched concept_define per article) + held-out re-runs | $2–4 |
 | M7 profile edits, onboarding | < $1 |
-| M8 extension ingestion (~$0.0075 per new article) | < $2 |
+| M8-local extension ingestion (~$0.0075 per new article) | < $2 |
 | M9 gold-set evals (30 articles × 2 personas) and demo pre-ingest | $3–6 |
 | Hosting after submission: Cloud Run min-instances 1 during judging (Oct 19 – Nov 6) | ~$15–25 |
 | **Total remaining** | **≈ $25–45 of the $300 credit** |
@@ -257,20 +262,29 @@ quota is free within the daily buckets.
 
 ## 9. Next actions, in order
 
+Re-planned 2026-10-10 (decisions 20–22); BUILD_PLAN.md has the prompts.
+
 | When | Action |
 |---|---|
-| Oct 5 | Set `LLM_DAILY_BUDGET_USD` back to 8 in `apps/api/.env` (you, by hand) |
-| Oct 8–9 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
-| Oct 9 | **Rest of M6:** two-phase loading for "Open here", "This is wrong" button; show the paragraph markers, pre-read card and "Know this?" prompt the API already returns; emit `annotation_dismissed` and paragraph_dwell / text_searched; slowdown detection |
-| Oct 9–10 | **M2.2** (issue #6): online concept growth, jurisdiction, link_confirm strictness; held-out set grows to 30; target ≥ 75% linked |
-| Oct 10–11 | **M7** onboarding, consent, calibration, reading profile page, profile edits. **Team lock Oct 11** (gate: if M6–M7 aren't solid, skip M8) |
-| Oct 12–14 | **M8** Chrome extension with privacy guards (only if the gate passed) |
-| Oct 15–17 | **M9** evals, hardening, WIF deploy, dashboard, demo personas, README, video, deck |
-| **Oct 18** | **Submit** |
+| Now | Confirm `LLM_DAILY_BUDGET_USD` in `apps/api/.env` is back to 8 (you, by hand; decision 2). M5 is the first model-heavy milestone since M2 |
+| Oct 10 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
+| Oct 11 | **Rest of M6:** show the paragraph markers, pre-read card and "Know this?" prompts the API already returns; two-phase "Open here"; complete event batching (`paragraph_dwell`, `text_searched`, `annotation_dismissed`) |
+| Oct 11 | **Team lock** |
+| Oct 12–13 | **M7 trimmed:** profile page (summary, domain bars, list view with corrections, THINKS_IN, export/delete/pause); Google onboarding with consent and calibration. Knowledge-map graph and edit-by-prompt optional |
+| Oct 14 | **M8-local:** unpacked Chrome extension, activeTab only, Readability on a DOM clone, client redaction + Presidio backstop, annotator on the live page, "Connect extension" auth for demo and Google readers, popup; README install steps |
+| Oct 15 | **M9** hardening and evals (gold set, report, WIF deploy, dashboard) + **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink) |
+| Oct 16 | Demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
+| **Oct 17** | **Submit** (deadline Oct 18) |
+
+**Cut order if late:** edit-by-prompt → knowledge-map graph → M2.2 online growth (already
+deferred) → extension popup extras.
+
+**You, by hand:** label the gold set (30 articles × 2 personas, with your teammate, from Oct 12);
+record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6.
 
 ---
 
-## 10. Decisions (all decided 2026-10-04)
+## 10. Decisions (1–14 decided 2026-10-04, later ones dated)
 
 | # | Topic | Decision |
 |---|---|---|
@@ -294,6 +308,9 @@ quota is free within the daily buckets.
 | 17 | Linked references (M4) | Option C: a linked context reference uses the concept's p_know only with a KNOWS edge or a prior ≥ 0.8 (DESIGN §6.7, five cases recorded there) |
 | 18 | Prompts while paused (M4) | No "Know this?" prompt while learning is paused, so a paused reader's page loads write nothing |
 | 19 | Deploy guard (M4) | `make deploy-api` / `deploy-web` refuse while a deploy runs on this machine, a Cloud Build is in progress or the API is mid-rollout |
+| 20 | Re-plan (2026-10-10) | M5 Oct 10; rest of M6 Oct 11; M7 trimmed Oct 12–13; M8-local Oct 14; M9 + M2.2 trimmed Oct 15; demo, README, video, deck Oct 16; submit Oct 17. M2.2 online growth and the bigger held-out set deferred |
+| 21 | Extension (2026-10-10) | M8-local replaces M8: unpacked via Developer mode, `activeTab`/`scripting`/`storage` only, no host permissions or automatic injection; auth via "Connect extension" for demo and Google readers; popup with sign-in state, persona, density, profile link. Web Store release post-hackathon |
+| 22 | Cut order (2026-10-10) | If late, cut in this order: edit-by-prompt, knowledge-map graph, M2.2 online growth, extension popup extras |
 
 No decisions are open.
 
