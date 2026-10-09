@@ -12,6 +12,7 @@ import {
   flip,
   offset,
   shift,
+  size,
 } from "@floating-ui/dom";
 
 import type { AnnotationDebug, AnnotatorEventType, CardAnnotation, Explanation } from "./types";
@@ -30,6 +31,9 @@ const C = "rl-card";
 const GAP_PX = 10;
 const EDGE_PX = 12;
 const DISMISS_DRAG_PX = 80;
+const MIN_HEIGHT_PX = 180;
+// Hosts with a fixed top bar set --rl-top-inset (px) so cards never slide under it.
+const TOP_INSET_VAR = "--rl-top-inset";
 const SVG_NS = "http://www.w3.org/2000/svg";
 
 export type CardMode = "float" | "sheet" | "sidenote";
@@ -151,17 +155,10 @@ export class Card {
     label.textContent = CARD_LABEL;
     footer.append(actions, label);
 
-    this.el.append(
-      handle,
-      this.arrowEl,
-      this.domain,
-      this.title,
-      this.explain,
-      this.status,
-      this.prereqs,
-      this.debug,
-      footer,
-    );
+    // The body scrolls when the card is taller than the room it has; the actions stay pinned.
+    const body = el(doc, "div", `${C}__body`);
+    body.append(this.domain, this.title, this.explain, this.status, this.prereqs, this.debug);
+    this.el.append(handle, this.arrowEl, body, footer);
     doc.body.append(this.scrim, this.el);
   }
 
@@ -246,6 +243,7 @@ export class Card {
     this.mode = mode;
     this.sidenote = mode === "sidenote" ? sidenote : null;
     this.el.style.width = this.sidenote ? `${this.sidenote.width}px` : "";
+    this.el.style.maxHeight = "";
     this.el.dataset.mode = mode;
     this.el.style.transform = "";
     this.el.hidden = false;
@@ -279,13 +277,21 @@ export class Card {
       this.placeSidenote(anchor, this.sidenote);
       return;
     }
+    const padding = { top: this.topInset(), right: EDGE_PX, bottom: EDGE_PX, left: EDGE_PX };
     const { x, y, placement, middlewareData } = await computePosition(anchor, this.el, {
       strategy: "fixed",
       placement: "bottom-start",
       middleware: [
         offset(GAP_PX),
-        flip({ padding: EDGE_PX }),
-        shift({ padding: EDGE_PX }),
+        // Below or above, whichever has more room; then cap the height to that room.
+        flip({ padding, fallbackStrategy: "bestFit" }),
+        shift({ padding }),
+        size({
+          padding,
+          apply: ({ availableHeight }) => {
+            this.el.style.maxHeight = `${Math.max(MIN_HEIGHT_PX, availableHeight)}px`;
+          },
+        }),
         arrow({ element: this.arrowEl, padding: 14 }),
       ],
     });
@@ -308,12 +314,21 @@ export class Card {
     const view = this.doc.defaultView;
     if (!view || this.el.hidden) return;
     const mark = anchor.getBoundingClientRect();
+    const inset = this.topInset();
+    this.el.style.maxHeight = `${view.innerHeight - inset - EDGE_PX}px`;
     const height = this.el.offsetHeight;
-    const top = Math.max(EDGE_PX, Math.min(mark.top - 14, view.innerHeight - height - EDGE_PX));
+    const top = Math.max(inset, Math.min(mark.top - 14, view.innerHeight - height - EDGE_PX));
     Object.assign(this.el.style, { left: `${box.left}px`, top: `${top}px` });
     this.el.dataset.placement = "right";
     const arrowY = Math.max(10, Math.min(mark.top + mark.height / 2 - top - 6, height - 22));
     Object.assign(this.arrowEl.style, { left: "-7px", top: `${arrowY}px`, bottom: "" });
+  }
+
+  private topInset(): number {
+    const view = this.doc.defaultView;
+    const raw = view?.getComputedStyle(this.doc.documentElement).getPropertyValue(TOP_INSET_VAR);
+    const px = Number.parseFloat(raw ?? "");
+    return Number.isFinite(px) && px > EDGE_PX ? px : EDGE_PX;
   }
 
   /** Swipe the sheet down by its handle to dismiss it. */

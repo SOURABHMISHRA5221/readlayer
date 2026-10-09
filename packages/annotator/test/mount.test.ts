@@ -389,5 +389,9 @@ describe("explanations", () => {
     expect(card().style.width).toBe("320px");
     expect(card().style.left).toBe("900px");
     expect(card().dataset.placement).toBe("right");
+    // never taller than the window: the body scrolls, the actions stay pinned
+    expect(card().style.maxHeight).toBe(`${window.innerHeight - 24}px`);
+    expect(card().querySelector(".rl-card__body .rl-card__explain")).not.toBeNull();
+    expect(card().querySelector(".rl-card__body .rl-card__footer")).toBeNull();
   });
 });
