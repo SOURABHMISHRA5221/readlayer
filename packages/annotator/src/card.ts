@@ -32,6 +32,7 @@ const GAP_PX = 10;
 const EDGE_PX = 12;
 const DISMISS_DRAG_PX = 80;
 const MIN_HEIGHT_PX = 180;
+const MAKE_ROOM_MS = 3000;
 // Hosts with a fixed top bar set --rl-top-inset (px) so cards never slide under it.
 const TOP_INSET_VAR = "--rl-top-inset";
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -69,6 +70,12 @@ export class Card {
   private readonly authorSays: HTMLParagraphElement;
   private readonly status: HTMLParagraphElement;
   private sidenote: SidenoteBox | null = null;
+  private readonly body: HTMLDivElement;
+  // Until when a card opened on purpose (click, tap, keyboard) may scroll the page once to make
+  // room, rather than hiding the author block below a scroll. Short, so a slow generation never
+  // moves the page long after the click; the fade on the body covers that case.
+  private makeRoomUntil = 0;
+  private anchor: HTMLElement | null = null;
   private readonly report: HTMLButtonElement;
   private readonly buttons: HTMLButtonElement[];
   private stopAutoUpdate: (() => void) | null = null;
@@ -156,9 +163,10 @@ export class Card {
     footer.append(actions, label);
 
     // The body scrolls when the card is taller than the room it has; the actions stay pinned.
-    const body = el(doc, "div", `${C}__body`);
-    body.append(this.domain, this.title, this.explain, this.status, this.prereqs, this.debug);
-    this.el.append(handle, this.arrowEl, body, footer);
+    this.body = el(doc, "div", `${C}__body`);
+    this.body.append(this.domain, this.title, this.explain, this.status, this.prereqs, this.debug);
+    this.body.addEventListener("scroll", () => this.markOverflow(), { passive: true });
+    this.el.append(handle, this.arrowEl, this.body, footer);
     doc.body.append(this.scrim, this.el);
   }
 
@@ -223,6 +231,9 @@ export class Card {
     this.report.disabled = !verified;
     this.report.hidden = !(verified || loading || reported);
     if (from && verified) this.grow(from, before !== this.background.textContent);
+    this.markOverflow();
+    // A capped card doesn't resize when its content arrives, so check for room here too.
+    if (!this.el.hidden) this.maybeMakeRoom();
   }
 
   private grow(from: number, swapped: boolean): void {
@@ -238,9 +249,16 @@ export class Card {
     );
   }
 
-  show(anchor: HTMLElement, mode: CardMode, sidenote: SidenoteBox | null = null): void {
+  show(
+    anchor: HTMLElement,
+    mode: CardMode,
+    sidenote: SidenoteBox | null = null,
+    makeRoom = false,
+  ): void {
     this.stopAutoUpdate?.();
     this.mode = mode;
+    this.makeRoomUntil = makeRoom && mode === "float" ? Date.now() + MAKE_ROOM_MS : 0;
+    this.anchor = anchor;
     this.sidenote = mode === "sidenote" ? sidenote : null;
     this.el.style.width = this.sidenote ? `${this.sidenote.width}px` : "";
     this.el.style.maxHeight = "";
@@ -297,6 +315,8 @@ export class Card {
     });
     if (this.el.hidden || this.mode !== "float") return;
     Object.assign(this.el.style, { left: `${x}px`, top: `${y}px` });
+    this.markOverflow();
+    this.maybeMakeRoom();
     this.el.dataset.placement = placement;
     const side = placement.split("-")[0];
     const a = middlewareData.arrow;
@@ -322,6 +342,31 @@ export class Card {
     this.el.dataset.placement = "right";
     const arrowY = Math.max(10, Math.min(mark.top + mark.height / 2 - top - 6, height - 22));
     Object.assign(this.arrowEl.style, { left: "-7px", top: `${arrowY}px`, bottom: "" });
+  }
+
+  /** Fade the body's bottom edge while there is more to scroll. */
+  private markOverflow(): void {
+    const b = this.body;
+    const more = b.scrollHeight - b.clientHeight - b.scrollTop > 4;
+    b.classList.toggle(`${C}__body--more`, more);
+  }
+
+  private maybeMakeRoom(): void {
+    const ready = this.explain.hidden || this.explain.dataset.state === "ready";
+    if (!ready || !this.makeRoomUntil || !this.anchor || this.mode !== "float") return;
+    if (Date.now() < this.makeRoomUntil) this.scrollForRoom(this.anchor);
+    this.makeRoomUntil = 0;
+  }
+
+  /** If the filled card still doesn't fit, bring its line up under the top bar so the card
+   * opens below it with the most room the screen has. Once per deliberate open. */
+  private scrollForRoom(anchor: HTMLElement): void {
+    const view = this.doc.defaultView;
+    if (!view || this.body.scrollHeight - this.body.clientHeight <= 0) return;
+    const shift = anchor.getBoundingClientRect().top - this.topInset() - GAP_PX;
+    if (shift <= 1) return;
+    const reduced = view.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    view.scrollBy({ top: shift, behavior: reduced ? "auto" : "smooth" });
   }
 
   private topInset(): number {

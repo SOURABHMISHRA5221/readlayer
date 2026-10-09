@@ -80,6 +80,10 @@ const CSS = `
   margin: 0 -18px;
   padding: 0 18px;
 }
+.rl-card__body--more {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent);
+}
 .rl-card__footer { flex: none; }
 .rl-card:focus { outline: none; }
 .rl-card p { margin: 0; }

@@ -155,7 +155,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       card.fill(entry.annotation, pressed.get(id) ?? new Set());
       if (!pressed.get(id)?.has("report_wrong")) loadInto(entry.annotation);
       const { mode, box } = placement();
-      card.show(mark, mode, box);
+      card.show(mark, mode, box, pinned);
       mark.setAttribute("aria-expanded", "true");
       emit(event("explain_opened", entry.annotation));
       options.onActive?.(id);
