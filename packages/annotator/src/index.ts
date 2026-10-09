@@ -8,10 +8,10 @@ import { indexText, resolveInText, type TextRange } from "./anchor";
 import { Card, SHEET_QUERY, type CardMode } from "./card";
 import { MARK_CLASS, markId, unwrap, wrapRange } from "./mark";
 import { injectStyles } from "./styles";
-import type { AnnotatorEvent, AnnotatorEventType, CardAnnotation } from "./types";
+import type { AnnotatorEvent, AnnotatorEventType, CardAnnotation, Explanation } from "./types";
 
 export type * from "./types";
-export { CARD_LABEL } from "./card";
+export { AUTHOR_LABEL, BACKGROUND_LABEL, CARD_LABEL } from "./card";
 export { normalizeWhitespace, resolveInText } from "./anchor";
 
 export const ANNOTATOR_VERSION = "0.3.0";
@@ -23,6 +23,12 @@ export interface AnnotatorOptions {
   onHover?: (id: string | null) => void;
   /** The card opened for an annotation (id) or closed (null). */
   onActive?: (id: string | null) => void;
+  /**
+   * Loads the verified explanation for a span when its card opens (DESIGN §7). The card shows
+   * the definition and a skeleton until it settles; a rejection keeps the definition only.
+   * Hosts cache and prefetch inside this function, so a prefetched card fills at once.
+   */
+  loadExplanation?: (annotation: CardAnnotation) => Promise<Explanation>;
   /** Attribute naming a paragraph element, used to scope anchor search. */
   paragraphAttribute?: string;
   hoverDelayMs?: number;
@@ -82,6 +88,9 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   let openTimer: ReturnType<typeof setTimeout> | undefined;
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
   let lastPointer = "mouse";
+  // Latest explanation per open card; a response for a card no longer open is dropped.
+  let loadToken = 0;
+  const shown = new Map<string, Explanation>();
 
   const card = new Card(doc, {
     onAction: (type) => {
@@ -89,6 +98,14 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       if (!entry) return;
       pressed.get(entry.annotation.id)?.add(type);
       if (type === "knew_this") entry.segments.forEach((m) => m.classList.add(KNOWN_CLASS));
+      if (type === "report_wrong") {
+        const explanation = shown.get(entry.annotation.id);
+        if (!explanation) return;
+        shown.delete(entry.annotation.id);
+        card.setExplanation("reported");
+        emit({ ...event(type, entry.annotation), explanation_id: explanation.id });
+        return;
+      }
       emit(event(type, entry.annotation));
     },
     onDismiss: () => close(true),
@@ -118,12 +135,26 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     active = { id, pinned: pinned || (!changed && !!active?.pinned) };
     if (changed || !card.isOpen) {
       card.fill(entry.annotation, pressed.get(id) ?? new Set());
+      if (!pressed.get(id)?.has("report_wrong")) loadInto(entry.annotation);
       card.show(mark, cardMode());
       mark.setAttribute("aria-expanded", "true");
       emit(event("explain_opened", entry.annotation));
       options.onActive?.(id);
     }
     if (focus || card.el.dataset.mode === "sheet") card.el.focus({ preventScroll: true });
+  }
+
+  function loadInto(annotation: CardAnnotation): void {
+    const load = options.loadExplanation;
+    if (!load) return;
+    const token = ++loadToken;
+    const settle = (result: Explanation | null) => {
+      if (token !== loadToken || active?.id !== annotation.id) return;
+      if (result?.kind === "verified") shown.set(annotation.id, result);
+      card.setExplanation(result ?? { id: "", kind: "definition", background: null, author_says: null });
+    };
+    card.setExplanation("loading");
+    load(annotation).then(settle, () => settle(null));
   }
 
   function close(returnFocus = false): void {

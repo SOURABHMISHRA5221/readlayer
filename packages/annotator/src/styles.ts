@@ -103,6 +103,42 @@ const CSS = `
   color: var(--rl-ink-soft, var(--rl-ink, #1c1b19));
   text-wrap: pretty;
 }
+.rl-card__def[hidden], .rl-card__explain[hidden], .rl-card__section[hidden],
+.rl-card__skeleton[hidden], .rl-btn[hidden] { display: none; }
+.rl-card__explain { margin-top: 10px; }
+.rl-card__section + .rl-card__section { margin-top: 12px; }
+.rl-card__section-label {
+  font: 600 11px/1 var(--rl-font-ui, system-ui, sans-serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rl-muted, #6b675f);
+}
+.rl-card__text {
+  margin-top: 4px !important;
+  color: var(--rl-ink-soft, var(--rl-ink, #1c1b19));
+  text-wrap: pretty;
+}
+.rl-card__skeleton { display: grid; gap: 8px; padding: 2px 0; }
+.rl-card__skeleton-line {
+  display: block;
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rl-hairline, #e7e1d6) 0%, var(--rl-accent-wash, #e6f0ee) 50%, var(--rl-hairline, #e7e1d6) 100%) 0 0 / 200% 100%;
+  animation: rl-shimmer 1.2s ease-in-out infinite;
+}
+.rl-card__skeleton-line:nth-child(2) { width: 92%; }
+.rl-card__skeleton-line:nth-child(3) { width: 64%; }
+.rl-card__status {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
+  white-space: nowrap;
+}
+.rl-card__status--visible {
+  position: static; width: auto; height: auto; overflow: visible; clip-path: none;
+  white-space: normal;
+  margin-top: 8px !important;
+  font: 400 13px/1.4 var(--rl-font-ui, system-ui, sans-serif);
+  color: var(--rl-muted, #6b675f);
+}
 .rl-card__prereqs { margin-top: 12px; }
 .rl-card__prereqs[hidden] { display: none; }
 .rl-card__prereq-label {
@@ -161,6 +197,9 @@ const CSS = `
   transition: background-color 150ms var(--rl-ease, ease-out), color 150ms var(--rl-ease, ease-out), border-color 150ms var(--rl-ease, ease-out);
 }
 .rl-btn--ghost { padding: 0 12px; margin-left: -12px; }
+.rl-btn--quiet { margin-left: 0; color: var(--rl-muted, #6b675f); font-weight: 400; }
+.rl-btn:disabled { opacity: 0.45; cursor: default; }
+.rl-btn:disabled[aria-pressed="true"] { opacity: 1; }
 .rl-btn--icon { width: 32px; padding: 0; margin-left: auto; color: var(--rl-muted, #6b675f); }
 .rl-btn:hover { background: var(--rl-accent-wash, #e6f0ee); color: var(--rl-accent, #1f5f5b); }
 .rl-btn:active { transform: translateY(1px); }
@@ -205,8 +244,11 @@ const CSS = `
 @keyframes rl-card-in { from { opacity: 0; transform: translateY(4px); } }
 @keyframes rl-sheet-in { from { transform: translateY(100%); } }
 @keyframes rl-fade-in { from { opacity: 0; } }
+@keyframes rl-shimmer { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .rl-mark, .rl-card, .rl-scrim, .rl-btn { transition: none; animation: none !important; }
+  .rl-mark, .rl-card, .rl-scrim, .rl-btn, .rl-card__skeleton-line {
+    transition: none; animation: none !important;
+  }
 }
 `;
 

@@ -13,9 +13,16 @@ import {
   shift,
 } from "@floating-ui/dom";
 
-import type { AnnotationDebug, AnnotatorEventType, CardAnnotation } from "./types";
+import type { AnnotationDebug, AnnotatorEventType, CardAnnotation, Explanation } from "./types";
 
 export const CARD_LABEL = "Explanation — not the author's words";
+export const BACKGROUND_LABEL = "Background";
+export const AUTHOR_LABEL = "What the author is saying";
+const REPORTED_TEXT = "Thanks. We've removed this explanation and will review it.";
+const LOADING_TEXT = "Writing an explanation and checking it against the article…";
+
+/** What the explanation area shows: nothing (no loader), loading, a result, or reported. */
+export type ExplanationState = "none" | "loading" | "reported" | Explanation;
 export const SHEET_QUERY = "(max-width: 639px)";
 const C = "rl-card";
 const GAP_PX = 10;
@@ -42,6 +49,12 @@ export class Card {
   private readonly prereqs: HTMLDivElement;
   private readonly prereqList: HTMLUListElement;
   private readonly debug: HTMLDListElement;
+  private readonly explain: HTMLDivElement;
+  private readonly skeleton: HTMLDivElement;
+  private readonly background: HTMLParagraphElement;
+  private readonly authorSays: HTMLParagraphElement;
+  private readonly status: HTMLParagraphElement;
+  private readonly report: HTMLButtonElement;
   private readonly buttons: HTMLButtonElement[];
   private stopAutoUpdate: (() => void) | null = null;
   private mode: CardMode = "float";
@@ -84,6 +97,25 @@ export class Card {
 
     this.debug = el(doc, "dl", `${C}__debug`);
 
+    // Verified explanation: Background (the reader's frame) and the author's claim, kept apart.
+    this.explain = el(doc, "div", `${C}__explain`);
+    this.skeleton = el(doc, "div", `${C}__skeleton`);
+    this.skeleton.setAttribute("aria-hidden", "true");
+    this.skeleton.append(
+      ...[0, 1, 2].map(() => el(doc, "span", `${C}__skeleton-line`)),
+    );
+    this.background = el(doc, "p", `${C}__text`);
+    this.background.id = `${id}-bg`;
+    this.authorSays = el(doc, "p", `${C}__text`);
+    this.explain.append(
+      this.skeleton,
+      section(doc, BACKGROUND_LABEL, this.background),
+      section(doc, AUTHOR_LABEL, this.authorSays),
+    );
+    // Announces loading and the report confirmation to screen readers.
+    this.status = el(doc, "p", `${C}__status`);
+    this.status.setAttribute("role", "status");
+
     const footer = el(doc, "div", `${C}__footer`);
     const knew = button(doc, "knew_this", "rl-btn rl-btn--ghost");
     knew.textContent = "Knew this";
@@ -91,7 +123,9 @@ export class Card {
     helpful.setAttribute("aria-label", "Helpful");
     helpful.title = "Helpful";
     helpful.append(thumbIcon(doc));
-    this.buttons = [knew, helpful];
+    this.report = button(doc, "report_wrong", "rl-btn rl-btn--ghost rl-btn--quiet");
+    this.report.textContent = "This is wrong";
+    this.buttons = [knew, this.report, helpful];
     for (const b of this.buttons) {
       b.addEventListener("click", () => {
         b.setAttribute("aria-pressed", "true");
@@ -99,7 +133,7 @@ export class Card {
       });
     }
     const actions = el(doc, "div", `${C}__actions`);
-    actions.append(knew, helpful);
+    actions.append(knew, this.report, helpful);
     const note = el(doc, "p", `${C}__note`);
     note.textContent = CARD_LABEL;
     footer.append(actions, note);
@@ -110,6 +144,8 @@ export class Card {
       this.domain,
       this.title,
       this.definition,
+      this.explain,
+      this.status,
       this.prereqs,
       this.debug,
       footer,
@@ -126,7 +162,7 @@ export class Card {
   }
 
   focusables(): HTMLElement[] {
-    return this.buttons.filter((b) => !b.disabled);
+    return this.buttons.filter((b) => !b.disabled && !b.hidden);
   }
 
   fill(a: CardAnnotation, pressed: ReadonlySet<AnnotatorEventType>): void {
@@ -147,6 +183,27 @@ export class Card {
     for (const b of this.buttons) {
       b.setAttribute("aria-pressed", String(pressed.has(b.dataset.action as AnnotatorEventType)));
     }
+    this.setExplanation(pressed.has("report_wrong") ? "reported" : "none");
+  }
+
+  /** Swap the explanation area. Definition-only results keep the definition showing. */
+  setExplanation(state: ExplanationState): void {
+    const verified = typeof state === "object" && state.kind === "verified";
+    const loading = state === "loading";
+    this.explain.hidden = !(verified || loading);
+    this.explain.setAttribute("aria-busy", String(loading));
+    this.skeleton.hidden = !loading;
+    for (const part of this.explain.querySelectorAll<HTMLElement>(`.${C}__section`)) {
+      part.hidden = !verified;
+    }
+    this.definition.hidden = verified;
+    this.el.setAttribute("aria-describedby", verified ? this.background.id : this.definition.id);
+    this.background.textContent = verified ? (state.background ?? "") : "";
+    this.authorSays.textContent = verified ? (state.author_says ?? "") : "";
+    this.status.textContent = state === "reported" ? REPORTED_TEXT : loading ? LOADING_TEXT : "";
+    this.status.classList.toggle(`${C}__status--visible`, state === "reported" || loading);
+    this.report.disabled = !verified;
+    this.report.hidden = state === "none" && this.report.getAttribute("aria-pressed") !== "true";
   }
 
   show(anchor: HTMLElement, mode: CardMode): void {
@@ -230,6 +287,14 @@ export class Card {
     handle.addEventListener("pointerup", end);
     handle.addEventListener("pointercancel", end);
   }
+}
+
+function section(doc: Document, label: string, body: HTMLElement): HTMLElement {
+  const wrap = el(doc, "section", `${C}__section`);
+  const heading = el(doc, "p", `${C}__section-label`);
+  heading.textContent = label;
+  wrap.append(heading, body);
+  return wrap;
 }
 
 function fillDebug(dl: HTMLDListElement, debug: AnnotationDebug | null): void {

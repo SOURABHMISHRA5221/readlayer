@@ -7,6 +7,7 @@ import {
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 import { trackEvent } from "../lib/events";
+import { loadExplanation, prefetchExplanations, reportExplanation } from "../lib/explanations";
 import type { PersonaKey } from "../lib/personas";
 
 export interface AnnotatorHandle {
@@ -39,10 +40,21 @@ export function useAnnotator(
   useEffect(() => {
     const el = root.current;
     if (!el || !articleKey) return;
-    const onEvent = (event: AnnotatorEvent) =>
+    const onEvent = (event: AnnotatorEvent) => {
+      // A report evicts the shared entry and records report_wrong in one server call.
+      if (event.type === "report_wrong") {
+        if (event.explanation_id) {
+          void reportExplanation(
+            articleKey, personaRef.current, event.annotation_id, event.explanation_id, event.concept_id,
+          ).catch(() => undefined);
+        }
+        return;
+      }
       trackEvent(event.type, event.concept_id, articleKey, personaRef.current);
+    };
     const annotator = createAnnotator(el, {
       onEvent,
+      loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
       onHover: setHovered,
       onActive: setActive,
     });
@@ -60,6 +72,7 @@ export function useAnnotator(
     const annotator = annotatorRef.current;
     if (!annotator || !annotations) return;
     let cancelled = false;
+    if (articleKey) prefetchExplanations(articleKey, personaRef.current, annotations);
     annotator.update(annotations).then((result) => {
       if (cancelled) return;
       setResolved(result.resolved);

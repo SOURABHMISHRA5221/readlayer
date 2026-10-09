@@ -46,6 +46,8 @@ async function setup(annotations: CardAnnotation[]) {
 }
 
 const card = () => document.querySelector<HTMLElement>(".rl-card")!;
+const btn = (action: string) =>
+  card().querySelector<HTMLButtonElement>(`button[data-action="${action}"]`)!;
 const key = (el: Element, k: string, shift = false) =>
   el.dispatchEvent(new KeyboardEvent("keydown", { key: k, shiftKey: shift, bubbles: true }));
 
@@ -108,7 +110,7 @@ describe("mount", () => {
     expect(card().querySelector(".rl-card__debug")!.hasAttribute("hidden")).toBe(true);
     expect(events.map((e) => e.type)).toEqual(["explain_opened"]);
 
-    const [knew, helpful] = Array.from(card().querySelectorAll("button"));
+    const [knew, helpful] = [btn("knew_this"), btn("explain_helpful")];
     key(card(), "Tab");
     expect(document.activeElement).toBe(knew);
     helpful!.focus();
@@ -127,7 +129,7 @@ describe("mount", () => {
     const { root, events } = await setup([annotation("yc", "yield curve", "p0")]);
     const mark = root.querySelector<HTMLElement>(".rl-mark")!;
     key(mark, " ");
-    const [knew, helpful] = Array.from(card().querySelectorAll("button"));
+    const [knew, helpful] = [btn("knew_this"), btn("explain_helpful")];
     expect(helpful!.getAttribute("aria-label")).toBe("Helpful");
     knew!.click();
     helpful!.click();
@@ -239,5 +241,90 @@ describe("createAnnotator.update", () => {
     expect(document.activeElement).toBe(card());
     annotator.close();
     expect(actives).toEqual(["yc", null]);
+  });
+});
+
+describe("explanations", () => {
+  const verified = (id: string) => ({
+    id,
+    kind: "verified" as const,
+    background: "A curve of rates by maturity.",
+    author_says: "The author says the curve inverted.",
+  });
+
+  async function withLoader(load: (a: CardAnnotation) => Promise<unknown>) {
+    document.body.innerHTML = HTML;
+    const root = document.getElementById("root") as HTMLElement;
+    const events: AnnotatorEvent[] = [];
+    const annotator = createAnnotator(root, {
+      onEvent: (e) => events.push(e),
+      loadExplanation: load as never,
+      staggerMs: 0,
+    });
+    await annotator.update([annotation("yc", "yield curve", "p0"), annotation("rp", "repo", "p0")]);
+    return { annotator, events };
+  }
+
+  const flush = () => new Promise((r) => setTimeout(r, 0));
+  const section = (i: number) =>
+    card().querySelectorAll<HTMLElement>(".rl-card__section")[i]!;
+
+  it("shows a skeleton, then Background and What the author is saying", async () => {
+    let resolve!: (e: unknown) => void;
+    const { annotator } = await withLoader(() => new Promise((r) => (resolve = r)));
+    annotator.open("yc");
+    expect(card().querySelector(".rl-card__skeleton")!.hasAttribute("hidden")).toBe(false);
+    expect(card().querySelector(".rl-card__explain")!.getAttribute("aria-busy")).toBe("true");
+    expect(card().querySelector(".rl-card__def")!.hasAttribute("hidden")).toBe(false);
+    expect(btn("report_wrong").disabled).toBe(true);
+
+    resolve(verified("k1"));
+    await flush();
+    expect(section(0).textContent).toContain("A curve of rates by maturity.");
+    expect(section(1).textContent).toContain("What the author is saying");
+    expect(section(1).textContent).toContain("The author says the curve inverted.");
+    expect(card().querySelector(".rl-card__def")!.hasAttribute("hidden")).toBe(true);
+    expect(card().textContent).toContain(CARD_LABEL);
+    expect(btn("report_wrong").disabled).toBe(false);
+  });
+
+  it("keeps the definition when there is no verified explanation or the load fails", async () => {
+    const { annotator } = await withLoader(async (a) =>
+      a.id === "yc"
+        ? { id: "k", kind: "definition", background: null, author_says: null }
+        : Promise.reject(new Error("offline")),
+    );
+    for (const id of ["yc", "rp"]) {
+      annotator.open(id);
+      await flush();
+      expect(card().querySelector(".rl-card__def")!.hasAttribute("hidden")).toBe(false);
+      expect(card().querySelector(".rl-card__explain")!.hasAttribute("hidden")).toBe(true);
+      expect(btn("report_wrong").disabled).toBe(true);
+    }
+  });
+
+  it("ignores a response that arrives after the card moved to another span", async () => {
+    const pending = new Map<string, (e: unknown) => void>();
+    const { annotator } = await withLoader((a) => new Promise((r) => pending.set(a.id, r)));
+    annotator.open("yc");
+    annotator.open("rp");
+    pending.get("yc")!(verified("old"));
+    await flush();
+    expect(card().querySelector(".rl-card__skeleton")!.hasAttribute("hidden")).toBe(false);
+    pending.get("rp")!(verified("new"));
+    await flush();
+    expect(section(1).textContent).toContain("The author says the curve inverted.");
+  });
+
+  it("This is wrong reports the explanation id and confirms", async () => {
+    const { annotator, events } = await withLoader(async () => verified("k9"));
+    annotator.open("yc");
+    await flush();
+    btn("report_wrong").click();
+    const report = events.find((e) => e.type === "report_wrong");
+    expect(report).toMatchObject({ annotation_id: "yc", explanation_id: "k9" });
+    expect(card().querySelector(".rl-card__status")!.textContent).toMatch(/removed/);
+    expect(card().querySelector(".rl-card__explain")!.hasAttribute("hidden")).toBe(true);
+    expect(btn("report_wrong").getAttribute("aria-pressed")).toBe("true");
   });
 });
