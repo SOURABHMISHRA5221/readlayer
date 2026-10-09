@@ -1,0 +1,438 @@
+# 15 adversarial cards: each changes ONE thing in a good card (`base`). All must be rejected.
+# 3 x dropped hedge, dropped attribution, changed number, flipped negation, opinion as fact.
+- id: A01
+  perturbation: dropped_hedge
+  base: G05
+  mode: span
+  source:
+    site: The Economic Times
+    content_id: 628d6fd2aa9fd3b5a99cedb64c70aa93
+    demand_id: d38
+  span: credit spreads
+  concept:
+    id: c_credit_spreads
+    label: Credit spreads
+    definition: Credit spreads are the yield difference between debt securities of similar maturity but
+      different credit quality, typically measuring default risk.
+    prerequisites:
+    - label: Credit risk
+      definition: Credit risk is the probability that a borrower will fail to meet their debt obligations,
+        resulting in a financial loss for the lender.
+    - label: Spread
+      definition: The difference between two contrasting interest rates, yields, or asset prices, commonly
+        used to gauge credit risk or financial market conditions.
+  band: heard of
+  thinks_in: null
+  paragraph: The 11.8–11.5 zone is the immediate support, while 15.2–15.5 remains key resistance. A sustained
+    move above 15.5 could trigger another rise in volatility and keep equities under pressure. In this
+    environment, debit spreads may be preferred over credit spreads because of their defined-risk profile.
+  card:
+    background: In options trading, a spread combines buying and selling options on the same asset. A
+      credit spread brings in money when it is opened, while a debit spread costs money to open.
+    author_says: In the current environment, debit spreads are preferred over credit spreads because their
+      risk is defined.
+- id: A02
+  perturbation: dropped_hedge
+  base: G02
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 454a6f88b5ae325cb3160425c12997f4
+    demand_id: d238
+  span: deflation
+  concept:
+    id: c_deflation
+    label: Deflation
+    definition: A general decline in prices for goods and services, typically associated with a contraction
+      in the supply of money and credit.
+    prerequisites:
+    - label: Inflation
+      definition: The general increase in prices and fall in the purchasing value of money over time.
+  band: heard of
+  thinks_in: software
+  paragraph: 'Freiwirtschaft economists theorize that demurrage currency could eliminate both inflation
+    and deflation. There tends to be some interest cost that is built into the goods and services that
+    consumers tend to purchase,[164]: 4 so if demurrage currency eliminates interest rates, then prices
+    are less likely to increase. Demurrage would also naturally cause the money supply to decrease, thus
+    causing deflation. If a central bank issues and monitors demurrage currency as Gesell originally proposed,
+    then it could replace all the money that disappears due to demurrage by printing money at a similar
+    rate.[165] The money printing could create just enough inflation to cancel out the natural deflation
+    of demurrage, thus achieving an inflation target of 0%.[166]'
+  card:
+    background: Deflation is a general fall in the prices of goods and services. It is usually linked
+      to a shrinking supply of money and credit.
+    author_says: Economists of the Freiwirtschaft school theorize that a demurrage currency eliminates
+      both inflation and deflation.
+- id: A03
+  perturbation: dropped_hedge
+  base: G18
+  mode: span
+  source:
+    site: The Guardian
+    content_id: 99a2cb53f16256bd275bafd180364134
+    demand_id: d15
+  span: distributed ledger technology
+  concept:
+    id: c_distributed_ledger_technology
+    label: Distributed Ledger Technology
+    definition: A decentralized digital database managed by multiple participants, commonly used for recording
+      transactions securely across a network.
+    prerequisites: []
+  band: understands
+  thinks_in: software
+  paragraph: “Market manipulation and insider trading risks reach new levels in the context of prediction
+    markets, particularly on DLT-based [distributed ledger technology] platforms such as Polymarket, which
+    operate with limited identity verification and where the platform itself may not know who is behind
+    a given wager.”
+  card:
+    background: Distributed ledger technology is a shared digital record of transactions kept by many
+      participants rather than one central authority. Blockchains are the best-known example.
+    author_says: The quoted passage says that risks of market manipulation and insider trading reach new
+      levels in prediction markets, especially on platforms built on distributed ledger technology such
+      as Polymarket, which have limited identity checks and where the platform itself does not know who
+      is behind a given bet.
+- id: A04
+  perturbation: dropped_attribution
+  base: G01
+  mode: span
+  source: &id001
+    site: The Guardian
+    content_id: d0e4036ca042fcbd55c3bd1db5c5fe6c
+    demand_id: d7
+  span: positive catalyst
+  concept: &id002
+    id: c_market_catalyst
+    label: Market catalyst
+    definition: An event or piece of news that triggers a significant upward movement in financial asset
+      prices or market sentiment.
+    prerequisites:
+    - label: Economic shock
+      definition: An unexpected event that suddenly and significantly alters the supply or demand conditions
+        in an economy.
+  band: unaware
+  thinks_in: null
+  paragraph: “The market had been tracing out a bullish formation, meaning the price pattern suggested
+    that any positive catalyst could trigger a move higher and that’s exactly what happened,” said Sam
+    Stovall, chief investment strategist at CFRA Research.
+  card:
+    background: A market catalyst is a piece of news or an event that sets off a noticeable move in prices
+      or sentiment. A positive catalyst is good news that can push prices up.
+    author_says: The market had been forming a bullish price pattern, which suggested that any positive
+      catalyst could trigger a move higher, and that is exactly what happened.
+- id: A05
+  perturbation: dropped_attribution
+  base: G16
+  mode: span
+  source:
+    site: The Guardian
+    content_id: 5edcef708dc18038a5ce6f94b208223c
+    demand_id: d10
+  span: guidance
+  concept:
+    id: c_profit_forecasts
+    label: Profit forecasts
+    definition: An official projection provided by a company regarding its expected future earnings and
+      financial performance.
+    prerequisites: []
+  band: unaware
+  thinks_in: law
+  paragraph: 'Aarin Chiekrie, an equity analyst at Hargreaves Lansdown, said: “Next delivered its first-half
+    results in style, with sales growth accelerating over the period and breezing past the fashion company’s
+    original guidance. In the UK, hotter-than-expected weather and more effective marketing saw customers
+    logging in to refresh their summer wardrobes online, helping offset a small decline in-store.”'
+  card:
+    background: Guidance is a company's own forecast of its future sales or profits. Beating guidance
+      means results came in better than the company itself had predicted.
+    author_says: Next delivered strong first-half results, with sales growth speeding up during the period
+      and comfortably beating the fashion company's original guidance.
+- id: A06
+  perturbation: dropped_attribution
+  base: G03
+  mode: span
+  source:
+    site: The Guardian
+    content_id: 884805502db120ccf4594905cfc4ae83
+    demand_id: d24
+  span: confirmation
+  concept:
+    id: c_senate_confirmation
+    label: Senate confirmation
+    definition: The constitutional process by which a legislative body formally reviews and approves or
+      rejects presidential appointments to high public office.
+    prerequisites:
+    - label: Supreme court
+      definition: The highest judicial court in a country's court system, with ultimate authority over
+        constitutional and legal interpretations.
+  band: understands
+  thinks_in: cricket
+  paragraph: The justice department investigation would end up stalling the confirmation of current Fed
+    chair Kevin Warsh, after a key Republican senator said he would be a holdout until the department
+    ended its investigation. In April, the justice department closed the investigation.
+  card:
+    background: Senate confirmation is the process in which senators review a president's nominee for
+      a senior public post and then approve or reject them.
+    author_says: The justice department's investigation would end up stalling Kevin Warsh's confirmation
+      as Fed chair, after a key Republican senator decided to hold out until the department ended its
+      investigation.
+- id: A07
+  perturbation: changed_number
+  base: G12
+  mode: span
+  source:
+    site: The Guardian
+    content_id: 2a6c9cd69d8e85ad444b53d08e1b9aca
+    demand_id: d8
+  span: capital-lite
+  concept:
+    id: c_asset_light_business_model
+    label: Asset-light business model
+    definition: An asset-light business model is a corporate strategy that minimizes owned physical assets
+      to reduce capital requirements and improve operational flexibility.
+    prerequisites: []
+  band: understands
+  thinks_in: law
+  paragraph: It is one reason why the listing should go well, assuming the wider stock market environment
+    remains calm. Airtel Money is capital-lite, converts a chunky proportion of its earnings into cash,
+    carries the buzzy fintech vibe and is growing at about 20% a year. The cash-generative qualities mean
+    no new equity is being raised, so it is really an opportunity for existing shareholders – including
+    minority owners including TPG, Mastercard, the Qatar Investment Authority and Chimetech Holding –
+    to cash in a few chips. As long as they don’t get greedy on price, it looks a relatively easy pitch
+    for the promoters.
+  card:
+    background: An asset-light, or capital-lite, business needs relatively little money tied up in buildings,
+      equipment or other physical assets to grow.
+    author_says: 'The author describes Airtel Money as capital-lite: it turns a large share of its earnings
+      into cash, has a fashionable fintech appeal and is growing at about 25% a year.'
+- id: A08
+  perturbation: changed_number
+  base: G13
+  mode: span
+  source:
+    site: The Guardian
+    content_id: e8aa9578974ed73ff4f0b22650cae478
+    demand_id: d7
+  span: yield
+  concept:
+    id: c_bond_yields
+    label: Bond yields
+    definition: The return an investor expects to receive on a bond investment, expressed as a percentage.
+    prerequisites:
+    - label: Bonds
+      definition: Bonds are fixed-income debt instruments where an investor loans money to an entity which
+        borrows the funds for a defined period.
+    - label: Interest rates
+      definition: The proportional cost charged by lenders to borrowers for the use of borrowed funds,
+        typically expressed as an annual percentage of the principal.
+  band: unaware
+  thinks_in: null
+  paragraph: In the UK, where surging borrowing costs are increasing the pressure on the chancellor, John
+    Healey, before his first budget later this month, the yield on 30-year bonds hit 6% for the first
+    time since 1998, before easing slightly later in the day. Yields on five- and 10-year UK bonds were
+    also up.
+  card:
+    background: A bond's yield is the return an investor gets for holding it, shown as a percentage. When
+      yields rise, it costs the government more to borrow.
+    author_says: In the UK, where rising borrowing costs are putting pressure on chancellor John Healey
+      before his first budget later this month, the yield on 30-year bonds hit 6% for the first time since
+      1988, then eased slightly later in the day.
+- id: A09
+  perturbation: changed_number
+  base: G15
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 2af9b33ac4250cfb6d028d593abbf9de
+    demand_id: d98
+  span: BOJ
+  concept:
+    id: c_bank_of_japan
+    label: Bank of Japan
+    definition: The central bank of Japan responsible for issuing currency and implementing monetary policy.
+    prerequisites:
+    - label: Central bank
+      definition: A national financial institution that oversees a country's monetary system, issues currency,
+        and regulates commercial banks.
+    - label: Monetary policy
+      definition: The strategy and actions taken by a central bank to manage the money supply, interest
+        rates, and credit conditions in an economy.
+  band: understands
+  thinks_in: cricket
+  paragraph: On 4 August 2011 the BOJ announced a unilateral move to increase the commercial bank current
+    account balance from ¥40 trillion (US$504 billion) to a total of ¥50 trillion (US$630 billion).[107][108]
+    In October 2011, the bank expanded its asset purchase program by ¥5 trillion ($66bn) to a total of
+    ¥55 trillion.[109]
+  card:
+    background: The Bank of Japan is Japan's central bank. Commercial banks keep current accounts at the
+      central bank, and a higher target for those balances means more money in the banking system.
+    author_says: On 4 August 2011 the BOJ announced a unilateral move to raise commercial banks' current
+      account balances from ¥40 trillion (US$504 billion) to ¥55 trillion (US$630 billion).
+- id: A10
+  perturbation: flipped_negation
+  base: G11
+  mode: span
+  source:
+    site: Mint
+    content_id: fc8fc736859176c46aa633a1d3e10701
+    demand_id: d8
+  span: EPS service history
+  concept:
+    id: c_eps_service_history
+    label: EPS service history
+    definition: The chronological record of an employee's contributions and service duration under an
+      employee pension scheme across different employers.
+    prerequisites:
+    - label: Eligible service period
+      definition: The minimum duration of employment required for a worker to qualify for pension benefits
+        upon retirement.
+  band: heard of
+  thinks_in: cricket
+  paragraph: When an employee withdraws their EPF balance, their EPS service history does not automatically
+    get transferred. Hence, when you switch jobs, it is important to ensure that your pensionable service
+    from previous employment is properly linked to your current EPF account.
+  card:
+    background: In India, the EPF is a retirement savings fund for salaried workers and the EPS is the
+      pension scheme linked to it. EPS service history records how long a worker has been covered by the
+      scheme.
+    author_says: When an employee withdraws their EPF balance, their EPS service history gets transferred
+      automatically.
+- id: A11
+  perturbation: flipped_negation
+  base: G10
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 6988ee7084a191a91f3d30f38f2b6ea4
+    demand_id: d52
+  span: Treasury
+  concept:
+    id: c_united_states_department_of_the_treasury
+    label: United States Department of the Treasury
+    definition: The United States Department of the Treasury is the executive department responsible for
+      managing federal finances, printing currency, and collecting taxes.
+    prerequisites: []
+  band: unaware
+  thinks_in: software
+  paragraph: Although the Treasury can and does hold cash and a special deposit account at the Fed (TGA
+    account), these assets do not count in any of the aggregates. So in essence, money paid in taxes paid
+    to the Federal Government (Treasury) is excluded from the money supply. To counter this, the government
+    created the Treasury Tax and Loan (TT&L) program in which any receipts above a certain threshold are
+    redeposited in private banks. The idea is that tax receipts won't decrease the amount of reserves
+    in the banking system. The TT&L accounts, while demand deposits, do not count toward M1 or any other
+    aggregate either.
+  card:
+    background: The US Treasury manages the federal government's money. Money supply aggregates are official
+      measures of how much money is circulating in the economy.
+    author_says: Although the Treasury holds cash and a special deposit account at the Fed, called the
+      TGA account, these assets count in all of the money supply aggregates.
+- id: A12
+  perturbation: flipped_negation
+  base: G09
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: abaf673973873cd34cf47095eca28b81
+    demand_id: d27
+  span: stock is split
+  concept:
+    id: c_stock_split
+    label: Stock split
+    definition: A stock split occurs when a company increases the number of its shares to lower the individual
+      stock price without changing its total market value.
+    prerequisites:
+    - label: Share price
+      definition: The current market price at which one share of a company's stock can be bought or sold.
+    - label: Market capitalization
+      definition: The total market value of a company's outstanding shares of stock, calculated by multiplying
+        the total number of shares by the current share price.
+  band: understands
+  thinks_in: null
+  paragraph: Nothing tangible will be gained if the stock is split because the total number of shares
+    increases, lowering the price of each share, without changing the total value of the shares held.
+    (See also Stock dilution.)
+  card:
+    background: In a stock split a company divides each existing share into several new ones. The share
+      count goes up and the price per share goes down in the same proportion.
+    author_says: 'Something tangible is gained when a stock is split: the number of shares goes up and
+      each share''s price goes down, without changing the total value of the shares held.'
+- id: A13
+  perturbation: opinion_as_fact
+  base: G04
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 802dac829eedef66feaca507db5c9cb7
+    demand_id: d14
+  span: public choice theory
+  concept:
+    id: c_public_choice
+    label: Public choice
+    definition: An economic and political theory that applies economic reasoning to government decision-making,
+      voting, and public administration.
+    prerequisites:
+    - label: Political economy
+      definition: Political economy is an interdisciplinary field studying how political institutions,
+        the political environment, and economic systems influence each other.
+    - label: Microeconomics
+      definition: The branch of economics that examines the behavior, decision-making, and interactions
+        of individual consumers, workers, and firms.
+  band: unaware
+  thinks_in: law
+  paragraph: 'Monetary stimulus is often considered more neutral: decreasing interest rates make additional
+    investments profitable, but yet only the most additional investments, whereas fiscal stimulus where
+    the government decides the investments may lead to populism via public choice theory, or corruption.
+    However, the government can also take externalities into account, such as how new roads or railways
+    benefit users who do not pay for them, and choose investments that are even more beneficial although
+    not profitable.'
+  card:
+    background: 'Public choice theory applies economic reasoning to politics: it treats voters, politicians
+      and officials as people pursuing their own interests.'
+    author_says: Monetary stimulus is more neutral, because lower interest rates make extra investments
+      profitable, while fiscal stimulus, where the government picks the investments, leads to populism,
+      through the dynamics public choice theory describes, or to corruption.
+- id: A14
+  perturbation: opinion_as_fact
+  base: G01
+  mode: span
+  source: *id001
+  span: positive catalyst
+  concept: *id002
+  band: unaware
+  thinks_in: null
+  paragraph: “The market had been tracing out a bullish formation, meaning the price pattern suggested
+    that any positive catalyst could trigger a move higher and that’s exactly what happened,” said Sam
+    Stovall, chief investment strategist at CFRA Research.
+  card:
+    background: A market catalyst is a piece of news or an event that sets off a noticeable move in prices
+      or sentiment. A positive catalyst is good news that can push prices up.
+    author_says: The market had been forming a bullish price pattern, so any positive catalyst will trigger
+      a move higher.
+- id: A15
+  perturbation: opinion_as_fact
+  base: G20
+  mode: span
+  source:
+    site: The Guardian
+    content_id: 7311a22bfa9f03acabcf86990dfafac6
+    demand_id: d19
+  span: list
+  concept:
+    id: c_ipo
+    label: IPO
+    definition: The process through which a privately held company offers its shares to the public for
+      the first time on a stock exchange.
+    prerequisites:
+    - label: Equities
+      definition: Shares or ownership stakes in companies traded on public stock exchanges.
+    - label: Public company
+      definition: A public company is a business corporation whose ownership is distributed among general
+        shareholders via freely traded shares of stock on public exchanges.
+  band: heard of
+  thinks_in: law
+  paragraph: UK-based Nscale filed papers for its flotation in the US on 18 September and could make its
+    stock market debut before the year end. The company is preparing to list in New York, reflecting its
+    global ambitions and the depth of funding available in the US for expensive AI infrastructure projects.
+  card:
+    background: To list is to have a company's shares admitted to trading on a stock exchange, often through
+      an initial public offering, when shares are first sold to the public.
+    author_says: Nscale is preparing to list its shares in New York because the US is the best place in
+      the world to raise money for expensive AI infrastructure projects.

@@ -302,3 +302,32 @@ async def test_route_timeout_overrides_default(monkeypatch, settings, spend):
     monkeypatch.setitem(llm.ROUTES, "smoke", llm.Route("model_quality", None, timeout_s=45.0))
     await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=settings)
     assert fake.calls[0]["timeout"] == 45.0
+
+
+async def test_reasoning_effort_is_sent_only_to_gemini_3(monkeypatch, settings, spend, tmp_path):
+    (tmp_path / "smoke.md").write_text("---\nversion: v-test\n---\n# user\n{{text}}\n")
+    monkeypatch.setattr(llm, "PROMPTS_DIR", tmp_path)
+    llm.load_prompt.cache_clear()
+    monkeypatch.setitem(
+        llm.ROUTES, "smoke", llm.Route("model_quality", "model_fallback", reasoning_effort="low")
+    )
+    seen: list[dict] = []
+
+    class Resp:
+        usage = None
+        choices = [type("C", (), {"message": type("M", (), {"content": '{"ok": true}'})()})()]
+
+    async def fake(**kwargs):
+        seen.append(kwargs)
+        return Resp()
+
+    monkeypatch.setattr(llm._litellm(), "acompletion", fake)
+
+    class Out(BaseModel):
+        ok: bool
+
+    for model, sent in (("vertex_ai/gemini-3.8-flash", True), ("vertex_ai/gemma-4", False)):
+        s = settings.model_copy(update={"model_quality": model})
+        await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=s)
+        assert ("reasoning_effort" in seen[-1]) is sent
+    llm.load_prompt.cache_clear()

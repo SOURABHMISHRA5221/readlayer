@@ -265,34 +265,59 @@ noisy-OR also counts unlinked terms and context references. Scoring p95: 0.2 ms 
 1,200-word article (synthetic 3,300-concept graph in tests; 0.25 ms on real articles).
 
 ## 7. Explanations
-Request: `{content_id, demand_id | paragraph_id}` + reader's band for the concept, top
-THINKS_IN domain and `explanation_style` (short | normal | detailed, §15.3).
+Request: `{content_id, demand_id | paragraph_id}` (+ `?persona=` for demo readers). The server
+derives the reader's band for the concept (current p_know, forgetting applied, or the IRT prior;
+for a paragraph, the prior with b = 0 in the paragraph's most salient domain), one THINKS_IN
+frame and `explanation_style` (short | normal | detailed, §15.3). Demo personas have fixed
+frames: newcomer software, trader cricket, policy student law (`PERSONA_THINKS_IN`); a signed-in
+reader uses their first THINKS_IN choice, else no analogy.
 
-Gemini output schema:
+Gemini output schema (`app/explain/models.py`, `extra="forbid"`):
 ```json
 {
   "background": "≤ 3 sentences of general knowledge; analogy from the reader's frame allowed here only",
   "author_says": "Restatement of the span/paragraph. Preserve hedges, attribution, numbers, negation.",
-  "analogy_domain": "software | cricket | ... | null"
+  "analogy_domain": "one of the THINKS_IN frames | null"
 }
 ```
-Inputs to the prompt are ONLY: the span, its paragraph, the concept definition, the reader band,
-the THINKS_IN domain, the explanation style. No web access.
+Inputs to the prompt are ONLY: the span, its sentence and paragraph, the concept definition and
+up to 3 prerequisite definitions, the reader band, the THINKS_IN frame, the explanation style
+(a test pins the key set). No uid, no history, no web access. Article text is inside the content
+delimiters and stated to be data.
 
 ### Verifier (must pass before cache/show)
-1. Deterministic checks on `author_says` vs source paragraph:
-   - every number in `author_says` appears in the source (normalize "40%"/"40 per cent");
-   - if source has hedge words (may, might, could, likely, reportedly, alleged, expected) the
-     restatement keeps a hedge;
-   - if source attributes ("said", "according to", "argues", "claims") the restatement keeps
-     attribution; negations ("not", "no", "never") are not dropped.
-2. Gemini judge (`MODEL_QUALITY`): split `author_says` into atomic claims; each must be
-   ENTAILED by the source paragraph; `background` must not CONTRADICT it. Structured verdict.
+1. Deterministic checks (`app/explain/checks.py`) on `author_says`. Scope: in span mode hedges,
+   attribution and negation are checked against the **span's sentence** (a hedge elsewhere in the
+   paragraph says nothing about this restatement), numbers against the paragraph; paragraph mode
+   (stricter) checks all four against the whole paragraph:
+   - every number in `author_says` appears in the source ("40%" = "40 per cent", "3.5bn" =
+     "3.5 billion", number words in the source match digits);
+   - a hedged source keeps a hedge; an attributed source keeps attribution (said, according to,
+     argues, claims, theorize, ...; noun-prone words like "notes" are excluded); negations are
+     not dropped; no link in either part unless the source has one.
+2. Judge (`verify` task on `MODEL_JUDGE`, default MODEL_QUALITY; never falls back): split
+   `author_says` into atomic claims; each must be ENTAILED by the source paragraph; `background`
+   must neither contradict it nor state facts about this article. Paragraph mode: only explicit
+   statements count as entailed. The judge is skipped when step 1 already failed.
 3. On fail: regenerate once with the failure reasons; on second fail, fall back to the concept's
    `definition` as a plain gloss (no `author_says`).
 
-Cache: Firestore `explanations/{sha1(anchor.exact + paragraph_id + content_id) + band + domain + style}`
-with `verified: true`, model ids, created_at.
+Cache: Firestore `explanations/{sha1(span_hash | band | thinks_in | style | prompt_version)}`,
+`span_hash = sha1(content_id | paragraph_id | anchor.exact)` (paragraph mode hashes the
+paragraph text), `prompt_version = explain-vN+verify-vN`. Each entry stores `kind`, the text,
+model ids, prompt version, key parts, cost and created_at. Verified cards are cached; so is a
+definition-only outcome after two rejected drafts (no generated text stored), so a hard span
+doesn't re-spend on every hover. A judge outage or the budget guard gives the definition and
+caches nothing. One generation per key per instance at a time (prefetch and hover share it).
+Uncached generations count against a daily cap per reader (100; 40 anonymous, 400 for all
+anonymous readers together), past which the card shows the definition.
+
+Prefetch: the web client asks for the top 3 spans by score as soon as the annotations arrive
+(the annotations route itself stays LLM-free); other cards load on open with a skeleton.
+
+"This is wrong" (POST /v1/explain/{id}/report): evicts the entry for everyone, copies it to
+`explanation_reports/{id}` for review (no user identifier), and records a `report_wrong` event
+(idempotent by event id, subject to pause). The next open regenerates.
 
 ## 8. API (FastAPI, `/v1`, Firebase ID token in `Authorization: Bearer`)
 | method | path | purpose |
@@ -306,7 +331,8 @@ with `verified: true`, model ids, created_at.
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
 | DELETE | /v1/me | delete all of the caller's data and their Auth user |
 | GET | /v1/content/{id}/annotations | ranked, budgeted annotations for the caller |
-| POST | /v1/explain | `{content_id, demand_id?, paragraph_id?}` → explanation (cached/verified) |
+| POST | /v1/explain | `{content_id, demand_id?, paragraph_id?}` → `{id, kind: verified\|definition, mode, label, definition, background, author_says, analogy_domain, band, thinks_in, style, cached, prompt_version}` (§7) |
+| POST | /v1/explain/{id}/report | `{event_id, content_id, concept_id?}` → `{evicted, event_applied}`: "This is wrong" (§7) |
 | POST | /v1/events | `{events: [{id, type, at, concept_id?, content_id?, paragraph_id?, words?, ms?}], persona?}` → `{applied, events_applied, events_ignored}`; sync, idempotent by event id (stored at `users/{uid}/events/{id}` with `expire_at` for the 90-day TTL); `applied: false` and no writes while learning is paused |
 | GET | /v1/me/graph | concepts by domain with band, plus stats (concepts learned, annotation trend); `?domain=X[&q=]` → capped subgraph for the knowledge map (§15.2) |
 | PATCH | /v1/me/graph/{concept_id} | user correction ("I know this" / "I don't") → strong evidence |
@@ -329,8 +355,8 @@ concept_id, label}`. `density` defaults to the reader's setting. Span item:
  "anchor": {"exact": "...", "prefix": "...", "suffix": "..."},
  "paragraph_id": "p3", "score": 0.68, "concept_id": "c_yield_curve", "label": "Yield curve"}
 ```
-Until explanations exist (M5), span items also carry `definition`, `domain` and up to 3
-`prerequisites` labels for the card, plus `debug {p_know, salience, span_score, domain,
+Span items also carry `definition`, `domain` and up to 3 `prerequisites` labels: the card shows
+them at once and keeps the definition when no verified explanation exists, plus `debug {p_know, salience, span_score, domain,
 base_difficulty}` when `?debug=1` and `ENV=dev`.
 
 ## 9. Client behavior (`packages/annotator`)
@@ -338,6 +364,14 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   to fuzzy (normalized whitespace); skip if not found.
 - Span: dotted underline; hover (desktop) / tap (mobile) opens card; card has "Knew this",
   "Helpful", "This is wrong". Card label: "Explanation — not the author's words".
+- Card (M5): a Background panel (recessed tint; names the analogy frame when one is used) and
+  "What the author is saying" (primary, accent rule). The glossary definition fills the
+  Background panel at once and is replaced in place by the verified Background (no layout jump;
+  height animates); definition-only results label the panel "Definition". Placement: sidenote in
+  the margin column at ≥1200px (level with its line), popover 360px elsewhere (height capped to
+  the room it has; a deliberate open scrolls its line up under the top bar to make room), bottom
+  sheet below 640px. Cards stay below the host's fixed bar (`--rl-top-inset`). A persona switch
+  reloads an open card and resets its actions.
 - Paragraph: small margin marker → "What this paragraph is saying".
 - Events batched every 5 s and on `visibilitychange`: explain_opened, knew_this, explain_helpful,
   report_wrong, annotation_dismissed (closing an annotation without acting, M6), text_searched
@@ -356,7 +390,7 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   | extract_demands, link_merge, concept_define, concept_prereqs, concept_wikidata, profile_edit | MODEL_FAST | MODEL_FALLBACK |
   | embed (`llm.embed`) | MODEL_EMBED | none: vectors from another model aren't comparable |
   | explain, link_confirm (timeout 45 s, batches of 10) | MODEL_QUALITY | MODEL_FAST |
-  | verify | MODEL_QUALITY | none: if the verifier is unavailable, show definition gloss only |
+  | verify | MODEL_JUDGE (empty = MODEL_QUALITY) | none: if the verifier is unavailable, show definition gloss only |
 - Error handling per model (`classify_error` in `llm.py`):
   - retry the same model with backoff (max `LLM_MAX_RETRIES`), then fall back: timeout (20 s),
     429, 5xx;

@@ -15,7 +15,7 @@ from datetime import datetime
 from app.graph.graph import ConceptGraph
 from app.reader import model
 from app.reader.model import Edge, Evidence
-from app.reader.state import PersonaKey
+from app.reader.state import PersonaKey, ThinksIn
 
 # (p_know, confidence α+β) per seeded edge kind.
 KNOWN = (0.85, 6.0)
@@ -208,6 +208,14 @@ PERSONAS: Mapping[PersonaKey, PersonaSpec] = {
             "c_s_p_500",
         ),
     ),  # fmt: skip
+}
+
+# Each persona's analogy frame for explanations (DESIGN §7). Code, not template data, so a
+# change needs no re-seed. Newcomer is an engineer; the frames differ so the demo shows it.
+PERSONA_THINKS_IN: Mapping[PersonaKey, ThinksIn] = {
+    "newcomer": "software",
+    "trader": "cricket",
+    "policy_student": "law",
 }
 
 

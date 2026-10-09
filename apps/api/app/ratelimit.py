@@ -65,3 +65,4 @@ annotations = limit(
     "annotations", lambda s: s.rate_annotations_per_min, lambda s: s.rate_annotations_anon_per_min
 )
 events = limit("events", lambda s: s.rate_events_per_min, lambda s: s.rate_events_per_min)
+explain = limit("explain", lambda s: s.rate_explain_per_min, lambda s: s.rate_explain_anon_per_min)

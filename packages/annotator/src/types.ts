@@ -28,7 +28,7 @@ export interface AnnotationDebug {
   base_difficulty: number;
 }
 
-/** What a span card shows. Explanations (DESIGN §7) will add fields here in M5. */
+/** What a span card shows before its explanation loads (and when there is none). */
 export interface CardAnnotation extends Annotation {
   definition: string;
   /** Graph domain, shown as the card's small-caps label. */
@@ -37,11 +37,31 @@ export interface CardAnnotation extends Annotation {
   debug?: AnnotationDebug | null;
 }
 
-export type AnnotatorEventType = "explain_opened" | "knew_this" | "explain_helpful";
+/**
+ * A verified two-part explanation (DESIGN §7), or `definition` when none passed the verifier
+ * (the card then keeps showing the definition only).
+ */
+export interface Explanation {
+  /** Cache entry id; "This is wrong" names it. */
+  id: string;
+  kind: "verified" | "definition";
+  background: string | null;
+  author_says: string | null;
+  /** The reader's frame the Background drew an analogy from, if any. */
+  analogy_domain?: string | null;
+}
+
+export type AnnotatorEventType =
+  | "explain_opened"
+  | "knew_this"
+  | "explain_helpful"
+  | "report_wrong";
 
 export interface AnnotatorEvent {
   type: AnnotatorEventType;
   annotation_id: string;
   concept_id: string | null;
   at: string;
+  /** report_wrong only: the explanation being reported. */
+  explanation_id?: string;
 }

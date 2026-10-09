@@ -1,7 +1,8 @@
 /**
- * The concept card: one shared dialog, floated next to its mark with Floating UI on wide
- * pointers, or shown as a draggable bottom sheet on touch and narrow screens. Filled with
- * textContent only: annotation data is never parsed as HTML.
+ * The concept card: one shared dialog, floated next to its mark with Floating UI, set in the
+ * page margin as a sidenote when the host offers a margin column, or shown as a draggable
+ * bottom sheet on touch and narrow screens. Filled with textContent only: annotation data is
+ * never parsed as HTML.
  */
 
 import {
@@ -11,19 +12,38 @@ import {
   flip,
   offset,
   shift,
+  size,
 } from "@floating-ui/dom";
 
-import type { AnnotationDebug, AnnotatorEventType, CardAnnotation } from "./types";
+import type { AnnotationDebug, AnnotatorEventType, CardAnnotation, Explanation } from "./types";
 
 export const CARD_LABEL = "Explanation — not the author's words";
+export const BACKGROUND_LABEL = "Background";
+export const AUTHOR_LABEL = "What the author is saying";
+export const DEFINITION_LABEL = "Definition";
+const REPORTED_TEXT = "Thanks. We've removed this explanation and will review it.";
+const LOADING_TEXT = "Writing an explanation and checking it against the article…";
+
+/** What the explanation area shows: nothing (no loader), loading, a result, or reported. */
+export type ExplanationState = "none" | "loading" | "reported" | Explanation;
 export const SHEET_QUERY = "(max-width: 639px)";
 const C = "rl-card";
 const GAP_PX = 10;
 const EDGE_PX = 12;
 const DISMISS_DRAG_PX = 80;
+const MIN_HEIGHT_PX = 180;
+const MAKE_ROOM_MS = 3000;
+// Hosts with a fixed top bar set --rl-top-inset (px) so cards never slide under it.
+const TOP_INSET_VAR = "--rl-top-inset";
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-export type CardMode = "float" | "sheet";
+export type CardMode = "float" | "sheet" | "sidenote";
+
+/** Where a sidenote goes: the margin column's left edge and usable width, in viewport px. */
+export interface SidenoteBox {
+  left: number;
+  width: number;
+}
 
 export interface CardHandlers {
   onAction: (type: AnnotatorEventType) => void;
@@ -38,10 +58,25 @@ export class Card {
   private readonly arrowEl: HTMLDivElement;
   private readonly domain: HTMLParagraphElement;
   private readonly title: HTMLParagraphElement;
-  private readonly definition: HTMLParagraphElement;
+  private definitionText = "";
   private readonly prereqs: HTMLDivElement;
   private readonly prereqList: HTMLUListElement;
   private readonly debug: HTMLDListElement;
+  private readonly explain: HTMLDivElement;
+  private readonly frame: HTMLSpanElement;
+  private readonly bgLabel: HTMLElement;
+  private readonly says: HTMLElement;
+  private readonly background: HTMLParagraphElement;
+  private readonly authorSays: HTMLParagraphElement;
+  private readonly status: HTMLParagraphElement;
+  private sidenote: SidenoteBox | null = null;
+  private readonly body: HTMLDivElement;
+  // Until when a card opened on purpose (click, tap, keyboard) may scroll the page once to make
+  // room, rather than hiding the author block below a scroll. Short, so a slow generation never
+  // moves the page long after the click; the fade on the body covers that case.
+  private makeRoomUntil = 0;
+  private anchor: HTMLElement | null = null;
+  private readonly report: HTMLButtonElement;
   private readonly buttons: HTMLButtonElement[];
   private stopAutoUpdate: (() => void) | null = null;
   private mode: CardMode = "float";
@@ -55,7 +90,7 @@ export class Card {
     Object.assign(this.el, { id, hidden: true, tabIndex: -1 });
     this.el.setAttribute("role", "dialog");
     this.el.setAttribute("aria-labelledby", `${id}-title`);
-    this.el.setAttribute("aria-describedby", `${id}-def`);
+    this.el.setAttribute("aria-describedby", `${id}-bg`);
 
     this.scrim = el(doc, "div", "rl-scrim");
     this.scrim.hidden = true;
@@ -71,8 +106,6 @@ export class Card {
     this.domain = el(doc, "p", `${C}__domain`);
     this.title = el(doc, "p", `${C}__title`);
     this.title.id = `${id}-title`;
-    this.definition = el(doc, "p", `${C}__def`);
-    this.definition.id = `${id}-def`;
 
     this.prereqs = el(doc, "div", `${C}__prereqs`);
     const prereqLabel = el(doc, "p", `${C}__prereq-label`);
@@ -84,6 +117,29 @@ export class Card {
 
     this.debug = el(doc, "dl", `${C}__debug`);
 
+    // One panel holds the background: the glossary definition at once (and as the fallback),
+    // replaced in place by the reader's verified Background, which is ours (their frame, the
+    // only place for an analogy), so it sits recessed on a tint with the frame named. The
+    // restatement of the author is the primary block, ruled in the accent that marks the text.
+    // Labels never move while loading; only bodies swap, so nothing jumps.
+    this.explain = el(doc, "div", `${C}__explain`);
+    this.frame = el(doc, "span", `${C}__frame`);
+    this.background = el(doc, "p", `${C}__text`);
+    this.background.id = `${id}-bg`;
+    this.authorSays = el(doc, "p", `${C}__text`);
+    const bg = section(doc, `${C}__bg`, BACKGROUND_LABEL, this.background, 0, this.frame);
+    this.bgLabel = bg.querySelector(`.${C}__section-label`)!;
+    this.says = section(doc, `${C}__says`, AUTHOR_LABEL, this.authorSays, 1);
+    const says = this.says;
+    const note = el(doc, "p", `${C}__loading-note`);
+    note.textContent = LOADING_TEXT;
+    note.setAttribute("aria-hidden", "true"); // the status line announces it
+    says.querySelector(`.${C}__skeleton`)?.append(note);
+    this.explain.append(bg, says);
+    // Announces loading to screen readers; shows the report confirmation.
+    this.status = el(doc, "p", `${C}__status`);
+    this.status.setAttribute("role", "status");
+
     const footer = el(doc, "div", `${C}__footer`);
     const knew = button(doc, "knew_this", "rl-btn rl-btn--ghost");
     knew.textContent = "Knew this";
@@ -91,7 +147,9 @@ export class Card {
     helpful.setAttribute("aria-label", "Helpful");
     helpful.title = "Helpful";
     helpful.append(thumbIcon(doc));
-    this.buttons = [knew, helpful];
+    this.report = button(doc, "report_wrong", "rl-btn rl-btn--ghost rl-btn--quiet");
+    this.report.textContent = "This is wrong";
+    this.buttons = [knew, this.report, helpful];
     for (const b of this.buttons) {
       b.addEventListener("click", () => {
         b.setAttribute("aria-pressed", "true");
@@ -99,21 +157,16 @@ export class Card {
       });
     }
     const actions = el(doc, "div", `${C}__actions`);
-    actions.append(knew, helpful);
-    const note = el(doc, "p", `${C}__note`);
-    note.textContent = CARD_LABEL;
-    footer.append(actions, note);
+    actions.append(knew, this.report, helpful);
+    const label = el(doc, "p", `${C}__note`);
+    label.textContent = CARD_LABEL;
+    footer.append(actions, label);
 
-    this.el.append(
-      handle,
-      this.arrowEl,
-      this.domain,
-      this.title,
-      this.definition,
-      this.prereqs,
-      this.debug,
-      footer,
-    );
+    // The body scrolls when the card is taller than the room it has; the actions stay pinned.
+    this.body = el(doc, "div", `${C}__body`);
+    this.body.append(this.domain, this.title, this.explain, this.status, this.prereqs, this.debug);
+    this.body.addEventListener("scroll", () => this.markOverflow(), { passive: true });
+    this.el.append(handle, this.arrowEl, this.body, footer);
     doc.body.append(this.scrim, this.el);
   }
 
@@ -126,14 +179,14 @@ export class Card {
   }
 
   focusables(): HTMLElement[] {
-    return this.buttons.filter((b) => !b.disabled);
+    return this.buttons.filter((b) => !b.disabled && !b.hidden);
   }
 
   fill(a: CardAnnotation, pressed: ReadonlySet<AnnotatorEventType>): void {
     this.domain.textContent = a.domain ?? "";
     this.domain.hidden = !a.domain;
     this.title.textContent = a.label;
-    this.definition.textContent = a.definition;
+    this.definitionText = a.definition;
     const prereqs = a.prerequisites.slice(0, 3);
     this.prereqs.hidden = prereqs.length === 0;
     this.prereqList.replaceChildren(
@@ -147,11 +200,68 @@ export class Card {
     for (const b of this.buttons) {
       b.setAttribute("aria-pressed", String(pressed.has(b.dataset.action as AnnotatorEventType)));
     }
+    this.setExplanation(pressed.has("report_wrong") ? "reported" : "none");
   }
 
-  show(anchor: HTMLElement, mode: CardMode): void {
+  /**
+   * Fill the panels. Loading: the definition in the Background panel, a skeleton for the
+   * author. Verified: the reader's Background replaces the definition in place. Otherwise
+   * (definition only, no loader, reported): the panel is labelled Definition and the author
+   * block goes. "This is wrong" only exists next to a verified explanation.
+   */
+  setExplanation(state: ExplanationState): void {
+    const verified = typeof state === "object" && state.kind === "verified";
+    const loading = state === "loading";
+    // Skeleton → text: grow from the old height instead of snapping.
+    const from = !this.el.hidden ? this.explain.offsetHeight : 0;
+    const before = this.background.textContent;
+    this.explain.dataset.state = loading ? "loading" : "ready";
+    this.explain.setAttribute("aria-busy", String(loading));
+    this.explain.hidden = !verified && !this.definitionText;
+    this.bgLabel.textContent = verified || loading ? BACKGROUND_LABEL : DEFINITION_LABEL;
+    this.background.textContent = verified ? (state.background ?? "") : this.definitionText;
+    this.says.hidden = !(verified || loading);
+    this.authorSays.textContent = verified ? (state.author_says ?? "") : "";
+    const frame = verified ? state.analogy_domain : null;
+    this.frame.textContent = frame ? `Analogy · ${frame}` : "";
+    this.frame.hidden = !frame;
+    this.status.textContent = state === "reported" ? REPORTED_TEXT : loading ? LOADING_TEXT : "";
+    this.status.classList.toggle(`${C}__status--visible`, state === "reported");
+    const reported = this.report.getAttribute("aria-pressed") === "true";
+    this.report.disabled = !verified;
+    this.report.hidden = !(verified || loading || reported);
+    if (from && verified) this.grow(from, before !== this.background.textContent);
+    this.markOverflow();
+    // A capped card doesn't resize when its content arrives, so check for room here too.
+    if (!this.el.hidden) this.maybeMakeRoom();
+  }
+
+  private grow(from: number, swapped: boolean): void {
+    const view = this.doc.defaultView;
+    const to = this.explain.offsetHeight;
+    const still = view?.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? true;
+    if (still || !to || !this.explain.animate) return;
+    if (swapped) this.background.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260 });
+    if (Math.abs(to - from) < 2) return;
+    this.explain.animate(
+      [{ height: `${from}px`, overflow: "hidden" }, { height: `${to}px`, overflow: "hidden" }],
+      { duration: 240, easing: "cubic-bezier(0.2, 0, 0, 1)" },
+    );
+  }
+
+  show(
+    anchor: HTMLElement,
+    mode: CardMode,
+    sidenote: SidenoteBox | null = null,
+    makeRoom = false,
+  ): void {
     this.stopAutoUpdate?.();
     this.mode = mode;
+    this.makeRoomUntil = makeRoom && mode === "float" ? Date.now() + MAKE_ROOM_MS : 0;
+    this.anchor = anchor;
+    this.sidenote = mode === "sidenote" ? sidenote : null;
+    this.el.style.width = this.sidenote ? `${this.sidenote.width}px` : "";
+    this.el.style.maxHeight = "";
     this.el.dataset.mode = mode;
     this.el.style.transform = "";
     this.el.hidden = false;
@@ -181,18 +291,32 @@ export class Card {
   }
 
   private async place(anchor: HTMLElement): Promise<void> {
+    if (this.sidenote) {
+      this.placeSidenote(anchor, this.sidenote);
+      return;
+    }
+    const padding = { top: this.topInset(), right: EDGE_PX, bottom: EDGE_PX, left: EDGE_PX };
     const { x, y, placement, middlewareData } = await computePosition(anchor, this.el, {
       strategy: "fixed",
       placement: "bottom-start",
       middleware: [
         offset(GAP_PX),
-        flip({ padding: EDGE_PX }),
-        shift({ padding: EDGE_PX }),
+        // Below or above, whichever has more room; then cap the height to that room.
+        flip({ padding, fallbackStrategy: "bestFit" }),
+        shift({ padding }),
+        size({
+          padding,
+          apply: ({ availableHeight }) => {
+            this.el.style.maxHeight = `${Math.max(MIN_HEIGHT_PX, availableHeight)}px`;
+          },
+        }),
         arrow({ element: this.arrowEl, padding: 14 }),
       ],
     });
     if (this.el.hidden || this.mode !== "float") return;
     Object.assign(this.el.style, { left: `${x}px`, top: `${y}px` });
+    this.markOverflow();
+    this.maybeMakeRoom();
     this.el.dataset.placement = placement;
     const side = placement.split("-")[0];
     const a = middlewareData.arrow;
@@ -202,6 +326,54 @@ export class Card {
       [side === "bottom" ? "top" : "bottom"]: "-6px",
       [side === "bottom" ? "bottom" : "top"]: "",
     });
+  }
+
+  /** In the margin, level with the mark's line, kept inside the viewport; the arrow points
+   * back at the line. */
+  private placeSidenote(anchor: HTMLElement, box: SidenoteBox): void {
+    const view = this.doc.defaultView;
+    if (!view || this.el.hidden) return;
+    const mark = anchor.getBoundingClientRect();
+    const inset = this.topInset();
+    this.el.style.maxHeight = `${view.innerHeight - inset - EDGE_PX}px`;
+    const height = this.el.offsetHeight;
+    const top = Math.max(inset, Math.min(mark.top - 14, view.innerHeight - height - EDGE_PX));
+    Object.assign(this.el.style, { left: `${box.left}px`, top: `${top}px` });
+    this.el.dataset.placement = "right";
+    const arrowY = Math.max(10, Math.min(mark.top + mark.height / 2 - top - 6, height - 22));
+    Object.assign(this.arrowEl.style, { left: "-7px", top: `${arrowY}px`, bottom: "" });
+  }
+
+  /** Fade the body's bottom edge while there is more to scroll. */
+  private markOverflow(): void {
+    const b = this.body;
+    const more = b.scrollHeight - b.clientHeight - b.scrollTop > 4;
+    b.classList.toggle(`${C}__body--more`, more);
+  }
+
+  private maybeMakeRoom(): void {
+    const ready = this.explain.hidden || this.explain.dataset.state === "ready";
+    if (!ready || !this.makeRoomUntil || !this.anchor || this.mode !== "float") return;
+    if (Date.now() < this.makeRoomUntil) this.scrollForRoom(this.anchor);
+    this.makeRoomUntil = 0;
+  }
+
+  /** If the filled card still doesn't fit, bring its line up under the top bar so the card
+   * opens below it with the most room the screen has. Once per deliberate open. */
+  private scrollForRoom(anchor: HTMLElement): void {
+    const view = this.doc.defaultView;
+    if (!view || this.body.scrollHeight - this.body.clientHeight <= 0) return;
+    const shift = anchor.getBoundingClientRect().top - this.topInset() - GAP_PX;
+    if (shift <= 1) return;
+    const reduced = view.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+    view.scrollBy({ top: shift, behavior: reduced ? "auto" : "smooth" });
+  }
+
+  private topInset(): number {
+    const view = this.doc.defaultView;
+    const raw = view?.getComputedStyle(this.doc.documentElement).getPropertyValue(TOP_INSET_VAR);
+    const px = Number.parseFloat(raw ?? "");
+    return Number.isFinite(px) && px > EDGE_PX ? px : EDGE_PX;
   }
 
   /** Swipe the sheet down by its handle to dismiss it. */
@@ -230,6 +402,30 @@ export class Card {
     handle.addEventListener("pointerup", end);
     handle.addEventListener("pointercancel", end);
   }
+}
+
+function section(
+  doc: Document,
+  className: string,
+  label: string,
+  body: HTMLElement,
+  lines: number,
+  tag?: HTMLElement,
+): HTMLElement {
+  const wrap = el(doc, "section", `${C}__section ${className}`);
+  const head = el(doc, "div", `${C}__section-head`);
+  const heading = el(doc, "p", `${C}__section-label`);
+  heading.textContent = label;
+  head.append(heading, ...(tag ? [tag] : []));
+  wrap.append(head);
+  if (lines > 0) {
+    const skeleton = el(doc, "div", `${C}__skeleton`);
+    skeleton.setAttribute("aria-hidden", "true");
+    skeleton.append(...Array.from({ length: lines }, () => el(doc, "span", `${C}__skeleton-line`)));
+    wrap.append(skeleton);
+  }
+  wrap.append(body);
+  return wrap;
 }
 
 function fillDebug(dl: HTMLDListElement, debug: AnnotationDebug | null): void {

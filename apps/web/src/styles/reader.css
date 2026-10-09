@@ -158,12 +158,15 @@
   padding: 0;
   list-style: none;
 }
+.rail[data-card-open="true"] .rail__item {
+  opacity: 0.28;
+}
 .rail__item {
   position: absolute;
   top: 0;
   left: 0;
   max-width: 100%;
-  transition: transform var(--dur-slow) var(--ease);
+  transition: transform var(--dur-slow) var(--ease), opacity var(--dur) var(--ease);
   animation: fade-in var(--dur-slow) var(--ease) both;
 }
 .rail .chip {

@@ -3,11 +3,27 @@ import {
   type Annotator,
   type AnnotatorEvent,
   type CardAnnotation,
+  type SidenoteBox,
 } from "@readlayer/annotator";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 import { trackEvent } from "../lib/events";
+import { loadExplanation, prefetchExplanations, reportExplanation } from "../lib/explanations";
 import type { PersonaKey } from "../lib/personas";
+
+const WIDE_PX = 1200; // the margin rail appears here (reader.css)
+const SIDENOTE_MAX_PX = 360;
+const EDGE_PX = 16;
+
+/** The margin rail's column, when it is on screen: cards become sidenotes there. */
+function railColumn(root: HTMLElement): SidenoteBox | null {
+  const view = root.ownerDocument.defaultView;
+  if (!view || view.innerWidth < WIDE_PX) return null;
+  const rail = root.closest(".reader__body")?.querySelector<HTMLElement>(".rail");
+  const box = rail?.getBoundingClientRect();
+  if (!box || box.width === 0) return null;
+  return { left: box.left, width: Math.min(SIDENOTE_MAX_PX, view.innerWidth - box.left - EDGE_PX) };
+}
 
 export interface AnnotatorHandle {
   /** Ids of annotations currently marked, in document order; null until the first update. */
@@ -39,10 +55,22 @@ export function useAnnotator(
   useEffect(() => {
     const el = root.current;
     if (!el || !articleKey) return;
-    const onEvent = (event: AnnotatorEvent) =>
+    const onEvent = (event: AnnotatorEvent) => {
+      // A report evicts the shared entry and records report_wrong in one server call.
+      if (event.type === "report_wrong") {
+        if (event.explanation_id) {
+          void reportExplanation(
+            articleKey, personaRef.current, event.annotation_id, event.explanation_id, event.concept_id,
+          ).catch(() => undefined);
+        }
+        return;
+      }
       trackEvent(event.type, event.concept_id, articleKey, personaRef.current);
+    };
     const annotator = createAnnotator(el, {
       onEvent,
+      loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
+      sidenote: () => railColumn(el),
       onHover: setHovered,
       onActive: setActive,
     });
@@ -60,7 +88,9 @@ export function useAnnotator(
     const annotator = annotatorRef.current;
     if (!annotator || !annotations) return;
     let cancelled = false;
-    annotator.update(annotations).then((result) => {
+    if (articleKey) prefetchExplanations(articleKey, personaRef.current, annotations);
+    // The persona is the reader: switching it reloads an open card and resets its actions.
+    annotator.update(annotations, { reader: personaRef.current ?? "me" }).then((result) => {
       if (cancelled) return;
       setResolved(result.resolved);
       if (result.unresolved.length) console.warn("[readlayer] anchors not found", result.unresolved);

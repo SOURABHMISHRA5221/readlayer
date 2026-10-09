@@ -1,12 +1,12 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-05 (IST), end of M4 on branch `m4`: the real gap scorer (DESIGN §5–6),
-demo personas as seeded reader graphs, and the interaction loop closed (API + web live, §12).
+Last updated: 2026-10-10 (IST): M5 deployed and verified live (§13), PR #13. Previous: M4 (#11),
+README and MIT license (#12), schedule re-planned (§9, decisions 20–22).
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
 
-Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
+Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we submit Oct 17.**
 
 ---
 
@@ -25,8 +25,10 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 | M2.2 | **open issue** | #6 | Online concept growth + linker tuning, target ≥ 75% held-out linking. Not started |
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
-| M4 | PR open (this branch) | — | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
-| M5, rest of M6, M7, M8, M9 | not started | — | See "Next actions" |
+| M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
+| docs | merged (squash) | #12 | README with live screenshots, persona GIF, diagrams; MIT license |
+| M5 | PR #13 (squash-merged when CI is green) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
+| Rest of M6, M7 (trimmed), M8-local, M9 (+ M2.2 trimmed) | not started | — | See "Next actions" (re-planned 2026-10-10) |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
 1. `e7c131c` M6 local vertical slice: `DEV_AUTH_BYPASS` (refuses to start on Cloud Run / ENV=prod),
@@ -51,11 +53,11 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 
 | Piece | Where it runs | State |
 |---|---|---|
-| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M4 build**: revision `readlayer-api-00009-gkf` (revision names restarted below M3's `-00010-tiw`; gcloud numbers them that way), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
-| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M4 build** (bundle `index-Dfwq_13e.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
+| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M5 build**: revision `readlayer-api-00010-9tr`, https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
+| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M5 build** (bundle `index-uEFIQ12G.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
-| `packages/annotator` | Bundled into the web app (and the extension in M8) | Final for spans; no paragraph markers / pre-read yet |
-| `apps/extension` | — | MV3 scaffold only (M8) |
+| `packages/annotator` | Bundled into the web app (and the extension in M8-local) | M5: two-part explanation card (sidenote ≥1200px, popover, sheet); no paragraph markers / pre-read yet |
+| `apps/extension` | — | MV3 scaffold only (M8-local: unpacked, activeTab only, Oct 14) |
 | Vertex AI (Gemini, Gemma MaaS, embeddings) | `global` endpoint, project `readlayer-sourabh-26` | Live, via ADC locally |
 | Firestore (Native) | asia-south1 | Live |
 | Cloud Storage | `gs://readlayer-sourabh-26-graph/concepts.json` (+ `concepts.prev.json`) | Live, loaded at API start |
@@ -70,19 +72,22 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Submission Oct 18.**
 |---|---|---|---|
 | extract_demands, link_merge, concept_define, concept_prereqs, concept_wikidata, smoke | MODEL_FAST `vertex_ai/gemini-3.5-flash-lite` | MODEL_FALLBACK `vertex_ai/google/gemma-4-26b-a4b-it-maas` | |
 | link_confirm | MODEL_QUALITY `vertex_ai/gemini-3.8-flash` | MODEL_FAST | 45 s timeout, batches of 10 |
-| explain | MODEL_QUALITY | MODEL_FAST | Route exists; M5 not built |
-| verify | MODEL_QUALITY | none | Route exists; M5 not built |
+| explain | MODEL_QUALITY | MODEL_FAST | M5: two-part card, regenerate once with reasons |
+| verify | MODEL_JUDGE (empty = MODEL_QUALITY) | none | M5: faithfulness judge; outage → definition card, nothing cached |
 | embed | MODEL_EMBED `vertex_ai/gemini-embedding-001`, 256 dims | none | |
 
-No LLM call exists on any reader-facing path in PR #9 (annotations, library, recommendations).
+No LLM call on the annotations, library or recommendations paths. POST /v1/explain (M5) is the
+only reader-facing path that may call a model, and only on a cache miss within the daily caps.
 "Open here" runs the normal ingestion pipeline (extract_demands + linking).
 
 **Firestore collections in use:** `contents/{url_hash}` (shared demand profiles),
+`explanations/{key}` (verified cards, M5), `explanation_reports/{id}` (review queue, no user id),
+`ops/explain/days/{date}` (hits, generated, outcomes, shared anonymous generation count),
 `ops/spend/days/{date}` (LLM ledger), `ops/search/days/{date}` (search-call ledger, now with an
 `anonymous` counter), `ops/ingest/days/{date}` (shared anonymous ingest count),
 `rec_cache/{concept_id}__{format}` (web results, concept-level, 48 h), and per reader
 `users/{uid}` with `domains`, `knows`, `events` (TTL), `weekly`, `profile_edits` (M7),
-`rec_signals/{persona|default}`, `ingest_counts/{day}`. All per-user data is in
+`rec_signals/{persona|default}`, `ingest_counts/{day}`, `explain_counts/{day}` (M5). All per-user data is in
 `reader_repo.USER_SUBCOLLECTIONS`, which drives both export and delete.
 
 ---
@@ -123,16 +128,23 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Recommendations (M6.5), GET content routes, `/v1/recs/*` and publisher metadata were built ahead of the spec | Needed for the slice | Now documented: DESIGN §3, §4, §8, §16 (decision 9) |
 | Publisher lead images are hotlinked with `referrerpolicy=no-referrer`, typographic tile on error | Fast demo; no image proxy | Keep (decision 3) |
 | Content `source` adds `user_ingested`; build and held-out scripts exclude it | Reader-opened pages must never become corpus or held-out data | Keep |
-| Annotator card shows the concept definition + prerequisites, not the two-part verified explanation; no "This is wrong" button. Card events (explain_opened, knew_this, explain_helpful) now go to POST /v1/events (5 s batches + on hide); paragraph_dwell / text_searched not emitted yet | M5 (explanations), rest of M6 (dwell, text search) | M5 / M6 rest |
-| Annotation response carries `definition`, `domain`, `prerequisites`, `debug` beyond the §8 shape | The card needs them until explanations exist | Revisit in M5 |
+| Card events (explain_opened, knew_this, explain_helpful) go to POST /v1/events (5 s batches + on hide); report_wrong goes through POST /v1/explain/{id}/report; paragraph_dwell / text_searched not emitted yet | Rest of M6 (dwell, text search) | M6 rest |
+| Annotation response carries `definition`, `domain`, `prerequisites`, `debug` beyond the §8 shape | Kept in M5: the card shows them instantly and falls back to the definition (now in DESIGN §8) | Keep |
 
+| Extension (M8-local) is unpacked, activeTab only: no allowlisted-domain activation, no host permissions, no automatic injection; not on the Web Store | Re-plan 2026-10-10 (decision 21): smallest permission set, no store review in the time left. DESIGN §11.3's allowlist activation is not built | Web Store release post-hackathon |
+| M2.2 trimmed to the jurisdiction fix and the Russell mislink; online concept growth and the 30-article held-out set deferred | Re-plan 2026-10-10 (decision 20) | Post-hackathon (issue #6) |
+| Explanation prefetch (top 3 spans) runs in the web client after annotations load, not on the server | Keeps the annotations route LLM-free (CLAUDE.md); Cloud Run throttles CPU after a response, so server background prefetch is unreliable | Keep (DESIGN §7) |
+| Verifier hedge/attribution/negation checks are scoped to the span's sentence in span mode, not the whole paragraph | A hedge elsewhere in the paragraph says nothing about the restated sentence; paragraph mode checks the whole paragraph | Keep (DESIGN §7) |
+| A definition-only outcome after two rejected drafts is cached (no generated text) | Otherwise every hover on a hard span re-spends two generations; judge outages and the budget guard are not cached | Keep (DESIGN §7) |
+| Paragraph explainers exist in the API (POST /v1/explain with `paragraph_id`) and the evals, but the margin marker that opens them isn't shown yet | Planning decision 2026-10-10: marker UI stays in the rest of M6 | M6 rest |
+| `explanation_reports` (review queue) stores the evicted entry with no user identifier, so it is outside export/delete; the report_wrong event itself is in `users/{uid}/events` | Shared content, not user data | Keep |
 ---
 
 ## 5. Known issues and tech debt
 
 | Severity | Issue |
 |---|---|
-| **High** | Local `LLM_DAILY_BUDGET_USD` is **25** (raised for M2 builds); you are setting it back to 8 (decision 2). Cloud Run uses 8 (`deploy.env.yaml`) |
+| **High** | Local `LLM_DAILY_BUDGET_USD` is still **25** in `apps/api/.env` (checked 2026-10-10 through Settings; decision 2 says 8). Every M5 eval and dev run passed `LLM_DAILY_BUDGET_USD=8` explicitly. Cloud Run uses 8 (`deploy.env.yaml`) |
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
@@ -142,7 +154,6 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Persona templates are cached per API process: re-seeding needs a restart (or a deploy) to take effect, and demo readers who already have a copy keep their old one |
 | Low | Recommendation format priors per persona are still the hand-set M6.5 values (`PERSONA_FORMAT_PRIORS`) |
 | Medium | Held-out linking 62% (target ≥ 75%), Chancellor→Treasury Secretary and levy over-generalisation (issue #6) |
-| Medium | No explanations yet (M5): cards show only the graph definition |
 | Low | Publisher images set third-party cookies (Lighthouse best-practices 96 on the library). Broken hotlinks fall back to the typographic tile everywhere |
 | Low | Web result quality varies (some generic podcasts, an exam-prep video); 21 of 87 cache entries empty |
 | Low | Headlines keep publisher SEO suffixes (" \| Stock Market News"); we don't alter publisher text |
@@ -161,6 +172,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | ENV, LOG_LEVEL | runtime mode, logging | `.env` | yes | — |
 | GCP_PROJECT, VERTEX_LOCATION | project, Vertex endpoint | `.env` | yes | — |
 | MODEL_FAST, MODEL_QUALITY, MODEL_FALLBACK | LLM routes | `.env` | yes | — |
+| MODEL_JUDGE | faithfulness judge (empty = MODEL_QUALITY) | `.env` (unset) | no (default) | — |
+| EXPLAIN_DAILY_CAP, ANON_EXPLAIN_DAILY_CAP, ANON_GLOBAL_EXPLAIN_DAILY_CAP, RATE_EXPLAIN_* | uncached explanations per reader per day (100 / 40 anon / 400 all anon), explain requests per minute (60 / 30 anon) | defaults in `config.py` | defaults | — |
 | MODEL_EMBED, EMBED_DIM | embeddings | `.env` | in `deploy.env.yaml`, not in deployed revision | — |
 | CONCEPTS_URI | graph location | `.env` | in `deploy.env.yaml`, not in deployed revision | — |
 | LINK_THRESHOLD, DEDUPE_THRESHOLD | linker tuning (calibrated 0.865) | `.env` | LINK_THRESHOLD 0.865 in `deploy.env.yaml`, not in deployed revision | — |
@@ -215,7 +228,7 @@ about 12 calls for a new article (3 concepts × 3 formats; YouTube counts 2), 0 
 | M5 explanations + verifier + 40-case suite + 10 injection cases | $2–5 |
 | M2.2 online growth (one batched concept_define per article) + held-out re-runs | $2–4 |
 | M7 profile edits, onboarding | < $1 |
-| M8 extension ingestion (~$0.0075 per new article) | < $2 |
+| M8-local extension ingestion (~$0.0075 per new article) | < $2 |
 | M9 gold-set evals (30 articles × 2 personas) and demo pre-ingest | $3–6 |
 | Hosting after submission: Cloud Run min-instances 1 during judging (Oct 19 – Nov 6) | ~$15–25 |
 | **Total remaining** | **≈ $25–45 of the $300 credit** |
@@ -224,6 +237,10 @@ Tavily cost depends on the plan in use (check the free monthly credit before M9)
 quota is free within the daily buckets.
 
 ---
+
+**2026-10-09 UTC (M5 day, IST 2026-10-10): $2.83 LLM**, 646 calls, 4 fallbacks (explain → FAST
+on timeouts). M5 safety evals ≈ $2.53 (five full runs incl. the Pro judge at $1.12); local dev,
+screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all day.
 
 ## 8. Guardrails in force
 
@@ -257,20 +274,30 @@ quota is free within the daily buckets.
 
 ## 9. Next actions, in order
 
+Re-planned 2026-10-10 (decisions 20–22); BUILD_PLAN.md has the prompts.
+
 | When | Action |
 |---|---|
-| Oct 5 | Set `LLM_DAILY_BUDGET_USD` back to 8 in `apps/api/.env` (you, by hand) |
-| Oct 8–9 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
-| Oct 9 | **Rest of M6:** two-phase loading for "Open here", "This is wrong" button; show the paragraph markers, pre-read card and "Know this?" prompt the API already returns; emit `annotation_dismissed` and paragraph_dwell / text_searched; slowdown detection |
-| Oct 9–10 | **M2.2** (issue #6): online concept growth, jurisdiction, link_confirm strictness; held-out set grows to 30; target ≥ 75% linked |
-| Oct 10–11 | **M7** onboarding, consent, calibration, reading profile page, profile edits. **Team lock Oct 11** (gate: if M6–M7 aren't solid, skip M8) |
-| Oct 12–14 | **M8** Chrome extension with privacy guards (only if the gate passed) |
-| Oct 15–17 | **M9** evals, hardening, WIF deploy, dashboard, demo personas, README, video, deck |
-| **Oct 18** | **Submit** |
+| Now | Confirm `LLM_DAILY_BUDGET_USD` in `apps/api/.env` is back to 8 (you, by hand; decision 2). M5 is the first model-heavy milestone since M2 |
+| Oct 10 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
+| Oct 11 | **Rest of M6:** show the paragraph markers, pre-read card and "Know this?" prompts the API already returns; two-phase "Open here"; complete event batching (`paragraph_dwell`, `text_searched`, `annotation_dismissed`) |
+| Oct 12 (M6 session) | **From the M5 review:** (1) generate "What the author is saying" once per (span, style) and personalise only Background, with its own cache key and one verifier pass per span (today every (span, band, frame, style) regenerates and re-verifies the restatement); (2) label the Helpful button with text instead of a bare icon. Also show paragraph explainers from the margin markers (decision 24) |
+| Oct 11 | **Team lock** |
+| Oct 12–13 | **M7 trimmed:** profile page (summary, domain bars, list view with corrections, THINKS_IN, export/delete/pause); Google onboarding with consent and calibration. Knowledge-map graph and edit-by-prompt optional |
+| Oct 14 | **M8-local:** unpacked Chrome extension, activeTab only, Readability on a DOM clone, client redaction + Presidio backstop, annotator on the live page, "Connect extension" auth for demo and Google readers, popup; README install steps |
+| Oct 15 | **M9** hardening and evals (gold set, report, WIF deploy, dashboard) + **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink) |
+| Oct 16 | Demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
+| **Oct 17** | **Submit** (deadline Oct 18) |
+
+**Cut order if late:** edit-by-prompt → knowledge-map graph → M2.2 online growth (already
+deferred) → extension popup extras.
+
+**You, by hand:** label the gold set (30 articles × 2 personas, with your teammate, from Oct 12);
+record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6.
 
 ---
 
-## 10. Decisions (all decided 2026-10-04)
+## 10. Decisions (1–14 decided 2026-10-04, later ones dated)
 
 | # | Topic | Decision |
 |---|---|---|
@@ -294,6 +321,13 @@ quota is free within the daily buckets.
 | 17 | Linked references (M4) | Option C: a linked context reference uses the concept's p_know only with a KNOWS edge or a prior ≥ 0.8 (DESIGN §6.7, five cases recorded there) |
 | 18 | Prompts while paused (M4) | No "Know this?" prompt while learning is paused, so a paused reader's page loads write nothing |
 | 19 | Deploy guard (M4) | `make deploy-api` / `deploy-web` refuse while a deploy runs on this machine, a Cloud Build is in progress or the API is mid-rollout |
+| 20 | Re-plan (2026-10-10) | M5 Oct 10; rest of M6 Oct 11; M7 trimmed Oct 12–13; M8-local Oct 14; M9 + M2.2 trimmed Oct 15; demo, README, video, deck Oct 16; submit Oct 17. M2.2 online growth and the bigger held-out set deferred |
+| 21 | Extension (2026-10-10) | M8-local replaces M8: unpacked via Developer mode, `activeTab`/`scripting`/`storage` only, no host permissions or automatic injection; auth via "Connect extension" for demo and Google readers; popup with sign-in state, persona, density, profile link. Web Store release post-hackathon |
+| 22 | Cut order (2026-10-10) | If late, cut in this order: edit-by-prompt, knowledge-map graph, M2.2 online growth, extension popup extras |
+| 23 | Persona frames (M5) | Newcomer software, trader cricket, policy student law (`PERSONA_THINKS_IN`, code not template data) |
+| 24 | Paragraph explainers (M5) | API, cache and evals in M5; the margin-marker UI in the rest of M6 |
+| 25 | Judge model (M5) | `MODEL_JUDGE` env var, default MODEL_QUALITY; compared against Gemini 3.1 Pro on the safety suite (evals/report.md) |
+| 26 | Eval integrity (M5) | Cases committed before the first model run; any prompt change bumps its version and is reported before/after in evals/report.md; cases are never edited to pass |
 
 No decisions are open.
 
@@ -381,3 +415,64 @@ creation time and deleted (Firestore tree + Auth user). All later scripts delete
 0 test users remain. One unrelated anonymous browser session from 17:32 UTC was left alone.
 
 **M4 spend:** $0 LLM. Three Cloud Builds (one cancelled), Firestore reads for the corpus analysis.
+
+---
+
+## 13. M5 acceptance (2026-10-10)
+
+**Built.** POST /v1/explain (span and paragraph mode) and POST /v1/explain/{id}/report;
+`app/explain/` (inputs, deterministic checks, judge, service with single-flight), cache
+`explanations/*`, review queue `explanation_reports/*`, per-uid daily generation cap
+(`explain_counts`, in export/delete), `MODEL_JUDGE`, per-route thinking level (unused). Card:
+Background (tinted panel, analogy frame tagged) and What the author is saying (accent rule),
+definition shown at once in the Background panel and replaced in place, skeleton with "checking
+it against the article", definition-only fallback, Knew this / Helpful / This is wrong with an
+inline confirmation, sidenote in the margin at ≥1200px, popover (360px, height capped to the
+room it has), bottom sheet on phones, persona switch reloads an open card. Web prefetches the
+top 3 spans after annotations load.
+
+**Safety evals** (`apps/api/evals/`, cases committed before the first model run; full table and
+per-case detail in `evals/report.md`, prompt history in `evals/changelog.md`):
+
+| Run | Prompts | Judge | Adversarial rejected | Good accepted | Judge errors | Pipeline first / retry / definition | Injection safe | $/explanation | p50 / p95 |
+|---|---|---|---|---|---|---|---|---|---|
+| baseline | explain-v1 | 3.8-flash | 15/15 | 25/25 | 0 | 22 / 1 / 2 | 10/10 | 0.0064 | – |
+| flash-judge-timed | explain-v1 | 3.8-flash | 15/15 | 21/25 | 4 (timeouts) | 23 / 0 / 2 | 10/10 | 0.0063 | 14.1 / 68.2 s |
+| pro-judge | explain-v1 | 3.1-pro-preview | 15/15 | 25/25 | 0 | 24 / 0 / 1 | 10/10 | 0.0165 | 20.4 / 40.3 s |
+| explain-v2 | explain-v2 | 3.8-flash | 15/15 | 25/25 | 0 | 24 / 1 / 0 | 10/10 | 0.0070 | 18.0 / 38.9 s |
+| **explain-v3 (shipped)** | explain-v3 | 3.8-flash | **15/15** | **25/25** | 0 | **25 / 0 / 0** | **10/10** | **0.0070** | **14.9 / 21.8 s** |
+
+- Deterministic checks caught 12 of 15 adversarial cards, the judge 14; A06 ("said he would hold
+  out" → "decided to hold out") passed both judges and was caught only by the attribution check.
+- Judge: Gemini 3.1 Pro gave identical verdicts at ≈ 4× the judge cost and a slower median, so
+  MODEL_QUALITY stays the judge (decision 25).
+- No planted instruction appeared in any shown card or any rejected draft.
+
+**Cost.** ≈ $0.0070 per verified explanation (generate + checks + judge, retries included).
+Prefetch across the demo: 6 articles × 3 personas × 3 spans = 54 explanations ≈ **$0.38** once,
+then cache hits. The $8 daily cap covers ≈ 1,100 new explanations a day (shared with ingestion).
+M5 spend: evals ≈ $2.53, local dev and screenshots ≈ $0.30.
+
+**Front-end review** (`make dev`, headless Chrome over CDP, light and dark, 1440 / 1024 / 390):
+redundant definition merged into the Background panel; Background shortened (explain-v2) and made
+level-aware (explain-v3, a trader who "can explain" gets nuance, not a definition); report
+confirmation restyled; popover at 1024px no longer runs off the top; rail chips step back under
+an open sidenote. A scripted persona switch timed out once while the dev API rate-limited the
+script (429s in the log); the rerun passed and the path is unit-tested.
+
+**Live (2026-10-10, API `readlayer-api-00010-9tr`, web `index-uEFIQ12G.js`)**, by
+`scripts/live_check_explain.py` (one anonymous user, deleted after: DELETE /v1/me 204):
+
+| Check | Result |
+|---|---|
+| Generate | Trader card for "FIIs" (band can explain, cricket): miss, verified first draft, **23.5 s** client (server 23.4 s, of which 15.3 s model time: explain 8.6 s + verify 6.7 s; the rest not broken down) |
+| Cached hit, no LLM call | Newcomer card: **145 ms / 191 ms** client, 41–60 ms server; the logs show no `llm call` for any of the 3 hits |
+| Personas get different Background | 3 distinct Backgrounds (software / cricket / law); the trader at "can explain" got one sentence of nuance, the others a definition plus analogy |
+| "This is wrong" | `{evicted: true, event_applied: true}`, review doc written, next request regenerated (**14.2 s**, verified first draft) |
+| Privacy | App log lines: 0 emails, 0 tokens, 0 article text; the only email-shaped strings are in GCP's own audit logs for the deploy |
+| Cache hit rate | `ops/explain/days/2026-10-09` (local dev + live, same Firestore): **135 hits / 38 generated = 78%**, all 38 verified first draft, 1 report |
+
+Demo exhibits in `apps/api/evals/demo.md`: "depth adapts" (basis points: unaware / can explain /
+heard of) and "three frames" (credit default swap, unfamiliar to all three: failover / batter
+insurance / indemnity analogies), plus a real rejection (the judge refused a draft that "fixed" a
+garbled source phrase; the reader got the definition).

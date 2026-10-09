@@ -7,8 +7,28 @@ One milestone per Claude Code session. For each one:
 4. Approve, let it build, then make it run the acceptance checks itself.
 5. Commit: `M<n>: <summary>`.
 
-Dates assume the 2026-10-18 submission deadline. Security, privacy and evaluation work is
-folded into the milestones it belongs to, not saved for the end.
+Dates assume the 2026-10-18 submission deadline; we submit on Oct 17. Security, privacy and
+evaluation work is folded into the milestones it belongs to, not saved for the end.
+
+## Schedule (re-planned 2026-10-10)
+
+M0–M4 and the M6 slice are merged and live. The rest:
+
+| Date | Work |
+|---|---|
+| Oct 10 | **M5** explanations, verifier, safety evals |
+| Oct 11 | **Rest of M6**: show paragraph markers, the pre-read card and "Know this?" prompts; two-phase "Open here"; complete event batching |
+| Oct 12–13 | **M7 trimmed**: profile page (summary, domain bars, list view, corrections); Google onboarding with consent and calibration. Knowledge-map graph and edit-by-prompt optional |
+| Oct 14 | **M8-local**: unpacked Chrome extension (Developer mode), activeTab only |
+| Oct 15 | **M9** hardening and evals, plus **M2.2 trimmed** (jurisdiction fix, Russell mislink) |
+| Oct 16 | Demo seeding, README refresh, video, deck |
+| Oct 17 | **Submit** |
+
+**Cut order if late** (first cut first): edit-by-prompt → knowledge-map graph → M2.2 online
+growth (already deferred) → extension popup extras (persona, density, profile link).
+
+**Post-hackathon:** Chrome Web Store release of the extension; M2.2 online concept growth and
+the 30-article held-out set (issue #6).
 
 ---
 
@@ -150,7 +170,7 @@ approve the Secret Manager and deploy commands when asked.
 
 ---
 
-## M5 — Explanations, verifier, safety evals (Oct 9)
+## M5 — Explanations, verifier, safety evals (Oct 10)
 **Prompt**
 > Implement `app/explain/` per docs/DESIGN.md section 7: generation (inputs restricted to span,
 > paragraph, concept definition, band, THINKS_IN domain; no user identifiers), deterministic
@@ -167,7 +187,7 @@ approve the Secret Manager and deploy commands when asked.
 
 ---
 
-## M6 — Annotator library and web reader (Oct 10)
+## M6 — Annotator library and web reader (slice merged in #9; rest Oct 11)
 **Prompt**
 > Build `packages/annotator` per docs/DESIGN.md section 9: anchor resolution (exact+prefix+suffix,
 > whitespace-normalized fallback), dotted underlines, hover/tap cards with Knew this / Helpful /
@@ -181,9 +201,39 @@ approve the Secret Manager and deploy commands when asked.
 - "Knew this" removes the annotation on reload and moves the concept's band in /v1/me/graph.
 - All card actions work with keyboard only.
 
+### Rest of M6 (Oct 11)
+**Prompt**
+> The API already returns paragraph markers, the pre-read path and the "Know this?" prompt
+> (DESIGN §6). Show them in `packages/annotator` and `apps/web`: a quiet margin marker per
+> paragraph item, a pre-read card above the article (steps most basic first, each linking to its
+> corpus explainer or showing the definition), and the prompt as an inline "Know this?" with
+> Yes / Not really that sends PATCH /v1/me/graph. Make "Open here" two-phase: return the
+> article as soon as it is fetched and extracted, then annotations when demand extraction and
+> linking finish (UI shows the article first, notes ink in after). Complete event batching:
+> emit `paragraph_dwell` (IntersectionObserver), `text_searched` and `annotation_dismissed`
+> alongside the existing card events, 5 s batches and on visibilitychange.
+
+> Carried over from the M5 review (decided 2026-10-10, for the Oct 12 M6 session):
+> (1) generate "What the author is saying" once per (span, style) and personalise only Background:
+> the restatement gets its own cache key and one verifier pass per span, the Background its own
+> per-reader key; (2) label the Helpful button with text instead of a bare thumb icon.
+
+**Acceptance**
+- Markers, pre-read card and prompt render for a persona that triggers them, keyboard reachable,
+  no serious axe violations; answering the prompt changes the next load.
+- "Open here" on a new URL shows the article before its notes; notes arrive without a reload.
+- Events from one reading session arrive in batches and are applied once (replay-safe).
+
 ---
 
-## M7 — Onboarding, consent, calibration, reading profile page (Oct 11)
+## M7 — Onboarding, consent, calibration, reading profile page (Oct 12–13, trimmed)
+**Trimmed scope (re-plan 2026-10-10).** Required: the profile page with the summary card,
+ability vs interest bars per domain, the keyboard-navigable list view of the reader's concepts
+with "I know this" / "I don't" corrections, editable THINKS_IN, Export / Delete / Pause; Google
+onboarding with the consent screen and calibration. Optional, and first to cut: the Cytoscape
+knowledge-map graph, then edit-by-prompt (§15.3). Acceptance items for optional parts apply only
+if they ship.
+
 **Prompt**
 > Implement /v1/onboarding and /v1/calibration/next|answer per docs/DESIGN.md sections 4 and 8.
 > In apps/web: a consent screen (what we collect, why, export/delete links) per DESIGN §11.4,
@@ -215,41 +265,54 @@ approve the Secret Manager and deploy commands when asked.
   expected ops; nothing changes before Apply; the next explanation is shorter and is a cache
   miss for the new style.
 
-**Gate:** if M6–M7 are not solid by end of Oct 11, skip M8 and spend Oct 12–14 on polish.
 
 ---
 
-## M8 — Chrome extension with privacy guards (Oct 12–14, only if the gate passed)
+## M8-local — Chrome extension, unpacked (Oct 14)
+Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not
+published to the Chrome Web Store (a post-hackathon item).
+
 **Prompt**
-> Build `apps/extension` (MV3) per docs/DESIGN.md sections 9 and 11.3. Activation only on toolbar
-> click or allowlisted news domains; never on pages with password fields, card inputs, or
-> mail/bank/intranet URL patterns. Run Readability.js on a DOM clone, send only the extracted
-> title and paragraphs (never raw HTML, comments or form fields) after client-side redaction of
-> emails, phones, Luhn-valid digit runs and Aadhaar/PAN-like patterns. Server side, add the
-> Presidio backstop to the `{url, title, paragraphs}` path of /v1/content. Mount
-> `packages/annotator` against the live DOM. Auth via the web app's /extension-connect page
-> using `externally_connectable`; keep tokens in memory or session storage only. Minimal
-> permissions (`activeTab`, `scripting`, `storage`, host permissions only for the allowlist).
+> Build `apps/extension` (MV3) per docs/DESIGN.md sections 9 and 11.3, with these limits.
+> Permissions `activeTab`, `scripting` and `storage` only: no host permissions and no automatic
+> injection; it runs only when the reader clicks the toolbar button. On click, still refuse on
+> pages with password fields, card inputs, or mail/bank/intranet URL patterns. Run Readability.js
+> on a DOM clone; send only the extracted title and paragraphs (never raw HTML, comments or form
+> fields) after client-side redaction of emails, phones, Luhn-valid digit runs and
+> Aadhaar/PAN-like patterns. Server side, add the Presidio backstop to the
+> `{url, title, paragraphs}` path of /v1/content. Mount `packages/annotator` on the live page.
+> Auth through the web app's "Connect extension" page using `externally_connectable`, for both
+> anonymous (demo) and Google readers; tokens in memory or `storage.session` only. A popup shows
+> sign-in state, the persona (demo readers), density and a link to the profile page. Add
+> "Install the extension locally" steps to README.md.
 
 **Acceptance**
-- Works on 3 news sites without site-specific code.
-- Does nothing on a Gmail tab, a bank login page and a page with a password field (manual test).
+- Works on 3 news sites without site-specific code, for a demo reader and a Google reader.
+- Does nothing until clicked; on click, refuses on a Gmail tab, a bank login page and a page
+  with a password field (manual test).
 - A test page with an email and a phone number in the article body arrives server-side redacted.
+- `manifest.json` lists no host permissions and no content scripts.
 
 ---
 
 ## M9 — Evaluation, hardening, demo, submission (Oct 15–17)
+
+Oct 15 hardening and evals, plus M2.2 trimmed; Oct 16 demo seeding, README, video and deck;
+Oct 17 submit.
 **Prompt**
 > Build the quality evals per docs/DESIGN.md §12.1 and §12.4: load `evals/gold/*.json` (spans a
 > human marked per persona), compute annotation precision/recall per persona at balanced density,
 > cost per article and per explanation, cache hit rate and p95 latency; write `evals/report.md`.
 > Set Cloud Run max instances 3 and finish rate limits. Switch CI deploy to Workload Identity
-> Federation. Create a Cloud Monitoring dashboard (requests, errors, p95, daily LLM spend). Write
-> `scripts/seed_personas.py` for the two demo accounts, pre-ingest the demo articles, and write
-> README.md covering architecture, setup, how Gemini (and Gemma, if used) is used at each stage,
-> security and privacy measures, and the eval results.
+> Federation. Create a Cloud Monitoring dashboard (requests, errors, p95, daily LLM spend).
+> Re-seed the persona templates (`scripts/seed_personas.py`, built in M4) against the final
+> graph, pre-ingest the demo articles, and refresh README.md (merged in #12) with the eval
+> results. M2.2 trimmed (issue #6): add `jurisdiction` to concepts and use it in `link_confirm`
+> (fix Chancellor → Treasury Secretary), and remove the Russell Indexes / FTSE Russell aliases
+> from S&P Dow Jones Indices with a merge-refusal test for distinct named organisations.
 
 **You do by hand:** label the gold set (30 articles × 2 personas, split with your teammate,
 start this on Oct 12); record the 3-minute video (same article, two personas side by side; the
 verifier catching a bad explanation; the graph page showing learning); build the PDF deck with
 the eval numbers; set Cloud Run min instances to 1 for Oct 19 – Nov 6; submit on Oct 17.
+Load the unpacked extension for the video (Developer mode).

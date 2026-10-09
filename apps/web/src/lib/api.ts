@@ -100,6 +100,19 @@ export class ApiError extends Error {
 
 export type ReaderEventType = "explain_opened" | "knew_this" | "explain_helpful";
 
+/** POST /v1/explain (DESIGN §7): a verified two-part card, or the definition only. */
+export interface ExplanationResponse {
+  id: string;
+  kind: "verified" | "definition";
+  mode: "span" | "paragraph";
+  label: string;
+  definition: string;
+  background: string | null;
+  author_says: string | null;
+  analogy_domain: string | null;
+  cached: boolean;
+}
+
 export interface ReaderEvent {
   id: string;
   type: ReaderEventType;
@@ -166,6 +179,7 @@ export function errorKind(error: unknown): ApiErrorKind {
 
 /** Demo readers carry a persona; signed-in readers are themselves (no persona param). */
 const personaParam = (persona: PersonaKey | null) => (persona ? `&persona=${persona}` : "");
+const personaQuery = (persona: PersonaKey | null) => (persona ? `?persona=${persona}` : "");
 
 export const api = {
   library: (q: string, persona: PersonaKey | null, density: Density, signal?: AbortSignal) =>
@@ -189,6 +203,20 @@ export const api = {
       `/v1/content/${encodeURIComponent(id)}/annotations?density=${density}${personaParam(persona)}${debug ? "&debug=1" : ""}`,
       signal,
     ).then(splitAnnotations),
+  explain: (contentId: string, demandId: string, persona: PersonaKey | null) =>
+    post<ExplanationResponse>(`/v1/explain${personaQuery(persona)}`, {
+      content_id: contentId,
+      demand_id: demandId,
+    }),
+  reportExplanation: (
+    explanationId: string,
+    report: { event_id: string; content_id: string; concept_id: string | null },
+    persona: PersonaKey | null,
+  ) =>
+    post<{ evicted: boolean; event_applied: boolean }>(
+      `/v1/explain/${encodeURIComponent(explanationId)}/report${personaQuery(persona)}`,
+      report,
+    ),
   events: (persona: PersonaKey | null, events: ReaderEvent[]) =>
     post<{ applied: boolean; events_applied: number; events_ignored: number }>("/v1/events", { persona, events }),
   exportMe: async (): Promise<Blob> => {

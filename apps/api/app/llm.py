@@ -35,6 +35,7 @@ SYSTEM_PREAMBLE = (
 
 # Vertex reports an unknown model as a 500 whose message carries the real 501/404.
 _MODEL_NOT_FOUND = re.compile(r"\b501\b|status: 404")
+_GEMINI_3 = re.compile(r"gemini-3")
 # Patched to tenacity.wait_none() in tests.
 retry_wait = wait_exponential(multiplier=0.5, max=4)
 
@@ -94,6 +95,9 @@ class Route:
     primary: str
     fallback: str | None
     timeout_s: float | None = None  # overrides LLM_TIMEOUT_S for this task
+    # Gemini 3 thinking level via LiteLLM's reasoning_effort ("low", "medium", "high"); sent
+    # only to Gemini 3 models (the Gemma fallback rejects it). None = the model's default.
+    reasoning_effort: str | None = None
 
 
 ROUTES: dict[str, Route] = {
@@ -108,7 +112,8 @@ ROUTES: dict[str, Route] = {
     "smoke": Route("model_fast", "model_fallback"),
     "explain": Route("model_quality", "model_fast"),
     # No fallback: if the verifier is down, callers show the definition gloss only.
-    "verify": Route("model_quality", None),
+    # judge_model = MODEL_JUDGE, or MODEL_QUALITY when that is empty.
+    "verify": Route("judge_model", None),
 }
 
 
@@ -218,12 +223,15 @@ async def run_with_meta[T: BaseModel](
         {"role": "user", "content": render(prompt.user, prompt_vars)},
     ]
     chain = _model_chain(route, settings)
+    effort = route.reasoning_effort
     if route.timeout_s:
         settings = settings.model_copy(update={"llm_timeout_s": route.timeout_s})
     ledger = _Ledger()
     for index, model in enumerate(chain):
         try:
-            output = await _run_on_model(model, schema, messages, prompt, settings, store, ledger)
+            output = await _run_on_model(
+                model, schema, messages, prompt, settings, store, ledger, effort
+            )
         except Exception as exc:
             next_model = chain[index + 1] if index + 1 < len(chain) else None
             await _handle_failure(task, model, next_model, exc, store)
@@ -405,11 +413,15 @@ async def _run_on_model[T: BaseModel](
     settings: Settings,
     store: SpendStore,
     ledger: _Ledger,
+    effort: str | None = None,
 ) -> T:
     """One model: call, validate, and on invalid output one repair attempt."""
     native_schema = _supports_schema(model)
     convo = messages if native_schema else _with_inline_schema(messages, schema)
-    content = await _call(model, schema, convo, native_schema, prompt, settings, store, ledger)
+    extra = {"reasoning_effort": effort} if effort and _GEMINI_3.search(model) else {}
+    content = await _call(
+        model, schema, convo, native_schema, prompt, settings, store, ledger, extra
+    )
     try:
         return _validate(schema, content)
     except (ValidationError, ValueError) as err:
@@ -422,7 +434,9 @@ async def _run_on_model[T: BaseModel](
                 "Reply again with only a JSON object that matches the schema.",
             },
         ]
-        content = await _call(model, schema, repair, native_schema, prompt, settings, store, ledger)
+        content = await _call(
+            model, schema, repair, native_schema, prompt, settings, store, ledger, extra
+        )
         return _validate(schema, content)
 
 
@@ -435,8 +449,10 @@ async def _call(
     settings: Settings,
     store: SpendStore,
     ledger: _Ledger,
+    extra: dict[str, Any] | None = None,
 ) -> str | None:
     kwargs: dict[str, Any] = {
+        **(extra or {}),
         "model": model,
         "messages": messages,
         "timeout": settings.llm_timeout_s,

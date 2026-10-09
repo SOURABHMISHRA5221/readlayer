@@ -53,7 +53,8 @@ export function ConceptRail({ items, body, ...link }: ConceptLinkProps & { body:
   }, [items, body]);
 
   return (
-    <aside className="rail" aria-label="Concepts in this article">
+    // An open card is set over this column as a sidenote: the other chips step back.
+    <aside className="rail" aria-label="Concepts in this article" data-card-open={link.active !== null}>
       <p className="rail__head eyebrow">{plural(items.length, "concept")} for you</p>
       <ul className="rail__list" ref={listRef}>
         {items.map((a, i) => (
