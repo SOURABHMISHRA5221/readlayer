@@ -294,3 +294,6 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   held-out demand set committed before any model run; held-out report committed under evals/;
   Concept.kind stored; Chancellor of the Exchequer and FTSE Russell added by override.
 - Checkpoint: end of day Oct 11 IST, unfinished parts go to Sourabh as a cut question.
+- Sourabh (decision 35): growth applies to demo readers too, within the existing caps; persona
+  graphs untouched. Plan §C.1 amended (reverses round-1 item 6), live check now runs as an
+  anonymous demo reader pasting a link (no operator script). Amendment sent to plan-reviewer.
