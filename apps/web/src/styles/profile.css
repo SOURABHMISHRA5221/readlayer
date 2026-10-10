@@ -222,7 +222,9 @@
 .data__row { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); align-items: center; }
 .data__row .btn { min-height: 44px; }
 .data__confirm { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; font: 400 var(--text-ui) var(--font-ui); }
-.btn--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--hairline)); }
+/* Outlined here; account.css's global .btn--danger is filled, so reset its background
+   (otherwise the label is danger-on-danger and invisible). */
+.btn--danger { color: var(--danger); background: transparent; border-color: color-mix(in srgb, var(--danger) 40%, var(--hairline)); }
 .btn--danger:hover { background: color-mix(in srgb, var(--danger) 8%, transparent); color: var(--danger); }
 
 @media (max-width: 639px) {
