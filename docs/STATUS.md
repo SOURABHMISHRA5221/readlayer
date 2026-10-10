@@ -1,6 +1,6 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-11 (IST): M7.5 built and accepted on the harness (§17), milestone review
+Last updated: 2026-10-10 (IST): M7.5 built and accepted on the harness (§17), milestone review
 fixes applied; next PR, merge, deploy and live checks, then the Design pass (decisions 39, 40).
 M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`

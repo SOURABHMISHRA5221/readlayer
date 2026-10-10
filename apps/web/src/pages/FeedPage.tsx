@@ -110,7 +110,7 @@ function FeedBody({ feed, persona, attempt }: { feed: FeedResponse; persona: Per
       {note && <p className="feed__note">{note}</p>}
       {waiting && <p className="feed__note" role="status">{waiting}</p>}
       <p className="visually-hidden" aria-live="polite">{announce}</p>
-      {!feed.items.length && !feed.pending && (
+      {!shown.length && !feed.pending && (
         <p className="feed__note">
           {feed.snapshot ? "This demo feed isn't ready yet. Sign in with Google for a live feed." : "Fresh picks arrive tomorrow."}
         </p>
