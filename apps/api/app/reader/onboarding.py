@@ -13,6 +13,7 @@ from typing import Literal
 
 from app.graph.graph import ConceptGraph
 from app.graph.models import DOMAINS, Concept
+from app.graph.taxonomy import BUSINESS_DOMAINS
 from app.ingest.models import ContentDoc
 from app.reader import model
 from app.reader.model import Edge
@@ -39,6 +40,9 @@ LIKED_MAX_CONCEPTS = 15
 
 CALIBRATION_ITEMS = 8
 POOL_SIZE = 150  # the most frequent concepts per domain: terms a news reader meets
+# A domain needs this many concepts before calibration offers it (glossary-seeded domains
+# qualify; a domain that only has a few grown concepts doesn't). M2.2.
+CALIBRATION_MIN_CONCEPTS = 30
 # DESIGN §4: calibration answers are ±3.0. "heard" (knows the word, not the idea) is −1.5 and an
 # Elo outcome of 0.5 (M7 rules, recorded in DESIGN §4).
 ANSWER_WEIGHT: Mapping[Answer, float] = {"explain": 3.0, "heard": -1.5, "none": -3.0}
@@ -72,8 +76,21 @@ def liked_concepts(docs: Sequence[ContentDoc]) -> list[str]:
 
 
 def calibration_pool(graph: ConceptGraph, domain: str) -> list[Concept]:
+    """Most frequent first; glossary seeds and grown concepts (doc_freq 0) offer their most basic
+    concepts first, since base_difficulty includes how common the word is."""
     in_domain = [c for c in graph.concepts if c.domain == domain]
-    return sorted(in_domain, key=lambda c: (-c.doc_freq, c.id))[:POOL_SIZE]
+    return sorted(in_domain, key=lambda c: (-c.doc_freq, c.base_difficulty, c.id))[:POOL_SIZE]
+
+
+def calibration_domains(graph: ConceptGraph, interest_domains: Iterable[str]) -> list[str]:
+    """The reader's interests that have enough concepts, in taxonomy order; if none qualifies,
+    the four business domains (the graph's original core)."""
+    counts: dict[str, int] = {}
+    for c in graph.concepts:
+        counts[c.domain] = counts.get(c.domain, 0) + 1
+    picked = set(interest_domains)
+    ready = [d for d in DOMAINS if d in picked and counts.get(d, 0) >= CALIBRATION_MIN_CONCEPTS]
+    return ready or list(BUSINESS_DOMAINS)
 
 
 def next_item(
@@ -83,11 +100,12 @@ def next_item(
     asked: Sequence[str],
 ) -> Concept | None:
     """The next calibration concept, or None when all 8 are asked. Round-robin over the reader's
-    interest domains (all four if none); within a domain the concept whose difficulty is closest
-    to the reader's θ there, never one already asked. Deterministic (ties by id)."""
+    interest domains that have enough concepts (else the four business domains); within a domain
+    the concept whose difficulty is closest to the reader's θ there, never one already asked.
+    Deterministic (ties by id)."""
     if len(asked) >= CALIBRATION_ITEMS:
         return None
-    domains = [d for d in DOMAINS if d in set(interest_domains)] or list(DOMAINS)
+    domains = calibration_domains(graph, interest_domains)
     done = set(asked)
     start = len(asked) % len(domains)
     for offset in range(len(domains)):

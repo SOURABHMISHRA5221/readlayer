@@ -15,7 +15,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.graph.graph import ConceptGraph
-from app.graph.models import Concept, Domain
+from app.graph.models import DOMAINS, Concept, Domain
 from app.reader import model
 from app.reader.model import Edge
 from app.reader.onboarding import LEVEL_THETA, Level
@@ -96,7 +96,8 @@ class FlatOp(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     op: OpName
-    domain: Literal["", "economics", "finance", "business", "policy"] = ""
+    # One flat enum ("" or a taxonomy domain): Vertex rejects anyOf unions in this schema.
+    domain: Literal[("", *DOMAINS)] = ""  # type: ignore[valid-type]
     level: Literal["", "new", "some", "comfortable", "expert"] = ""
     names: list[Name] = Field(default_factory=list, max_length=MAX_NAMES_PER_OP)
     state: Literal["", "known", "unknown"] = ""

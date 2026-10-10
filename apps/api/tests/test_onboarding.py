@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from app.content import router as read_router
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph, set_graph
-from app.graph.models import Concept, ConceptGraphFile
+from app.graph.models import DOMAINS, Concept, ConceptGraphFile
 from app.ingest.models import StoredParagraph
 from app.main import app
 from app.reader import model, onboarding
@@ -37,6 +37,12 @@ CONCEPTS = [
     for i in range(10)
 ]
 GRAPH = ConceptGraph(ConceptGraphFile(version="t", concepts=CONCEPTS))
+
+
+@pytest.fixture(autouse=True)
+def small_domains_qualify(monkeypatch):
+    """GRAPH has 10 concepts per domain; the real bar (30) is tested on its own below."""
+    monkeypatch.setattr(onboarding, "CALIBRATION_MIN_CONCEPTS", 10)
 
 
 @pytest.fixture
@@ -83,7 +89,7 @@ def test_starting_theta_and_interests_follow_the_answers():
         "finance": -1.5, "policy": 1.5,
     }  # fmt: skip
     got = onboarding.interests(["finance"])
-    assert got["finance"] == 1.0 and got["policy"] == 0.3 and len(got) == 4
+    assert got["finance"] == 1.0 and got["policy"] == 0.3 and len(got) == len(DOMAINS) == 14
 
 
 def test_calibration_picks_round_robin_closest_to_theta_and_never_repeats():
@@ -102,6 +108,29 @@ def test_calibration_picks_round_robin_closest_to_theta_and_never_repeats():
     assert onboarding.next_item(GRAPH, ["finance"], theta, asked) is None  # 8 asked: done
     again = onboarding.next_item(GRAPH, ["economics", "finance"], theta, [])
     assert again is not None and again.id == "c_economics_6"  # deterministic
+
+
+def test_calibration_offers_only_interests_with_enough_concepts(monkeypatch):
+    monkeypatch.setattr(onboarding, "CALIBRATION_MIN_CONCEPTS", 30)
+    health = [concept(f"c_health_{i}", "health", round(-2 + i * 0.1, 2), 0) for i in range(30)]
+    sports = [concept(f"c_sports_{i}", "sports", 0.0, 0) for i in range(29)]  # one short
+    graph = ConceptGraph(ConceptGraphFile(version="t", concepts=CONCEPTS + health + sports))
+    assert onboarding.calibration_domains(graph, ["sports", "health"]) == ["health"]
+    item = onboarding.next_item(graph, ["sports", "health"], {}, [])
+    assert item is not None and item.domain == "health"
+    # nothing qualifies → the four business domains (here they have 10 each, so none is "ready",
+    # but they are the fallback list; their pools still offer concepts)
+    assert onboarding.calibration_domains(graph, ["sports"]) == [
+        "economics", "finance", "business", "policy",
+    ]  # fmt: skip
+
+
+def test_seeded_domain_pool_offers_its_most_basic_concepts_first():
+    seeds = [concept(f"c_sci_{i}", "science", b, 0) for i, b in enumerate([1.5, -1.0, 0.2])]
+    graph = ConceptGraph(ConceptGraphFile(version="t", concepts=seeds))
+    assert [c.id for c in onboarding.calibration_pool(graph, "science")] == [
+        "c_sci_1", "c_sci_2", "c_sci_0",
+    ]  # fmt: skip
 
 
 def test_answers_move_the_concept_and_theta_with_onboarding_strength():
@@ -236,4 +265,4 @@ def test_the_summary_names_only_domains_the_reader_rated_or_reads_in(env):
     profile = g.get("/v1/me/profile").json()
     assert profile["summary"]["text"].startswith("New to finance.")
     rated = {d["domain"]: d["rated"] for d in profile["domains"]}
-    assert rated == {"economics": False, "finance": True, "business": False, "policy": False}
+    assert rated == {d: d == "finance" for d in DOMAINS}

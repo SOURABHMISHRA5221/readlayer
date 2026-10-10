@@ -185,3 +185,47 @@ async def test_load_graph_rejects_cycles(tmp_path):
     path.write_text(f.model_dump_json())
     with pytest.raises(ValueError, match="cycles"):
         await load_graph(str(path))
+
+
+# ---------------------------------------------------------------- taxonomy (M2.2, decision 33)
+
+
+def test_taxonomy_is_the_only_domain_list_and_web_mirrors_it():
+    import re
+    from pathlib import Path
+
+    from app.graph.models import DOMAINS
+    from app.graph.taxonomy import BUSINESS_DOMAINS, DOMAIN_IDS
+
+    assert DOMAINS == DOMAIN_IDS and len(DOMAINS) == 14
+    assert BUSINESS_DOMAINS == ("economics", "finance", "business", "policy")
+    web = Path(__file__).parents[2] / "web" / "src" / "lib" / "taxonomy.ts"
+    block = re.search(r"DOMAINS = \[(.*?)\] as const", web.read_text(), re.S)
+    assert block, "taxonomy.ts must declare DOMAINS"
+    assert tuple(re.findall(r'"([a-z]+)"', block.group(1))) == DOMAIN_IDS
+    # no other hard-coded domain list in the web app or API
+    roots = [Path(__file__).parents[1] / "app", Path(__file__).parents[2] / "web" / "src"]
+    four = re.compile(r'"economics",\s*"finance",\s*"business",\s*"policy"\s*[\])]')
+    offenders = [
+        str(p)
+        for root in roots
+        for p in root.rglob("*")
+        if p.suffix in {".py", ".ts", ".tsx"}
+        and four.search(p.read_text(encoding="utf-8"))
+        and p.name not in {"taxonomy.py", "taxonomy.ts", "models.py"}
+    ]
+    assert offenders == []
+
+
+def test_a_pre_m2_2_graph_file_with_four_domains_still_loads():
+    from app.graph.graph import ConceptGraph
+    from app.graph.models import ConceptGraphFile
+
+    old = (
+        '{"version": "2026-10-04", "domains": ["economics", "finance", "business", "policy"], '
+        '"concepts": [{"id": "c_repo_rate", "label": "Repo rate", "domain": "economics", '
+        '"definition": "d", "base_difficulty": 0.4, "embedding": [1.0, 0.0]}]}'
+    )
+    graph = ConceptGraph(ConceptGraphFile.model_validate_json(old))
+    c = graph.get("c_repo_rate")
+    assert c is not None and c.kind is None and c.jurisdiction == "global"
