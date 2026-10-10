@@ -34,7 +34,7 @@ export interface Onboarding {
 export interface Profile {
   summary: { text: string; top_domain: string | null; moved_up_this_week: number; learning_paused: boolean };
   /** `rated`: the reader rated, reads in, or has concepts in this domain. */
-  domains: { domain: Domain; theta: number; interest: number; rated: boolean }[];
+  domains: { domain: Domain; theta: number; interest: number; rated: boolean; concepts: number }[];
   thinks_in: Frame[];
   week: {
     moved_up: { concept_id: string; label: string; from: Band; to: Band }[];

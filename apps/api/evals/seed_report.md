@@ -64,3 +64,28 @@
 - **Low comedy** (culture, idea, global): A form of comedic performance that relies on physical slapstick, crude humor, and exaggerated situations rather than subtle wit. Prerequisites: Humor.
 - **Street football** (sports, idea, global): Informal variations of football played in streets, courtyards, or other non-traditional spaces. Prerequisites: none.
 - **Capital cost** (business, jargon, global): The total upfront financial expenditure required to acquire physical assets such as land, buildings, and machinery for a business. Prerequisites: Capital expenditures, Capital asset.
+
+## Production writes (dry run of the re-link and the demo diff)
+
+Seeded graph sha256 0cc0554780aec275; 313 stored content docs re-linked in memory (link_confirm on MODEL_QUALITY, 0 fallback batches); new spend $0.525.
+
+| scope | docs whose links change | demands whose link changes |
+|---|---|---|
+| all | 49 | 71 |
+| without held-out | 42 | 62 |
+
+Demo articles × personas (deterministic annotate, balanced density, no LLM):
+
+| article | persona | spans before | after | added | removed |
+|---|---|---|---|---|---|
+| 23324188 | newcomer | 11 | 11 | – | – |
+| 23324188 | trader | 8 | 8 | – | – |
+| 23324188 | policy_student | 11 | 11 | – | – |
+| 99a2cb53 | newcomer | 10 | 10 | – | – |
+| 99a2cb53 | trader | 4 | 4 | – | – |
+| 99a2cb53 | policy_student | 8 | 8 | – | – |
+| 1bff839e | newcomer | 2 | 2 | – | – |
+| 1bff839e | trader | 2 | 2 | – | – |
+| 1bff839e | policy_student | 2 | 2 | – | – |
+
+New demo spans to warm with warm_demo: 0 (≈ $0.00, one Background each; restatements are shared and mostly cached).

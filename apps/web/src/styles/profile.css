@@ -68,6 +68,15 @@
 .bars__bar { height: 6px; border-radius: var(--radius-pill); background: var(--hairline); overflow: hidden; }
 .bars__fill { display: block; height: 100%; border-radius: inherit; transition: width var(--dur-slow) var(--ease); }
 .bars__fill--ability { background: var(--accent); }
+/* M2.2: the other taxonomy domains, folded away so the 14 don't swamp the page. */
+.bars__more { margin-top: var(--s4); }
+.bars__more > summary {
+  display: flex; align-items: center; min-height: 44px; cursor: pointer;
+  font: 500 var(--text-ui-sm) / 1.4 var(--font-ui); color: var(--ink-soft);
+}
+.bars__more > summary:hover { color: var(--ink); }
+.bars__more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.bars__more[open] > summary { margin-bottom: var(--s4); }
 .bars__fill--interest { background: color-mix(in srgb, var(--accent) 40%, var(--hairline)); }
 .bars__value { font: 400 var(--text-ui-sm) var(--font-ui); color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 

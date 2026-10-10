@@ -5,6 +5,7 @@ paused). GET/PATCH /v1/me/graph, GET /v1/me/profile and PATCH /v1/me/settings re
 the model; GET /v1/me/export and DELETE /v1/me are the data rights. No LLM call on any of these.
 """
 
+from collections import Counter
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
@@ -270,6 +271,7 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
         if d in user.onboarding.get("comfort", {}) or abs(theta[d]) > 1e-9 or d in edge_domains
     }  # fmt: skip
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
+    in_graph = Counter(c.domain for c in graph.concepts)  # the map offers domains with concepts
     # A demo reader's frame is the persona's, the one explanations use (not users/{uid}).
     frames = (
         list(ctx.state.thinks_in or [PERSONA_THINKS_IN[ctx.persona]])
@@ -290,6 +292,7 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
                 "rated": d in rated,
                 "interest": domains[d].interest if d in domains else 0.0,
                 "thinks_in": domains[d].thinks_in if d in domains else 0.0,
+                "concepts": in_graph[d],
             }
             for d in DOMAINS
         ],

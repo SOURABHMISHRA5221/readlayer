@@ -13,6 +13,7 @@ import { signOutUser, useIsDemo } from "../lib/auth";
 import { domainLabel } from "../lib/format";
 import { personaOf, personaParam, readerPersona } from "../lib/personas";
 import { FRAMES, profileApi, type Domain, type Frame, type Profile } from "../lib/profileApi";
+import { BUSINESS_DOMAINS } from "../lib/taxonomy";
 import { thetaPercent, thetaText, thetaWord } from "../lib/profileFormat";
 import { navigate, withParams } from "../lib/router";
 import "../styles/profile.css";
@@ -90,7 +91,7 @@ export default function ProfilePage({ url }: { url: URL }) {
             <DomainBars profile={profile} />
             <KnowledgeMap
               persona={persona}
-              domains={profile.domains.map((d) => d.domain)}
+              domains={profile.domains.filter((d) => d.concepts > 0).map((d) => d.domain)}
               initial={(profile.summary.top_domain as Domain) ?? "finance"}
               refreshKey={version}
               onChanged={refresh}
@@ -107,14 +108,40 @@ export default function ProfilePage({ url }: { url: URL }) {
   );
 }
 
+
+type DomainRow = Profile["domains"][number];
+
+/** Rated domains and the reader's chosen interests come first; with neither, the four core
+ *  domains. The rest of the 14 sit behind "Other domains" so the page stays short. */
+function splitDomains(rows: DomainRow[]): [DomainRow[], DomainRow[]] {
+  const mine = rows.filter((d) => d.rated || d.interest >= 0.5);
+  const primary = mine.length ? mine : rows.filter((d) => BUSINESS_DOMAINS.includes(d.domain));
+  return [primary, rows.filter((d) => !primary.includes(d))];
+}
+
 function DomainBars({ profile }: { profile: Profile }) {
+  const [primary, rest] = splitDomains(profile.domains);
   return (
     <section className="bars" aria-labelledby="bars-title">
       <h2 id="bars-title" className="profile__h2">
         Ability and interest
       </h2>
+      <DomainList rows={primary} />
+      {rest.length > 0 && (
+        <details className="bars__more">
+          <summary>Other domains ({rest.length})</summary>
+          <DomainList rows={rest} />
+        </details>
+      )}
+      <p className="profile__note">Ability is on a scale from −2 (new to it) to +2 (advanced).</p>
+    </section>
+  );
+}
+
+function DomainList({ rows }: { rows: DomainRow[] }) {
+  return (
       <ul className="bars__list">
-        {profile.domains.map((d) => (
+        {rows.map((d) => (
           <li key={d.domain} className="bars__row">
             <span className="bars__domain">{domainLabel(d.domain)}</span>
             <span className="bars__pair">
@@ -134,8 +161,6 @@ function DomainBars({ profile }: { profile: Profile }) {
           </li>
         ))}
       </ul>
-      <p className="profile__note">Ability is on a scale from −2 (new to it) to +2 (advanced).</p>
-    </section>
   );
 }
 

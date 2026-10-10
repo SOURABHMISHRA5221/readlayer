@@ -18,3 +18,6 @@ export const DOMAINS = [
 ] as const;
 
 export type Domain = (typeof DOMAINS)[number];
+
+/** The graph's original core (the first four), shown when a reader has rated nothing. */
+export const BUSINESS_DOMAINS: readonly Domain[] = DOMAINS.slice(0, 4);
