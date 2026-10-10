@@ -18,14 +18,13 @@ M0–M4 and the M6 slice are merged and live. The rest:
 |---|---|
 | Oct 10 | **M5** explanations, verifier, safety evals |
 | Oct 11 | **Rest of M6**: show paragraph markers, the pre-read card and "Know this?" prompts; two-phase "Open here"; complete event batching |
-| Oct 12–13 | **M7 trimmed**: profile page (summary, domain bars, list view, corrections); Google onboarding with consent and calibration. Knowledge-map graph and edit-by-prompt optional |
+| Oct 12–13 | **M7**: profile page (summary, domain bars, knowledge-map graph and list view, corrections); Google onboarding with consent and calibration; edit-by-prompt. All required (decision 27) |
 | Oct 14 | **M8-local**: unpacked Chrome extension (Developer mode), activeTab only |
 | Oct 15 | **M9** hardening and evals, plus **M2.2 trimmed** (jurisdiction fix, Russell mislink) |
 | Oct 16 | Demo seeding, README refresh, video, deck |
 | Oct 17 | **Submit** |
 
-**Cut order if late** (first cut first): edit-by-prompt → knowledge-map graph → M2.2 online
-growth (already deferred) → extension popup extras (persona, density, profile link).
+**If late:** stop and ask Sourabh what to cut (decision 27); nothing is cut automatically.
 
 **Post-hackathon:** Chrome Web Store release of the extension; M2.2 online concept growth and
 the 30-article held-out set (issue #6).
@@ -226,13 +225,12 @@ approve the Secret Manager and deploy commands when asked.
 
 ---
 
-## M7 — Onboarding, consent, calibration, reading profile page (Oct 12–13, trimmed)
-**Trimmed scope (re-plan 2026-10-10).** Required: the profile page with the summary card,
-ability vs interest bars per domain, the keyboard-navigable list view of the reader's concepts
-with "I know this" / "I don't" corrections, editable THINKS_IN, Export / Delete / Pause; Google
-onboarding with the consent screen and calibration. Optional, and first to cut: the Cytoscape
-knowledge-map graph, then edit-by-prompt (§15.3). Acceptance items for optional parts apply only
-if they ship.
+## M7 — Onboarding, consent, calibration, reading profile page (Oct 12–13)
+**Scope (decided 2026-10-10, decision 27): everything below is required.** The profile page with
+the summary card, ability vs interest bars per domain, the Cytoscape knowledge-map graph with its
+keyboard-navigable list view of the reader's concepts and "I know this" / "I don't" corrections,
+editable THINKS_IN, Export / Delete / Pause; Google onboarding with the consent screen and
+calibration; and edit-by-prompt (§15.3). Nothing is cut without asking Sourabh first.
 
 **Prompt**
 > Implement /v1/onboarding and /v1/calibration/next|answer per docs/DESIGN.md sections 4 and 8.

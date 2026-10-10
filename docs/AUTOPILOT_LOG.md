@@ -141,3 +141,29 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Open for Sourabh: (a) one more new URL to measure the warm live "Open here" time (a production
   write beyond the plan's count); (b) delete the 8 orphaned docs from his 12:28 session now, or
   leave them for the M9 cleanup.
+
+---
+
+## M7
+
+### Plan
+- 2026-10-10: BUILD_PLAN.md M7 section updated at Sourabh's request (knowledge map and
+  edit-by-prompt required; "first to cut" line and the automatic cut order removed). Committed
+  with the plan.
+- Plan drafted: `docs/plans/M7.md` (consent, onboarding, calibration, profile page with Cytoscape
+  map and list view, edit-by-prompt, emulator-based local e2e harness).
+- Calls made where the docs don't settle it (flagged for Sourabh, plan proceeds unless he says
+  otherwise): (1) edit-by-prompt is for Google readers only; demo personas see it disabled;
+  (2) onboarding's "liked links" are picked from the library instead of pasted URLs (no ingest,
+  no cost, no SSRF surface at sign-up).
+- plan-reviewer round 1: **REVISE**, 11 items (budget guard under the emulator, emulator env
+  refused on Cloud Run + seed script can't write production, name cap 30 and ≤ 3 link_confirm
+  batches, demo variant for edit-by-prompt is Sourabh's call before step C, persona frames on the
+  demo profile, consent gate in the API, new rules and deviations recorded, live Google acceptance
+  as a named step, React.lazy routes + cytoscape in dependencies, no reader-typed strings stored,
+  eval before/after in report.md). All applied, plus 2 nits.
+- plan-reviewer round 2: **APPROVE**; 3 optional nits applied (rec_signals under the consent gate
+  and export/delete always open; edit box follows the variant; demo undo skips dropped edges).
+- Asked Sourabh: edit-by-prompt for demo readers (variant B) or Google only (A); one more live URL
+  for a warm "Open here" measurement; delete the 8 orphan docs now or leave for M9. Work proceeds
+  on A, B, D, E, G meanwhile; C waits for the answer.
