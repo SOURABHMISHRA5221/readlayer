@@ -83,3 +83,24 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   local testing.
 - Automation note: the Claude-in-Chrome tab reports `visibilityState: hidden`, so
   IntersectionObserver never fires there; dwell and timing checks ran in headless Chrome over CDP.
+- D (shared restatement): `restate` (restate-v1) + `explain` (explain-v4, Background only) +
+  `verify` (verify-v2, claims) + `verify_background` (verify-background-v1); two cache entries per
+  card (restatement by span+style, shared; Background by span+band+frame+style); parts run in
+  parallel; a request counts once against the explain caps; past the cap a shared restatement
+  still shows; "This is wrong" evicts both parts. Deviation from the plan: the Background judge
+  is a separate prompt and route (`verify_background`) rather than a second verdict in
+  `verify.md`; `verify` still bumped (v2, claims only).
+- Eval integrity: 5-case Background suite + runner change committed (fd30bba) before the run.
+  Run `explain-v4-split`: adversarial 15/15 (judge 15, was 14), good 25/25, Background 5/5,
+  pipeline 24/1/0, injection 10/10; $0.0090 per card from scratch (was $0.0070), p50 9.6 s (was
+  14.9 s), p95 31.4 s (was 21.8 s). Eval spend $0.46.
+- Acceptance 4 (local): newcomer then trader on RoDTEP: 3 restatements for 3 distinct spans,
+  4 Backgrounds; "RoDTEP rates" restatement made once and reused by the trader. PASS.
+- CLAUDE.md: split cache keys and the autopilot working agreement (pre-approved).
+- Cleanup and an incident: test sessions deleted via DELETE /v1/me (headless b64c5fd4… 204).
+  The automation-tab session (115f6c76…) had already been ended at 06:42:49 UTC, not by me. At
+  06:58 UTC a different anonymous session (47fc3fc4…) used that visible tab (library → "Nifty 50
+  correction" → 3 explanations); I deleted it at 07:02:41 believing it was my test session. It was
+  an anonymous demo session I did not create (events, counters and its anonymous Auth user);
+  shared content untouched. Reported to Sourabh. Rule for the rest of the run: only delete
+  sessions whose uid_hash I created in the same step, verified against the log first.

@@ -1,7 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): M5 deployed and verified live (§13), PR #13. Previous: M4 (#11),
-README and MIT license (#12), schedule re-planned (§9, decisions 20–22).
+Last updated: 2026-10-10 (IST): rest of M6 built and verified locally (§14); autopilot run log in
+`docs/AUTOPILOT_LOG.md`. Previous: M5 deployed and verified live (§13), PR #13.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -27,8 +27,9 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
 | M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
 | docs | merged (squash) | #12 | README with live screenshots, persona GIF, diagrams; MIT license |
-| M5 | PR #13 (squash-merged when CI is green) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
-| Rest of M6, M7 (trimmed), M8-local, M9 (+ M2.2 trimmed) | not started | — | See "Next actions" (re-planned 2026-10-10) |
+| M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
+| Rest of M6 | branch `m6-rest` | — | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement. See §14 |
+| M7, M8-local, M2.2 (trimmed), M9 | not started | — | Autopilot order (2026-10-10): M7 with knowledge map and edit-by-prompt required, M8-local, M2.2, M9 |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
 1. `e7c131c` M6 local vertical slice: `DEV_AUTH_BYPASS` (refuses to start on Cloud Run / ENV=prod),
@@ -56,7 +57,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M5 build**: revision `readlayer-api-00010-9tr`, https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
 | `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M5 build** (bundle `index-uEFIQ12G.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
-| `packages/annotator` | Bundled into the web app (and the extension in M8-local) | M5: two-part explanation card (sidenote ≥1200px, popover, sheet); no paragraph markers / pre-read yet |
+| `packages/annotator` | Bundled into the web app (and the extension in M8-local) | 0.4.0 (M6): two-part card, paragraph markers, "Know this?" chip, pre-read, reading signals |
 | `apps/extension` | — | MV3 scaffold only (M8-local: unpacked, activeTab only, Oct 14) |
 | Vertex AI (Gemini, Gemma MaaS, embeddings) | `global` endpoint, project `readlayer-sourabh-26` | Live, via ADC locally |
 | Firestore (Native) | asia-south1 | Live |
@@ -72,16 +73,20 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 |---|---|---|---|
 | extract_demands, link_merge, concept_define, concept_prereqs, concept_wikidata, smoke | MODEL_FAST `vertex_ai/gemini-3.5-flash-lite` | MODEL_FALLBACK `vertex_ai/google/gemma-4-26b-a4b-it-maas` | |
 | link_confirm | MODEL_QUALITY `vertex_ai/gemini-3.8-flash` | MODEL_FAST | 45 s timeout, batches of 10 |
-| explain | MODEL_QUALITY | MODEL_FAST | M5: two-part card, regenerate once with reasons |
-| verify | MODEL_JUDGE (empty = MODEL_QUALITY) | none | M5: faithfulness judge; outage → definition card, nothing cached |
+| restate | MODEL_QUALITY | MODEL_FAST | M6: "What the author is saying", once per (span, style), shared |
+| explain | MODEL_QUALITY | MODEL_FAST | M6: Background only, per reader; regenerate once with reasons |
+| verify | MODEL_JUDGE (empty = MODEL_QUALITY) | none | claims judge for the restatement; outage → definition card, nothing cached |
+| verify_background | MODEL_JUDGE (empty = MODEL_QUALITY) | none | M6: Background judge (contradiction, article claims) |
 | embed | MODEL_EMBED `vertex_ai/gemini-embedding-001`, 256 dims | none | |
 
 No LLM call on the annotations, library or recommendations paths. POST /v1/explain (M5) is the
 only reader-facing path that may call a model, and only on a cache miss within the daily caps.
-"Open here" runs the normal ingestion pipeline (extract_demands + linking).
+"Open here" runs the normal ingestion pipeline in two requests (M6): phase 1 fetch + extract
+(no LLM), phase 2 extract_demands + linking (POST /v1/content/{id}/analyse).
 
 **Firestore collections in use:** `contents/{url_hash}` (shared demand profiles),
-`explanations/{key}` (verified cards, M5), `explanation_reports/{id}` (review queue, no user id),
+`pending_contents/{url_hash}` (fetched, not yet analysed; no user data; 24 h TTL, M6),
+`explanations/{key}` (two entries per card since M6: shared restatement, per-reader Background), `explanation_reports/{id}` (review queue, no user id),
 `ops/explain/days/{date}` (hits, generated, outcomes, shared anonymous generation count),
 `ops/spend/days/{date}` (LLM ledger), `ops/search/days/{date}` (search-call ledger, now with an
 `anonymous` counter), `ops/ingest/days/{date}` (shared anonymous ingest count),
@@ -96,10 +101,10 @@ only reader-facing path that may call a model, and only on a cache miss within t
 
 | Item | Value |
 |---|---|
-| Content docs in Firestore | 309 total |
+| Content docs in Firestore | 310 total (309 + 1 M6 local test; 311 after the live check) |
 | Corpus (in `data/corpus_urls.txt`) | 290 |
 | Held-out (in `data/heldout_urls.txt`) | 15, never used to build the graph |
-| `user_ingested` ("Open here" testing) | 2: chain.link "Singleness of money", ECB macroprudential explainer |
+| `user_ingested` ("Open here" testing) | 3: chain.link "Singleness of money", ECB macroprudential explainer, Wikipedia "Yield curve control" (M6 local test) |
 | Other | 2 M1 acceptance URLs (BusinessLine RoDTEP, JGU PLI evaluation), source `fetch`, in neither list |
 | Publisher metadata backfilled | 306/306 dates, 273 authors, 236 standfirsts, 271 images (before the 3 docs added later) |
 | Concept graph | version `2026-10-04` (+ `doc_freq` on 3,325 concepts, uploaded 2026-10-05), 3,327 concepts (finance 1,279, economics 1,064, policy 557, business 427), 4,053 prerequisite edges, 680 Wikidata ids, acyclic |
@@ -117,8 +122,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 |---|---|---|
 | `link_confirm` runs on MODEL_QUALITY, not MODEL_FAST (CLAUDE.md prefers FAST) | FAST measured 89% precision, QUALITY 97% against the 95% target (M2). Recorded in CLAUDE.md and DESIGN §2/§10 | Keep |
 | Spans only for graph-linked demands (the paragraph noisy-OR does count unlinked terms and context references) | The card needs a label and definition until explanations exist | M5 |
-| Paragraph markers, the pre-read path and the "Know this?" prompt are computed and returned, not shown | Display is part of the rest of M6 | M6 rest |
-| `annotation_dismissed` (threshold_offset +0.02) is accepted by the API but no client emits it; `slowdown` (−0.02) isn't computed | Needs the card's dismiss action and dwell medians | M6 rest |
+| `slowdown` (−0.02 on an unannotated paragraph) isn't computed | Needs dwell medians per reader; `annotation_dismissed` and paragraph-only `text_searched` are emitted since M6 | Post-hackathon unless M9 has room |
 | Personas only for **anonymous** (demo) readers, via `?persona=` (default newcomer). Each (uid, persona) learns separately in `demo_graphs/{persona}` (θ too, now). Signed-in readers start neutral (θ = 0, no edges) until M7 onboarding | Decision 15 | M7 onboarding for Google readers |
 | Per-minute rate limits are in memory per instance (≤ 3× a limit in the worst case); daily caps are in Firestore | Cheap; money-protecting caps are exact | Keep |
 | A deleted account's still-valid ID token (≤ 1 h) is refused only on the instance that ran the delete | No per-request revocation check (an extra Auth call per request) | M9 if needed |
@@ -128,7 +132,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Recommendations (M6.5), GET content routes, `/v1/recs/*` and publisher metadata were built ahead of the spec | Needed for the slice | Now documented: DESIGN §3, §4, §8, §16 (decision 9) |
 | Publisher lead images are hotlinked with `referrerpolicy=no-referrer`, typographic tile on error | Fast demo; no image proxy | Keep (decision 3) |
 | Content `source` adds `user_ingested`; build and held-out scripts exclude it | Reader-opened pages must never become corpus or held-out data | Keep |
-| Card events (explain_opened, knew_this, explain_helpful) go to POST /v1/events (5 s batches + on hide); report_wrong goes through POST /v1/explain/{id}/report; paragraph_dwell / text_searched not emitted yet | Rest of M6 (dwell, text search) | M6 rest |
+| report_wrong goes through POST /v1/explain/{id}/report, not the event batch | It must evict the cache entries in the same call | Keep |
 | Annotation response carries `definition`, `domain`, `prerequisites`, `debug` beyond the §8 shape | Kept in M5: the card shows them instantly and falls back to the definition (now in DESIGN §8) | Keep |
 
 | Extension (M8-local) is unpacked, activeTab only: no allowlisted-domain activation, no host permissions, no automatic injection; not on the Web Store | Re-plan 2026-10-10 (decision 21): smallest permission set, no store review in the time left. DESIGN §11.3's allowlist activation is not built | Web Store release post-hackathon |
@@ -136,7 +140,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Explanation prefetch (top 3 spans) runs in the web client after annotations load, not on the server | Keeps the annotations route LLM-free (CLAUDE.md); Cloud Run throttles CPU after a response, so server background prefetch is unreliable | Keep (DESIGN §7) |
 | Verifier hedge/attribution/negation checks are scoped to the span's sentence in span mode, not the whole paragraph | A hedge elsewhere in the paragraph says nothing about the restated sentence; paragraph mode checks the whole paragraph | Keep (DESIGN §7) |
 | A definition-only outcome after two rejected drafts is cached (no generated text) | Otherwise every hover on a hard span re-spends two generations; judge outages and the budget guard are not cached | Keep (DESIGN §7) |
-| Paragraph explainers exist in the API (POST /v1/explain with `paragraph_id`) and the evals, but the margin marker that opens them isn't shown yet | Planning decision 2026-10-10: marker UI stays in the rest of M6 | M6 rest |
+| The plan's 400 KB extracted-text refusal (two-phase ingest) was not added | `clean_paragraphs` already truncates at 150,000 characters, which is tighter | Keep |
+| The Background judge is its own prompt and route (`verify_background`), not a second verdict inside `verify.md` | Each part is verified on its own, and a Background check never re-judges a shared restatement | Keep (DESIGN §7, §10) |
 | `explanation_reports` (review queue) stores the evicted entry with no user identifier, so it is outside export/delete; the report_wrong event itself is in `users/{uid}/events` | Shared content, not user data | Keep |
 ---
 
@@ -147,7 +152,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
-| Medium | "Open here" takes 24–55 s for a new article (fetch + extract_demands + linking incl. link_confirm). UI says "up to a minute" and shows elapsed time. Two-phase loading in the rest of M6 (decision 6) |
+| Low | "Open here" (M6, two-phase): the article shows in ~1.4 s; its notes take 20–55 s more (extract_demands + linking). The reader shows "Preparing your notes… N s" meanwhile |
+| Low | A cold explanation card (both parts missing) costs $0.0090 and p95 31 s (was $0.0070, 22 s): two judge calls. Reuse across readers repays it |
 | Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
 | Medium | Build-time merge error: "Russell Indexes"/"FTSE Russell" are aliases of S&P Dow Jones Indices, so Russell mentions link there by exact name (issue #6 comment) |
 | Low | Persona templates are cached per API process: re-seeding needs a restart (or a deploy) to take effect, and demo readers who already have a copy keep their old one |
@@ -251,7 +257,9 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
   serves cached (even stale) results and makes no call.
 - **Ingest cap:** 20 new URLs per reader per day (3 for anonymous, 30 shared across all
   anonymous readers), on both POST /v1/content and "Open here", reserved in a Firestore
-  transaction before ingesting and refunded on failure. Known URLs are free.
+  transaction before ingesting and refunded on failure. Known URLs, including ones still pending
+  analysis, are free. Two-phase: the slot is refunded if phase 1 fails; an article whose analysis
+  fails 3 times (410) keeps the slot spent (the pending doc holds no uid to refund).
 - **Anonymous search cap:** uncached web searches triggered by anonymous readers share 100 calls
   a day; past it they get cached web items and library items only.
 - **Rate limits:** per uid per minute (general, annotations, events), tighter for anonymous.
@@ -326,6 +334,9 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 24 | Paragraph explainers (M5) | API, cache and evals in M5; the margin-marker UI in the rest of M6 |
 | 25 | Judge model (M5) | `MODEL_JUDGE` env var, default MODEL_QUALITY; compared against Gemini 3.1 Pro on the safety suite (evals/report.md) |
 | 26 | Eval integrity (M5) | Cases committed before the first model run; any prompt change bumps its version and is reported before/after in evals/report.md; cases are never edited to pass |
+| 27 | Autopilot (2026-10-10) | Plan-reviewer loop replaces plan mode and plan approval; milestone-reviewer SHIP + green CI before merge; deploys and `git push` still need Sourabh's yes; production writes only within each plan's counts. M7 keeps the knowledge map and edit-by-prompt (no cuts without asking). Log: `docs/AUTOPILOT_LOG.md` |
+| 28 | Shared restatement (M6) | "What the author is saying" is one cache entry per (span, style) for every reader; the Background is per (band, frame, style). Restatement rejected → definition card; Background rejected → restatement with the definition in that panel. One cap count per request |
+| 29 | Two-phase "Open here" (M6) | Two synchronous requests (no work after a response on Cloud Run): phase 1 stores `pending_contents/`, phase 2 under a 150 s lease with a 120 s timeout; 3 counted failures → 410 |
 
 No decisions are open.
 
@@ -474,3 +485,30 @@ Demo exhibits in `apps/api/evals/demo.md`: "depth adapts" (basis points: unaware
 heard of) and "three frames" (credit default swap, unfamiliar to all three: failover / batter
 insurance / indemnity analogies), plus a real rejection (the judge refused a draft that "fixed" a
 garbled source phrase; the reader got the definition).
+
+---
+
+## 14. M6 (rest) acceptance (2026-10-10, local; live after deploy)
+
+**Built.** Annotator 0.4.0: paragraph markers (pilcrow in the margin; float right below 900 px)
+opening the card in paragraph mode, "Know this?" chip (Yes / Not really → PATCH /v1/me/graph),
+pre-read card (`renderPreread`, links or definition disclosures), reading signals
+(`paragraph_dwell`, `text_searched`, `annotation_dismissed`), inserted controls never part of the
+article text (`data-rl-ui`), Helpful with a text label. Web: event batching with paragraph_id,
+words and ms, hide/pagehide flush and one retry; two-phase reader. API: two-phase ingest
+(`pending_contents`, POST /v1/content/{id}/analyse), paragraph-only `text_searched`, shared
+restatement (`restate`, `verify_background`). Tests: API 435, annotator 36 (incl. axe-core).
+
+| Check | Result |
+|---|---|
+| Markers, pre-read and prompt render for a persona that triggers them | Newcomer on "Government extends RoDTEP…": pre-read 3 steps, 2 markers, prompt on SEZ |
+| Keyboard reachable | Marker: Enter opens with focus in the card, Tab cycles its buttons, Escape closes and returns focus to the marker; Tab reaches the chip's buttons |
+| No serious axe violations | axe-core in the live reader (incl. contrast, paragraph card open): 0 violations in light 1440, dark 1440, light 390 (after hiding rail chips under an open card; they failed contrast at 0.28 opacity since M5) |
+| Answering the prompt changes the next load | "Not really" on SEZ → reload: SEZ is a span, the prompt slot moved to "Export Oriented Units" |
+| "Open here" shows the article before its notes | New URL (Wikipedia "Yield curve control"): article **1.39 s** after the click, notes **24.7 s**, no reload; pending doc deleted, $0.0024 |
+| Events batched and applied once | One 5 s batch: paragraph_dwell ×5, text_searched (unmarked paragraph), explain_opened, annotation_dismissed; replay → `events_applied: 0` |
+| Shared restatement | Newcomer then trader: 3 restatements for 3 distinct spans, 4 Backgrounds; the shared span's restatement made once |
+| Safety evals (`explain-v4-split`) | Adversarial 15/15 (judge 15), good 25/25, new Background suite 5/5, injection 10/10; $0.0090 per cold card, p50 9.6 s, p95 31.4 s |
+
+**Spend:** evals $0.46, local explanations ≈ $0.03, ingest $0.0024.
+
