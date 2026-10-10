@@ -22,7 +22,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M2.1 | merged | #5 | Graph grown to 3,327 concepts, overrides file, held-out linker evaluation (15 articles) |
 | docs | merged | #7 | Reading profile page spec (DESIGN §15) |
 | docs | merged | #8 | DESIGN §2 brought up to date with the M2.1 build |
-| M2.2 | **in progress**, full scope + open domains (decisions 32, 33) | #6 | 14-domain taxonomy, online concept growth, jurisdiction in `link_confirm`, strictness, Russell mislink, 30-article held-out set with non-business articles, ≥ 75% linked, per-domain report |
+| M2.2 | **in progress** on branch `m2.2`, full scope + open domains (decisions 32–35) | #6 | Built: 14-domain taxonomy, kind/jurisdiction on concepts, overrides (Russell, Tax alias, Chancellor, FTSE Russell), jurisdiction-aware linker (link_confirm v3), glossary seeding (dry run: +1,874 concepts), online growth (off until the seeded graph serves), frozen 30-article held-out set. Waiting: Sourabh's yes on the seeding counts and writes (`apps/api/evals/seed_report.md`) |
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
 | M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
