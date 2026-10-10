@@ -10,6 +10,7 @@ users/{uid}/profile_edits/{id} M7
 users/{uid}/rec_signals/{key}  app/recs/state.py
 users/{uid}/ingest_counts/{d}  new URLs ingested that UTC day
 users/{uid}/explain_counts/{d} explanations generated (not cached) that UTC day
+users/{uid}/growth_counts/{d}  concept-growth slots reserved that UTC day (M2.2)
 users/{uid}/demo_graphs/{p}    a demo reader's graph for persona p: θ, threshold_offset, knows
                                map, engaged contents. Copied from persona_templates/{p} on the
                                first event or correction; until then the template is read as-is.
@@ -45,6 +46,7 @@ USER_SUBCOLLECTIONS = (
     "demo_graphs",
     "explain_counts",
     "profile_edit_counts",
+    "growth_counts",
 )
 EVENT_TTL = timedelta(days=90)
 MAX_WEEKLY_CONTENT_IDS = 500

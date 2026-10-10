@@ -6,16 +6,30 @@ first and then buffers writes (Firestore's rule); it may be retried on contentio
 not have side effects beyond the transaction.
 """
 
+from __future__ import annotations
+
 import asyncio
 import copy
 import random
 from collections.abc import Awaitable, Callable
+from datetime import UTC, datetime
 from typing import Any, Protocol, TypeVar
 
 from google.cloud import firestore
 
 T = TypeVar("T")
 Doc = dict[str, Any]
+
+
+class _ServerTime:
+    """Marker for a top-level field the store sets to its own clock on write (Firestore's
+    server timestamp), so a skewed instance clock can't misorder documents (M2.2 growth)."""
+
+    def __repr__(self) -> str:
+        return "SERVER_TIME"
+
+
+SERVER_TIME: Any = _ServerTime()
 
 
 class Txn(Protocol):
@@ -32,6 +46,10 @@ class DocStore(Protocol):
     async def get(self, path: str) -> Doc | None: ...
 
     async def list(self, collection: str) -> list[tuple[str, Doc]]: ...
+
+    async def list_since(self, collection: str, field: str, after: Any) -> list[tuple[str, Doc]]:
+        """Documents of `collection` whose `field` is greater than `after` (one indexed query)."""
+        ...
 
     async def delete_tree(self, path: str) -> int: ...
 
@@ -79,7 +97,10 @@ class _FirestoreTxn:
         return out
 
     def set(self, path: str, data: Doc) -> None:
-        self._txn.set(self._db.document(path), data)
+        resolved = {
+            k: firestore.SERVER_TIMESTAMP if v is SERVER_TIME else v for k, v in data.items()
+        }
+        self._txn.set(self._db.document(path), resolved)
 
     def delete(self, path: str) -> None:
         self._txn.delete(self._db.document(path))
@@ -95,6 +116,12 @@ class FirestoreDocStore:
 
     async def list(self, collection: str) -> list[tuple[str, Doc]]:
         return [(s.id, s.to_dict() or {}) async for s in self._db.collection(collection).stream()]
+
+    async def list_since(self, collection: str, field: str, after: Any) -> list[tuple[str, Doc]]:
+        query = self._db.collection(collection).where(
+            filter=firestore.FieldFilter(field, ">", after)
+        )
+        return [(s.id, s.to_dict() or {}) async for s in query.stream()]
 
     async def delete_tree(self, path: str) -> int:
         """Delete a document and every subcollection under it."""
@@ -128,7 +155,10 @@ class _MemoryTxn:
         return {p: await self.get(p) for p in paths}
 
     def set(self, path: str, data: Doc) -> None:
-        self.writes[path] = copy.deepcopy(data)
+        now = datetime.now(UTC)
+        self.writes[path] = {
+            k: now if v is SERVER_TIME else copy.deepcopy(v) for k, v in data.items()
+        }
 
     def delete(self, path: str) -> None:
         self.writes[path] = None
@@ -152,6 +182,9 @@ class InMemoryDocStore:
             for p, d in self.docs.items()
             if p.startswith(collection + "/") and p.count("/") == depth
         )
+
+    async def list_since(self, collection: str, field: str, after: Any) -> list[tuple[str, Doc]]:
+        return [(i, d) for i, d in await self.list(collection) if d.get(field) and d[field] > after]
 
     async def delete_tree(self, path: str) -> int:
         doomed = [p for p in self.docs if p == path or p.startswith(path + "/")]

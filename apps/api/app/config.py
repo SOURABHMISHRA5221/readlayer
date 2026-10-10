@@ -33,6 +33,14 @@ class Settings(BaseSettings):
     # Phase 2 of an ingest (demand extraction + linking) is cut off after this; its lease on the
     # pending doc lasts 30 s longer, so an expired lease always means the run has stopped.
     analyse_timeout_s: float = 120.0
+    # Online concept growth (M2.2, DESIGN §2): new concepts from an ingest's unlinked demands.
+    # Off until the seeded graph is serving (deploy.env.yaml); also the demo kill switch.
+    growth_enabled: bool = False
+    growth_per_article: int = 5
+    growth_per_uid_day: int = 25  # per reader, Google or anonymous (decision 35)
+    growth_per_day: int = 100  # all readers together
+    growth_refresh_s: float = 60.0  # how often an instance looks for concepts grown elsewhere
+    growth_timeout_s: float = 20.0  # inside phase 2; bounded by the time phase 2 has left
     # Profile edits by prompt per UTC day (DESIGN §15.3, §11.5): per reader, and for demo readers
     # per uid plus a cap shared across all anonymous readers.
     profile_edit_daily_cap: int = 10
