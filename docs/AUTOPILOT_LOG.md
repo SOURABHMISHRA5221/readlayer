@@ -126,3 +126,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   6. POST /v1/content always adds the doc to the catalog (a pending URL is new to it too).
 - milestone-reviewer round 2: **SHIP**. Follow-ups applied: DESIGN §7 says single-flight per
   part; the eval report's latency column is labelled "Claims judge".
+
+### Ship
+- PR #14 squash-merged (25210ca) after CI green (api, typescript) and milestone-reviewer SHIP.
+- Deployed from up-to-date `main`: API `readlayer-api-00011-6sp`, then web `index-DKVIFx4G.js`
+  (Sourabh approved both prompts). TTL on `pending_contents.expire_at`: ACTIVE.
+- Live: `live_check_m6.py` all 4 pass; "Open here" on Quantitative tightening: article 7.31 s
+  (over the 5 s warm target; cold first ingest on the new revision, shared instance), notes
+  22.5 s, no reload, pending deleted, contents 311; demo articles re-warmed (24/24 hits on the
+  second pass, slowest 598 ms); axe 0 violations ×3; console 0 errors. Every test session made
+  here deleted (204).
+- Deviation: the live "Open here" was opened with the page's own token, not by clicking an Up
+  next card (Up next can't be made to offer a chosen URL); the reader's two-phase flow is the same.
+- Open for Sourabh: (a) one more new URL to measure the warm live "Open here" time (a production
+  write beyond the plan's count); (b) delete the 8 orphaned docs from his 12:28 session now, or
+  leave them for the M9 cleanup.

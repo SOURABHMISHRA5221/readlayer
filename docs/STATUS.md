@@ -1,7 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): rest of M6 built and verified locally (§14); autopilot run log in
-`docs/AUTOPILOT_LOG.md`. Previous: M5 deployed and verified live (§13), PR #13.
+Last updated: 2026-10-10 (IST): rest of M6 merged (#14), deployed and verified live (§14);
+autopilot run log in `docs/AUTOPILOT_LOG.md`. Previous: M5 (#13).
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -28,7 +28,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
 | docs | merged (squash) | #12 | README with live screenshots, persona GIF, diagrams; MIT license |
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
-| Rest of M6 | branch `m6-rest` | — | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement. See §14 |
+| Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
 | M7, M8-local, M2.2 (trimmed), M9 | not started | — | Autopilot order (2026-10-10): M7 with knowledge map and edit-by-prompt required, M8-local, M2.2, M9 |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
@@ -54,8 +54,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 
 | Piece | Where it runs | State |
 |---|---|---|
-| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M5 build**: revision `readlayer-api-00010-9tr`, https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
-| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M5 build** (bundle `index-uEFIQ12G.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
+| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M6 build**: revision `readlayer-api-00011-6sp`, https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
+| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M6 build** (bundle `index-DKVIFx4G.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
 | `packages/annotator` | Bundled into the web app (and the extension in M8-local) | 0.4.0 (M6): two-part card, paragraph markers, "Know this?" chip, pre-read, reading signals |
 | `apps/extension` | — | MV3 scaffold only (M8-local: unpacked, activeTab only, Oct 14) |
@@ -65,7 +65,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | Secret Manager | `uid-hash-salt`, `tavily-api-key`, `youtube-api-key` (asia-south1, runtime SA has accessor) | Live |
 | Tavily, YouTube Data API v3 | External, called only from the API | Keys from Secret Manager on Cloud Run; local `.env` locally |
 | Firestore rules | `firestore.rules` deny all client access | Deployed |
-| Firestore TTL | collection group `events`, field `expire_at` (90 days) | Enabled |
+| Firestore TTL | collection groups `events` (90 days) and `pending_contents` (24 h, M6), field `expire_at` | Enabled |
 
 **LLM routes** (`app/llm.py` `ROUTES`; model ids come from env, never code):
 
@@ -85,8 +85,8 @@ only reader-facing path that may call a model, and only on a cache miss within t
 (no LLM), phase 2 extract_demands + linking (POST /v1/content/{id}/analyse).
 
 **Firestore collections in use:** `contents/{url_hash}` (shared demand profiles),
-`pending_contents/{url_hash}` (fetched, not yet analysed; no user data; `expire_at` 24 h, TTL
-policy **pending** until it is created after the M6 deploy),
+`pending_contents/{url_hash}` (fetched, not yet analysed; no user data; TTL on `expire_at`,
+24 h, active since the M6 deploy),
 `explanations/{key}` (two entries per card since M6: shared restatement, per-reader Background), `explanation_reports/{id}` (review queue, no user id),
 `ops/explain/days/{date}` (hits, generated, outcomes, shared anonymous generation count),
 `ops/spend/days/{date}` (LLM ledger), `ops/search/days/{date}` (search-call ledger, now with an
@@ -102,10 +102,10 @@ policy **pending** until it is created after the M6 deploy),
 
 | Item | Value |
 |---|---|
-| Content docs in Firestore | 310 total (309 + 1 M6 local test; 311 after the live check) |
+| Content docs in Firestore | 311 total (309 + 2 M6 "Open here" tests) |
 | Corpus (in `data/corpus_urls.txt`) | 290 |
 | Held-out (in `data/heldout_urls.txt`) | 15, never used to build the graph |
-| `user_ingested` ("Open here" testing) | 3: chain.link "Singleness of money", ECB macroprudential explainer, Wikipedia "Yield curve control" (M6 local test) |
+| `user_ingested` ("Open here" testing) | 4: chain.link "Singleness of money", ECB macroprudential explainer, Wikipedia "Yield curve control" (M6 local), Wikipedia "Quantitative tightening" (M6 live) |
 | Other | 2 M1 acceptance URLs (BusinessLine RoDTEP, JGU PLI evaluation), source `fetch`, in neither list |
 | Publisher metadata backfilled | 306/306 dates, 273 authors, 236 standfirsts, 271 images (before the 3 docs added later) |
 | Concept graph | version `2026-10-04` (+ `doc_freq` on 3,325 concepts, uploaded 2026-10-05), 3,327 concepts (finance 1,279, economics 1,064, policy 557, business 427), 4,053 prerequisite edges, 680 Wikidata ids, acyclic |
@@ -156,7 +156,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
-| Low | "Open here" (M6, two-phase): the article showed in 1.4 s **locally** (live number after deploy); its notes take 20–55 s more (extract_demands + linking). The reader shows "Preparing your notes… N s" meanwhile |
+| Medium | "Open here" (M6, two-phase): the article shows in 1.4 s locally but took **7.3 s live** on the first ingest of the new revision (phase 1 5.2 s server-side: deferred ingestion imports on a 1-vCPU instance shared with other readers' requests). The 5 s warm target is unmeasured live (needs one more new URL). Notes 20–55 s after; the reader shows "Preparing your notes… N s" |
 | Low | Deleted-account revocation is per instance and in memory, so it is also lost on a restart. Seen in M6 local testing: a demo session deleted at 07:02:41 UTC sent one event batch at 07:10:19 after the dev server restarted, leaving `users/{uid}` + 6 `events` + 1 `demo_graphs/newcomer` (8 docs) under a deleted Auth user (Sourabh's own session). Left for the M9 anonymous cleanup unless Sourabh asks for a delete now; events expire by TTL in 90 days |
 | Low | A cold explanation card (both parts missing) costs $0.0090 and p95 31 s (was $0.0070, 22 s): two judge calls. Reuse across readers repays it |
 | Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
@@ -294,8 +294,7 @@ is built (§14) and awaits merge and deploy.
 
 | When | Action |
 |---|---|
-| Now | **Rest of M6:** merge `m6-rest` (CI green), deploy API then web back to back from `main`, add the TTL policy on `pending_contents.expire_at`, run `scripts/live_check_m6.py` and the live "Open here" (Wikipedia "Quantitative tightening") through the web UI, re-warm the demo articles' explanations for all three personas (every cache entry missed once the prompt versions changed) |
-| Next | **M7:** profile page (summary, domain bars, list view with corrections, THINKS_IN, export/delete/pause), Google onboarding with consent and calibration, **knowledge-map graph and edit-by-prompt (both required, decision 27)** |
+| Now | **M7:** profile page (summary, domain bars, list view with corrections, THINKS_IN, export/delete/pause), Google onboarding with consent and calibration, **knowledge-map graph and edit-by-prompt (both required, decision 27)** |
 | Then | **M8-local** (unpacked extension), **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink), **M9** hardening and evals |
 | Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
@@ -494,7 +493,7 @@ garbled source phrase; the reader got the definition).
 
 ---
 
-## 14. M6 (rest) acceptance (2026-10-10, local; live after deploy)
+## 14. M6 (rest) acceptance (2026-10-10, local and live)
 
 **Built.** Annotator 0.4.0: paragraph markers (pilcrow in the margin; float right below 900 px)
 opening the card in paragraph mode, "Know this?" chip (Yes / Not really → PATCH /v1/me/graph),
@@ -517,4 +516,20 @@ restatement (`restate`, `verify_background`). Tests: API 435, annotator 36 (incl
 | Safety evals (`explain-v4-split`) | Adversarial 15/15 (judge 15), good 25/25, new Background suite 5/5, injection 10/10; $0.0090 per cold card, p50 9.6 s, p95 31.4 s |
 
 **Spend:** evals $0.46, local explanations ≈ $0.03, ingest $0.0024.
+
+**Live (2026-10-10, API `readlayer-api-00011-6sp`, web `index-DKVIFx4G.js`, deployed from `main`
+after #14, API then web back to back):**
+
+| Check | Result |
+|---|---|
+| New API serving | `/health` 200; GET /v1/content/{id} returns `status` |
+| `scripts/live_check_m6.py` | All 4 pass: newcomer on RoDTEP gets spans 2, markers 2, pre-read 1, prompt 1; event batch applied 4, replay 0; "Not really" on SEZ → not prompted again, now a span; "RoDTEP rates" for newcomer and trader shares the restatement, Backgrounds differ. Test user deleted (204) |
+| "Open here" (Wikipedia "Quantitative tightening", headless Chrome on the live site; the open request used the page's own token because Up next can't be made to offer a given URL) | Open 5.36 s (server 5.24 s), article visible **7.31 s** after the click, notes **22.5 s**, no reload. Over the 5 s target: first ingest on the new revision (deferred imports) on an instance busy with other readers' requests; warm number not measured live. Pending doc deleted, `contents/` 311, `ops/ingest` anonymous 2 |
+| TTL policy on `pending_contents.expire_at` | ACTIVE |
+| Demo articles re-warmed (`scripts/warm_demo.py`: ET markets preview, Guardian Polymarket/HSBC, ET RoDTEP × 3 personas, top 3 spans) | Pass 1: 24 cards, 24 verified (4 already cached); pass 2: **24/24 cache hits**, slowest 598 ms. Test user deleted |
+| axe-core in the live reader | 0 violations at 1440 light, 1440 dark, 390 light |
+| Console | 0 errors or warnings at 390 light and 1440 dark (paragraph card open) |
+
+**Live spend:** one ingest, 24 warm-up cards (≈ $0.15 incl. the restatements shared across
+personas), live check hits only.
 
