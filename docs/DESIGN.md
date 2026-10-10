@@ -94,7 +94,9 @@ personas stay curated on the original four.
 - **Online growth (M2.2, decision 35).** After linking, a new article's unlinked concept/term
   demands may grow verified concepts (taxonomy domain, kept kind, specialization ≥ 2, not an
   everyday word, prerequisites existing ids only, acyclic): one batched `link_merge` against near
-  graph concepts, one batched `concept_define`, one batched `concept_prereqs`. Slots are reserved
+  graph concepts, one batched `concept_define`, one batched `link_confirm` (MODEL_QUALITY: would
+  the new definition explain the mention in its sentence? drops wrong senses and generic words;
+  ≈ $0.004 and up to ~30 s more per growing article), one batched `concept_prereqs`. Slots are reserved
   when the article is first fetched, for any reader within the ingest caps (demo readers too):
   ≤ 5 per article, 25 per reader and 100 per day for the service. Growth has its own timeout
   inside phase 2 and never fails the ingest; held-out URLs never grow. Concepts are stored
