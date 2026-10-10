@@ -217,3 +217,6 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   transaction contention under three prefetches (jittered retry), Escape focus return, preview
   showing unchanged settings, "−0.0 · building" wording, bar alignment.
 - Harness spend $0.07 (separate ledger seeded with production's $0.82).
+- `scripts/live_check_m7.py` (demo side of M7: persona profile/frame, map evidence, session-only
+  edit preview/apply/undo/reset, onboarding refused for demo readers); dry-run on the harness
+  with `--emulator`: all pass, test user deleted (204).
