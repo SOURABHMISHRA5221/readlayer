@@ -13,15 +13,14 @@ import logging
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
-from app import llm
 from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
-from app.content.router import score_for
+from app.content.router import doc_or_error, score_for
 from app.context import ReaderContext, reader_context, scope_persona
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph
@@ -29,10 +28,12 @@ from app.ingest import quota
 from app.ingest.models import ContentDoc
 from app.ingest.router import (
     FETCH_ERROR_STATUS,
+    INGEST_ERRORS,
     MAX_URL_CHARS,
     _error,
     _ingest_error,
-    ingest_url,  # lazy: loads the ingestion pipeline on first use
+    fetch_and_extract,  # lazy: loads the ingestion pipeline on first use
+    is_known,
 )
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import url_hash
@@ -108,6 +109,9 @@ class OpenRequest(BaseModel):
 class OpenResponse(BaseModel):
     content_id: str
     new: bool
+    # False while the article is fetched but not analysed: the reader shows it at once and
+    # calls POST /v1/content/{id}/analyse for the notes (two-phase "Open here").
+    ready: bool
 
 
 # Library index per catalog version (pure derivation over all docs).
@@ -213,9 +217,7 @@ async def recommendations(
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     prefer: Format | None = None,
 ) -> RecsResponse:
-    doc = await get_content_store().get(content_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="content not found")
+    doc = await doc_or_error(content_id)
     graph = get_graph()
     theta = ctx.theta
     spans = (await score_for(ctx, doc, "balanced", datetime.now(UTC))).spans
@@ -319,23 +321,27 @@ async def open_web_article(
     caller: Annotated[Caller, Depends(current_caller)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> OpenResponse | JSONResponse:
-    """Ingest a web article through safe_fetch and the normal pipeline, within the daily cap."""
+    """Phase 1 of "Open here": fetch through safe_fetch and extract, within the daily cap. The
+    analysis (phase 2) is its own request, so the reader sees the article in seconds."""
     try:
         validate_url(body.url)
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
-    known = await get_content_store().get(url_hash(body.url)) is not None
-    if not known and not await quota.reserve(caller, settings):
+    content_id = url_hash(body.url)
+    if await get_content_store().get(content_id) is not None:
+        log.info("rec opened", extra={"content_id": content_id, "new": False, "ready": True})
+        return OpenResponse(content_id=content_id, new=False, ready=True)
+    if await is_known(content_id):  # fetched by someone else, not analysed yet
+        log.info("rec opened", extra={"content_id": content_id, "new": False, "ready": False})
+        return OpenResponse(content_id=content_id, new=False, ready=False)
+    if not await quota.reserve(caller, settings):
         return quota.cap_reached(caller, settings, "Use “Open original” for this one.")
     try:
-        doc = await ingest_url(body.url, source="user_ingested")
+        await fetch_and_extract(body.url, "user_ingested")
     except Exception as exc:
-        if not known:
-            await quota.refund(caller)
-        if isinstance(exc, FetchError | llm.BudgetExceeded | llm.LLMUnavailable | llm.LLMRejected):
+        await quota.refund(caller)
+        if isinstance(exc, INGEST_ERRORS):
             return _ingest_error(exc)
         raise
-    if not known:
-        catalog.add(doc)
-    log.info("rec opened", extra={"content_id": doc.content_id, "new": not known})
-    return OpenResponse(content_id=doc.content_id, new=not known)
+    log.info("rec opened", extra={"content_id": content_id, "new": True, "ready": False})
+    return OpenResponse(content_id=content_id, new=True, ready=False)

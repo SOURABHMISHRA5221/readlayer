@@ -17,7 +17,7 @@ from app.recs import router as recs_router
 from app.recs import web_search as ws
 from app.store.content_repo import InMemoryContentStore, set_content_store
 from app.store.reader_repo import USER_SUBCOLLECTIONS
-from tests.fakes import auth, token
+from tests.fakes import auth, fake_fetch_and_extract, token
 from tests.test_recs_api import FakeProvider
 from tests.test_recs_library import DOCS, GRAPH, doc
 
@@ -352,7 +352,7 @@ def test_signed_in_reader_gets_429_on_the_21st_new_url(env, monkeypatch):
     # A URL already in the library is free.
     assert client.post("/v1/content", json={"url": "https://n.example/3"}).status_code == 200
     # The cap is shared with "Open here".
-    monkeypatch.setattr(recs_router, "ingest_url", _fake_ingest(store))
+    monkeypatch.setattr(recs_router, "fetch_and_extract", fake_fetch_and_extract())
     assert client.post("/v1/recs/open", json={"url": "https://n.example/x"}).status_code == 429
 
 

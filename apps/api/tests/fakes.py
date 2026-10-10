@@ -76,4 +76,40 @@ class ExplainLLM:
         return llm.LLMResult(schema.model_validate(item), meta(model, 0.001, task))
 
 
+def pending_doc(url: str, source: str = "user_ingested", texts: list[str] | None = None):
+    """A phase-1 article as fetch_and_extract would store it."""
+    from datetime import UTC, datetime
+
+    from app.ingest.models import PendingDoc, PendingParagraph
+    from app.ingest.urls import url_hash
+    from app.store.pending_repo import PENDING_TTL
+
+    now = datetime.now(UTC)
+    paragraphs = texts or ["Opened article text about bond yields and the curve."]
+    return PendingDoc(
+        content_id=url_hash(url),
+        url=url,
+        final_url=url,
+        title="Opened",
+        site="explainer.example",
+        source=source,
+        fetched_at=now.isoformat(),
+        paragraphs=[PendingParagraph(id=f"p{i}", text=t) for i, t in enumerate(paragraphs)],
+        expire_at=now + PENDING_TTL,
+    )
+
+
+def fake_fetch_and_extract(sources: list[str] | None = None):
+    """Replaces the router's fetch_and_extract: stores a pending doc, no network, no LLM."""
+
+    async def fetch_and_extract(url, source="fetch"):
+        from app.store.pending_repo import get_pending_repo
+
+        if sources is not None:
+            sources.append(source)
+        return await get_pending_repo().create(pending_doc(url, source))
+
+    return fetch_and_extract
+
+
 from tests.fake_auth import FakeAuthAdmin, auth, token  # noqa: E402,F401  (re-export)

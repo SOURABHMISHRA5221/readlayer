@@ -87,6 +87,14 @@ def apply_events(
             if ev.content_id:
                 contents.add(ev.content_id)
             continue
+        if ev.type == "text_searched" and not ev.concept_id and ev.paragraph_id:
+            # A look-up on a paragraph with no notes: moves threshold_offset (DESIGN §5), no
+            # concept to give evidence to.
+            applied.append(ev.id)
+            types.append(ev.type)
+            if ev.content_id:
+                contents.add(ev.content_id)
+            continue
         ref = concepts.get(ev.concept_id) if ev.concept_id else None
         if ev.type not in CONCEPT_EVENTS or ref is None:
             ignored.append(ev.id)

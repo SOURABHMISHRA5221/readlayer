@@ -3,7 +3,7 @@
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,10 +12,11 @@ from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
 from app.ingest import quota
-from app.ingest.models import ContentDoc
+from app.ingest.models import ContentDoc, PendingDoc
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import url_hash
 from app.store.content_repo import get_content_store
+from app.store.pending_repo import AnalysisBusy, AnalysisFailed, NotPending, get_pending_repo
 
 router = APIRouter()
 
@@ -81,6 +82,26 @@ async def ingest_submitted(url: str, title: str, paragraphs: list[str]) -> Conte
     return await service.ingest_submitted(url, title, paragraphs)
 
 
+async def fetch_and_extract(url: str, source: Literal["fetch", "user_ingested"]) -> PendingDoc:
+    from app.ingest import service
+
+    return await service.fetch_and_extract(url, source)
+
+
+async def analyse_pending(content_id: str) -> ContentDoc:
+    from app.ingest import service
+
+    return await service.analyse_pending(content_id)
+
+
+async def is_known(content_id: str) -> bool:
+    """Already ingested, or fetched and waiting for analysis: either way no new fetch and no
+    new slot against the daily cap."""
+    if await get_content_store().get(content_id) is not None:
+        return True
+    return await get_pending_repo().get(content_id) is not None
+
+
 def _seconds_to_utc_midnight(now: datetime | None = None) -> int:
     now = now or datetime.now(UTC)
     midnight = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
@@ -102,7 +123,7 @@ async def post_content(
         validate_url(body.url)
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
-    known = await get_content_store().get(url_hash(body.url)) is not None
+    known = await is_known(url_hash(body.url))
     if not known and not await quota.reserve(caller, settings):
         return quota.cap_reached(caller, settings, "Articles already in the library stay free.")
     try:
@@ -113,7 +134,7 @@ async def post_content(
     except Exception as exc:
         if not known:
             await quota.refund(caller)
-        if isinstance(exc, FetchError | llm.BudgetExceeded | llm.LLMUnavailable | llm.LLMRejected):
+        if isinstance(exc, INGEST_ERRORS):
             return _ingest_error(exc)
         raise
     if not known:
@@ -121,7 +142,55 @@ async def post_content(
     return _response(doc)
 
 
+class AnalyseResponse(BaseModel):
+    content_id: str
+    status: Literal["ready", "analysing"]
+
+
+@router.post("/content/{content_id}/analyse", response_model=AnalyseResponse)
+async def analyse_content(
+    content_id: Annotated[str, Path(min_length=1, max_length=64, pattern=r"^[0-9a-f]+$")],
+    caller: Annotated[Caller, Depends(current_caller)],
+) -> AnalyseResponse | JSONResponse:
+    """Phase 2 of "Open here": demand extraction and linking for a fetched article. Already
+    analysed → ready, no LLM call. Another request analysing it → 202. The ingest slot was taken
+    in phase 1, so this costs the reader nothing against the daily cap."""
+    try:
+        doc = await analyse_pending(content_id)
+    except NotPending:
+        return _error(404, "not_found", "content not found")
+    except AnalysisBusy:
+        return JSONResponse({"content_id": content_id, "status": "analysing"}, status_code=202)
+    except Exception as exc:
+        if isinstance(exc, INGEST_ERRORS):
+            return _ingest_error(exc)
+        raise
+    catalog.add(doc)
+    return AnalyseResponse(content_id=content_id, status="ready")
+
+
+INGEST_ERRORS = (
+    FetchError,
+    llm.BudgetExceeded,
+    llm.LLMUnavailable,
+    llm.LLMRejected,
+    AnalysisBusy,
+    AnalysisFailed,
+    TimeoutError,
+)
+
+
 def _ingest_error(exc: Exception) -> JSONResponse:
+    if isinstance(exc, AnalysisBusy):
+        return _error(
+            409, "content_analysing", "This article is being analysed. Try again shortly.", 5
+        )
+    if isinstance(exc, AnalysisFailed):
+        return _error(
+            410, "analyse_failed", "This article couldn't be analysed. Open the original instead."
+        )
+    if isinstance(exc, TimeoutError):
+        return _error(504, "analyse_timeout", "Analysing this article took too long. Try again.")
     if isinstance(exc, FetchError):
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
     if isinstance(exc, llm.BudgetExceeded):
