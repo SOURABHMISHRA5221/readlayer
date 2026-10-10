@@ -21,12 +21,13 @@ M0–M4 and the M6 slice are merged and live. The rest:
 | Oct 12–13 | **M7**: profile page (summary, domain bars, knowledge-map graph and list view, corrections); Google onboarding with consent and calibration; edit-by-prompt. All required (decision 27) |
 | Oct 10–11 | **M2.2 (full scope, decision 32, extended with open domains, decision 33)**: fixed 14-domain taxonomy, online concept growth into it, jurisdiction in `link_confirm`, linker strictness, Russell mislink, 30-article held-out set with non-business articles, ≥ 75% linked, linking per domain |
 | Oct 12–13 | **M7.5** (decision 33): "For you" feed for Google readers, "Read any link" box, reading goals |
+| Oct 13 | **Design pass** (decision 39): Medium-style reading product, right after M7.5 is merged and deployed |
 | Oct 14 | **M8-local**: unpacked Chrome extension (Developer mode), activeTab only (plan approved, paused on branch `m8`) |
 | Oct 15 | **M9** hardening and evals |
 | Oct 16 | Demo seeding, README refresh, video, deck |
 | Oct 17 | **Submit** |
 
-**Order (Sourabh, 2026-10-10, decision 33):** M2.2 → M7.5 → M8-local → M9. ReadLayer is not a
+**Order (Sourabh, 2026-10-10, decisions 33 and 39):** M2.2 → M7.5 → Design pass → M8-local → M9. ReadLayer is not a
 business-only reader; demo personas stay curated as they are, open domains are for signed-in
 (Google) readers.
 
@@ -270,6 +271,37 @@ calibration; and edit-by-prompt (§15.3). Nothing is cut without asking Sourabh 
 
 
 ---
+
+## Design pass — Medium-style reading product (decision 39; after M7.5, before M8)
+**Scope (Sourabh, 2026-10-10): everything below is required.** Same plan-reviewer and
+milestone-reviewer loop, plus before/after screenshots at desktop, mobile and dark in
+`docs/AUTOPILOT_LOG.md`. Inspired by Medium's layout and typography; no Medium branding, logo or
+copied assets.
+
+1. **Tokens.** White background (dark mode near-black), near-black ink, one accent, real contrast.
+   Reading serif in the Charter style (Source Serif 4 or a similar free font) at 20–21px for the
+   article body; a clean sans for UI at ≥ 14px. No light-grey 12px text for anything a reader
+   needs.
+2. **Library becomes a feed.** Tabs "For you · Topics · Saved"; single-column rows (source and
+   favicon line, big bold title, one-line grey subtitle, thumbnail right, read time, quiet save
+   and not-interested icon buttons, "N new concepts" as a readable tag, not a faint pill). Right
+   sidebar on desktop: recommended topic chips, reading-goal progress, "Read any link". Fix the
+   stale tagline.
+3. **Reader.** 680px column, large bold title, byline with source, a sticky slim action bar
+   (Helpful, save, share link, notes density). Annotations feel like Medium highlights: soft
+   underline, the card slides from the margin on desktop, a bottom sheet on mobile. Clear hover
+   and focus states, small purposeful motion (respect prefers-reduced-motion).
+4. **Profile.** Lead with a readable summary; domain cards instead of thin bars (level, interest,
+   trend). **Knowledge map redesign:**
+   - a force/radial layout clustered by domain;
+   - known concepts solid, and "next to learn" neighbours from the global graph as faint outline
+     nodes, so a new reader's map is never empty;
+   - node size by salience, colour by band;
+   - an overview of all domains first, then drill in;
+   - new nodes animate in.
+   Keep the accessible list view.
+5. **Keep everything that works:** accessibility (axe 0, keyboard, 44px targets), the bundle
+   budget, two-phase loading, annotation behaviour.
 
 ## M8-local — Chrome extension, unpacked (Oct 14)
 Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not

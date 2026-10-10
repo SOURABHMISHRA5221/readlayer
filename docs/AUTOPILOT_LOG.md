@@ -383,3 +383,8 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   count before deploy, one ingested read per request).
 
 ### Build
+- Sourabh (decision 39): a dedicated **Design pass** milestone right after M7.5 is merged and
+  deployed, before M8 (Medium-style tokens and type, library as a feed, reader, profile and
+  knowledge map). BUILD_PLAN and STATUS updated. M7.5's web parts stay functional and accessible,
+  not polished, to avoid doing them twice. Freeze watch: M7.5 by Oct 12, design pass Oct 13, M8
+  Oct 14, M9 Oct 15; the Oct 12 checkpoint stays.
