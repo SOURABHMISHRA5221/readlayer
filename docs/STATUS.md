@@ -144,7 +144,6 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 
 | Severity | Issue |
 |---|---|
-| **High** | Local `LLM_DAILY_BUDGET_USD` is still **25** in `apps/api/.env` (checked 2026-10-10 through Settings; decision 2 says 8). Every M5 eval and dev run passed `LLM_DAILY_BUDGET_USD=8` explicitly. Cloud Run uses 8 (`deploy.env.yaml`) |
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
@@ -278,7 +277,6 @@ Re-planned 2026-10-10 (decisions 20–22); BUILD_PLAN.md has the prompts.
 
 | When | Action |
 |---|---|
-| Now | Confirm `LLM_DAILY_BUDGET_USD` in `apps/api/.env` is back to 8 (you, by hand; decision 2). M5 is the first model-heavy milestone since M2 |
 | Oct 10 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
 | Oct 11 | **Rest of M6:** show the paragraph markers, pre-read card and "Know this?" prompts the API already returns; two-phase "Open here"; complete event batching (`paragraph_dwell`, `text_searched`, `annotation_dismissed`) |
 | Oct 12 (M6 session) | **From the M5 review:** (1) generate "What the author is saying" once per (span, style) and personalise only Background, with its own cache key and one verifier pass per span (today every (span, band, frame, style) regenerates and re-verifies the restatement); (2) label the Helpful button with text instead of a bare icon. Also show paragraph explainers from the margin markers (decision 24) |
