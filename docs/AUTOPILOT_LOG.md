@@ -124,3 +124,5 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   5. per-part single-flight (`_inflight` keyed by each part's cache key) so two personas loading
      cold share one restatement; new concurrent test;
   6. POST /v1/content always adds the doc to the catalog (a pending URL is new to it too).
+- milestone-reviewer round 2: **SHIP**. Follow-ups applied: DESIGN §7 says single-flight per
+  part; the eval report's latency column is labelled "Claims judge".

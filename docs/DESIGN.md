@@ -338,7 +338,8 @@ text). On a miss both parts run at the same time.
 Each entry stores `part`, `kind`, the text (none when rejected), model ids, prompt version, key
 parts, cost and created_at. Verified parts are cached, and so is a part rejected twice (no text
 stored), so a hard span doesn't re-spend on every hover; a judge outage or the budget guard
-caches nothing. One generation per card per instance at a time (prefetch and hover share it).
+caches nothing. One generation per part per instance at a time, keyed by the part's cache key
+(a prefetch and a hover share it, and so do two personas loading the same span cold).
 A request that generates anything counts **once** against a daily cap per reader (100;
 40 anonymous, 400 for all anonymous readers together); past the cap a shared restatement still
 shows and the Background stays the definition. The card id is `restatement_key-background_key`.

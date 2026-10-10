@@ -19,7 +19,7 @@ Targets: every adversarial card rejected; at least 90% of good cards accepted; e
 
 Latest run per judge on prompts `restate-v1+verify-v2|explain-v4+verify-background-v1`.
 
-| Judge | Adversarial rejected | Missed | Good accepted | Good rejected | Injection safe | Judge $/call | Judge calls / explanation | Judge $/explanation | Judge $/day at the $8 cap's volume | Judge p50 / p95 per call | Explanation p50 / p95 |
+| Judge | Adversarial rejected | Missed | Good accepted | Good rejected | Injection safe | Judge $/call | Judge calls / explanation | Judge $/explanation | Judge $/day at the $8 cap's volume | Claims judge p50 / p95 per call | Explanation p50 / p95 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | none | 25/25 (100%) | none | 10/10 (100%) | $0.00196 | 2.00 | $0.00391 | $3.48 | 4.8 s / 10.3 s | 9.6 s / 31.4 s |
 

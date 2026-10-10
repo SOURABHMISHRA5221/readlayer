@@ -103,7 +103,8 @@ def _comparison(all_runs: list[dict[str, Any]]) -> list[str]:
         "",
         "| Judge | Adversarial rejected | Missed | Good accepted | Good rejected | Injection "
         "safe | Judge $/call | Judge calls / explanation | Judge $/explanation | "
-        "Judge $/day at the $8 cap's volume | Judge p50 / p95 per call | Explanation p50 / p95 |",
+        "Judge $/day at the $8 cap's volume | Claims judge p50 / p95 per call | "
+        "Explanation p50 / p95 |",
         "|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for judge, r in latest.items():
