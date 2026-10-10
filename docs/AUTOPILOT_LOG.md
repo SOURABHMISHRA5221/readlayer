@@ -326,3 +326,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - profile_edit: "before" is the shipped M7 run (profile-edit-v3, 6/6, 4/4), since the code
   already sends 14 domains. v4 broke P06 (5/6: the fan line dropped the cricket frame); v5 fixes
   it with a football example (6/6, 4/4). Both runs kept in evals/report.md.
+- Seeding dry run, first attempt stopped: dedupe compared every candidate pair ≥ 0.88 (~12,000
+  link_merge pairs, 619 calls, $0.74 before I stopped it; projection had guessed 39 calls). Fixed:
+  each candidate is compared with its nearest graph concept and at most its 3 nearest
+  candidates (the build's top-k rule), and --project now counts the real pairs (7,686,
+  projected $1.71). Deviations from the plan, both logged: kind for pre-M2.2 concepts comes from
+  concept_jurisdiction for all of them (the build cache keys can't be mapped back to concepts);
+  exact matches of existing concepts are dropped rather than adding their aliases.

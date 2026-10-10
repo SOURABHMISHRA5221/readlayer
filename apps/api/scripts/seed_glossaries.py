@@ -55,6 +55,7 @@ from scripts.build_concepts import (
 )
 
 SEED_PER_DOMAIN = 300
+MERGE_TOP_K = 3  # nearest other candidates each candidate is compared with
 GLOSSARY_FILE = DATA_DIR / "glossaries.yaml"
 HTML_DIR = CACHE_DIR / "glossary"
 SEEDED_FILE = DATA_DIR / "concepts.seeded.json"
@@ -168,16 +169,13 @@ def _entry(c: Candidate) -> enrich.Entry:
     )
 
 
-async def dedupe(
-    cands: list[Candidate],
-    graph: ConceptGraph,
-    cache: BuildCache,
-    ledger: list,
-    overrides: Overrides,
-    counts: dict[str, Counts],
-) -> list[Candidate]:
+def merge_pairs(
+    cands: list[Candidate], graph: ConceptGraph, vecs: np.ndarray, overrides: Overrides
+) -> tuple[list[tuple[enrich.Entry, enrich.Entry]], list[tuple[str, int, int | str]]]:
+    """Pairs for link_merge: each candidate vs its nearest graph concept, and vs at most its
+    MERGE_TOP_K nearest other candidates (the build's rule), all ≥ DEDUPE_THRESHOLD. Comparing
+    every pair above the threshold would ask ~12,000 pairs (glossary terms cluster)."""
     threshold = get_settings().dedupe_threshold
-    vecs = np.asarray(await cache.embed([c.label for c in cands], "SEMANTIC_SIMILARITY"))
     norm = vecs / np.maximum(np.linalg.norm(vecs, axis=1, keepdims=True), 1e-9)
     pairs: list[tuple[enrich.Entry, enrich.Entry]] = []
     kinds: list[tuple[str, int, int | str]] = []  # ("graph", i, concept id) | ("cand", i, j)
@@ -188,9 +186,28 @@ async def dedupe(
             kinds.append(("graph", i, concept.id))
     sims = norm @ norm.T
     np.fill_diagonal(sims, -1.0)
-    for i, j in zip(*np.nonzero(np.triu(sims) >= threshold), strict=True):
-        pairs.append((_entry(cands[i]), _entry(cands[j])))
-        kinds.append(("cand", int(i), int(j)))
+    seen: set[tuple[int, int]] = set()
+    for i in range(len(cands)):
+        for j in np.argsort(-sims[i])[:MERGE_TOP_K]:
+            j = int(j)
+            key = (min(i, j), max(i, j))
+            if sims[i, j] >= threshold and key not in seen:
+                seen.add(key)
+                pairs.append((_entry(cands[key[0]]), _entry(cands[key[1]])))
+                kinds.append(("cand", key[0], key[1]))
+    return pairs, kinds
+
+
+async def dedupe(
+    cands: list[Candidate],
+    graph: ConceptGraph,
+    cache: BuildCache,
+    ledger: list,
+    overrides: Overrides,
+    counts: dict[str, Counts],
+) -> list[Candidate]:
+    vecs = np.asarray(await cache.embed([c.label for c in cands], "SEMANTIC_SIMILARITY"))
+    pairs, kinds = merge_pairs(cands, graph, vecs, overrides)
     answers = await enrich.check_merges(pairs, cache.run, ledger)
     into_graph = {i for k, (kind, i, _) in enumerate(kinds) if kind == "graph" and answers.get(k)}
     same = [(i, j) for k, (kind, i, j) in enumerate(kinds) if kind == "cand" and answers.get(k)]
@@ -319,11 +336,13 @@ async def backfill_kinds(
     return file.model_copy(update={"concepts": concepts}), sources
 
 
-def project(ranked: dict[str, list[Candidate]], graph: ConceptGraph, cache: BuildCache) -> float:
+def project(
+    ranked: dict[str, list[Candidate]], graph: ConceptGraph, cache: BuildCache, n_pairs: int
+) -> float:
     n = sum(len(v) for v in ranked.values())
     unknown_kind = sum(c.kind is None for c in graph.concepts)
     calls = {
-        "link_merge": math.ceil(n * 0.3 / 20),
+        "link_merge": math.ceil(n_pairs / 20),
         "concept_define": math.ceil(n / 25),
         "concept_prereqs": math.ceil(n * 0.7 / 15),
         "concept_jurisdiction": math.ceil(unknown_kind / 50),
@@ -410,14 +429,18 @@ async def main(args: argparse.Namespace) -> int:
     pages = await fetch_pages(sources)
     ranked, counts = collect(sources, pages, graph)
     print(f"{len(pages)} pages; {sum(len(v) for v in ranked.values())} candidates to dedupe")
+    overrides = Overrides.load(OVERRIDES_FILE)
+    cands = [c for v in ranked.values() for c in v]
+    vecs = np.asarray(await cache.embed([c.label for c in cands], "SEMANTIC_SIMILARITY"))
+    n_pairs = len(merge_pairs(cands, graph, vecs, overrides)[0])
+    print(f"{n_pairs} link_merge pairs")
+    projected = project(ranked, graph, cache, n_pairs)
     if args.project:
-        return 0 if project(ranked, graph, cache) <= PROJECTION_LIMIT_USD else 2
-    if project(ranked, graph, cache) > PROJECTION_LIMIT_USD:
+        return 0 if projected <= PROJECTION_LIMIT_USD else 2
+    if projected > PROJECTION_LIMIT_USD:
         print("refusing: projected spend above the limit")
         return 2
 
-    overrides = Overrides.load(OVERRIDES_FILE)
-    cands = [c for v in ranked.values() for c in v]
     kept = await dedupe(cands, graph, cache, ledger, overrides, counts)
     defined = await define(kept, cache, ledger, counts)
     vecs = await cache.embed([c.label for c, _ in defined], "SEMANTIC_SIMILARITY")
