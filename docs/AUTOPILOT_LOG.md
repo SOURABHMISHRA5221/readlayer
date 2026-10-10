@@ -339,3 +339,5 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   (production behaviour): business 89%, non-business 69%, all 80%. Grown-concept precision
   26/30 = 87% (target 90%). Nothing written to production; seeding upload, re-link and
   held-out storage NOT done. Asked Sourabh how to proceed.
+- Sourabh (decision 36): go with the recommendation. Next: tighten growth to ≥ 90% precision,
+  then show the exact production writes with the deploy request, ship, then M7.5.
