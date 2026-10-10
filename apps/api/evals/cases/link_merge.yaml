@@ -1,0 +1,302 @@
+# link_merge pairs with the M2 decision, frozen from the M2.1 graph before any M2.2
+# model run (evals/freeze_link_cases.py, seed 7). Never edited afterwards.
+- a: Indexation
+  b: indexed to the price level
+  same: true
+- a: Debt servicing
+  b: debt service payments
+  same: true
+- a: Market-capitalization weighting
+  b: market-cap weighted
+  same: true
+- a: Vehicle currency
+  b: key convertible currency
+  same: true
+- a: Bond discount
+  b: Trading at a discount
+  same: true
+- a: Callable bond
+  b: sells the bond back
+  same: true
+- a: Repurchase agreement
+  b: Repo agreement
+  same: true
+- a: Classical economics
+  b: Classical version
+  same: true
+- a: Liquidation value
+  b: Scrap value
+  same: true
+- a: Special Purpose Vehicle
+  b: Project SPVs
+  same: true
+- a: Boutique investment bank
+  b: boutique bank
+  same: true
+- a: Qualified Domestic Institutional Investor
+  b: QDII funds
+  same: true
+- a: Expiry days
+  b: Expiration date (futures)
+  same: true
+- a: Basel Accords
+  b: Basel II/III
+  same: true
+- a: Carbon Border Adjustment Mechanism
+  b: carbon-border adjustment measures (CBAM)
+  same: true
+- a: Neoliberalism
+  b: Economic liberalism
+  same: true
+- a: Multimodal transport
+  b: multimodal export corridors
+  same: true
+- a: CPI
+  b: Harmonized Index of Consumer Prices
+  same: true
+- a: Fiscal deficit
+  b: deficit-financed fiscal stimulus
+  same: true
+- a: Central bank exit strategy
+  b: exit strategies
+  same: true
+- a: Risk-free asset
+  b: safe haven currency
+  same: true
+- a: NPS
+  b: National Pension Scheme
+  same: true
+- a: Bretton Woods system
+  b: Bretton Woods II
+  same: true
+- a: Securities and Exchange Commission
+  b: U.S. Securities and Exchange Commission
+  same: true
+- a: Credit and debit (accounting)
+  b: credit or debit
+  same: true
+- a: Factor investing
+  b: Style investing
+  same: true
+- a: Trade deficit
+  b: deficit countries
+  same: true
+- a: Trade and economic growth
+  b: Trade Cause Growth
+  same: true
+- a: Budget
+  b: upcoming Budget
+  same: true
+- a: Single-source supply chain dependency
+  b: single-source dependencies
+  same: true
+- a: Spin off
+  b: demerged Vedanta entities
+  same: true
+- a: Means testing
+  b: Means test
+  same: true
+- a: Bond markets
+  b: debt markets
+  same: true
+- a: FSSR
+  b: Food Safety and Standards Regulations
+  same: true
+- a: Bill of exchange
+  b: Bankers' Acceptance Futures
+  same: true
+- a: S&P Dow Jones Indices
+  b: Russell Indexes
+  same: true
+- a: Cross rate
+  b: Basic rate
+  same: true
+- a: Government bonds
+  b: issue bonds
+  same: true
+- a: Multiplier
+  b: Multiplier effect
+  same: true
+- a: Cyclical stocks
+  b: consumer cyclicals
+  same: true
+- a: Resolution plans
+  b: Dispute resolution
+  same: true
+- a: Corporate bond
+  b: corporate debt
+  same: true
+- a: Share class
+  b: Class I shares
+  same: true
+- a: IMF reserve position
+  b: reserve positions
+  same: true
+- a: SSY
+  b: Sukanya Samriddhi Yojana
+  same: true
+- a: Dutch auction
+  b: Uniform-price auction
+  same: true
+- a: Common law
+  b: common law jurisdictions
+  same: true
+- a: Sovereign default risk
+  b: sovereign risk
+  same: true
+- a: Share class
+  b: Class N shares
+  same: true
+- a: Trimmed mean inflation
+  b: trimmed mean core inflation
+  same: true
+- a: Exchange-traded fund
+  b: Emerging-market equities
+  same: false
+- a: Moral hazard
+  b: Model risk
+  same: false
+- a: Core inflation
+  b: Imported inflation
+  same: false
+- a: Treasury Secretary
+  b: On-the-run Treasury
+  same: false
+- a: Capital flows
+  b: Capitalization (finance)
+  same: false
+- a: Wealth effect
+  b: Asset price inflation
+  same: false
+- a: Capital asset
+  b: Collateralized security
+  same: false
+- a: Financial conditions
+  b: Economic flow
+  same: false
+- a: Sovereign state
+  b: Creditor nation
+  same: false
+- a: Tax refund
+  b: Tax deduction
+  same: false
+- a: Price stability
+  b: Financial stability
+  same: false
+- a: Labor mobility
+  b: Labour economics
+  same: false
+- a: Request for Quote
+  b: Quote currency
+  same: false
+- a: Receivables
+  b: Credit reporting
+  same: false
+- a: Monetary regime
+  b: Depository Institutions Deregulation and Monetary Control Act
+  same: false
+- a: Interest rate swap curve
+  b: Spot interest rate
+  same: false
+- a: Gilt-edged securities
+  b: Loanable funds
+  same: false
+- a: European option
+  b: Greenshoe option
+  same: false
+- a: GDP per capita
+  b: Income measure of GDP
+  same: false
+- a: Collateral
+  b: Rehypothecation
+  same: false
+- a: liquefied natural gas (LNG)
+  b: flexible LNG supplies
+  same: false
+- a: Interest rates
+  b: Interest rate future
+  same: false
+- a: Tax bracket
+  b: Ad valorem tax
+  same: false
+- a: Socially responsible investing
+  b: Shareholder value
+  same: false
+- a: Market monetarism
+  b: Neo-mercantilism
+  same: false
+- a: Re-commerce
+  b: Person-to-Person-Merchant
+  same: false
+- a: Inflation rate
+  b: Inflationary inertia
+  same: false
+- a: Cash flows
+  b: Capital and financial account
+  same: false
+- a: Crypto wallets
+  b: Currency basket
+  same: false
+- a: Sub-index
+  b: OECD Better Life Index
+  same: false
+- a: Pre-emptive monetary policy
+  b: Economic policy
+  same: false
+- a: Economic shock
+  b: Panic of 1837
+  same: false
+- a: Market maker
+  b: Arbitrageur
+  same: false
+- a: Due diligence
+  b: On-site investigations
+  same: false
+- a: Service tax
+  b: Tax policy
+  same: false
+- a: Price discovery
+  b: Transaction value
+  same: false
+- a: Blue-chip
+  b: Flight to quality
+  same: false
+- a: Central bank digital currencies
+  b: FedNow
+  same: false
+- a: VAT
+  b: Sin tax
+  same: false
+- a: Zero lower bound
+  b: Lower bound
+  same: false
+- a: LIBOR curve
+  b: Mumbai Interbank Forward Offer Rate
+  same: false
+- a: Market failure
+  b: Economic dislocation
+  same: false
+- a: Merger
+  b: Corporate restructuring
+  same: false
+- a: Sovereign wealth fund
+  b: Sovereign credit
+  same: false
+- a: Refinancing
+  b: Underwriting
+  same: false
+- a: Capital requirements
+  b: Capital call
+  same: false
+- a: Consumer Price Index series
+  b: Exchange rate series
+  same: false
+- a: IEA
+  b: OPEC
+  same: false
+- a: Risk-free rate
+  b: Interest rate future
+  same: false
+- a: Capital goods
+  b: Economic components
+  same: false

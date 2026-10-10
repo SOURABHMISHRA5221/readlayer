@@ -1,0 +1,752 @@
+# M2 variant precision sample, frozen from the M2.1 graph before any M2.2 model run
+# (evals/freeze_link_cases.py, seed 7). Never edited afterwards (decision 26).
+- content_id: 5192cf082698e180520a773b6f82624d
+  demand_id: d6
+  label: Foreign Institutional Investor
+  exact: FIIs
+  target: c_foreign_portfolio_investor_fpi
+- content_id: fdd32dd36d7a30f4c96c3b46c541399e
+  demand_id: d31
+  label: Foreign portfolio investment
+  exact: foreign portfolio investors
+  target: c_foreign_portfolio_investor_fpi
+- content_id: 2af9b33ac4250cfb6d028d593abbf9de
+  demand_id: d249
+  label: Demand-side economics
+  exact: demand side economics
+  target: c_keynesian_economics
+- content_id: 628d6fd2aa9fd3b5a99cedb64c70aa93
+  demand_id: d29
+  label: Exponential moving average
+  exact: EMA
+  target: c_ema
+- content_id: a97116c13b8ce65f458983ad51abe84d
+  demand_id: d3
+  label: Goods and Services Tax
+  exact: GST
+  target: c_gst
+- content_id: 0e17fac068bc54bed8014706a01b638b
+  demand_id: d4
+  label: Initial Public Offering
+  exact: IPO
+  target: c_ipo
+- content_id: 1049912d9f2c1fde4812122c4e338a71
+  demand_id: d85
+  label: Harmonised Index of Consumer Prices
+  exact: Harmonised index of consumer prices
+  target: c_cpi
+- content_id: d592e4f66fa6501b9f2bbda35e1df1dc
+  demand_id: d54
+  label: Basket of goods
+  exact: commodity baskets
+  target: c_consumer_price_index_basket
+- content_id: 933863f0348a72fcd1891e4aa3177805
+  demand_id: d120
+  label: Bilateral trade agreement
+  exact: bilateral agreements
+  target: c_free_trade_agreement
+- content_id: 15005667ef9b922eb4c0edfe73d6778a
+  demand_id: d5
+  label: food business operator
+  exact: FBO
+  target: c_fbo
+- content_id: 5fa156f81445492e031dea9310363a2b
+  demand_id: d0
+  label: Consumer price index
+  exact: consumer price index
+  target: c_cpi
+- content_id: 9a74c9519edc737688d587a08a7dac29
+  demand_id: d8
+  label: Second quarter
+  exact: Q2
+  target: c_q2
+- content_id: 103818e74dcc6c91f0b8f67453ae5021
+  demand_id: d39
+  label: Expansionary monetary policy
+  exact: Expansionary policy
+  target: c_credit_growth
+- content_id: f1b0469c38e2720a6bbc487946b32dea
+  demand_id: d7
+  label: Public Sector Undertaking
+  exact: PSU
+  target: c_psu
+- content_id: 80a1c6addb3672eb4171e6cc895e9343
+  demand_id: d9
+  label: Fiscal half-year
+  exact: H2FY27
+  target: c_h2
+- content_id: 413fdf0c1b0f823f110a64ba8ad2f8b0
+  demand_id: d75
+  label: Market basket
+  exact: market basket
+  target: c_consumer_price_index_basket
+- content_id: 0de07a9a4e72a518f7e60a79aca4a9c0
+  demand_id: d30
+  label: Exogenous variable
+  exact: exogeneous
+  target: c_exogenous
+- content_id: 14c54262b21c8546f0a3491f2013d030
+  demand_id: d41
+  label: Gross domestic product
+  exact: GDP
+  target: c_gdp
+- content_id: 6988ee7084a191a91f3d30f38f2b6ea4
+  demand_id: d34
+  label: Devaluation
+  exact: devalued
+  target: c_currency_devaluation
+- content_id: 67aedecec090b6c23545b0069ff23ea7
+  demand_id: d3
+  label: Globalization
+  exact: globalization
+  target: c_globalisation
+- content_id: 1049912d9f2c1fde4812122c4e338a71
+  demand_id: d62
+  label: Debt restructuring
+  exact: debt relief
+  target: c_loan_restructuring
+- content_id: 45a461117ff3465b4cc4a32c3fc53285
+  demand_id: d9
+  label: Insurance sub-limit
+  exact: sub-limits
+  target: c_energy_price_cap
+- content_id: 14c54262b21c8546f0a3491f2013d030
+  demand_id: d72
+  label: Free trade
+  exact: free trade
+  target: c_freetrade
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d10
+  label: Industrial production
+  exact: industrial production
+  target: c_index_of_industrial_production
+- content_id: 682ea5ee0151987f8065705599a1db10
+  demand_id: d2
+  label: Domestic tariff area
+  exact: DTA
+  target: c_dta
+- content_id: 103818e74dcc6c91f0b8f67453ae5021
+  demand_id: d43
+  label: Monetary transmission mechanism
+  exact: monetary transmission mechanism
+  target: c_monetary_policy_transmission
+- content_id: d5d09762d65040321a0aa779d23a6561
+  demand_id: d45
+  label: Managed float
+  exact: managed float
+  target: c_managed_float_regime
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d197
+  label: Contractionary fiscal policy
+  exact: contractionary
+  target: c_fiscal_consolidation
+- content_id: 25c6107ae6ec96964c600fc4b1ede16b
+  demand_id: d22
+  label: Investment fund
+  exact: investment funds
+  target: c_investment_vehicle
+- content_id: fdd32dd36d7a30f4c96c3b46c541399e
+  demand_id: d30
+  label: Initial public offering
+  exact: initial public offerings
+  target: c_ipo
+- content_id: 454a6f88b5ae325cb3160425c12997f4
+  demand_id: d198
+  label: Adjustable-rate loan
+  exact: adjustable rate
+  target: c_standard_variable_rate_mortgage
+- content_id: a5c4265823cd151ac63a693e99402b82
+  demand_id: d18
+  label: Treasury security
+  exact: Treasury securities
+  target: c_us_treasury_bonds
+- content_id: a4827e5ac4cc6203766c29e2fb63ae43
+  demand_id: d59
+  label: Debt service
+  exact: debt interest expense
+  target: c_debt_servicing
+- content_id: 103818e74dcc6c91f0b8f67453ae5021
+  demand_id: d63
+  label: Main refinancing operations
+  exact: Main refinancing rate
+  target: c_refinancing
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d56
+  label: Durable goods
+  exact: durable and non-durable goods
+  target: c_white_goods
+- content_id: 9b0a5ea9f8dd937544d5101e9a08bc77
+  demand_id: d14
+  label: Resistance level
+  exact: resistance
+  target: c_resistance
+- content_id: 628d6fd2aa9fd3b5a99cedb64c70aa93
+  demand_id: d7
+  label: Resistance level
+  exact: hurdle
+  target: c_resistance
+- content_id: 103818e74dcc6c91f0b8f67453ae5021
+  demand_id: d100
+  label: Credit rating
+  exact: credit ratings
+  target: c_credit_score
+- content_id: 454a6f88b5ae325cb3160425c12997f4
+  demand_id: d143
+  label: Business cycle
+  exact: business cycles
+  target: c_market_cycles
+- content_id: 0e17fac068bc54bed8014706a01b638b
+  demand_id: d12
+  label: Gross Domestic Product
+  exact: GDP
+  target: c_gdp
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d138
+  label: Stock market
+  exact: equity markets
+  target: c_stock_market_update
+- content_id: dfd90cb43460fb7c41a3c9d592d03c78
+  demand_id: d10
+  label: Fiscal headroom
+  exact: headroom
+  target: c_fiscal_space
+- content_id: 28a6c1ecbf545a2d47ce4335241cabf4
+  demand_id: d24
+  label: Bond coupon
+  exact: coupon
+  target: c_coupon
+- content_id: 4de4c1763bb1e3901efa172c4c55b032
+  demand_id: d1
+  label: Exogenous spending multiplier
+  exact: exogenous spending multiplier
+  target: c_multiplier
+- content_id: 67aedecec090b6c23545b0069ff23ea7
+  demand_id: d37
+  label: Business cycle
+  exact: business cycle
+  target: c_market_cycles
+- content_id: 2af9b33ac4250cfb6d028d593abbf9de
+  demand_id: d19
+  label: Currency depreciation
+  exact: depreciate
+  target: c_depreciation
+- content_id: 933863f0348a72fcd1891e4aa3177805
+  demand_id: d195
+  label: Global saving glut
+  exact: Global Saving Glut
+  target: c_global_savings_glut
+- content_id: 2332418841faa08d5f5e157c2d038d1d
+  demand_id: d31
+  label: Accounts receivable
+  exact: receivables
+  target: c_receivables
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d227
+  label: Contractionary monetary policy
+  exact: tight-money policy
+  target: c_monetary_tightening
+- content_id: 4fc18176ca97d891f88603a505c6e85b
+  demand_id: d175
+  label: Marking to market
+  exact: marking to market
+  target: c_mark_to_market_accounting
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d160
+  label: Gross Domestic Product
+  exact: GDP
+  target: c_gdp
+- content_id: d592e4f66fa6501b9f2bbda35e1df1dc
+  demand_id: d1
+  label: Market basket
+  exact: market basket
+  target: c_consumer_price_index_basket
+- content_id: b1fca67b0839fbb791c6c9ffba2fdb46
+  demand_id: d30
+  label: Fixed exchange rate system
+  exact: fixed exchange rate
+  target: c_fixed_exchange_rate
+- content_id: 351732f141037ada7701455f7c1e1677
+  demand_id: d5
+  label: Hedging
+  exact: hedging
+  target: c_hedge
+- content_id: 1aa3da70c8f93a81f911ad1d33c8d6ea
+  demand_id: d11
+  label: Foreign portfolio investment
+  exact: foreign portfolio investors (FPIs)
+  target: c_foreign_portfolio_investor_fpi
+- content_id: 9a74c9519edc737688d587a08a7dac29
+  demand_id: d4
+  label: First half of fiscal year
+  exact: first half
+  target: c_h2
+- content_id: a7ee25cb49083fb70e4381fdfe68b055
+  demand_id: d15
+  label: 10-year borrowing costs
+  exact: benchmark 10-year borrowing costs
+  target: c_borrowing_costs
+- content_id: 373520899451e1bc4cad5a16ab23ab82
+  demand_id: d15
+  label: Government budget deficit
+  exact: budget deficit
+  target: c_fiscal_deficit
+- content_id: 5fa156f81445492e031dea9310363a2b
+  demand_id: d56
+  label: Economic depreciation
+  exact: notional cost of depreciation
+  target: c_depreciation
+- content_id: 15c92c9599e20046e087301bf722d0c2
+  demand_id: d17
+  label: Bank rate
+  exact: bank rate
+  target: c_repo_rate
+- content_id: 933863f0348a72fcd1891e4aa3177805
+  demand_id: d91
+  label: Currency depreciation
+  exact: depreciate
+  target: c_depreciation
+- content_id: b9debf6b694ded46d3a94863dc711c6b
+  demand_id: d10
+  label: Fiat currency
+  exact: fiat currency
+  target: c_legal_tender
+- content_id: 103818e74dcc6c91f0b8f67453ae5021
+  demand_id: d8
+  label: Reserve requirements
+  exact: reserve requirements
+  target: c_cash_reserve_ratio_crr
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d187
+  label: Expansionary policy
+  exact: expansionary macroeconomic policy
+  target: c_credit_growth
+- content_id: 103818e74dcc6c91f0b8f67453ae5021
+  demand_id: d44
+  label: Consumer spending
+  exact: aggregate consumption
+  target: c_domestic_consumption
+- content_id: a4827e5ac4cc6203766c29e2fb63ae43
+  demand_id: d157
+  label: Economic growth
+  exact: economic growth
+  target: c_real_gdp_growth
+- content_id: 3f5a3a4789bb237dd83d90a99fe37e96
+  demand_id: d5
+  label: regulatory guardrails
+  exact: guardrails
+  target: c_regulatory_framework
+- content_id: 7dad42b03500d0984bb77e9d965f7b93
+  demand_id: d4
+  label: Food price inflation
+  exact: grocery inflation
+  target: c_food_inflation
+- content_id: b1fca67b0839fbb791c6c9ffba2fdb46
+  demand_id: d20
+  label: Exchange rate management
+  exact: exchange rate management policies
+  target: c_exchange_rate_policy
+- content_id: 8b98a1548374454d2a0a9f4f3ccc97b4
+  demand_id: d7
+  label: Price cap
+  exact: ₹45 lakh
+  target: c_energy_price_cap
+- content_id: 68fc4fd38beb1a4fb65a8a9538a13467
+  demand_id: d17
+  label: Operating loss
+  exact: operating loss
+  target: c_net_loss
+- content_id: c8bd976f1727214fa2d789ce228f352f
+  demand_id: d75
+  label: Interest rate spread
+  exact: spread of interest rates
+  target: c_spread
+- content_id: 4fc18176ca97d891f88603a505c6e85b
+  demand_id: d76
+  label: Short (finance)
+  exact: short selling
+  target: c_short_positions
+- content_id: 6bd06d90152d192110ee92142b67aded
+  demand_id: d71
+  label: Austerity measures
+  exact: austerity measures
+  target: c_fiscal_consolidation
+- content_id: f7cfb4c74f29b9af983f603eae43f3dd
+  demand_id: d2
+  label: Production-linked incentive
+  exact: incentive scheme
+  target: c_production_linked_incentive_pli_scheme
+- content_id: 6bd06d90152d192110ee92142b67aded
+  demand_id: d157
+  label: Economic growth rate
+  exact: growth rate
+  target: c_real_gdp_growth
+- content_id: 5f48d0cb2cd424b397f180a79dff9a3c
+  demand_id: d14
+  label: Probability of default
+  exact: probability of default
+  target: c_credit_risk
+- content_id: 4e00b90b88cf62b5bffa8f8689c5edc0
+  demand_id: d6
+  label: Financial cushion
+  exact: financial cushions
+  target: c_fiscal_space
+- content_id: 45aa206796450a85f98d9492b87ff924
+  demand_id: d29
+  label: Fixed-income security
+  exact: fixed income securities
+  target: c_fixed_income
+- content_id: d0fab080f5d4451962bf71179cab02b9
+  demand_id: d25
+  label: Self-custody crypto wallet
+  exact: self-custody wallets
+  target: c_crypto_wallets
+- content_id: 351732f141037ada7701455f7c1e1677
+  demand_id: d37
+  label: Nominal value
+  exact: nominal value
+  target: c_denomination
+- content_id: b307f96380c9e21bd11415f65179a796
+  demand_id: d8
+  label: Yield spread
+  exact: spread
+  target: c_spread
+- content_id: ca4e1eb43f7c0ca7e8e1b4258d86ec00
+  demand_id: d9
+  label: Currency depreciation
+  exact: rupee depreciation
+  target: c_depreciation
+- content_id: 45aa206796450a85f98d9492b87ff924
+  demand_id: d172
+  label: Credit rating
+  exact: Triple A ratings
+  target: c_credit_score
+- content_id: 14c54262b21c8546f0a3491f2013d030
+  demand_id: d173
+  label: Macroeconomics
+  exact: Macroeconomy
+  target: c_macroeconomic_conditions
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d243
+  label: Conference Board Leading Economic Index
+  exact: Leading Economic Index
+  target: c_bellwether
+- content_id: 4ea5c79019da93a58250d0d33aee09e3
+  demand_id: d1
+  label: Prudential regulation
+  exact: prudential regulations
+  target: c_banking_supervision
+- content_id: 8656b3556529883a384fa3a85ed5f73e
+  demand_id: d5
+  label: Fiscal year
+  exact: fiscal year 2026 (FY26)
+  target: c_q1fy27
+- content_id: 7d650d1124e64750f30ec45273f6f0c3
+  demand_id: d1
+  label: Gross Domestic Product
+  exact: GDP
+  target: c_gdp
+- content_id: e70cffe33a97c00eabe72ed73db038b5
+  demand_id: d5
+  label: Wholesale energy costs
+  exact: wholesale energy costs
+  target: c_wholesale_gas_prices
+- content_id: 5c802763ffe0adddbf4fd48aed700cb5
+  demand_id: d36
+  label: Refinancing operation
+  exact: refinancing operations
+  target: c_refinancing
+- content_id: b9debf6b694ded46d3a94863dc711c6b
+  demand_id: d96
+  label: Reserve requirement ratio
+  exact: reserve ratio
+  target: c_cash_reserve_ratio_crr
+- content_id: 6bd06d90152d192110ee92142b67aded
+  demand_id: d132
+  label: Fiscal retrenchment
+  exact: economic retrenchment
+  target: c_fiscal_consolidation
+- content_id: 4ca86689a5ec78e5de0e636cdde4b575
+  demand_id: d33
+  label: Goods and Services Tax
+  exact: GST
+  target: c_gst
+- content_id: a2bffe2a8b5321198c9f433f814a82a0
+  demand_id: d2
+  label: Publicly listed company
+  exact: listed company
+  target: c_public_company
+- content_id: 1049912d9f2c1fde4812122c4e338a71
+  demand_id: d99
+  label: Reserve requirement
+  exact: cash reserves
+  target: c_cash_reserve_ratio_crr
+- content_id: 8242774cc28ec46b9c143acc3ba3639e
+  demand_id: d20
+  label: Gross Domestic Product
+  exact: GDP growth
+  target: c_gdp
+- content_id: 351732f141037ada7701455f7c1e1677
+  demand_id: d101
+  label: Currency swap
+  exact: currency swap
+  target: c_foreign_exchange_swaps
+- content_id: c343b9a23db3840cc3b95758f154a377
+  demand_id: d15
+  label: Refined products
+  exact: refined products
+  target: c_refined_fuels
+- content_id: 5c802763ffe0adddbf4fd48aed700cb5
+  demand_id: d16
+  label: Base money
+  exact: base money
+  target: c_monetary_base
+- content_id: 2af9b33ac4250cfb6d028d593abbf9de
+  demand_id: d44
+  label: Liquidity
+  exact: excess liquidity
+  target: c_market_liquidity
+- content_id: f9a9c16c01323ea73fb54db90b4c8760
+  demand_id: d12
+  label: Compound growth
+  exact: compounding
+  target: c_compound_annual_growth_rate
+- content_id: 73f9b5bebb2a29a98020d9d9b23d1389
+  demand_id: d3
+  label: Worker cooperative
+  exact: worker-owned co-ops
+  target: c_co_operatives
+- content_id: 67aedecec090b6c23545b0069ff23ea7
+  demand_id: d73
+  label: Capital accumulation
+  exact: capital accumulation
+  target: c_capital_expenditures
+- content_id: 0de07a9a4e72a518f7e60a79aca4a9c0
+  demand_id: d49
+  label: Cost-push inflation
+  exact: cost-push inflation
+  target: c_cost_inflation
+- content_id: abaf673973873cd34cf47095eca28b81
+  demand_id: d6
+  label: Shareholders' equity
+  exact: shareholders' equity
+  target: c_equities
+- content_id: 14c54262b21c8546f0a3491f2013d030
+  demand_id: d100
+  label: Carbon border adjustment
+  exact: carbon border-adjustment mechanism
+  target: c_carbon_border_adjustment_mechanism
+- content_id: c7d880f0d1651b3f516107b08d989730
+  demand_id: d39
+  label: Short selling
+  exact: Shorting
+  target: c_short_positions
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d142
+  label: Yield curve spread
+  exact: long-term spread
+  target: c_spread
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d236
+  label: Consumer Price Index
+  exact: Consumer Price Index
+  target: c_cpi
+- content_id: d0bf856320fc0a25108b8413a5c54836
+  demand_id: d29
+  label: Crowding out effect
+  exact: crowding out
+  target: c_crowding_out
+- content_id: d592e4f66fa6501b9f2bbda35e1df1dc
+  demand_id: d2
+  label: Gross domestic product
+  exact: gross domestic product
+  target: c_gdp
+- content_id: 4fc18176ca97d891f88603a505c6e85b
+  demand_id: d72
+  label: Risk-free interest rate
+  exact: risk-free return
+  target: c_risk_free_rate
+- content_id: 5b16d1ae4d2c0f2f8a7b448064a36bf5
+  demand_id: d96
+  label: Bank rate
+  exact: Bank rate
+  target: c_repo_rate
+- content_id: b307f96380c9e21bd11415f65179a796
+  demand_id: d37
+  label: Index-linked gilt
+  exact: index-linked
+  target: c_inflation_indexed_bond
+- content_id: 5df845da8631c089334d2597c07b8a17
+  demand_id: d35
+  label: Net factor income
+  exact: net income from abroad
+  target: c_factor_income
+- content_id: 9c3a46655308f2baa94a2a8c54c72df1
+  demand_id: d15
+  label: Harmonised Index of Consumer Prices
+  exact: Harmonised Index of Consumer Prices (HICP)
+  target: c_cpi
+- content_id: 7def279b188931f1b5213afbb83a0c94
+  demand_id: d0
+  label: Initial public offering
+  exact: float
+  target: c_ipo
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d95
+  label: Industrial production
+  exact: industrial production
+  target: c_index_of_industrial_production
+- content_id: d370a6e2cf525268410e10f570fe9252
+  demand_id: d122
+  label: Securities lending
+  exact: Securities Lending
+  target: c_securities_lending_and_borrowing
+- content_id: 6bd06d90152d192110ee92142b67aded
+  demand_id: d177
+  label: Risk-free interest rate
+  exact: nominal risk-free rate
+  target: c_risk_free_rate
+- content_id: 1049912d9f2c1fde4812122c4e338a71
+  demand_id: d33
+  label: Inverse correlation
+  exact: inverse correlation
+  target: c_inverse_relationship
+- content_id: db88a72be8eefb678dd462d0b5982aed
+  demand_id: d46
+  label: Non-GAAP financial measures
+  exact: non-GAAP measures
+  target: c_non_gaap
+- content_id: 15005667ef9b922eb4c0edfe73d6778a
+  demand_id: d4
+  label: food business operator
+  exact: food business operator
+  target: c_fbo
+- content_id: fc8fc736859176c46aa633a1d3e10701
+  demand_id: d3
+  label: Employees' Pension Scheme
+  exact: EPS
+  target: c_eps
+- content_id: 49d02d819a8a24d6992098a587f13faa
+  demand_id: d7
+  label: Merchant discount rate
+  exact: MDR
+  target: c_mdr
+- content_id: 702e1d060cf7ec03146383f8bb5de0b4
+  demand_id: d17
+  label: Expectations-augmented Phillips curve
+  exact: expectations-augmented Phillips curve
+  target: c_phillips_curve
+- content_id: b307f96380c9e21bd11415f65179a796
+  demand_id: d52
+  label: Yield to maturity
+  exact: yield to maturity
+  target: c_bond_yields
+- content_id: abaf673973873cd34cf47095eca28b81
+  demand_id: d176
+  label: With-profits policy
+  exact: with-profits policy
+  target: c_participating_policy
+- content_id: 103818e74dcc6c91f0b8f67453ae5021
+  demand_id: d96
+  label: Foreign exchange intervention
+  exact: foreign exchange interventions
+  target: c_foreign_exchange_market
+- content_id: 103818e74dcc6c91f0b8f67453ae5021
+  demand_id: d59
+  label: Maturity (finance)
+  exact: maturity
+  target: c_expiry_days
+- content_id: bab77467ea8339b40c8ad8e0909275b6
+  demand_id: d6
+  label: Tax revenue
+  exact: tax receipts
+  target: c_tax_receipts
+- content_id: b60c50efc071532e40122c924bdff06d
+  demand_id: d124
+  label: 12b-1 fee
+  exact: 12b-1 fee
+  target: c_distribution_costs
+- content_id: 4fc18176ca97d891f88603a505c6e85b
+  demand_id: d195
+  label: Marking to market
+  exact: mark-to-market
+  target: c_mark_to_market_accounting
+- content_id: a93fb9289822088acf3532b48064166b
+  demand_id: d3
+  label: Risk-free interest rate
+  exact: risk-free rate of interest
+  target: c_risk_free_rate
+- content_id: 98ac32745f82fea12e5b87055b9e49f4
+  demand_id: d68
+  label: Marginal propensity to consume
+  exact: marginal propensity to spend
+  target: c_domestic_consumption
+- content_id: b1fca67b0839fbb791c6c9ffba2fdb46
+  demand_id: d29
+  label: Fixed exchange rate system
+  exact: fixed exchange rate
+  target: c_fixed_exchange_rate
+- content_id: d592e4f66fa6501b9f2bbda35e1df1dc
+  demand_id: d57
+  label: International dollar
+  exact: international dollars
+  target: c_geary_khamis_dollar
+- content_id: 6bd06d90152d192110ee92142b67aded
+  demand_id: d123
+  label: Social benefits
+  exact: benefits
+  target: c_welfare
+- content_id: 4acbb9a9ba2bbab5e42b71471e8c1806
+  demand_id: d0
+  label: RoDTEP scheme
+  exact: Remission of Duties and Taxes on Exported Products (RoDTEP)
+  target: c_rodtep
+- content_id: b9debf6b694ded46d3a94863dc711c6b
+  demand_id: d171
+  label: Consumer Price Index
+  exact: Consumer Price Index
+  target: c_cpi
+- content_id: 60d092d8023d226b17787542571216f0
+  demand_id: d11
+  label: Initial public offering
+  exact: IPO
+  target: c_ipo
+- content_id: e8aa9578974ed73ff4f0b22650cae478
+  demand_id: d9
+  label: Stock exchange
+  exact: Bourses
+  target: c_bourses
+- content_id: abaf673973873cd34cf47095eca28b81
+  demand_id: d61
+  label: Cum dividend
+  exact: cum dividend
+  target: c_in_dividend_date
+- content_id: 5df845da8631c089334d2597c07b8a17
+  demand_id: d12
+  label: Net exports
+  exact: net exports
+  target: c_trade_balance
+- content_id: 0512a8e696bb239ca03f2280677e04ad
+  demand_id: d10
+  label: Mutual organization
+  exact: mutuals
+  target: c_co_operatives
+- content_id: fc8fc736859176c46aa633a1d3e10701
+  demand_id: d1
+  label: Employees' Pension Scheme
+  exact: Employees’ Pension Scheme (EPS)
+  target: c_eps
+- content_id: 6bd06d90152d192110ee92142b67aded
+  demand_id: d4
+  label: Gross domestic product
+  exact: gross domestic product (GDP)
+  target: c_gdp
+- content_id: 5df845da8631c089334d2597c07b8a17
+  demand_id: d85
+  label: Service sector
+  exact: services balance
+  target: c_services_sector
+- content_id: 351732f141037ada7701455f7c1e1677
+  demand_id: d140
+  label: Derivative
+  exact: derivative product
+  target: c_derivative_contracts

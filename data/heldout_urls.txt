@@ -1,17 +1,33 @@
-# ReadLayer held-out linker evaluation set (M2.1). NEVER add these to the corpus;
-# build_concepts refuses any overlap. format: url<TAB>source
-https://www.livemint.com/economy/gst-arrest-powers-may-be-removed-council-to-discuss-decriminalisation-on-wednesday-law-change-likely-in-winter-session-11791112867891.html	mint
-https://www.livemint.com/market/stock-market-news/sensex-nifty-bank-nifty-prediction-what-will-happen-in-the-indian-stock-market-on-monday-3-reasons-tell-the-scene-11791107343487.html	mint
-https://www.livemint.com/companies/dlf-sells-out-maiden-senior-living-project-aureva-in-gurugram-for-rs-1985-crore-11791098745562.html	mint
-https://www.thehindubusinessline.com/economy/india-chile-struggle-to-clear-critical-mineral-hurdle-in-cepa-talks/article71543542.ece	businessline
-https://www.thehindubusinessline.com/markets/from-a-nation-of-savers-to-a-nation-of-investors-nse-bets-on-technology-financialisation-and-market-depth/article71543414.ece	businessline
-https://www.thehindubusinessline.com/companies/kudankulam-npp-to-add-1000-mw-capacity-next-year-with-unit-3-start-up-rosatom/article71543479.ece	businessline
-https://economictimes.indiatimes.com/news/economy/indicators/indias-growth-is-making-the-world-rewrite-its-forecast-mospi-secretary-saurabh-garg/articleshow/134674032.cms	et
-https://economictimes.indiatimes.com/markets/stocks/news/ahead-of-market-10-things-that-will-decide-stock-market-action-on-monday/articleshow/134673452.cms	et
-https://economictimes.indiatimes.com/markets/stocks/news/valuations-of-it-stocks-already-capture-most-of-ai-disruption-risk-chintan-haria/articleshow/134673144.cms	et
-https://www.bbc.co.uk/news/articles/c689jqvnqw9jo	bbc
-https://www.bbc.co.uk/news/articles/cwp93jp4p7xpo	bbc
-https://www.bbc.co.uk/news/articles/clyl18x4734o	bbc
-https://www.theguardian.com/business/2026/oct/04/andy-burnham-plans-social-care-workers-changes	guardian
-https://www.theguardian.com/business/2026/oct/04/costa-coffee-shops-return-profit-iced-drinks-matcha	guardian
-https://www.livemint.com/money/personal-finance/is-your-sbi-hdfc-bank-other-bank-branch-closing-or-shifting-will-ifsc-cheque-book-details-change-know-here-11791114000086.html	mint
+# ReadLayer held-out linker evaluation set. NEVER add these to the corpus; build_concepts
+# refuses any overlap. format: url<TAB>source<TAB>domain. Lines 1–15: M2.1 (business);
+# 16–30: M2.2 non-business, appended by --collect-open. Domains fixed before measuring.
+https://www.livemint.com/economy/gst-arrest-powers-may-be-removed-council-to-discuss-decriminalisation-on-wednesday-law-change-likely-in-winter-session-11791112867891.html	mint	policy
+https://www.livemint.com/market/stock-market-news/sensex-nifty-bank-nifty-prediction-what-will-happen-in-the-indian-stock-market-on-monday-3-reasons-tell-the-scene-11791107343487.html	mint	finance
+https://www.livemint.com/companies/dlf-sells-out-maiden-senior-living-project-aureva-in-gurugram-for-rs-1985-crore-11791098745562.html	mint	business
+https://www.thehindubusinessline.com/economy/india-chile-struggle-to-clear-critical-mineral-hurdle-in-cepa-talks/article71543542.ece	businessline	business
+https://www.thehindubusinessline.com/markets/from-a-nation-of-savers-to-a-nation-of-investors-nse-bets-on-technology-financialisation-and-market-depth/article71543414.ece	businessline	finance
+https://www.thehindubusinessline.com/companies/kudankulam-npp-to-add-1000-mw-capacity-next-year-with-unit-3-start-up-rosatom/article71543479.ece	businessline	business
+https://economictimes.indiatimes.com/news/economy/indicators/indias-growth-is-making-the-world-rewrite-its-forecast-mospi-secretary-saurabh-garg/articleshow/134674032.cms	et	policy
+https://economictimes.indiatimes.com/markets/stocks/news/ahead-of-market-10-things-that-will-decide-stock-market-action-on-monday/articleshow/134673452.cms	et	finance
+https://economictimes.indiatimes.com/markets/stocks/news/valuations-of-it-stocks-already-capture-most-of-ai-disruption-risk-chintan-haria/articleshow/134673144.cms	et	finance
+https://www.bbc.co.uk/news/articles/c689jqvnqw9jo	bbc	business
+https://www.bbc.co.uk/news/articles/cwp93jp4p7xpo	bbc	policy
+https://www.bbc.co.uk/news/articles/clyl18x4734o	bbc	finance
+https://www.theguardian.com/business/2026/oct/04/andy-burnham-plans-social-care-workers-changes	guardian	policy
+https://www.theguardian.com/business/2026/oct/04/costa-coffee-shops-return-profit-iced-drinks-matcha	guardian	business
+https://www.livemint.com/money/personal-finance/is-your-sbi-hdfc-bank-other-bank-branch-closing-or-shifting-will-ifsc-cheque-book-details-change-know-here-11791114000086.html	mint	policy
+https://www.bbc.co.uk/news/articles/cqkg50j1yd5lo	bbc	technology
+https://www.bbc.co.uk/news/articles/cwm24n9v8rdeo	bbc	technology
+https://www.bbc.co.uk/news/articles/c3vgx4450v2lo	bbc	science
+https://www.bbc.co.uk/news/articles/c574p9rdk2mko	bbc	science
+https://www.bbc.co.uk/news/articles/c8x2z22wdeglo	bbc	health
+https://www.bbc.co.uk/news/articles/crn8wyl4n42yo	bbc	health
+https://www.theguardian.com/football/2026/oct/10/manchester-city-enzo-maresca	guardian	sports
+https://www.theguardian.com/football/2026/oct/09/chelsea-xabi-alonso-cole-palmer-england-thomas-tuchel	guardian	sports
+https://www.theguardian.com/environment/2026/oct/10/climate-crisis-putting-world-best-surf-breaks-at-risk	guardian	environment
+https://www.theguardian.com/environment/2026/oct/09/cop31-host-wealthy-countries-climate-crisis-spending-defence-nato	guardian	environment
+https://www.bbc.co.uk/news/articles/cmewe5lvl2rqo	bbc	politics
+https://www.bbc.co.uk/news/articles/cw4g13j4mdxjo	bbc	politics
+https://www.theguardian.com/law/2026/oct/07/two-men-freed-indefinite-sentences-for-public-protection-ipp	guardian	law
+https://www.theguardian.com/culture/2026/oct/10/my-cultural-awakening-amelie-autism-neurodivergence	guardian	culture
+https://www.theguardian.com/education/2026/oct/10/pre-apprenticeship-scheme-landmark-alan-milburn-youth-jobs-crisis-report	guardian	education

@@ -1,0 +1,224 @@
+# link_confirm regression cases (M2.2, issue #6, decision 34). Written and committed before the
+# first model run; never edited or dropped to make a number pass (decision 26).
+# Each case is self-contained: the phrase, its sentence, the article's site and the candidates
+# exactly as the linker would show them (id, label, definition, plus kind and jurisdiction,
+# which only link_confirm v3 renders). `expect`: the acceptable ids; an empty list means the
+# right answer is null (no candidate explains the phrase). Before = link_confirm-v2, after = v3.
+# Held-out sentences (L01, L03, L04) appear here only as regression cases; the v3 prompt's own
+# examples use different wording (plan §D.4).
+
+- id: L01
+  note: UK Chancellor (held-out Guardian sentence) must not link to the US Treasury Secretary
+  phrase: Chancellor
+  site: The Guardian
+  sentence: >-
+    The meeting comes as Chancellor John Healey prepares for his first Budget next month, with
+    rising borrowing costs in recent weeks adding to the pressure on government finances.
+  candidates:
+    - {id: c_treasury_secretary, label: Treasury Secretary, kind: role, jurisdiction: US,
+       definition: "A cabinet-level government official responsible for managing a nation's treasury, public finances, and economic policy."}
+    - {id: c_chancellor_of_the_exchequer, label: Chancellor of the Exchequer, kind: role, jurisdiction: GB,
+       definition: "The UK government minister in charge of the Treasury, responsible for taxes, public spending and the annual Budget."}
+  expect: [c_chancellor_of_the_exchequer]
+
+- id: L02
+  note: UK Chancellor (corpus BBC sentence)
+  phrase: Chancellor
+  site: BBC News
+  sentence: >-
+    UK Chancellor John Healey has told BBC News that the UK is in talks with US authorities over
+    a potential diesel export ban and has started preparing for it.
+  candidates:
+    - {id: c_treasury_secretary, label: Treasury Secretary, kind: role, jurisdiction: US,
+       definition: "A cabinet-level government official responsible for managing a nation's treasury, public finances, and economic policy."}
+    - {id: c_chancellor_of_the_exchequer, label: Chancellor of the Exchequer, kind: role, jurisdiction: GB,
+       definition: "The UK government minister in charge of the Treasury, responsible for taxes, public spending and the annual Budget."}
+  expect: [c_chancellor_of_the_exchequer]
+
+- id: L03
+  note: a specific named levy (held-out Guardian sentence) must not collapse into the generic Tax levy
+  phrase: health and care levy
+  site: The Guardian
+  sentence: >-
+    While it seems to have been memory-holed by the political class, Boris Johnson was prepared
+    to bust a Conservative manifesto promise in 2021 and introduce a £12bn-a-year "health and
+    care levy" to "fix social care".
+  candidates:
+    - {id: c_tax_levy, label: Tax levy, kind: tax, jurisdiction: global,
+       definition: "A compulsory payment or tax imposed by a government authority on goods, services, or income."}
+    - {id: c_national_insurance, label: National Insurance, kind: tax, jurisdiction: GB,
+       definition: "National Insurance is a system of compulsory payroll taxes levied on employees and employers to fund state benefits and healthcare."}
+  expect: []
+
+- id: L04
+  note: a paraphrase of the same trade concept (held-out BusinessLine sentence) should link
+  phrase: preferential access (Preferential trade access)
+  site: BusinessLine
+  sentence: >-
+    Despite agreeing to a separate chapter on critical minerals in the CEPA, Chile is seeking to
+    focus on cooperation to secure supply chains and exports of value-added products rather than
+    committing to preferential access to raw materials.
+  candidates:
+    - {id: c_preferential_tariffs, label: Preferential tariffs, kind: policy, jurisdiction: global,
+       definition: "Customs duties that are lower or eliminated for imports originating from specific partner countries under a free trade agreement."}
+    - {id: c_market_access, label: Market access, kind: idea, jurisdiction: global,
+       definition: "The ability of a company or country to sell its products and services in a foreign market."}
+    - {id: c_free_trade_agreement, label: Free trade agreement, kind: policy, jurisdiction: global,
+       definition: "A free trade agreement is a pact between two or more countries designed to reduce or eliminate tariffs, quotas, and other trade barriers on goods and services exchanged between them."}
+  expect: [c_preferential_tariffs, c_market_access]
+
+- id: L05
+  note: Russell Indexes are FTSE Russell's, not S&P Dow Jones Indices' (corpus Wikipedia sentence)
+  phrase: Russell Indexes
+  site: Wikimedia Foundation, Inc.
+  sentence: >-
+    A number of bond indices exist for the purposes of managing portfolios and measuring
+    performance, similar to the S&P 500 or Russell Indexes for companies' shares.
+  candidates:
+    - {id: c_s_p_dow_jones_indices, label: S&P Dow Jones Indices, kind: index_provider, jurisdiction: global,
+       definition: "An organization that creates and manages financial market indexes used to track the performance of specific groups of stocks or bonds."}
+    - {id: c_ftse_russell, label: FTSE Russell, kind: index_provider, jurisdiction: global,
+       definition: "A company that designs and publishes stock market indices, including the FTSE 100 and the Russell 2000, and licenses them to investors and fund managers."}
+    - {id: c_benchmark_index, label: Benchmark index, kind: index, jurisdiction: global,
+       definition: "A benchmark index is a statistical measure of the performance of a specific segment of the stock market, used as a standard for portfolio performance."}
+  expect: [c_ftse_russell]
+
+- id: L06
+  note: the index provider by name (corpus Wikipedia sentence)
+  phrase: FTSE Russell
+  site: Wikimedia Foundation, Inc.
+  sentence: >-
+    Index provider FTSE Russell defines its segments by sorting all eligible companies by market
+    cap, and then taking the top or bottom N companies (by count) from the list.
+  candidates:
+    - {id: c_s_p_dow_jones_indices, label: S&P Dow Jones Indices, kind: index_provider, jurisdiction: global,
+       definition: "An organization that creates and manages financial market indexes used to track the performance of specific groups of stocks or bonds."}
+    - {id: c_ftse_russell, label: FTSE Russell, kind: index_provider, jurisdiction: global,
+       definition: "A company that designs and publishes stock market indices, including the FTSE 100 and the Russell 2000, and licenses them to investors and fund managers."}
+  expect: [c_ftse_russell]
+
+- id: L07
+  note: control, levies on electricity bills are energy levies (corpus BBC sentence)
+  phrase: levies
+  site: BBC News
+  sentence: >-
+    VAT on electricity bills was cut on Thursday, and some levies were cancelled or shifted into
+    taxation earlier this year.
+  candidates:
+    - {id: c_energy_levy, label: Energy levy, kind: tax, jurisdiction: global,
+       definition: "An energy levy is a government-imposed surcharge or fee added to utility bills to fund environmental programs or social policies."}
+    - {id: c_tax_levy, label: Tax levy, kind: tax, jurisdiction: global,
+       definition: "A compulsory payment or tax imposed by a government authority on goods, services, or income."}
+  expect: [c_energy_levy]
+
+- id: L08
+  note: control (corpus Economic Times sentence)
+  phrase: policy repo rate (Repo rate)
+  site: The Economic Times
+  sentence: Currently, the RBI's policy repo rate stands at 5.25 per cent.
+  candidates:
+    - {id: c_repo_rate, label: Repo rate, kind: idea, jurisdiction: global,
+       definition: "The benchmark interest rate at which a central bank lends short-term money to commercial banks."}
+    - {id: c_reverse_repo_rate, label: Reverse repo rate, kind: idea, jurisdiction: global,
+       definition: "The reverse repo rate is the interest rate at which a central bank absorbs excess liquidity from commercial banks within the financial system."}
+  expect: [c_repo_rate]
+
+- id: L09
+  note: control (corpus Economic Times sentence)
+  phrase: bond yields
+  site: The Economic Times
+  sentence: >-
+    The market sell-off has been driven largely by external factors, with bond yields reaching
+    multi-year highs and crude oil prices remaining elevated.
+  candidates:
+    - {id: c_bond_yields, label: Bond yields, kind: idea, jurisdiction: global,
+       definition: "The return an investor expects to receive on a bond investment, expressed as a percentage."}
+    - {id: c_benchmark_index, label: Benchmark index, kind: index, jurisdiction: global,
+       definition: "A benchmark index is a statistical measure of the performance of a specific segment of the stock market, used as a standard for portfolio performance."}
+  expect: [c_bond_yields]
+
+- id: L10
+  note: control (corpus Guardian sentence)
+  phrase: inflationary pressures (Inflation)
+  site: The Guardian
+  sentence: >-
+    Greggs told investors on Wednesday that while stronger sales had "modestly improved" its
+    outlook for this year, "there are signs of greater inflationary pressures in 2027".
+  candidates:
+    - {id: c_inflation, label: Inflation, kind: idea, jurisdiction: global,
+       definition: "The general increase in prices and fall in the purchasing value of money over time."}
+    - {id: c_core_inflation, label: Core inflation, kind: idea, jurisdiction: global,
+       definition: "Core inflation is a measure of inflation that excludes volatile items like food and energy prices to reflect the underlying long-term trend."}
+  expect: [c_inflation]
+
+- id: L11
+  note: control, written for this suite
+  phrase: GST
+  site: The Economic Times
+  sentence: Restaurants will now charge 5% GST on food bills, the finance ministry said on Monday.
+  candidates:
+    - {id: c_gst, label: GST, kind: tax, jurisdiction: IN,
+       definition: "A comprehensive indirect tax levied on the supply of goods and services across an economy."}
+    - {id: c_tax_levy, label: Tax levy, kind: tax, jurisdiction: global,
+       definition: "A compulsory payment or tax imposed by a government authority on goods, services, or income."}
+  expect: [c_gst]
+
+- id: L12
+  note: control, an index is not its provider; written for this suite
+  phrase: S&P 500
+  site: The Guardian
+  sentence: Wall Street's S&P 500 closed at a record high after the jobs figures beat forecasts.
+  candidates:
+    - {id: c_s_p_500, label: S&P 500, kind: index, jurisdiction: US,
+       definition: "A prominent stock market index tracking the performance of 500 of the largest publicly traded companies in the United States."}
+    - {id: c_s_p_dow_jones_indices, label: S&P Dow Jones Indices, kind: index_provider, jurisdiction: global,
+       definition: "An organization that creates and manages financial market indexes used to track the performance of specific groups of stocks or bonds."}
+  expect: [c_s_p_500]
+
+- id: L13
+  note: non-business (sports), written for this suite
+  phrase: duck
+  site: BBC News
+  sentence: Kohli fell for a duck in the second over, edging a full delivery to the slips.
+  candidates:
+    - {id: c_duck_cricket, label: Duck, kind: idea, jurisdiction: global,
+       definition: "In cricket, a batter's dismissal without scoring a single run."}
+    - {id: c_run_cricket, label: Run, kind: idea, jurisdiction: global,
+       definition: "The basic unit of scoring in cricket, made by the batters running between the wickets or by hitting a boundary."}
+  expect: [c_duck_cricket]
+
+- id: L14
+  note: non-business (sports), written for this suite
+  phrase: lbw (Leg before wicket)
+  site: BBC News
+  sentence: He was trapped lbw by a full, inswinging delivery that would have hit middle stump.
+  candidates:
+    - {id: c_leg_before_wicket, label: Leg before wicket, kind: method, jurisdiction: global,
+       definition: "A way a batter can be out in cricket when the ball, which would otherwise have hit the stumps, strikes their body first."}
+    - {id: c_bowled, label: Bowled, kind: method, jurisdiction: global,
+       definition: "A dismissal in cricket in which the bowler's delivery hits the stumps and dislodges a bail."}
+  expect: [c_leg_before_wicket]
+
+- id: L15
+  note: non-business (health), written for this suite; an opposite must not be chosen
+  phrase: hypertension
+  site: BBC News
+  sentence: Untreated hypertension sharply raises the risk of stroke and heart attack, doctors warn.
+  candidates:
+    - {id: c_hypertension, label: Hypertension, kind: condition, jurisdiction: global,
+       definition: "A long-term condition in which the pressure of blood against the artery walls is higher than normal."}
+    - {id: c_hypotension, label: Hypotension, kind: condition, jurisdiction: global,
+       definition: "Blood pressure that is lower than normal, which can cause dizziness or fainting."}
+  expect: [c_hypertension]
+
+- id: L16
+  note: a German chancellor must not link to a UK or US role (jurisdiction); written for this suite
+  phrase: Chancellor
+  site: Reuters
+  sentence: German Chancellor Friedrich Merz said Berlin would raise defence spending next year.
+  candidates:
+    - {id: c_chancellor_of_the_exchequer, label: Chancellor of the Exchequer, kind: role, jurisdiction: GB,
+       definition: "The UK government minister in charge of the Treasury, responsible for taxes, public spending and the annual Budget."}
+    - {id: c_treasury_secretary, label: Treasury Secretary, kind: role, jurisdiction: US,
+       definition: "A cabinet-level government official responsible for managing a nation's treasury, public finances, and economic policy."}
+  expect: []
