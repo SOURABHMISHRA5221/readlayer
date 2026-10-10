@@ -117,10 +117,11 @@ function AddGoal({ onAdded }: { onAdded: () => void }) {
     e.preventDefault();
     if (!idea.trim()) return;
     setBusy(true);
-    setNote("");
+    setNote("Looking up that idea and what it builds on…"); // resolving can take 10–20 s
     try {
       await profileApi.addLearning(`understand ${idea.trim()}`);
       setIdea("");
+      setNote("");
       onAdded();
     } catch (err) {
       setNote(message(err, "That goal couldn't be added."));
@@ -148,7 +149,7 @@ function AddGoal({ onAdded }: { onAdded: () => void }) {
         <label htmlFor={`${id}-i`} className="goals__form-title">Understand an idea</label>
         <input id={`${id}-i`} className="goals__text" type="text" maxLength={100} value={idea}
           placeholder="e.g. insulin resistance" onChange={(e) => setIdea(e.target.value)} />
-        <button className="btn" type="submit" disabled={busy || !idea.trim()}>Add</button>
+        <button className="btn" type="submit" disabled={busy || !idea.trim()}>{busy ? "Adding…" : "Add"}</button>
       </form>
       <p className="profile__note" aria-live="polite">{note}</p>
     </div>
