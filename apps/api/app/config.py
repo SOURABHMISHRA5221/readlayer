@@ -40,7 +40,9 @@ class Settings(BaseSettings):
     growth_per_uid_day: int = 25  # per reader, Google or anonymous (decision 35)
     growth_per_day: int = 100  # all readers together
     growth_refresh_s: float = 60.0  # how often an instance looks for concepts grown elsewhere
-    growth_timeout_s: float = 20.0  # inside phase 2; bounded by the time phase 2 has left
+    # Inside phase 2, bounded by the time phase 2 has left (minus 5 s). 30 s, not the plan's 20 s:
+    # a harness ingest needed 20.0 s for 4 concepts (five batched calls incl. MODEL_QUALITY).
+    growth_timeout_s: float = 30.0
     # Profile edits by prompt per UTC day (DESIGN §15.3, §11.5): per reader, and for demo readers
     # per uid plus a cap shared across all anonymous readers.
     profile_edit_daily_cap: int = 10

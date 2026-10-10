@@ -349,3 +349,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   profile leads with Health/Sports, 12 others folded; map lists all 14.
 - Found and fixed a live bug from M7: the Delete my data label was invisible (account.css filled
   .btn--danger + profile.css outlined rule = danger text on danger background), both themes.
+- milestone-reviewer round 1: FIX (9 items: STATUS accuracy, deviations, open decisions, missing
+  tests, startup guard); all applied. Round 2: **SHIP**; follow-ups applied (cost line, injection
+  test renders the real prompt against a forged delimiter).
+- Harness fix: the emulator budget refused every call once production spend passed $1 (cap now
+  copied spend + allowance). Growth timing on the harness (growth on, seeded graph): technology
+  article 4 concepts in 20.0 s, health 3 in 6.9 s; growth timeout raised to 30 s (deviation logged).

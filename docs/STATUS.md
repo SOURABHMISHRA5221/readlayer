@@ -168,6 +168,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M2.2: glossary terms that exactly match an existing concept are dropped, not turned into link_merge-gated alias additions | Short acronyms are ambiguous across domains; dropping is safer | Keep |
 | M2.2: growth is stored in Firestore `graph_growth/` and folded into `concepts.json` later (BUILD_PLAN said growth writes `concepts.json`) | The runtime account has no Storage write (an IAM change), and rewriting a 12 MB file per article is heavy | Keep (DESIGN §2) |
 | M2.2: growth makes a fourth batched call, `link_confirm` on MODEL_QUALITY, to confirm each new concept (decision 36 tightening; the plan had 3 MODEL_FAST calls ≈ $0.004/article) | Raised judged precision from 87% to 97%; adds ≈ $0.004 and up to ~30 s per growing article (within growth's own timeout) | Keep; measure growth time before the flag flip |
+| M2.2: growth timeout 30 s, not the plan's 20 s (still min(30 s, phase-2 time left − 5 s)) | Harness timing with growth on: 4 concepts in 20.0 s (cold instance), 3 in 6.9 s; 20 s would drop growth on a slow model answer | Keep; watch `growth_ms` live |
 | M2.2: linker suite has 16 cases, not the planned 14 | Added a German chancellor negative and a second Chancellor case before any run | Keep |
 | M2.2: variant-precision baseline is 83% on the newly frozen 150-mention sample, not M2's 93% | M2's figure used a different sample and candidate floor; not comparable | Keep |
 ---
