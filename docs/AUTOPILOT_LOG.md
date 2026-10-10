@@ -167,3 +167,15 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Asked Sourabh: edit-by-prompt for demo readers (variant B) or Google only (A); one more live URL
   for a warm "Open here" measurement; delete the 8 orphan docs now or leave for M9. Work proceeds
   on A, B, D, E, G meanwhile; C waits for the answer.
+
+### Build
+- A (API): POST /v1/me/consent (`consent-v1`), POST /v1/onboarding (θ from comfort, interest,
+  frames, liked library articles → +0.2 nudges, ≤ 15 salient concepts each), GET
+  /v1/calibration/next (round-robin over interest domains, b closest to θ among the 150 most
+  frequent concepts, deterministic), POST /v1/calibration/answer (only the current item; explain
+  +3.0 / heard −1.5 / none −3.0, Elo K 0.3), POST /v1/calibration/skip; profile `onboarding`
+  block. Consent gate: events, page-view writes, rec signals and served items record nothing for
+  a Google reader without consent; corrections and settings 403; export/delete always open.
+  Demo profile shows the persona's frame. Existing signed-in test readers now consent first.
+- B (API): map nodes carry `recent` (last 3 evidence items, newest first).
+- Tests: 10 new (onboarding); API suite 451 pass.

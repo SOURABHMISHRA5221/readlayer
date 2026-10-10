@@ -18,7 +18,7 @@ from app.main import app
 from app.reader.personas import PERSONAS
 from app.store.content_repo import InMemoryContentStore, set_content_store
 from app.store.reader_repo import FIRESTORE_DOC_LIMIT, demo_path, firestore_size, fit_demo_doc
-from tests.fakes import auth
+from tests.fakes import auth, consented
 from tests.test_scorer import concept, demand, doc, paras
 
 GRAPH = ConceptGraph(
@@ -121,7 +121,7 @@ def test_signed_in_readers_start_neutral_and_learn(docs):
     previous = get_graph()
     set_graph(GRAPH)
     try:
-        google = TestClient(app, headers=auth("g1"))
+        google = consented(TestClient(app, headers=auth("g1")))
         first = google.get("/v1/content/loop/annotations?density=guided&debug=1").json()
         spans = [a for a in first["annotations"] if a["kind"] == "span"]
         # θ = 0, b = −0.5 → prior 0.62, no edges: the neutral reader (0.38 ≥ guided 0.30)

@@ -120,4 +120,10 @@ def fake_fetch_and_extract(sources: list[str] | None = None):
     return fetch_and_extract
 
 
+def consented(client):
+    """A signed-in reader who accepted the consent screen (M7): records allowed from now on."""
+    assert client.post("/v1/me/consent", json={"version": "consent-v1"}).status_code == 200
+    return client
+
+
 from tests.fake_auth import FakeAuthAdmin, auth, token  # noqa: E402,F401  (re-export)
