@@ -25,3 +25,14 @@ class WebResult(BaseModel):
     snippet: str = ""
     thumbnail: str | None = None
     published_at: str | None = None
+
+
+# Podcast episodes come from Tavily restricted to podcast directories.
+PODCAST_DOMAINS = (
+    "podcasts.apple.com",
+    "open.spotify.com",
+    "pca.st",
+    "player.fm",
+    "podbean.com",
+    "iheart.com",
+)

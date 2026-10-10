@@ -48,6 +48,15 @@ def test_relevance_by_topic_word_or_a_concept_of_that_domain():
     assert fr.is_relevant(result("Sports minister resigns"), "sports", ())
     off = result("Inflation eases in September")
     assert not fr.is_relevant(off, "sports", fr.named_concepts(GRAPH, off.title))
+    assert fr.is_relevant(
+        result("Tech News This Week: Muse takes on small business"), "technology", ()
+    )
+    assert fr.is_relevant(result("OpenAI ships a new AI model"), "technology", ())
+    assert fr.is_relevant(result("US economy adds 200,000 jobs"), "economics", ())
+    assert not fr.is_relevant(
+        result("Detached house prices"), "technology", ()
+    )  # no "tech" inside words
+    assert not fr.is_relevant(result("Paint the town"), "technology", ())
 
 
 def test_article_dates_filter_at_fetch_time_only():
@@ -56,6 +65,25 @@ def test_article_dates_filter_at_fetch_time_only():
     assert not fr.recent_enough(old, NOW) and fr.recent_enough(rfc, NOW)
     assert fr.recent_enough(result("x", fmt="video", published="2020-01-01"), NOW)
     assert fr.recent_enough(result("undated"), NOW)
+
+
+def test_feed_pages_are_single_articles_and_single_shows():
+    articles = ["https://www.nytimes.com/2026/10/08/world/europe/united-nations-technology-warning.html",
+                "https://www.reuters.com/business/us-consumer-sentiment-deteriorates-further",
+                "https://www.bbc.com/news/articles/c8dn03216z3t"]  # fmt: skip
+    hubs = ["https://techxplore.com", "https://www.pcmag.com/news",
+            "https://www.aljazeera.com/tag/technology", "https://thehill.com/policy/technology",
+            "https://www.bbc.com/news/topics/c8dn03216z3t",
+            "https://www.merriam-webster.com/thesaurus/technology"]  # fmt: skip
+    assert all(fr.looks_like_article(u) for u in articles)
+    assert not any(fr.looks_like_article(u) for u in hubs)
+    assert fr.is_listing_page("https://podcasts.apple.com/in/charts/1318")
+    assert fr.is_listing_page("https://podcasts.apple.com/us/genre/1318")
+    assert not fr.is_listing_page("https://open.spotify.com/show/4ln6H9peIXhq19yv3CdOvE")
+    assert not fr.is_feed_page(result("p", fmt="podcast", url="https://www.podbean.com"))
+    assert fr.is_feed_page(result("p", fmt="podcast", url="https://fordhamgsb.podbean.com"))
+    assert fr.is_feed_page(result("v", fmt="video", url="https://www.youtube.com/watch?v=x"))
+    assert not fr.is_feed_page(result("t", url="https://www.pcmag.com/news"))
 
 
 def test_readiness_curve():

@@ -24,7 +24,7 @@ import httpx
 from google.cloud import firestore
 
 from app.config import Settings, get_settings
-from app.recs.models import Format, WebResult
+from app.recs.models import PODCAST_DOMAINS, Format, WebResult
 from app.store.spend_repo import today_utc
 
 log = logging.getLogger("app.recs.web")
@@ -45,15 +45,6 @@ QUERY_SUFFIX: dict[Format, str] = {
     "video": "explained",
     "podcast": "podcast episode",
 }
-# Podcast episodes come from Tavily restricted to podcast directories.
-PODCAST_DOMAINS = (
-    "podcasts.apple.com",
-    "open.spotify.com",
-    "pca.st",
-    "player.fm",
-    "podbean.com",
-    "iheart.com",
-)
 # Kept out of article results: they are other formats, served by their own provider.
 NOT_ARTICLE_DOMAINS = ("youtube.com", "youtu.be", "vimeo.com", *PODCAST_DOMAINS)
 
@@ -170,17 +161,22 @@ class TavilyProvider:
             "search_depth": "basic",
             # The For you feed (M7.5) asks for recent news articles; Up next for explainers.
             "topic": "news" if news and fmt == "article" else "general",
-            "max_results": MAX_RESULTS,
+            # The feed filters page shapes after the search, so it asks for more (same credit).
+            "max_results": FEED_MAX_RESULTS if news else MAX_RESULTS,
             "include_images": True,  # per-result images where Tavily has them
             "include_published_date": True,
             "safe_search": True,
         }
         if news and fmt == "article":
             body["days"] = FEED_NEWS_DAYS
+        feed_article = news and fmt == "article"
         if fmt == "podcast":
             body["include_domains"] = list(PODCAST_DOMAINS)
-        else:
+        elif not feed_article:
             body["exclude_domains"] = sorted({*NOT_ARTICLE_DOMAINS, *self._blocklist})[:150]
+        # Feed articles: with `exclude_domains` the news topic returned section pages only
+        # (9 results, 0 articles vs 8 without it, 2026-10-10), so those domains are dropped
+        # here instead; the blocklist is applied to every result in WebSearch._filter.
         async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
             resp = await client.post(
                 TAVILY_URL, json=body, headers={"Authorization": f"Bearer {self._key}"}
@@ -190,7 +186,7 @@ class TavilyProvider:
         out = []
         for r in data.get("results") or []:
             url = str(r.get("url") or "")
-            if not is_web_url(url):
+            if not is_web_url(url) or (feed_article and is_blocked(url, NOT_ARTICLE_DOMAINS)):
                 continue
             words = len(str(r.get("raw_content") or r.get("content") or "").split())
             out.append(
@@ -236,6 +232,13 @@ class YouTubeProvider:
                     "safeSearch": "strict",
                     "relevanceLanguage": "en",
                     "key": self._key,
+                    # The feed (M7.5) wants recent explainers, not Shorts or evergreen kids'
+                    # lessons: 4–20 minutes, published in the last 30 days.
+                    **(
+                        {"videoDuration": "medium", "publishedAfter": _days_ago(FEED_VIDEO_DAYS)}
+                        if news
+                        else {}
+                    ),
                 },
             )
             found.raise_for_status()
@@ -274,6 +277,10 @@ class YouTubeProvider:
         return out
 
 
+def _days_ago(days: int) -> str:
+    return (datetime.now(UTC) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def _first_image(images: object) -> str | None:
     if isinstance(images, list) and images:
         first = images[0]
@@ -305,6 +312,8 @@ class RecCacheStore(Protocol):
 ANONYMOUS = "anonymous"  # counter of calls triggered by anonymous (demo) readers
 FEED = "feed"  # counter of calls made for the For you feed (M7.5), within FEED_SEARCH_DAILY_CAP
 FEED_NEWS_DAYS = 7
+FEED_VIDEO_DAYS = 30
+FEED_MAX_RESULTS = 10  # one credit; 15 timed out at 10 s and Tavily rarely returns more than 10
 
 
 class SearchCallStore(Protocol):
@@ -533,9 +542,15 @@ class WebSearch:
         )
         return clean
 
-    async def cached_entry(self, key: str, fmt: Format) -> CachedResults | None:
-        """A cache entry as stored (the feed keys entries by day, so it has no TTL)."""
-        return await self._cache.get(key, fmt)
+    async def cached_entry(
+        self, key: str, fmt: Format, query: str | None = None
+    ) -> CachedResults | None:
+        """A cache entry as stored (the feed keys entries by day, so it has no TTL). With
+        `query`, an entry made for a different query (a changed phrase) counts as missing."""
+        entry = await self._cache.get(key, fmt)
+        if entry is not None and query is not None and entry.query != cache_key(query):
+            return None
+        return entry
 
     async def fetch_feed(
         self, key: str, fmt: Format, query: str, keep: Callable[[WebResult], bool]

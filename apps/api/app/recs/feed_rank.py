@@ -16,13 +16,14 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
+from urllib.parse import urlsplit
 
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
 from app.graph.taxonomy import BY_ID
 from app.reader import model
 from app.reader.state import ReaderState
-from app.recs.models import Format, WebResult
+from app.recs.models import PODCAST_DOMAINS, Format, WebResult
 from app.recs.rank import FormatPrior, FormatStats, format_affinity, freshness
 
 READY_MIN, READY_MAX = 1, 4
@@ -34,6 +35,16 @@ QUOTAS: Mapping[Format, int] = {"article": 3, "video": 2, "podcast": 1}
 NGRAM_MAX = 4
 ARTICLE_MAX_AGE = timedelta(days=14)
 _WORDS = re.compile(r"[\w'’&-]+", re.UNICODE)
+# Path segments of section, tag and listing pages ("latest news" searches return many of them).
+HUB_SEGMENTS = frozenset(
+    {"tag", "tags", "topic", "topics", "category", "categories", "section", "sections",
+     "news-event", "hub", "author", "authors", "search"}
+)  # fmt: skip
+# Podcast-directory pages that list many shows rather than being one show or episode.
+DIRECTORY_SEGMENTS = frozenset({"charts", "chart", "genre", "genres", "browse", "search", "top",
+                                "category", "categories"})  # fmt: skip
+SLUG_MIN_WORDS = 3
+_ID_DIGITS = re.compile(r"\d{4,}")
 
 
 @dataclass(frozen=True)
@@ -81,15 +92,67 @@ def named_concepts(graph: ConceptGraph, text: str) -> tuple[Concept, ...]:
     return tuple(found.values())
 
 
+_SCOPE_STOP = frozenset({"and", "the", "their", "its", "of", "for", "power", "rules"})
+SHORT_STEM = 4  # "tech", "econ", "educ": long labels also match their short forms
+LONG_LABEL = 7
+
+
+def topic_pattern(topic: str) -> re.Pattern[str]:
+    """Words that say an item is about the topic: the label's stem (and, for labels of 7+
+    letters, its first 4 letters), plus the words of the domain's one-line scope in the
+    taxonomy ("AI", "software", "inflation"). Deterministic, no new keyword list."""
+    info = BY_ID[topic]
+    label = info.label.casefold()
+    stems = {label[:-1] if label.endswith("s") else label}
+    if len(label) >= LONG_LABEL:
+        stems.add(label[:SHORT_STEM])
+    scope = {w for w in re.findall(r"[a-z]{3,}|[A-Z]{2,}", info.scope)
+             if w.casefold() not in _SCOPE_STOP}  # fmt: skip
+    prefixes = "|".join(sorted(re.escape(s) for s in stems))
+    words = "|".join(sorted(re.escape(w.casefold()) for w in scope))
+    return re.compile(rf"\b(?:{prefixes})|\b(?:{words})\b")
+
+
 def is_relevant(result: WebResult, topic: str, concepts: Iterable[Concept]) -> bool:
-    """The item names its topic, or at least one concept of that domain (§A.2): sports news
-    rarely says "sport", but it does name offside or a penalty."""
-    label = BY_ID[topic].label.casefold()
+    """The item names its topic (label, short form or a scope word), or at least one concept
+    of that domain (§A.2): sports news rarely says "sport", but it does name a penalty."""
     text = f"{result.title} {result.snippet}".casefold()
-    stem = label[:-1] if label.endswith("s") else label
-    if re.search(rf"\b{re.escape(stem)}", text):
+    if topic_pattern(topic).search(text):
         return True
     return any(c.domain == topic for c in concepts)
+
+
+def _segments(url: str) -> list[str]:
+    return [s for s in urlsplit(url).path.casefold().split("/") if s]
+
+
+def looks_like_article(url: str) -> bool:
+    """One article, not a section, tag or home page: no hub segment, and the last path segment
+    is a slug of ≥ 3 words or the path carries a date or numeric id. Deterministic; a short
+    real slug is the accepted loss."""
+    segments = _segments(url)
+    if not segments or HUB_SEGMENTS.intersection(segments):
+        return False
+    last = re.sub(r"\.(s?html?|php|aspx?)$", "", segments[-1])
+    return len(re.split(r"[-_]+", last)) >= SLUG_MIN_WORDS or bool(
+        _ID_DIGITS.search("/".join(segments))
+    )
+
+
+def is_listing_page(url: str, directories: Iterable[str] = ()) -> bool:
+    """A podcast directory's chart, genre or browse page, or its home page (many shows, not
+    one). A show hosted on its own subdomain (name.podbean.com) is not a listing."""
+    segments = _segments(url)
+    host = (urlsplit(url).hostname or "").removeprefix("www.")
+    return bool(DIRECTORY_SEGMENTS.intersection(segments)) or (not segments and host in directories)
+
+
+def is_feed_page(result: WebResult) -> bool:
+    if result.format == "article":
+        return looks_like_article(result.url)
+    if result.format == "podcast":
+        return not is_listing_page(result.url, PODCAST_DOMAINS)
+    return True
 
 
 def published(value: str | None) -> datetime | None:

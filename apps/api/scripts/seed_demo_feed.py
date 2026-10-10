@@ -2,13 +2,15 @@
 
     cd apps/api && uv run python -m scripts.seed_demo_feed --dry-run   # print, write no snapshot
     cd apps/api && uv run python -m scripts.seed_demo_feed            # write persona_feeds/*
+    (--persona newcomer limits it to one persona, e.g. on the emulator harness)
 
 For each persona's two topics, the same searches as the live feed (taxonomy label + fixed
 phrase, day-keyed shared cache, the feed cap and the global caps): ≤ 6 topics × 3 formats =
 ≤ 18 searches (≤ 24 calls), counted in `ops/search`. The dry run performs those searches too
 (they're cached, so the real run the same day pays nothing more) and writes no snapshot.
-Every article is then checked locally (safe_fetch + extraction, ≥ 400 words; no LLM, no
-Firestore write) and dropped if it fails, so a judge never hits a dead link. The 14-day date
+Articles are then checked locally, in order, until 6 per topic pass (safe_fetch + extraction,
+≥ 400 words; no LLM, no Firestore write); a failing one is dropped, so a judge never hits a
+dead link. The 14-day date
 filter applies here, never when a snapshot is served. Production write: 3 `persona_feeds/{p}`
 docs (public search results only, no user data). No LLM.
 """
@@ -30,6 +32,7 @@ from app.recs.feed import (
     Snapshot,
     SnapshotRepo,
     feed_key,
+    feed_query,
 )
 from app.recs.models import WebResult
 from app.recs.web_search import get_web_search
@@ -37,6 +40,7 @@ from app.store.docstore import get_doc_store
 from app.store.spend_repo import today_utc
 
 MIN_WORDS = 400
+ARTICLES_PER_TOPIC = 6  # checked articles kept per topic (ranking shows 3)
 
 
 async def article_ok(fetcher: SafeFetcher, url: str) -> bool:
@@ -58,11 +62,18 @@ async def build(persona: str, graph: ConceptGraph, search: FeedSearch, fetcher: 
     dropped = 0
     for topic in topics:
         for fmt in ("article", "video", "podcast"):
-            entry = await web.cached_entry(feed_key(topic, today_utc()), fmt)
+            entry = await web.cached_entry(
+                feed_key(topic, today_utc()), fmt, feed_query(topic, fmt)
+            )
+            kept = 0
             for r in entry.results if entry else []:
-                if fmt == "article" and not await article_ok(fetcher, r.url):
-                    dropped += 1
-                    continue
+                if fmt == "article":
+                    if kept >= ARTICLES_PER_TOPIC:
+                        break
+                    if not await article_ok(fetcher, r.url):
+                        dropped += 1
+                        continue
+                    kept += 1
                 items.append((topic, r))
     return Snapshot(persona, now.isoformat(timespec="seconds"), topics, tuple(items)), dropped
 
@@ -76,7 +87,7 @@ async def main(args: argparse.Namespace) -> int:
         SafeFetcher(),
         SnapshotRepo(get_doc_store()),
     )
-    for persona in PERSONA_TOPICS:
+    for persona in args.persona or PERSONA_TOPICS:
         snap, dropped = await build(persona, graph, search, fetcher)
         print(
             f"{persona}: topics {snap.topics}, {len(snap.items)} items, {dropped} articles dropped"
@@ -92,4 +103,6 @@ async def main(args: argparse.Namespace) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--persona", action="append", choices=list(PERSONA_TOPICS),
+                        help="only these personas (repeatable); default all three")  # fmt: skip
     sys.exit(asyncio.run(main(parser.parse_args())))

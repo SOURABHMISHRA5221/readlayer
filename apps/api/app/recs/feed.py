@@ -26,9 +26,13 @@ from app.store.spend_repo import today_utc
 MAX_TOPICS = 6
 FETCH_WAIT_S = 6.0
 FEED_PHRASE: Mapping[Format, str] = {
-    "article": "latest news",
-    "podcast": "podcast episode",
-    "video": "explained",
+    # "latest news" returned section and tag pages; plain "news" swung between 2 and 10 real
+    # articles out of 15; "news this week" gave 8–15 on every sample (2026-10-10).
+    # "podcast episode" returned nothing for some topics (Economics); "podcast" returns shows.
+    # Videos: news explainers, medium length, last 30 days (YouTubeProvider).
+    "article": "news this week",
+    "podcast": "podcast",
+    "video": "news explained",
 }
 PERSONA_TOPICS: Mapping[str, tuple[str, str]] = {
     "newcomer": ("technology", "economics"),  # a software engineer meeting economics
@@ -64,7 +68,9 @@ def reader_topics(interest: Mapping[str, float]) -> list[str]:
 def keep_for(topic: str, graph: ConceptGraph, now: datetime):
     def keep(r: WebResult) -> bool:
         concepts = fr.named_concepts(graph, f"{r.title} {r.snippet}")
-        return fr.recent_enough(r, now) and fr.is_relevant(r, topic, concepts)
+        return (
+            fr.is_feed_page(r) and fr.recent_enough(r, now) and fr.is_relevant(r, topic, concepts)
+        )
 
     return keep
 
@@ -94,7 +100,7 @@ class FeedSearch:
             for fmt in FORMATS:
                 if fmt not in self._web.formats:
                     continue
-                entry = await self._web.cached_entry(key, fmt)
+                entry = await self._web.cached_entry(key, fmt, feed_query(topic, fmt))
                 if entry is not None:
                     found[(topic, fmt)] = entry.results
                     continue

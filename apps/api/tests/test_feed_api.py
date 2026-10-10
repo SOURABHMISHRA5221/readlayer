@@ -41,7 +41,7 @@ class TopicProvider:
         self.queries.append(query)
         if self.delay:
             await asyncio.sleep(self.delay)
-        slug = query.replace(" ", "-")
+        slug = query.replace(" ", "-") + "-today"  # an article-like slug (≥ 3 words)
         return [WebResult(url=f"https://x.test/{fmt}/{slug}", title=f"{query} today",
                           source="x.test", format=fmt)]  # fmt: skip
 
@@ -78,6 +78,7 @@ def env(monkeypatch):
 def google(uid, interests):
     c = TestClient(app, headers=auth(uid))
     consented(c)
+
     async def put():
         async def body(t):
             for d, v in interests.items():
@@ -177,3 +178,12 @@ def test_feed_items_are_remembered_as_feed_relation(env):
     doc = asyncio.run(get_doc_store().get("users/gd/rec_signals/default"))
     assert {v["relation"] for v in doc["served"].values()} == {"feed"}
     assert set(doc["served"]) == {i["id"] for i in items}
+
+
+def test_a_changed_phrase_makes_todays_cached_entry_stale(env):
+    provider, web = env
+    google("ge", {"health": 1.0}).get("/v1/feed")
+    key = feed_mod.feed_key("health", feed_mod.today_utc())
+    query = feed_mod.feed_query("health", "article")
+    assert asyncio.run(web.cached_entry(key, "article", query)) is not None
+    assert asyncio.run(web.cached_entry(key, "article", query + " v2")) is None
