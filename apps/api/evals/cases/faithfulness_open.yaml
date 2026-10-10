@@ -1,0 +1,187 @@
+# 7 faithful cards on non-business paragraphs (decision 37, M7.5 §E.2). Written and committed
+# before any prompt edit; never edited to make a number pass (decision 26). Reported separately,
+# outside the M5 targets: evidence that general prompts work on articles outside business news.
+# Paragraphs come from public articles fetched through safe_fetch on 2026-10-10 (not stored, not
+# held-out). Cards are hand-written from the source.
+- id: O01
+  mode: span
+  domain: health
+  source:
+    site: BBC News
+    url: https://www.bbc.co.uk/news/articles/crkg7n1ypj24o
+  span: ADHD
+  concept:
+    id: c_adhd
+    label: Attention deficit hyperactivity disorder
+    definition: A neurodevelopmental condition marked by persistent inattention, hyperactivity or
+      impulsivity that interferes with daily functioning.
+    prerequisites: []
+  band: heard of
+  thinks_in: null
+  paragraph: The experts said too often diagnoses of mental health problems and ADHD and autism were
+    ending up as labels that defined people by their "difficulties rather than their strengths and
+    potential", harming their prospects at school, in work and in relationships.
+  card:
+    background: ADHD (attention deficit hyperactivity disorder) is a condition that shows up as
+      ongoing difficulty with attention, restlessness or acting on impulse, enough to get in the way
+      of everyday life.
+    author_says: The experts said that, too often, diagnoses of mental health problems, ADHD and
+      autism ended up as labels defining people by their difficulties rather than their strengths and
+      potential, which harmed their prospects at school, at work and in relationships.
+- id: O02
+  mode: span
+  domain: sports
+  source:
+    site: The Guardian
+    url: https://www.theguardian.com/football/2026/oct/09/west-ham-qpr-championship-report-penalties
+  span: VAR review
+  concept:
+    id: c_var
+    label: Video assistant referee
+    definition: A football officiating system in which officials review video replays to help the
+      referee correct clear and obvious errors in key match decisions.
+    prerequisites: []
+  band: unaware
+  thinks_in: software
+  paragraph: West Ham were earlier on the wrong end of a dreadful penalty decision after Tomas Soucek
+    was penalised for fouling Paul Smyth. Replays showed the challenge was well outside the area and
+    that the Hammers midfielder got the ball. A VAR review would have definitely overturned referee
+    Ruebyn Ricardo’s decision but with no technology in the Championship it stood, to the dismay of the
+    majority inside the London Stadium.
+  card:
+    background: VAR (video assistant referee) lets match officials check video replays and advise the
+      referee to change a clear and obvious mistake in a key decision, such as a penalty.
+    author_says: The writer says a VAR review would definitely have overturned the referee's penalty
+      decision, but because the Championship has no such technology, the decision stood, to the dismay
+      of most of the crowd at the London Stadium.
+- id: O03
+  mode: span
+  domain: science
+  source:
+    site: The Guardian
+    url: https://www.theguardian.com/science/2026/oct/07/jonathan-the-giant-tortoise-194-offers-up-insight-into-secrets-of-longevity
+  span: mitochondria
+  concept:
+    id: c_mitochondria
+    label: Mitochondria
+    definition: Structures inside cells that turn nutrients into the chemical energy the cell uses.
+    prerequisites:
+    - label: Cell
+      definition: The smallest unit of a living thing that can carry out the processes of life.
+  band: heard of
+  thinks_in: null
+  paragraph: But more intriguing to the researchers were chemical patterns on Jonathan’s genes that
+    appear to protect the healthy functioning of his mitochondria, the tiny battery-like structures that
+    power biological cells. Ailing mitochondria have been strongly linked to ageing and age-related
+    diseases.
+  card:
+    background: Mitochondria are tiny structures inside cells that convert nutrients into the energy
+      the cell runs on.
+    author_says: The researchers found chemical patterns on Jonathan's genes that appear to protect the
+      healthy working of his mitochondria, and the article notes that failing mitochondria have been
+      strongly linked to ageing and age-related diseases.
+- id: O04
+  mode: span
+  domain: science
+  source:
+    site: The Guardian
+    url: https://www.theguardian.com/science/2026/oct/07/jonathan-the-giant-tortoise-194-offers-up-insight-into-secrets-of-longevity
+  span: methyl groups
+  concept:
+    id: c_dna_methylation
+    label: DNA methylation
+    definition: The attachment of small chemical tags called methyl groups to DNA, which can switch
+      genes off without changing the genetic code itself.
+    prerequisites:
+    - label: Gene
+      definition: A stretch of DNA that carries the instructions for making a particular product in a
+        cell.
+  band: unaware
+  thinks_in: software
+  paragraph: The insight came when the international team, led by Benjamin Vaisvil, looked at chemical
+    tags that attach to DNA, creating patterns that change over time. The tags, known as methyl groups,
+    typically silence the genes they latch on to.
+  card:
+    background: DNA methylation is when small chemical tags called methyl groups attach to DNA. They can
+      switch genes off without changing the genetic code itself.
+    author_says: The international team led by Benjamin Vaisvil found the insight by looking at chemical
+      tags on DNA, known as methyl groups, which form patterns that change over time and typically
+      silence the genes they attach to.
+- id: O05
+  mode: span
+  domain: technology
+  source:
+    site: The Guardian
+    url: https://www.theguardian.com/technology/2026/oct/08/anthropic-bans-abusive-behavior-claude
+  span: LLMs
+  concept:
+    id: c_large_language_model
+    label: Large language model
+    definition: An AI system trained on very large amounts of text to predict and generate language.
+    prerequisites: []
+  band: heard of
+  thinks_in: null
+  paragraph: “We remain highly uncertain about the potential moral status of Claude and other LLMs, now
+    or in the future. However, we take the issue seriously, and alongside our research program we’re
+    working to identify and implement low-cost interventions to mitigate risks to model welfare, in case
+    such welfare is possible. Allowing models to end or exit potentially distressing interactions is one
+    such intervention,” according to its website.
+  card:
+    background: A large language model (LLM) is an AI system trained on huge amounts of text so that it
+      can predict and generate language.
+    author_says: According to its website, the company says it remains highly uncertain about the
+      potential moral status of Claude and other LLMs, but takes the issue seriously and is working on
+      low-cost ways to reduce risks to model welfare in case such welfare is possible, such as letting
+      models end potentially distressing conversations.
+- id: O06
+  mode: span
+  domain: culture
+  source:
+    site: The Guardian
+    url: https://www.theguardian.com/books/2026/oct/10/people-forgot-i-existed-audrey-niffenegger-on-taking-14-years-to-write-a-sequel-to-the-time-travelers-wife
+  span: impostor syndrome
+  concept:
+    id: c_impostor_syndrome
+    label: Impostor syndrome
+    definition: A persistent feeling of not deserving one's success and fearing being exposed as a fraud,
+      despite evidence of competence.
+    prerequisites: []
+  band: heard of
+  thinks_in: null
+  paragraph: Becoming a sudden commercial success was “very odd”, she recalls, “all the running around
+    and doing interviews and having people dig really deep into the novel and have very intricate
+    questions was extraordinary”. The scrutiny didn’t trouble her too much – it reminded her of being
+    critiqued at art school – but she struggled with “impostor syndrome”.
+  card:
+    background: Impostor syndrome is a lasting feeling that you don't deserve your success and might be
+      exposed as a fraud, even when there is evidence that you are good at what you do.
+    author_says: Niffenegger recalls that sudden commercial success felt very odd; the scrutiny did not
+      trouble her much, as it reminded her of critiques at art school, but she says she struggled with
+      impostor syndrome.
+- id: O07
+  mode: span
+  domain: environment
+  source:
+    site: The Guardian
+    url: https://www.theguardian.com/environment/2026/oct/09/uk-water-companies-industrial-commercial-wastewater-sewage-treatment
+  span: trade-effluent consents
+  concept:
+    id: c_trade_effluent_consent
+    label: Trade effluent consent
+    definition: A permit from a water company that lets a business discharge industrial wastewater into
+      the public sewer, usually with conditions on what and how much it may send.
+    prerequisites:
+    - label: Wastewater
+      definition: Water that has been used in homes, businesses or industry and needs treatment before it
+        is returned to the environment.
+  band: unaware
+  thinks_in: null
+  paragraph: Water companies in England are required by law to take industrial wastewater and issue
+    permits called “trade-effluent consents” that allow businesses to send it to sewage works, though
+    water companies can refuse applications.
+  card:
+    background: A trade effluent consent is a permit from a water company that allows a business to
+      send industrial wastewater into the public sewer, usually with conditions on what it can send.
+    author_says: The article says water companies in England are legally required to take industrial
+      wastewater and to issue trade-effluent consents letting businesses send it to sewage works, though
+      they can refuse applications.
