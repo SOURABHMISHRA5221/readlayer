@@ -134,7 +134,7 @@ export function LibraryPage({ url }: { url: URL }) {
               <>
                 <span className="masthead__persona">you</span> are likely to miss.
               </>
-            )}
+            )}{" "}
             The author's words stay exactly as written.
           </p>
           <label className="search">

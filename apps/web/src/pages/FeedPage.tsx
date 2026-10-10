@@ -173,7 +173,10 @@ function FeedCard({ item, persona }: { item: FeedItem; persona: PersonaKey | nul
         </div>
         {error && <p className="fcard__error" role="alert">{error}</p>}
       </div>
-      {item.thumbnail && <img className="fcard__thumb" src={item.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" />}
+      {item.thumbnail && (
+        <img className="fcard__thumb" src={item.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer"
+          onError={(e) => { e.currentTarget.hidden = true; }} />
+      )}
     </article>
   );
 }
