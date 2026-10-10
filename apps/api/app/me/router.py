@@ -194,16 +194,24 @@ async def get_my_graph(
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     domain: Domain | None = None,
     q: Annotated[str, Query(max_length=100)] = "",
+    goal: Annotated[str | None, Query(max_length=40)] = None,
 ) -> SubgraphOut | GraphSummaryOut:
     graph = get_graph()
     now = datetime.now(UTC)
     repo = _repo()
     knows = dict(ctx.state.edges)
-    if domain is None and not q.strip():
+    exact: list[str] | None = None
+    if goal is not None:  # a learning goal's targets only (M7.5 §C.5)
+        from app.me.goals import goal_target_ids
+
+        exact = None if ctx.caller.is_anonymous else await goal_target_ids(ctx.uid, goal)
+        if exact is None:
+            raise HTTPException(status_code=404, detail="goal not found")
+    if exact is None and domain is None and not q.strip():
         return _summary(graph, knows, ctx, await repo.get_weekly(ctx.uid), now)
     theta = dict(ctx.theta)
     sub = knowledge_subgraph(
-        graph, knows, lambda c: _band(c, knows.get(c.id), theta, now), now, domain, q
+        graph, knows, lambda c: _band(c, knows.get(c.id), theta, now), now, domain, q, exact
     )
     return SubgraphOut(
         domain=domain,

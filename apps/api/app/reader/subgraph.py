@@ -110,14 +110,19 @@ def knowledge_subgraph(
     now: datetime,
     domain: str | None = None,
     q: str = "",
+    exact_ids: list[str] | None = None,
 ) -> Subgraph:
-    if q.strip():
-        start = [c.id for c in search(graph, q, domain)]
-    elif domain:
-        start = seeds(graph, knows, domain, now)
+    """`exact_ids` (a learning goal's targets, M7.5) shows just those nodes and their edges."""
+    if exact_ids is not None:
+        ids, truncated = [cid for cid in exact_ids if graph.get(cid) is not None], False
     else:
-        start = []
-    ids, truncated = closure(graph, start)
+        if q.strip():
+            start = [c.id for c in search(graph, q, domain)]
+        elif domain:
+            start = seeds(graph, knows, domain, now)
+        else:
+            start = []
+        ids, truncated = closure(graph, start)
     members = set(ids)
     edges = sorted((p.id, cid) for cid in ids for p in graph.prerequisites(cid) if p.id in members)
     depth = _depths(ids, edges)

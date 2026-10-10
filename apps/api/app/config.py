@@ -63,6 +63,8 @@ class Settings(BaseSettings):
     search_daily_cap: int = 300  # outgoing search calls per UTC day, all providers
     # For you feed (M7.5): its own share of those calls, so it can never starve Up next.
     feed_search_daily_cap: int = 60
+    # Learning goals resolved per reader per UTC day (≤ 1 embed + 1 link_confirm each; M7.5).
+    goal_resolve_daily_cap: int = 10
     youtube_search_daily_cap: int = 90  # YouTube's search.list has its own 100/day bucket
     search_timeout_s: float = 10.0
     recs_cache_ttl_h: float = 48.0

@@ -12,6 +12,8 @@ users/{uid}/ingest_counts/{d}  new URLs ingested that UTC day
 users/{uid}/explain_counts/{d} explanations generated (not cached) that UTC day
 users/{uid}/growth_counts/{d}  concept-growth slots reserved that UTC day (M2.2)
 users/{uid}/ingested/{cid}     pages this reader brought in (M7.5): their library shows them
+users/{uid}/goals/{id}         reading goals (M7.5): habit targets, or learning target concepts
+users/{uid}/goal_resolve_counts/{d}  learning goals resolved that UTC day (M7.5 cap)
 users/{uid}/demo_graphs/{p}    a demo reader's graph for persona p: θ, threshold_offset, knows
                                map, engaged contents. Copied from persona_templates/{p} on the
                                first event or correction; until then the template is read as-is.
@@ -49,6 +51,8 @@ USER_SUBCOLLECTIONS = (
     "profile_edit_counts",
     "growth_counts",
     "ingested",
+    "goals",
+    "goal_resolve_counts",
 )
 EVENT_TTL = timedelta(days=90)
 MAX_WEEKLY_CONTENT_IDS = 500
