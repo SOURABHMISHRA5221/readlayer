@@ -76,6 +76,9 @@ def remember(doc: RecSignalsDoc, items: dict[str, Served], now: datetime) -> Non
     if len(doc.served) > MAX_SERVED:
         newest = sorted(doc.served.items(), key=lambda kv: (kv[1][1], kv[0]))[-MAX_SERVED:]
         doc.served = dict(newest)
+    # Bounded with `served` (M7.5): the feed adds ~24 ids a day, so these can't grow forever.
+    doc.seen = {k: v for k, v in doc.seen.items() if k in doc.served}
+    doc.shown_counts = {k: v for k, v in doc.shown_counts.items() if k in doc.served}
 
 
 def apply_event(doc: RecSignalsDoc, event_id: str, kind: RecEventType, item_id: str) -> bool:
@@ -97,7 +100,8 @@ def apply_event(doc: RecSignalsDoc, event_id: str, kind: RecEventType, item_id: 
         doc.seen[item_id] = "completed"
     elif kind == "rec_dismissed":
         doc.formats[fmt] = replace(stats, dismissals=stats.dismissals + 1)
-        doc.relation_dismissals[relation] = doc.relation_dismissals.get(relation, 0) + 1
+        if relation != "feed":  # a dismissed feed pick never down-weights an Up next relation
+            doc.relation_dismissals[relation] = doc.relation_dismissals.get(relation, 0) + 1
         doc.seen[item_id] = "dismissed"
     return True
 

@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 Format = Literal["article", "video", "podcast"]
 FORMATS: tuple[Format, ...] = ("article", "video", "podcast")
 
-Relation = Literal["same_story", "primer", "deeper", "angle", "explainer"]
+Relation = Literal["same_story", "primer", "deeper", "angle", "explainer", "feed"]
+# Up next's relations; "feed" (M7.5 For you) is served and evented but never ranks Up next.
 RELATIONS: tuple[Relation, ...] = ("same_story", "primer", "deeper", "angle", "explainer")
 
 

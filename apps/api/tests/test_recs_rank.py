@@ -170,3 +170,22 @@ def test_select_mixes_library_and_web_when_both_exist():
     assert mix(chosen) == {"article": 4, "video": 2, "podcast": 0}
     assert "l0" in ids and "w3" not in ids
     assert ids == ["w0", "w1", "w2", "v0", "v1", "l0"]  # still ordered by score
+
+
+def test_feed_dismissals_never_touch_up_next_and_seen_maps_stay_bounded():
+    from datetime import UTC, datetime, timedelta
+
+    from app.recs.state import MAX_SERVED, RecSignalsDoc, Served, apply_event, remember
+
+    doc = RecSignalsDoc()
+    now = datetime(2026, 10, 11, tzinfo=UTC)
+    remember(doc, {"feed:a": Served("article", "feed"), "lib:b": Served("article", "primer")}, now)
+    assert apply_event(doc, "e1", "rec_dismissed", "feed:a")
+    assert doc.relation_dismissals == {}  # Up next relation weights unchanged
+    assert apply_event(doc, "e2", "rec_dismissed", "lib:b")
+    assert doc.relation_dismissals == {"primer": 1}
+    for i in range(MAX_SERVED + 50):
+        remember(doc, {f"feed:{i}": Served("video", "feed")}, now + timedelta(seconds=i + 1))
+        apply_event(doc, f"s{i}", "rec_shown", f"feed:{i}")
+    assert len(doc.served) == MAX_SERVED
+    assert set(doc.shown_counts) <= set(doc.served) and set(doc.seen) <= set(doc.served)
