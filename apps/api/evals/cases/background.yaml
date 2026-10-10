@@ -1,0 +1,148 @@
+# Background verifier cases (M6, M5 review item 1): the Background now has its own judge
+# (verify_background) and the frozen faithfulness suite can't exercise it alone. Written and
+# committed before any model run; never edited to pass (decision 26). Each takes the passage,
+# concept and reader of a good case (`base`) and a hand-written Background.
+# expect: reject (article_claim | contradicts | link) or accept.
+- id: B01
+  expect: reject
+  issue: article_claim
+  base: G13
+  mode: span
+  source:
+    site: The Guardian
+    content_id: e8aa9578974ed73ff4f0b22650cae478
+    demand_id: d7
+  span: yield
+  concept:
+    id: c_bond_yields
+    label: Bond yields
+    definition: The return an investor expects to receive on a bond investment, expressed as a percentage.
+    prerequisites:
+    - label: Bonds
+      definition: Bonds are fixed-income debt instruments where an investor loans money to an entity which
+        borrows the funds for a defined period.
+    - label: Interest rates
+      definition: The proportional cost charged by lenders to borrowers for the use of borrowed funds,
+        typically expressed as an annual percentage of the principal.
+  band: unaware
+  thinks_in: null
+  paragraph: In the UK, where surging borrowing costs are increasing the pressure on the chancellor, John
+    Healey, before his first budget later this month, the yield on 30-year bonds hit 6% for the first
+    time since 1998, before easing slightly later in the day. Yields on five- and 10-year UK bonds were
+    also up.
+  background: Yields rise when bond prices fall. UK 30-year yields just hit 6%, the highest since 1998,
+    because investors doubt the chancellor's budget plans.
+- id: B02
+  expect: reject
+  issue: contradicts
+  base: G10
+  mode: span
+  source:
+    site: Wikimedia Foundation, Inc.
+    content_id: 6988ee7084a191a91f3d30f38f2b6ea4
+    demand_id: d52
+  span: Treasury
+  concept:
+    id: c_united_states_department_of_the_treasury
+    label: United States Department of the Treasury
+    definition: The United States Department of the Treasury is the executive department responsible for
+      managing federal finances, printing currency, and collecting taxes.
+    prerequisites: []
+  band: unaware
+  thinks_in: software
+  paragraph: Although the Treasury can and does hold cash and a special deposit account at the Fed (TGA
+    account), these assets do not count in any of the aggregates. So in essence, money paid in taxes paid
+    to the Federal Government (Treasury) is excluded from the money supply. To counter this, the government
+    created the Treasury Tax and Loan (TT&L) program in which any receipts above a certain threshold are
+    redeposited in private banks. The idea is that tax receipts won't decrease the amount of reserves
+    in the banking system. The TT&L accounts, while demand deposits, do not count toward M1 or any other
+    aggregate either.
+  background: A national treasury cannot hold an account at the central bank; it keeps all of its cash
+    in ordinary commercial banks.
+- id: B03
+  expect: reject
+  issue: link
+  base: G05
+  mode: span
+  source:
+    site: The Economic Times
+    content_id: 628d6fd2aa9fd3b5a99cedb64c70aa93
+    demand_id: d38
+  span: credit spreads
+  concept:
+    id: c_credit_spreads
+    label: Credit spreads
+    definition: Credit spreads are the yield difference between debt securities of similar maturity but
+      different credit quality, typically measuring default risk.
+    prerequisites:
+    - label: Credit risk
+      definition: Credit risk is the probability that a borrower will fail to meet their debt obligations,
+        resulting in a financial loss for the lender.
+    - label: Spread
+      definition: The difference between two contrasting interest rates, yields, or asset prices, commonly
+        used to gauge credit risk or financial market conditions.
+  band: heard of
+  thinks_in: null
+  paragraph: The 11.8–11.5 zone is the immediate support, while 15.2–15.5 remains key resistance. A sustained
+    move above 15.5 could trigger another rise in volatility and keep equities under pressure. In this
+    environment, debit spreads may be preferred over credit spreads because of their defined-risk profile.
+  background: A credit spread is an options position that brings in money when it is opened. See https://options.example.com/credit-spreads
+    for worked examples.
+- id: B04
+  expect: accept
+  issue: none
+  base: G13
+  mode: span
+  source:
+    site: The Guardian
+    content_id: e8aa9578974ed73ff4f0b22650cae478
+    demand_id: d7
+  span: yield
+  concept:
+    id: c_bond_yields
+    label: Bond yields
+    definition: The return an investor expects to receive on a bond investment, expressed as a percentage.
+    prerequisites:
+    - label: Bonds
+      definition: Bonds are fixed-income debt instruments where an investor loans money to an entity which
+        borrows the funds for a defined period.
+    - label: Interest rates
+      definition: The proportional cost charged by lenders to borrowers for the use of borrowed funds,
+        typically expressed as an annual percentage of the principal.
+  band: unaware
+  thinks_in: null
+  paragraph: In the UK, where surging borrowing costs are increasing the pressure on the chancellor, John
+    Healey, before his first budget later this month, the yield on 30-year bonds hit 6% for the first
+    time since 1998, before easing slightly later in the day. Yields on five- and 10-year UK bonds were
+    also up.
+  background: A bond's yield is the return an investor earns for holding it, set by its price and its
+    interest payments. When bond prices fall, yields rise.
+- id: B05
+  expect: accept
+  issue: none
+  base: G20
+  mode: span
+  source:
+    site: The Guardian
+    content_id: 7311a22bfa9f03acabcf86990dfafac6
+    demand_id: d19
+  span: list
+  concept:
+    id: c_ipo
+    label: IPO
+    definition: The process through which a privately held company offers its shares to the public for
+      the first time on a stock exchange.
+    prerequisites:
+    - label: Equities
+      definition: Shares or ownership stakes in companies traded on public stock exchanges.
+    - label: Public company
+      definition: A public company is a business corporation whose ownership is distributed among general
+        shareholders via freely traded shares of stock on public exchanges.
+  band: heard of
+  thinks_in: law
+  paragraph: UK-based Nscale filed papers for its flotation in the US on 18 September and could make its
+    stock market debut before the year end. The company is preparing to list in New York, reflecting its
+    global ambitions and the depth of funding available in the US for expensive AI infrastructure projects.
+  background: 'To list is to have a company''s shares admitted to trading on a stock exchange, so the
+    public can buy and sell them. It is a little like being admitted to practise before a court: the exchange''s
+    rules must be met first.'

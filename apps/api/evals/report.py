@@ -178,6 +178,34 @@ def _cost(r: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _background(all_runs: list[dict[str, Any]]) -> list[str]:
+    """The Background judge's own suite (explain-v4 on), reported apart from the frozen one."""
+    with_bg = [r for r in all_runs if r.get("background")]
+    if not with_bg:
+        return ["No run with the Background suite yet."]
+    lines = [
+        "| Run | Prompts | Rejected (should reject) | Accepted (should accept) | Wrong |",
+        "|---|---|---|---|---|",
+    ]
+    for r in with_bg:
+        s = r["summary"]
+        lines.append(
+            f"| `{r['file']}` | {r['meta']['prompt_version']} | "
+            f"{s['background_rejected']}/{s['background_reject_total']} | "
+            f"{s['background_accepted']}/{s['background_accept_total']} | "
+            f"{', '.join(s['background_wrong']) or '–'} |"
+        )
+    lines += ["", "| Case | Issue | Verdict | Reasons |", "|---|---|---|---|"]
+    for case in with_bg[-1]["background"]:
+        reasons = case.get("check_reasons", []) + case.get("judge_reasons", [])
+        verdict = (
+            "error" if case["passed"] is None else ("accepted" if case["passed"] else "rejected")
+        )
+        codes = "; ".join(x.split(":", 1)[0] for x in reasons) or "–"
+        lines.append(f"| {case['id']} | {case.get('issue')} | {verdict} | {codes} |")
+    return lines
+
+
 def write_report() -> None:
     all_runs = runs()
     if not all_runs:
@@ -213,6 +241,10 @@ def write_report() -> None:
         "## Good cards the verifier rejected (same run)",
         "",
         *_good_rejections(baseline_judge),
+        "",
+        "## Background judge (own suite, since explain-v4)",
+        "",
+        *_background(all_runs),
         "",
         "## Injection cases (same run)",
         "",

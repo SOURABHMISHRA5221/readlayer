@@ -132,7 +132,10 @@ def rejection_example() -> list[str]:
     if not found:
         return ["## A draft the verifier rejected", "", "No rejected draft in the saved runs yet."]
     _, name, run, case = found[0]
-    bad = next(a for a in case["attempts"] if a["reasons"])
+    bad = next(
+        (a for a in case["attempts"] if a["reasons"] and a["draft"].get("author_says")),
+        next(a for a in case["attempts"] if a["reasons"]),
+    )
     lines = [
         "## A draft the verifier rejected",
         "",
@@ -141,7 +144,7 @@ def rejection_example() -> list[str]:
         "",
         "**Rejected draft, What the author is saying:**",
         "",
-        f"> {bad['draft']['author_says']}",
+        f"> {bad['draft'].get('author_says') or bad['draft'].get('background')}",
         "",
         "**Why:**",
         "",

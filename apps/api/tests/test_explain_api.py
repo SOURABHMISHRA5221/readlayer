@@ -1,4 +1,5 @@
-"""Verified explanations end to end (M5): pipeline, cache, report, privacy, caps.
+"""Verified explanations end to end: two parts (restatement shared, Background per reader),
+cache, report, privacy, caps (DESIGN §7).
 
 Through the real API with in-memory stores and a scripted LLM (tests/fakes.ExplainLLM).
 """
@@ -13,14 +14,14 @@ from fastapi.testclient import TestClient
 from app import llm
 from app.content import router as read_router
 from app.explain import service
-from app.explain.inputs import ExplainInputs
+from app.explain.inputs import PROMPT_VAR_KEYS, RESTATE_VAR_KEYS, ExplainInputs
 from app.graph.loader import get_graph, set_graph
 from app.ingest.models import StoredParagraph
 from app.main import app
 from app.store.content_repo import InMemoryContentStore, set_content_store
 from app.store.explain_repo import ExplainRepo
 from app.store.reader_repo import USER_SUBCOLLECTIONS
-from tests.fakes import FAIL, GOOD_DRAFT, PASS, ExplainLLM, auth
+from tests.fakes import BG_FAIL, FAIL, GOOD_DRAFT, PASS, ExplainLLM, auth
 from tests.test_scorer import GRAPH, demand, doc
 
 TEXT = "Analysts said the yield_curve may invert soon. Rates were 4 per cent."
@@ -56,118 +57,164 @@ def ask(client, persona="newcomer", **target):
     return client.post(f"/v1/explain?persona={persona}", json=body)
 
 
-def test_generates_verifies_caches_and_serves_the_hit_without_a_model_call(
+def entries(docs) -> dict[str, dict]:
+    return {p: d for p, d in docs.docs.items() if p.startswith("explanations/")}
+
+
+def by_part(docs, part: str) -> list[dict]:
+    return [d for d in entries(docs).values() if d["part"] == part]
+
+
+def test_generates_both_parts_caches_them_and_serves_the_hit_without_a_model_call(
     client, fake, docs, caplog
 ):
     first = ask(client).json()
     assert first["kind"] == "verified" and first["cached"] is False
     assert first["author_says"] == GOOD_DRAFT["author_says"]
+    assert first["background"] == GOOD_DRAFT["background"]
     assert first["thinks_in"] == "software" and first["label"] == "Yield Curve"
-    assert fake.tasks() == ["explain", "verify"]
-    entry = docs.docs[f"explanations/{first['id']}"]
-    assert entry["verified"] is True and entry["prompt_version"] == first["prompt_version"]
-    assert entry["models"] == {"explain": "vertex_ai/quality", "verify": "vertex_ai/quality"}
+    assert sorted(fake.tasks()) == ["explain", "restate", "verify", "verify_background"]
+    rkey, bkey = first["id"].split("-")
+    r, b = docs.docs[f"explanations/{rkey}"], docs.docs[f"explanations/{bkey}"]
+    assert r["part"] == "restatement" and r["verified"] is True and "band" not in r
+    assert b["part"] == "background" and b["band"] == first["band"]
+    assert b["thinks_in"] == "software"
+    assert first["prompt_version"] == f"{r['prompt_version']}|{b['prompt_version']}"
+    assert r["models"] == {"generate": "vertex_ai/quality", "verify": "vertex_ai/quality"}
 
     with caplog.at_level(logging.INFO, logger="app.explain.router"):
         second = ask(client).json()
     assert second["cached"] is True and second["author_says"] == first["author_says"]
-    assert fake.tasks() == ["explain", "verify"]  # no new call
+    assert len(fake.calls) == 4  # no new call
     assert any(getattr(r, "cache", None) == "hit" for r in caplog.records)
     counters = docs.docs[f"ops/explain/days/{datetime.now(UTC).date().isoformat()}"]
     assert counters["hits"] == 1 and counters["generated"] == 1
 
 
-def test_personas_get_their_own_frame_and_cache_entry(client, fake):
-    keys = {p: ask(client, p).json() for p in ("newcomer", "trader", "policy_student")}
-    assert {k: v["thinks_in"] for k, v in keys.items()} == {
+def test_personas_share_one_restatement_and_get_their_own_background(client, fake, docs):
+    cards = {p: ask(client, p).json() for p in ("newcomer", "trader", "policy_student")}
+    assert {k: v["thinks_in"] for k, v in cards.items()} == {
         "newcomer": "software", "trader": "cricket", "policy_student": "law",
     }  # fmt: skip
-    assert len({v["id"] for v in keys.values()}) == 3
+    assert fake.count("restate") == 1 and fake.count("verify") == 1  # made and checked once
+    assert fake.count("explain") == 3
     frames = [c["vars"]["thinks_in"] for c in fake.calls if c["task"] == "explain"]
-    assert frames == ["software", "cricket", "law"]
+    assert sorted(frames) == ["cricket", "law", "software"]
+    assert len({v["id"].split("-")[0] for v in cards.values()}) == 1
+    assert len({v["id"].split("-")[1] for v in cards.values()}) == 3
+    assert len(by_part(docs, "restatement")) == 1 and len(by_part(docs, "background")) == 3
 
 
-def test_prompt_gets_content_and_band_only_never_identity(client, fake):
+def test_prompts_get_content_and_band_only_never_identity(client, fake):
     ask(client)
     for call in fake.calls:
         blob = repr(call["vars"])
         assert "demo1" not in blob and "@" not in blob
-    assert set(fake.calls[0]["vars"]) == {
-        "mode", "span", "sentence", "paragraph", "concepts", "band", "band_rule", "thinks_in",
-        "style", "style_rule", "feedback",
-    }  # fmt: skip
+    calls = {c["task"]: c["vars"] for c in fake.calls}
+    assert set(calls["restate"]) == RESTATE_VAR_KEYS  # no band, no frame: shared by everyone
+    assert "band" not in calls["restate"] and "thinks_in" not in calls["restate"]
+    assert set(calls["explain"]) == PROMPT_VAR_KEYS
+    assert set(calls["verify"]) == {"mode", "span", "paragraph", "author_says"}
+    assert set(calls["verify_background"]) == {"mode", "span", "paragraph", "background"}
 
 
-def test_rejected_draft_is_regenerated_once_with_the_reasons(client, fake):
-    fake.verdicts = [FAIL, PASS]
+def test_a_rejected_restatement_is_regenerated_once_with_the_reasons(client, fake):
+    fake.script("verify", [FAIL, PASS])
     body = ask(client).json()
     assert body["kind"] == "verified"
-    explains = [c for c in fake.calls if c["task"] == "explain"]
-    assert explains[0]["vars"]["feedback"] == "none"
-    assert "judge_not_entailed" in explains[1]["vars"]["feedback"]
+    restates = [c for c in fake.calls if c["task"] == "restate"]
+    assert restates[0]["vars"]["feedback"] == "none"
+    assert "judge_not_entailed" in restates[1]["vars"]["feedback"]
+    assert fake.count("explain") == 1  # the Background passed the first time
 
 
 def test_deterministic_failure_skips_the_judge_and_feeds_back(client, fake):
-    bad = {**GOOD_DRAFT, "author_says": "The yield curve will invert."}  # hedge + attribution
-    fake.drafts = [bad, GOOD_DRAFT]
+    bad = {"author_says": "The yield curve will invert."}  # hedge + attribution dropped
+    fake.script("restate", [bad, {"author_says": GOOD_DRAFT["author_says"]}])
     assert ask(client).json()["kind"] == "verified"
-    assert fake.tasks() == ["explain", "explain", "verify"]
-    assert "hedge_dropped" in fake.calls[1]["vars"]["feedback"]
+    assert fake.count("restate") == 2 and fake.count("verify") == 1
+    restates = [c for c in fake.calls if c["task"] == "restate"]
+    assert "hedge_dropped" in restates[1]["vars"]["feedback"]
 
 
-def test_two_rejections_fall_back_to_the_definition_and_cache_no_text(client, fake, docs):
-    fake.verdicts = [FAIL]
+def test_restatement_rejected_twice_gives_the_definition_card(client, fake, docs):
+    fake.script("verify", [FAIL])
     body = ask(client).json()
     assert body["kind"] == "definition" and body["author_says"] is None
+    assert body["background"] is None
     assert body["definition"] == "Definition of c_yield_curve."
-    entry = docs.docs[f"explanations/{body['id']}"]
-    assert entry["kind"] == "definition" and entry["author_says"] is None
-    assert entry["background"] is None
+    (r,) = by_part(docs, "restatement")
+    assert r["kind"] == "definition" and r["author_says"] is None  # no draft stored
     calls = len(fake.calls)
-    assert ask(client).json()["cached"] is True and len(fake.calls) == calls
+    again = ask(client, "trader").json()  # another reader: the rejection is shared
+    assert again["kind"] == "definition" and len(fake.calls) == calls  # no Background made
+
+
+def test_background_rejected_twice_keeps_the_verified_restatement(client, fake, docs):
+    fake.script("verify_background", [BG_FAIL])
+    body = ask(client).json()
+    assert body["kind"] == "verified" and body["author_says"] == GOOD_DRAFT["author_says"]
+    assert body["background"] is None  # the card keeps the definition in that panel
+    assert body["analogy_domain"] is None
+    (b,) = by_part(docs, "background")
+    assert b["verified"] is False and b["background"] is None
+    explains = [c for c in fake.calls if c["task"] == "explain"]
+    assert (
+        len(explains) == 2 and "judge_background_article_claim" in explains[1]["vars"]["feedback"]
+    )
 
 
 @pytest.mark.parametrize(
     "error", [llm.LLMUnavailable("down"), llm.LLMRejected("400"), llm.BudgetExceeded("cap")]
 )
 def test_judge_unavailable_shows_the_definition_and_caches_nothing(client, fake, docs, error):
-    fake.verdicts = [error]
+    fake.script("verify", [error])
+    fake.script("verify_background", [error])
     body = ask(client).json()
     assert body["kind"] == "definition" and body["background"] is None
-    assert not [p for p in docs.docs if p.startswith("explanations/")]
+    assert not entries(docs)
 
 
 def test_budget_before_generation_refunds_the_daily_slot(client, fake, docs):
-    fake.drafts = [llm.BudgetExceeded("cap")]
+    fake.script("restate", [llm.BudgetExceeded("cap")])
+    fake.script("explain", [llm.BudgetExceeded("cap")])
     assert ask(client).json()["kind"] == "definition"
     day = datetime.now(UTC).date().isoformat()
     assert docs.docs[f"users/demo1/explain_counts/{day}"]["count"] == 0
 
 
-def test_daily_generation_cap_serves_the_definition(client, fake, monkeypatch):
+def test_one_request_counts_once_against_the_cap_however_many_parts(client, fake, docs):
+    ask(client)  # restatement + Background: two parts, one request
+    day = datetime.now(UTC).date().isoformat()
+    assert docs.docs[f"users/demo1/explain_counts/{day}"]["count"] == 1
+
+
+def test_daily_generation_cap_still_shows_a_shared_restatement(client, fake, monkeypatch):
     from app.config import get_settings
 
     monkeypatch.setattr(get_settings(), "anon_explain_daily_cap", 1)
     assert ask(client, "newcomer").json()["kind"] == "verified"
-    capped = ask(client, "trader").json()  # a new key: would need a generation
-    assert capped["kind"] == "definition"
+    capped = ask(client, "trader").json()  # needs a new Background: past the cap
+    assert capped["kind"] == "verified" and capped["background"] is None
+    assert capped["author_says"] == GOOD_DRAFT["author_says"]  # the shared part is free
     assert ask(client, "newcomer").json()["cached"] is True  # cached ones stay free
 
 
-def test_report_evicts_queues_for_review_and_records_the_event_once(client, fake, docs):
+def test_report_evicts_both_parts_queues_them_and_records_the_event_once(client, fake, docs):
     first = ask(client).json()
     report = {"event_id": "r1", "content_id": "art", "concept_id": "c_yield_curve"}
     url = f"/v1/explain/{first['id']}/report?persona=newcomer"
     resp = client.post(url, json=report).json()
     assert resp == {"evicted": True, "event_applied": True}
-    assert f"explanations/{first['id']}" not in docs.docs
+    assert not entries(docs)
     reviews = [d for p, d in docs.docs.items() if p.startswith("explanation_reports/")]
-    assert len(reviews) == 1 and reviews[0]["entry"]["author_says"] == GOOD_DRAFT["author_says"]
-    assert "uid" not in repr(reviews[0]) and "demo1" not in repr(reviews[0])
+    assert len(reviews) == 2
+    assert {r["entry"]["part"] for r in reviews} == {"restatement", "background"}
+    assert "uid" not in repr(reviews) and "demo1" not in repr(reviews)
     assert docs.docs["users/demo1/events/r1"]["type"] == "report_wrong"
     # replay: nothing left to evict, event not applied twice
     assert client.post(url, json=report).json() == {"evicted": False, "event_applied": False}
-    # the next hover regenerates
+    # the next hover regenerates both
     assert ask(client).json()["cached"] is False
 
 
@@ -197,8 +244,8 @@ def test_paragraph_explainer_uses_the_same_pipeline(client, fake):
     body = ask(client, paragraph_id="p0").json()
     assert body["mode"] == "paragraph" and body["kind"] == "verified"
     assert body["label"] == "What this paragraph is saying"
-    assert fake.calls[0]["vars"]["mode"] == "paragraph"
-    assert fake.calls[0]["vars"]["sentence"] == TEXT
+    restate = next(c for c in fake.calls if c["task"] == "restate")
+    assert restate["vars"]["mode"] == "paragraph" and restate["vars"]["sentence"] == TEXT
 
 
 def test_explain_counts_are_covered_by_export_and_delete():
@@ -230,8 +277,15 @@ async def test_concurrent_requests_for_one_key_share_one_generation(docs):
     await asyncio.sleep(0.01)
     gate.set()
     ra, rb = await asyncio.gather(a, b)
-    assert calls == ["explain", "verify"]
+    assert sorted(calls) == ["explain", "restate", "verify", "verify_background"]
     assert ra.kind == rb.kind == "verified"
+
+
+def test_restate_route_and_both_judges(settings):
+    assert llm.ROUTES["restate"].primary == "model_quality"
+    assert llm.ROUTES["restate"].fallback == "model_fast"
+    assert llm.ROUTES["verify_background"].primary == "judge_model"
+    assert llm.ROUTES["verify_background"].fallback is None
 
 
 def test_verify_route_uses_the_judge_model_setting(settings):

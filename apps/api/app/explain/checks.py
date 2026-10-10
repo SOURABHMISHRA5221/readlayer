@@ -107,6 +107,24 @@ def _has(text: str, vocab: frozenset[str]) -> bool:
 
 
 def check(inputs: ExplainInputs, author_says: str, background: str = "") -> list[str]:
+    """Both parts of a card (the eval cases hold whole cards)."""
+    return check_restatement(inputs, author_says) + check_background(inputs, background)
+
+
+def check_background(inputs: ExplainInputs, background: str) -> list[str]:
+    """The Background may carry no link the source doesn't have."""
+    return _links(inputs, ("background", background))
+
+
+def _links(inputs: ExplainInputs, *parts: tuple[str, str]) -> list[str]:
+    return [
+        f"link_in_{field}: links that are not in the source are not allowed"
+        for field, text in parts
+        if _URL.search(text) and not _URL.search(inputs.paragraph)
+    ]
+
+
+def check_restatement(inputs: ExplainInputs, author_says: str) -> list[str]:
     """Reasons the restatement is unfaithful; empty when every check passes."""
     reasons: list[str] = []
     scope = inputs.paragraph if inputs.mode == "paragraph" else inputs.sentence
@@ -124,7 +142,4 @@ def check(inputs: ExplainInputs, author_says: str, background: str = "") -> list
         )
     if _has_negation(scope) and not _has_negation(author_says):
         reasons.append("negation_dropped: the source contains a negation; keep it")
-    for field, text in (("author_says", author_says), ("background", background)):
-        if _URL.search(text) and not _URL.search(inputs.paragraph):
-            reasons.append(f"link_in_{field}: links that are not in the source are not allowed")
-    return reasons
+    return reasons + _links(inputs, ("author_says", author_says))

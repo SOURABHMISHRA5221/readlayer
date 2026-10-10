@@ -35,7 +35,8 @@ log = logging.getLogger(__name__)
 router = APIRouter()
 
 ID_PATTERN = r"^[A-Za-z0-9_-]+$"
-KEY_PATTERN = r"^[0-9a-f]{40}$"
+# A card id names its two cache entries (restatement-background); a bare key is still accepted.
+KEY_PATTERN = r"^[0-9a-f]{40}(-[0-9a-f]{40})?$"
 
 
 class ExplainRequest(BaseModel):
@@ -195,7 +196,10 @@ async def report_wrong(
     content, not the reader); the event follows the pause rule like every other event."""
     now = datetime.now(UTC)
     repo = ExplainRepo(get_doc_store())
-    evicted = await repo.evict_to_review(key, f"{key[:16]}-{body.event_id}", now)
+    # Both parts go: the shared restatement for everyone, and this reader's Background.
+    evicted = False
+    for part in service.split_card_id(key):
+        evicted |= await repo.evict_to_review(part, f"{part[:16]}-{body.event_id}", now)
     concept = get_graph().get(body.concept_id) if body.concept_id else None
     refs = {concept.id: ConceptRef(concept.domain, concept.base_difficulty)} if concept else {}
     event = ReaderEvent(
