@@ -68,3 +68,9 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
 - Before (same day, shipped `explain-v4` + `restate-v1`, verify-v2, verify-background-v1):
   adversarial 15/15, good 25/25, background 3/3 + 2/2, injection 10/10; non-business verifier
   6/7 (O06), pipeline verified 7/7. $0.53.
+- After (same day, `explain-v5` + `restate-v2`; judge prompts unchanged): adversarial 15/15,
+  good 24/25, background 3/3 + 2/2, injection 10/10, pipeline 25/25 verified first; non-business
+  verifier 6/7 (O06, as before), pipeline verified 7/7. $0.54. **Targets met; v5/v2 ship.** The
+  one good card rejected is a verifier-only case (fixed card, unchanged judge prompt), so it is
+  judge run-to-run variation, not an effect of the prompt change. Pipeline p95 24.6 s (11.8 s
+  before) came from a single slow call; p50 9.5 s vs 9.1 s.
