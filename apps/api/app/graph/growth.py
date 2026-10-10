@@ -14,7 +14,7 @@ import networkx as nx
 from app.graph.build import KEEP_KINDS, SINGLE_DOC_MIN_SPEC, Prereq, difficulty, normalize_label
 from app.graph.enrich import ConceptInfo
 from app.graph.graph import ConceptGraph
-from app.graph.linking import EMBED_TYPES, sentence_around
+from app.graph.linking import EMBED_TYPES, phrase, sentence_around
 from app.graph.models import DOMAINS, Concept
 from app.ingest.models import Demand
 
@@ -39,6 +39,7 @@ class GrowthPick:
     sentence: str
     salience: float
     demand_ids: tuple[str, ...]  # every demand in the article with this label
+    phrase: str = ""  # the mention as the linker shows it: "exact (label)"
 
 
 def pick(demands: Sequence[Demand], paragraphs: dict[str, str], limit: int) -> list[GrowthPick]:
@@ -57,6 +58,7 @@ def pick(demands: Sequence[Demand], paragraphs: dict[str, str], limit: int) -> l
                 sentence_around(para, top.anchor.exact, top.anchor.prefix),
                 top.salience,
                 tuple(d.id for d in members),
+                phrase(top),
             )
         )
     picks.sort(key=lambda p: (-p.salience, p.label))

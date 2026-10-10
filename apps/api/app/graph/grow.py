@@ -94,6 +94,7 @@ async def grow(
         cid = unique_id(slug_ids([p.label])[0], taken)
         taken.add(cid)
         candidates.append((p, make_concept(cid, p.label, info, zipf, vectors[p.label])))
+    candidates = await _confirm(candidates, runner, out)
     if not candidates:
         return out
     requests = [
@@ -125,6 +126,26 @@ async def grow(
             out.links[did] = target
             out.grown.add(did)
     return out
+
+
+async def _confirm(
+    candidates: list[tuple[GrowthPick, Concept]], runner: enrich.Runner, out: GrowthOutcome
+) -> list[tuple[GrowthPick, Concept]]:
+    """The linker's own check on each new concept: would its definition explain the mention in
+    its sentence (link_confirm, the same strictness as linking)? Drops definitions that miss the
+    sense used ("18-month fuel cycle" ≠ the nuclear fuel cycle) and concepts made from a generic
+    word. One batched call."""
+    questions = [
+        enrich.LinkQuestion(
+            c.id, p.phrase or p.label, p.sentence, ((c.id, c.label, c.definition, 1.0),),
+            kinds=(c.kind or "",), jurisdictions=(c.jurisdiction,),
+        )
+        for p, c in candidates
+    ]  # fmt: skip
+    answers = await enrich.confirm_links(questions, runner, out.calls)
+    kept = [(p, c) for k, (p, c) in enumerate(candidates) if answers.get(k) == c.id]
+    out.rejected += len(candidates) - len(kept)
+    return kept
 
 
 async def _merge_known(

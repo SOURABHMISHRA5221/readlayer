@@ -1,5 +1,8 @@
 ---
-version: concept_define-v3
+version: concept_define-v4
+# v4: domain scopes clarified (energy technology is technology; environment is climate,
+# ecology, pollution and conservation), after the M2.2 judged sample filed a reactor device
+# under environment.
 # v3 (M2.2, decision 33): any field, not only business news; 14 taxonomy domains; new kept kinds
 # role, index_provider, condition, method, organism_type; new field `jurisdiction`.
 ---
@@ -21,10 +24,10 @@ education and society. For each numbered entry return:
 - "policy": public policy, taxes, regulation, government schemes
 - "politics": elections, parties, government, international relations
 - "law": laws, courts, legal procedure and rights
-- "technology": computing, software, AI, the internet, devices
+- "technology": computing, software, AI, the internet, devices, engineering and energy technology (power plants, nuclear reactors, batteries)
 - "science": physics, chemistry, biology, astronomy, research methods
 - "health": medicine, diseases, the body, public health
-- "environment": climate, ecology, energy and pollution
+- "environment": climate, ecology, pollution and conservation
 - "sports": sports, their rules, tactics and competitions
 - "culture": arts, literature, music, film, media, philosophy
 - "education": schools, universities, teaching and learning

@@ -22,10 +22,15 @@ TAXONOMY: tuple[DomainInfo, ...] = (
     DomainInfo("policy", "Policy", "public policy, taxes, regulation, government schemes"),
     DomainInfo("politics", "Politics", "elections, parties, government, international relations"),
     DomainInfo("law", "Law", "laws, courts, legal procedure and rights"),
-    DomainInfo("technology", "Technology", "computing, software, AI, the internet, devices"),
+    DomainInfo(
+        "technology",
+        "Technology",
+        "computing, software, AI, the internet, devices, engineering"
+        " and energy technology (power plants, nuclear reactors, batteries)",
+    ),
     DomainInfo("science", "Science", "physics, chemistry, biology, astronomy, research methods"),
     DomainInfo("health", "Health", "medicine, diseases, the body, public health"),
-    DomainInfo("environment", "Environment", "climate, ecology, energy and pollution"),
+    DomainInfo("environment", "Environment", "climate, ecology, pollution and conservation"),
     DomainInfo("sports", "Sports", "sports, their rules, tactics and competitions"),
     DomainInfo("culture", "Culture", "arts, literature, music, film, media, philosophy"),
     DomainInfo("education", "Education", "schools, universities, teaching and learning"),

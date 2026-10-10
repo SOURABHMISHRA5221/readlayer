@@ -1,5 +1,7 @@
 """Online concept growth (M2.2 plan §C.2): picking, verification, merge, store, prerequisites."""
 
+import re
+
 import pytest
 from pydantic import ValidationError
 
@@ -47,6 +49,17 @@ class Script:
         )
 
 
+def confirm_all(prompt_vars):
+    """link_confirm reply that accepts each mention's (single) candidate."""
+    ids = re.findall(r"candidate (c_[a-z0-9_]+):", prompt_vars["mentions"])
+    return {"answers": [{"mention": i, "concept_id": cid} for i, cid in enumerate(ids)]}
+
+
+def confirm_none(prompt_vars):
+    n = prompt_vars["mentions"].count("phrase:")
+    return {"answers": [{"mention": i, "concept_id": None} for i in range(n)]}
+
+
 def info(domain="sports", kind="method", spec=3):
     return {"id": 0, "definition": "A tactical role in football, defined here.",
             "specialization": spec, "domain": domain, "kind": kind}  # fmt: skip
@@ -82,6 +95,7 @@ async def test_a_new_concept_is_verified_stored_and_linked_with_existing_prerequ
     repo = GrowthRepo(InMemoryDocStore())
     runner = Script({
         "concept_define": lambda v: {"concepts": [info()]},
+        "link_confirm": confirm_all,
         "concept_prereqs": lambda v: {"concepts": [{"concept": 0, "prerequisites": [
             {"id": "c_football", "confidence": 0.9}, {"id": "c_made_up", "confidence": 0.9}]}]},
     })  # fmt: skip
@@ -92,7 +106,7 @@ async def test_a_new_concept_is_verified_stored_and_linked_with_existing_prerequ
     assert c.prerequisites == ["c_football"]  # the invented id is dropped
     assert out.links == {"d1": "c_false_nine", "d2": "c_false_nine"} and out.grown == {"d1", "d2"}
     assert (await repo.get("c_false_nine")).source_cid == "cid1"
-    assert runner.calls == ["concept_define", "concept_prereqs"]  # one batched call each
+    assert runner.calls == ["concept_define", "link_confirm", "concept_prereqs"]  # one each
 
 
 async def test_an_unverified_answer_grows_nothing():
@@ -118,6 +132,7 @@ async def test_named_organisations_never_absorb_another_label():
         return [[0.0, 1.0] for _ in texts]
 
     runner = Script({"concept_define": lambda v: {"concepts": [info(kind="institution", spec=2)]},
+                     "link_confirm": confirm_all,
                      "concept_prereqs": lambda v: {"concepts": []}})  # fmt: skip
     out = await grow(GRAPH, [demand("d1", "UEFA")], {"p0": TEXT}, 5, "c",
                      GrowthRepo(InMemoryDocStore()), runner, embed_fifa)  # fmt: skip
@@ -130,6 +145,7 @@ async def test_an_id_stored_first_by_another_instance_is_reused_only_for_the_sam
     repo = GrowthRepo(store)
     await repo.create_if_absent(concept("c_false_nine", "False nine"), "other", {})
     runner = Script({"concept_define": lambda v: {"concepts": [info()]},
+                     "link_confirm": confirm_all,
                      "concept_prereqs": lambda v: {"concepts": []}})  # fmt: skip
     out = await grow(GRAPH, [demand("d1", "False nine")], {"p0": TEXT}, 5, "c", repo, runner,
                      embed_far)  # fmt: skip
@@ -149,3 +165,13 @@ def test_a_single_everyday_word_is_never_a_grown_or_seeded_concept():
     assert not growth.verified(ok, "Health", 5.6)  # would mislink every "health"
     assert growth.verified(ok, "False nine", 5.0)  # multi-word phrases are fine
     assert growth.verified(ok, "Dialysis", 3.2)  # rare single words are fine
+
+
+async def test_a_definition_the_linker_would_not_confirm_grows_nothing():
+    repo = GrowthRepo(InMemoryDocStore())
+    runner = Script({"concept_define": lambda v: {"concepts": [info()]},
+                     "link_confirm": confirm_none})  # fmt: skip
+    out = await grow(GRAPH, [demand("d1", "Fuel cycle")], {"p0": TEXT}, 5, "c", repo, runner,
+                     embed_far)  # fmt: skip
+    assert out.added == [] and out.rejected == 1 and "concept_prereqs" not in runner.calls
+    assert await repo.since(None) == []
