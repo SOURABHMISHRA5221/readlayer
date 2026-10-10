@@ -16,7 +16,7 @@ HOSTING  := https://$(PROJECT).web.app,https://$(PROJECT).firebaseapp.com
 JAVA21   := $(HOME)/.sdkman/candidates/java/21.0.12-amzn
 SECRETS  := UID_HASH_SALT=uid-hash-salt:latest,TAVILY_API_KEY=tavily-api-key:latest,YOUTUBE_API_KEY=youtube-api-key:latest
 
-.PHONY: dev dev-api dev-web test test-emulator smoke check-gcp setup-gcp web-config deploy-api \
+.PHONY: dev dev-api dev-web dev-emulator test test-emulator smoke check-gcp setup-gcp web-config deploy-api \
 	deploy-web deploy-rules deploy-guard
 
 # Local only: API (:8000, real Firebase sign-in, reads Firestore + graph with this project's ADC)
@@ -37,6 +37,10 @@ test:
 	pnpm -r test
 
 # Firestore + Auth emulators (Java 21): export/delete, transactions, deny-all rules.
+# Local end-to-end harness (M7): emulators seeded read-only from production; no production writes.
+dev-emulator: check-gcp
+	apps/api/scripts/dev_emulator.sh
+
 test-emulator:
 	JAVA_HOME=$(JAVA21) PATH=$(JAVA21)/bin:$$PATH pnpm exec firebase emulators:exec \
 		--project demo-readlayer --only firestore,auth "cd apps/api && uv run pytest -q -m emulator"

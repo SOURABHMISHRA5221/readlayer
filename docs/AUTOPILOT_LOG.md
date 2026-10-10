@@ -187,3 +187,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Harness groundwork: Settings refuse `FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST` on
   Cloud Run or ENV=prod (tests); `FIRESTORE_PROJECT` / `db_project` so Firestore can point at the
   emulator's demo project while Vertex and GCS keep the real project.
+- G (harness): `make dev-emulator` (apps/api/scripts/dev_emulator.sh): Firestore + Auth
+  emulators (demo-readlayer), `seed_emulator.py` copies 5 articles, 3 persona templates and
+  today's spend ledger read-only from production (two explicit clients; refuses same target),
+  harness budget = min($1, $8 − today's production spend), API with emulator hosts and
+  `FIRESTORE_PROJECT=demo-readlayer`, web with `VITE_USE_EMULATORS=1` (window hook for an
+  unsigned emulator Google identity; the Vite build refuses emulator mode). Smoke: emulator
+  "Google" reader → API 200, onboarding step "consent". First run: production spend today
+  $0.82, harness budget $1.00.
