@@ -31,8 +31,10 @@ export function Segmented<K extends string>({ label, options, value, onChange }:
         {label}
       </span>
       <div className="segmented__track" role="radiogroup" aria-labelledby={labelId} onKeyDown={move}>
-        {options.map((o) => {
+        {options.map((o, i) => {
           const checked = o.key === value;
+          // Nothing chosen yet: the first option takes the tab stop, so the group is reachable.
+          const tabStop = checked || (i === 0 && !options.some((x) => x.key === value));
           return (
             <button
               key={o.key}
@@ -40,7 +42,7 @@ export function Segmented<K extends string>({ label, options, value, onChange }:
               role="radio"
               data-key={o.key}
               aria-checked={checked}
-              tabIndex={checked ? 0 : -1}
+              tabIndex={tabStop ? 0 : -1}
               className="segmented__option"
               onClick={() => onChange(o.key)}
             >

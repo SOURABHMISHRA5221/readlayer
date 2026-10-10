@@ -13,6 +13,7 @@ phases back to back through the same pending doc and lease.
 
 import asyncio
 import logging
+import time
 from datetime import UTC, datetime, timedelta
 
 from app import llm
@@ -79,9 +80,18 @@ async def fetch_and_extract(url: str, source: Source = "fetch") -> PendingDoc:
     """Phase 1: safe_fetch, extraction and paragraph ids; no LLM call. Stores the pending doc
     (or returns the one another request stored first)."""
     fetch.validate_url(url)
+    started = time.perf_counter()
     page = await fetch.safe_fetch(url)
+    fetched = time.perf_counter()
     html = page.body.decode(page.encoding, errors="replace") if page.encoding else page.body
     extracted = await asyncio.to_thread(extract, html, page.url)
+    log.info(
+        "phase 1 timing",
+        extra={
+            "fetch_ms": round((fetched - started) * 1000),
+            "extract_ms": round((time.perf_counter() - fetched) * 1000),  # incl. first import
+        },
+    )
     title = extracted.title or extracted.site or page.url
     return await _store_pending(
         url_hash(url),

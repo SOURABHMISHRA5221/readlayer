@@ -1,7 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): rest of M6 merged (#14), deployed and verified live (§14);
-autopilot run log in `docs/AUTOPILOT_LOG.md`. Previous: M5 (#13).
+Last updated: 2026-10-10 (IST): M7 built and verified on the local emulator harness (§15); M6
+live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -29,7 +29,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | docs | merged (squash) | #12 | README with live screenshots, persona GIF, diagrams; MIT license |
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
-| M7, M8-local, M2.2 (trimmed), M9 | not started | — | Autopilot order (2026-10-10): M7 with knowledge map and edit-by-prompt required, M8-local, M2.2, M9 |
+| M7 | branch `m7` | — | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
+| M8-local, M2.2 (trimmed), M9 | not started | — | Autopilot order (decision 27) |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
 1. `e7c131c` M6 local vertical slice: `DEV_AUTH_BYPASS` (refuses to start on Cloud Run / ENV=prod),
@@ -77,6 +78,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | explain | MODEL_QUALITY | MODEL_FAST | M6: Background only, per reader; regenerate once with reasons |
 | verify | MODEL_JUDGE (empty = MODEL_QUALITY) | none | claims judge for the restatement; outage → definition card, nothing cached |
 | verify_background | MODEL_JUDGE (empty = MODEL_QUALITY) | none | M6: Background judge (contradiction, article claims) |
+| profile_edit | MODEL_FAST | MODEL_FALLBACK | M7: edit profile with a prompt (flat schema, strict local whitelist); prompt `profile-edit-v3` |
 | embed | MODEL_EMBED `vertex_ai/gemini-embedding-001`, 256 dims | none | |
 
 No LLM call on the annotations, library or recommendations paths. POST /v1/explain (M5) is the
@@ -93,7 +95,10 @@ only reader-facing path that may call a model, and only on a cache miss within t
 `anonymous` counter), `ops/ingest/days/{date}` (shared anonymous ingest count),
 `rec_cache/{concept_id}__{format}` (web results, concept-level, 48 h), and per reader
 `users/{uid}` with `domains`, `knows`, `events` (TTL), `weekly`, `profile_edits` (M7),
-`rec_signals/{persona|default}`, `ingest_counts/{day}`, `explain_counts/{day}` (M5). All per-user data is in
+`rec_signals/{persona|default}`, `ingest_counts/{day}`, `explain_counts/{day}` (M5),
+`profile_edits/{id}` and `profile_edit_counts/{day}` (M7), plus `consent`, `field`, `onboarding`
+and `calibration` fields on `users/{uid}` (M7); `ops/profile_edit/days/{day}` (shared anonymous
+profile-edit count). All per-user data is in
 `reader_repo.USER_SUBCOLLECTIONS`, which drives both export and delete.
 
 ---
@@ -102,7 +107,7 @@ only reader-facing path that may call a model, and only on a cache miss within t
 
 | Item | Value |
 |---|---|
-| Content docs in Firestore | 311 total (309 + 2 M6 "Open here" tests) |
+| Content docs in Firestore | 312 total (309 + 3 "Open here" tests: M6 local, M6 live, M6 warm-timing live) |
 | Corpus (in `data/corpus_urls.txt`) | 290 |
 | Held-out (in `data/heldout_urls.txt`) | 15, never used to build the graph |
 | `user_ingested` ("Open here" testing) | 4: chain.link "Singleness of money", ECB macroprudential explainer, Wikipedia "Yield curve control" (M6 local), Wikipedia "Quantitative tightening" (M6 live) |
@@ -124,7 +129,14 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | `link_confirm` runs on MODEL_QUALITY, not MODEL_FAST (CLAUDE.md prefers FAST) | FAST measured 89% precision, QUALITY 97% against the 95% target (M2). Recorded in CLAUDE.md and DESIGN §2/§10 | Keep |
 | Spans only for graph-linked demands (the paragraph noisy-OR does count unlinked terms and context references) | The card needs a label and definition until explanations exist | M5 |
 | `slowdown` (−0.02 on an unannotated paragraph) isn't computed | Needs dwell medians per reader; `annotation_dismissed` and paragraph-only `text_searched` are emitted since M6 | Post-hackathon unless M9 has room |
-| Personas only for **anonymous** (demo) readers, via `?persona=` (default newcomer). Each (uid, persona) learns separately in `demo_graphs/{persona}` (θ too, now). Signed-in readers start neutral (θ = 0, no edges) until M7 onboarding | Decision 15 | M7 onboarding for Google readers |
+| Personas only for **anonymous** (demo) readers, via `?persona=` (default newcomer). Each (uid, persona) learns separately in `demo_graphs/{persona}` (θ too, now). Signed-in readers get onboarding + calibration since M7 | Decision 15 | Done (M7) |
+| M7 onboarding: liked articles are picked from the library, not pasted URLs (DESIGN §8 said "optional liked URLs") | No ingest, no LLM cost, no SSRF surface at sign-up | Keep |
+| M7 acceptance 1 and 2 ran with Auth-emulator "Google" accounts on the local harness (`make dev-emulator`), not real Google accounts | Creating real accounts isn't something the agent does; the live Google check covers the real flow once (Sourabh) | Live check after deploy |
+| M7: new route POST /v1/me/consent (and /v1/calibration/skip, GET /v1/me/profile/edits, POST /v1/me/demo/reset) | Consent recorded by the API so the gate is enforced server-side | In DESIGN §8 |
+| M7: profile_edit uses a flat response schema re-validated locally against the strict whitelist | Vertex returns 400 for tagged-union schemas and for an outer maxItems next to inner limits | Keep (DESIGN §15.3) |
+| M7: edit-by-prompt for demo readers is session-only (their persona copy + session settings; reset button) | Sourabh's decision 2026-10-10 (judges are anonymous) | Keep (DESIGN §15.3) |
+| M7: "this week" trend is a table only, no sparkline (the plan said sparkline with a table fallback) | The table carries the numbers accessibly; a sparkline is decoration for a few weeks of data | Revisit in M9 if time |
+| M7: the live check is an API script plus a headless-browser pass on the live site, not one browser script | The demo flows are cheapest to assert through the API; the browser pass covers rendering, focus, axe and console | Keep |
 | Per-minute rate limits are in memory per instance (≤ 3× a limit in the worst case); daily caps are in Firestore | Cheap; money-protecting caps are exact | Keep |
 | A deleted account's still-valid ID token (≤ 1 h) is refused only on the instance that ran the delete | No per-request revocation check (an extra Auth call per request) | M9 if needed |
 | Web search queries are `label + graph domain + format suffix`, not label + suffix only | Bare labels were ambiguous ("separation principle" returned a marine-engineering video). Domain is concept data, never reader data | Accepted as the rule (decision 4, DESIGN §16.3) |
@@ -156,7 +168,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
-| Medium | "Open here" (M6, two-phase): the article shows in 1.4 s locally but took **7.3 s live** on the first ingest of the new revision (phase 1 5.2 s server-side: deferred ingestion imports on a 1-vCPU instance shared with other readers' requests). The 5 s warm target is unmeasured live (needs one more new URL). Notes 20–55 s after; the reader shows "Preparing your notes… N s" |
+| Medium | "Open here" (M6, two-phase): the article shows in 1.4 s locally but took **7.3 s live** on the first ingest of the new revision (phase 1 5.2 s server-side: deferred ingestion imports on a 1-vCPU instance shared with other readers' requests). A second live run (Wikipedia "Forward guidance", instance warm for health checks but its first ingest) gave the same: phase 1 6.6 s, article 7.5 s, notes 43.7 s. Phase-1 timing fields (`fetch_ms`, `extract_ms`) ship with M7 to split the cost; the likely cause is the deferred ingestion imports on a 1-vCPU instance. M9: preload them at startup while min instances = 1 (judging), where cold-start time no longer matters. Notes 20–55 s after; the reader shows "Preparing your notes… N s" |
 | Low | Deleted-account revocation is per instance and in memory, so it is also lost on a restart. Seen in M6 local testing: a demo session deleted at 07:02:41 UTC sent one event batch at 07:10:19 after the dev server restarted, leaving `users/{uid}` + 6 `events` + 1 `demo_graphs/newcomer` (8 docs) under a deleted Auth user (Sourabh's own session). Left for the M9 anonymous cleanup unless Sourabh asks for a delete now; events expire by TTL in 90 days |
 | Low | A cold explanation card (both parts missing) costs $0.0090 and p95 31 s (was $0.0070, 22 s): two judge calls. Reuse across readers repays it |
 | Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
@@ -170,7 +182,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | In-process catalog cache: docs ingested by another process need an API restart to appear (Open here appends directly) |
 | Low | `rec_signals` keeps `seen` and `shown_counts` unbounded (served items and event ids are capped); a very heavy reader could approach the 1 MiB doc limit after thousands of items |
 | Low | `rec_shown` relies on IntersectionObserver, which browsers pause in background tabs (seen in automated testing; real readers have the tab in front) |
-| Low | Web build is 128 KB gzipped JS now that Firebase Auth is in (budget 150 KB) |
+| Low | Web main bundle 137.7 KB gzip (budget 150 KB); M7 pages are lazy chunks (profile 6.8 KB, welcome 3.3 KB), Cytoscape + dagre 155 KB load only when the map opens |
+| Low | The weekly trend is per uid, so a demo session's trend mixes the personas it read as (the page says "this demo session") |
+| Low | Calibration picks the most frequent concepts per domain, which occasionally surfaces a term like "Expiry days"; fine for a quick check, revisit with the gold set |
+| Low | Firestore emulator fails contended transactions faster than production (three prefetched explanations reserving one daily counter); a jittered retry now wraps every transaction (no production occurrence in 7 days of logs) |
 | Low | StarletteDeprecationWarning (httpx TestClient) in pytest output |
 
 ---
@@ -248,6 +263,11 @@ quota is free within the daily buckets.
 
 ---
 
+**2026-10-10 UTC (M7, so far):** profile-edit evals ≈ $0.01 (v1 rejected at $0, v2 $0.0047,
+v3 $0.0049); emulator harness ≈ $0.10 over two runs (explanations and edits; its ledger is separate and was
+seeded with production's $0.82, so with the cap at min($1, $8 − spend) checked against that seeded
+ledger the harness had about $0.18 of headroom, not $1). Production spend today before M7 work: $0.82.
+
 **2026-10-10 UTC (rest of M6, local): ≈ $0.50 LLM.** Safety evals `explain-v4-split` $0.46,
 local explanations while testing ≈ $0.03, one "Open here" ingest $0.0024. Under the $8 cap.
 
@@ -268,6 +288,14 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
   transaction before ingesting and refunded on failure. Known URLs, including ones still pending
   analysis, are free. Two-phase: the slot is refunded if phase 1 fails; an article whose analysis
   fails 3 times (410) keeps the slot spent (the pending doc holds no uid to refund).
+- **Consent gate (M7):** nothing about a signed-in reader is recorded before consent (events,
+  page views, rec signals); corrections, settings and profile edits are 403; export/delete open.
+- **Profile edits (M7):** 10 parses/day per signed-in reader; 3 per anonymous uid + 30/day shared;
+  ≤ 30 names per edit, ≤ 3 link_confirm batches (≈ $0.02 worst case per parse); raw text and typed
+  names never stored or logged.
+- **Emulator harness (M7):** Settings refuse emulator hosts on Cloud Run or ENV=prod; the seed
+  script reads production through a separate client and writes only to `demo-readlayer`; the
+  harness budget is min($1, $8 − today's production spend).
 - **Anonymous search cap:** uncached web searches triggered by anonymous readers share 100 calls
   a day; past it they get cached web items and library items only.
 - **Rate limits:** per uid per minute (general, annotations, events), tighter for anonymous.
@@ -289,13 +317,13 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
 
 ## 9. Next actions, in order
 
-Autopilot order (decision 27); BUILD_PLAN.md has the prompts. M5 merged (#13); the rest of M6
-is built (§14) and awaits merge and deploy.
+Autopilot order (decision 27); BUILD_PLAN.md has the prompts. M6 is merged and live (#14, #15);
+M7 is built and verified on the local harness (§15) and awaits review, merge and deploy.
 
 | When | Action |
 |---|---|
-| Now | **M7:** profile page (summary, domain bars, list view with corrections, THINKS_IN, export/delete/pause), Google onboarding with consent and calibration, **knowledge-map graph and edit-by-prompt (both required, decision 27)** |
-| Then | **M8-local** (unpacked extension), **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink), **M9** hardening and evals |
+| Now | **M7:** merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
+| Next | **M8-local** (unpacked extension), then **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink), then **M9** hardening and evals |
 | Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
 
@@ -342,6 +370,8 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 27 | Autopilot (2026-10-10) | Plan-reviewer loop replaces plan mode and plan approval; milestone-reviewer SHIP + green CI before merge; deploys and `git push` still need Sourabh's yes; production writes only within each plan's counts. M7 keeps the knowledge map and edit-by-prompt (no cuts without asking). Log: `docs/AUTOPILOT_LOG.md` |
 | 28 | Shared restatement (M6) | "What the author is saying" is one cache entry per (span, style) for every reader; the Background is per (band, frame, style). Restatement rejected → definition card; Background rejected → restatement with the definition in that panel. One cap count per request |
 | 29 | Two-phase "Open here" (M6) | Two synchronous requests (no work after a response on Cloud Run): phase 1 stores `pending_contents/`, phase 2 under a 150 s lease with a 120 s timeout; 3 counted failures → 410 |
+| 30 | Edit-by-prompt for demo readers (M7, Sourabh 2026-10-10) | Allowed, session-only: changes the session's persona copy and settings, never the template; "Reset persona" returns to the original; caps 3/uid, 30/day shared |
+| 31 | M7 harness (2026-10-10) | Local end-to-end on Firestore + Auth emulators seeded read-only from production; emulator "Google" readers for acceptance; real-account check by Sourabh after deploy |
 
 No decisions are open.
 
@@ -532,4 +562,30 @@ after #14, API then web back to back):**
 
 **Live spend:** one ingest, 24 warm-up cards (≈ $0.15 incl. the restatements shared across
 personas), live check hits only.
+
+---
+
+## 15. M7 acceptance (2026-10-10, local harness on the final code; live after deploy)
+
+**Built.** API: consent (`consent-v1`), onboarding, calibration (8 taps, skip), consent gate,
+map-node evidence, edit-by-prompt (flat schema + strict whitelist, redaction, name cap, resolver,
+preview/apply/undo with exact deltas, demo session-only + reset that also restores session
+settings), emulator-safety settings, transaction contention retry, rated domains in the profile.
+Web: `/welcome` (with export/delete before consent), `/profile` (summary, bars with "not rated
+yet", Cytoscape map + list view + node dialog, this week, analogy chips, preferences with visible
+errors, edit box, data controls), onboarding gate (re-checked when the flow finishes), lazy
+route chunks. Harness: `make dev-emulator`. Tests: API 489, annotator 36, web 7; profile-edit
+evals `profile-edit-v3` 6/6 phrasings, 4/4 attacks. Raw harness output:
+`docs/evidence/M7-harness.txt`.
+
+| Check | Result (from `docs/evidence/M7-harness.txt`) |
+|---|---|
+| Two fresh accounts get different annotations and analogies on the same article | Emulator "Google" readers: software engineer vs commerce student. Guardian UK bonds **8 vs 2** spans, Guardian Polymarket/HSBC **9 vs 5**; RoDTEP card: "Analogy · software" (billing rebate / deployment fees) vs "Analogy · cricket" (touring team's kit expenses) |
+| Onboarding ends on the library without a reload | After the 8th answer and after "Skip the rest": path `/`, library shown, 0 full page loads |
+| Delete my data signs out; fresh sign-in starts onboarding | Confirm focuses Cancel, Escape cancels and returns focus; Delete everything → sign-in page; signing in again → `/welcome` consent step. Delete from the consent screen (before consent) also works |
+| Profile page keyboard + axe | Tab walk: **31 stops for 31 tabbable controls**; list item Enter opens the node dialog, Escape returns focus to the item; axe 0 serious/critical at 1440 light, 1440 dark, 390, 320 |
+| Mobile | No horizontal scroll at 320 px; list view default below 640 px; no target under 44 px in the page, node card or open preview (header items raised to 44 px after the first run flagged the 40 px icons and 21 px wordmark) |
+| Knowledge map | Renders at 1440 light and dark (3 canvases, not busy); after Apply, "Options" appears in the finance list as Understands without a reload or domain switch |
+| Profile edit tests | 26 tests: whitelist, cross-op fields, id-shaped names, unresolved names never stored, apply→undo exact, 11th parse → 429, >30 names refused before linking, ≤ 3 link_confirm batches, reset restores session settings |
+| "I'm a backend engineer, I know options well, keep explanations short" | Preview: 1 concept known, length normal → short; settings unchanged before Apply; after Apply the "Bond sell-off" Background is **23 words vs 56** at style short. First run: a cache miss (harness log); the evidence re-run hit the cache because the first run had already made that short Background |
 

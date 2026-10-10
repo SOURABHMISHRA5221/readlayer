@@ -110,6 +110,7 @@ ROUTES: dict[str, Route] = {
     "concept_prereqs": Route("model_fast", "model_fallback"),
     "concept_wikidata": Route("model_fast", "model_fallback"),
     "smoke": Route("model_fast", "model_fallback"),
+    "profile_edit": Route("model_fast", "model_fallback"),  # DESIGN §15.3
     # Explanation cards come in two parts (DESIGN §7): the restatement of the author, made once
     # per (span, style) and shared by every reader, and the reader's own Background.
     "restate": Route("model_quality", "model_fast"),
@@ -196,7 +197,7 @@ def set_spend_store(store: SpendStore | None) -> None:
 def get_spend_store() -> SpendStore:
     global _spend_store
     if _spend_store is None:
-        _spend_store = FirestoreSpendStore(get_settings().gcp_project)
+        _spend_store = FirestoreSpendStore(get_settings().db_project)
     return _spend_store
 
 

@@ -206,6 +206,8 @@ const personaParam = (persona: PersonaKey | null) => (persona ? `&persona=${pers
 const personaQuery = (persona: PersonaKey | null) => (persona ? `?persona=${persona}` : "");
 
 export const api = {
+  /** Low-level helpers for feature modules (lib/profileApi.ts). */
+  raw: { get, send },
   library: (q: string, persona: PersonaKey | null, density: Density, signal?: AbortSignal) =>
     get<ContentSummary[]>(
       `/v1/content?q=${encodeURIComponent(q)}&density=${density}${personaParam(persona)}`,

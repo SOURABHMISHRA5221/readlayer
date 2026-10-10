@@ -223,6 +223,12 @@ def _background(all_runs: list[dict[str, Any]]) -> list[str]:
     return lines
 
 
+def profile_edit_lines() -> list[str]:
+    from evals.profile_edit import report_lines
+
+    return report_lines()
+
+
 def write_report() -> None:
     all_runs = runs()
     if not all_runs:
@@ -262,6 +268,10 @@ def write_report() -> None:
         "## Background judge (own suite, since explain-v4)",
         "",
         *_background(all_runs),
+        "",
+        "## Profile edit by prompt (own suite, M7)",
+        "",
+        *profile_edit_lines(),
         "",
         "## Injection cases (same run)",
         "",

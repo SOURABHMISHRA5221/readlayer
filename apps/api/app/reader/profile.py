@@ -16,6 +16,8 @@ WEEK = timedelta(days=7)
 
 
 def theta_word(theta: float) -> str:
+    """Judged on θ as shown (one decimal), so the page's numbers and words never disagree."""
+    theta = round(theta, 1)
     if theta >= 1:
         return "advanced"
     if theta >= 0:

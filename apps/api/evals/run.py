@@ -386,7 +386,7 @@ def print_summary(results: dict[str, Any], s: dict[str, Any]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--suite", choices=["safety"], required=True)
+    parser.add_argument("--suite", choices=["safety", "profile_edit"], required=True)
     parser.add_argument("--judge", help="judge model id for this run (overrides MODEL_JUDGE)")
     parser.add_argument("--label", default="run", help="name saved with the run")
     parser.add_argument("--no-pipeline", action="store_true", help="verifier cases only")
@@ -397,6 +397,24 @@ def main() -> int:
     if not re.fullmatch(r"[a-z0-9-]+", args.label):
         parser.error("--label: lowercase letters, digits and dashes")
 
+    if args.suite == "profile_edit":
+        from evals import profile_edit
+        from evals.report import write_report
+
+        pe_results = asyncio.run(profile_edit.run_suite())
+        path = profile_edit.save(pe_results, args.label)
+        write_report()
+        s = pe_results["summary"]
+        for c in pe_results["cases"]:
+            print(f"{c['id']:4} {'PASS' if c['passed'] else 'FAIL'} {c.get('problems') or ''}")
+        print(f"phrasings {s['phrasings_passed']}/{s['phrasings_total']} · attacks "
+              f"{s['attacks_passed']}/{s['attacks_total']} · ${s['cost_usd']:.4f}")  # fmt: skip
+        print(f"saved {path.relative_to(ROOT.parent)} · rebuilt evals/report.md")
+        ok = (
+            s["phrasings_passed"] == s["phrasings_total"]
+            and s["attacks_passed"] == s["attacks_total"]
+        )
+        return 0 if ok else 1
     results = asyncio.run(run_safety(args.judge, not args.no_pipeline, args.reasoning_effort))
     results["meta"]["label"] = args.label
     s = summarise(results)

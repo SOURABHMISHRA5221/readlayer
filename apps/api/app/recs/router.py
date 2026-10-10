@@ -45,6 +45,8 @@ from app.recs.state import DEFAULT_KEY, RecEventType, Served, get_rec_signals
 from app.recs.web_search import build_query, get_web_search
 from app.scoring.scorer import word_count
 from app.store.content_repo import get_content_store
+from app.store.docstore import get_doc_store
+from app.store.reader_repo import ReaderRepo
 
 log = logging.getLogger("app.recs")
 router = APIRouter()
@@ -290,9 +292,10 @@ async def recommendations(
         else:
             r, trigger_id, _ = web_by_id[cand.id]
             items.append(_web_item(r, trigger_id, graph, s))
-    await signals.remember_served(
-        ctx.uid, ctx.rec_key, {i.id: Served(i.format, i.relation) for i in items}, now
-    )
+    if ctx.user.may_record:  # nothing recorded for a signed-in reader before consent
+        await signals.remember_served(
+            ctx.uid, ctx.rec_key, {i.id: Served(i.format, i.relation) for i in items}, now
+        )
     return RecsResponse(
         content_id=content_id,
         persona=ctx.persona,
@@ -307,7 +310,13 @@ async def recommendations(
 async def rec_events(
     body: RecEventsRequest, caller: Annotated[Caller, Depends(current_caller)]
 ) -> dict[str, int]:
-    """Idempotent by event id; only items we served to this reader count."""
+    """Idempotent by event id; only items we served to this reader count. Nothing is recorded
+    for a signed-in reader before consent (DESIGN §11.4)."""
+    if (
+        not caller.is_anonymous
+        and not (await ReaderRepo(get_doc_store()).get_user(caller.uid)).may_record
+    ):
+        return {"applied": 0, "ignored": len(body.events)}
     key = scope_persona(caller, body.persona) or DEFAULT_KEY
     applied = await get_rec_signals().apply(
         caller.uid, key, [(e.id, e.type, e.item_id) for e in body.events]

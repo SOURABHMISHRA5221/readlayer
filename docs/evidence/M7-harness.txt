@@ -1,0 +1,31 @@
+[Software Engineer] start at /welcome
+[Software Engineer] after calibration (8 answers): {"path": "/", "loading": false, "library": true} full page loads: 0
+[software engineer] spans {"e8aa9578": [8, ["Bond sell-off", "US treasury bonds", "Bond yields", "Federal Reserve", "FTSE 100", "Hedge fund", "Risk appetite", "Bourses"]], "99a2cb53": [9, ["Credit default swap", "Prediction market", "Market manipulation", "Financial Conduct Authority", "Crypto wallets", "Insider trading", "Market integrity", "European Securities and Markets Authority", "Moral hazard"]]}
+[software engineer] card {"title": "RoDTEP", "frame": "Analogy \u00b7 software", "bg": "RoDTEP rates determine the percentage of unrecovered domestic taxes and levies that governments refund to exporters. Think of it like a billing rebate that reimburses developers for hidden infrastructure fees incurred during deployment. These refunds help domestic products stay price-competitive in international markets."}
+[profile 1440-light] axe [] layout {"scroll": 0, "view": "map", "small": ["wordmark wordmark--md 88x21", "icon-btn 40x40", "account__chip 40x40"]}
+[profile 1440-light] map {"canvases": 3, "busy": "false"} /private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/0ef08198-ee07-4693-8c12-51fba183fbad/scratchpad/m7-map-1440-light.png
+[profile 1440-dark] axe [] layout {"scroll": 0, "view": "map", "small": ["wordmark wordmark--md 88x21", "icon-btn 40x40", "account__chip 40x40"]}
+[profile 1440-dark] map {"canvases": 3, "busy": "false"} /private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/0ef08198-ee07-4693-8c12-51fba183fbad/scratchpad/m7-map-1440-dark.png
+[profile 390-light] axe [] layout {"scroll": 0, "view": "list", "small": ["wordmark wordmark--md 88x21", "icon-btn 40x40", "account__chip 40x40"]}
+[profile 390-light] node card open targets <44: [] /private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/0ef08198-ee07-4693-8c12-51fba183fbad/scratchpad/m7-nodecard-390-light.png
+[profile 390-light] after Escape focus: clist__item
+[profile 320-light] axe [] layout {"scroll": 0, "view": "list", "small": ["wordmark wordmark--md 88x21", "icon-btn 40x40", "account__chip 40x40"]}
+[profile 320-light] node card open targets <44: [] /private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/0ef08198-ee07-4693-8c12-51fba183fbad/scratchpad/m7-nodecard-320-light.png
+[profile 320-light] after Escape focus: clist__item
+[tab walk] 31 stops for 31 tabbable controls (roving radio groups count once):
+  A.profile__back:Library | A.wordmark wordmark--md:ReadLayer home | BUTTON.icon-btn:Switch to dark theme | BUTTON.account__chip:SE
+[explain before edit] Bond sell-off: kind verified, cached True, style normal, Background 56 words
+[edit] Options in the finance map before: not in the map
+[edit] preview: ["1 concept marked as known", "Explanation length: normal \u2192 short"] | settings before/after preview: {"density": "balanced", "explanation_style": "normal"} {"density": "balanced", "explanation_style": "normal"} | preview targets <44: [] /private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/0ef08198-ee07-4693-8c12-51fba183fbad/scratchpad/m7-edit-preview.png
+[edit] Options in the finance map after Apply (no reload, no domain switch): ◑ Options Understands
+[edit] settings after Apply: {"density": "balanced", "explanation_style": "short"}
+[explain after edit] Bond sell-off: kind verified, cached True, style short, Background 23 words
+[delete] confirm focus: Cancel
+[delete] Escape cancels, focus back on: Delete my data
+[delete] after: {"path": "/", "signin": true}
+[delete] signed in again: {"path": "/welcome", "consent": true}
+[delete from consent] after: {"signin": true}
+[Commerce Student] start at /welcome
+[Commerce Student] after calibration (skip): {"path": "/", "loading": false, "library": true} full page loads: 0
+[commerce student] spans {"e8aa9578": [2, ["Federal Reserve", "Bourses"]], "99a2cb53": [5, ["Credit default swap", "Financial Conduct Authority", "European Securities and Markets Authority", "Blockchain", "Moral hazard"]]}
+[commerce student] card {"title": "RoDTEP", "frame": "Analogy \u00b7 cricket", "bg": "RoDTEP rates set the percentage of domestic taxes and duties that governments refund to exporters on goods sold abroad. It is like reimbursing a touring cricket team for their travel and kit expenses so overseas play stays affordable. These rebates ensure local taxes do not make domestic goods uncompetitively expensive in global trade."}

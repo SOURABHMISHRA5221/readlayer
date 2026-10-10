@@ -1,9 +1,11 @@
 import { initializeApp } from "firebase/app";
 import {
   GoogleAuthProvider,
+  connectAuthEmulator,
   getAuth,
   onAuthStateChanged,
   signInAnonymously,
+  signInWithCredential,
   signInWithPopup,
   signOut,
   type Auth,
@@ -16,15 +18,32 @@ import { useSyncExternalStore } from "react";
  * is public by design; it comes from Vite env (apps/web/.env.local, written by `make web-config`)
  * so it never lands in git. The ID token goes to our API only, never to storage we control.
  */
-const config = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
-};
+// Local emulator harness only (`make dev-emulator`, M7); the Vite build refuses it for production.
+const useEmulators = import.meta.env.VITE_USE_EMULATORS === "1";
+const config = useEmulators
+  ? { apiKey: "demo-key", authDomain: "localhost", projectId: "demo-readlayer", appId: "demo" }
+  : {
+      apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
+      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined,
+      projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
+      appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
+    };
 
 export const authConfigured = Boolean(config.apiKey && config.authDomain && config.projectId);
 const auth: Auth | null = authConfigured ? getAuth(initializeApp(config)) : null;
+
+if (useEmulators && auth) {
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+  // The Auth emulator accepts an unsigned Google identity: lets a headless browser be two
+  // different "Google" readers without real accounts. Never present outside emulator builds.
+  (window as unknown as { __rlEmulatorSignIn?: unknown }).__rlEmulatorSignIn = async (
+    email: string,
+    name: string,
+  ) => {
+    const claims = { sub: email, email, email_verified: true, name };
+    await signInWithCredential(auth, GoogleAuthProvider.credential(JSON.stringify(claims)));
+  };
+}
 
 export type Session =
   | { status: "loading" }

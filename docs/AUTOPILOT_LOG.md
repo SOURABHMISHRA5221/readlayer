@@ -141,3 +141,109 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Open for Sourabh: (a) one more new URL to measure the warm live "Open here" time (a production
   write beyond the plan's count); (b) delete the 8 orphaned docs from his 12:28 session now, or
   leave them for the M9 cleanup.
+
+---
+
+## M7
+
+### Plan
+- 2026-10-10: BUILD_PLAN.md M7 section updated at Sourabh's request (knowledge map and
+  edit-by-prompt required; "first to cut" line and the automatic cut order removed). Committed
+  with the plan.
+- Plan drafted: `docs/plans/M7.md` (consent, onboarding, calibration, profile page with Cytoscape
+  map and list view, edit-by-prompt, emulator-based local e2e harness).
+- Calls made where the docs don't settle it (flagged for Sourabh, plan proceeds unless he says
+  otherwise): (1) edit-by-prompt is for Google readers only; demo personas see it disabled;
+  (2) onboarding's "liked links" are picked from the library instead of pasted URLs (no ingest,
+  no cost, no SSRF surface at sign-up).
+- plan-reviewer round 1: **REVISE**, 11 items (budget guard under the emulator, emulator env
+  refused on Cloud Run + seed script can't write production, name cap 30 and ≤ 3 link_confirm
+  batches, demo variant for edit-by-prompt is Sourabh's call before step C, persona frames on the
+  demo profile, consent gate in the API, new rules and deviations recorded, live Google acceptance
+  as a named step, React.lazy routes + cytoscape in dependencies, no reader-typed strings stored,
+  eval before/after in report.md). All applied, plus 2 nits.
+- plan-reviewer round 2: **APPROVE**; 3 optional nits applied (rec_signals under the consent gate
+  and export/delete always open; edit box follows the variant; demo undo skips dropped edges).
+- Asked Sourabh: edit-by-prompt for demo readers (variant B) or Google only (A); one more live URL
+  for a warm "Open here" measurement; delete the 8 orphan docs now or leave for M9. Work proceeds
+  on A, B, D, E, G meanwhile; C waits for the answer.
+
+### Build
+- A (API): POST /v1/me/consent (`consent-v1`), POST /v1/onboarding (θ from comfort, interest,
+  frames, liked library articles → +0.2 nudges, ≤ 15 salient concepts each), GET
+  /v1/calibration/next (round-robin over interest domains, b closest to θ among the 150 most
+  frequent concepts, deterministic), POST /v1/calibration/answer (only the current item; explain
+  +3.0 / heard −1.5 / none −3.0, Elo K 0.3), POST /v1/calibration/skip; profile `onboarding`
+  block. Consent gate: events, page-view writes, rec signals and served items record nothing for
+  a Google reader without consent; corrections and settings 403; export/delete always open.
+  Demo profile shows the persona's frame. Existing signed-in test readers now consent first.
+- B (API): map nodes carry `recent` (last 3 evidence items, newest first).
+- Tests: 10 new (onboarding); API suite 451 pass.
+- Sourabh decided C1: edit-by-prompt **for demo accounts too, session-scoped**: edits apply to
+  that demo session's copy of the persona only and reset to the original afterwards (new
+  session; End demo deletes it). Added a "Reset persona" button (POST /v1/me/demo/reset) so a
+  demo reader can return to the original within the session, and session-only frames for demo
+  `set_thinks_in`. Plan updated.
+- Harness groundwork: Settings refuse `FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST` on
+  Cloud Run or ENV=prod (tests); `FIRESTORE_PROJECT` / `db_project` so Firestore can point at the
+  emulator's demo project while Vertex and GCS keep the real project.
+- G (harness): `make dev-emulator` (apps/api/scripts/dev_emulator.sh): Firestore + Auth
+  emulators (demo-readlayer), `seed_emulator.py` copies 5 articles, 3 persona templates and
+  today's spend ledger read-only from production (two explicit clients; refuses same target),
+  harness budget = min($1, $8 − today's production spend), API with emulator hosts and
+  `FIRESTORE_PROJECT=demo-readlayer`, web with `VITE_USE_EMULATORS=1` (window hook for an
+  unsigned emulator Google identity; the Vite build refuses emulator mode). Smoke: emulator
+  "Google" reader → API 200, onboarding step "consent". First run: production spend today
+  $0.82, harness budget $1.00.
+- Profile-edit evals: v1 schema rejected by Vertex (0/6, 0/4 at $0; tagged unions and an outer
+  maxItems are refused); flat schema + local strict whitelist; v2 5/6 · 4/4; v3 (domain-work rule)
+  6/6 · 4/4, $0.0049. Cases unchanged (decision 26); before/after in evals/report.md + changelog.
+- D+E+F (web): `/welcome` (consent-v1 → field → interests → comfort → frames → liked library
+  articles → 8-tap calibration with Skip; focus moves to each step's heading) and `/profile`
+  (summary, ability/interest bars with numbers as text, knowledge map: Cytoscape + dagre in a
+  lazy chunk, list view grouped by depth (default below 640 px), search, node card as a native
+  modal dialog with last 3 evidence items and corrections; this week + trend table; analogy
+  chips (read-only for demo personas); preferences; edit box with preview/apply/undo and demo
+  reset; data controls with export, delete/end demo, pause). Onboarding gate for Google
+  readers; React.lazy route chunks; account menu links to the profile. Segmented control is now
+  reachable by keyboard with nothing selected. Bundle: main 137.6 KB gzip (budget 150),
+  ProfilePage 6.7 KB, WelcomePage 3.3 KB, cytoscape 121.6 KB + dagre 33.6 KB only when the map
+  opens. Web vitest added (4 helper tests).
+- Acceptance on the emulator harness (all pass): different spans (UK bonds 8 vs 2, Polymarket 9
+  vs 4) and analogies (software vs cricket); delete → sign-in → consent; profile keyboard dialog
+  with focus return; axe 0 at 1440 light/dark, 390, 320 and on the welcome steps; no overflow at
+  320 (topic toggle now wraps); 44 px targets; acceptance sentence previews options/short and,
+  after Apply, the next explanation is a miss at 23 words vs 56. Fixes found on the way: Firestore
+  transaction contention under three prefetches (jittered retry), Escape focus return, preview
+  showing unchanged settings, "−0.0 · building" wording, bar alignment.
+- Harness spend $0.07 (separate ledger seeded with production's $0.82).
+- `scripts/live_check_m7.py` (demo side of M7: persona profile/frame, map evidence, session-only
+  edit preview/apply/undo/reset, onboarding refused for demo readers); dry-run on the harness
+  with `--emulator`: all pass, test user deleted (204).
+- Sourabh approved one more live URL for the warm "Open here" timing. Wikipedia "Forward guidance"
+  (dry run: new): open 6.64 s, article 7.54 s, notes 43.7 s, no reload — same as the first live
+  run, so it isn't instance cold start; phase 1 itself is slow on Cloud Run (local 0.84 s).
+  Added `fetch_ms`/`extract_ms` to phase 1 logs (M7). M9 item: preload the ingestion imports at
+  startup during judging (min instances 1). contents/ now 312; ops/ingest anonymous 3.
+- milestone-reviewer round 1: **FIX** (4 blocking, 2 should-fix, 5 follow-ups). Applied so far:
+  onboarding status refetched after the welcome flow (no stuck "Opening…"); map refreshes after
+  Apply/Undo/Reset; consent screen has Export and Delete (with Escape/focus) and accurate wording;
+  44 px preview summary and header targets; delete confirmation focus + Escape; settings errors
+  shown; edit history labels; summary/bars agree (rounded θ, unrated domains not named, bars say
+  "not rated yet"); reset restores session settings; liked ids pattern; expired edits cleaned on
+  parse; gate logic vitest; live check asserts + announced counter write. Evidence re-run on the
+  final code saved to docs/evidence/M7-harness.txt (onboarding → library without reload via last
+  answer and Skip; spans 8 vs 2 and 9 vs 5; software vs cricket analogies; axe 0 ×4; no overflow;
+  31/31 Tab stops; node card focus return; map renders and refreshes; preview leaves settings
+  unchanged; explanation 56 → 23 words — a cache hit in this re-run because the earlier run had
+  cached the same short Background; the earlier run's miss is in the harness log).
+- Still to do before re-review: STATUS §15 numbers from the evidence file, STATUS deviations
+  (trend table only, live check shape) and decision row order, harness headroom wording
+  ($0.18, not $1), re-run milestone-reviewer.
+- Orphan cleanup: Sourabh approved deleting the 8 docs of his 12:28 IST session. Dry run (read-only)
+  found **21** docs under that uid (users doc, 18 events, weekly/2026-W41, demo_graphs/newcomer): his
+  tab kept posting events to the local dev server (production Firestore) until it was stopped for
+  the M6 deploy. **Nothing deleted**; asked Sourabh to confirm 21. The one-off script lives outside
+  the repo.
+- milestone-reviewer round 2: **SHIP**. Follow-ups noted: re-measure the 44 px header next run;
+  PR mentions the phase-1 timing logs (e1f51dc) as an out-of-scope change.

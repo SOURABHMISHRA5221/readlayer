@@ -22,6 +22,7 @@ from app.graph.models import DOMAINS, Concept, Domain
 from app.reader import model, profile
 from app.reader.events import ConceptRef, EventType, ReaderEvent
 from app.reader.model import Band, Edge
+from app.reader.personas import PERSONA_THINKS_IN
 from app.reader.state import PersonaKey, ThinksIn
 from app.reader.subgraph import knowledge_subgraph
 from app.store.docstore import get_doc_store
@@ -31,6 +32,13 @@ router = APIRouter()
 
 MAX_EVENTS = 100
 ID_PATTERN = r"^[A-Za-z0-9_-]+$"
+
+
+async def require_consent(caller: Caller) -> None:
+    """Corrections and settings are records about the reader: signed-in readers consent first
+    (DESIGN §11.4). Export and delete never need it, so a reader can always leave."""
+    if not caller.is_anonymous and not (await _repo().get_user(caller.uid)).may_record:
+        raise HTTPException(status_code=403, detail="consent_required")
 
 
 def _repo() -> ReaderRepo:
@@ -91,13 +99,18 @@ async def post_events(
         caller.uid, scope_persona(caller, body.persona), events, refs, datetime.now(UTC)
     )
     return EventsResponse(
-        applied=not result.paused,
+        applied=not result.paused and not result.consent_required,
         events_applied=result.applied,
         events_ignored=result.ignored,
     )
 
 
 # ---------------------------------------------------------------- graph
+
+
+class EvidenceOut(BaseModel):
+    type: str
+    at: datetime
 
 
 class GraphNodeOut(BaseModel):
@@ -108,6 +121,7 @@ class GraphNodeOut(BaseModel):
     evidence_count: int
     last_seen: datetime | None
     depth: int
+    recent: list[EvidenceOut] = []
 
 
 class GraphEdgeOut(BaseModel):
@@ -192,7 +206,10 @@ async def get_my_graph(
     )
     return SubgraphOut(
         domain=domain,
-        nodes=[GraphNodeOut(**vars(n)) for n in sub.nodes],
+        nodes=[
+            GraphNodeOut(**(vars(n) | {"recent": [EvidenceOut(type=k, at=a) for k, a in n.recent]}))
+            for n in sub.nodes
+        ],
         edges=[GraphEdgeOut(from_=a, to=b) for a, b in sub.edges],
         truncated=sub.truncated,
     )
@@ -217,6 +234,7 @@ async def correct_concept(
     persona: Annotated[PersonaKey | None, Query()] = None,
 ) -> CorrectionOut:
     """ "I know this" / "I don't": strong evidence, applied even while learning is paused."""
+    await require_consent(caller)
     concept = get_graph().get(concept_id)
     if concept is None:
         raise HTTPException(status_code=404, detail="concept not found")
@@ -244,11 +262,24 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     knows = dict(ctx.state.edges)
     weekly = await _repo().get_weekly(ctx.uid)
     theta = {d: float(ctx.theta.get(d, 0.0)) for d in DOMAINS}
+    # A domain the reader rated, reads in, or moved: the summary speaks only about those (a
+    # neutral 0 in an untouched domain isn't "comfortable").
+    edge_domains = {c.domain for cid in knows if (c := graph.get(cid)) is not None}
+    rated = {
+        d for d in DOMAINS
+        if d in user.onboarding.get("comfort", {}) or abs(theta[d]) > 1e-9 or d in edge_domains
+    }  # fmt: skip
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
+    # A demo reader's frame is the persona's, the one explanations use (not users/{uid}).
+    frames = (
+        list(ctx.state.thinks_in or [PERSONA_THINKS_IN[ctx.persona]])
+        if ctx.persona
+        else list(user.thinks_in)
+    )
     return {
         "summary": {
-            "text": profile.summary_text(theta, user.thinks_in, len(moves)),
-            "top_domain": profile.top_domain(theta),
+            "text": profile.summary_text({d: theta[d] for d in rated}, frames, len(moves)),
+            "top_domain": profile.top_domain({d: theta[d] for d in rated}),
             "moved_up_this_week": len(moves),
             "learning_paused": user.learning_paused,
         },
@@ -256,12 +287,13 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
             {
                 "domain": d,
                 "theta": round(theta[d], 4),
+                "rated": d in rated,
                 "interest": domains[d].interest if d in domains else 0.0,
                 "thinks_in": domains[d].thinks_in if d in domains else 0.0,
             }
             for d in DOMAINS
         ],
-        "thinks_in": user.thinks_in,
+        "thinks_in": frames,
         "week": {
             "moved_up": [
                 {
@@ -276,7 +308,20 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
         },
         "settings": {"density": user.density, "explanation_style": user.explanation_style},
         "persona": ctx.persona,
+        "onboarding": {
+            "consented": user.may_record,
+            "done": ctx.caller.is_anonymous or user.onboarding_done,
+            "step": _onboarding_step(ctx.caller.is_anonymous, user),
+        },
     }
+
+
+def _onboarding_step(anonymous: bool, user: Any) -> str:
+    if anonymous or user.onboarding_done:
+        return "done"
+    if user.consent is None:
+        return "consent"
+    return "calibration" if user.field else "onboarding"
 
 
 class SettingsIn(BaseModel):
@@ -291,6 +336,7 @@ class SettingsIn(BaseModel):
 async def patch_settings(
     body: SettingsIn, caller: Annotated[Caller, Depends(current_caller)]
 ) -> dict[str, Any]:
+    await require_consent(caller)
     changes = body.model_dump(exclude_none=True)
     if "thinks_in" in changes:
         changes["thinks_in"] = sorted(set(changes["thinks_in"]))

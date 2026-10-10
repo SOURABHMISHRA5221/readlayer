@@ -164,8 +164,9 @@ def test_summary_omits_empty_parts():
 
 @pytest.mark.parametrize(
     ("theta", "word"),
-    [(1.0, "advanced"), (0.99, "comfortable"), (0.0, "comfortable"), (-0.01, "building"),
-     (-1.0, "building"), (-1.01, "new to")],
+    # Judged on θ as shown, one decimal (M7): 0.96 shows as 1.0, −0.04 as 0.0.
+    [(1.0, "advanced"), (0.96, "advanced"), (0.94, "comfortable"), (0.0, "comfortable"),
+     (-0.04, "comfortable"), (-0.06, "building"), (-1.04, "building"), (-1.06, "new to")],
 )  # fmt: skip
 def test_theta_words(theta, word):
     assert profile.theta_word(theta) == word

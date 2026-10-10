@@ -22,6 +22,15 @@ def test_settings_refuse_bypass_on_cloud_run():
         Settings(_env_file=None, dev_auth_bypass=True, k_service="readlayer-api")
 
 
+@pytest.mark.parametrize("host", ["firebase_auth_emulator_host", "firestore_emulator_host"])
+def test_settings_refuse_emulator_hosts_when_deployed(host):
+    with pytest.raises(ValidationError, match="emulator hosts"):
+        Settings(_env_file=None, k_service="readlayer-api", **{host: "127.0.0.1:9099"})
+    with pytest.raises(ValidationError, match="emulator hosts"):
+        Settings(_env_file=None, env="prod", **{host: "127.0.0.1:9099"})
+    assert Settings(_env_file=None, **{host: "127.0.0.1:9099"})  # fine on a laptop
+
+
 def test_settings_refuse_bypass_in_prod():
     with pytest.raises(ValidationError, match="DEV_AUTH_BYPASS"):
         Settings(_env_file=None, dev_auth_bypass=True, env="prod")

@@ -44,6 +44,7 @@ USER_SUBCOLLECTIONS = (
     "ingest_counts",
     "demo_graphs",
     "explain_counts",
+    "profile_edit_counts",
 )
 EVENT_TTL = timedelta(days=90)
 MAX_WEEKLY_CONTENT_IDS = 500
@@ -68,10 +69,21 @@ class UserProfile(BaseModel):
     learning_paused: bool = False
     explanation_style: ExplanationStyle = "normal"
     thinks_in: list[str] = Field(default_factory=list)
+    # M7: consent (version + time; DESIGN §11.4), onboarding answers and calibration progress.
+    # Nothing about a signed-in reader is recorded before `consent` is set.
+    consent: dict[str, Any] | None = None
+    field: str | None = None
+    onboarding: dict[str, Any] = Field(default_factory=dict)  # interests, comfort, liked ids
+    calibration: dict[str, Any] = Field(default_factory=lambda: {"asked": [], "answers": 0})
     # Scoring state (DESIGN §5–6). Demo readers keep offset and engaged per persona instead.
     engaged: dict[str, datetime] = Field(default_factory=dict)  # content_id → last engaged
     prompts: dict[str, list[str]] = Field(default_factory=dict)  # UTC day → prompted contents
     rev: int = 0  # bumped on every change to the reader's graph; derived caches key on it
+
+    @property
+    def may_record(self) -> bool:
+        """Demo readers agree by starting the demo; signed-in readers on the consent screen."""
+        return self.is_anonymous or self.consent is not None
 
 
 @dataclass(frozen=True)
@@ -204,6 +216,7 @@ def state_from_demo(uid: str, persona: PersonaKey, doc: Doc, copied: bool) -> Re
         edges={cid: edge_from_doc(e) for cid, e in (doc.get("knows") or {}).items()},
         threshold_offset=float(doc.get("threshold_offset", 0.0)),
         engaged=dict(doc.get("engaged") or {}),
+        thinks_in=tuple(doc.get("thinks_in") or ()),
         rev=rev,
     )
 
@@ -239,6 +252,7 @@ class EventsResult:
     applied: int
     ignored: int
     paused: bool
+    consent_required: bool = False
 
 
 class ReaderRepo:
@@ -321,6 +335,8 @@ class ReaderRepo:
         async def body(t: Txn) -> EventsResult:
             user_doc = await t.get(user_path(uid))
             user = UserProfile.model_validate(user_doc or {})
+            if not user.may_record:
+                return EventsResult(0, len(events), False, consent_required=True)
             if user.learning_paused:
                 return EventsResult(0, len(events), True)
             stored = await t.get_all([sub_path(uid, "events", e.id) for e in events])
@@ -485,7 +501,7 @@ class ReaderRepo:
             reads = await t.get_all([user_path(uid), sub_path(uid, "weekly", week)])
             user_doc = reads[user_path(uid)]
             user = UserProfile.model_validate(user_doc or {})
-            if user.learning_paused:
+            if user.learning_paused or not user.may_record:
                 return
             today = user.prompts.get(day, [])
             if prompted and content_id not in today:
@@ -500,6 +516,102 @@ class ReaderRepo:
             t.set(sub_path(uid, "weekly", week), weekly)
 
         await self._store.run(body)
+
+    # ------------------------------------------------------------ consent, onboarding, calibration
+
+    async def record_consent(self, uid: str, version: str, now: datetime) -> UserProfile:
+        return await self.update_settings(uid, {"consent": {"version": version, "at": now}})
+
+    async def save_onboarding(
+        self,
+        uid: str,
+        *,
+        field: str,
+        answers: Mapping[str, Any],
+        thinks_in: list[str],
+        theta: Mapping[str, float],
+        interest: Mapping[str, float],
+        liked: Mapping[str, tuple[ConceptRef, Any]],
+        now: datetime,
+    ) -> None:
+        """One transaction: answers on users/{uid}, θ and interest per domain, and the liked
+        articles' small nudges (`liked`: concept id → (ref, apply(edge | None, θ) -> Edge)).
+        Re-submitting overwrites the answers and θ and restarts calibration."""
+        domains = sorted(set(theta) | set(interest) | {r.domain for r, _ in liked.values()})
+
+        async def body(t: Txn) -> None:
+            reads = await t.get_all(
+                [user_path(uid)]
+                + [sub_path(uid, "domains", d) for d in domains]
+                + [sub_path(uid, "knows", c) for c in liked]
+            )
+            user = UserProfile.model_validate(reads[user_path(uid)] or {})
+            stored = {d: reads[sub_path(uid, "domains", d)] or {} for d in domains}
+            new_theta = {d: float(stored[d].get("theta", 0.0)) for d in domains} | dict(theta)
+            for d in domains:
+                doc = stored[d] | {"theta": new_theta[d]}
+                if d in interest:
+                    doc["interest"] = interest[d]
+                t.set(sub_path(uid, "domains", d), doc)
+            for cid, (ref, apply) in liked.items():
+                current = reads[sub_path(uid, "knows", cid)]
+                edge = apply(edge_from_doc(current) if current else None, new_theta[ref.domain])
+                t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, ref.domain))
+            updated = user.model_copy(
+                update={
+                    "field": field,
+                    "onboarding": dict(answers),
+                    "thinks_in": list(thinks_in),
+                    "calibration": {"asked": [], "answers": 0},
+                    "onboarding_done": False,
+                    "rev": user.rev + 1,
+                }
+            )
+            t.set(user_path(uid), updated.model_dump())
+
+        await self._store.run(body)
+
+    async def calibration_answer(
+        self, uid: str, concept_id: str, ref: ConceptRef, apply: Any, total: int, now: datetime
+    ) -> tuple[bool, int] | None:
+        """Record one answer (`apply(edge | None, θ) -> (Edge, θ)`). None if this concept was
+        already asked or calibration is finished; else (done, answers so far)."""
+
+        async def body(t: Txn) -> tuple[bool, int] | None:
+            reads = await t.get_all(
+                [
+                    user_path(uid),
+                    sub_path(uid, "knows", concept_id),
+                    sub_path(uid, "domains", ref.domain),
+                ]
+            )
+            user = UserProfile.model_validate(reads[user_path(uid)] or {})
+            asked = list(user.calibration.get("asked", []))
+            if concept_id in asked or len(asked) >= total:
+                return None
+            current = reads[sub_path(uid, "knows", concept_id)]
+            dom = reads[sub_path(uid, "domains", ref.domain)] or {}
+            edge, theta = apply(
+                edge_from_doc(current) if current else None, float(dom.get("theta", 0.0))
+            )
+            t.set(sub_path(uid, "knows", concept_id), edge_to_doc(edge, ref.domain))
+            t.set(sub_path(uid, "domains", ref.domain), dom | {"theta": theta})
+            asked.append(concept_id)
+            done = len(asked) >= total
+            updated = user.model_copy(
+                update={
+                    "calibration": {"asked": asked, "answers": len(asked)},
+                    "onboarding_done": user.onboarding_done or done,
+                    "rev": user.rev + 1,
+                }
+            )
+            t.set(user_path(uid), updated.model_dump())
+            return done, len(asked)
+
+        return await self._store.run(body)
+
+    async def finish_onboarding(self, uid: str) -> UserProfile:
+        return await self.update_settings(uid, {"onboarding_done": True})
 
     # ------------------------------------------------------------ ingest cap
 

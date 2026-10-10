@@ -20,6 +20,7 @@ MAX_RELEVANT = 40
 NEW_READER_SEEDS = 20
 MAX_MATCHES = 10
 RECENCY_HALF_LIFE_DAYS = 30.0
+RECENT = 3  # evidence items shown on a node card
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,8 @@ class Node:
     evidence_count: int
     last_seen: datetime | None
     depth: int
+    # The last evidence items, newest first, for the node card (DESIGN §15.1 item 3).
+    recent: tuple[tuple[str, datetime], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -132,6 +135,9 @@ def knowledge_subgraph(
                 evidence_count=len(e.evidence) if e else 0,
                 last_seen=e.last_seen if e else None,
                 depth=depth[cid],
+                recent=tuple((ev.type, ev.at) for ev in reversed(e.evidence[-RECENT:]))
+                if e
+                else (),
             )
         )
     return Subgraph(nodes, edges, truncated)

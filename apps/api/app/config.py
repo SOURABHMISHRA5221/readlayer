@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     # Phase 2 of an ingest (demand extraction + linking) is cut off after this; its lease on the
     # pending doc lasts 30 s longer, so an expired lease always means the run has stopped.
     analyse_timeout_s: float = 120.0
+    # Profile edits by prompt per UTC day (DESIGN §15.3, §11.5): per reader, and for demo readers
+    # per uid plus a cap shared across all anonymous readers.
+    profile_edit_daily_cap: int = 10
+    anon_profile_edit_daily_cap: int = 3
+    anon_global_profile_edit_daily_cap: int = 30
 
     llm_daily_budget_usd: float = 8.0
     llm_timeout_s: float = 20.0
@@ -75,6 +80,9 @@ class Settings(BaseSettings):
 
     # Firebase Auth project for ID-token verification; defaults to gcp_project.
     firebase_project: str = ""
+    # Firestore project; defaults to gcp_project. The emulator harness sets it to its demo
+    # project while Vertex AI and Cloud Storage keep using gcp_project.
+    firestore_project: str = ""
     # Browser origins allowed by CORS, comma-separated (the Hosting origins in prod).
     cors_origins: str = ""
 
@@ -84,10 +92,18 @@ class Settings(BaseSettings):
     # Cloud Run sets K_SERVICE on every revision; its presence means we are not on a laptop.
     k_service: str = ""
 
+    # Local emulator harness only (M7 `make dev-emulator`). With the Auth emulator host set,
+    # firebase-admin accepts unsigned emulator tokens, so these are refused on Cloud Run too.
+    firebase_auth_emulator_host: str = ""
+    firestore_emulator_host: str = ""
+
     @model_validator(mode="after")
     def _no_auth_bypass_when_deployed(self) -> "Settings":
-        if self.dev_auth_bypass and (self.k_service or self.env == "prod"):
+        deployed = bool(self.k_service) or self.env == "prod"
+        if self.dev_auth_bypass and deployed:
             raise ValueError("DEV_AUTH_BYPASS must never be set on Cloud Run or with ENV=prod")
+        if deployed and (self.firebase_auth_emulator_host or self.firestore_emulator_host):
+            raise ValueError("emulator hosts must never be set on Cloud Run or with ENV=prod")
         return self
 
     @property
@@ -105,6 +121,10 @@ class Settings(BaseSettings):
     @property
     def auth_project(self) -> str:
         return self.firebase_project or self.gcp_project
+
+    @property
+    def db_project(self) -> str:
+        return self.firestore_project or self.gcp_project
 
 
 @lru_cache

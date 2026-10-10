@@ -85,9 +85,11 @@ class ReportResponse(BaseModel):
 
 
 def frame_for(ctx: ReaderContext) -> ThinksIn | None:
-    """Demo personas have a fixed frame; signed-in readers their first THINKS_IN choice."""
+    """Demo personas have a fixed frame (unless this demo session changed it with a profile
+    edit); signed-in readers their first THINKS_IN choice."""
     if ctx.persona is not None:
-        return PERSONA_THINKS_IN[ctx.persona]
+        session = [f for f in ctx.state.thinks_in if f in THINKS_IN]
+        return cast(ThinksIn, session[0]) if session else PERSONA_THINKS_IN[ctx.persona]
     frames = [f for f in ctx.user.thinks_in if f in THINKS_IN]
     return cast(ThinksIn, frames[0]) if frames else None
 

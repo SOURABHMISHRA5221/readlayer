@@ -193,6 +193,19 @@ prior(c) = σ(θ_user,domain(c) − b_c)
 
 While `learning_paused` is set, no evidence from events is applied (§15.1).
 
+### Onboarding and calibration (M7, signed-in readers)
+- Consent first (`consent-v1`, §11.4); nothing about a signed-in reader is recorded before it.
+- Onboarding: field (suggests an analogy frame), interests, comfort per chosen domain, up to 3
+  analogy frames, up to 3 liked **library** articles (picked, not pasted URLs). θ per rated domain
+  from comfort: new −1.5, some −0.5, comfortable 0.5, expert 1.5 (the same targets as a profile
+  edit's `set_domain_level`); interest 1.0 for chosen domains, 0.3 otherwise; each liked article
+  adds `liked_article_mention` (+0.2) to its ≤ 15 linked concepts with salience ≥ 0.7.
+- Calibration: 8 items, round-robin over the interest domains (all four if none); within a
+  domain, among its 150 highest-`doc_freq` concepts, the one with b closest to θ, never one already
+  asked (deterministic). Answers: explain +3.0, **heard −1.5**, none −3.0 (`calibration_answer`),
+  and an Elo step with K = 0.3 and outcome explain 1, **heard 0.5**, none 0. Only the current item
+  can be answered; "Skip" ends calibration with what was answered.
+
 ### Domain ability (Elo-style)
 On every graded outcome (calibration, knew_this, explain_opened):
 ```
@@ -375,9 +388,13 @@ subject to pause). The next open regenerates.
 | POST | /v1/me/profile/edits | parse a natural-language profile edit → preview, writes nothing (§15.3) |
 | POST | /v1/me/profile/edits/{id}/apply | apply a previewed edit |
 | POST | /v1/me/profile/edits/{id}/undo | undo an applied edit |
-| POST | /v1/onboarding | field, interests, comfort per domain, optional liked URLs |
-| GET | /v1/calibration/next | next item: concept with b closest to current θ, not yet asked |
-| POST | /v1/calibration/answer | `{concept_id, answer: explain|heard|none}` |
+| POST | /v1/me/consent | `{version}` (signed-in readers): records consent; required before anything is recorded (§11.4) |
+| POST | /v1/onboarding | field, interests, comfort per domain, ≤ 3 frames, ≤ 3 liked library content ids (§4); needs consent |
+| GET | /v1/calibration/next | next item: concept with b closest to current θ, not yet asked; `{done}` after 8 |
+| POST | /v1/calibration/answer | `{concept_id, answer: explain|heard|none}`: only the current item (409 otherwise) |
+| POST | /v1/calibration/skip | ends calibration (onboarding done) |
+| GET | /v1/me/profile/edits | the last 10 applied/undone edits (expired pending ones are deleted) |
+| POST | /v1/me/demo/reset | `{persona}` (demo readers): back to the original persona for this session (§15.3) |
 
 Annotation response items (spans first, ranked; then paragraph markers, the pre-read card,
 the prompt; `count` counts spans). Paragraph: `{id: "para:p3", kind, paragraph_id, score,
@@ -505,7 +522,10 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   and the Auth user.
 - Firestore security rules: clients never read/write Firestore directly; only the API service
   account does. Rules deny all client access.
-- Consent screen at onboarding states what is collected and why, in plain language. Design with
+- Consent screen at onboarding states what is collected and why, in plain language. The API
+  enforces it (M7): for a signed-in reader without consent, POST /v1/events applies nothing,
+  page views and rec signals write nothing, corrections, settings and profile edits are 403;
+  export and delete are always open. Design with
   India's DPDP Act principles in mind (notice, consent, purpose limitation, erasure); this needs
   proper legal review before any public launch.
 
@@ -561,10 +581,11 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
 
 ### 15.1 Page sections
 1. **Summary card.** A deterministic template, never sent to an LLM. Inputs: θ per domain,
-   THINKS_IN domains, and this week's band changes. θ maps to words: θ ≥ 1 "advanced",
+   THINKS_IN domains, and this week's band changes. θ (rounded to one decimal, as the page shows it) maps to words: θ ≥ 1 "advanced",
    0 ≤ θ < 1 "comfortable", −1 ≤ θ < 0 "building", θ < −1 "new to". Example:
    "Comfortable in finance, building in economics. You think in software. 6 concepts moved up a
-   band this week." Same inputs always give the same text (unit-tested).
+   band this week." Only domains the reader rated, reads in or has concepts in are named (M7).
+   Same inputs always give the same text (unit-tested).
 2. **Ability vs interest.** Per domain, two bars: ability (θ, shown on a fixed −2..2 scale) and
    interest (0..1 from onboarding and reading). Bars carry their numbers as text, not colour alone.
 3. **Knowledge map, one domain at a time.** Cytoscape.js with the dagre layered layout
@@ -620,13 +641,22 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
 A text box: "Describe yourself as a reader" ("I'm a backend engineer, I know options trading
 well, explain macro things briefly"). A one-line notice under it: "Your text is processed by AI
 to update your settings. It is not stored."
+- **Who (M7, Sourabh):** signed-in readers, and demo readers **for their own session only**: a demo
+  edit changes that session's copy of the persona (`demo_graphs/{persona}`, incl. a session-only
+  `thinks_in` frame used by explanations) and the session's settings, never the persona template;
+  POST /v1/me/demo/reset returns it to the original. Caps: 10 parses/day per signed-in reader;
+  3 per anonymous uid and 30/day shared across anonymous readers.
 - **Parse.** One `MODEL_FAST` call, task `profile_edit`, prompt file
   `app/prompts/profile_edit.md` with a version header. The reader's text goes between content
   delimiters as untrusted data. The prompt gets only the text, the domain list and the allowed
   THINKS_IN list: no uid, no history, no concept ids. §11.3 redaction runs on the text first.
   The raw text is never logged or stored; logs carry `uid_hash`, op counts and cost.
-- **Whitelist.** Output is a Pydantic discriminated union with `extra="forbid"`; at most 20 ops,
-  at most 30 concept names per op:
+- **Whitelist.** Vertex rejects tagged-union response schemas (and an outer `maxItems` next to
+  inner ones), so the model fills a flat schema (`ModelEditOps`: op name plus every op's fields as
+  plain enums/lists with empty defaults) and `strict()` re-validates each op against the strict
+  Pydantic discriminated union with `extra="forbid"`: a field that doesn't belong to its op rejects
+  the whole edit. At most 20 ops, at most 30 concept names per op and **30 distinct names per
+  edit** (checked before linking); an id-shaped name (`c_…`) rejects the edit:
   | op | fields |
   |---|---|
   | set_domain_level | domain, level: new / some / comfortable / expert |
@@ -638,10 +668,11 @@ to update your settings. It is not stored."
   Any output that fails validation is rejected as a whole ("Couldn't understand that, try
   rephrasing"); nothing is partially applied.
 - **Resolve.** Concept names go through the existing graph linker (§2: exact alias, then
-  embedding candidates + `link_confirm`); the model never supplies ids. Names that don't
+  embedding candidates + at most 3 `link_confirm` batches); the model never supplies ids. Names that don't
   resolve are listed as "Couldn't find: …" and dropped from the edit.
 - **Preview.** POST /v1/me/profile/edits parses and resolves, writes nothing to the reader
-  model, and returns `{edit_id, ops, preview, unresolved}`. The preview is a diff: per domain θ
+  model, and returns `{edit_id, preview}` (`preview.unresolved` lists names it couldn't find:
+  returned only, never stored or logged; the edit doc keeps ops, values and resolved ids only). The preview is a diff: per domain θ
   before → after, concepts affected per direction with counts (expandable list), settings
   before → after. The pending edit expires after 1 hour. Nothing changes until the reader
   clicks **Apply** (POST /v1/me/profile/edits/{id}/apply).

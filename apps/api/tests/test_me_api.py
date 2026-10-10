@@ -17,7 +17,7 @@ from app.recs import router as recs_router
 from app.recs import web_search as ws
 from app.store.content_repo import InMemoryContentStore, set_content_store
 from app.store.reader_repo import USER_SUBCOLLECTIONS
-from tests.fakes import auth, fake_fetch_and_extract, token
+from tests.fakes import auth, consented, fake_fetch_and_extract, token
 from tests.test_recs_api import FakeProvider
 from tests.test_recs_library import DOCS, GRAPH, doc
 
@@ -51,8 +51,9 @@ def env():
     read_router.reset_catalog()
 
 
-def client_for(uid="g1", anonymous=False):
-    return TestClient(app, headers=auth(uid, anonymous))
+def client_for(uid="g1", anonymous=False, consent=True):
+    client = TestClient(app, headers=auth(uid, anonymous))
+    return consented(client) if consent and not anonymous else client
 
 
 def user_docs(docs, uid):
