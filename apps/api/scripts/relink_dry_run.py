@@ -43,6 +43,7 @@ from scripts.warm_demo import DEMO_ARTICLES
 LINK_THRESHOLD = 0.865
 PREVIEW_FILE = CACHE_DIR / "relink_preview.json"
 EXPLAIN_PART_USD = 0.004  # one Background generation + verify, M5/M6 measurements
+DOC_CONCURRENCY = 8  # docs at once; each doc's link_confirm batches run concurrently too
 
 
 def _load(path) -> tuple[ConceptGraph, str]:
@@ -60,19 +61,29 @@ async def relink(
         return await enrich.confirm_links(questions, cache.run, ledger)
 
     out: dict[str, dict[str, str | None]] = {}
-    for doc in docs:
-        fresh = [d.model_copy(update={"target_id": None}) for d in doc.demands]
-        linked, _ = await link_demands(
-            graph,
-            fresh,
-            {p.id: p.text for p in doc.paragraphs},
-            LINK_THRESHOLD,
-            embed=embed,
-            confirm=confirm,
-            site=doc.site,
-            url=doc.final_url or doc.url,
-        )
-        out[doc.content_id] = {d.id: d.target_id for d in linked}
+    gate = asyncio.Semaphore(DOC_CONCURRENCY)
+    done = 0
+
+    async def one(doc: ContentDoc) -> None:
+        nonlocal done
+        async with gate:
+            fresh = [d.model_copy(update={"target_id": None}) for d in doc.demands]
+            linked, _ = await link_demands(
+                graph,
+                fresh,
+                {p.id: p.text for p in doc.paragraphs},
+                LINK_THRESHOLD,
+                embed=embed,
+                confirm=confirm,
+                site=doc.site,
+                url=doc.final_url or doc.url,
+            )
+            out[doc.content_id] = {d.id: d.target_id for d in linked}
+            done += 1
+            if done % 25 == 0:
+                print(f"  re-linked {done}/{len(docs)}", flush=True)
+
+    await asyncio.gather(*(one(d) for d in docs))
     return out
 
 
