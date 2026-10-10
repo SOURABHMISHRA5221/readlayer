@@ -308,8 +308,17 @@ health, environment, sports, culture, education, society. The old four keep thei
 existing graph, persona templates and reader θ stay valid. Online concept growth assigns every
 new concept to a taxonomy domain (`concept_define` is constrained to the list). Onboarding
 interests, comfort and calibration offer the whole taxonomy; calibration only draws from domains
-that have enough concepts. The held-out set includes non-business articles and the report gives
-linking per domain. Demo personas are unchanged.
+that have enough concepts. Demo personas are unchanged.
+
+**Seeding and targets (decision 34).** Each new domain is seeded from Wikipedia glossaries
+(Glossary of medicine, computer science, cricket terms, association football, biology, law, …)
+fetched through `safe_fetch` and parsed deterministically from their definition lists, then put
+through the normal dedupe / `concept_define` / keep / prerequisites pipeline. Concept counts and
+production writes go to Sourabh before anything is written. The held-out set (30 articles)
+includes non-business articles; per domain the report gives (1) the frozen-graph link rate, the
+headline: business ≥ 75%, non-business aim 60%, under 50% → stop and tell Sourabh; (2) the
+after-growth link rate, labelled production behaviour; (3) precision on a judged sample of grown
+concepts, ≥ 90%. Links to concepts grown from the same article never count in the headline.
 
 **Prompt**
 > Read docs/DESIGN.md §2 and §3 and issue #6. (1) **Online concept growth:** when a newly ingested
@@ -330,7 +339,8 @@ linking per domain. Demo personas are unchanged.
 > then measure linking on all 30 with `scripts/eval_heldout.py`.
 
 **Acceptance**
-- ≥ 75% of concept/term demands linked on the 30-article held-out set, with precision on the
+- Frozen-graph link rate on the 30-article held-out set: business ≥ 75%, non-business aim 60%
+  (under 50% stops the milestone for Sourabh), with precision on the
   spot-check set not lower than M2.1's (report both, before and after, in `evals/` and STATUS).
 - Chancellor (UK) links to a UK concept, not the US Treasury Secretary; "levy" no longer links to
   a named scheme; Russell mentions no longer link to S&P Dow Jones Indices (tests).

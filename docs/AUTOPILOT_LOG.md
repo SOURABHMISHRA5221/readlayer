@@ -276,3 +276,8 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   risks are non-coding: seeding non-business concepts needs production writes beyond current
   counts, and each deploy waits on Sourabh. Re-checked after the M2.2 plan is sized.
 - DESIGN feed and goals sections are written with the M7.5 plan, so plan-reviewer sees them.
+- Asked how the 75% applies with non-business articles. Sourabh (decision 34): headline is the
+  frozen-graph rate (business ≥ 75%, non-business aim 60%, < 50% → stop and tell him); after-growth
+  rate reported as production behaviour; grown-concept precision ≥ 90% on a judged sample. Seed new
+  domains from Wikipedia glossaries via safe_fetch + deterministic parsing; show counts and writes
+  before writing.
