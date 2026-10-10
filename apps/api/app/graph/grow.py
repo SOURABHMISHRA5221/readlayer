@@ -87,13 +87,13 @@ async def grow(
     taken = {c.id for c in graph.concepts}
     for i, p in enumerate(rest):
         info = infos.get(i)
-        if info is None or not verified(info):
+        zipf = zipf_frequency(p.label, "en")
+        if info is None or not verified(info, p.label, zipf):
             out.rejected += 1
             continue
         cid = unique_id(slug_ids([p.label])[0], taken)
         taken.add(cid)
-        candidates.append((p, make_concept(cid, p.label, info, zipf_frequency(p.label, "en"),
-                                           vectors[p.label])))  # fmt: skip
+        candidates.append((p, make_concept(cid, p.label, info, zipf, vectors[p.label])))
     if not candidates:
         return out
     requests = [

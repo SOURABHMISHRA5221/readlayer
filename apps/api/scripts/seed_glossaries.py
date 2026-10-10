@@ -38,6 +38,7 @@ from app.config import get_settings
 from app.graph import build, enrich
 from app.graph.glossary import parse
 from app.graph.graph import ConceptGraph
+from app.graph.growth import everyday_word
 from app.graph.models import Concept, ConceptGraphFile
 from app.graph.overrides import Overrides, patch_adds, patch_remove_aliases, pending_adds
 from app.ingest.safe_fetch import FetchError, SafeFetcher
@@ -90,6 +91,7 @@ class Counts:
     merged_together: int = 0
     defined: int = 0
     dropped_kind: Counter[str] = field(default_factory=Counter)
+    everyday: int = 0
     new: int = 0
     prereq_edges: int = 0
 
@@ -240,7 +242,9 @@ async def define(
         if info is None:
             continue
         counts[c.domain_hint].defined += 1
-        if build.apply_keep(info.kind, is_seed=False, doc_groups=build.MIN_DOC_GROUPS):
+        if everyday_word(c.label, c.zipf):
+            counts[c.domain_hint].everyday += 1
+        elif build.apply_keep(info.kind, is_seed=False, doc_groups=build.MIN_DOC_GROUPS):
             kept.append((c, info))
         else:
             counts[c.domain_hint].dropped_kind[info.kind] += 1
@@ -380,15 +384,15 @@ def report(
         "## Pipeline per glossary group (domain hint)",
         "",
         "| hint | pages | parsed | exact match (dropped) | duplicate | ranked out | to dedupe "
-        "| merged into graph | merged together | defined | dropped by kind | new |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "| merged into graph | merged together | defined | everyday word | dropped by kind | new |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     for hint, c in sorted(counts.items()):
         drop = ", ".join(f"{k} {v}" for k, v in c.dropped_kind.most_common(4)) or "0"
         lines.append(
             f"| {hint} | {c.pages} | {c.parsed} | {c.exact_existing} | {c.duplicates} "
             f"| {c.ranked_out} | {c.kept_for_define} | {c.merged_into_graph} "
-            f"| {c.merged_together} | {c.defined} | {drop} | {c.new} |"
+            f"| {c.merged_together} | {c.defined} | {c.everyday} | {drop} | {c.new} |"
         )
     lines += [
         "",

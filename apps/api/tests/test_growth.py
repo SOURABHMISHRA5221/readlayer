@@ -142,3 +142,10 @@ async def test_no_slots_no_calls():
     out = await grow(GRAPH, [demand("d1", "False nine")], {"p0": TEXT}, 0, "c",
                      GrowthRepo(InMemoryDocStore()), runner, embed_far)  # fmt: skip
     assert out.added == [] and runner.calls == []
+
+
+def test_a_single_everyday_word_is_never_a_grown_or_seeded_concept():
+    ok = ConceptInfo(**info())
+    assert not growth.verified(ok, "Health", 5.6)  # would mislink every "health"
+    assert growth.verified(ok, "False nine", 5.0)  # multi-word phrases are fine
+    assert growth.verified(ok, "Dialysis", 3.2)  # rare single words are fine

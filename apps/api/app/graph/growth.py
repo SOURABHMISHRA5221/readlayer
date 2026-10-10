@@ -23,6 +23,14 @@ from app.ingest.models import Demand
 NEVER_MERGE_KINDS = frozenset({"institution", "regulator", "committee", "index", "index_provider"})
 PREREQ_NEAREST = 20
 PREREQ_BASICS = 20
+# A single everyday English word ("Health", "Level", "Room") can't carry a glossary-only sense:
+# exact-match linking would attach that sense to every ordinary use of the word. Seeds and grown
+# concepts must be multi-word or rarer than this (wordfreq Zipf scale; M2.2 seeding dry run).
+EVERYDAY_ZIPF = 4.5
+
+
+def everyday_word(label: str, zipf: float) -> bool:
+    return " " not in label.strip() and zipf >= EVERYDAY_ZIPF
 
 
 @dataclass(frozen=True)
@@ -63,13 +71,15 @@ def merge_refused(existing: Concept, label: str) -> bool:
     return normalize_label(label) not in names
 
 
-def verified(info: ConceptInfo) -> bool:
-    """A verified concept (plan §C.2): a taxonomy domain, a kept kind, and specialised enough to
-    be worth a concept from a single article. The schema already guarantees the shape."""
+def verified(info: ConceptInfo, label: str = "", zipf: float = 0.0) -> bool:
+    """A verified concept (plan §C.2): a taxonomy domain, a kept kind, specialised enough to be
+    worth a concept from a single article, and not a single everyday word. The schema already
+    guarantees the shape."""
     return (
         info.domain in DOMAINS
         and info.kind in KEEP_KINDS
         and info.specialization >= SINGLE_DOC_MIN_SPEC
+        and not everyday_word(label, zipf)
     )
 
 
