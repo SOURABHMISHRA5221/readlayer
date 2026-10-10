@@ -147,7 +147,23 @@ def is_listing_page(url: str, directories: Iterable[str] = ()) -> bool:
     return bool(DIRECTORY_SEGMENTS.intersection(segments)) or (not segments and host in directories)
 
 
+LATIN_SHARE = 0.7
+
+
+def mostly_latin(text: str) -> bool:
+    """At least 70% of the letters are Latin script: the explanations and the reader are in
+    English, and YouTube's relevanceLanguage is only a hint."""
+    letters = [ch for ch in text if ch.isalpha()]
+    if not letters:
+        return True
+    return sum(ch.isascii() or "\u00c0" <= ch <= "\u024f" for ch in letters) >= LATIN_SHARE * len(
+        letters
+    )
+
+
 def is_feed_page(result: WebResult) -> bool:
+    if not mostly_latin(result.title):
+        return False
     if result.format == "article":
         return looks_like_article(result.url)
     if result.format == "podcast":

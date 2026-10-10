@@ -98,7 +98,10 @@ def test_queries_are_only_a_taxonomy_label_and_a_fixed_phrase():
 
 def test_topics_are_the_strongest_stored_interests():
     assert feed_mod.reader_topics({"health": 1.0, "sports": 0.8, "finance": 0.3}) == [
-        "health", "sports", "finance"]  # fmt: skip
+        "health",
+        "sports",
+    ]  # fmt: skip  (0.3 = onboarding's "not chosen")
+    assert feed_mod.reader_topics({"law": 0.3, "finance": 0.4}) == ["finance", "law"]
     assert feed_mod.reader_topics({}) == ["economics", "finance", "business", "policy"]
     many = {d: 1.0 for d in DOMAIN_IDS}
     assert len(feed_mod.reader_topics(many)) == feed_mod.MAX_TOPICS
@@ -187,3 +190,23 @@ def test_a_changed_phrase_makes_todays_cached_entry_stale(env):
     query = feed_mod.feed_query("health", "article")
     assert asyncio.run(web.cached_entry(key, "article", query)) is not None
     assert asyncio.run(web.cached_entry(key, "article", query + " v2")) is None
+
+
+def test_an_empty_day_entry_is_searched_again_after_an_hour(monkeypatch):
+    class Empty(TopicProvider):
+        async def search(self, query, fmt, news=False):
+            self.queries.append(query)
+            return []
+
+    empty = Empty()
+    search = feed_mod.FeedSearch(service(empty))
+
+    async def twice():
+        await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0)
+        await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0)
+
+    asyncio.run(twice())
+    assert len(empty.queries) == 3  # within the hour: the empty entries are served
+    monkeypatch.setattr(feed_mod, "EMPTY_RETRY", timedelta(0))
+    asyncio.run(twice())
+    assert len(empty.queries) == 9  # after it: searched again (still within the caps)

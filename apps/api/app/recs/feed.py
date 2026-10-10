@@ -12,7 +12,7 @@ import asyncio
 import hashlib
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.graph.graph import ConceptGraph
@@ -24,6 +24,8 @@ from app.store.docstore import DocStore
 from app.store.spend_repo import today_utc
 
 MAX_TOPICS = 6
+MIN_TOPIC_INTEREST = 0.5  # onboarding stores 1.0 for chosen domains and 0.3 for the rest
+EMPTY_RETRY = timedelta(hours=1)  # an empty day entry may be searched again (within the caps)
 FETCH_WAIT_S = 6.0
 FEED_PHRASE: Mapping[Format, str] = {
     # "latest news" returned section and tag pages; plain "news" swung between 2 and 10 real
@@ -56,13 +58,15 @@ def item_id(url: str) -> str:
 
 
 def reader_topics(interest: Mapping[str, float]) -> list[str]:
-    """Top MAX_TOPICS taxonomy domains by stored interest (ties in taxonomy order); none
+    """Up to MAX_TOPICS taxonomy domains the reader chose or raised (interest ≥ 0.5), strongest
+    first (ties in taxonomy order); none that strong → their strongest stored domains; none
     stored → the four business domains."""
     ranked = sorted(
         (d for d in DOMAIN_IDS if interest.get(d, 0.0) > 0),
         key=lambda d: (-interest[d], DOMAIN_IDS.index(d)),
     )
-    return ranked[:MAX_TOPICS] or list(BUSINESS_DOMAINS)
+    chosen = [d for d in ranked if interest[d] >= MIN_TOPIC_INTEREST]
+    return (chosen or ranked)[:MAX_TOPICS] or list(BUSINESS_DOMAINS)
 
 
 def keep_for(topic: str, graph: ConceptGraph, now: datetime):
@@ -101,7 +105,7 @@ class FeedSearch:
                 if fmt not in self._web.formats:
                     continue
                 entry = await self._web.cached_entry(key, fmt, feed_query(topic, fmt))
-                if entry is not None:
+                if entry is not None and (entry.results or now - entry.fetched_at < EMPTY_RETRY):
                     found[(topic, fmt)] = entry.results
                     continue
                 task = self._inflight.get((key, fmt))

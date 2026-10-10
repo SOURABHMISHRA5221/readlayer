@@ -84,6 +84,8 @@ def test_feed_pages_are_single_articles_and_single_shows():
     assert fr.is_feed_page(result("p", fmt="podcast", url="https://fordhamgsb.podbean.com"))
     assert fr.is_feed_page(result("v", fmt="video", url="https://www.youtube.com/watch?v=x"))
     assert not fr.is_feed_page(result("t", url="https://www.pcmag.com/news"))
+    assert not fr.is_feed_page(result("എംബാപ്പെ റയൽ മാഡ്രിഡ് വിടുമോ? ലിവർപൂൾ", fmt="video"))
+    assert fr.is_feed_page(result("Mbappé’s Real Madrid exit, explained", fmt="video"))
 
 
 def test_readiness_curve():

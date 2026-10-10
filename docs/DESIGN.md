@@ -841,8 +841,10 @@ A daily page of articles, videos and podcasts on the reader's topics, ranked for
 is ready to learn. No LLM anywhere on this path.
 
 ### 17.1 Topics and searches (`app/recs/feed.py`)
-- **Topics.** A signed-in reader's top 6 taxonomy domains by stored interest (ties in taxonomy
-  order); none stored → the four business domains. Demo personas have a fixed pair: newcomer
+- **Topics.** Up to 6 taxonomy domains the signed-in reader chose or raised (interest ≥ 0.5;
+  onboarding stores 1.0 for chosen domains and 0.3 for the rest), strongest first, ties in
+  taxonomy order; if none is that strong, their strongest stored domains; none stored → the
+  four business domains. Demo personas have a fixed pair: newcomer
   technology + economics, trader finance + business, policy student policy + politics.
 - **Query = the taxonomy label + a fixed phrase**, nothing else: "Health news this week" (Tavily,
   `topic: news`, last 7 days, 10 results for one credit), "Health podcast" (Tavily, podcast directories), "Health
@@ -853,7 +855,8 @@ is ready to learn. No LLM anywhere on this path.
   and cached in `rec_cache` under `feed:<domain>:<day>`. Results pass the blocklist, a page-shape
   check (an article URL must not be a section, tag or home page: a ≥ 3-word slug or a date/id
   in the path; podcast chart and genre pages are dropped), the 14-day article filter (when a
-  date is given) and a relevance gate: the title or snippet names the topic (its label, the first
+  date is given), an English-only check (≥ 70% of title letters in Latin script; YouTube's
+  language setting is only a hint) and a relevance gate: the title or snippet names the topic (its label, the first
   4 letters of a long label such as "tech", or a word of the domain's taxonomy scope line such
   as "AI" or "inflation"), or a graph concept of that domain (sports news rarely says "sport",
   but it names a penalty).
@@ -861,7 +864,9 @@ is ready to learn. No LLM anywhere on this path.
   and YouTube caps; past any of them nothing is called and cached results are served.
 - **In-request only.** Missing searches run inside the request with a 6 s limit (Cloud Run
   throttles CPU after a response). What doesn't finish is `pending: true`; the client asks again
-  and joins the same in-flight task, so a re-ask never searches twice.
+  and joins the same in-flight task, so a re-ask never searches twice. Provider results vary
+  from run to run, so a day entry that came back empty may be searched again after an hour
+  (within the caps); non-empty entries last the day.
 
 ### 17.2 Ranking (`app/recs/feed_rank.py`, pure)
 ```
