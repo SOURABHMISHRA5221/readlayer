@@ -56,12 +56,28 @@ def _history(all_runs: list[dict[str, Any]]) -> list[str]:
     return lines
 
 
+JUDGE_TASKS = ("verify", "verify_background")  # one judge before explain-v4, two since
+
+
 def _judge_calls_per_explanation(r: dict[str, Any]) -> float:
-    total = r["cost"].get("verify", {}).get("calls", 0)
-    verifier_only = r["verify_cost"].get("verify", {}).get("calls", 0)
+    total = sum(r["cost"].get(t, {}).get("calls", 0) for t in JUDGE_TASKS)
+    # The verifier-only part judges whole cards (both judges) and the Background suite
+    # (verify_background): neither is a pipeline explanation.
+    verifier_only = sum(r["verify_cost"].get(t, {}).get("calls", 0) for t in JUDGE_TASKS)
+    verifier_only += len(r.get("background", []))
     s = r["summary"]
     cases = s.get("pipeline_total", 0) + s.get("injection_total", 0)
     return (total - verifier_only) / cases if cases else 1.0
+
+
+def _judge_cost_per_call(r: dict[str, Any]) -> float:
+    """Average over both judges since explain-v4 (the Background judge is cheaper per call);
+    the recorded verifier-only figure for older runs, so their rows don't change."""
+    if "verify_background" not in r["cost"]:
+        return r["summary"]["judge_cost_per_call"]
+    cost = sum(r["cost"].get(t, {}).get("cost_usd", 0) for t in JUDGE_TASKS)
+    calls = sum(r["cost"].get(t, {}).get("calls", 0) for t in JUDGE_TASKS)
+    return cost / calls if calls else 0.0
 
 
 def _judge_latency(r: dict[str, Any]) -> str:
@@ -92,7 +108,7 @@ def _comparison(all_runs: list[dict[str, Any]]) -> list[str]:
     ]
     for judge, r in latest.items():
         s = r["summary"]
-        per_call = s["judge_cost_per_call"]
+        per_call = _judge_cost_per_call(r)
         calls = _judge_calls_per_explanation(r)
         per_expl = per_call * calls
         explain_per_case = s.get("pipeline_cost_per_case", 0) or 1e-9

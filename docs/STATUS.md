@@ -85,7 +85,8 @@ only reader-facing path that may call a model, and only on a cache miss within t
 (no LLM), phase 2 extract_demands + linking (POST /v1/content/{id}/analyse).
 
 **Firestore collections in use:** `contents/{url_hash}` (shared demand profiles),
-`pending_contents/{url_hash}` (fetched, not yet analysed; no user data; 24 h TTL, M6),
+`pending_contents/{url_hash}` (fetched, not yet analysed; no user data; `expire_at` 24 h, TTL
+policy **pending** until it is created after the M6 deploy),
 `explanations/{key}` (two entries per card since M6: shared restatement, per-reader Background), `explanation_reports/{id}` (review queue, no user id),
 `ops/explain/days/{date}` (hits, generated, outcomes, shared anonymous generation count),
 `ops/spend/days/{date}` (LLM ledger), `ops/search/days/{date}` (search-call ledger, now with an
@@ -142,6 +143,9 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | A definition-only outcome after two rejected drafts is cached (no generated text) | Otherwise every hover on a hard span re-spends two generations; judge outages and the budget guard are not cached | Keep (DESIGN §7) |
 | The plan's 400 KB extracted-text refusal (two-phase ingest) was not added | `clean_paragraphs` already truncates at 150,000 characters, which is tighter | Keep |
 | The Background judge is its own prompt and route (`verify_background`), not a second verdict inside `verify.md` | Each part is verified on its own, and a Background check never re-judges a shared restatement | Keep (DESIGN §7, §10) |
+| M6 shipped as one PR and one deploy, not two (A–C, then D) | All four parts were finished the same day; one deploy, one live check | Done |
+| M6 accessibility: axe-core run in the live reader through headless Chrome instead of the Lighthouse CLI | Same engine (Lighthouse's accessibility audit is axe); no Lighthouse install in the repo | Keep |
+| M6 keyboard: "Tab reaches pre-read links" not exercised live (the test article's pre-read steps are all definition disclosures, reached and toggled by keyboard); the "Yes" answer not checked live | Covered offline: vitest renders and clicks link steps; `tests/test_loop_e2e.py::test_corrections_change_the_next_load` covers both answers | Live check after deploy on an article with link steps if one is found |
 | `explanation_reports` (review queue) stores the evicted entry with no user identifier, so it is outside export/delete; the report_wrong event itself is in `users/{uid}/events` | Shared content, not user data | Keep |
 ---
 
@@ -152,7 +156,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
-| Low | "Open here" (M6, two-phase): the article shows in ~1.4 s; its notes take 20–55 s more (extract_demands + linking). The reader shows "Preparing your notes… N s" meanwhile |
+| Low | "Open here" (M6, two-phase): the article showed in 1.4 s **locally** (live number after deploy); its notes take 20–55 s more (extract_demands + linking). The reader shows "Preparing your notes… N s" meanwhile |
+| Low | Deleted-account revocation is per instance and in memory, so it is also lost on a restart. Seen in M6 local testing: a demo session deleted at 07:02:41 UTC sent one event batch at 07:10:19 after the dev server restarted, leaving `users/{uid}` + 6 `events` + 1 `demo_graphs/newcomer` (8 docs) under a deleted Auth user (Sourabh's own session). Left for the M9 anonymous cleanup unless Sourabh asks for a delete now; events expire by TTL in 90 days |
 | Low | A cold explanation card (both parts missing) costs $0.0090 and p95 31 s (was $0.0070, 22 s): two judge calls. Reuse across readers repays it |
 | Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
 | Medium | Build-time merge error: "Russell Indexes"/"FTSE Russell" are aliases of S&P Dow Jones Indices, so Russell mentions link there by exact name (issue #6 comment) |
@@ -243,6 +248,9 @@ quota is free within the daily buckets.
 
 ---
 
+**2026-10-10 UTC (rest of M6, local): ≈ $0.50 LLM.** Safety evals `explain-v4-split` $0.46,
+local explanations while testing ≈ $0.03, one "Open here" ingest $0.0024. Under the $8 cap.
+
 **2026-10-09 UTC (M5 day, IST 2026-10-10): $2.83 LLM**, 646 calls, 4 fallbacks (explain → FAST
 on timeouts). M5 safety evals ≈ $2.53 (five full runs incl. the Pro judge at $1.12); local dev,
 screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all day.
@@ -281,22 +289,20 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
 
 ## 9. Next actions, in order
 
-Re-planned 2026-10-10 (decisions 20–22); BUILD_PLAN.md has the prompts.
+Autopilot order (decision 27); BUILD_PLAN.md has the prompts. M5 merged (#13); the rest of M6
+is built (§14) and awaits merge and deploy.
 
 | When | Action |
 |---|---|
-| Oct 10 | **M5** explanations + verifier + safety evals; card shows Background / What the author is saying |
-| Oct 11 | **Rest of M6:** show the paragraph markers, pre-read card and "Know this?" prompts the API already returns; two-phase "Open here"; complete event batching (`paragraph_dwell`, `text_searched`, `annotation_dismissed`) |
-| Oct 12 (M6 session) | **From the M5 review:** (1) generate "What the author is saying" once per (span, style) and personalise only Background, with its own cache key and one verifier pass per span (today every (span, band, frame, style) regenerates and re-verifies the restatement); (2) label the Helpful button with text instead of a bare icon. Also show paragraph explainers from the margin markers (decision 24) |
-| Oct 11 | **Team lock** |
-| Oct 12–13 | **M7 trimmed:** profile page (summary, domain bars, list view with corrections, THINKS_IN, export/delete/pause); Google onboarding with consent and calibration. Knowledge-map graph and edit-by-prompt optional |
-| Oct 14 | **M8-local:** unpacked Chrome extension, activeTab only, Readability on a DOM clone, client redaction + Presidio backstop, annotator on the live page, "Connect extension" auth for demo and Google readers, popup; README install steps |
-| Oct 15 | **M9** hardening and evals (gold set, report, WIF deploy, dashboard) + **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink) |
-| Oct 16 | Demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
+| Now | **Rest of M6:** merge `m6-rest` (CI green), deploy API then web back to back from `main`, add the TTL policy on `pending_contents.expire_at`, run `scripts/live_check_m6.py` and the live "Open here" (Wikipedia "Quantitative tightening") through the web UI, re-warm the demo articles' explanations for all three personas (every cache entry missed once the prompt versions changed) |
+| Next | **M7:** profile page (summary, domain bars, list view with corrections, THINKS_IN, export/delete/pause), Google onboarding with consent and calibration, **knowledge-map graph and edit-by-prompt (both required, decision 27)** |
+| Then | **M8-local** (unpacked extension), **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink), **M9** hardening and evals |
+| Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
 
-**Cut order if late:** edit-by-prompt → knowledge-map graph → M2.2 online growth (already
-deferred) → extension popup extras.
+**If late:** stop and ask Sourabh what to cut (decision 27). The old cut order (edit-by-prompt →
+knowledge-map graph → M2.2 online growth → extension popup extras) is no longer applied
+automatically.
 
 **You, by hand:** label the gold set (30 articles × 2 personas, with your teammate, from Oct 12);
 record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6.

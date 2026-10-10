@@ -104,3 +104,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   an anonymous demo session I did not create (events, counters and its anonymous Auth user);
   shared content untouched. Reported to Sourabh. Rule for the rest of the run: only delete
   sessions whose uid_hash I created in the same step, verified against the log first.
+- Resolved: Sourabh confirmed the 06:58 UTC (12:28 IST) session in the automation tab was his;
+  no harm done. The cleanup rule above stays for the rest of the run.
+- Live check script drafted (`scripts/live_check_m6.py`) and dry-run against the local API: all
+  four checks pass (annotations kinds, event replay 4 → 0, prompt answer changes the next load,
+  shared restatement with distinct Backgrounds); its test user deleted (204).
+- milestone-reviewer round 1: **FIX** (4 blocking, 2 should-fix). Applied:
+  1. live check script and log committed;
+  2. eval report counted only `verify` as a judge: now both judges, averaged per call
+     (2.00 calls, $0.0039 judge per card), report regenerated from the same result file;
+  3. STATUS: next actions rewritten, M6 costs added, `pending_contents` TTL marked pending,
+     "Open here" 1.4 s marked local, deviations recorded (one PR/deploy, axe instead of
+     Lighthouse, two keyboard checks covered offline);
+  4. the 07:02 deletion did not end the session: after a dev-server restart (in-memory
+     revocation lost) it sent one event batch at 07:10:19 (200). Read-only check: `users/{uid}`
+     + 6 events + 1 `demo_graphs/newcomer` = 8 docs under a deleted Auth user (Sourabh's
+     session). Not deleted (beyond the plan's writes); left for the M9 anonymous cleanup unless
+     Sourabh says otherwise. Noted in STATUS §5;
+  5. per-part single-flight (`_inflight` keyed by each part's cache key) so two personas loading
+     cold share one restatement; new concurrent test;
+  6. POST /v1/content always adds the doc to the catalog (a pending URL is new to it too).

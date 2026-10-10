@@ -338,11 +338,36 @@ def _text(entry: dict | None, field_name: str) -> str | None:
     return entry.get(field_name) if entry and entry.get("verified") else None
 
 
-_inflight: dict[str, asyncio.Task[Served]] = {}
+# One generation per part per instance at a time, keyed by the part's cache key: a prefetch and
+# a hover share it, and so do two personas loading the same span cold (one restatement, not two).
+_inflight: dict[str, asyncio.Task[PartOutcome]] = {}
 
 
-async def _none() -> None:
-    return None
+def _part_task(
+    key: str,
+    part: Part,
+    inputs: ExplainInputs,
+    repo: ExplainRepo,
+    version: str,
+    run: RunFn,
+) -> tuple[asyncio.Task[PartOutcome], bool]:
+    """The in-flight generation for this part, or a new one (True). Only the creator writes the
+    cache entry."""
+    if (task := _inflight.get(key)) is not None:
+        return task, False
+
+    async def make() -> PartOutcome:
+        out = await generate_part(part, inputs, run=run)
+        if out.cacheable:
+            doc = restatement_doc if part == "restatement" else background_doc
+            await repo.put(key, doc(inputs, out, version, datetime.now(UTC)))
+        _log(inputs, out)
+        return out
+
+    task = asyncio.ensure_future(make())
+    _inflight[key] = task
+    task.add_done_callback(lambda _: _inflight.pop(key, None))
+    return task, True
 
 
 async def serve(
@@ -353,9 +378,9 @@ async def serve(
     refund: Callable[[], Awaitable[None]],
     run: RunFn | None = None,
 ) -> Served:
-    """The cached card, or the missing parts made now. One generation per card per instance at
-    a time (a prefetch and a hover share it). A request that generates anything counts once
-    against the reader's daily cap (`reserve`), refunded if no model call could be made."""
+    """The cached card, or the missing parts made now (each part single-flight). A request that
+    starts a generation counts once against the reader's daily cap (`reserve`), refunded if no
+    model call could be made; joining generations already running costs nothing."""
     rv, bv = restate_version(), background_version()
     rkey, bkey = inputs.restate_key(rv), inputs.background_key(bv)
     key = card_id(rkey, bkey)
@@ -371,47 +396,42 @@ async def serve(
             "hit",
         )
         return Served(key, out.kind, "hit", out.explanation, cached=True, counts={"hits": 1})
-    if (task := _inflight.get(key)) is not None:
-        shared = await asyncio.shield(task)
-        return Served(key, shared.kind, shared.reason, shared.explanation, cached=False)
-    if not await reserve():
+    wanted = [k for k, need in ((rkey, need_r), (bkey, need_b)) if need]
+    joining = all(k in _inflight for k in wanted)
+    if not joining and not await reserve():
         # Past the cap: a shared restatement still shows; the Background stays the definition.
         out = compose(_text(r_entry, "author_says"), None, None, "capped")
         return Served(key, out.kind, "capped", out.explanation, cached=False, counts={"capped": 1})
 
-    async def fill() -> Served:
-        run_ = run or llm.run_with_meta
-        r_out, b_out = await asyncio.gather(
-            generate_part("restatement", inputs, run=run_) if need_r else _none(),
-            generate_part("background", inputs, run=run_) if need_b else _none(),
+    run_ = run or llm.run_with_meta
+    tasks: dict[Part, tuple[asyncio.Task[PartOutcome], bool]] = {}
+    if need_r:
+        tasks["restatement"] = _part_task(rkey, "restatement", inputs, repo, rv, run_)
+    if need_b:
+        tasks["background"] = _part_task(bkey, "background", inputs, repo, bv, run_)
+    results = dict(
+        zip(
+            tasks,
+            await asyncio.gather(*(asyncio.shield(t) for t, _ in tasks.values())),
+            strict=True,
         )
-        made = [p for p in (r_out, b_out) if p is not None]
-        if all(p.nothing_ran for p in made):
-            await refund()
-        now = datetime.now(UTC)
-        if r_out is not None and r_out.cacheable:
-            await repo.put(rkey, restatement_doc(inputs, r_out, rv, now))
-        if b_out is not None and b_out.cacheable:
-            await repo.put(bkey, background_doc(inputs, b_out, bv, now))
-        author_says = r_out.text if r_out is not None else _text(r_entry, "author_says")
-        background = b_out.text if b_out is not None else _text(b_entry, "background")
-        analogy = (
-            b_out.analogy_domain if b_out is not None else (b_entry or {}).get("analogy_domain")
-        )
-        reason: Reason = (r_out or b_out).reason  # type: ignore[union-attr]
-        out = compose(author_says, background, analogy, reason, r_out, b_out)
-        for p in made:
-            _log(inputs, p)
-        counts = {"generated": 1} | {f"{p.part}_{p.reason}": 1 for p in made}
-        return Served(
-            key, out.kind, out.reason, out.explanation, cached=False,
-            cost_usd=out.cost_usd, counts=counts,
-        )  # fmt: skip
-
-    task = asyncio.ensure_future(fill())
-    _inflight[key] = task
-    task.add_done_callback(lambda _: _inflight.pop(key, None))
-    return await asyncio.shield(task)
+    )
+    r_out, b_out = results.get("restatement"), results.get("background")
+    made = [results[part] for part, (_, created) in tasks.items() if created]
+    if made and all(p.nothing_ran for p in made):
+        await refund()
+    elif not made and not joining:
+        await refund()  # reserved, but another request started every part meanwhile
+    author_says = r_out.text if r_out is not None else _text(r_entry, "author_says")
+    background = b_out.text if b_out is not None else _text(b_entry, "background")
+    analogy = b_out.analogy_domain if b_out is not None else (b_entry or {}).get("analogy_domain")
+    reason: Reason = (r_out or b_out).reason  # type: ignore[union-attr]
+    out = compose(author_says, background, analogy, reason, r_out, b_out)
+    counts = ({"generated": 1} if made else {}) | {f"{p.part}_{p.reason}": 1 for p in made}
+    return Served(
+        key, out.kind, out.reason, out.explanation, cached=False,
+        cost_usd=sum(p.cost_usd for p in made), counts=counts,
+    )  # fmt: skip
 
 
 def _log(inputs: ExplainInputs, outcome: PartOutcome) -> None:

@@ -137,8 +137,7 @@ async def post_content(
         if isinstance(exc, INGEST_ERRORS):
             return _ingest_error(exc)
         raise
-    if not known:
-        catalog.add(doc)
+    catalog.add(doc)  # no-op if listed; a URL that was pending is new to the catalog too
     return _response(doc)
 
 

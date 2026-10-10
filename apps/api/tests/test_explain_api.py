@@ -293,3 +293,44 @@ def test_verify_route_uses_the_judge_model_setting(settings):
     assert llm._model_chain(llm.ROUTES["verify"], settings) == ["vertex_ai/quality"]
     pro = settings.model_copy(update={"model_judge": "vertex_ai/pro"})
     assert llm._model_chain(llm.ROUTES["verify"], pro) == ["vertex_ai/pro"]
+
+
+async def test_two_personas_loading_cold_at_once_share_one_restatement(docs):
+    gate = asyncio.Event()
+    calls: list[str] = []
+    fake = ExplainLLM()
+
+    async def slow(task, schema, prompt_vars, **_):
+        calls.append(task)
+        await gate.wait()
+        return await fake(task, schema, prompt_vars)
+
+    def reader(band: str, frame: str) -> ExplainInputs:
+        return ExplainInputs(
+            "span", "art", "p0", "yield_curve", TEXT, TEXT, (), band, frame, "normal"
+        )
+
+    reserved: list[int] = []
+
+    async def yes() -> bool:
+        reserved.append(1)
+        return True
+
+    async def nothing() -> None:
+        return None
+
+    repo = ExplainRepo(docs)
+    a = asyncio.create_task(
+        service.serve(reader("unaware", "software"), repo, reserve=yes, refund=nothing, run=slow)
+    )
+    b = asyncio.create_task(
+        service.serve(reader("heard of", "cricket"), repo, reserve=yes, refund=nothing, run=slow)
+    )
+    await asyncio.sleep(0.01)
+    gate.set()
+    ra, rb = await asyncio.gather(a, b)
+    assert calls.count("restate") == 1 and calls.count("explain") == 2
+    assert ra.explanation.author_says == rb.explanation.author_says
+    assert ra.key.split("-")[0] == rb.key.split("-")[0]
+    assert ra.key.split("-")[1] != rb.key.split("-")[1]
+    assert len(reserved) == 2  # each started a Background of its own
