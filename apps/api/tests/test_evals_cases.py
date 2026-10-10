@@ -50,3 +50,25 @@ def test_background_cases_are_well_formed():
     for c in cases:
         inputs = inputs_for(c)
         assert inputs.paragraph and c["background"]
+
+
+def test_profile_edit_cases_and_judge():
+    import yaml
+
+    from evals.profile_edit import CASES, judge
+
+    cases = yaml.safe_load(CASES.read_text(encoding="utf-8"))
+    assert len([c for c in cases if c["id"].startswith("P")]) == 6
+    assert len([c for c in cases if c["id"].startswith("X")]) == 4
+    p01 = cases[0]
+    good = [
+        {"op": "set_thinks_in", "domains": ["software"]},
+        {"op": "mark_concepts", "names": ["Options"], "state": "known"},
+        {"op": "set_explanation_style", "length": "short"},
+    ]
+    assert judge(p01, good) == []
+    assert judge(p01, [*good, {"op": "pause_learning", "paused": True}]) == [
+        "forbidden op pause_learning"
+    ]
+    assert "id-shaped name" in judge(p01, [*good, {"op": "mark_concepts", "names": ["c_x"],
+                                                    "state": "known"}])  # fmt: skip
