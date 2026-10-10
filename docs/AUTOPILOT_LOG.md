@@ -247,3 +247,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   the repo.
 - milestone-reviewer round 2: **SHIP**. Follow-ups noted: re-measure the 44 px header next run;
   PR mentions the phase-1 timing logs (e1f51dc) as an out-of-scope change.
+
+### Ship
+- PR #16 squash-merged (e7f06f0), CI green, milestone-reviewer SHIP. Deployed API
+  `readlayer-api-00012-ccv`, then web `index-Dm3tU99c.js` (Sourabh approved).
+- Orphan cleanup: Sourabh approved 21 docs; deleted 21 (count-guarded), nothing left under that uid.
+- Live: live_check_m7 all pass; browser pass clean (axe 0 ×3, console 0, 44 px header confirmed);
+  demo annotations identical before/after; 1 pre-M7 Google user doc now gated at consent.
+- Pending: Sourabh's live Google check.

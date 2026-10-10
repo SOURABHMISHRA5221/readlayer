@@ -29,7 +29,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | docs | merged (squash) | #12 | README with live screenshots, persona GIF, diagrams; MIT license |
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
-| M7 | branch `m7` | — | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
+| M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
 | M8-local, M2.2 (trimmed), M9 | not started | — | Autopilot order (decision 27) |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
@@ -55,8 +55,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 
 | Piece | Where it runs | State |
 |---|---|---|
-| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M6 build**: revision `readlayer-api-00011-6sp`, https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
-| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M6 build** (bundle `index-DKVIFx4G.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
+| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M7 build**: revision `readlayer-api-00012-ccv`, https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
+| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M7 build** (bundle `index-Dm3tU99c.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
 | `packages/annotator` | Bundled into the web app (and the extension in M8-local) | 0.4.0 (M6): two-part card, paragraph markers, "Know this?" chip, pre-read, reading signals |
 | `apps/extension` | — | MV3 scaffold only (M8-local: unpacked, activeTab only, Oct 14) |
@@ -322,7 +322,7 @@ M7 is built and verified on the local harness (§15) and awaits review, merge an
 
 | When | Action |
 |---|---|
-| Now | **M7:** merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
+| Done | **M7:** merged #16 and live; only Sourabh's Google check left. Was: merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
 | Next | **M8-local** (unpacked extension), then **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink), then **M9** hardening and evals |
 | Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
@@ -565,7 +565,7 @@ personas), live check hits only.
 
 ---
 
-## 15. M7 acceptance (2026-10-10, local harness on the final code; live after deploy)
+## 15. M7 acceptance (2026-10-10, local harness on the final code, and live)
 
 **Built.** API: consent (`consent-v1`), onboarding, calibration (8 taps, skip), consent gate,
 map-node evidence, edit-by-prompt (flat schema + strict whitelist, redaction, name cap, resolver,
@@ -588,4 +588,16 @@ evals `profile-edit-v3` 6/6 phrasings, 4/4 attacks. Raw harness output:
 | Knowledge map | Renders at 1440 light and dark (3 canvases, not busy); after Apply, "Options" appears in the finance list as Understands without a reload or domain switch |
 | Profile edit tests | 26 tests: whitelist, cross-op fields, id-shaped names, unresolved names never stored, apply→undo exact, 11th parse → 429, >30 names refused before linking, ≤ 3 link_confirm batches, reset restores session settings |
 | "I'm a backend engineer, I know options well, keep explanations short" | Preview: 1 concept known, length normal → short; settings unchanged before Apply; after Apply the "Bond sell-off" Background is **23 words vs 56** at style short. First run: a cache miss (harness log); the evidence re-run hit the cache because the first run had already made that short Background |
+
+**Live (2026-10-10, API `readlayer-api-00012-ccv`, web `index-Dm3tU99c.js`, deployed from `main`
+e7f06f0 after #16, API then web back to back):**
+
+| Check | Result |
+|---|---|
+| Deep links | `/profile` and `/welcome` 200 from Hosting |
+| `scripts/live_check_m7.py` | All pass: trader profile onboarding done, frame cricket; finance map 53 nodes, edges closed, 52 with recent evidence; session-only edit preview changes nothing, Apply → software + short (asserted), Undo restores both, reset 200; onboarding 403 for a demo reader; test user deleted (204). Writes: +1 on `ops/profile_edit/days/{day}`, one profile_edit call (≈ $0.001) |
+| Browser pass (demo trader, headless Chrome) | Map renders at 1440 light and dark (3 canvases); list view at 390; node card opens on Enter, Escape returns focus to the item; axe 0 serious/critical ×3; 0 console errors; no target under 44 px (header re-measured) |
+| Anonymous readers unaffected | Annotation id sets for 3 demo articles × 3 personas identical before and after the deploy |
+| Existing signed-in users gated at consent | 1 Google user doc from before M7 (of 4 user docs); it sees the consent screen on its next visit and records nothing until then |
+| Sourabh's Google check | Pending (consent → onboarding → 8 taps land on the library → profile and map → edit preview/Apply (map updates)/Undo → Delete → sign in again lands on consent) |
 
