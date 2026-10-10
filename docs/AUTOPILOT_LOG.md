@@ -209,3 +209,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   reachable by keyboard with nothing selected. Bundle: main 137.6 KB gzip (budget 150),
   ProfilePage 6.7 KB, WelcomePage 3.3 KB, cytoscape 121.6 KB + dagre 33.6 KB only when the map
   opens. Web vitest added (4 helper tests).
+- Acceptance on the emulator harness (all pass): different spans (UK bonds 8 vs 2, Polymarket 9
+  vs 4) and analogies (software vs cricket); delete → sign-in → consent; profile keyboard dialog
+  with focus return; axe 0 at 1440 light/dark, 390, 320 and on the welcome steps; no overflow at
+  320 (topic toggle now wraps); 44 px targets; acceptance sentence previews options/short and,
+  after Apply, the next explanation is a miss at 23 words vs 56. Fixes found on the way: Firestore
+  transaction contention under three prefetches (jittered retry), Escape focus return, preview
+  showing unchanged settings, "−0.0 · building" wording, bar alignment.
+- Harness spend $0.07 (separate ledger seeded with production's $0.82).
