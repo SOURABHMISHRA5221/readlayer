@@ -255,3 +255,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Live: live_check_m7 all pass; browser pass clean (axe 0 ×3, console 0, 44 px header confirmed);
   demo annotations identical before/after; 1 pre-M7 Google user doc now gated at consent.
 - Pending: Sourabh's live Google check.
+
+---
+
+## Scope change (Sourabh, 2026-10-10)
+- M2.2 is **full scope** (decision 32): online growth, jurisdiction in link_confirm, strictness,
+  Russell mislink, 30-article held-out set, ≥ 75% linked. BUILD_PLAN gets a full M2.2 section
+  (out of M9 and the post-hackathon list); STATUS milestone rows, deviations and next actions
+  updated.

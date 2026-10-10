@@ -20,14 +20,13 @@ M0–M4 and the M6 slice are merged and live. The rest:
 | Oct 11 | **Rest of M6**: show paragraph markers, the pre-read card and "Know this?" prompts; two-phase "Open here"; complete event batching |
 | Oct 12–13 | **M7**: profile page (summary, domain bars, knowledge-map graph and list view, corrections); Google onboarding with consent and calibration; edit-by-prompt. All required (decision 27) |
 | Oct 14 | **M8-local**: unpacked Chrome extension (Developer mode), activeTab only |
-| Oct 15 | **M9** hardening and evals, plus **M2.2 trimmed** (jurisdiction fix, Russell mislink) |
+| Oct 15 | **M2.2 (full scope, decision 32)**: online concept growth, jurisdiction in `link_confirm`, linker strictness, Russell mislink, 30-article held-out set, ≥ 75% linked; then **M9** hardening and evals |
 | Oct 16 | Demo seeding, README refresh, video, deck |
 | Oct 17 | **Submit** |
 
 **If late:** stop and ask Sourabh what to cut (decision 27); nothing is cut automatically.
 
-**Post-hackathon:** Chrome Web Store release of the extension; M2.2 online concept growth and
-the 30-article held-out set (issue #6).
+**Post-hackathon:** Chrome Web Store release of the extension.
 
 ---
 
@@ -293,9 +292,45 @@ published to the Chrome Web Store (a post-hackathon item).
 
 ---
 
+## M2.2 — Online concept growth and linker quality (full scope, issue #6; Oct 15)
+**Scope (decided 2026-10-10, decision 32): everything below is required; nothing is trimmed.**
+
+**Prompt**
+> Read docs/DESIGN.md §2 and §3 and issue #6. (1) **Online concept growth:** when a newly ingested
+> article (POST /v1/content, "Open here", the extension) has concept demands that don't link,
+> propose new concepts for them in one batched `concept_define` call per article (definition,
+> domain, base_difficulty, ≤ 3 prerequisites chosen from existing concepts only, no cycles,
+> checked with networkx), dedupe against the graph (cosine ≥ DEDUPE_THRESHOLD + `link_merge`),
+> embed, and add them to the live graph and to `concepts.json` in Cloud Storage with a version
+> bump and a backup of the previous file; link the article's demands to them. Cap new concepts
+> per article and per day, count them against the LLM budget, and never grow from `user_ingested`
+> or held-out text without the same checks. (2) **Jurisdiction:** add `jurisdiction` (country or
+> "global") to concepts and use it in `link_confirm` so a UK "Chancellor" never links to the US
+> Treasury Secretary. (3) **Strictness:** tune `link_confirm` so general nouns ("levy", "duty")
+> don't link to narrow named schemes; record precision on the M2 spot-check set before/after.
+> (4) **Russell mislink:** remove the Russell Indexes / FTSE Russell aliases from S&P Dow Jones
+> Indices and add a merge-refusal rule and test for distinct named organisations. (5) **Held-out
+> set to 30 articles** (15 today + 15 new, never in the corpus; the held-out guard enforces it),
+> then measure linking on all 30 with `scripts/eval_heldout.py`.
+
+**Acceptance**
+- ≥ 75% of concept/term demands linked on the 30-article held-out set, with precision on the
+  spot-check set not lower than M2.1's (report both, before and after, in `evals/` and STATUS).
+- Chancellor (UK) links to a UK concept, not the US Treasury Secretary; "levy" no longer links to
+  a named scheme; Russell mentions no longer link to S&P Dow Jones Indices (tests).
+- A new article with an unknown concept grows the graph by a verified concept (definition,
+  prerequisites from existing concepts, acyclic), the article's demand links to it, and the new
+  concept appears in the next library score; caps and budget respected (tests offline, one live
+  run).
+- `concepts.json` in GCS has a new version and a backup of the previous one; the API loads it.
+
+**You or the agent:** 15 more held-out URLs (business/economy articles, not in the corpus).
+
+---
+
 ## M9 — Evaluation, hardening, demo, submission (Oct 15–17)
 
-Oct 15 hardening and evals, plus M2.2 trimmed; Oct 16 demo seeding, README, video and deck;
+Oct 15 hardening and evals (after M2.2); Oct 16 demo seeding, README, video and deck;
 Oct 17 submit.
 **Prompt**
 > Build the quality evals per docs/DESIGN.md §12.1 and §12.4: load `evals/gold/*.json` (spans a
@@ -305,9 +340,7 @@ Oct 17 submit.
 > Federation. Create a Cloud Monitoring dashboard (requests, errors, p95, daily LLM spend).
 > Re-seed the persona templates (`scripts/seed_personas.py`, built in M4) against the final
 > graph, pre-ingest the demo articles, and refresh README.md (merged in #12) with the eval
-> results. M2.2 trimmed (issue #6): add `jurisdiction` to concepts and use it in `link_confirm`
-> (fix Chancellor → Treasury Secretary), and remove the Russell Indexes / FTSE Russell aliases
-> from S&P Dow Jones Indices with a merge-refusal test for distinct named organisations.
+> results.
 
 **You do by hand:** label the gold set (30 articles × 2 personas, split with your teammate,
 start this on Oct 12); record the 3-minute video (same article, two personas side by side; the
