@@ -409,13 +409,9 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 34 | M2.2 targets with open domains (Sourabh, 2026-10-10) | New domains are seeded from Wikipedia glossaries (medicine, computer science, cricket, association football, biology, law, …) fetched through safe_fetch, parsed deterministically from definition lists, then the normal dedupe/define pipeline; concept counts and production writes shown to Sourabh before writing. Per domain on the 30-article held-out set: (1) frozen-graph link rate, the headline: business ≥ 75%, non-business aim 60%, **under 50% → stop and tell Sourabh**; (2) after-growth link rate, labelled production behaviour (links to concepts grown from the same article never count in the headline); (3) precision on a judged sample of grown concepts ≥ 90% |
 | 35 | Growth for demo readers too (Sourabh, 2026-10-10) | Concept growth applies to any ingest that passes the existing caps, anonymous/demo readers included (3 per uid, 30 shared per day already bound the cost); judges mostly use demo mode and must see growth on a pasted link. Persona graphs stay as they are; only the global concept graph grows. Supersedes the "Google readers only" growth gate in the M2.2 plan |
 | 36 | M2.2 after the stop rule (Sourabh, 2026-10-10) | Frozen-graph headline missed (business 64%, non-business 13%) even with 1,874 glossary seeds: glossaries hold textbook terms, news uses specific phrases. Go with the recommendation: tighten growth until grown-concept precision clears 90%, ship seeding plus growth (judges see concepts grow on a pasted link), report the headline miss honestly, move on to M7.5. News-corpus seeding per domain not done (about a day; freeze risk) |
+| 37 | M2.2 open questions (Sourabh, 2026-10-10) | Generalise `explain`, `restate`, `verify`, `verify_background` beyond business news inside M7.5, with before/after safety evals on the frozen cases (≈ $2) and a `warm_demo` re-run as a production write. Keep `society` (fills through growth; hidden in calibration until 30 concepts) |
 
-**Open decisions (Sourabh):**
-1. Keep `society` as a domain (28 concepts, grows only through articles; hidden in calibration
-   until 30), or fold it into culture? (M2.2 plan §A.1)
-2. Generalise the `explain`, `restate`, `verify` and `verify_background` prompts beyond "business
-   and economy news"? Needs before/after safety evals on the frozen cases (≈ $2) and a `warm_demo`
-   re-run as a production write, since the cache keys carry the prompt versions. (M2.2 plan §D.1)
+No decisions are open.
 
 ---
 
