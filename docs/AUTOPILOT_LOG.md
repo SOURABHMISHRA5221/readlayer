@@ -333,3 +333,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   projected $1.71). Deviations from the plan, both logged: kind for pre-M2.2 concepts comes from
   concept_jurisdiction for all of them (the build cache keys can't be mapped back to concepts);
   exact matches of existing concepts are dropped rather than adding their aliases.
+- **STOP (decision 34 stop rule), 2026-10-10 ~19:15 IST.** Local frozen-graph headline on the
+  seeded graph (5,201 concepts, link_confirm-v3): business 64% (target 75%), non-business 13%
+  (aim 60%, floor 50%; every non-business domain under 50%). Before: 61% / 11%. After growth
+  (production behaviour): business 89%, non-business 69%, all 80%. Grown-concept precision
+  26/30 = 87% (target 90%). Nothing written to production; seeding upload, re-link and
+  held-out storage NOT done. Asked Sourabh how to proceed.
