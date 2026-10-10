@@ -240,3 +240,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Still to do before re-review: STATUS §15 numbers from the evidence file, STATUS deviations
   (trend table only, live check shape) and decision row order, harness headroom wording
   ($0.18, not $1), re-run milestone-reviewer.
+- Orphan cleanup: Sourabh approved deleting the 8 docs of his 12:28 IST session. Dry run (read-only)
+  found **21** docs under that uid (users doc, 18 events, weekly/2026-W41, demo_graphs/newcomer): his
+  tab kept posting events to the local dev server (production Firestore) until it was stopped for
+  the M6 deploy. **Nothing deleted**; asked Sourabh to confirm 21. The one-off script lives outside
+  the repo.
+- milestone-reviewer round 2: **SHIP**. Follow-ups noted: re-measure the 44 px header next run;
+  PR mentions the phase-1 timing logs (e1f51dc) as an out-of-scope change.
