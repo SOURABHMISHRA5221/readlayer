@@ -193,6 +193,12 @@ users/{uid}/rec_signals/{persona_or_default}   Up next signals (§16): format st
                                   dismissals, seen items, recent event ids
 users/{uid}/ingest_counts/{utc_day}            new URLs ingested that day (per-user cap)
 users/{uid}/demo_graphs/{persona}             a demo reader's graph for one persona (below)
+users/{uid}/goals/{goal_id}                   reading goals (§18): habit numbers or resolved
+                                  learning targets (ids and labels, never the goal text)
+users/{uid}/goal_resolve_counts/{utc_day}     learning-goal resolutions that day (cap, §18)
+users/{uid}/ingested/{content_id}             pages this reader brought in (`at`, §17.4)
+users/{uid}/growth_counts/{utc_day}           concepts grown from this reader's ingests (M2.2)
+persona_feeds/{persona}                       demo For you snapshots (§17.3, not user data)
 persona_templates/{persona}                   read-only seeded persona graphs (not user data)
 ```
 
@@ -356,6 +362,10 @@ up to 3 prerequisite definitions, the reader band, the THINKS_IN frame, the expl
 (a test pins the key set). No uid, no history, no web access. Article text is inside the content
 delimiters and stated to be data.
 
+Since M7.5 (decision 37) `explain` (v5) and `restate` (v2) describe the source as "news on any
+subject", not business and economy news; the judge prompts already said only "news article"
+and are unchanged (verify-v2, verify-background-v1). Before/after safety runs: `evals/report.md`.
+
 ### Verifier (must pass before cache/show)
 1. Deterministic checks (`app/explain/checks.py`) on `author_says`. Scope: in span mode hedges,
    attribution and negation are checked against the **span's sentence** (a hedge elsewhere in the
@@ -438,6 +448,11 @@ subject to pause). The next open regenerates.
 | POST | /v1/calibration/answer | `{concept_id, answer: explain|heard|none}`: only the current item (409 otherwise) |
 | POST | /v1/calibration/skip | ends calibration (onboarding done) |
 | GET | /v1/me/profile/edits | the last 10 applied/undone edits (expired pending ones are deleted) |
+| GET | /v1/feed?persona= | For you (§17): `{topics, items[{id, topic, topic_label, format, title, url, source, snippet, thumbnail, duration_or_read_time, published_at, new_concepts, goal, why, score}], pending, snapshot, prepared_at}`; demo readers get their persona's pre-seeded snapshot (`snapshot: true`) and trigger no search |
+| GET | /v1/me/goals | the caller's reading goals with progress (§18); signed-in readers only (403 for demo readers) |
+| POST | /v1/me/goals | `{type: habit, metric: articles\|minutes, per_week}` or `{type: learning, text}` (≤ 120 chars, resolved, never stored) → the goal with progress; needs consent; ≤ 5 goals (409), 422 `goal_not_found`, 429 past `GOAL_RESOLVE_DAILY_CAP` |
+| DELETE | /v1/me/goals/{id} | 204 |
+| GET | /v1/me/graph?goal={id} | the learning goal's ≤ 8 target nodes and their edges, for the map's goal view (§18) |
 | POST | /v1/me/demo/reset | `{persona}` (demo readers): back to the original persona for this session (§15.3) |
 
 Annotation response items (spans first, ranked; then paragraph markers, the pre-read card,
@@ -560,6 +575,8 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 ### 11.4 User data rights and minimisation
 - Data held: Firebase uid, display name, onboarding answers, settings, KNOWS edges, domain
   abilities, weekly reading stats, applied profile edits (ops and deltas, never the raw text),
+  reading goals (`goals`: type, numbers, resolved target ids and labels, never the goal text),
+  pages the reader brought in (`ingested`: content id and time),
   events (raw events expire after 90 days via Firestore TTL; aggregates stay).
 - No email stored in our collections (Firebase Auth keeps it).
 - `GET /v1/me/export` → JSON of everything above. `DELETE /v1/me` → deletes all user documents
@@ -579,7 +596,10 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 - CORS: only the web app origin and the extension origin.
 - Secrets in Secret Manager; nothing secret in the extension bundle.
 - Rate limits per uid: 60 annotation reads/min, 30 explain calls/min, 20 new URLs/day,
-  10 profile-edit parses/day (§15.3), 120 requests/min overall, 30 event batches/min.
+  10 profile-edit parses/day (§15.3), 10 learning-goal resolutions/day
+  (`GOAL_RESOLVE_DAILY_CAP`, §18), 120 requests/min overall, 30 event batches/min. The For you
+  feed's searches have their own shared cap, `FEED_SEARCH_DAILY_CAP` (60/day, §17), inside the
+  global search caps.
   Per-minute limits are in memory per instance (≤ 3 instances); daily caps are in Firestore,
   reserved in a transaction before the work and refunded if it fails. Two-phase ingest (§3):
   the slot is taken in phase 1 and refunded if phase 1 fails; an article whose analysis later
@@ -816,3 +836,90 @@ score = relevance × relation_weight × format_affinity × freshness × not_seen
   (§4), covered by export and delete. Personas apply to anonymous demo readers only; signed-in
   readers use `default` and a neutral format prior until onboarding (M7).
 
+## 17. For you feed (M7.5, decision 33)
+A daily page of articles, videos and podcasts on the reader's topics, ranked for what this reader
+is ready to learn. No LLM anywhere on this path.
+
+### 17.1 Topics and searches (`app/recs/feed.py`)
+- **Topics.** Up to 6 taxonomy domains the signed-in reader chose or raised (interest ≥ 0.5;
+  onboarding stores 1.0 for chosen domains and 0.3 for the rest), strongest first, ties in
+  taxonomy order; if none is that strong, their strongest stored domains; none stored → the
+  four business domains. Demo personas have a fixed pair: newcomer
+  technology + economics, trader finance + business, policy student policy + politics.
+- **Query = the taxonomy label + a fixed phrase**, nothing else: "Health news this week" (Tavily,
+  `topic: news`, last 7 days, 10 results for one credit), "Health podcast" (Tavily, podcast directories), "Health
+  news explained" (YouTube, 4–20 minutes, published in the last 30 days). Never reader text,
+  ids, history or the current article (property test over all 14 domains). A changed phrase
+  makes that day's cache entry stale.
+- **Shared and day-keyed.** Each (topic, format, UTC day) is searched once for everyone and
+  cached in `rec_cache` under `feed:<domain>:<day>`. Results pass the blocklist, a page-shape
+  check (an article URL must not be a section, tag or home page: a ≥ 3-word slug or a date/id
+  in the path; podcast chart and genre pages are dropped), the 14-day article filter (when a
+  date is given), an English-only check (≥ 70% of title letters in Latin script; YouTube's
+  language setting is only a hint) and a relevance gate: the title or snippet names the topic (its label, the first
+  4 letters of a long label such as "tech", or a word of the domain's taxonomy scope line such
+  as "AI" or "inflation"), or a graph concept of that domain (sports news rarely says "sport",
+  but it names a penalty).
+- **Caps.** `FEED_SEARCH_DAILY_CAP` (60 calls/day) is reserved under the same lock as the global
+  and YouTube caps; past any of them nothing is called and cached results are served.
+- **In-request only.** Missing searches run inside the request with a 6 s limit (Cloud Run
+  throttles CPU after a response). What doesn't finish is `pending: true`; the client asks again
+  and joins the same in-flight task, so a re-ask never searches twice. Provider results vary
+  from run to run, so a day entry that came back empty may be searched again after an hour.
+  Bound: each API instance makes at most 2 searches per (topic, format, day), so at most 6 with
+  ≤ 3 instances, all inside `FEED_SEARCH_DAILY_CAP`.
+- **When a search can't run** (a cap, a provider failure, or that bound) and today has no
+  entry, yesterday's entry for the same topic and format is served if there is one; after a
+  cap hit or failure that instance waits 10 minutes before trying again.
+
+### 17.2 Ranking (`app/recs/feed_rank.py`, pure)
+```
+score = interest(topic) × format_affinity(format) × readiness × goal_boost × freshness
+```
+- interest: stored domain interest, normalised so the top topic is 1.0.
+- format_affinity and freshness: as Up next (§16.4), sharing its per-reader format model.
+- readiness: concepts the item names (exact label/alias match over 1–4-word n-grams of title and
+  snippet) that are new to this reader (p_know < 0.5): 1–4 new → 1.0, none → 0.6, more than 4 →
+  0.8^(k−4).
+- goal_boost: 1.3 when the item names a learning-goal target (§18).
+- Selection: per topic up to 3 articles, 2 videos, 1 podcast (one per URL), then the topics'
+  picks interleaved by score, at most 24. Each item carries a `why` line ("Health · 2 ideas new
+  to you · helps your goal: Insulin resistance").
+- Feed impressions use the Up next signal store with relation `feed`; feed dismissals never
+  touch relation dismissals.
+
+### 17.3 Demo snapshots (decision 38)
+Demo readers never trigger a search. `scripts/seed_demo_feed.py` runs the same searches once and
+stores `persona_feeds/{persona}` (public search results only), dropping any article that fails a
+local fetch-and-extract check (≥ 400 words). Serving applies no date filter, and the page says
+the picks were prepared in advance, may be dated, and that signing in with Google gives a live
+feed.
+
+### 17.4 Opening items and pasted links
+Feed articles open through "Open here" (POST /v1/recs/open, two-phase, §3). The library's **Read
+any link** box uses the same route. Pages that reach ReadLayer this way (`user_ingested`) or from
+the extension (`extension`), the `NOT_CORPUS` sources, are private to the readers who brought
+them in: `users/{uid}/ingested/{content_id}` is written on every successful open, and the library
+list and Up next drop other readers' `NOT_CORPUS` docs per request, after the shared caches (Up
+next filters before its per-relation cut). A doc stays reachable by id; POST /v1/content with a
+URL stays public (source `fetch`).
+
+## 18. Reading goals (M7.5)
+Signed-in readers only, after consent, at most 5, stored at `users/{uid}/goals/{goal_id}`.
+
+- **Habit:** `{metric: articles | minutes, per_week}` (1–50 articles or 10–600 minutes).
+  Progress is this ISO week's (UTC) `weekly` doc: articles = `content_ids` (written when
+  annotations load), minutes = `words_read / 230`. While learning is paused nothing is recorded,
+  so the goal says "Learning is paused, so reading isn't counting" instead of silently showing zero.
+- **Learning:** "understand X". The text is redacted (§11.3), a leading "understand / learn /
+  get" is stripped, and X is resolved by `resolve_names` (exact label or alias, then embedding
+  candidates + `link_confirm`), which sees only the redacted phrase. Targets = the concept plus
+  its prerequisite chain, most basic first, at most 8. **Only the target ids and labels are
+  stored; the text is never stored or logged** (logs: `uid_hash`, outcome, cost). Unresolvable
+  → 422, nothing stored. `GOAL_RESOLVE_DAILY_CAP` 10 per reader per day.
+- **Known** = band "understands" or "can explain", i.e. current p_know ≥ 0.5 from `knows` with
+  forgetting, else the IRT prior. Learning progress = known targets / targets. Pure math in
+  `app/reader/goals.py`, no LLM.
+- **Where it shows:** the profile's Goals section (progress bars with text values), the feed's
+  goal boost and `why` line (§17.2), and the knowledge map, which rings goal targets and offers
+  a "Goal: X" view (GET /v1/me/graph?goal=).

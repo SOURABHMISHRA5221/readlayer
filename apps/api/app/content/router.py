@@ -17,7 +17,7 @@ from app import ratelimit
 from app.config import Settings, get_settings
 from app.content import catalog
 from app.content.summary import article_domain
-from app.context import ReaderContext, reader_context
+from app.context import ReaderContext, hidden_ids, reader_context
 from app.graph.loader import get_graph
 from app.ingest.models import ContentDoc, PendingDoc
 from app.reader.state import Density, PersonaKey
@@ -284,6 +284,9 @@ async def list_content(
     await refresh_growth()
     needle = q.strip().casefold()
     items = await _summaries(ctx, density or ctx.density)
+    # Other readers' pages are dropped per request, after the shared row cache (M7.5).
+    hidden = hidden_ids(await catalog.all_docs(), ctx)
+    items = [s for s in items if s.id not in hidden]
     if not needle:
         return items
     return [s for s in items if needle in s.title.casefold() or needle in s.site.casefold()]

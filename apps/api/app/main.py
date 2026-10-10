@@ -17,9 +17,11 @@ from app.explain.router import router as explain_router
 from app.graph.loader import get_graph, load_graph, set_graph
 from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
+from app.me.goals import router as goals_router
 from app.me.onboarding import router as onboarding_router
 from app.me.profile_edit import router as profile_edit_router
 from app.me.router import router as me_router
+from app.recs.feed_router import router as feed_router
 from app.recs.router import router as recs_router
 
 settings = get_settings()
@@ -109,6 +111,8 @@ async def healthz() -> dict[str, str]:
 v1.include_router(content_router)
 v1.include_router(read_router)
 v1.include_router(recs_router)
+v1.include_router(feed_router)
+v1.include_router(goals_router)
 v1.include_router(explain_router)
 v1.include_router(me_router)
 v1.include_router(onboarding_router)

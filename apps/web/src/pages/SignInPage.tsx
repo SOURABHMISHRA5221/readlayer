@@ -57,7 +57,7 @@ export function SignInPage({ url }: { url: URL }) {
             Read anything. <em>Understand it your way.</em>
           </h1>
           <p className="signin__lede">
-            Quiet notes on business and economy writing, only where you're likely to need them. The author's words
+            Quiet notes on writing about any subject, only where you're likely to need them. The author's words
             stay exactly as written, and the notes thin out as you learn.
           </p>
         </section>

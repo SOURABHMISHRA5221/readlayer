@@ -197,6 +197,27 @@ def _cost(r: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _open_cases(all_runs: list[dict[str, Any]]) -> list[str]:
+    """Non-business cards (decision 37), reported apart from the M5 targets."""
+    with_open = [r for r in all_runs if r.get("open_verify")]
+    if not with_open:
+        return ["No run with the non-business cards yet."]
+    lines = [
+        "| Run | Prompts | Verifier accepted | Rejected | Pipeline verified | Definition-only |",
+        "|---|---|---|---|---|---|",
+    ]
+    for r in with_open:
+        s = r["summary"]
+        lines.append(
+            f"| `{r['file']}` | {r['meta']['prompt_version']} | "
+            f"{s.get('open_accepted')}/{s.get('open_total')} | "
+            f"{', '.join(s.get('open_rejected', [])) or '–'} | "
+            f"{s.get('open_pipeline_verified', '–')} | "
+            f"{', '.join(s.get('open_pipeline_definition', [])) or '–'} |"
+        )
+    return lines
+
+
 def _background(all_runs: list[dict[str, Any]]) -> list[str]:
     """The Background judge's own suite (explain-v4 on), reported apart from the frozen one."""
     with_bg = [r for r in all_runs if r.get("background")]
@@ -299,6 +320,10 @@ def write_report() -> None:
         "## Background judge (own suite, since explain-v4)",
         "",
         *_background(all_runs),
+        "",
+        "## Non-business cards (decision 37; outside the M5 targets)",
+        "",
+        *_open_cases(all_runs),
         "",
         "## Linker (own suite, M2.2)",
         "",

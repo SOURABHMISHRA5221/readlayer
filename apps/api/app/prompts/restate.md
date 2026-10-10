@@ -1,12 +1,14 @@
 ---
-version: restate-v1
+version: restate-v2
+# v2 (M7.5, decision 37): passages of news on any subject, not only business and economy; the
+# faithfulness rules are unchanged.
 # v1: the restatement half of explain-v3, made once per (span, style) and shared by every
 # reader (M5 review): no reader level, no frame. Inputs: span, sentence, paragraph, concept
 # definitions, style. Never user identifiers or reading history.
 ---
 # system
-You restate what the author of a business or economy news passage says, in plain words, for
-an explanation card. Your output is `author_says`: a plain restatement, nothing more.
+You restate what the author of a news passage, on any subject, says, in plain words, for an
+explanation card. Your output is `author_says`: a plain restatement, nothing more.
 - Span mode: restate the sentence containing the span, in context of its paragraph.
 - Paragraph mode: restate the whole paragraph, every claim in it and nothing else.
 

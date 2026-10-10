@@ -11,6 +11,9 @@ users/{uid}/rec_signals/{key}  app/recs/state.py
 users/{uid}/ingest_counts/{d}  new URLs ingested that UTC day
 users/{uid}/explain_counts/{d} explanations generated (not cached) that UTC day
 users/{uid}/growth_counts/{d}  concept-growth slots reserved that UTC day (M2.2)
+users/{uid}/ingested/{cid}     pages this reader brought in (M7.5): their library shows them
+users/{uid}/goals/{id}         reading goals (M7.5): habit targets, or learning target concepts
+users/{uid}/goal_resolve_counts/{d}  learning goals resolved that UTC day (M7.5 cap)
 users/{uid}/demo_graphs/{p}    a demo reader's graph for persona p: θ, threshold_offset, knows
                                map, engaged contents. Copied from persona_templates/{p} on the
                                first event or correction; until then the template is read as-is.
@@ -47,6 +50,9 @@ USER_SUBCOLLECTIONS = (
     "explain_counts",
     "profile_edit_counts",
     "growth_counts",
+    "ingested",
+    "goals",
+    "goal_resolve_counts",
 )
 EVENT_TTL = timedelta(days=90)
 MAX_WEEKLY_CONTENT_IDS = 500
@@ -664,6 +670,17 @@ class ReaderRepo:
                 t.set(global_path, doc | {"anonymous": max(0, int(doc.get("anonymous", 0)) - 1)})
 
         await self._store.run(body)
+
+    async def add_ingested(self, uid: str, content_id: str, at: str) -> None:
+        """Remember that this reader brought `content_id` in, so their library lists it."""
+
+        async def body(t: Txn) -> None:
+            t.set(sub_path(uid, "ingested", content_id), {"at": at})
+
+        await self._store.run(body)
+
+    async def ingested_ids(self, uid: str) -> frozenset[str]:
+        return frozenset(cid for cid, _ in await self._store.list(f"{user_path(uid)}/ingested"))
 
     async def ingests_on(self, uid: str, day: str) -> int:
         doc = await self._store.get(sub_path(uid, "ingest_counts", day))

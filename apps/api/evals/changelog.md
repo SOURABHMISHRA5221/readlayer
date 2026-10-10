@@ -57,3 +57,26 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
   equities for a living") got no finance level, the model treating it as a job title.
   `profile-edit-v3` (doing a domain's work for a living is a statement of comfort; a bare job
   title is still only a frame hint): **6/6, 4/4**, $0.0049, same frozen cases.
+
+## 2026-10-10 — M7.5, decision 37: general explanation prompts
+
+- New, separate suite `faithfulness_open.yaml` (7 non-business cards: health, sports, science ×2,
+  technology, culture, environment), committed before any prompt edit and reported outside the
+  M5 targets. **Case flaw found by the judge, left unedited:** O06's card names "Niffenegger",
+  but its paragraph only says "she" — the judge's `judge_not_entailed` rejection is correct.
+  The case stays as written (decision 26); read O06 rejections as a correct catch.
+- Before (same day, shipped `explain-v4` + `restate-v1`, verify-v2, verify-background-v1):
+  adversarial 15/15, good 25/25, background 3/3 + 2/2, injection 10/10; non-business verifier
+  6/7 (O06), pipeline verified 7/7. $0.53.
+- After (same day, `explain-v5` + `restate-v2`; judge prompts unchanged): adversarial 15/15,
+  good 24/25, background 3/3 + 2/2, injection 10/10, pipeline 25/25 verified first; non-business
+  verifier 6/7 (O06, as before), pipeline verified 7/7. $0.54. **Targets met; v5/v2 ship.** The
+  one good card rejected is a verifier-only case (fixed card, unchanged judge prompt), so it is
+  judge run-to-run variation, not an effect of the prompt change. Pipeline p95 24.6 s (11.8 s
+  before) came from a single slow call; p50 9.5 s vs 9.1 s.
+- **Judge variation, after-run (`20261010T161404_m7-5-after`):** the judge passed A06 (dropped
+  attribution, "said he would hold out" → "decided to hold out"); only the deterministic
+  attribution check rejected it. The report's "Missed: none" counts rejections by either layer,
+  so it hides this. Same class of run-to-run variation as G21 above; the before-run's judge
+  rejected A06.
+

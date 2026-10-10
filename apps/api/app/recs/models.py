@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field
 Format = Literal["article", "video", "podcast"]
 FORMATS: tuple[Format, ...] = ("article", "video", "podcast")
 
-Relation = Literal["same_story", "primer", "deeper", "angle", "explainer"]
+Relation = Literal["same_story", "primer", "deeper", "angle", "explainer", "feed"]
+# Up next's relations; "feed" (M7.5 For you) is served and evented but never ranks Up next.
 RELATIONS: tuple[Relation, ...] = ("same_story", "primer", "deeper", "angle", "explainer")
 
 
@@ -24,3 +25,14 @@ class WebResult(BaseModel):
     snippet: str = ""
     thumbnail: str | None = None
     published_at: str | None = None
+
+
+# Podcast episodes come from Tavily restricted to podcast directories.
+PODCAST_DOMAINS = (
+    "podcasts.apple.com",
+    "open.spotify.com",
+    "pca.st",
+    "player.fm",
+    "podbean.com",
+    "iheart.com",
+)

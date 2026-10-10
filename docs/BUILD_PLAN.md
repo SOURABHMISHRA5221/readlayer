@@ -21,12 +21,13 @@ M0–M4 and the M6 slice are merged and live. The rest:
 | Oct 12–13 | **M7**: profile page (summary, domain bars, knowledge-map graph and list view, corrections); Google onboarding with consent and calibration; edit-by-prompt. All required (decision 27) |
 | Oct 10–11 | **M2.2 (full scope, decision 32, extended with open domains, decision 33)**: fixed 14-domain taxonomy, online concept growth into it, jurisdiction in `link_confirm`, linker strictness, Russell mislink, 30-article held-out set with non-business articles, ≥ 75% linked, linking per domain |
 | Oct 12–13 | **M7.5** (decision 33): "For you" feed for Google readers, "Read any link" box, reading goals |
+| Oct 13 | **Design pass** (decision 39): Medium-style reading product, right after M7.5 is merged and deployed |
 | Oct 14 | **M8-local**: unpacked Chrome extension (Developer mode), activeTab only (plan approved, paused on branch `m8`) |
 | Oct 15 | **M9** hardening and evals |
 | Oct 16 | Demo seeding, README refresh, video, deck |
 | Oct 17 | **Submit** |
 
-**Order (Sourabh, 2026-10-10, decision 33):** M2.2 → M7.5 → M8-local → M9. ReadLayer is not a
+**Order (Sourabh, 2026-10-10, decisions 33 and 39):** M2.2 → M7.5 → Design pass → M8-local → M9. ReadLayer is not a
 business-only reader; demo personas stay curated as they are, open domains are for signed-in
 (Google) readers.
 
@@ -271,6 +272,67 @@ calibration; and edit-by-prompt (§15.3). Nothing is cut without asking Sourabh 
 
 ---
 
+## Design pass — Medium-style reading product (decision 39; after M7.5, before M8)
+**Scope (Sourabh, 2026-10-10): everything below is required.** Same plan-reviewer and
+milestone-reviewer loop, plus before/after screenshots at desktop, mobile and dark in
+`docs/AUTOPILOT_LOG.md`. Inspired by Medium's layout and typography; no Medium branding, logo or
+copied assets.
+
+1. **Tokens.** White background (dark mode near-black), near-black ink, one accent, real contrast.
+   Reading serif in the Charter style (Source Serif 4 or a similar free font) at 20–21px for the
+   article body; a clean sans for UI at ≥ 14px. No light-grey 12px text for anything a reader
+   needs.
+2. **Library becomes a feed.** Tabs "For you · Topics · Saved"; single-column rows (source and
+   favicon line, big bold title, one-line grey subtitle, thumbnail right, read time, quiet save
+   and not-interested icon buttons, "N new concepts" as a readable tag, not a faint pill). Right
+   sidebar on desktop: recommended topic chips, reading-goal progress, "Read any link". Fix the
+   stale tagline.
+3. **Reader.** 680px column, large bold title, byline with source, a sticky slim action bar
+   (Helpful, save, share link, notes density). Annotations feel like Medium highlights: soft
+   underline, the card slides from the margin on desktop, a bottom sheet on mobile. Clear hover
+   and focus states, small purposeful motion (respect prefers-reduced-motion).
+4. **Profile.** Lead with a readable summary; domain cards instead of thin bars (level, interest,
+   trend). **Knowledge map redesign:**
+   - a force/radial layout clustered by domain;
+   - known concepts solid, and "next to learn" neighbours from the global graph as faint outline
+     nodes, so a new reader's map is never empty;
+   - node size by salience, colour by band;
+   - an overview of all domains first, then drill in;
+   - new nodes animate in.
+   Keep the accessible list view.
+5. **Keep everything that works:** accessibility (axe 0, keyboard, 44px targets), the bundle
+   budget, two-phase loading, annotation behaviour.
+
+**Additions (Sourabh, 2026-10-10 22:06, decision 40; also required):**
+
+6. **Name: Gloss.** Rename the product to "Gloss" for display only: logo, page titles, meta tags,
+   copy, README and deck. Firebase project, URLs, repo name and internal ids stay as they are.
+7. **Visual target: `docs/design/mockup.html`.** Open it in headless Chrome (tabs: Feed, Reader,
+   Profile and map, Logo and Margo; light and dark). Match its layout, type (Schibsted Grotesk
+   for UI and headlines, Source Serif 4 for reading), tokens and the knowledge-map style. It is a
+   target, not code to copy: rebuild it in our components with real data, accessibility and the
+   bundle budget. Commit the mockup with the Design pass branch.
+8. **Mascot: Margo.** Use the `margo()` SVG from the mockup (one ink outline, one teal swipe; moods
+   idle, thinking, happy, oops, plus the simplified 16px mark). Where it appears: logo, favicon,
+   extension icon, the reader margin header, the notes-loading state, the end-of-article recap,
+   empty and error states. Never inside article text, never on every note card, never animated
+   while the reader reads (an occasional blink when idle is fine; none under
+   prefers-reduced-motion). Decorative SVGs are aria-hidden.
+9. **Reader details from the mockup** (size these in the plan; some need API work):
+   - "Before you read" as a path of steps (known steps ticked, the article's key idea last; a step
+     opens its definition or links to an explainer);
+   - two highlight styles: ideas new to the reader vs quick refreshers;
+   - the margin shows "N notes for you" as a mini contents list until a note opens; the note card
+     opens level with the highlighted line, with a connector;
+   - the card shows how it was pitched (level meter and one line), "Builds on" (prerequisites),
+     and "Say it simpler" / "Go deeper", which request the explanation one band lower or higher
+     through the normal verified path (cached by band, counted against the explain caps);
+   - "What the author is saying" set as a quote;
+   - **"What this article changed"** at the end: the reader's band changes from this page view
+     (with undo, through the existing correction route), plus read-next and watch-next items that
+     teach what the reader said they didn't know. Margo (happy) heads it.
+10. **Mobile:** note card as a bottom sheet; paragraph markers only where a paragraph note exists.
+
 ## M8-local — Chrome extension, unpacked (Oct 14)
 Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not
 published to the Chrome Web Store (a post-hackathon item).
@@ -388,6 +450,18 @@ readers; demo personas are unchanged. DESIGN gets new sections for the feed and 
 
 Oct 15 hardening and evals (after M2.2); Oct 16 demo seeding, README, video and deck;
 Oct 17 submit.
+
+**Required before the Oct 16 freeze (Sourabh, 2026-10-10, from the M2.2 live check):**
+1. **Same-article duplicate concepts from growth** (live: "Forever chemicals" vs "PFAS"): run the
+   merge check within one growth batch before defining, so one article never grows two concepts
+   for the same idea.
+2. **Wrong grown prerequisites** (live: PFOS → PHOSITA): validate prerequisites against the
+   concept's domain, or drop low-confidence picks.
+3. **Re-measure grown-concept precision on a fresh, independent sample of 30.** The 97% was a
+   re-sample after tuning (the first sample was 87%); report both, plus the fresh one.
+4. **README and deck state the frozen-graph misses** (business 64% vs the 75% target,
+   non-business 13%) alongside the after-growth numbers (89% / 66%).
+
 **Prompt**
 > Build the quality evals per docs/DESIGN.md §12.1 and §12.4: load `evals/gold/*.json` (spans a
 > human marked per persona), compute annotation precision/recall per persona at balanced density,

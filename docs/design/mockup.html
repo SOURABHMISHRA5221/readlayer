@@ -1,0 +1,641 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gloss redesign</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#ffffff; --ink:#1c1c1c; --ink-2:#5f5f5f; --ink-3:#8a8a8a;
+  --line:#ececec; --wash:#f7f7f5;
+  --accent:#0d6b62; --accent-ink:#0a5a52; --accent-wash:#e4f2ef; --accent-soft:#9fcfc6;
+  --mark:#fff3c4; --focus:#0d6b62;
+  --sans:"Schibsted Grotesk", system-ui, sans-serif;
+  --serif:"Source Serif 4", Georgia, serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#121212; --ink:#ececec; --ink-2:#a9a9a9; --ink-3:#7c7c7c;
+    --line:#262626; --wash:#1b1b1b;
+    --accent:#4fbfae; --accent-ink:#7ad3c5; --accent-wash:#163632; --accent-soft:#2f6e66; --mark:#3a3420;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#121212; --ink:#ececec; --ink-2:#a9a9a9; --ink-3:#7c7c7c;
+  --line:#262626; --wash:#1b1b1b;
+  --accent:#4fbfae; --accent-ink:#7ad3c5; --accent-wash:#163632; --accent-soft:#2f6e66; --mark:#3a3420;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:6px}
+a{color:inherit}
+
+/* mockup switcher */
+.switch{flex-wrap:wrap;position:relative;z-index:20;display:flex;gap:4px;align-items:center;justify-content:center;padding:10px 16px;background:var(--wash);border-bottom:1px solid var(--line);font-size:14px}
+.switch p{margin:0 12px 0 0;color:var(--ink-2)}
+.switch button{padding:6px 14px;border-radius:999px;color:var(--ink-2)}
+.switch button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.switch .theme{margin-left:12px;border:1px solid var(--line)}
+
+/* top bar */
+.top{display:flex;align-items:center;gap:20px;height:60px;padding:0 24px;border-bottom:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:24px;letter-spacing:-.04em;line-height:1}
+.logo svg{flex:none}
+/* mascot */
+.margo .body{fill:var(--paper);stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.margo .fold{fill:none;stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.margo .eye{fill:var(--ink)}
+.margo .lid{fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round}
+.margo .mouth{fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round}
+.margo .swipe{fill:var(--accent);opacity:.85}
+.margo .cheek{fill:var(--accent);opacity:.25}
+.margo .dot{fill:var(--accent)}
+.blink .eye{animation:blink 5s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes blink{0%,94%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+@media (prefers-reduced-motion: reduce){.blink .eye{animation:none}}
+.peek{position:absolute;left:-58px;top:-4px}
+/* brand sheet */
+.brand{max-width:1100px;margin:0 auto;padding:48px 24px 96px}
+.brand h1{font-size:44px;letter-spacing:-.03em;margin:0 0 10px;font-weight:800}
+.brand .lede{font-family:var(--serif);font-size:21px;color:var(--ink-2);max-width:700px;margin:0 0 40px;line-height:1.45}
+.brand h2{font-size:22px;letter-spacing:-.015em;margin:48px 0 16px}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.tile{border:1px solid var(--line);border-radius:12px;padding:24px 16px 18px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center}
+.tile p{margin:0;font-size:14px;color:var(--ink-2)}
+.tile b{display:block;color:var(--ink);font-weight:600;margin-bottom:2px}
+.lockups{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lock{border-radius:12px;padding:40px;display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap}
+.lock.l{background:#fff;border:1px solid #ececec;color:#1c1c1c}
+.lock.d{background:#121212;color:#ececec}
+.lock .logo{font-size:40px}
+.sizes{display:flex;align-items:end;gap:24px}
+.rules{columns:2;column-gap:40px;font-size:15px;color:var(--ink-2);padding-left:18px}
+.rules li{margin:0 0 10px;break-inside:avoid}
+@media (max-width:760px){.tiles{grid-template-columns:repeat(2,1fr)}.lockups{grid-template-columns:1fr}.rules{columns:1}}
+.logo span{color:var(--accent)}
+.search{flex:0 1 260px;display:flex;align-items:center;gap:8px;background:var(--wash);border-radius:999px;padding:8px 14px;color:var(--ink-3)}
+.top .spacer{flex:1}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;color:var(--ink-2)}
+.btn-ghost:hover{color:var(--ink)}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:600;font-size:13px}
+
+.view{display:none}
+.view.on{display:block}
+
+/* ---------- FEED ---------- */
+.feed-wrap{max-width:1192px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:72px}
+.feed{padding-top:28px;max-width:700px}
+.tabs{display:flex;gap:28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.tabs button{padding:12px 0 14px;color:var(--ink-2);font-size:15px;border-bottom:1px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--ink)}
+.row{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:28px;padding:26px 0;border-bottom:1px solid var(--line)}
+.src{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink)}
+.src i{width:20px;height:20px;border-radius:4px;display:grid;place-items:center;font-style:normal;font-size:10px;font-weight:700;color:#fff}
+.src em{font-style:normal;color:var(--ink-3)}
+.row h2{font-size:22px;line-height:1.25;font-weight:700;letter-spacing:-.015em;margin:10px 0 6px}
+.row h2 a{text-decoration:none}
+.row h2 a:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}
+.row p.sub{font-family:var(--serif);font-size:16.5px;color:var(--ink-2);margin:0 0 14px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.meta{display:flex;align-items:center;gap:16px;white-space:nowrap;flex-wrap:wrap;font-size:13.5px;color:var(--ink-3)}
+.tag{display:inline-flex;align-items:center;gap:6px;color:var(--accent-ink);font-weight:500}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.goaltag{background:var(--accent-wash);color:var(--accent-ink);border-radius:999px;padding:2px 10px;font-weight:500}
+.meta .acts{margin-left:auto;display:flex;gap:4px}
+.icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3)}
+.icon:hover{color:var(--ink);background:var(--wash)}
+.thumb{width:120px;height:120px;border-radius:4px;align-self:center;position:relative;overflow:hidden}
+.why{font-size:13px;color:var(--ink-3);margin:-4px 0 12px}
+.why b{font-weight:500;color:var(--ink-2)}
+
+.side{padding-top:36px;border-left:1px solid var(--line);padding-left:40px;min-height:100vh}
+.side h3{font-size:16px;font-weight:600;margin:0 0 14px}
+.side section{margin-bottom:40px}
+.anylink{display:flex;gap:8px}
+.anylink input{flex:1;min-width:0;border:1px solid var(--line);border-radius:999px;padding:10px 14px;font:inherit;background:var(--paper);color:var(--ink)}
+.anylink button{background:var(--ink);color:var(--paper);border-radius:999px;padding:10px 16px;font-weight:500}
+.hint{font-size:13px;color:var(--ink-3);margin:8px 0 0}
+.goal{padding:16px 0;border-top:1px solid var(--line)}
+.goal:first-of-type{border-top:0;padding-top:0}
+.goal .gt{font-weight:600;margin:0 0 2px}
+.goal .gs{font-size:13.5px;color:var(--ink-2);margin:0 0 10px}
+.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar span{display:block;height:100%;background:var(--accent);border-radius:3px}
+.dots{display:flex;gap:6px}
+.dots span{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--accent-soft)}
+.dots span.on{background:var(--accent);border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{background:var(--wash);border-radius:999px;padding:8px 14px;font-size:14px}
+.chips button:hover{background:var(--line)}
+
+/* ---------- READER ---------- */
+.progress{position:fixed;left:0;top:0;height:3px;background:var(--accent);width:0;z-index:40;transition:width .1s linear}
+.reader{max-width:1160px;margin:0 auto;padding:48px 24px 120px;display:grid;grid-template-columns:minmax(0,680px) 320px;gap:64px;justify-content:center}
+.kicker{font-size:14px;color:var(--accent-ink);font-weight:500;margin:0 0 14px}
+.reader h1{font-size:44px;line-height:1.1;letter-spacing:-.028em;font-weight:800;margin:0 0 14px}
+.reader .dek{font-family:var(--serif);font-size:22px;line-height:1.4;color:var(--ink-2);margin:0 0 28px}
+.byline{display:flex;align-items:center;gap:12px;font-size:14px;padding-bottom:20px}
+.byline i{width:40px;height:40px;border-radius:50%;background:#3d6b9e;color:#fff;display:grid;place-items:center;font-style:normal;font-weight:700;font-size:13px}
+.byline .who{font-weight:500}
+.byline .when{color:var(--ink-3)}
+.actionbar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:6px;padding:8px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--paper);margin-bottom:32px;font-size:14px;color:var(--ink-2)}
+.actionbar .notes{display:flex;align-items:center;gap:10px;margin-right:auto}
+.seg{display:inline-flex;background:var(--wash);border-radius:999px;padding:3px}
+.seg button{white-space:nowrap;padding:5px 12px;border-radius:999px;font-size:13.5px;color:var(--ink-2)}
+.seg button[aria-pressed="true"]{background:var(--paper);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+/* pre-read path */
+.path{margin:0 0 40px}
+.path .ph{font-size:15px;font-weight:600;margin:0 0 4px}
+.path .ps{font-size:14px;color:var(--ink-2);margin:0 0 14px}
+.steps{display:flex;align-items:center;flex-wrap:wrap;gap:0}
+.step{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 10px;font-size:14.5px;background:var(--paper)}
+.step .st{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;border:1.5px solid var(--accent-soft);color:var(--accent-ink)}
+.step.known .st{background:var(--accent);border-color:var(--accent);color:#fff}
+.step.cur{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-wash)}
+.step:hover{border-color:var(--ink-3)}
+.join{width:22px;height:1.5px;background:var(--accent-soft)}
+.stepdef{font-family:var(--serif);font-size:16px;line-height:1.5;color:var(--ink-2);margin:12px 0 0;padding:12px 16px;background:var(--wash);border-radius:8px}
+.stepdef[hidden]{display:none}
+/* body */
+.body{position:relative}
+.body p{font-family:var(--serif);font-size:21px;line-height:1.62;margin:0 0 30px;position:relative}
+.hl{cursor:pointer;border-radius:2px;transition:background .2s;text-decoration:none;padding:0 1px}
+.hl.new{background:linear-gradient(transparent 60%, var(--accent-wash) 60%);box-shadow:inset 0 -2px 0 var(--accent)}
+.hl.refresh{box-shadow:inset 0 -1.5px 0 var(--accent-soft)}
+.hl:hover,.hl.open{background:var(--accent-wash)}
+.hl.new::after{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);vertical-align:super;margin-left:2px}
+.pmark{position:absolute;left:-52px;top:2px;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--ink-3);font-family:var(--sans);font-size:15px;opacity:0;transition:opacity .15s}
+.body p:hover .pmark,.pmark:focus-visible,.pmark.has{opacity:1}
+.pmark:hover{background:var(--wash);color:var(--accent-ink)}
+.know{display:inline-flex;align-items:center;gap:4px;font-family:var(--sans);font-size:13.5px;background:var(--wash);border-radius:999px;padding:3px 4px 3px 12px;margin-left:6px;vertical-align:3px;color:var(--ink-2);white-space:nowrap}
+.know button{border-radius:999px;padding:3px 10px;font-weight:500;color:var(--ink)}
+.know button:hover{background:var(--paper)}
+/* margin */
+.margin{position:relative}
+.toc{position:sticky;top:72px;font-size:14px;transition:opacity .2s}
+.toc h3{font-size:14px;font-weight:600;margin:0 0 4px}
+.toc p{color:var(--ink-3);margin:0 0 12px;font-size:13.5px}
+.toc button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 0;border-top:1px solid var(--line);color:var(--ink-2)}
+.toc button:hover{color:var(--ink)}
+.toc .d{width:8px;height:8px;border-radius:50%;flex:none}
+.margin.reading .toc{opacity:0;pointer-events:none}
+.notecard{position:absolute;left:0;right:0;transition:top .3s cubic-bezier(.2,.8,.2,1),opacity .2s}
+.notecard[hidden]{display:block;opacity:0;pointer-events:none}
+.notecard::before{content:"";position:absolute;left:-40px;top:14px;width:32px;border-top:1px dashed var(--accent-soft)}
+.nc-in{border-left:2px solid var(--accent);padding:2px 0 0 20px}
+.notecard .x{position:absolute;right:-8px;top:-6px}
+.notecard .term{font-size:21px;font-weight:700;margin:0 0 8px;letter-spacing:-.015em}
+.pitch{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2);margin:0 0 14px}
+.lv{display:flex;gap:3px}.lv span{width:16px;height:4px;border-radius:2px;background:var(--line)}.lv span.on{background:var(--accent)}
+.builds{font-size:13.5px;color:var(--ink-2);margin:0 0 16px}
+.builds a{color:var(--accent-ink);text-underline-offset:3px}
+.notecard h4{font-size:13.5px;font-weight:600;margin:0 0 6px;display:flex;align-items:center;gap:8px}
+.notecard .bg{font-family:var(--serif);font-size:16.5px;line-height:1.55;margin:0 0 10px}
+.an{display:inline-block;font-family:var(--sans);font-size:12.5px;font-weight:500;background:var(--accent-wash);color:var(--accent-ink);border-radius:4px;padding:1px 7px}
+.depth{display:flex;gap:6px;margin:0 0 18px}
+.depth button{font-size:13px;color:var(--ink-2);padding:4px 10px;border-radius:999px;border:1px solid var(--line)}
+.depth button:hover{color:var(--ink);border-color:var(--ink-3)}
+.says{font-family:var(--serif);font-style:italic;font-size:16.5px;line-height:1.55;margin:0 0 18px;color:var(--ink-2);padding-left:14px;border-left:2px solid var(--line)}
+.notecard .row-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.pill:hover{border-color:var(--ink-3)}
+.pill.quiet{border-color:transparent;color:var(--ink-3);padding-left:6px}
+.pill.done{background:var(--accent-wash);border-color:var(--accent-wash);color:var(--accent-ink)}
+/* recap */
+.recap{margin-top:56px;border-top:1px solid var(--ink);padding-top:28px}
+.recap h2{font-size:26px;letter-spacing:-.02em;margin:0 0 6px}
+.recap > p{color:var(--ink-2);margin:0 0 22px;font-size:15.5px}
+.moves{list-style:none;margin:0 0 32px;padding:0}
+.moves li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.moves b{font-weight:600}
+.moves small{display:block;color:var(--ink-3);font-size:13px}
+.mv{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-2)}
+.mv i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.mv .arrow{width:28px;height:1.5px;background:var(--ink-3);position:relative}
+.mv .arrow::after{content:"";position:absolute;right:-1px;top:-3px;border:4px solid transparent;border-left:5px solid var(--ink-3);border-right:0}
+.next{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.next a{display:block;text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:16px}
+.next a:hover{border-color:var(--ink-3)}
+.next .k{font-size:13px;color:var(--accent-ink);font-weight:500;margin:0 0 6px}
+.next .t{font-weight:700;font-size:16.5px;line-height:1.3;margin:0 0 6px}
+.next .w{font-size:13px;color:var(--ink-3);margin:0}
+
+/* ---------- PROFILE ---------- */
+.profile{max-width:1100px;margin:0 auto;padding:48px 24px 96px}
+.profile h1{font-size:44px;line-height:1.1;letter-spacing:-.03em;font-weight:800;margin:0 0 12px;max-width:760px}
+.profile .lede{font-family:var(--serif);font-size:22px;line-height:1.45;color:var(--ink-2);margin:0 0 40px;max-width:720px}
+.domains{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:56px}
+.dom{background:var(--paper);padding:20px 22px}
+.dom .dn{font-weight:600;font-size:16px;margin:0 0 2px}
+.dom .dl{font-size:28px;font-weight:700;letter-spacing:-.02em;margin:6px 0 2px}
+.dom .dd{font-size:13.5px;color:var(--ink-2);margin:0 0 12px}
+.dom .up{color:var(--accent-ink);font-weight:500}
+.scale{display:flex;gap:3px}
+.scale span{flex:1;height:5px;border-radius:2px;background:var(--line)}
+.scale span.on{background:var(--accent)}
+.maphead{display:flex;align-items:end;gap:24px;margin-bottom:16px;flex-wrap:wrap}
+.maphead h2{font-size:28px;letter-spacing:-.02em;margin:0;font-weight:700}
+.maphead p{margin:0;color:var(--ink-2);font-size:15px}
+.maphead .ctrl{margin-left:auto;display:flex;gap:10px;align-items:center}
+.mapgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;border:1px solid var(--line);border-radius:12px;overflow:hidden;min-height:560px}
+.map{position:relative;background:var(--paper)}
+.map svg{display:block;width:100%;height:100%}
+.legend{position:absolute;left:16px;bottom:14px;display:flex;gap:16px;font-size:13px;color:var(--ink-2);background:var(--paper);padding:6px 10px;border-radius:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.lg{width:12px;height:12px;border-radius:50%;display:inline-block}
+.inspect{border-left:1px solid var(--line);padding:24px;background:var(--paper)}
+.inspect .ct{font-size:22px;font-weight:700;letter-spacing:-.015em;margin:0 0 4px}
+.inspect .cd{font-size:13.5px;color:var(--ink-3);margin:0 0 16px}
+.inspect .def{font-family:var(--serif);font-size:16px;line-height:1.5;margin:0 0 20px}
+.inspect h4{font-size:13.5px;font-weight:600;margin:0 0 8px}
+.inspect ul{list-style:none;margin:0 0 22px;padding:0;font-size:14px;color:var(--ink-2)}
+.inspect li{padding:8px 0;border-top:1px solid var(--line)}
+.inspect li time{display:block;font-size:12.5px;color:var(--ink-3)}
+.node{cursor:pointer}
+.node text{font-family:var(--sans);font-size:12px;fill:var(--ink-2);pointer-events:none}
+.node:hover text,.node.sel text{fill:var(--ink);font-weight:600}
+.cl{font-family:var(--sans);font-size:14px;font-weight:700;fill:var(--ink);letter-spacing:-.01em;cursor:pointer}
+.cl.dim{fill:var(--ink-3)}
+.grow{animation:pop .6s cubic-bezier(.2,.9,.3,1.3) both}
+@keyframes pop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion: reduce){.grow{animation:none}.notecard{transition:none}}
+
+.note-spec{max-width:1100px;margin:0 auto;padding:0 24px 48px;color:var(--ink-3);font-size:13.5px}
+
+@media (max-width:960px){
+  .feed-wrap{grid-template-columns:1fr;gap:0}
+  .side{border-left:0;padding-left:0;border-top:1px solid var(--line);min-height:0}
+  .reader{grid-template-columns:1fr}
+  .margin .toc{display:none}
+  .notecard{position:fixed;left:0;right:0;bottom:0;top:auto!important;background:var(--paper);padding:20px 16px 24px;border-radius:16px 16px 0 0;box-shadow:0 -8px 30px rgba(0,0,0,.14);max-height:72vh;overflow:auto;z-index:30;transition:transform .25s,opacity .2s}
+  .notecard[hidden]{transform:translateY(24px)}
+  .notecard::before{display:none}
+  .nc-in{border-left:0;padding-left:0}
+  .notecard .x{right:4px;top:0}
+  .pmark{display:none}
+  .pmark.has{position:static;display:inline-grid;margin-right:4px;opacity:1;vertical-align:2px}
+  .next{grid-template-columns:1fr}
+  .domains{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .mapgrid{grid-template-columns:1fr}
+  .inspect{border-left:0;border-top:1px solid var(--line)}
+  .map{height:440px}
+}
+@media (max-width:600px){
+  .swl{display:none}.switch button{padding:6px 10px}
+  .top{padding:0 16px;gap:10px}.search{display:none}
+  .feed-wrap,.reader,.profile{padding-left:16px;padding-right:16px}
+  .row{grid-template-columns:minmax(0,1fr) 80px;gap:16px}
+  .thumb{width:80px;height:80px}
+  .row h2{font-size:19px}
+  .reader h1,.profile h1{font-size:32px}
+  .body p{font-size:19px}
+  .legend{flex-wrap:wrap;gap:8px}
+}
+</style>
+</head>
+<body>
+
+<nav class="switch" aria-label="Mockup screens">
+  <p class="swl">Redesign mockup</p>
+  <button data-v="feed" aria-pressed="true">Feed</button>
+  <button data-v="reader" aria-pressed="false">Reader</button>
+  <button data-v="profile" aria-pressed="false">Profile and map</button>
+  <button data-v="brand" aria-pressed="false">Logo and Margo</button>
+  <button class="theme" id="theme">Dark mode</button>
+</nav>
+
+<header class="top">
+  <div class="logo"><span data-m="idle" data-s="30"></span>gloss</div>
+  <div class="search" role="search"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5"/><path d="M11 11l4 4"/></svg> Search</div>
+  <div class="spacer"></div>
+  <button class="btn-ghost"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7.5 10.5l3-3M6 8L4.5 9.5a2.5 2.5 0 003.5 3.5L9.5 11.5M12 10l1.5-1.5a2.5 2.5 0 00-3.5-3.5L8.5 6.5"/></svg>Read any link</button>
+  <div class="avatar" aria-label="Your account">SM</div>
+</header>
+
+<!-- ================= FEED ================= -->
+<main class="view on" id="v-feed">
+  <div class="feed-wrap">
+    <div class="feed">
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true">For you</button>
+        <button role="tab" aria-selected="false">Topics</button>
+        <button role="tab" aria-selected="false">Saved</button>
+      </div>
+
+      <article class="row">
+        <div>
+          <div class="src"><i style="background:#bb1919">B</i>BBC News <em>in Environment</em></div>
+          <h2><a href="#">Forever chemicals at former Oxfordshire fuel depot have been removed</a></h2>
+          <p class="sub">Barrels of PFAS left at a development site have been cleared, but residents want the soil tested before homes go up.</p>
+          <p class="why">Picked for your goal <b>Understand climate policy</b></p>
+          <div class="meta"><span>4 min read</span><span class="tag">3 ideas new to you</span>
+            <span class="acts"><button class="icon" aria-label="Save"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h8v12l-4-3-4 3z"/></svg></button><button class="icon" aria-label="Show less like this"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="6.5"/><path d="M5.5 9h7"/></svg></button></span></div>
+        </div>
+        <div class="thumb" style="background:linear-gradient(135deg,#4b5a4a,#a7a58f)"></div>
+      </article>
+
+      <article class="row">
+        <div>
+          <div class="src"><i style="background:#c0392b">YT</i>Kurzgesagt <em>in Science · video</em></div>
+          <h2><a href="#">How mRNA vaccines actually teach your cells</a></h2>
+          <p class="sub">A 9-minute animated explainer. Gloss reads the transcript and adds notes as it plays.</p>
+          <div class="meta"><span>9 min watch</span><span class="tag">2 ideas new to you</span>
+            <span class="acts"><button class="icon" aria-label="Save"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h8v12l-4-3-4 3z"/></svg></button><button class="icon" aria-label="Show less like this"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="6.5"/><path d="M5.5 9h7"/></svg></button></span></div>
+        </div>
+        <div class="thumb" style="background:linear-gradient(160deg,#2b3f7a,#e2a35b)"></div>
+      </article>
+
+      <article class="row">
+        <div>
+          <div class="src"><i style="background:#3d6b9e">M</i>Mint <em>in Finance</em></div>
+          <h2><a href="#">Why the RBI held the repo rate, and what the bond market heard instead</a></h2>
+          <p class="sub">Yields barely moved after the decision. The real signal was in the governor's line on liquidity.</p>
+          <div class="meta"><span>6 min read</span><span class="tag">1 idea new to you</span><span class="goaltag">Builds on yield curve</span>
+            <span class="acts"><button class="icon" aria-label="Save"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h8v12l-4-3-4 3z"/></svg></button><button class="icon" aria-label="Show less like this"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="6.5"/><path d="M5.5 9h7"/></svg></button></span></div>
+        </div>
+        <div class="thumb" style="background:linear-gradient(135deg,#1f3b36,#6fa597)"></div>
+      </article>
+
+      <article class="row">
+        <div>
+          <div class="src"><i style="background:#6b4fa0">P</i>Hard Fork <em>in Technology · podcast</em></div>
+          <h2><a href="#">The chip export rules, explained by the people who wrote them</a></h2>
+          <p class="sub">A 40-minute conversation. Notes appear on the transcript beside the player.</p>
+          <div class="meta"><span>40 min listen</span><span class="tag">5 ideas new to you</span>
+            <span class="acts"><button class="icon" aria-label="Save"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h8v12l-4-3-4 3z"/></svg></button><button class="icon" aria-label="Show less like this"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="9" r="6.5"/><path d="M5.5 9h7"/></svg></button></span></div>
+        </div>
+        <div class="thumb" style="background:linear-gradient(135deg,#251a3b,#8f6fd0)"></div>
+      </article>
+    </div>
+
+    <aside class="side">
+      <section>
+        <h3>Read any link</h3>
+        <form class="anylink" onsubmit="return false"><input aria-label="Article link" placeholder="Paste an article, video or podcast link"><button>Read</button></form>
+        <p class="hint">Opens here with notes for you. The original stays untouched.</p>
+      </section>
+      <section>
+        <h3>Your goals</h3>
+        <div class="goal">
+          <p class="gt">Understand climate policy</p>
+          <p class="gs">7 of 20 ideas you know now</p>
+          <div class="bar"><span style="width:35%"></span></div>
+        </div>
+        <div class="goal">
+          <p class="gt">Read 5 articles a week</p>
+          <p class="gs">3 so far, 2 to go by Sunday</p>
+          <div class="dots"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div>
+        </div>
+      </section>
+      <section>
+        <h3>Topics for you</h3>
+        <div class="chips"><button>Environment</button><button>Finance</button><button>Technology</button><button>Health</button><button>Cricket</button><button>Law</button><button>Science</button></div>
+      </section>
+    </aside>
+  </div>
+</main>
+
+<!-- ================= READER ================= -->
+<main class="view" id="v-reader">
+  <div class="progress" id="prog"></div>
+  <div class="reader">
+    <article>
+      <p class="kicker">Finance</p>
+      <h1>Why the RBI held the repo rate, and what the bond market heard instead</h1>
+      <p class="dek">Yields barely moved after the decision. The real signal was in the governor's line on liquidity.</p>
+      <div class="byline"><i>M</i><div><div class="who">Mint</div><div class="when">6 min read &nbsp; 9 Oct 2026</div></div></div>
+      <div class="actionbar">
+        <span class="notes">Notes
+          <span class="seg" role="group" aria-label="How many notes"><button aria-pressed="false">Fewer</button><button aria-pressed="true">For me</button><button aria-pressed="false">More</button></span>
+        </span>
+        <button class="icon" aria-label="Save"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h8v12l-4-3-4 3z"/></svg></button>
+        <button class="icon" aria-label="Copy link"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7.5 10.5l3-3M6 8L4.5 9.5a2.5 2.5 0 003.5 3.5L9.5 11.5M12 10l1.5-1.5a2.5 2.5 0 00-3.5-3.5L8.5 6.5"/></svg></button>
+        <button class="icon" aria-label="Open original"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 3h5v5M15 3l-7 7M13 11v4H3V5h4"/></svg></button>
+      </div>
+
+      <div class="path">
+        <p class="ph">Before you read</p>
+        <p class="ps">This piece leans on one idea you haven't met yet. Here's the path to it.</p>
+        <div class="steps">
+          <button class="step known" data-s="0"><span class="st">✓</span>Central bank</button><span class="join"></span>
+          <button class="step known" data-s="1"><span class="st">✓</span>Repo rate</button><span class="join"></span>
+          <button class="step cur" data-s="2"><span class="st">3</span>Yield curve</button>
+        </div>
+        <p class="stepdef" id="stepdef" hidden></p>
+      </div>
+
+      <div class="body" id="body">
+        <p><button class="pmark" aria-label="What this paragraph is saying">¶</button>The Reserve Bank of India kept the <span class="hl refresh" tabindex="0" role="button" data-n="repo">repo rate</span> unchanged at 5.5% on Wednesday, as most economists had expected. Markets had priced in a pause weeks ago.</p>
+        <p><button class="pmark" aria-label="What this paragraph is saying">¶</button>What moved traders was not the rate but the tone. The governor said the central bank would keep liquidity "adequate", a phrase bond desks read as a promise to keep buying government paper. Ten-year yields slipped two <span class="hl new" tabindex="0" role="button" data-n="bps">basis points</span> before the press conference ended.</p>
+        <p><button class="pmark has" aria-label="What this paragraph is saying">¶</button>The shape of the <span class="hl new" tabindex="0" role="button" data-n="yc">yield curve</span> tells the rest of the story. Short-dated bills now pay almost as much as ten-year bonds, which usually means investors expect slower growth ahead. <span class="know" role="group" aria-label="Do you know term premium?">Know term premium? <button>Yes</button><button>Not really</button></span></p>
+        <p><button class="pmark" aria-label="What this paragraph is saying">¶</button>Analysts at two large banks said a cut in December is still possible if food prices keep falling, though neither expects one before the budget.</p>
+      </div>
+
+      <section class="recap" aria-labelledby="recap-h">
+        <div style="display:flex;align-items:center;gap:14px"><span data-m="happy" data-s="52"></span><h2 id="recap-h" style="margin:0">What this article changed</h2></div>
+        <p>Your map updated as you read. Undo anything that looks wrong.</p>
+        <ul class="moves">
+          <li><div><b>Yield curve</b><small>You opened the note and marked it helpful</small></div><span class="mv"><i style="background:var(--accent-soft)"></i>Heard of<span class="arrow"></span><i style="background:var(--accent)"></i>Understands</span></li>
+          <li><div><b>Basis points</b><small>New to you, note opened</small></div><span class="mv"><i style="border:1.5px solid var(--accent-soft)"></i>New<span class="arrow"></span><i style="background:var(--accent-soft)"></i>Heard of</span></li>
+          <li><div><b>Term premium</b><small>You said "Not really", so it's next on your path</small></div><span class="mv"><i style="border:1.5px dashed #c58b00"></i>Ready to learn</span></li>
+        </ul>
+        <div class="next">
+          <a href="#"><p class="k">Read next, teaches term premium</p><p class="t">Why long bonds pay more, and when they stop</p><p class="w">The Economist, 7 min read</p></a>
+          <a href="#"><p class="k">Watch, goes deeper on yield curves</p><p class="t">The yield curve, explained in 8 minutes</p><p class="w">Video, 8 min</p></a>
+        </div>
+      </section>
+    </article>
+
+    <aside class="margin" id="margin">
+      <div class="toc">
+        <h3 style="display:flex;align-items:center;gap:10px"><span data-m="idle" data-s="34" class="blinker"></span>3 notes for you</h3>
+        <p>Pitched for what you already know. Tap a highlight or pick one here.</p>
+        <button data-go="repo"><span class="d" style="background:var(--accent-soft)"></span>Repo rate, a quick refresher</button>
+        <button data-go="bps"><span class="d" style="background:var(--accent)"></span>Basis points, new to you</button>
+        <button data-go="yc"><span class="d" style="background:var(--accent)"></span>Yield curve, new to you</button>
+      </div>
+      <div class="notecard" id="note" hidden aria-live="polite"></div>
+    </aside>
+  </div>
+</main>
+
+<!-- ================= PROFILE ================= -->
+<main class="view" id="v-profile">
+  <div class="profile">
+    <h1>What Gloss thinks you know</h1>
+    <p class="lede">You're at home in finance and getting there in environment. Policy is new to you, so notes there go slower. You think in software, so analogies come from there.</p>
+
+    <div class="domains">
+      <div class="dom"><p class="dn">Finance</p><p class="dl">Comfortable</p><p class="dd">48 ideas known <span class="up">+6 this week</span></p><div class="scale"><span class="on"></span><span class="on"></span><span class="on"></span><span></span><span></span></div></div>
+      <div class="dom"><p class="dn">Environment</p><p class="dl">Getting there</p><p class="dd">17 ideas known <span class="up">+9 this week</span></p><div class="scale"><span class="on"></span><span class="on"></span><span></span><span></span><span></span></div></div>
+      <div class="dom"><p class="dn">Technology</p><p class="dl">Advanced</p><p class="dd">71 ideas known <span class="up">+2 this week</span></p><div class="scale"><span class="on"></span><span class="on"></span><span class="on"></span><span class="on"></span><span></span></div></div>
+      <div class="dom"><p class="dn">Policy</p><p class="dl">New to you</p><p class="dd">6 ideas known, no change</p><div class="scale"><span class="on"></span><span></span><span></span><span></span><span></span></div></div>
+    </div>
+
+    <div class="maphead">
+      <h2>Your knowledge map</h2>
+      <p>Solid dots are ideas you know. Rings are what you're ready to learn next.</p>
+      <div class="ctrl">
+        <span class="seg" role="group" aria-label="Map view"><button aria-pressed="true">Map</button><button aria-pressed="false">List</button></span>
+        <button class="pill" id="replay">Replay this week</button>
+      </div>
+    </div>
+    <div class="mapgrid">
+      <div class="map" id="map">
+        <div class="legend">
+          <span><i class="lg" style="border:1.5px solid var(--accent-soft)"></i>Ready to learn</span>
+          <span><i class="lg" style="background:var(--accent-soft)"></i>Heard of</span>
+          <span><i class="lg" style="background:var(--accent)"></i>Understands</span>
+          <span><i class="lg" style="background:var(--accent-ink);box-shadow:0 0 0 2px var(--paper),0 0 0 3.5px var(--accent-ink)"></i>Can explain</span>
+          <span><i class="lg" style="border:1.5px dashed #c58b00"></i>In a goal</span>
+        </div>
+      </div>
+      <aside class="inspect" id="inspect" aria-live="polite"></aside>
+    </div>
+  </div>
+</main>
+
+<main class="view" id="v-brand">
+  <div class="brand">
+    <h1>Gloss, and Margo</h1>
+    <p class="lede">A gloss is the note a reader writes in the margin beside a hard word, without touching the text. Margo is the little page who writes them for you. Margo lives in the margin, never in the article.</p>
+    <h2>Logo</h2>
+    <div class="lockups">
+      <div class="lock l"><div class="logo" style="color:#1c1c1c"><span data-m="idle" data-s="52" data-theme-force="light"></span>gloss</div><div class="sizes"><span data-m="idle" data-s="32" data-theme-force="light"></span><span data-m="mark" data-s="16" data-theme-force="light"></span></div></div>
+      <div class="lock d"><div class="logo" style="color:#ececec"><span data-m="idle" data-s="52" data-theme-force="dark"></span>gloss</div><div class="sizes"><span data-m="idle" data-s="32" data-theme-force="dark"></span><span data-m="mark" data-s="16" data-theme-force="dark"></span></div></div>
+    </div>
+    <h2>Margo's moods</h2>
+    <div class="tiles">
+      <div class="tile"><span data-m="idle" data-s="96" class="blinker"></span><p><b>Here if you need me</b>Logo, margin, idle states. Blinks now and then.</p></div>
+      <div class="tile"><span data-m="think" data-s="96"></span><p><b>Reading the article</b>While notes are being prepared.</p></div>
+      <div class="tile"><span data-m="happy" data-s="96"></span><p><b>Your map grew</b>End-of-article recap, goal reached.</p></div>
+      <div class="tile"><span data-m="oops" data-s="96"></span><p><b>Couldn't open that</b>Errors and empty states, with what to do next.</p></div>
+    </div>
+    <h2>Where Margo appears</h2>
+    <ul class="rules">
+      <li>The logo, the favicon (the simplified mark at 16px) and the extension icon.</li>
+      <li>The margin, above "N notes for you", and while notes are loading ("Reading the article…").</li>
+      <li>The end-of-article recap, when your map changes.</li>
+      <li>Empty and error states: an empty Saved tab, a link that couldn't be opened.</li>
+      <li>Never inside the article text, never on every note card, never animated while you read.</li>
+      <li>Margo is one ink outline and one teal swipe, so it works in light and dark and at any size.</li>
+    </ul>
+  </div>
+</main>
+
+<p class="note-spec">Mockup for the Design pass (product name: Gloss, mascot: Margo). Content is illustrative. Fonts: Schibsted Grotesk (UI and headlines), Source Serif 4 (reading).</p>
+
+<script>
+// view switcher
+const views=document.querySelectorAll('.view'), sw=document.querySelectorAll('.switch [data-v]');
+sw.forEach(b=>b.onclick=()=>{sw.forEach(x=>x.setAttribute('aria-pressed',x===b));views.forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));if(b.dataset.v==='profile')drawMap(true);window.scrollTo(0,0)});
+// theme
+const tb=document.getElementById('theme');
+tb.onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme==='dark'||(!r.dataset.theme&&matchMedia('(prefers-color-scheme: dark)').matches);r.dataset.theme=dark?'light':'dark';tb.textContent=dark?'Dark mode':'Light mode';drawMap(false)};
+// segmented controls
+document.querySelectorAll('.seg').forEach(g=>g.querySelectorAll('button').forEach(b=>b.onclick=()=>g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b))));
+// reader notes
+const notes={
+ repo:{t:'Repo rate',lv:3,pitch:'You understand this, so it\'s a one-line refresher',an:'',builds:'Central bank',bg:'The rate the central bank charges banks for short loans. Raise it and borrowing gets dearer across the economy.',simple:'',s:'The RBI kept this rate at 5.5%, as most economists expected.'},
+ bps:{t:'Basis points',lv:0,pitch:'New to you, so this note starts from zero',an:'Like the patch digit in a version number',builds:'Percentage',bg:'One hundredth of a percentage point. Two basis points is 0.02%: tiny on paper, but enough to move very large bond portfolios.',simple:'A way of counting very small changes in interest rates. 100 basis points make 1%.',s:'Ten-year yields fell by 0.02 percentage points before the press conference ended.'},
+ yc:{t:'Yield curve',lv:1,pitch:'You\'ve heard of this, so it skips the basics',an:'Like a software release roadmap',builds:'Repo rate → Bond yield',bg:'A line plotting what lenders earn for tying money up for a week, a year, ten years. Normally longer means more, the way a longer support contract costs more. When the line flattens, the market is betting the future looks slower.',simple:'A chart of interest rates from short loans to long ones. When short and long pay about the same, people expect the economy to slow.',s:'Short-term bills now pay almost as much as ten-year bonds, which the author says usually signals expected slower growth.'}};
+const note=document.getElementById('note'),margin=document.getElementById('margin');
+function openNote(key,h){
+ document.querySelectorAll('.hl').forEach(x=>x.classList.toggle('open',x===h));
+ const n=notes[key];margin.classList.add('reading');
+ note.innerHTML=`<div class="nc-in"><button class="icon x" aria-label="Close note">✕</button><p class="term">${n.t}</p>
+  <div class="pitch"><span class="lv">${[0,1,2,3].map(i=>`<span class="${i<=n.lv?'on':''}"></span>`).join('')}</span>${n.pitch}</div>
+  <p class="builds">Builds on <a href="#">${n.builds}</a></p>
+  <h4>Background ${n.an?`<span class="an">${n.an}</span>`:''}</h4>
+  <p class="bg" id="bgtext">${n.bg}</p>
+  ${n.simple?`<div class="depth"><button id="simpler">Say it simpler</button><button>Go deeper</button></div>`:'<div style="height:8px"></div>'}
+  <h4>What the author is saying</h4>
+  <p class="says">${n.s}</p>
+  <div class="row-acts"><button class="pill" data-a>Helpful</button><button class="pill" data-a>Knew this</button><button class="pill quiet">This is wrong</button></div></div>`;
+ const top=h.getBoundingClientRect().top-margin.getBoundingClientRect().top-14;
+ note.style.top=Math.max(0,top)+'px';note.hidden=false;
+ note.querySelector('.x').onclick=()=>{note.hidden=true;margin.classList.remove('reading');h.classList.remove('open');h.focus()};
+ const sb=note.querySelector('#simpler');if(sb)sb.onclick=()=>{const b=note.querySelector('#bgtext');const simple=sb.dataset.on!=='1';b.textContent=simple?n.simple:n.bg;sb.dataset.on=simple?'1':'0';sb.textContent=simple?'Back to my level':'Say it simpler'};
+ note.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{b.classList.add('done');b.textContent=b.textContent==='Helpful'?'Thanks, noted':'Got it, fewer notes like this'});
+}
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!note.hidden)note.querySelector('.x').click()});
+document.querySelectorAll('.hl').forEach(h=>{h.onclick=()=>openNote(h.dataset.n,h);h.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openNote(h.dataset.n,h)}}});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{const h=document.querySelector(`.hl[data-n="${b.dataset.go}"]`);h.scrollIntoView({block:'center',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});setTimeout(()=>openNote(b.dataset.go,h),350)});
+document.querySelectorAll('.know button').forEach(b=>b.onclick=()=>{b.parentElement.textContent=b.textContent==='Yes'?'Noted, no notes on it.':'Added to your path. It\'s next.'});
+const defs=['The country\'s bank for banks. It sets the price of money. You know this one.','The rate the central bank lends to banks at. You know this one too.','How much lenders earn at each length of loan, from a week to thirty years. This article depends on it.'];
+document.querySelectorAll('.step').forEach(s=>s.onclick=()=>{const d=document.getElementById('stepdef');const same=d.dataset.s===s.dataset.s&&!d.hidden;d.hidden=same;d.dataset.s=s.dataset.s;d.textContent=defs[s.dataset.s]});
+addEventListener('scroll',()=>{const v=document.getElementById('v-reader');if(!v.classList.contains('on'))return;const a=v.querySelector('article'),r=a.getBoundingClientRect();const p=Math.min(1,Math.max(0,-r.top/(r.height-innerHeight)));document.getElementById('prog').style.width=(p*100)+'%'},{passive:true});
+
+
+// ---------- Margo ----------
+function margo(state,size){
+ const eyes={idle:'<circle class="eye" cx="25" cy="33" r="3.2"/><circle class="eye" cx="39" cy="33" r="3.2"/>',
+  think:'<circle class="eye" cx="27" cy="30" r="3.2"/><circle class="eye" cx="41" cy="30" r="3.2"/>',
+  happy:'<path class="lid" d="M21.5 34 q3.5 -4.5 7 0"/><path class="lid" d="M35.5 34 q3.5 -4.5 7 0"/>',
+  oops:'<circle class="eye" cx="25" cy="34" r="3.2"/><circle class="eye" cx="39" cy="34" r="3.2"/>',
+  mark:'<circle class="eye" cx="25" cy="34" r="4"/><circle class="eye" cx="39" cy="34" r="4"/>'}[state];
+ const mouth={idle:'<path class="mouth" d="M28.5 40.5 q3.5 3 7 0"/>',think:'<path class="mouth" d="M30 41.5 h5"/>',happy:'<path class="mouth" d="M27 39.5 q5 5.5 10 0"/>',oops:'<path class="mouth" d="M28.5 42.5 q3.5 -3 7 0"/>',mark:''}[state];
+ const extra={think:'<circle class="dot" cx="50" cy="10" r="2.2"/><circle class="dot" cx="56" cy="5" r="1.6"/>',happy:'<circle class="cheek" cx="20" cy="40" r="3"/><circle class="cheek" cx="44" cy="40" r="3"/>',idle:'',oops:'',mark:''}[state];
+ const sw=state==='mark'?'<rect class="swipe" x="9" y="52" width="46" height="7" rx="3.5"/>':'<path class="swipe" d="M8 55.5 q24 -5 48 0 v4 q-24 -4.5 -48 0z"/>';
+ return `<svg class="margo" width="${size}" height="${size}" viewBox="0 0 64 64" aria-hidden="true">${sw}<path class="body" d="M17 8 h22 l11 11 v29 a6 6 0 0 1 -6 6 h-27 a6 6 0 0 1 -6 -6 v-34 a6 6 0 0 1 6 -6z"/><path class="fold" d="M39 8 v7 a4 4 0 0 0 4 4 h7"/>${eyes}${mouth}${extra}</svg>`;
+}
+function paintMargo(){document.querySelectorAll('[data-m]').forEach(el=>{el.innerHTML=margo(el.dataset.m,+el.dataset.s);el.style.display='inline-flex';if(el.classList.contains('blinker'))el.firstChild.classList.add('blink');const f=el.dataset.themeForce;if(f){const c=f==='dark'?{p:'#121212',i:'#ececec',a:'#4fbfae'}:{p:'#ffffff',i:'#1c1c1c',a:'#0d6b62'};el.firstChild.style.setProperty('--paper',c.p);el.firstChild.style.setProperty('--ink',c.i);el.firstChild.style.setProperty('--accent',c.a)}})}
+paintMargo();
+
+// ---------- knowledge map ----------
+const DOM=[
+ {d:'Finance',a:-126,c:[['Yield curve',2,1],['Repo rate',3,1],['Central bank',4,1],['Basis points',1,0.7],['Bond yield',3,1],['Term premium',0,0.8],['Credit default swap',2,0.8],['Liquidity',3,0.9],['Inflation targeting',0,0.7],['Quantitative tightening',0,0.6]]},
+ {d:'Environment',a:-54,c:[['PFAS',2,1,1],['Net zero',3,1,1],['Carbon tax',1,0.9,1],['Emissions trading',0,0.8,1],['Methane',2,0.7],['Carbon budget',0,0.9,1],['Groundwater',1,0.6]]},
+ {d:'Technology',a:18,c:[['Large language model',4,1],['Semiconductor',3,1],['Export controls',1,0.9],['Transformer',4,0.8],['Chip fab',2,0.8],['Open weights',3,0.6],['Lithography',0,0.7]]},
+ {d:'Policy',a:162,c:[['Fiscal deficit',1,1],['Budget',2,0.8],['Subsidy',1,0.7],['Climate finance',0,0.9,1],['Monetary policy committee',0,0.8]]},
+ {d:'Health',a:90,c:[['mRNA vaccine',1,0.9],['Antibody',2,0.7],['Clinical trial',0,0.8]]},
+];
+const DEFS={'Yield curve':'How much lenders earn at each length of loan, from a week to thirty years, drawn as one line.','PFAS':'"Forever chemicals": a family of man-made compounds that barely break down in soil or water.','Net zero':'Cutting emissions until whatever is left is balanced by what is removed from the air.'};
+function rng(s){return()=>{s=Math.sin(s)*10000;return s-Math.floor(s)}}
+let selected='Yield curve', focus=null;
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+function drawMap(anim){
+ const host=document.getElementById('map');host.querySelector('svg')?.remove();
+ const W=host.clientWidth||760,H=host.clientHeight||560,cx=W/2,cy=H/2-10,R=Math.min(W*0.36,H*0.42);
+ const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.setAttribute('role','img');svg.setAttribute('aria-label','Knowledge map: ideas you know grouped by topic');
+ const fill=[css('--paper'),css('--accent-soft'),css('--accent'),css('--accent'),css('--accent-ink')];
+ const pts=[];let k=0;
+ DOM.forEach((g,gi)=>{const r=rng(gi+3),ang=g.a*Math.PI/180,gx=cx+Math.cos(ang)*R,gy=cy+Math.sin(ang)*R*0.85;
+  g.c.forEach((c,i)=>{const t=i*2.399+r(),rr=i===0?0:16+Math.sqrt(i)*30;pts.push({n:c[0],lvl:c[1],w:c[2],goal:c[3],d:g.d,x:gx+Math.cos(t)*rr*1.25,y:gy+Math.sin(t)*rr*0.8,k:k++})});
+  g.x=gx;g.y=gy});
+ for(let it=0;it<120;it++)for(const a of pts)for(const b of pts){if(a===b)continue;const dx=b.x-a.x,dy=(b.y-a.y)*1.6,d=Math.hypot(dx,dy)||1;if(d<62){const m=(62-d)/2/d;a.x-=dx*m*0.5;a.y-=dy*m*0.3;b.x+=dx*m*0.5;b.y+=dy*m*0.3}}
+ for(const a of pts){a.x=Math.max(60,Math.min(W-60,a.x));a.y=Math.max(56,Math.min(H-96,a.y))}
+ // links within cluster to nearest known
+ const gl=document.createElementNS(ns,'g');
+ pts.forEach(p=>{let best=null,bd=1e9;pts.forEach(q=>{if(q===p||q.d!==p.d||q.k>p.k)return;const dd=(q.x-p.x)**2+(q.y-p.y)**2;if(dd<bd){bd=dd;best=q}});if(best){const l=document.createElementNS(ns,'line');l.setAttribute('x1',p.x);l.setAttribute('y1',p.y);l.setAttribute('x2',best.x);l.setAttribute('y2',best.y);l.setAttribute('stroke',css('--line'));l.setAttribute('stroke-width',1.2);l.style.opacity=focus&&focus!==p.d?.3:1;gl.appendChild(l)}});
+ // cross-domain bridges
+ [['Climate finance','Carbon tax'],['Export controls','Semiconductor'],['Fiscal deficit','Bond yield']].forEach(([a,b])=>{const p=pts.find(x=>x.n===a),q=pts.find(x=>x.n===b);const l=document.createElementNS(ns,'path');const mx=(p.x+q.x)/2,my=(p.y+q.y)/2-30;l.setAttribute('d',`M${p.x},${p.y} Q${mx},${my} ${q.x},${q.y}`);l.setAttribute('fill','none');l.setAttribute('stroke',css('--accent-soft'));l.setAttribute('stroke-dasharray','3 4');l.style.opacity=focus?.25:.8;gl.appendChild(l)});
+ svg.appendChild(gl);
+ // you
+ const you=document.createElementNS(ns,'g');you.innerHTML=`<circle cx="${cx}" cy="${cy}" r="22" fill="${css('--ink')}"/><text x="${cx}" y="${cy+4}" text-anchor="middle" fill="${css('--paper')}" style="font:600 12px var(--sans)">You</text>`;svg.appendChild(you);
+ DOM.forEach(g=>{const l=document.createElementNS(ns,'line');l.setAttribute('x1',cx);l.setAttribute('y1',cy);l.setAttribute('x2',g.x);l.setAttribute('y2',g.y);l.setAttribute('stroke',css('--line'));l.setAttribute('stroke-width',1);svg.insertBefore(l,svg.firstChild)});
+ const placed=[];[...pts].sort((a,b)=>(b.n===selected)-(a.n===selected)||b.lvl-a.lvl||b.w-a.w).forEach(p=>{const w=p.n.length*6.8,r=6+p.w*7,y=p.y+r+11;if(placed.every(q=>Math.abs(q.x-p.x)>(q.w+w)/2+6||Math.abs(q.y-y)>16)&&pts.every(o=>o===p||Math.abs(o.x-p.x)>w/2+8||Math.abs(o.y-(y-4))>14)){p.showLabel=1;placed.push({x:p.x,y,w})}});
+ pts.forEach(p=>{const g=document.createElementNS(ns,'g');g.setAttribute('class','node'+(p.n===selected?' sel':'')+(anim?' grow':''));g.style.transformOrigin=`${p.x}px ${p.y}px`;g.style.animationDelay=(p.k*35)+'ms';g.setAttribute('tabindex','0');g.setAttribute('role','button');g.setAttribute('aria-label',`${p.n}, ${['ready to learn','heard of','understands','understands','can explain'][p.lvl]}`);
+  const r=6+p.w*7;let s='';
+  if(p.goal)s+=`<circle cx="${p.x}" cy="${p.y}" r="${r+5}" fill="none" stroke="#c58b00" stroke-width="1.4" stroke-dasharray="3 3"/>`;
+  if(p.n===selected)s+=`<circle cx="${p.x}" cy="${p.y}" r="${r+9}" fill="none" stroke="${css('--ink')}" stroke-width="1.5"/>`;
+  s+=p.lvl===0?`<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${css('--paper')}" stroke="${css('--accent-soft')}" stroke-width="1.6"/>`:`<circle cx="${p.x}" cy="${p.y}" r="${r}" fill="${fill[p.lvl]}"/>`;
+  if(p.lvl===4)s+=`<circle cx="${p.x}" cy="${p.y}" r="${r+3}" fill="none" stroke="${css('--accent-ink')}" stroke-width="1.2"/>`;
+  if(p.showLabel)s+=`<text x="${p.x}" y="${p.y+r+15}" text-anchor="middle">${p.n}</text>`;
+  g.innerHTML=s;const tt=document.createElementNS(ns,'title');tt.textContent=p.n;g.appendChild(tt);g.style.opacity=focus&&focus!==p.d?.18:(p.lvl===0?.85:1);
+  const pick=()=>{selected=p.n;drawMap(false);inspect(p)};g.onclick=pick;g.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}};svg.appendChild(g)});
+ DOM.forEach(g=>{const t=document.createElementNS(ns,'text');const mine=pts.filter(p=>p.d===g.d);const minY=Math.min(...mine.map(p=>p.y)),mx=mine.reduce((a,p)=>a+p.x,0)/mine.length;t.setAttribute('x',Math.max(50,Math.min(W-50,mx)));t.setAttribute('y',Math.max(20,minY-24));t.setAttribute('text-anchor','middle');t.setAttribute('class','cl'+(focus&&focus!==g.d?' dim':''));t.textContent=g.d;t.setAttribute('tabindex','0');t.setAttribute('role','button');t.onclick=()=>{focus=focus===g.d?null:g.d;drawMap(false)};svg.appendChild(t)});
+ host.insertBefore(svg,host.firstChild);
+ if(!document.getElementById('inspect').innerHTML)inspect(pts.find(p=>p.n===selected));
+}
+function inspect(p){const lv=['Ready to learn','Heard of','Understands','Understands','Can explain'][p.lvl];
+ document.getElementById('inspect').innerHTML=`<p class="ct">${p.n}</p><p class="cd">${p.d}, ${lv.toLowerCase()}${p.goal?', part of your climate goal':''}</p><p class="def">${DEFS[p.n]||'A short definition appears here, written for your level.'}</p><h4>Why we think so</h4><ul>${p.lvl===0?'<li>Comes up next in 4 articles in your feed<time>Ready when you are</time></li>':'<li>Opened a note on it in "Why the RBI held the repo rate"<time>9 Oct</time></li><li>Answered "Not really" to Know this?<time>7 Oct</time></li><li>Read 3 articles that use it without opening a note<time>This week</time></li>'}</ul><div class="row-acts"><button class="pill">I know this</button><button class="pill">I don't</button></div>`}
+document.getElementById('replay').onclick=()=>drawMap(true);
+addEventListener('resize',()=>{if(document.getElementById('v-profile').classList.contains('on'))drawMap(false)});
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { api, errorKind, ApiError, type RecEventType, type RecFormat, type RecItem } from "../lib/api";
+import { queueRecEvent } from "../lib/recEvents";
 import { sourceMonogram, sourceName } from "../lib/format";
 import { personaParam, type PersonaKey } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
@@ -40,9 +41,7 @@ function writePref(persona: PersonaKey | null, pref: RecFormat | null): void {
 }
 
 export function sendRecEvent(persona: PersonaKey | null, type: RecEventType, itemId: string): void {
-  api.recEvents(persona, [{ id: crypto.randomUUID(), type, item_id: itemId }]).catch(() => {
-    // Signals are best-effort; a lost one only makes ranking slightly less personal.
-  });
+  queueRecEvent(persona, type, itemId);
 }
 
 export function formatLength(item: Pick<RecItem, "format" | "duration_or_read_time">): string {

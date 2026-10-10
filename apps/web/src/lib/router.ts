@@ -6,6 +6,7 @@ export type Route =
   | { name: "reader"; id: string }
   | { name: "welcome" }
   | { name: "profile" }
+  | { name: "feed" }
   | { name: "missing" };
 
 const NAV_EVENT = "rl:navigate";
@@ -30,6 +31,7 @@ export function matchRoute(pathname: string): Route {
   if (pathname === "/") return { name: "library" };
   if (pathname === "/welcome") return { name: "welcome" };
   if (pathname === "/profile") return { name: "profile" };
+  if (pathname === "/for-you") return { name: "feed" };
   const reader = /^\/read\/([A-Za-z0-9_-]+)$/.exec(pathname);
   if (reader?.[1]) return { name: "reader", id: reader[1] };
   return { name: "missing" };

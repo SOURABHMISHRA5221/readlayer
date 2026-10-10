@@ -64,11 +64,26 @@ async def warm(client: httpx.AsyncClient, api: str, articles: list[str], n: int)
         )
 
 
-async def run(api: str, articles: list[str], n: int) -> None:
+async def dry_run(client: httpx.AsyncClient, api: str, articles: list[str], n: int) -> None:
+    """List the (article, persona, span) explanations a real run would request; generates
+    nothing (annotations only, no POST /v1/explain)."""
+    total = 0
+    for cid in articles:
+        for persona in PERSONAS:
+            for s in await top_spans(client, api, cid, persona, n):
+                total += 1
+                print(f"  {cid[:8]} {persona:15s} {s['id']:6s} {s.get('label', '')}")
+    print(f"dry run: {total} explanation requests would be made (nothing generated)")
+
+
+async def run(api: str, articles: list[str], n: int, dry: bool = False) -> None:
     async with httpx.AsyncClient(timeout=60) as client:
         client.headers["Authorization"] = f"Bearer {await sign_in_anonymously(client)}"
         try:
-            await warm(client, api, articles, n)
+            if dry:
+                await dry_run(client, api, articles, n)
+            else:
+                await warm(client, api, articles, n)
         finally:
             resp = await client.delete(f"{api}/v1/me")
             print(f"cleanup: DELETE /v1/me → {resp.status_code}")
@@ -79,8 +94,9 @@ def main() -> None:
     parser.add_argument("articles", nargs="*", default=list(DEMO_ARTICLES))
     parser.add_argument("--api", default=API)
     parser.add_argument("--top", type=int, default=3)
+    parser.add_argument("--dry-run", action="store_true", help="list requests, generate nothing")
     args = parser.parse_args()
-    asyncio.run(run(args.api.rstrip("/"), args.articles, args.top))
+    asyncio.run(run(args.api.rstrip("/"), args.articles, args.top, args.dry_run))
 
 
 if __name__ == "__main__":

@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import { ArticleImage } from "../components/ArticleImage";
 import { Search } from "../components/Icons";
+import { LibraryTabs } from "../components/LibraryTabs";
 import { PersonaPicker } from "../components/PersonaPicker";
+import { ReadAnyLink } from "../components/ReadAnyLink";
 import { SourceMark } from "../components/SourceMark";
 import { ERROR_COPY, StateView } from "../components/StateView";
 import { ThemeToggle } from "../components/ThemeToggle";
@@ -117,12 +119,13 @@ export function LibraryPage({ url }: { url: URL }) {
             <AccountMenu />
           </div>
         </div>
+        <LibraryTabs current="library" persona={persona} />
         <div className="masthead__hero">
           <h1 className="masthead__tagline">
             Read anything. <em>Understand it your way.</em>
           </h1>
           <p className="masthead__lede">
-            Business and economy writing with quiet notes, only on the ideas{" "}
+            Writing on any subject with quiet notes, only on the ideas{" "}
             {persona ? (
               <>
                 <span className="masthead__persona">{personaOf(persona).label.toLowerCase()}s</span> tend to miss.
@@ -131,7 +134,7 @@ export function LibraryPage({ url }: { url: URL }) {
               <>
                 <span className="masthead__persona">you</span> are likely to miss.
               </>
-            )}
+            )}{" "}
             The author's words stay exactly as written.
           </p>
           <label className="search">
@@ -147,6 +150,7 @@ export function LibraryPage({ url }: { url: URL }) {
               spellCheck={false}
             />
           </label>
+          <ReadAnyLink persona={persona} />
         </div>
       </header>
 

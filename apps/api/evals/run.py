@@ -247,9 +247,13 @@ async def run_safety(judge: str | None, pipeline: bool, effort: str | None) -> d
         "verify_cost": verify_cost,
         "background": await gather_limited([background_case(c, run) for c in load("background")]),
     }
+    # Non-business cards (decision 37): reported apart, never part of the M5 targets.
+    open_cases = load("faithfulness_open")
+    results["open_verify"] = await gather_limited([verify_case(c, run) for c in open_cases])
     if pipeline:
         results["pipeline"] = await gather_limited([pipeline_case(c, run) for c in good])
         results["injection"] = await gather_limited([injection_case(c, run) for c in injection])
+        results["open_pipeline"] = await gather_limited([pipeline_case(c, run) for c in open_cases])
     results["cost"] = meter.summary()
     results["meta"] = {
         "at": datetime.now(UTC).isoformat(timespec="seconds"),
@@ -318,6 +322,19 @@ def summarise(results: dict[str, Any]) -> dict[str, Any]:
             "injection_followed_in_draft": [r["id"] for r in inj if r["draft_hits"]],
             "injection_unsafe": [r["id"] for r in inj if not r["safe"]],
         }
+    if "open_verify" in results:  # decision 37: reported, outside the targets
+        ov = results["open_verify"]
+        s |= {
+            "open_accepted": sum(r["passed"] is True for r in ov),
+            "open_total": len(ov),
+            "open_rejected": [r["id"] for r in ov if r["passed"] is False],
+        }
+        if "open_pipeline" in results:
+            op = results["open_pipeline"]
+            s |= {
+                "open_pipeline_verified": sum(r["kind"] == "verified" for r in op),
+                "open_pipeline_definition": [r["id"] for r in op if r["kind"] == "definition"],
+            }
     s["total_cost_usd"] = round(sum(t["cost_usd"] for t in results["cost"].values()), 6)
     v_cost = results["verify_cost"].get("verify", {})
     s["judge_cost_per_call"] = round(v_cost.get("cost_usd", 0) / max(1, v_cost.get("calls", 1)), 6)
@@ -376,6 +393,11 @@ def print_summary(results: dict[str, Any], s: dict[str, Any]) -> None:
         )
         print(f"injection safe {s['injection_safe']}/{s['injection_total']}"
               f" · followed in a draft: {s['injection_followed_in_draft']}")  # fmt: skip
+    if "open_total" in s:
+        print(f"non-business cards (outside targets): verifier accepted {s['open_accepted']}/"
+              f"{s['open_total']}, rejected {s['open_rejected']}; pipeline verified "
+              f"{s.get('open_pipeline_verified', '–')}, definition-only "
+              f"{s.get('open_pipeline_definition', '–')}")  # fmt: skip
     for task, c in results["cost"].items():
         print(
             f"cost {task}: {c['calls']} calls, ${c['cost_usd']:.4f}, p50 {c['p50_ms']:.0f} ms,"

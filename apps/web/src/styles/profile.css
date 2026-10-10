@@ -242,3 +242,30 @@
 .profile__bar .icon-btn,
 .profile__bar .account__chip { width: 44px; height: 44px; }
 .profile__bar .wordmark { display: inline-flex; align-items: center; min-height: 44px; }
+
+/* Reading goals and the map's goal view (M7.5; restyled in the design pass). */
+.goals { margin-top: var(--s8); }
+.goals__list { list-style: none; margin: 0 0 var(--s4); padding: 0; display: grid; gap: var(--s4); }
+.goals__item { display: grid; gap: var(--s2); }
+.goals__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); }
+.goals__label { font: 600 16px / 1.35 var(--font-read); color: var(--ink); }
+.goals__value { font: 500 var(--text-ui) / 1.4 var(--font-ui); color: var(--ink-soft); }
+.goals__bar { width: 100%; height: 8px; accent-color: var(--accent); }
+.goals__actions { display: flex; gap: var(--s2); }
+.goals__actions .btn, .goals__form .btn { min-height: 44px; }
+.goals__add { display: grid; gap: var(--s3); }
+.goals__form { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
+.goals__form-title { font: 500 var(--text-ui) / 1.4 var(--font-ui); color: var(--ink); margin-right: var(--s2); }
+.goals__num { width: 80px; }
+.goals__num, .goals__select, .goals__text {
+  min-height: 44px; padding: 0 var(--s3); border: 1px solid var(--hairline); border-radius: var(--radius);
+  background: var(--surface); color: var(--ink); font: 400 var(--text-ui) / 1.4 var(--font-ui);
+}
+.goals__text { flex: 1; min-width: 180px; }
+.goals__num:focus-visible, .goals__select:focus-visible, .goals__text:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+.kmap__goal { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin: 0;
+  font: 400 var(--text-ui) / 1.4 var(--font-ui); color: var(--ink); }
+.clist__goal { font: 600 12px / 1 var(--font-ui); color: var(--accent); border: 1px solid var(--accent);
+  border-radius: var(--radius-pill); padding: 3px 8px; }

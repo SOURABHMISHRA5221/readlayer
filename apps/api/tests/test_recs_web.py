@@ -140,6 +140,38 @@ async def test_youtube_results_are_normalized_with_duration():
     assert ws.parse_iso_duration("PT1H2M3S") == 3723 and ws.parse_iso_duration("P0D") is None
 
 
+async def test_feed_videos_ask_for_recent_medium_length_explainers_and_up_next_does_not():
+    rec = Recorder()
+    yt = ws.YouTubeProvider("yt-test", 5, httpx.MockTransport(rec))
+    await yt.search("Health news explained", "video", news=True)
+    feed = rec.requests[0].url.params
+    assert feed["videoDuration"] == "medium" and feed["publishedAfter"].endswith("Z")
+    assert feed["q"] == "Health news explained"
+    rec.requests.clear()
+    await yt.search("Repo rate economics explained", "video")
+    assert "videoDuration" not in rec.requests[0].url.params
+    assert "publishedAfter" not in rec.requests[0].url.params
+
+
+async def test_feed_articles_filter_other_formats_locally_instead_of_exclude_domains():
+    def answer(request):
+        return httpx.Response(200, json={"results": [
+            {"url": "https://www.youtube.com/watch?v=x", "title": "v", "content": "c"},
+            {"url": "https://news.test/2026/10/09/a-real-story", "title": "a", "content": "c"},
+        ]})  # fmt: skip
+
+    sent = []
+    tavily = ws.TavilyProvider(
+        "t", BLOCK, 5, httpx.MockTransport(lambda r: sent.append(r) or answer(r))
+    )
+    got = await tavily.search("Health news this week", "article", news=True)
+    assert [r.url for r in got] == ["https://news.test/2026/10/09/a-real-story"]
+    body = json.loads(sent[0].content)
+    assert "exclude_domains" not in body and body["topic"] == "news" and body["max_results"] == 10
+    await tavily.search("Repo rate economics explained", "article")
+    assert "exclude_domains" in json.loads(sent[1].content)  # Up next unchanged
+
+
 async def test_a_changed_query_makes_the_cache_stale():
     rec = Recorder()
     svc = service(rec)
