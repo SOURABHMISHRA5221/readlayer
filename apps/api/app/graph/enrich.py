@@ -110,6 +110,10 @@ class LinkQuestion:
     phrase: str
     sentence: str
     candidates: tuple[tuple[str, str, str, float], ...]  # (id, label, definition, cosine)
+    # M2.2 jurisdiction inputs, parallel to `candidates` (rendered by link_confirm v3 only).
+    site: str = ""
+    kinds: tuple[str, ...] = ()
+    jurisdictions: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

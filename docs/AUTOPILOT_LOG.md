@@ -300,3 +300,20 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - plan-reviewer on the decision-35 amendment: **APPROVE**; its 5 nits applied (cleanup via
   DELETE /v1/me, pre-flight cap check, evidence before cleanup, complete write list, fold review
   list to Sourabh).
+
+### Build (in progress, paused at usage limit, 2026-10-10)
+- Done and committed: 14-domain taxonomy (API, web, calibration gate); overrides remove_alias /
+  add / never_merge_kind (Russell, Tax alias, Chancellor of the Exchequer, FTSE Russell);
+  concept_define v3; extract_demands v2; frozen eval inputs (link_confirm 16 cases,
+  link_variants 150, link_merge 100, held-out list to 30 with domains, frozen demand set for the
+  new 15 with sha256); linker eval suite; held-out headline script; jurisdiction module + tests.
+- Before (linker suite, v2): link_confirm 13/16 (fails: levy, preferential, Russell Indexes),
+  variant precision 83% (1 of 15 batches answered by the fallback model after a 45 s timeout,
+  both runs logged), merge agreement 71/100. Old-15 extract counts v1 186 → v2 169
+  (evals/results/heldout_extract_counts_v1_v2.md).
+- Before headline (held-out, frozen graph) was running in the background at the pause; check
+  evals/heldout_report.md, and rerun `uv run python -m scripts.heldout_headline --label before`
+  if it has no "before" block.
+- Next: link_confirm v3 prompt + rendering of site/kind/jurisdiction and the code filter in
+  plan_links; kind/jurisdiction backfill; glossary parser and seeding dry run; then the counts
+  message to Sourabh (plan run order step 6).
