@@ -404,3 +404,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Sourabh (decision 40, mid-run): Design pass additions — Gloss name, `docs/design/mockup.html`
   as the visual target, Margo mascot, reader details, mobile. His BUILD_PLAN edit and the mockup
   are committed with this docs commit; STATUS decision 40 logged. M7.5 continues first.
+- Harness acceptance (restarted harness after the session restart; scratch helpers recovered
+  from the transcript). Fixed on the way: feed topics from chosen interests only (≥ 0.5),
+  English-only titles, empty day entries retried after an hour, rec signals batched in the
+  client (per-card requests contended on one Firestore doc and stalled page loads to 31 s),
+  learning-goal progress note, intro spacing, sign-in copy, failed thumbnails. All checks pass
+  except the live-only items; goal boost covered by tests only (no matching live item). STATUS
+  §17, `docs/evidence/M7.5-harness.txt`. Next: milestone-reviewer.
