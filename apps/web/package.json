@@ -7,19 +7,24 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
   },
   "dependencies": {
     "@readlayer/annotator": "workspace:*",
+    "cytoscape": "3.30.4",
+    "cytoscape-dagre": "2.5.0",
     "firebase": "^12.19.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@types/cytoscape": "3.21.9",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "^5.9.0",
-    "vite": "^7.0.0"
+    "vite": "^7.0.0",
+    "vitest": "4.1.11"
   }
 }

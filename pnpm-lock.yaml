@@ -194,6 +194,12 @@ importers:
       '@readlayer/annotator':
         specifier: workspace:*
         version: link:../../packages/annotator
+      cytoscape:
+        specifier: 3.30.4
+        version: 3.30.4
+      cytoscape-dagre:
+        specifier: 2.5.0
+        version: 2.5.0(cytoscape@3.30.4)
       firebase:
         specifier: ^12.19.0
         version: 12.19.0
@@ -204,6 +210,9 @@ importers:
         specifier: ^19.0.0
         version: 19.3.0(react@19.3.0)
     devDependencies:
+      '@types/cytoscape':
+        specifier: 3.21.9
+        version: 3.21.9
       '@types/react':
         specifier: ^19.0.0
         version: 19.3.0
@@ -219,6 +228,9 @@ importers:
       vite:
         specifier: ^7.0.0
         version: 7.3.6(@types/node@26.6.4)(yaml@2.9.1)
+      vitest:
+        specifier: 4.1.11
+        version: 4.1.11(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(jsdom@30.1.1)(vite@7.3.6(@types/node@26.6.4)(yaml@2.9.1))
 
   packages/annotator:
     dependencies:
@@ -1309,6 +1321,9 @@ packages:
   '@types/chrome@0.1.43':
     resolution: {integrity: sha512-ukH/HhmR6ht+UTX3PLUWJxgJ/RQcK2Foj4lBzsF24SIWsXgqhGuXqjd8FFuwioPP7d/JUKLM4g8GZxw3F4HTcA==}
 
+  '@types/cytoscape@3.21.9':
+    resolution: {integrity: sha512-JyrG4tllI6jvuISPjHK9j2Xv/LTbnLekLke5otGStjFluIyA9JjgnvgZrSBsp8cEDpiTjwgZUZwpPv8TSBcoLw==}
+
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
@@ -1862,6 +1877,18 @@ packages:
   csv-parse@5.6.0:
     resolution: {integrity: sha512-l3nz3euub2QMg5ouu5U09Ew9Wf6/wQ8I++ch1loQ0ljmzhmfZYrH9fflS22i/PQEvsPvxCwxgz5q7UB8K1JO4Q==}
 
+  cytoscape-dagre@2.5.0:
+    resolution: {integrity: sha512-VG2Knemmshop4kh5fpLO27rYcyUaaDkRw+6PiX4bstpB+QFt0p2oauMrsjVbUamGWQ6YNavh7x2em2uZlzV44g==}
+    peerDependencies:
+      cytoscape: ^3.2.22
+
+  cytoscape@3.30.4:
+    resolution: {integrity: sha512-OxtlZwQl1WbwMmLiyPSEBuzeTIQnwZhJYYWFzZ2PhEHVFwpeaqNIkUzSiso00D98qk60l8Gwon2RP304d3BJ1A==}
+    engines: {node: '>=0.10'}
+
+  dagre@0.8.5:
+    resolution: {integrity: sha512-/aTqmnRta7x7MCCpExk7HQL2O4owCT2h8NT//9I1OQ9vt29Pa0BzSAkR5lwFUcQ7491yVi/3CXU9jQ5o0Mn2Sw==}
+
   data-uri-to-buffer@4.0.1:
     resolution: {integrity: sha512-0R9ikRb668HB7QDxT1vkpuUBtqc53YyAwMwGeUFKRojY/NWKvdZ+9UYtRfGmhqNbRkTSVpMbmyhXipFFv2cb/A==}
     engines: {node: '>= 12'}
@@ -2338,6 +2365,9 @@ packages:
 
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
+
+  graphlib@2.1.8:
+    resolution: {integrity: sha512-jcLLfkpoVGmH7/InMC/1hIvOPSUh38oJtGhvrOFGzioE1DZ+0YW16RgmOJhHiuWTvGiJQ9Z1Ik43JvkRPRvE+A==}
 
   gtoken@7.1.0:
     resolution: {integrity: sha512-pCcEwRi+TKpMlxAQObHDQ56KawURgyAf6jtIY046fJ5tIv3zDe/LEIubckAO8fj6JnAxLdmWkUfNyulQ2iKdEw==}
@@ -5027,6 +5057,8 @@ snapshots:
       '@types/filesystem': 0.0.36
       '@types/har-format': 1.2.16
 
+  '@types/cytoscape@3.21.9': {}
+
   '@types/deep-eql@4.0.2': {}
 
   '@types/estree@1.0.9': {}
@@ -5604,6 +5636,18 @@ snapshots:
   csstype@3.2.3: {}
 
   csv-parse@5.6.0: {}
+
+  cytoscape-dagre@2.5.0(cytoscape@3.30.4):
+    dependencies:
+      cytoscape: 3.30.4
+      dagre: 0.8.5
+
+  cytoscape@3.30.4: {}
+
+  dagre@0.8.5:
+    dependencies:
+      graphlib: 2.1.8
+      lodash: 4.18.1
 
   data-uri-to-buffer@4.0.1: {}
 
@@ -6357,6 +6401,10 @@ snapshots:
   graceful-fs@4.2.10: {}
 
   graceful-fs@4.2.11: {}
+
+  graphlib@2.1.8:
+    dependencies:
+      lodash: 4.18.1
 
   gtoken@7.1.0(supports-color@7.2.0):
     dependencies:

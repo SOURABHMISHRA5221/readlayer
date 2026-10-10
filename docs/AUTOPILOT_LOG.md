@@ -198,3 +198,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Profile-edit evals: v1 schema rejected by Vertex (0/6, 0/4 at $0; tagged unions and an outer
   maxItems are refused); flat schema + local strict whitelist; v2 5/6 · 4/4; v3 (domain-work rule)
   6/6 · 4/4, $0.0049. Cases unchanged (decision 26); before/after in evals/report.md + changelog.
+- D+E+F (web): `/welcome` (consent-v1 → field → interests → comfort → frames → liked library
+  articles → 8-tap calibration with Skip; focus moves to each step's heading) and `/profile`
+  (summary, ability/interest bars with numbers as text, knowledge map: Cytoscape + dagre in a
+  lazy chunk, list view grouped by depth (default below 640 px), search, node card as a native
+  modal dialog with last 3 evidence items and corrections; this week + trend table; analogy
+  chips (read-only for demo personas); preferences; edit box with preview/apply/undo and demo
+  reset; data controls with export, delete/end demo, pause). Onboarding gate for Google
+  readers; React.lazy route chunks; account menu links to the profile. Segmented control is now
+  reachable by keyboard with nothing selected. Bundle: main 137.6 KB gzip (budget 150),
+  ProfilePage 6.7 KB, WelcomePage 3.3 KB, cytoscape 121.6 KB + dagre 33.6 KB only when the map
+  opens. Web vitest added (4 helper tests).

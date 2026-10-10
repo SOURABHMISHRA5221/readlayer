@@ -116,6 +116,18 @@ export function AccountMenu() {
           </p>
           {step.kind === "menu" && (
             <div className="account__actions">
+              <button
+                type="button"
+                className="account__action"
+                onClick={() => {
+                  // Keep the demo persona: the profile shows that sample reader's model.
+                  const persona = new URL(window.location.href).searchParams.get("persona");
+                  close();
+                  navigate(persona ? `/profile?persona=${encodeURIComponent(persona)}` : "/profile");
+                }}
+              >
+                {demo ? "This reader's profile" : "Your reading profile"}
+              </button>
               {!demo && (
                 <button type="button" className="account__action" onClick={() => run("Preparing your export…", downloadExport, "The export didn't download. Try again.")}>
                   Export my data

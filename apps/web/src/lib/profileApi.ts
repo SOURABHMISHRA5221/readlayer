@@ -1,0 +1,127 @@
+import { api } from "./api";
+import type { PersonaKey } from "./personas";
+
+/** Reading profile, onboarding and profile edits (DESIGN §8, §15; M7). */
+
+export type Band = "unaware" | "heard of" | "understands" | "can explain";
+export type Domain = "economics" | "finance" | "business" | "policy";
+export type Level = "new" | "some" | "comfortable" | "expert";
+export type ExplanationStyle = "short" | "normal" | "detailed";
+export type Density = "minimal" | "balanced" | "guided";
+export const DOMAINS: readonly Domain[] = ["economics", "finance", "business", "policy"];
+export const FRAMES = [
+  "software", "engineering", "science", "medicine", "law", "design", "teaching", "music",
+  "cooking", "cricket", "football", "gaming",
+] as const; // prettier-ignore
+export type Frame = (typeof FRAMES)[number];
+export const FIELDS = [
+  "software", "finance", "commerce", "law", "science", "medicine", "design", "teaching", "other",
+] as const; // prettier-ignore
+export type Field = (typeof FIELDS)[number];
+/** A field suggests an analogy frame; the reader's pick is what's saved. */
+export const FIELD_FRAME: Partial<Record<Field, Frame>> = {
+  software: "software", law: "law", science: "science", medicine: "medicine", design: "design",
+  teaching: "teaching",
+}; // prettier-ignore
+
+export interface Onboarding {
+  consented: boolean;
+  done: boolean;
+  step: "consent" | "onboarding" | "calibration" | "done";
+}
+
+export interface Profile {
+  summary: { text: string; top_domain: string | null; moved_up_this_week: number; learning_paused: boolean };
+  domains: { domain: Domain; theta: number; interest: number }[];
+  thinks_in: Frame[];
+  week: {
+    moved_up: { concept_id: string; label: string; from: Band; to: Band }[];
+    trend: { week: string; annotations_per_1000_words: number }[];
+  };
+  settings: { density: Density; explanation_style: ExplanationStyle };
+  persona: PersonaKey | null;
+  onboarding: Onboarding;
+}
+
+export interface GraphNode {
+  id: string;
+  label: string;
+  domain: Domain;
+  band: Band;
+  evidence_count: number;
+  last_seen: string | null;
+  depth: number;
+  recent: { type: string; at: string }[];
+}
+
+export interface Subgraph {
+  nodes: GraphNode[];
+  edges: { from: string; to: string }[];
+  truncated: boolean;
+}
+
+export interface CalibrationNext {
+  done: boolean;
+  asked: number;
+  total: number;
+  item?: { concept_id: string; label: string; domain: Domain };
+}
+
+export interface EditPreview {
+  edit_id: string;
+  persona: PersonaKey | null;
+  expires_in_s: number;
+  preview: {
+    domains: { domain: Domain; before: number; after: number }[];
+    known: { concept_id: string; label: string }[];
+    unknown: { concept_id: string; label: string }[];
+    settings: { setting: string; before: unknown; after: unknown }[];
+    unresolved: string[];
+  };
+}
+
+export interface EditSummary {
+  edit_id: string;
+  status: "applied" | "undone";
+  persona: PersonaKey | null;
+  applied_at: string | null;
+  concepts: number;
+  domains: string[];
+  settings: string[];
+}
+
+const q = (persona: PersonaKey | null, first = true) => (persona ? `${first ? "?" : "&"}persona=${persona}` : "");
+
+export const profileApi = {
+  profile: (persona: PersonaKey | null, signal?: AbortSignal) =>
+    api.raw.get<Profile>(`/v1/me/profile${q(persona)}`, signal),
+  graph: (persona: PersonaKey | null, domain: Domain, search = "", signal?: AbortSignal) =>
+    api.raw.get<Subgraph>(
+      `/v1/me/graph?domain=${domain}${search ? `&q=${encodeURIComponent(search)}` : ""}${q(persona, false)}`,
+      signal,
+    ),
+  settings: (changes: Partial<{ thinks_in: Frame[]; density: Density; explanation_style: ExplanationStyle; learning_paused: boolean }>) =>
+    api.raw.send<Record<string, unknown>>("PATCH", "/v1/me/settings", changes),
+  consent: (version: string) => api.raw.send<{ consented: boolean }>("POST", "/v1/me/consent", { version }),
+  onboarding: (answers: {
+    field: Field;
+    interests: Domain[];
+    comfort: Partial<Record<Domain, Level>>;
+    thinks_in: Frame[];
+    liked_content_ids: string[];
+  }) => api.raw.send<{ saved: boolean }>("POST", "/v1/onboarding", answers),
+  calibrationNext: () => api.raw.get<CalibrationNext>("/v1/calibration/next"),
+  calibrationAnswer: (concept_id: string, answer: "explain" | "heard" | "none") =>
+    api.raw.send<{ done: boolean; asked: number }>("POST", "/v1/calibration/answer", { concept_id, answer }),
+  calibrationSkip: () => api.raw.send<{ done: boolean }>("POST", "/v1/calibration/skip", {}),
+  parseEdit: (text: string, persona: PersonaKey | null) =>
+    api.raw.send<EditPreview>("POST", `/v1/me/profile/edits${q(persona)}`, { text }),
+  applyEdit: (id: string, persona: PersonaKey | null) =>
+    api.raw.send<EditSummary>("POST", `/v1/me/profile/edits/${id}/apply${q(persona)}`, {}),
+  undoEdit: (id: string, persona: PersonaKey | null) =>
+    api.raw.send<EditSummary>("POST", `/v1/me/profile/edits/${id}/undo${q(persona)}`, {}),
+  edits: (persona: PersonaKey | null) =>
+    api.raw.get<{ edits: EditSummary[] }>(`/v1/me/profile/edits${q(persona)}`),
+  resetDemo: (persona: PersonaKey) =>
+    api.raw.send<{ reset: boolean }>("POST", "/v1/me/demo/reset", { persona }),
+};
