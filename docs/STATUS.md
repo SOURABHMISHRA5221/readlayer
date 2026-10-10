@@ -355,7 +355,7 @@ M7 is built and verified on the local harness (§15) and awaits review, merge an
 | Now | **M7.5**: "For you" feed, "Read any link", reading goals (plan, plan-reviewer, build). Checkpoint end of day Oct 11 IST: anything unfinished goes to Sourabh as a cut question |
 | Oct 12–13 | **M7.5**: "For you" feed, "Read any link", reading goals (DESIGN gets feed and goals sections with the plan) |
 | Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done) |
-| Oct 15 | **M9** hardening and evals |
+| Oct 15 | **M9** hardening and evals, plus four M2.2 follow-ups required before the freeze (Sourabh, 2026-10-10): (1) merge check within one growth batch (same-article duplicates, e.g. Forever chemicals / PFAS); (2) validate grown prerequisites against the domain or drop low-confidence ones (PFOS → PHOSITA); (3) grown-concept precision on a fresh, independent sample of 30, reported with the 87% and 97% samples; (4) README and deck state the frozen-graph misses (64% / 13%) next to the after-growth numbers |
 | Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
 

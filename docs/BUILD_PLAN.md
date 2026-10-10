@@ -388,6 +388,18 @@ readers; demo personas are unchanged. DESIGN gets new sections for the feed and 
 
 Oct 15 hardening and evals (after M2.2); Oct 16 demo seeding, README, video and deck;
 Oct 17 submit.
+
+**Required before the Oct 16 freeze (Sourabh, 2026-10-10, from the M2.2 live check):**
+1. **Same-article duplicate concepts from growth** (live: "Forever chemicals" vs "PFAS"): run the
+   merge check within one growth batch before defining, so one article never grows two concepts
+   for the same idea.
+2. **Wrong grown prerequisites** (live: PFOS → PHOSITA): validate prerequisites against the
+   concept's domain, or drop low-confidence picks.
+3. **Re-measure grown-concept precision on a fresh, independent sample of 30.** The 97% was a
+   re-sample after tuning (the first sample was 87%); report both, plus the fresh one.
+4. **README and deck state the frozen-graph misses** (business 64% vs the 75% target,
+   non-business 13%) alongside the after-growth numbers (89% / 66%).
+
 **Prompt**
 > Build the quality evals per docs/DESIGN.md §12.1 and §12.4: load `evals/gold/*.json` (spans a
 > human marked per persona), compute annotation precision/recall per persona at balanced density,
