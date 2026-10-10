@@ -319,8 +319,8 @@ is built (§14) and awaits merge and deploy.
 
 | When | Action |
 |---|---|
-| Now | **M7:** profile page (summary, domain bars, list view with corrections, THINKS_IN, export/delete/pause), Google onboarding with consent and calibration, **knowledge-map graph and edit-by-prompt (both required, decision 27)** |
-| Then | **M8-local** (unpacked extension), **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink), **M9** hardening and evals |
+| Now | **M7:** merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
+| Next | **M8-local** (unpacked extension), then **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink), then **M9** hardening and evals |
 | Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
 
