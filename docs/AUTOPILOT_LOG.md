@@ -371,3 +371,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Sourabh: generalise the explanation prompts in M7.5 and keep society (decision 37); demo
   personas get a predefined, pre-seeded feed with a subtle "prepared in advance, may be dated,
   sign in for a live feed" note (decision 38).
+- plan-reviewer round 1: REVISE (16 items, applied; item 12 replaced by decision 38's pre-seeded
+  demo feed). Round 2: REVISE (2 items + 7 nits, applied): per-request visibility filter after the
+  shared caches (two judges on one persona template never see each other's pasted pages), and
+  one shared `NOT_CORPUS` constant.
+- **Note for resuming M8:** M8's approved plan hides NOT_CORPUS docs from everyone; M7.5 makes them
+  visible to the reader who brought them in (users/{uid}/ingested). Update the M8 plan to keep that
+  rule before building on the m8 branch.
