@@ -93,6 +93,9 @@ async def get_feed(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> Fe
         gathered = await get_feed_search().gather(topics, graph, now)
         candidates, pending, prepared_at = gathered.candidates, gathered.pending, None
     signals = await get_rec_signals().signals(ctx.uid, ctx.rec_key)
+    # "Not interested" (and finished items) stay gone for this reader.
+    gone = ("dismissed", "completed")
+    candidates = [c for c in candidates if signals.seen.get(item_id(c.result.url)) not in gone]
     reader = fr.FeedReader(
         state=ctx.state,
         interest=interest,

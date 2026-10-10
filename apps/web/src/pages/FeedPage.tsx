@@ -10,13 +10,12 @@ import { Wordmark } from "../components/Wordmark";
 import { api, ApiError, errorKind, type ApiErrorKind } from "../lib/api";
 import { useIsDemo } from "../lib/auth";
 import { feedApi, type FeedItem, type FeedResponse } from "../lib/feedApi";
+import { pendingNote, reaskDelay, snapshotNote, visibleItems } from "../lib/feedView";
 import { formatDate } from "../lib/format";
 import { DEFAULT_PERSONA, personaParam, readerPersona, type PersonaKey } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
 import "../styles/feed.css";
 
-const REASK_MS = 3000;
-const MAX_REASKS = 3;
 
 type Load = { status: "loading" } | { status: "ready"; feed: FeedResponse } | { status: "error"; kind: ApiErrorKind };
 
@@ -49,8 +48,9 @@ export default function FeedPage({ url }: { url: URL }) {
   // Searches still running: ask again a few times (they finish on the server meanwhile).
   const pending = load.status === "ready" && load.feed.pending;
   useEffect(() => {
-    if (!pending || attempt >= MAX_REASKS) return;
-    const t = setTimeout(() => setAttempt((a) => a + 1), REASK_MS);
+    const delay = reaskDelay(pending, attempt);
+    if (delay === null) return;
+    const t = setTimeout(() => setAttempt((a) => a + 1), delay);
     return () => clearTimeout(t);
   }, [pending, attempt]);
 
@@ -86,29 +86,37 @@ export default function FeedPage({ url }: { url: URL }) {
             <p>{ERROR_COPY[load.kind].body}</p>
           </StateView>
         )}
-        {load.status === "ready" && <FeedBody feed={load.feed} persona={persona} />}
+        {load.status === "ready" && <FeedBody feed={load.feed} persona={persona} attempt={attempt} />}
       </main>
     </>
   );
 }
 
-function FeedBody({ feed, persona }: { feed: FeedResponse; persona: PersonaKey | null }) {
+function FeedBody({ feed, persona, attempt }: { feed: FeedResponse; persona: PersonaKey | null; attempt: number }) {
+  const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
+  const [announce, setAnnounce] = useState("");
+  const shown = visibleItems(feed.items, dismissed);
+  const note = snapshotNote(feed, (iso) => formatDate(iso) ?? iso);
+  const waiting = pendingNote(feed.pending, attempt);
+
+  const dismiss = (item: FeedItem) => {
+    sendRecEvent(persona, "rec_dismissed", item.id);
+    setDismissed((d) => new Set([...d, item.id]));
+    setAnnounce(`Removed “${item.title}”. You won't see it again.`);
+  };
+
   return (
     <>
-      {feed.snapshot && (
-        <p className="feed__note">
-          Picks prepared in advance for this demo{feed.prepared_at ? ` (${formatDate(feed.prepared_at)})` : ""}, so
-          some may be dated. Sign in with Google for a live feed.
-        </p>
-      )}
-      {feed.pending && <p className="feed__note" role="status">Still gathering a few picks…</p>}
+      {note && <p className="feed__note">{note}</p>}
+      {waiting && <p className="feed__note" role="status">{waiting}</p>}
+      <p className="visually-hidden" aria-live="polite">{announce}</p>
       {!feed.items.length && !feed.pending && (
         <p className="feed__note">
           {feed.snapshot ? "This demo feed isn't ready yet. Sign in with Google for a live feed." : "Fresh picks arrive tomorrow."}
         </p>
       )}
       {feed.topics.map((topic) => {
-        const items = feed.items.filter((i) => i.topic === topic);
+        const items = shown.filter((i) => i.topic === topic);
         if (!items.length) return null;
         return (
           <section key={topic} className="feed__topic" aria-labelledby={`t-${topic}`}>
@@ -116,7 +124,7 @@ function FeedBody({ feed, persona }: { feed: FeedResponse; persona: PersonaKey |
             <ul className="feed__list">
               {items.map((item) => (
                 <li key={item.id}>
-                  <FeedCard item={item} persona={persona} />
+                  <FeedCard item={item} persona={persona} onDismiss={dismiss} />
                 </li>
               ))}
             </ul>
@@ -127,7 +135,9 @@ function FeedBody({ feed, persona }: { feed: FeedResponse; persona: PersonaKey |
   );
 }
 
-function FeedCard({ item, persona }: { item: FeedItem; persona: PersonaKey | null }) {
+type FeedCardProps = { item: FeedItem; persona: PersonaKey | null; onDismiss: (item: FeedItem) => void };
+
+function FeedCard({ item, persona, onDismiss }: FeedCardProps) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -166,7 +176,7 @@ function FeedCard({ item, persona }: { item: FeedItem; persona: PersonaKey | nul
             {item.format === "video" ? "Watch" : item.format === "podcast" ? "Listen" : "Open original"}
             <span className="visually-hidden"> (opens in a new tab)</span>
           </a>
-          <button className="btn btn--quiet" type="button" onClick={() => sendRecEvent(persona, "rec_dismissed", item.id)}
+          <button className="btn btn--quiet" type="button" onClick={() => onDismiss(item)}
             aria-label={`Not interested: ${item.title}`}>
             Not interested
           </button>

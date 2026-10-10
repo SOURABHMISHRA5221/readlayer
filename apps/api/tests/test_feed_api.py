@@ -192,7 +192,7 @@ def test_a_changed_phrase_makes_todays_cached_entry_stale(env):
     assert asyncio.run(web.cached_entry(key, "article", query + " v2")) is None
 
 
-def test_an_empty_day_entry_is_searched_again_after_an_hour(monkeypatch):
+def test_an_empty_day_entry_is_searched_again_once_then_stops(monkeypatch):
     class Empty(TopicProvider):
         async def search(self, query, fmt, news=False):
             self.queries.append(query)
@@ -209,4 +209,68 @@ def test_an_empty_day_entry_is_searched_again_after_an_hour(monkeypatch):
     assert len(empty.queries) == 3  # within the hour: the empty entries are served
     monkeypatch.setattr(feed_mod, "EMPTY_RETRY", timedelta(0))
     asyncio.run(twice())
-    assert len(empty.queries) == 9  # after it: searched again (still within the caps)
+    assert len(empty.queries) == 6  # one retry each after the hour
+    asyncio.run(twice())
+    assert len(empty.queries) == 6  # then no more today (≤ MAX_SEARCHES per instance)
+
+
+def test_a_cap_hit_serves_yesterdays_entry_and_backs_off(env, monkeypatch):
+    provider, web = env
+    yesterday = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
+    old = WebResult(
+        url="https://x.test/2026/10/09/health-story-from-yesterday",
+        title="Health story from yesterday", source="x.test", format="article",
+    )  # fmt: skip
+    asyncio.run(web._cache.put(feed_mod.feed_key("health", yesterday), "article", [old],
+                               ws.cache_key(feed_mod.feed_query("health", "article"))))  # fmt: skip
+    monkeypatch.setattr(config.get_settings(), "feed_search_daily_cap", 0)
+    search = feed_mod.FeedSearch(web)
+    got = asyncio.run(search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0))
+    assert [c.result.title for c in got.candidates] == ["Health story from yesterday"]
+    assert got.pending is False and provider.queries == []
+    monkeypatch.setattr(config.get_settings(), "feed_search_daily_cap", 60)
+    again = asyncio.run(search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0))
+    assert provider.queries == [] and len(again.candidates) == 1  # backing off for 10 minutes
+
+
+def test_a_learning_goal_boosts_the_feed_item_that_names_its_target(env, monkeypatch):
+    """Through the routes: POST a learning goal (resolution faked, no LLM), then GET /v1/feed."""
+    from app.me import goals as goals_api
+
+    provider, _ = env
+
+    async def fake_resolve(graph, names, threshold, **kw):
+        hit = graph.lookup(names[0])
+        return ({names[0].casefold(): hit.id} if hit else {}), []
+
+    monkeypatch.setattr(goals_api, "resolve_names", fake_resolve)
+    original = provider.search
+
+    async def naming_offside(query, fmt, news=False):
+        results = await original(query, fmt, news)
+        if fmt == "article":
+            results.append(WebResult(url="https://x.test/2026/10/10/offside-rule-explained-again",
+                                     title="The offside rule, explained", source="x.test",
+                                     format="article"))  # fmt: skip
+        return results
+
+    provider.search = naming_offside
+    c = google("goalfeed", {"sports": 1.0})
+    goal = c.post("/v1/me/goals", json={"type": "learning", "text": "understand offside"})
+    assert goal.status_code == 200 and goal.json()["label"] == "Offside"
+    items = c.get("/v1/feed").json()["items"]
+    boosted = [i for i in items if i["goal"]]
+    assert [i["title"] for i in boosted] == ["The offside rule, explained"]
+    assert "helps your goal: Offside" in boosted[0]["why"]
+    assert items[0]["title"] == "The offside rule, explained"  # ranked first
+
+
+def test_not_interested_keeps_a_feed_item_away(env):
+    c = google("dismisser", {"sports": 1.0})
+    first = c.get("/v1/feed").json()["items"]
+    gone = first[0]["id"]
+    sent = c.post("/v1/recs/events", json={"events": [
+        {"id": "e-dismiss-1", "type": "rec_dismissed", "item_id": gone}]})  # fmt: skip
+    assert sent.status_code == 200
+    again = c.get("/v1/feed").json()["items"]
+    assert gone not in {i["id"] for i in again} and len(again) == len(first) - 1

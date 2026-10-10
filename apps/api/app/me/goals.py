@@ -14,7 +14,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Path
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -33,6 +33,7 @@ from app.store.reader_repo import ReaderRepo, sub_path, user_path
 from app.store.spend_repo import today_utc
 
 log = logging.getLogger("app.me.goals")
+GOAL_ID = r"^[0-9a-f]{12}$"  # uuid4().hex[:12]; never a path separator
 router = APIRouter()
 
 
@@ -175,7 +176,10 @@ async def _resolve(caller: Caller, text: str, settings: Settings) -> dict[str, A
 
 
 @router.delete("/me/goals/{goal_id}", status_code=204)
-async def delete_goal(goal_id: str, caller: Annotated[Caller, Depends(current_caller)]) -> None:
+async def delete_goal(
+    goal_id: Annotated[str, Path(pattern=GOAL_ID)],
+    caller: Annotated[Caller, Depends(current_caller)],
+) -> None:
     _signed_in(caller)
 
     async def body(t):

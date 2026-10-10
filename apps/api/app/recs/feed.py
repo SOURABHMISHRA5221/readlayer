@@ -26,6 +26,8 @@ from app.store.spend_repo import today_utc
 MAX_TOPICS = 6
 MIN_TOPIC_INTEREST = 0.5  # onboarding stores 1.0 for chosen domains and 0.3 for the rest
 EMPTY_RETRY = timedelta(hours=1)  # an empty day entry may be searched again (within the caps)
+MAX_SEARCHES = 2  # per instance (≤ 3) and (topic, format, day): ≤ 6 in all, inside the feed cap
+FAILURE_BACKOFF = timedelta(minutes=10)  # after a cap hit or provider failure
 FETCH_WAIT_S = 6.0
 FEED_PHRASE: Mapping[Format, str] = {
     # "latest news" returned section and tag pages; plain "news" swung between 2 and 10 real
@@ -86,17 +88,36 @@ class Gathered:
 
 
 class FeedSearch:
-    """Shared, day-keyed searches for the For you feed, with in-flight de-duplication."""
+    """Shared, day-keyed searches for the For you feed, with in-flight de-duplication.
+
+    Per (topic, format, UTC day) and instance, at most MAX_SEARCHES searches: the first, and one
+    more an hour later if it came back empty (or after a failure, FAILURE_BACKOFF later). When a
+    search can't run (a cap, a failure, the limit) and today has no entry, yesterday's entry is
+    served if there is one."""
 
     def __init__(self, web: WebSearch) -> None:
         self._web = web
         self._inflight: dict[tuple[str, Format], asyncio.Task[list[WebResult] | None]] = {}
+        self._searches: dict[tuple[str, Format], int] = {}
+        self._failed_at: dict[tuple[str, Format], datetime] = {}
+
+    def _prune(self, day: str) -> None:
+        for store in (self._inflight, self._searches, self._failed_at):
+            for k in [k for k in store if not k[0].endswith(day)]:
+                del store[k]
+
+    def _may_search(self, k: tuple[str, Format], now: datetime) -> bool:
+        failed = self._failed_at.get(k)
+        if failed is not None and now - failed < FAILURE_BACKOFF:
+            return False
+        return self._searches.get(k, 0) < MAX_SEARCHES
 
     async def gather(
         self, topics: Sequence[str], graph: ConceptGraph, now: datetime,
         wait_s: float = FETCH_WAIT_S,
     ) -> Gathered:  # fmt: skip
         day = today_utc()
+        self._prune(day)
         found: dict[tuple[str, Format], list[WebResult]] = {}
         tasks: dict[tuple[str, Format], asyncio.Task[list[WebResult] | None]] = {}
         for topic in topics:
@@ -104,28 +125,43 @@ class FeedSearch:
             for fmt in FORMATS:
                 if fmt not in self._web.formats:
                     continue
-                entry = await self._web.cached_entry(key, fmt, feed_query(topic, fmt))
-                if entry is not None and (entry.results or now - entry.fetched_at < EMPTY_RETRY):
+                k, query = (key, fmt), feed_query(topic, fmt)
+                entry = await self._web.cached_entry(key, fmt, query)
+                fresh = entry is not None and (
+                    entry.results or now - entry.fetched_at < EMPTY_RETRY
+                )
+                task = self._inflight.get(k)
+                if entry is not None and (fresh or not self._may_search(k, now)):
                     found[(topic, fmt)] = entry.results
                     continue
-                task = self._inflight.get((key, fmt))
                 if task is None or task.done():
+                    if not self._may_search(k, now):
+                        found[(topic, fmt)] = await self._yesterday(topic, fmt)
+                        continue
+                    self._searches[k] = self._searches.get(k, 0) + 1
                     task = asyncio.create_task(
-                        self._web.fetch_feed(
-                            key, fmt, feed_query(topic, fmt), keep_for(topic, graph, now)
-                        )  # fmt: skip
+                        self._web.fetch_feed(key, fmt, query, keep_for(topic, graph, now))
                     )
-                    self._inflight[(key, fmt)] = task
+                    self._inflight[k] = task
                 tasks[(topic, fmt)] = task
         if tasks:
             await asyncio.wait(tasks.values(), timeout=wait_s)
         pending = False
-        for k, task in tasks.items():
-            if task.done() and not task.cancelled() and task.exception() is None:
-                found[k] = task.result() or []
-            else:
+        for (topic, fmt), task in tasks.items():
+            if not task.done():
                 pending = True
+                continue
+            result = None if task.cancelled() or task.exception() else task.result()
+            if result is None:  # a cap or a provider failure: no search for a while
+                self._failed_at[(feed_key(topic, day), fmt)] = now
+                result = await self._yesterday(topic, fmt)
+            found[(topic, fmt)] = result
         return Gathered(_candidates(found, graph), pending)
+
+    async def _yesterday(self, topic: str, fmt: Format) -> list[WebResult]:
+        day = (datetime.fromisoformat(today_utc()) - timedelta(days=1)).date().isoformat()
+        entry = await self._web.cached_entry(feed_key(topic, day), fmt, feed_query(topic, fmt))
+        return entry.results if entry is not None else []
 
 
 def _candidates(

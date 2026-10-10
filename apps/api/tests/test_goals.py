@@ -128,7 +128,9 @@ def test_goal_map_filter_feed_targets_export_and_delete(env):
     sub = c.get(f"/v1/me/graph?goal={goal['id']}").json()
     assert {n["id"] for n in sub["nodes"]} == {"c_glucose", "c_insulin", "c_insulin_resistance"}
     assert len(sub["edges"]) == 2
-    assert c.get("/v1/me/graph?goal=nope").status_code == 404
+    assert c.get("/v1/me/graph?goal=nope").status_code == 422  # not a goal id
+    assert c.get("/v1/me/graph?goal=0123456789ab").status_code == 404
+    assert c.delete("/v1/me/goals/a%2Fb").status_code in (404, 422)
     targets = asyncio.run(goals_api.targets_for_feed("g6"))
     assert targets["c_insulin"] == "Insulin resistance"
     repo = ReaderRepo(get_doc_store())

@@ -194,7 +194,7 @@ async def get_my_graph(
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     domain: Domain | None = None,
     q: Annotated[str, Query(max_length=100)] = "",
-    goal: Annotated[str | None, Query(max_length=40)] = None,
+    goal: Annotated[str | None, Query(pattern=r"^[0-9a-f]{12}$")] = None,
 ) -> SubgraphOut | GraphSummaryOut:
     graph = get_graph()
     now = datetime.now(UTC)
