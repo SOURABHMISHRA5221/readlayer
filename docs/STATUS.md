@@ -1,7 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): M7 built and verified on the local emulator harness (§15); M6
-live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
+Last updated: 2026-10-10 (IST): open domains and a new M7.5 (decision 33); M2.2 in progress, M8
+paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -22,7 +22,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M2.1 | merged | #5 | Graph grown to 3,327 concepts, overrides file, held-out linker evaluation (15 articles) |
 | docs | merged | #7 | Reading profile page spec (DESIGN §15) |
 | docs | merged | #8 | DESIGN §2 brought up to date with the M2.1 build |
-| M2.2 | **open issue**, full scope (decision 32) | #6 | Online concept growth, jurisdiction in `link_confirm`, strictness, Russell mislink, 30-article held-out set, ≥ 75% linked. Not started |
+| M2.2 | **in progress**, full scope + open domains (decisions 32, 33) | #6 | 14-domain taxonomy, online concept growth, jurisdiction in `link_confirm`, strictness, Russell mislink, 30-article held-out set with non-business articles, ≥ 75% linked, per-domain report |
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
 | M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
@@ -30,7 +30,9 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
-| M8-local, M2.2 (full scope), M9 | M8 planning; others not started | — | Autopilot order (decision 27) |
+| M7.5 | not started | — | "For you" feed, "Read any link", reading goals (decision 33) |
+| M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
+| M9 | not started | — | Hardening and evals |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
 1. `e7c131c` M6 local vertical slice: `DEV_AUTH_BYPASS` (refuses to start on Cloud Run / ENV=prod),
@@ -316,13 +318,16 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
 
 ## 9. Next actions, in order
 
-Autopilot order (decision 27); BUILD_PLAN.md has the prompts. M6 is merged and live (#14, #15);
+Autopilot order (decisions 27 and 33): M2.2 → M7.5 → M8-local → M9; BUILD_PLAN.md has the prompts. M6 is merged and live (#14, #15);
 M7 is built and verified on the local harness (§15) and awaits review, merge and deploy.
 
 | When | Action |
 |---|---|
 | Done | **M7:** merged #16 and live; only Sourabh's Google check left. Was: merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
-| Next | **M8-local** (unpacked extension), then **M2.2, full scope** (online concept growth, jurisdiction in `link_confirm`, strictness, Russell mislink, 30-article held-out set, ≥ 75% linked), then **M9** hardening and evals |
+| Now | **M2.2, full scope + open domains** (decision 33): 14-domain taxonomy, online concept growth, jurisdiction, strictness, Russell mislink, 30-article held-out set with non-business articles, ≥ 75% linked, per-domain report |
+| Oct 12–13 | **M7.5**: "For you" feed, "Read any link", reading goals (DESIGN gets feed and goals sections with the plan) |
+| Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done) |
+| Oct 15 | **M9** hardening and evals |
 | Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
 
@@ -372,6 +377,7 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 30 | Edit-by-prompt for demo readers (M7, Sourabh 2026-10-10) | Allowed, session-only: changes the session's persona copy and settings, never the template; "Reset persona" returns to the original; caps 3/uid, 30/day shared |
 | 31 | M7 harness (2026-10-10) | Local end-to-end on Firestore + Auth emulators seeded read-only from production; emulator "Google" readers for acceptance; real-account check by Sourabh after deploy |
 | 32 | M2.2 scope (Sourabh, 2026-10-10) | Full scope, not trimmed: online concept growth, jurisdiction in `link_confirm`, strictness, the Russell mislink, a 30-article held-out set and ≥ 75% linked on it. Supersedes the M2.2 part of decisions 20 and 22 |
+| 33 | Open domains, new order (Sourabh, 2026-10-10) | Not a business-only reader. M2.2 adds a fixed 14-domain taxonomy (old four ids kept), growth into it, non-business held-out articles and a per-domain report. New M7.5: "For you" feed (Tavily, YouTube; taxonomy topic names as the only query text; shared cache per topic/format/day), "Read any link" box, reading goals (`users/{uid}/goals`). Demo personas unchanged; open domains for Google readers. Order M2.2 → M7.5 → M8 → M9; if the Oct 16 freeze is at risk, ask what to cut |
 
 No decisions are open.
 

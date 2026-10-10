@@ -12,11 +12,14 @@ default constants so implementation doesn't have to make product decisions.
 6. Signals: interactions update the reader's graph (Beta pseudo-counts + Elo θ).
 
 ## 2. Global concept graph (`gs://<bucket>/concepts.json`)
-One domain for the hackathon: business & economy news.
+Open domains (decision 33): one fixed taxonomy of 14 top-level domains. The graph started from a
+business & economy corpus; online concept growth (M2.2) adds concepts in any domain. Demo
+personas stay curated on the original four.
 ```json
 {
   "version": "2026-10-06",
-  "domains": ["economics", "finance", "business", "policy"],
+  "domains": ["economics", "finance", "business", "policy", "politics", "law", "technology",
+              "science", "health", "environment", "sports", "culture", "education", "society"],
   "concepts": [{
     "id": "c_repo_rate",
     "label": "Repo rate",
@@ -570,7 +573,7 @@ the deck.
 - One Cloud Monitoring dashboard: requests, errors, p95 latency, daily LLM spend.
 
 ## 14. Out of scope for the hackathon
-Video/podcast, learned scoring model, Neo4j/Postgres, multi-domain graph, mobile app,
+Learned scoring model, Neo4j/Postgres, open-ended (user-defined) domains, mobile app,
 LiteLLM proxy server, self-hosted open models, Terraform.
 
 ## 15. Reading profile page

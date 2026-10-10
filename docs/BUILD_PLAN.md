@@ -19,12 +19,18 @@ M0–M4 and the M6 slice are merged and live. The rest:
 | Oct 10 | **M5** explanations, verifier, safety evals |
 | Oct 11 | **Rest of M6**: show paragraph markers, the pre-read card and "Know this?" prompts; two-phase "Open here"; complete event batching |
 | Oct 12–13 | **M7**: profile page (summary, domain bars, knowledge-map graph and list view, corrections); Google onboarding with consent and calibration; edit-by-prompt. All required (decision 27) |
-| Oct 14 | **M8-local**: unpacked Chrome extension (Developer mode), activeTab only |
-| Oct 15 | **M2.2 (full scope, decision 32)**: online concept growth, jurisdiction in `link_confirm`, linker strictness, Russell mislink, 30-article held-out set, ≥ 75% linked; then **M9** hardening and evals |
+| Oct 10–11 | **M2.2 (full scope, decision 32, extended with open domains, decision 33)**: fixed 14-domain taxonomy, online concept growth into it, jurisdiction in `link_confirm`, linker strictness, Russell mislink, 30-article held-out set with non-business articles, ≥ 75% linked, linking per domain |
+| Oct 12–13 | **M7.5** (decision 33): "For you" feed for Google readers, "Read any link" box, reading goals |
+| Oct 14 | **M8-local**: unpacked Chrome extension (Developer mode), activeTab only (plan approved, paused on branch `m8`) |
+| Oct 15 | **M9** hardening and evals |
 | Oct 16 | Demo seeding, README refresh, video, deck |
 | Oct 17 | **Submit** |
 
-**If late:** stop and ask Sourabh what to cut (decision 27); nothing is cut automatically.
+**Order (Sourabh, 2026-10-10, decision 33):** M2.2 → M7.5 → M8-local → M9. ReadLayer is not a
+business-only reader; demo personas stay curated as they are, open domains are for signed-in
+(Google) readers.
+
+**If late:** stop and ask Sourabh what to cut (decisions 27 and 33); nothing is cut automatically.
 
 **Post-hackathon:** Chrome Web Store release of the extension.
 
@@ -292,8 +298,18 @@ published to the Chrome Web Store (a post-hackathon item).
 
 ---
 
-## M2.2 — Online concept growth and linker quality (full scope, issue #6; Oct 15)
-**Scope (decided 2026-10-10, decision 32): everything below is required; nothing is trimmed.**
+## M2.2 — Open domains, online concept growth and linker quality (full scope, issue #6; Oct 10–11)
+**Scope (decided 2026-10-10, decisions 32 and 33): everything below is required; nothing is
+trimmed.**
+
+**Open domains (decision 33).** Replace the 4 fixed domains with one fixed taxonomy of 14
+top-level domains: economics, finance, business, policy, politics, law, technology, science,
+health, environment, sports, culture, education, society. The old four keep their ids, so the
+existing graph, persona templates and reader θ stay valid. Online concept growth assigns every
+new concept to a taxonomy domain (`concept_define` is constrained to the list). Onboarding
+interests, comfort and calibration offer the whole taxonomy; calibration only draws from domains
+that have enough concepts. The held-out set includes non-business articles and the report gives
+linking per domain. Demo personas are unchanged.
 
 **Prompt**
 > Read docs/DESIGN.md §2 and §3 and issue #6. (1) **Online concept growth:** when a newly ingested
@@ -323,8 +339,38 @@ published to the Chrome Web Store (a post-hackathon item).
   concept appears in the next library score; caps and budget respected (tests offline, one live
   run).
 - `concepts.json` in GCS has a new version and a backup of the previous one; the API loads it.
+- Open domains: the taxonomy is the only domain list in API and web; a new concept from a
+  non-business article lands in the right domain; onboarding and calibration work for a reader
+  who picks only non-business interests; the held-out report has a per-domain table.
 
-**You or the agent:** 15 more held-out URLs (business/economy articles, not in the corpus).
+**You or the agent:** 15 more held-out URLs (not in the corpus), including non-business articles.
+
+---
+
+## M7.5 — "For you" feed, "Read any link", reading goals (Oct 12–13)
+**Scope (decided 2026-10-10, decision 33): everything below is required.** Signed-in (Google)
+readers; demo personas are unchanged. DESIGN gets new sections for the feed and goals.
+
+**Prompt**
+> (1) **"For you" feed:** per interest topic, Tavily (articles, podcasts) and YouTube (video),
+> ranked by interest, format affinity and readiness (concepts new to the reader, but not too
+> many). Opening an item uses two-phase "Open here". Search queries are taxonomy topic names only,
+> never reader text or history. Results are cached per (topic, format, day) and shared; add caps
+> and budget lines. (2) **"Read any link"** box on the library, through the existing ingest path
+> and per-user cap. (3) **Reading goals** in `users/{uid}/goals` (covered by export and delete):
+> habit goals (articles or minutes per week, from reading events) and learning goals ("understand
+> X", resolved through the graph linker to a target concept set; the feed boosts items covering
+> them; progress = targets at band "known", shown on the profile page and the knowledge map).
+
+**Acceptance**
+- A Google reader with non-business interests gets a feed of articles, podcasts and videos for
+  those topics; queries contain only taxonomy topic names (test); cache hits on the same
+  (topic, format, day) make no search call; caps and budget lines hold.
+- Opening a feed item shows the article within 5 s (two-phase).
+- "Read any link" ingests a pasted URL within the per-user cap and refuses beyond it.
+- A habit goal's progress matches the week's reading events; a learning goal resolves to concepts,
+  boosts matching feed items, and its progress shows on the profile page and the knowledge map;
+  goals appear in export and go on delete.
 
 ---
 

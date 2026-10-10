@@ -263,3 +263,16 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   Russell mislink, 30-article held-out set, ≥ 75% linked. BUILD_PLAN gets a full M2.2 section
   (out of M9 and the post-hackathon list); STATUS milestone rows, deviations and next actions
   updated.
+
+## Scope change 2 (Sourabh, 2026-10-10, decision 33)
+- Not a business-only reader. New order: M2.2 (full scope + open domains) → new M7.5 ("For you"
+  feed, "Read any link", reading goals) → M8-local → M9. Demo personas unchanged.
+- M8 paused on branch `m8` (local commit 2f037a1: redaction format and false positives,
+  NOT_CORPUS exclusions; 512 tests pass). Plan stays approved; resumes after M7.5.
+- Taxonomy chosen (14 domains, old four ids kept so existing data stays valid): economics,
+  finance, business, policy, politics, law, technology, science, health, environment, sports,
+  culture, education, society.
+- Freeze check: tight but not yet judged at risk (M6 rest and M7 each took a few hours). Real
+  risks are non-coding: seeding non-business concepts needs production writes beyond current
+  counts, and each deploy waits on Sourabh. Re-checked after the M2.2 plan is sized.
+- DESIGN feed and goals sections are written with the M7.5 plan, so plan-reviewer sees them.
