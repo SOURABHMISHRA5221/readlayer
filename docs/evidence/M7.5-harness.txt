@@ -1,0 +1,106 @@
+# M7.5 harness acceptance (2026-10-10, emulator harness, final branch code)
+
+## Google reader (health + sports), goals, map, export, delete
+[onboarded] hs-654274@example.com at /
+[feed google A] 0.0s topics ['health', 'sports'] snapshot False pending False items 10 counts {"health": {"video": 2, "article": 3, "podcast": 1}, "sports": {"article": 3, "podcast": 1}}
+   - health/video Health Insurance Claim Ka 10% Ab Aapko Dena Hoga? | New Proposal Expla | Health · 1 idea new to you | goal None
+   - sports/article Ravens announce bad Lamar Jackson news for Week 5 Falcons matchup - Ya | Sports · 1 idea new to you | goal None
+   - health/article Around the MHS - October 8, 2026 | Health.mil | Health · 1 idea new to you | goal None
+   - sports/article Sports of the Week: Field Hockey Wins Back-to-Back Matches - Swampscot | Sports · 2 ideas new to you | goal None
+   - health/article ‘Medicare for All’ Message Attracts Voters Buckling Under Medical Bill | Health · 2 ideas new to you | goal None
+   - sports/article Sports/Rec calendar: Oct. 9–18, 2026 | Sports · 2 ideas new to you | goal None
+   - health/article The Week in Health: SUS Clinics, WHO Leadership, Medicine Nobel | Health · 1 idea new to you | goal None
+   - sports/podcast Business of Sports: NFL Business Podcast - Podcast - Apple Podcasts | Sports · 1 idea new to you | goal None
+[searches] reader A: 0 feed searches
+[feed-google 1440-light] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "icon-btn 40x40", "account__chip 40x40"] m75-feed-google-1440-light.png
+...
+[onboarded] hs-654478@example.com at /
+[feed google A] 0.0s topics ['health', 'sports'] snapshot False pending False items 10 counts {"health": {"video": 2, "article": 3, "podcast": 1}, "sports": {"article": 3, "podcast": 1}}
+   - health/video Health Insurance Claim Ka 10% Ab Aapko Dena Hoga? | New Proposal Expla | Health · 1 idea new to you | goal None
+   - sports/article Ravens announce bad Lamar Jackson news for Week 5 Falcons matchup - Ya | Sports · 1 idea new to you | goal None
+   - health/article Around the MHS - October 8, 2026 | Health.mil | Health · 1 idea new to you | goal None
+   - sports/article Sports of the Week: Field Hockey Wins Back-to-Back Matches - Swampscot | Sports · 2 ideas new to you | goal None
+   - health/article ‘Medicare for All’ Message Attracts Voters Buckling Under Medical Bill | Health · 2 ideas new to you | goal None
+   - sports/article Sports/Rec calendar: Oct. 9–18, 2026 | Sports · 2 ideas new to you | goal None
+   - health/article The Week in Health: SUS Clinics, WHO Leadership, Medicine Nobel | Health · 1 idea new to you | goal None
+   - sports/podcast Business of Sports: NFL Business Podcast - Podcast - Apple Podcasts | Sports · 1 idea new to you | goal None
+[searches] reader A: 0 feed searches
+[feed-google 1440-light] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "icon-btn 40x40", "account__chip 40x40"] m75-feed-google-1440-light.png
+[feed-google 1440-dark] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "icon-btn 40x40", "account__chip 40x40"] m75-feed-google-1440-dark.png
+[feed-google 390-light] axe [] hscroll 0 small [] m75-feed-google-390-light.png
+[feed-google 390-dark] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "icon-btn 40x40", "account__chip 40x40"] m75-feed-google-390-dark.png
+[goals before] []
+[learning goal] shown after 19.1 s; note ''
+[goals after add] [{"id": "358764ba1324", "type": "habit", "label": "3 articles a week", "metric": "articles", "per_week": 3, "targets": [], "done": 0, "total": 3, "fraction": 0, "paused": false}, {"id": "69b3082533df", "type": "learning", "label": "Insulin resistance", "metric": null, "per_week": null, "targets": [{"concept_id": "c_natural_science", "label": "Natural science", "known": true}, {"concept_id": "c_anatomy", "label": "Anatomy", "known": true}, {"concept_id": "c_blood_vessel", "label": "Blood vessel", "known": true}, {"concept_id": "c_cardiovascular", "label": "Cardiovascular", "known": true}, {"concept_id": "c_circulation", "label": "Circulation", "known": true}, {"concept_id": "c_blood_sugar", "label": "Blood sugar", "known": true}, {"concept_id": "c_insulin_resistance", "label": "Insulin resistance", "known": false}], "done": 6, "total": 7, "fraction": 0.857, "paused": false}]
+[goals 1440-light] axe [] hscroll 0 small [] m75-goals-1440-light.png
+[goals 1440-dark] axe [] hscroll 0 small [] m75-goals-1440-dark.png
+[goals 390-light] axe [] hscroll 0 small [] m75-goals-390-light.png
+[goals 390-dark] axe [] hscroll 0 small [] m75-goals-390-dark.png
+[habit after reading 628d6fd2] done 1 of 3
+[map goal] clicked 'Show on map'; subgraph 200 nodes ['Natural science', 'Anatomy', 'Blood vessel', 'Cardiovascular', 'Circulation', 'Blood sugar', 'Insulin resistance']
+[map rings] 23
+[map-goal 1440-light] axe [] hscroll 0 small [] m75-map-goal-1440-light.png
+[map-goal 1440-dark] axe [] hscroll 0 small [] m75-map-goal-1440-dark.png
+[map-goal 390-light] axe [] hscroll 0 small [] m75-map-goal-390-light.png
+[feed google A with goal] 0.0s topics ['health', 'sports'] snapshot False pending False items 10 counts {"health": {"video": 2, "podcast": 1, "article": 3}, "sports": {"podcast": 1, "article": 3}}
+   - health/video Health Insurance Claim Ka 10% Ab Aapko Dena Hoga? | New Proposal Expla | Health · 1 idea new to you | goal None
+   - sports/podcast Business of Sports: NFL Business Podcast - Podcast - Apple Podcasts | Sports · 1 idea new to you | goal None
+   - health/podcast TED Health - Podcast - Apple Podcasts | Health · 1 idea new to you | goal None
+   - sports/article Ravens announce bad Lamar Jackson news for Week 5 Falcons matchup - Ya | Sports · 1 idea new to you | goal None
+   - health/article Around the MHS - October 8, 2026 | Health.mil | Health · 1 idea new to you | goal None
+   - sports/article Sports of the Week: Field Hockey Wins Back-to-Back Matches - Swampscot | Sports · 2 ideas new to you | goal None
+   - health/article ‘Medicare for All’ Message Attracts Voters Buckling Under Medical Bill | Health · 2 ideas new to you | goal None
+   - sports/article Sports/Rec calendar: Oct. 9–18, 2026 | Sports · 2 ideas new to you | goal None
+[goal boost] items naming a goal target: []
+[export] keys ['demo_graphs', 'domains', 'events', 'explain_counts', 'exported_at', 'goal_resolve_counts', 'goals', 'growth_counts', 'ingest_counts', 'ingested', 'knows', 'profile_edit_counts', 'profile_edits', 'rec_signals', 'uid', 'user', 'weekly']
+[export] goals {"358764ba1324": {"per_week": 3, "created_at": "2026-10-10T17:49:59.995640+00:00", "type": "habit", "metric": "articles"}, "69b3082533df": {"concept_id": "c_insulin_resistance", "created_at": "2026-10-10T17:50:20.824693+00:00", "label": "Insulin resistance", "type": "learning", "targets": [{"concept_id": "c_natural_science", "label": "Natural science"}, {"concept_id": "c_anatomy", "label": "Anatom
+[onboarded] hs2-654478@example.com at /
+[feed google B] 0.0s topics ['health', 'sports'] snapshot False pending False items 10 counts {"health": {"video": 2, "article": 3, "podcast": 1}, "sports": {"article": 3, "podcast": 1}}
+   - health/video Health Insurance Claim Ka 10% Ab Aapko Dena Hoga? | New Proposal Expla | Health · 1 idea new to you | goal None
+   - sports/article Ravens announce bad Lamar Jackson news for Week 5 Falcons matchup - Ya | Sports · 1 idea new to you | goal None
+   - health/article Around the MHS - October 8, 2026 | Health.mil | Health · 1 idea new to you | goal None
+   - sports/article Sports of the Week: Field Hockey Wins Back-to-Back Matches - Swampscot | Sports · 2 ideas new to you | goal None
+   - health/article ‘Medicare for All’ Message Attracts Voters Buckling Under Medical Bill | Health · 2 ideas new to you | goal None
+   - sports/article Sports/Rec calendar: Oct. 9–18, 2026 | Sports · 2 ideas new to you | goal None
+   - health/article The Week in Health: SUS Clinics, WHO Leadership, Medicine Nobel | Health · 1 idea new to you | goal None
+   - sports/podcast Business of Sports: NFL Business Podcast - Podcast - Apple Podcasts | Sports · 1 idea new to you | goal None
+[searches] reader B: 0 feed searches (expect 0)
+[delete] reader A uid PpouTvcxbIeJLZHmZLa7KebMOVBD: DELETE /v1/me → 204
+
+## Demo reader: snapshot, Read any link, cap
+[feed demo newcomer] 0.0s topics ['technology', 'economics'] snapshot True pending False items 9 counts {"technology": {"video": 2, "article": 3, "podcast": 1}, "economics": {"video": 2, "article": 1}}
+   - technology/video AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova | Technology · 1 idea new to you | goal None
+   - economics/video Has Inequality Ever Been Worse? | Economics · 2 ideas new to you | goal None
+   - technology/video Gadgets of the future? | BBC News | Technology · 1 idea new to you | goal None
+   - economics/video Gaming out the Fed's next move: The investment committee weighs in | Economics · 1 idea new to you | goal None
+   - technology/article Jeff Bezos says AI could result in a 3-day work week | Technology · 2 ideas new to you | goal None
+   - economics/article September CPI is just the tip of the inflation iceberg | Economics · 2 ideas new to you | goal None
+   - technology/article What's behind the recovery rally in tech stocks — plus, Musk's good we | Technology · 4 ideas new to you | goal None
+   - technology/article At the epicenter of AI, San Francisco Bay residents take on the techno | Technology · 2 ideas new to you | goal None
+[demo] searches 0 (expect 0); prepared_at 2026-10-10T17:35:28+00:00
+[demo note] ['Picks prepared in advance for this demo (10 Oct 2026), so some may be dated. Sign in with Google for a live feed.']
+[feed-demo 1440-light] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "persona__chip 151x40", "icon-btn 40x40", "account__chip 51x40"] m75-feed-demo-1440-light.png
+[feed-demo 1440-dark] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "persona__chip 151x40", "icon-btn 40x40", "account__chip 51x40"] m75-feed-demo-1440-dark.png
+[feed-demo 390-light] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "persona__chip 78x40", "icon-btn 40x40", "account__chip 51x40"] m75-feed-demo-390-light.png
+[feed-demo 390-dark] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "persona__chip 78x40", "icon-btn 40x40", "account__chip 51x40"] m75-feed-demo-390-dark.png
+[anylink 1440-light] axe [] hscroll 0 small ["skip-link 131x37", "wordmark wordmark--lg 110x26", "persona__chip 151x40", "icon-btn 40x40", "account__chip 51x40", "filter 96x36", "filter 87x36", "filter 74x36", "SELECT 179x36"] m75-anylink-1440-light.png
+[anylink 1440-dark] axe [] hscroll 0 small ["skip-link 131x37", "wordmark wordmark--lg 110x26", "persona__chip 151x40", "icon-btn 40x40", "account__chip 51x40", "filter 96x36", "filter 87x36", "filter 74x36", "SELECT 179x36"] m75-anylink-1440-dark.png
+[anylink 390-light] axe [] hscroll 0 small ["skip-link 131x37", "wordmark wordmark--lg 110x26", "persona__chip 78x40", "icon-btn 40x40", "account__chip 51x40", "filter 96x36", "filter 87x36", "filter 74x36", "SELECT 179x36"] m75-anylink-390-light.png
+[anylink 390-dark] axe [] hscroll 0 small ["skip-link 131x37", "wordmark wordmark--lg 110x26", "persona__chip 78x40", "icon-btn 40x40", "account__chip 51x40", "filter 96x36", "filter 87x36", "filter 74x36", "SELECT 179x36"] m75-anylink-390-dark.png
+[read any link] Photosynthesis → /read/6a61ac687d4058d4ee4c4eb6d4db7a40; article visible in 2.0 s; hint ''
+[read any link] Offside_(association_football) → /read/4b2477a4509391dd523118ac27a4bc4e; article visible in 1.0 s; hint ''
+[read any link] Plate_tectonics → /read/e3f8710b1f36e3054c240c6cc70c1321; article visible in 0.8 s; hint ''
+[read any link] Mitochondrion → /; article visible in None s; hint 'The demo can analyse only a few new articles a day. Use “Open original” for this one. Sign in with Google for more.'
+[anylink-cap 1440-light] axe [] hscroll 0 small ["skip-link 131x37", "wordmark wordmark--lg 110x26", "persona__chip 151x40", "icon-btn 40x40", "account__chip 51x40", "filter 96x36", "filter 87x36", "filter 74x36", "SELECT 179x36"] m75-anylink-cap-1440-light.png
+[anylink-cap 390-dark] axe [] hscroll 0 small ["skip-link 131x37", "wordmark wordmark--lg 110x26", "persona__chip 78x40", "icon-btn 40x40", "account__chip 51x40", "filter 96x36", "filter 87x36", "filter 74x36", "SELECT 179x36"] m75-anylink-cap-390-dark.png
+[privacy] opened ['6a61ac687d4058d4ee4c4eb6d4db7a40', '4b2477a4509391dd523118ac27a4bc4e', 'e3f8710b1f36e3054c240c6cc70c1321'] listed for me: [False, False, False]
+
+## Privacy after notes finished (fresh demo readers, same persona)
+[open] 70d7dca80ef12e78409fa2f6028ac95b article visible in 1.0 s
+[notes] done after 63.2 s
+[privacy] listed for the paster: True
+[privacy] listed for a second demo reader (same persona): False
+[by id] second reader can open it by id: 200
+
+## Feed page reloads after batching rec signals (was 0.5 → 31 s and timeouts before)
+7 reloads at 1440/390, light/dark: all 0.5 s

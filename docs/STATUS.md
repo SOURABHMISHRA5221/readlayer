@@ -30,7 +30,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
-| M7.5 | building on branch `m7.5` (plan approved; API, web, prompts, scripts and docs done; harness acceptance next) | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
+| M7.5 | harness acceptance passed on branch `m7.5` (§17); review, merge, deploy and live checks next | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -203,8 +203,12 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Headlines keep publisher SEO suffixes (" \| Stock Market News"); we don't alter publisher text |
 | Low | In-process catalog cache: docs ingested by another process need an API restart to appear (Open here appends directly) |
 | Low | Up next article searches still send Tavily `exclude_domains`, which made the news topic return only section pages in M7.5 testing; Up next uses the general topic and its results looked fine in M6.5, but this is unverified (feed articles no longer send it) |
+| Low | For you quality depends on Tavily's news results, which vary run to run (the same query gave 2 or 10 real articles); empty day entries are retried after an hour. "News this week" also pulls event pages ("Mental Health Week") |
+| Low | A pasted page stays pending (not in the library) if its reader leaves before the notes finish and the analyse request never ran; the next open of that link analyses it |
+| Low | Learning-goal resolution takes 8–19 s on the harness (embedding + link_confirm); the form says it is looking the idea up |
+| Low | Header controls (theme toggle, account chip 40×40, persona chip 40 px tall) are under 44 px; pre-existing, rebuilt in the Design pass |
 | Low | `rec_shown` relies on IntersectionObserver, which browsers pause in background tabs (seen in automated testing; real readers have the tab in front) |
-| Low | Web main bundle 137.7 KB gzip (budget 150 KB); M7 pages are lazy chunks (profile 6.8 KB, welcome 3.3 KB), Cytoscape + dagre 155 KB load only when the map opens |
+| Low | Web main bundle 138.7 KB gzip (budget 150 KB; M7.5's For you page is a lazy chunk); M7 pages are lazy chunks (profile 6.8 KB, welcome 3.3 KB), Cytoscape + dagre 155 KB load only when the map opens |
 | Low | The weekly trend is per uid, so a demo session's trend mixes the personas it read as (the page says "this demo session") |
 | Low | Calibration picks the most frequent concepts per domain, which occasionally surfaces a term like "Expiry days"; fine for a quick check, revisit with the gold set |
 | Low | Firestore emulator fails contended transactions faster than production (three prefetched explanations reserving one daily counter); a jittered retry now wraps every transaction (no production occurrence in 7 days of logs) |
@@ -678,3 +682,29 @@ Branch `m2.2`. Full numbers and every verdict: `apps/api/evals/heldout_report.md
 | Taxonomy only domain list; open-domain onboarding, calibration, profile, map | Pass on the harness (seeded graph): 14 chips, axe 0, no h-scroll at 1440/390 light/dark; Health+Sports reader calibrated in health (16) and sports (8) |
 | Seeding dry run | +1,874 concepts (5,201 total), no single everyday word; 42 docs / 62 demands re-link (held-out excluded); demo spans unchanged |
 | Bug found on the way | Delete my data label invisible since M7 (both themes); fixed |
+
+## 17. M7.5 acceptance (2026-10-10, emulator harness; live checks after deploy)
+
+Evidence: `docs/evidence/M7.5-harness.txt`, screenshots in the session scratchpad (1440 and 390,
+light and dark). Safety evals for the general prompts: `evals/report.md` (targets met, before and
+after, non-business cases reported separately).
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Google reader with only Health and Sports gets articles, videos and podcasts for those topics | Pass: topics `[health, sports]`, 10 items (health 3 articles, 2 videos, 1 podcast; sports 3 articles, 1 podcast) in 4.2 s on a cold day cache, 6 searches |
+| 1 | Queries are only topic names; a second reader makes no new search; caps hold | Pass: property test over 14 domains; reader B 0 searches (live harness count); cap tests |
+| 1 | Demo personas see the snapshot with the note | Pass: newcomer snapshot (technology 3 articles, 2 videos, 1 podcast; economics 1 article, 2 videos), 0 searches, note shown |
+| 2 | Opening a pasted or feed article shows it within 5 s | Pass on the harness: 2.0, 1.0, 0.8 and 1.0 s (Read any link, same two-phase route as the feed's "Read here"); notes 63 s with growth. Live check after deploy |
+| 3 | Read any link: 3 new URLs, then the cap message; other readers don't see them | Pass: 3 opened, the 4th got "The demo can analyse only a few new articles a day…"; after its notes finished, the page is listed for the paster and not for a second demo reader on the same persona (still reachable by id) |
+| 4 | Habit progress matches the week's page loads | Pass: 0 of 3, read one article, 1 of 3 |
+| 4 | Learning goal resolves, shows progress on the profile and the map | Pass: "understand insulin resistance" → Insulin resistance + 6 prerequisites (6 of 7 known); "Show on map" draws the 7-node chain |
+| 4 | Goal boost shows in the feed's `why` | Covered by tests only: no live feed item named an insulin-resistance target that day |
+| 4 | Goals in export, gone on delete | Pass: `goals`, `ingested`, `goal_resolve_counts` in export; after DELETE /v1/me no user doc, goals, ingested or weekly docs remain |
+| — | Accessibility and layout | axe: 0 serious or critical on For you (Google and demo), Goals, the map's goal view and the Read any link box, at 1440 and 390, light and dark; no horizontal scroll |
+| 5 | Prompts meet the M5 targets; demo cards re-warmed live | Evals pass (before 25/25, after 24/25 good cards, G21 judge variation; all adversarial rejected; injections 10/10). Re-warm after deploy |
+
+Found and fixed during acceptance:
+- **Feed search quality:** "latest news" returned section pages. Fixes: "news this week", an article-shaped URL check, show pages only for podcasts, YouTube news explainers of 4–20 minutes from the last 30 days, relevance by label, short stem or scope words, no `exclude_domains` on feed news (with it Tavily returned 0 articles of 9), English-only titles.
+- **Topics:** onboarding's 0.3 "not chosen" interest made every business domain a topic; now ≥ 0.5.
+- **Rec signals:** one request per card contended on the reader's signals doc (30 s latencies, failed commits) and stalled page loads (0.5 → 31 s). Now batched to one request per 400 ms; reloads 0.5 s.
+- **Copy and UI:** progress note while a learning goal resolves, library intro spacing, sign-in copy for any subject, failed thumbnails hidden.
