@@ -844,15 +844,19 @@ is ready to learn. No LLM anywhere on this path.
 - **Topics.** A signed-in reader's top 6 taxonomy domains by stored interest (ties in taxonomy
   order); none stored → the four business domains. Demo personas have a fixed pair: newcomer
   technology + economics, trader finance + business, policy student policy + politics.
-- **Query = the taxonomy label + a fixed phrase**, nothing else: "Health latest news" (Tavily,
-  `topic: news`, last 7 days), "Health podcast episode" (Tavily, podcast directories), "Health
-  explained" (YouTube). Never reader text, ids, history or the current article (property test
-  over all 14 domains).
+- **Query = the taxonomy label + a fixed phrase**, nothing else: "Health news this week" (Tavily,
+  `topic: news`, last 7 days, 10 results for one credit), "Health podcast" (Tavily, podcast directories), "Health
+  news explained" (YouTube, 4–20 minutes, published in the last 30 days). Never reader text,
+  ids, history or the current article (property test over all 14 domains). A changed phrase
+  makes that day's cache entry stale.
 - **Shared and day-keyed.** Each (topic, format, UTC day) is searched at most once for everyone
-  and cached in `rec_cache` under `feed:<domain>:<day>`. Results pass the blocklist, the 14-day
-  article filter (when a date is given) and a relevance gate: the title or snippet names the
-  topic, or a graph concept of that domain (sports news rarely says "sport", but it names a
-  penalty).
+  and cached in `rec_cache` under `feed:<domain>:<day>`. Results pass the blocklist, a page-shape
+  check (an article URL must not be a section, tag or home page: a ≥ 3-word slug or a date/id
+  in the path; podcast chart and genre pages are dropped), the 14-day article filter (when a
+  date is given) and a relevance gate: the title or snippet names the topic (its label, the first
+  4 letters of a long label such as "tech", or a word of the domain's taxonomy scope line such
+  as "AI" or "inflation"), or a graph concept of that domain (sports news rarely says "sport",
+  but it names a penalty).
 - **Caps.** `FEED_SEARCH_DAILY_CAP` (60 calls/day) is reserved under the same lock as the global
   and YouTube caps; past any of them nothing is called and cached results are served.
 - **In-request only.** Missing searches run inside the request with a 6 s limit (Cloud Run

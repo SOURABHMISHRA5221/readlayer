@@ -388,3 +388,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   knowledge map). BUILD_PLAN and STATUS updated. M7.5's web parts stay functional and accessible,
   not polished, to avoid doing them twice. Freeze watch: M7.5 by Oct 12, design pass Oct 13, M8
   Oct 14, M9 Oct 15; the Oct 12 checkpoint stays.
+- warm_demo `--dry-run` and `scripts/live_check_m7_5.py` (demo snapshot, goals 403, Read any
+  link privacy across two demo readers). DESIGN §17 (For you) and §18 (goals), route rows,
+  §11.4/§11.5; STATUS deviations (private pasted pages: **7** production `user_ingested` docs,
+  0 `extension`, read-only count), caps, Tavily projection.
+- Harness snapshot check found the feed unfit to show: "latest news" returned section/tag pages
+  (8 of 9 articles failed the 400-word check), "Technology explained" returned kids' lessons
+  and Shorts, podcasts came back as chart pages. Probed providers (≈ 30 Tavily credits, ≈ 6
+  YouTube searches, harness only) and fixed deterministically: article phrase "news this week",
+  article-shaped URL check, show pages only for podcasts ("podcast"), YouTube 4–20 min from the
+  last 30 days ("news explained"), relevance by label / short stem / taxonomy scope words, and no
+  `exclude_domains` on feed news (with it Tavily returned 0 articles of 9). Newcomer snapshot now
+  4 technology + 2 economics readable articles, news-explainer videos, real shows. Queries are
+  still only a taxonomy label + fixed phrase (decision 33).
+- Sourabh (decision 40, mid-run): Design pass additions — Gloss name, `docs/design/mockup.html`
+  as the visual target, Margo mascot, reader details, mobile. His BUILD_PLAN edit and the mockup
+  are committed with this docs commit; STATUS decision 40 logged. M7.5 continues first.

@@ -303,6 +303,36 @@ copied assets.
 5. **Keep everything that works:** accessibility (axe 0, keyboard, 44px targets), the bundle
    budget, two-phase loading, annotation behaviour.
 
+**Additions (Sourabh, 2026-10-10 22:06, decision 40; also required):**
+
+6. **Name: Gloss.** Rename the product to "Gloss" for display only: logo, page titles, meta tags,
+   copy, README and deck. Firebase project, URLs, repo name and internal ids stay as they are.
+7. **Visual target: `docs/design/mockup.html`.** Open it in headless Chrome (tabs: Feed, Reader,
+   Profile and map, Logo and Margo; light and dark). Match its layout, type (Schibsted Grotesk
+   for UI and headlines, Source Serif 4 for reading), tokens and the knowledge-map style. It is a
+   target, not code to copy: rebuild it in our components with real data, accessibility and the
+   bundle budget. Commit the mockup with the Design pass branch.
+8. **Mascot: Margo.** Use the `margo()` SVG from the mockup (one ink outline, one teal swipe; moods
+   idle, thinking, happy, oops, plus the simplified 16px mark). Where it appears: logo, favicon,
+   extension icon, the reader margin header, the notes-loading state, the end-of-article recap,
+   empty and error states. Never inside article text, never on every note card, never animated
+   while the reader reads (an occasional blink when idle is fine; none under
+   prefers-reduced-motion). Decorative SVGs are aria-hidden.
+9. **Reader details from the mockup** (size these in the plan; some need API work):
+   - "Before you read" as a path of steps (known steps ticked, the article's key idea last; a step
+     opens its definition or links to an explainer);
+   - two highlight styles: ideas new to the reader vs quick refreshers;
+   - the margin shows "N notes for you" as a mini contents list until a note opens; the note card
+     opens level with the highlighted line, with a connector;
+   - the card shows how it was pitched (level meter and one line), "Builds on" (prerequisites),
+     and "Say it simpler" / "Go deeper", which request the explanation one band lower or higher
+     through the normal verified path (cached by band, counted against the explain caps);
+   - "What the author is saying" set as a quote;
+   - **"What this article changed"** at the end: the reader's band changes from this page view
+     (with undo, through the existing correction route), plus read-next and watch-next items that
+     teach what the reader said they didn't know. Margo (happy) heads it.
+10. **Mobile:** note card as a bottom sheet; paragraph markers only where a paragraph note exists.
+
 ## M8-local — Chrome extension, unpacked (Oct 14)
 Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not
 published to the Chrome Web Store (a post-hackathon item).
