@@ -324,16 +324,26 @@ class ProfileEditRepo:
     # ------------------------------------------------------------ demo reset
 
     async def reset_demo(self, uid: str, persona: PersonaKey) -> int:
-        """Back to the original persona for this session: its copy and its edits go."""
+        """Back to the original persona for this session: its copy and its edits go, and the
+        session settings its applied edits changed return to what they were before the first."""
         rows = await self._store.list(f"{user_path(uid)}/profile_edits")
+        mine = [(i, d) for i, d in rows if d.get("persona") == persona]
+        applied = sorted(
+            (d for _, d in mine if d.get("status") == "applied"), key=lambda d: d["applied_at"]
+        )
+        restore: dict[str, Any] = {}
+        for d in applied:  # the earliest edit's "before" wins
+            for k, v in d["deltas"]["previous_settings"].items():
+                if k != "thinks_in":  # the session frame lives on the persona copy, deleted here
+                    restore.setdefault(k, v)
 
         async def body(t: Txn) -> int:
+            user = UserProfile.model_validate(await t.get(user_path(uid)) or {})
             t.delete(demo_path(uid, persona))
-            n = 0
-            for i, d in rows:
-                if d.get("persona") == persona:
-                    t.delete(_edit_path(uid, i))
-                    n += 1
-            return n
+            for i, _ in mine:
+                t.delete(_edit_path(uid, i))
+            if restore:
+                t.set(user_path(uid), user.model_copy(update=restore).model_dump())
+            return len(mine)
 
         return await self._store.run(body)

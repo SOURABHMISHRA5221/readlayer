@@ -5,6 +5,13 @@ import type { PersonaKey } from "../../lib/personas";
 import { profileApi, type EditPreview, type EditSummary } from "../../lib/profileApi";
 import { previewLines } from "../../lib/profileFormat";
 
+const SETTING_NAMES: Record<string, string> = {
+  thinks_in: "analogies",
+  explanation_style: "explanation length",
+  density: "notes",
+  learning_paused: "pause",
+};
+
 interface Props {
   persona: PersonaKey | null;
   personaName: string | null;
@@ -149,7 +156,13 @@ export function EditBox({ persona, personaName, onChanged }: Props) {
               <li key={e.edit_id}>
                 <span>
                   {e.applied_at ? new Date(e.applied_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : ""} ·{" "}
-                  {[e.concepts ? `${e.concepts} concepts` : "", ...e.domains, ...e.settings].filter(Boolean).join(", ")}
+                  {[
+                    e.concepts ? `${e.concepts} concept${e.concepts > 1 ? "s" : ""}` : "",
+                    ...e.domains.map((d) => `${d} level`),
+                    ...e.settings.map((k) => SETTING_NAMES[k] ?? k),
+                  ]
+                    .filter(Boolean)
+                    .join(", ")}
                 </span>
                 {e.status === "applied" ? (
                   <button

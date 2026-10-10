@@ -164,3 +164,20 @@
   .welcome__actions { justify-content: stretch; }
   .welcome__actions .btn { flex: 1; }
 }
+
+.welcome__data { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); align-items: center; margin-top: var(--s5); }
+.btn--link {
+  min-height: 44px;
+  padding: 0 var(--s1);
+  border: 0;
+  background: none;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.btn--link:hover { background: none; color: var(--ink); }
+.btn--link-danger { color: var(--danger); }
+.welcome__confirm { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; font: 400 var(--text-ui) var(--font-ui); }
+.welcome__confirm .btn { min-height: 44px; }
+.btn--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--hairline)); }
+.welcome__bar .wordmark { display: inline-flex; align-items: center; min-height: 44px; }

@@ -89,6 +89,7 @@ async def parse_edit(
         "profile_edit_counts", caller.uid, day, cap, shared, shared_cap
     ):
         return _error(429, "profile_edit_cap", "That's enough profile edits for today.")
+    await _repo().recent(caller.uid, datetime.now(UTC))  # drops expired pending edits
     graph = get_graph()
     ledger: list[llm.CallMeta] = []
     variables = {

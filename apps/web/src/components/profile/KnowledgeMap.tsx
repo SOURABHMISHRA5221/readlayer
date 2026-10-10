@@ -14,6 +14,8 @@ interface Props {
   persona: PersonaKey | null;
   domains: Domain[];
   initial: Domain;
+  /** Changes when anything else on the page changed the model (an applied or undone edit). */
+  refreshKey: number;
   onChanged: () => void;
 }
 
@@ -22,7 +24,7 @@ interface Props {
  * loaded only when the map is shown) and the same subgraph as a keyboard-navigable list, the
  * default on phones. Either opens the node card: band, last evidence, and corrections.
  */
-export function KnowledgeMap({ persona, domains, initial, onChanged }: Props) {
+export function KnowledgeMap({ persona, domains, initial, refreshKey, onChanged }: Props) {
   const narrow = typeof window !== "undefined" && window.matchMedia(NARROW).matches;
   const [domain, setDomain] = useState<Domain>(initial);
   const [view, setView] = useState<View>(narrow ? "list" : "map");
@@ -47,7 +49,7 @@ export function KnowledgeMap({ persona, domains, initial, onChanged }: Props) {
       .then(setGraph)
       .catch(() => !ctrl.signal.aborted && setFailed(true));
     return () => ctrl.abort();
-  }, [persona, domain, search, version]);
+  }, [persona, domain, search, version, refreshKey]);
 
   const open = (node: GraphNode, from: HTMLElement | null) => {
     opener.current = from;

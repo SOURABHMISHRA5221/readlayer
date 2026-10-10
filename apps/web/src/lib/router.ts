@@ -35,6 +35,11 @@ export function matchRoute(pathname: string): Route {
   return { name: "missing" };
 }
 
+/** Where a signed-in reader must go first: consent and onboarding before anything else. */
+export function onboardingRedirect(done: boolean | null, route: Route["name"]): string | null {
+  return done === false && route !== "welcome" ? "/welcome" : null;
+}
+
 export function navigate(to: string, { replace = false } = {}): void {
   if (replace) window.history.replaceState(null, "", to);
   else window.history.pushState(null, "", to);

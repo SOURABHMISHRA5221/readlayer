@@ -8,8 +8,9 @@ check with his Google account.
 
 1. The trader's profile: onboarding done, the persona's frame (cricket) in thinks_in and summary.
 2. The knowledge map for finance: ≤ 60 nodes, edges closed, nodes carry `recent` evidence.
-3. A session-only profile edit: preview changes nothing; apply sets the session frame; undo
-   restores it; reset returns the persona to the original. One profile_edit call (≈ $0.001).
+3. A session-only profile edit: preview changes nothing; apply sets the session frame and style;
+   undo restores both; reset returns the persona to the original. One profile_edit call
+   (≈ $0.001) and +1 on the shared anonymous counter ops/profile_edit/days/{day} (not deleted).
 4. Signed-in-only routes refuse a demo reader (onboarding 403).
 """
 
@@ -64,7 +65,9 @@ async def checks(client: httpx.AsyncClient, api: str) -> None:
         "style",
         restored["settings"]["explanation_style"],
     )
+    assert after["thinks_in"] == ["software"] and after["settings"]["explanation_style"] == "short"
     assert restored["thinks_in"] == ["cricket"]
+    assert restored["settings"]["explanation_style"] == "normal"
     reset = await client.post(f"{api}/v1/me/demo/reset", json={"persona": "trader"})
     print("   reset", reset.json())
     assert reset.status_code == 200

@@ -24,6 +24,7 @@ from app.store.reader_repo import ReaderRepo, UserProfile
 router = APIRouter()
 
 CONSENT_VERSIONS = frozenset({"consent-v1"})
+ContentId = Annotated[str, Field(max_length=120, pattern=r"^[A-Za-z0-9_-]+$")]
 
 
 def _repo() -> ReaderRepo:
@@ -67,7 +68,9 @@ class OnboardingIn(BaseModel):
     interests: list[Domain] = Field(default_factory=list, max_length=len(DOMAINS))
     comfort: dict[Domain, Level] = Field(default_factory=dict)
     thinks_in: list[ThinksIn] = Field(default_factory=list, max_length=onboarding.MAX_THINKS_IN)
-    liked_content_ids: list[str] = Field(default_factory=list, max_length=onboarding.MAX_LIKED)
+    liked_content_ids: list[ContentId] = Field(
+        default_factory=list, max_length=onboarding.MAX_LIKED
+    )
 
 
 @router.post("/onboarding")

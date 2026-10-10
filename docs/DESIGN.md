@@ -581,10 +581,11 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
 
 ### 15.1 Page sections
 1. **Summary card.** A deterministic template, never sent to an LLM. Inputs: θ per domain,
-   THINKS_IN domains, and this week's band changes. θ maps to words: θ ≥ 1 "advanced",
+   THINKS_IN domains, and this week's band changes. θ (rounded to one decimal, as the page shows it) maps to words: θ ≥ 1 "advanced",
    0 ≤ θ < 1 "comfortable", −1 ≤ θ < 0 "building", θ < −1 "new to". Example:
    "Comfortable in finance, building in economics. You think in software. 6 concepts moved up a
-   band this week." Same inputs always give the same text (unit-tested).
+   band this week." Only domains the reader rated, reads in or has concepts in are named (M7).
+   Same inputs always give the same text (unit-tested).
 2. **Ability vs interest.** Per domain, two bars: ability (θ, shown on a fixed −2..2 scale) and
    interest (0..1 from onboarding and reading). Bars carry their numbers as text, not colour alone.
 3. **Knowledge map, one domain at a time.** Cytoscape.js with the dagre layered layout

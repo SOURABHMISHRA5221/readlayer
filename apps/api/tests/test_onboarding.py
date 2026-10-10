@@ -226,3 +226,14 @@ def test_map_nodes_carry_their_last_evidence_items(env):
     recent = nodes[cid]["recent"]
     assert [r["type"] for r in recent] == ["correction", "calibration_answer"]  # newest first
     assert len(recent) <= 3
+
+
+def test_the_summary_names_only_domains_the_reader_rated_or_reads_in(env):
+    g = consented(google())
+    g.post(
+        "/v1/onboarding", json={**ANSWERS, "comfort": {"finance": "new"}, "liked_content_ids": []}
+    )
+    profile = g.get("/v1/me/profile").json()
+    assert profile["summary"]["text"].startswith("New to finance.")
+    rated = {d["domain"]: d["rated"] for d in profile["domains"]}
+    assert rated == {"economics": False, "finance": True, "business": False, "policy": False}

@@ -262,6 +262,13 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     knows = dict(ctx.state.edges)
     weekly = await _repo().get_weekly(ctx.uid)
     theta = {d: float(ctx.theta.get(d, 0.0)) for d in DOMAINS}
+    # A domain the reader rated, reads in, or moved: the summary speaks only about those (a
+    # neutral 0 in an untouched domain isn't "comfortable").
+    edge_domains = {c.domain for cid in knows if (c := graph.get(cid)) is not None}
+    rated = {
+        d for d in DOMAINS
+        if d in user.onboarding.get("comfort", {}) or abs(theta[d]) > 1e-9 or d in edge_domains
+    }  # fmt: skip
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
     # A demo reader's frame is the persona's, the one explanations use (not users/{uid}).
     frames = (
@@ -271,8 +278,8 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     )
     return {
         "summary": {
-            "text": profile.summary_text(theta, frames, len(moves)),
-            "top_domain": profile.top_domain(theta),
+            "text": profile.summary_text({d: theta[d] for d in rated}, frames, len(moves)),
+            "top_domain": profile.top_domain({d: theta[d] for d in rated}),
             "moved_up_this_week": len(moves),
             "learning_paused": user.learning_paused,
         },
@@ -280,6 +287,7 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
             {
                 "domain": d,
                 "theta": round(theta[d], 4),
+                "rated": d in rated,
                 "interest": domains[d].interest if d in domains else 0.0,
                 "thinks_in": domains[d].thinks_in if d in domains else 0.0,
             }

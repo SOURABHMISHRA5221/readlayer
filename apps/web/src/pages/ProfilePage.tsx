@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { AccountMenu } from "../components/AccountMenu";
 import { ArrowLeft } from "../components/Icons";
@@ -92,6 +92,7 @@ export default function ProfilePage({ url }: { url: URL }) {
               persona={persona}
               domains={profile.domains.map((d) => d.domain)}
               initial={(profile.summary.top_domain as Domain) ?? "finance"}
+              refreshKey={version}
               onChanged={refresh}
             />
             <WeekCard profile={profile} demo={!!persona} />
@@ -118,10 +119,12 @@ function DomainBars({ profile }: { profile: Profile }) {
             <span className="bars__domain">{domainLabel(d.domain)}</span>
             <span className="bars__pair">
               <span className="bars__bar" aria-hidden="true">
-                <span className="bars__fill bars__fill--ability" style={{ width: `${thetaPercent(d.theta)}%` }} />
+                {d.rated && (
+                  <span className="bars__fill bars__fill--ability" style={{ width: `${thetaPercent(d.theta)}%` }} />
+                )}
               </span>
               <span className="bars__value">
-                Ability {thetaText(d.theta)} · {thetaWord(d.theta)}
+                {d.rated ? `Ability ${thetaText(d.theta)} · ${thetaWord(d.theta)}` : "Ability: not rated yet"}
               </span>
               <span className="bars__bar" aria-hidden="true">
                 <span className="bars__fill bars__fill--interest" style={{ width: `${Math.round(d.interest * 100)}%` }} />
@@ -194,13 +197,20 @@ function Frames({ profile, demoName, onChanged }: { profile: Profile; demoName: 
       </section>
     );
   }
+  const [error, setError] = useState<string | null>(null);
   const toggle = async (f: Frame) => {
     const next = chosen.includes(f) ? chosen.filter((x) => x !== f) : chosen.length < 3 ? [...chosen, f] : chosen;
     if (next === chosen) return;
     setBusy(true);
-    await profileApi.settings({ thinks_in: next }).catch(() => undefined);
-    setBusy(false);
-    onChanged();
+    setError(null);
+    try {
+      await profileApi.settings({ thinks_in: next });
+      onChanged();
+    } catch {
+      setError("That didn't save. Try again.");
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <section className="frames" aria-labelledby="frames-title">
@@ -225,14 +235,25 @@ function Frames({ profile, demoName, onChanged }: { profile: Profile; demoName: 
           );
         })}
       </div>
+      {error && (
+        <p className="welcome__error" role="alert">
+          {error}
+        </p>
+      )}
     </section>
   );
 }
 
 function Preferences({ profile, onChanged, disabled }: { profile: Profile; onChanged: () => void; disabled: boolean }) {
+  const [error, setError] = useState<string | null>(null);
   const set = async (changes: Parameters<typeof profileApi.settings>[0]) => {
-    await profileApi.settings(changes).catch(() => undefined);
-    onChanged();
+    setError(null);
+    try {
+      await profileApi.settings(changes);
+      onChanged();
+    } catch {
+      setError("That didn't save. Try again.");
+    }
   };
   if (disabled) return null; // demo sessions change these through the description box
   return (
@@ -260,6 +281,11 @@ function Preferences({ profile, onChanged, disabled }: { profile: Profile; onCha
         value={profile.settings.density}
         onChange={(v) => void set({ density: v })}
       />
+      {error && (
+        <p className="welcome__error" role="alert">
+          {error}
+        </p>
+      )}
     </section>
   );
 }
@@ -268,6 +294,11 @@ function DataControls({ demo, paused, onChanged }: { demo: boolean; paused: bool
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const deleteButton = useRef<HTMLButtonElement>(null);
+  const cancel = () => {
+    setConfirming(false);
+    requestAnimationFrame(() => deleteButton.current?.focus());
+  };
 
   const exportData = async () => {
     setBusy(true);
@@ -308,8 +339,13 @@ function DataControls({ demo, paused, onChanged }: { demo: boolean; paused: bool
             type="checkbox"
             checked={paused}
             onChange={async (e) => {
-              await profileApi.settings({ learning_paused: e.target.checked }).catch(() => undefined);
-              onChanged();
+              setMessage(null);
+              try {
+                await profileApi.settings({ learning_paused: e.target.checked });
+                onChanged();
+              } catch {
+                setMessage("Pausing didn't save. Try again.");
+              }
             }}
           />
           <span>Pause learning (reading won't change your profile)</span>
@@ -322,13 +358,13 @@ function DataControls({ demo, paused, onChanged }: { demo: boolean; paused: bool
           </button>
         )}
         {!confirming ? (
-          <button type="button" className="btn btn--danger" onClick={() => setConfirming(true)} disabled={busy}>
+          <button type="button" ref={deleteButton} className="btn btn--danger" onClick={() => setConfirming(true)} disabled={busy}>
             {demo ? "End demo" : "Delete my data"}
           </button>
         ) : (
-          <span className="data__confirm" role="group" aria-label="Confirm delete">
+          <span className="data__confirm" role="group" aria-label="Confirm delete" onKeyDown={(e) => e.key === "Escape" && cancel()}>
             <span>{demo ? "End the demo and delete what it recorded?" : "Delete everything ReadLayer knows about you? This can't be undone."}</span>
-            <button type="button" className="btn" onClick={() => setConfirming(false)} disabled={busy}>
+            <button type="button" className="btn" autoFocus onClick={cancel} disabled={busy}>
               Cancel
             </button>
             <button type="button" className="btn btn--danger" onClick={() => void deleteAll()} disabled={busy}>

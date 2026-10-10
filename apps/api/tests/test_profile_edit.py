@@ -394,3 +394,19 @@ def test_the_preview_leaves_out_settings_that_wouldnt_change(env, docs):
     g.patch("/v1/me/settings", json={"thinks_in": ["software"]})
     settings = parse(g).json()["preview"]["settings"]
     assert [s["setting"] for s in settings] == ["explanation_style"]
+
+
+def test_reset_restores_the_session_settings_a_demo_edit_changed(env, docs):
+    anon = TestClient(app, headers=auth("a3", anonymous=True))
+    edit = parse(anon, persona="newcomer").json()["edit_id"]
+    anon.post(f"/v1/me/profile/edits/{edit}/apply?persona=newcomer")
+    assert docs.docs["users/a3"]["explanation_style"] == "short"
+    anon.post("/v1/me/demo/reset", json={"persona": "newcomer"})
+    assert docs.docs["users/a3"]["explanation_style"] == "normal"
+
+
+def test_liked_content_ids_must_look_like_ids(env):
+    from app.me.onboarding import OnboardingIn
+
+    with pytest.raises(ValidationError):
+        OnboardingIn.model_validate({"field": "software", "liked_content_ids": ["../../x"]})

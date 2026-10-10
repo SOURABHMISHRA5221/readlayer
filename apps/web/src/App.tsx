@@ -6,7 +6,7 @@ import { profileApi } from "./lib/profileApi";
 import { LibraryPage } from "./pages/LibraryPage";
 import { ReaderPage } from "./pages/ReaderPage";
 import { SignInPage } from "./pages/SignInPage";
-import { matchRoute, navigate, useUrl } from "./lib/router";
+import { matchRoute, navigate, onboardingRedirect, useUrl } from "./lib/router";
 
 // Route chunks: the main bundle doesn't carry onboarding or the profile page (M7).
 const WelcomePage = lazy(() => import("./pages/WelcomePage"));
@@ -15,6 +15,13 @@ const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 /** A signed-in (Google) reader goes through consent and onboarding first; demo readers never. */
 function useOnboardingDone(uid: string | null, isDemo: boolean): boolean | null {
   const [done, setDone] = useState<{ uid: string; done: boolean } | null>(null);
+  // Bumped when the welcome flow finishes, so the status is fetched again (not left loading).
+  const [checks, setChecks] = useState(0);
+  useEffect(() => {
+    const again = () => setChecks((n) => n + 1);
+    window.addEventListener("rl:onboarding-changed", again);
+    return () => window.removeEventListener("rl:onboarding-changed", again);
+  }, []);
   useEffect(() => {
     if (!uid || isDemo) return;
     let live = true;
@@ -22,13 +29,10 @@ function useOnboardingDone(uid: string | null, isDemo: boolean): boolean | null 
       .profile(null)
       .then((p) => live && setDone({ uid, done: p.onboarding.done }))
       .catch(() => live && setDone({ uid, done: true })); // never lock a reader out on an error
-    const again = () => setDone(null);
-    window.addEventListener("rl:onboarding-changed", again);
     return () => {
       live = false;
-      window.removeEventListener("rl:onboarding-changed", again);
     };
-  }, [uid, isDemo]);
+  }, [uid, isDemo, checks]);
   if (isDemo) return true;
   return done && done.uid === uid ? done.done : null;
 }
@@ -66,7 +70,8 @@ function SignedIn({ url, uid, isDemo }: { url: URL; uid: string; isDemo: boolean
   const route = matchRoute(url.pathname);
   const done = useOnboardingDone(uid, isDemo);
   useEffect(() => {
-    if (done === false && route.name !== "welcome") navigate("/welcome", { replace: true });
+    const to = onboardingRedirect(done, route.name);
+    if (to) navigate(to, { replace: true });
   }, [done, route.name]);
   if (done === null || (done === false && route.name !== "welcome")) return loading;
   if (route.name === "welcome")

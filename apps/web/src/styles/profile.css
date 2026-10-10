@@ -200,7 +200,7 @@
 .editbox__h3 { margin: 0; font: 500 18px / 1.3 var(--font-read); }
 .editbox__lines { margin: var(--s3) 0 0; padding-left: var(--s5); font: 400 15px / 1.6 var(--font-ui); }
 .editbox__details { margin-top: var(--s3); font: 400 var(--text-ui-sm) / 1.5 var(--font-ui); color: var(--ink-soft); }
-.editbox__details summary { min-height: 32px; cursor: pointer; }
+.editbox__details summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
 .editbox__history { margin-top: var(--s6); }
 .editbox__history ul { display: grid; gap: var(--s2); margin: var(--s3) 0 0; padding: 0; list-style: none; }
 .editbox__history li { display: flex; justify-content: space-between; align-items: center; gap: var(--s3); font: 400 var(--text-ui-sm) var(--font-ui); color: var(--ink-soft); }
@@ -226,3 +226,8 @@
   .bars__pair { grid-template-columns: 1fr 11.5em; }
   .clist__items { grid-template-columns: 1fr; }
 }
+
+/* 44 px targets in this page's bar (the shared chrome uses 40 px icons). */
+.profile__bar .icon-btn,
+.profile__bar .account__chip { width: 44px; height: 44px; }
+.profile__bar .wordmark { display: inline-flex; align-items: center; min-height: 44px; }

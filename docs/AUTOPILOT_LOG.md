@@ -225,3 +225,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   run, so it isn't instance cold start; phase 1 itself is slow on Cloud Run (local 0.84 s).
   Added `fetch_ms`/`extract_ms` to phase 1 logs (M7). M9 item: preload the ingestion imports at
   startup during judging (min instances 1). contents/ now 312; ops/ingest anonymous 3.
+- milestone-reviewer round 1: **FIX** (4 blocking, 2 should-fix, 5 follow-ups). Applied so far:
+  onboarding status refetched after the welcome flow (no stuck "Opening…"); map refreshes after
+  Apply/Undo/Reset; consent screen has Export and Delete (with Escape/focus) and accurate wording;
+  44 px preview summary and header targets; delete confirmation focus + Escape; settings errors
+  shown; edit history labels; summary/bars agree (rounded θ, unrated domains not named, bars say
+  "not rated yet"); reset restores session settings; liked ids pattern; expired edits cleaned on
+  parse; gate logic vitest; live check asserts + announced counter write. Evidence re-run on the
+  final code saved to docs/evidence/M7-harness.txt (onboarding → library without reload via last
+  answer and Skip; spans 8 vs 2 and 9 vs 5; software vs cricket analogies; axe 0 ×4; no overflow;
+  31/31 Tab stops; node card focus return; map renders and refreshes; preview leaves settings
+  unchanged; explanation 56 → 23 words — a cache hit in this re-run because the earlier run had
+  cached the same short Background; the earlier run's miss is in the harness log).
+- Still to do before re-review: STATUS §15 numbers from the evidence file, STATUS deviations
+  (trend table only, live check shape) and decision row order, harness headroom wording
+  ($0.18, not $1), re-run milestone-reviewer.

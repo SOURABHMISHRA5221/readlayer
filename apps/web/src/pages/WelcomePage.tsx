@@ -124,13 +124,16 @@ export default function WelcomePage() {
             </li>
             <li>
               <strong>What we never do.</strong> Send your email, name or reading history to an AI
-              model, or sell or share your data. Explanations get the article text and your level only.
+              model, or sell or share your data. To write an explanation, the AI model gets the
+              article passage, your level for that idea, your analogy field and preferred length:
+              nothing that says who you are.
             </li>
             <li>
-              <strong>Your control.</strong> Export or delete everything from the account menu at any
-              time, or pause learning on your profile page.
+              <strong>Your control.</strong> Export or delete everything at any time, here or from the
+              account menu, or pause learning on your profile page.
             </li>
           </ul>
+          <DataLinks />
         </Panel>
       )}
 
@@ -247,6 +250,76 @@ export default function WelcomePage() {
 
       {step === "calibration" && <Calibration heading={heading} onDone={finish} />}
     </Shell>
+  );
+}
+
+/** Export and delete work before consent too (the API keeps them open), so leaving is easy. */
+function DataLinks() {
+  const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const deleteButton = useRef<HTMLButtonElement>(null);
+  const exportData = async () => {
+    setBusy(true);
+    try {
+      const blob = await api.exportMe();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "readlayer-export.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      setMessage("The export didn't download. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const deleteAll = async () => {
+    setBusy(true);
+    try {
+      await api.deleteMe();
+      await signOutUser();
+    } catch {
+      setMessage("We couldn't delete your account. Try again.");
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="welcome__data">
+      <button type="button" className="btn btn--link" onClick={() => void exportData()} disabled={busy}>
+        Export my data
+      </button>
+      {!confirming ? (
+        <button type="button" ref={deleteButton} className="btn btn--link btn--link-danger" onClick={() => setConfirming(true)} disabled={busy}>
+          Delete my account
+        </button>
+      ) : (
+        <span
+          className="welcome__confirm"
+          role="group"
+          aria-label="Confirm delete"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              setConfirming(false);
+              requestAnimationFrame(() => deleteButton.current?.focus());
+            }
+          }}
+        >
+          <span>Delete your account and everything with it?</span>
+          <button type="button" className="btn" autoFocus onClick={() => setConfirming(false)} disabled={busy}>
+            Cancel
+          </button>
+          <button type="button" className="btn btn--danger" onClick={() => void deleteAll()} disabled={busy}>
+            Delete
+          </button>
+        </span>
+      )}
+      {message && (
+        <p className="welcome__error" role="alert">
+          {message}
+        </p>
+      )}
+    </div>
   );
 }
 
