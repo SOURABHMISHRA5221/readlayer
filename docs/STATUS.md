@@ -1,8 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): M2.2 built on branch `m2.2` (§16; frozen-graph headline missed,
-shipped under decision 36), post-merge production steps pending Sourabh's yes; then M7.5. M8
-paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
+Last updated: 2026-10-10 (IST): M2.2 merged (#18) and live: seeded graph, growth on, live growth
+check passed (§16; frozen-graph headline missed, decision 36). Next M7.5. M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -23,7 +22,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M2.1 | merged | #5 | Graph grown to 3,327 concepts, overrides file, held-out linker evaluation (15 articles) |
 | docs | merged | #7 | Reading profile page spec (DESIGN §15) |
 | docs | merged | #8 | DESIGN §2 brought up to date with the M2.1 build |
-| M2.2 | **built** on branch `m2.2`; frozen-graph headline **missed** (business 64%, non-business 13%), shipped under decision 36 | #6 | 14-domain taxonomy, kind/jurisdiction, overrides (Russell, Tax alias, Chancellor, FTSE Russell), jurisdiction-aware linker (link_confirm v3), glossary seeding (+1,874 concepts, dry run), online growth with a link_confirm check (off until the seeded graph serves). Pending post-merge, each with Sourabh's yes, in Ship order: deploy API → upload seeded graph (backup first) → roll → re-link 42 docs / 62 demands → roll → warm_demo (0 spans) → store the 15 held-out docs → flip `GROWTH_ENABLED` → live growth check → fold → deploy web. Acceptance 3 (live growth) and 4 (GCS version + backup) stay open until then. See §16 |
+| M2.2 | merged (squash), **live** | #18 | 14-domain taxonomy, kind/jurisdiction, overrides (Russell, Tax alias, Chancellor, FTSE Russell), jurisdiction-aware linker (link_confirm v3), glossary-seeded graph live (5,206 concepts after the fold), online growth **on** (any reader within the caps), Delete-button fix. Frozen-graph headline missed (64% / 13%), shipped under decision 36. See §16 |
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
 | M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
@@ -120,7 +119,8 @@ profile-edit count). All per-user data is in
 | Held-out linking (M2.1) | 186 concept/term demands: 57% exact-name, 5% model-confirmed, **62% linked**, 38% unlinked. LINK_THRESHOLD 0.865 |
 | Held-out set (M2.2, 2026-10-10) | 30 URLs (15 business + 15 non-business, domain column fixed before measuring); the new 15's demands frozen (`data/heldout_new_demands.json` + sha256), not yet stored in Firestore |
 | Held-out linking (M2.2, local, seeded graph) | frozen graph: business 64%, non-business 13%; after growth (production behaviour): 89% / 66%. `apps/api/evals/heldout_report.md` |
-| Seeded graph (local only, not uploaded) | `data/concepts.seeded.json`: 5,201 concepts (+1,874), 14 domains, kind + jurisdiction on all; sha256 `0cc0554780aec275…` |
+| Concept graph (live, 2026-10-10) | `2026-10-10-folded-5206`: 5,201 seeded + 5 grown concepts, 14 domains, kind + jurisdiction on all. GCS `concepts.prev.json` is the seeded file; the pre-M2.2 graph is only in local `data/concepts.json` (rollback to a pre-M2.2 revision: upload that file first) |
+| Content docs (M2.2) | +15 held-out docs (source `fetch`), +1 live-check doc; 49 docs re-linked (42 corpus + 7 held-out) |
 | Search cache | 87 `rec_cache` entries, 21 of them empty (no result passed the blocklist + relevance gate) |
 
 The held-out guard (`build_concepts.corpus_sources()` refuses any corpus/held-out overlap) passes,
@@ -191,6 +191,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Linker spot-check 3/10 wrong (target ≤ 2): links to a broader field or narrower concept, and to a generic seeded category ("molybdenum" → Element) |
 | Medium | `explain` and `restate` prompts still say "business and economy news", while non-business articles now get explanations (open decision, §10) |
 | Low | Grown concepts can carry an invented label (1/30 in the judged sample: "Underground wildfire hot spots") |
+| Medium | Growth doesn't dedupe concepts grown from the same article against each other: the live check grew both "Forever chemicals" and "PFAS" |
+| Low | Grown/seeded prerequisites can be lexically near but wrong (live: PFOS → PHOSITA, a patent-law term; harness: Cilia waveform → Proper motion) |
 | Low | `society` has 28 concepts, under calibration's 30, so it never appears in calibration (open decision, §10) |
 | Low | Anonymous traffic alone can use up the service's 100/day growth cap (30 × 5 = 150); accepted by decision 35, growth then stops for the day |
 | Low | The cross-instance catalog refresh only covers articles that grew concepts; other new docs still need a restart on other instances |
@@ -349,7 +351,8 @@ M7 is built and verified on the local harness (§15) and awaits review, merge an
 | When | Action |
 |---|---|
 | Done | **M7:** merged #16 and live; only Sourabh's Google check left. Was: merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
-| Now | **M2.2 merge and production steps**, each needing Sourabh's yes: PR (milestone-reviewer SHIP, CI green) → deploy API → upload seeded graph with backup → roll → re-link 42 docs / 62 demands → roll → warm_demo (0 new spans) → store the 15 held-out docs → flip `GROWTH_ENABLED` (one-line commit, deploy) → live growth check → fold → deploy web. Checkpoint end of day Oct 11 IST: anything unfinished goes to Sourabh as a cut question |
+| Done | **M2.2** merged (#18) and live (revisions 00013–00016, web redeployed); all post-merge steps run with Sourabh's yes (§16) |
+| Now | **M7.5**: "For you" feed, "Read any link", reading goals (plan, plan-reviewer, build). Checkpoint end of day Oct 11 IST: anything unfinished goes to Sourabh as a cut question |
 | Oct 12–13 | **M7.5**: "For you" feed, "Read any link", reading goals (DESIGN gets feed and goals sections with the plan) |
 | Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done) |
 | Oct 15 | **M9** hardening and evals |
@@ -656,8 +659,8 @@ Branch `m2.2`. Full numbers and every verdict: `apps/api/evals/heldout_report.md
 | Linker suite (16 frozen cases) | **Partly missed**: 13/16 → 14/16. Chancellor ×2, German chancellor and levy pass; preferential access and "Russell Indexes" (as a phrase) still null, which plan Acceptance 2 required. Russell no longer links to S&P DJI and resolves by the FTSE Russell alias |
 | Variant precision (plan: ≥ 93%; BUILD_PLAN: not lower than before) | **≥ 93% not met (86%)**; not comparable with M2's sample; "not lower than before" met (83% → 86%) |
 | Spot-check ≤ 2/10 wrong | **Missed: 3/10 wrong** |
-| Growth: verified concept, prerequisites existing ids, acyclic, linked, caps | Tests offline; live check after deploy (judge-style, demo reader) |
-| `concepts.json` new version + backup, API loads it | After Sourabh's yes (apply_seeded, fold_growth) |
+| Growth: verified concept, prerequisites existing ids, acyclic, linked, caps | **Pass live** (revision 00015, demo reader pasted a BBC science article): 5 concepts grown in environment (PFAS, PFOS, forever chemicals, Phase 1/2 environmental site assessment), listed in the library (concepts_new 1), 2 grown concepts annotated for the newcomer; POST 49.6 s; reader deleted |
+| `concepts.json` new version + backup, API loads it | **Pass**: seeded upload (backup = the M2.1 file), then fold → `2026-10-10-folded-5206` (backup = the seeded file); revision 00016 startup log shows the folded version, load 1.26 s |
 | Taxonomy only domain list; open-domain onboarding, calibration, profile, map | Pass on the harness (seeded graph): 14 chips, axe 0, no h-scroll at 1440/390 light/dark; Health+Sports reader calibrated in health (16) and sports (8) |
 | Seeding dry run | +1,874 concepts (5,201 total), no single everyday word; 42 docs / 62 demands re-link (held-out excluded); demo spans unchanged |
 | Bug found on the way | Delete my data label invisible since M7 (both themes); fixed |

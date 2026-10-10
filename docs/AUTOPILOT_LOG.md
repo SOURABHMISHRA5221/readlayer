@@ -355,3 +355,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Harness fix: the emulator budget refused every call once production spend passed $1 (cap now
   copied spend + allowance). Growth timing on the harness (growth on, seeded graph): technology
   article 4 concepts in 20.0 s, health 3 in 6.9 s; growth timeout raised to 30 s (deviation logged).
+
+### Ship
+- PR #18 squash-merged (a627081), CI green, milestone-reviewer SHIP. Sourabh approved the whole
+  post-merge sequence. API 00013 (old graph) → seeded upload (backup M2.1 file) → 00014 (seeded,
+  load 1.08 s) → re-link 42 corpus docs → 15 held-out docs stored (store_heldout, cache only) →
+  7 held-out docs re-linked → GROWTH_ENABLED true (bc4f55a, CI green) → 00015 → live growth check
+  passed (5 concepts, environment) → fold (backup seeded file) → 00016 loads 2026-10-10-folded-5206
+  → web deployed (index-oV20XPLM.js; Delete fix live in ProfilePage/WelcomePage CSS).
+- Issues seen live: same-article duplicates (Forever chemicals / PFAS), PFOS → PHOSITA prerequisite.

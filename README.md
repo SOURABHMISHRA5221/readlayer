@@ -175,9 +175,9 @@ Measured results so far. Each number comes from [docs/STATUS.md](docs/STATUS.md)
 
 | What | Result |
 |---|---|
-| Concept graph | 3,327 concepts in 4 domains (finance, economics, policy, business), 4,053 prerequisite edges, no cycles, 680 Wikidata ids |
+| Concept graph | 5,206 concepts in 14 domains (the business core plus politics, law, technology, science, health, environment, sports, culture, education, society), seeded from Wikipedia glossaries and grown online from new articles; no cycles |
 | Library | 310 articles, each ingested once and shared by every reader |
-| Linking on unseen articles | 62% of 186 concept mentions in 15 held-out articles linked; target 75% ([#6](https://github.com/SOURABHMISHRA5221/readlayer/issues/6)) |
+| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60% missed); with online growth, as in production, 89% / 66% ([report](apps/api/evals/heldout_report.md)) |
 | Readers see different notes | Trader and policy student get identical underlines on **8 of 310** articles (mean overlap 0.15) |
 | Scoring latency, p95 | **0.19 ms** for a 1,200-word article (local test); about 1 ms on Cloud Run; budget 150 ms |
 | Annotations endpoint, p95 on Cloud Run | **99 ms** server-side, including the Firestore read; 121 ms measured from a client in India |
@@ -289,7 +289,7 @@ readlayer/
 ## Where we are
 
 **Built and live (M0–M4).** These are running at [readlayer-sourabh-26.web.app](https://readlayer-sourabh-26.web.app):
-- safe ingestion and the 3,327-concept graph;
+- safe ingestion and the concept graph (5,206 concepts in 14 domains, growing online);
 - the reader knowledge model, with Google and demo sign-in, export and delete;
 - the deterministic gap scorer, and three seeded demo personas that learn from "Knew this";
 - the annotator, library and reader;
@@ -304,7 +304,7 @@ Today a card shows the concept's definition and its prerequisites.
 
 **Next.**
 - **Rest of M6:** paragraph notes, the pre-read path and "Know this?" prompts. The API already computes them.
-- **M2.2:** linking on unseen articles, from 62% to the 75% target.
+- **M2.2:** open domains and online concept growth (done); frozen-graph linking on unseen articles stays below target, see the held-out report.
 - **M7:** onboarding and the reading profile page. Readers will see and correct their graph there; the API for it exists. This is also where the reader's own analogy domain is set.
 - **M8:** the Chrome extension.
 - **M9:** quality evals on a hand-labelled gold set.
@@ -319,7 +319,7 @@ Today a card shows the concept's definition and its prerequisites.
 - [x] M6 slice: annotator, library, reader, Up next recommendations
 - [ ] M5: two-part explanations, faithfulness verifier, safety evals
 - [ ] M6: paragraph notes, pre-read path, "Know this?" prompts, "This is wrong"
-- [ ] M2.2: online concept growth and linking above 75% on unseen articles
+- [x] M2.2: 14 domains, glossary seeding, online concept growth, jurisdiction-aware linking (frozen-graph targets missed and reported)
 - [ ] M7: onboarding, calibration and the reading profile page
 - [ ] M8: Chrome extension with client-side redaction
 - [ ] M9: quality evals on a hand-labelled gold set, hardening, demo video
