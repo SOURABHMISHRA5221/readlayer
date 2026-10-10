@@ -352,7 +352,7 @@ M7 is built and verified on the local harness (§15) and awaits review, merge an
 |---|---|
 | Done | **M7:** merged #16 and live; only Sourabh's Google check left. Was: merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
 | Done | **M2.2** merged (#18) and live (revisions 00013–00016, web redeployed); all post-merge steps run with Sourabh's yes (§16) |
-| Now | **M7.5**: "For you" feed, "Read any link", reading goals (plan, plan-reviewer, build). Checkpoint end of day Oct 11 IST: anything unfinished goes to Sourabh as a cut question |
+| Now | **M7.5**: "For you" feed, "Read any link", reading goals (plan, plan-reviewer, build). Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut (first questions: the map's goal ring/filter, podcasts in the feed) |
 | Oct 12–13 | **M7.5**: "For you" feed, "Read any link", reading goals (DESIGN gets feed and goals sections with the plan) |
 | Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done) |
 | Oct 15 | **M9** hardening and evals, plus four M2.2 follow-ups required before the freeze (Sourabh, 2026-10-10): (1) merge check within one growth batch (same-article duplicates, e.g. Forever chemicals / PFAS); (2) validate grown prerequisites against the domain or drop low-confidence ones (PFOS → PHOSITA); (3) grown-concept precision on a fresh, independent sample of 30, reported with the 87% and 97% samples; (4) README and deck state the frozen-graph misses (64% / 13%) next to the after-growth numbers |
