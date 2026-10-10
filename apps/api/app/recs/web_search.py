@@ -14,7 +14,7 @@ import asyncio
 import html
 import logging
 import re
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Protocol
@@ -143,7 +143,7 @@ class SearchProvider(Protocol):
     name: str
     formats: frozenset[Format]
 
-    async def search(self, query: str, fmt: Format) -> list[WebResult]: ...
+    async def search(self, query: str, fmt: Format, news: bool = False) -> list[WebResult]: ...
 
 
 class TavilyProvider:
@@ -164,16 +164,19 @@ class TavilyProvider:
         self._timeout = timeout_s
         self._transport = transport
 
-    async def search(self, query: str, fmt: Format) -> list[WebResult]:
+    async def search(self, query: str, fmt: Format, news: bool = False) -> list[WebResult]:
         body: dict[str, object] = {
             "query": query,
             "search_depth": "basic",
-            "topic": "general",
+            # The For you feed (M7.5) asks for recent news articles; Up next for explainers.
+            "topic": "news" if news and fmt == "article" else "general",
             "max_results": MAX_RESULTS,
             "include_images": True,  # per-result images where Tavily has them
             "include_published_date": True,
             "safe_search": True,
         }
+        if news and fmt == "article":
+            body["days"] = FEED_NEWS_DAYS
         if fmt == "podcast":
             body["include_domains"] = list(PODCAST_DOMAINS)
         else:
@@ -221,7 +224,7 @@ class YouTubeProvider:
         self._timeout = timeout_s
         self._transport = transport
 
-    async def search(self, query: str, fmt: Format) -> list[WebResult]:
+    async def search(self, query: str, fmt: Format, news: bool = False) -> list[WebResult]:
         async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
             found = await client.get(
                 YOUTUBE_SEARCH_URL,
@@ -300,12 +303,16 @@ class RecCacheStore(Protocol):
 
 
 ANONYMOUS = "anonymous"  # counter of calls triggered by anonymous (demo) readers
+FEED = "feed"  # counter of calls made for the For you feed (M7.5), within FEED_SEARCH_DAILY_CAP
+FEED_NEWS_DAYS = 7
 
 
 class SearchCallStore(Protocol):
     async def count_today(self, provider: str | None = None) -> int: ...
 
-    async def add(self, provider: str, calls: int, anonymous: bool = False) -> None: ...
+    async def add(
+        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False
+    ) -> None: ...
 
 
 class FirestoreRecCache:
@@ -357,7 +364,9 @@ class FirestoreSearchCalls:
         data = (snap.to_dict() or {}) if snap.exists else {}
         return int(data.get(provider or "calls", 0))
 
-    async def add(self, provider: str, calls: int, anonymous: bool = False) -> None:
+    async def add(
+        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False
+    ) -> None:
         fields = {
             "calls": firestore.Increment(calls),
             provider: firestore.Increment(calls),
@@ -365,6 +374,8 @@ class FirestoreSearchCalls:
         }
         if anonymous:
             fields[ANONYMOUS] = firestore.Increment(calls)
+        if feed:
+            fields[FEED] = firestore.Increment(calls)
         await self._doc().set(fields, merge=True)
 
 
@@ -383,18 +394,25 @@ class InMemorySearchCalls:
     def __init__(self) -> None:
         self.calls: dict[str, int] = {}
         self.anonymous = 0
+        self.feed = 0
 
     async def count_today(self, provider: str | None = None) -> int:
         if provider == ANONYMOUS:
             return self.anonymous
+        if provider == FEED:
+            return self.feed
         if provider:
             return self.calls.get(provider, 0)
         return sum(self.calls.values())
 
-    async def add(self, provider: str, calls: int, anonymous: bool = False) -> None:
+    async def add(
+        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False
+    ) -> None:
         self.calls[provider] = self.calls.get(provider, 0) + calls
         if anonymous:
             self.anonymous += calls
+        if feed:
+            self.feed += calls
 
 
 # ---------------------------------------------------------------- service
@@ -513,6 +531,47 @@ class WebSearch:
                 "dropped": len(results) - len(clean),
             },
         )
+        return clean
+
+    async def cached_entry(self, key: str, fmt: Format) -> CachedResults | None:
+        """A cache entry as stored (the feed keys entries by day, so it has no TTL)."""
+        return await self._cache.get(key, fmt)
+
+    async def fetch_feed(
+        self, key: str, fmt: Format, query: str, keep: Callable[[WebResult], bool]
+    ) -> list[WebResult] | None:
+        """One For you search (M7.5 §A): the feed's own cap and the global caps are checked
+        and reserved together; results pass the blocklist and `keep` (topic relevance, dates)
+        and are cached under `key`. None when a cap is spent or the provider failed."""
+        provider = self._providers.get(fmt)
+        if provider is None:
+            return []
+        calls = 2 if provider.name == "youtube" else 1
+        try:
+            async with self._reserve_lock:
+                used = await self._calls.count_today(FEED)
+                if used + calls > self._settings.feed_search_daily_cap:
+                    log.warning("feed search cap reached", extra={"feed_today": used})
+                    raise SearchCapReached("daily feed search cap reached")
+                await self._check_cap(provider.name, calls, anonymous=False)
+                await self._calls.add(provider.name, calls, feed=True)
+        except SearchCapReached:
+            return None
+        try:
+            results = await provider.search(query, fmt, news=True)
+        except (httpx.HTTPError, ValueError) as exc:
+            error = type(exc).__name__
+            extra = {"provider": provider.name, "format": fmt, "error": error}
+            log.warning("feed search failed", extra=extra)
+            return None
+        clean = [r for r in self._filter(results) if keep(r)]
+        await self._cache.put(key, fmt, clean, cache_key(query))
+        dropped = len(results) - len(clean)
+        log.info(
+            "feed search",
+            extra={"provider": provider.name, "format": fmt, "key": key, "results": len(clean),
+                   "dropped": dropped},
+        )  # fmt: skip
         return clean
 
     async def _check_cap(self, provider: str, calls: int = 1, anonymous: bool = False) -> None:
