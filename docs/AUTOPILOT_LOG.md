@@ -297,3 +297,6 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Sourabh (decision 35): growth applies to demo readers too, within the existing caps; persona
   graphs untouched. Plan §C.1 amended (reverses round-1 item 6), live check now runs as an
   anonymous demo reader pasting a link (no operator script). Amendment sent to plan-reviewer.
+- plan-reviewer on the decision-35 amendment: **APPROVE**; its 5 nits applied (cleanup via
+  DELETE /v1/me, pre-flight cap check, evidence before cleanup, complete write list, fold review
+  list to Sourabh).
