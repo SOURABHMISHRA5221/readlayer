@@ -378,3 +378,8 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - **Note for resuming M8:** M8's approved plan hides NOT_CORPUS docs from everyone; M7.5 makes them
   visible to the reader who brought them in (users/{uid}/ingested). Update the M8 plan to keep that
   rule before building on the m8 branch.
+- plan-reviewer round 3: **APPROVE**; its 6 nits applied (filter before the per-relation cut,
+  ingested on the pending branch and on submitted text, known_urls from the filtered set, exact
+  count before deploy, one ingested read per request).
+
+### Build
