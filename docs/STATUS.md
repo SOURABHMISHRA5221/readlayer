@@ -288,7 +288,7 @@ ledger the harness had about $0.18 of headroom, not $1). Production spend today 
 
 **2026-10-10 UTC (M2.2, local): ledger $5.43 for the day at the end of M2.2 work.** Linker
 suite runs ≈ $0.31, held-out extraction freeze $0.08 + old-15 counts $0.07, held-out headline
-runs ≈ $0.48, seeding dry runs $0.45 (final) + $0.74 (aborted all-pairs dedupe, fixed) + $1.74
+runs ≈ $0.48, seeding dry runs $0.45 (final) + $0.74 (aborted all-pairs dedupe, fixed) + $1.72
 (first full run), re-link dry run $0.53, profile_edit suite ≈ $0.01, harness ≈ $0.05. Under the
 $8 cap.
 
