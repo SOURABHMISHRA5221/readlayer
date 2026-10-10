@@ -23,6 +23,9 @@ export const AUTHOR_LABEL = "What the author is saying";
 export const DEFINITION_LABEL = "Definition";
 const REPORTED_TEXT = "Thanks. We've removed this explanation and will review it.";
 const LOADING_TEXT = "Writing an explanation and checking it against the article…";
+// A paragraph has no glossary definition to fall back on.
+export const NO_EXPLANATION_TEXT =
+  "No explanation passed our accuracy check for this paragraph, so we're not showing one.";
 
 /** What the explanation area shows: nothing (no loader), loading, a result, or reported. */
 export type ExplanationState = "none" | "loading" | "reported" | Explanation;
@@ -65,6 +68,8 @@ export class Card {
   private readonly explain: HTMLDivElement;
   private readonly frame: HTMLSpanElement;
   private readonly bgLabel: HTMLElement;
+  private readonly bgSection: HTMLElement;
+  private readonly knew: HTMLButtonElement;
   private readonly says: HTMLElement;
   private readonly background: HTMLParagraphElement;
   private readonly authorSays: HTMLParagraphElement;
@@ -129,6 +134,7 @@ export class Card {
     this.authorSays = el(doc, "p", `${C}__text`);
     const bg = section(doc, `${C}__bg`, BACKGROUND_LABEL, this.background, 0, this.frame);
     this.bgLabel = bg.querySelector(`.${C}__section-label`)!;
+    this.bgSection = bg;
     this.says = section(doc, `${C}__says`, AUTHOR_LABEL, this.authorSays, 1);
     const says = this.says;
     const note = el(doc, "p", `${C}__loading-note`);
@@ -143,10 +149,12 @@ export class Card {
     const footer = el(doc, "div", `${C}__footer`);
     const knew = button(doc, "knew_this", "rl-btn rl-btn--ghost");
     knew.textContent = "Knew this";
-    const helpful = button(doc, "explain_helpful", "rl-btn rl-btn--icon");
-    helpful.setAttribute("aria-label", "Helpful");
-    helpful.title = "Helpful";
-    helpful.append(thumbIcon(doc));
+    this.knew = knew;
+    // A visible word, not a bare thumb: what the button records is unambiguous (M5 review).
+    const helpful = button(doc, "explain_helpful", "rl-btn rl-btn--ghost rl-btn--helpful");
+    const helpfulText = el(doc, "span", "");
+    helpfulText.textContent = "Helpful";
+    helpful.append(thumbIcon(doc), helpfulText);
     this.report = button(doc, "report_wrong", "rl-btn rl-btn--ghost rl-btn--quiet");
     this.report.textContent = "This is wrong";
     this.buttons = [knew, this.report, helpful];
@@ -183,6 +191,9 @@ export class Card {
   }
 
   fill(a: CardAnnotation, pressed: ReadonlySet<AnnotatorEventType>): void {
+    // Paragraph cards have no concept: nothing to "know", no prerequisites.
+    this.el.dataset.kind = a.kind;
+    this.knew.hidden = a.kind === "paragraph";
     this.domain.textContent = a.domain ?? "";
     this.domain.hidden = !a.domain;
     this.title.textContent = a.label;
@@ -217,16 +228,32 @@ export class Card {
     const before = this.background.textContent;
     this.explain.dataset.state = loading ? "loading" : "ready";
     this.explain.setAttribute("aria-busy", String(loading));
-    this.explain.hidden = !verified && !this.definitionText;
-    this.bgLabel.textContent = verified || loading ? BACKGROUND_LABEL : DEFINITION_LABEL;
-    this.background.textContent = verified ? (state.background ?? "") : this.definitionText;
+    this.explain.hidden = !verified && !loading && !this.definitionText;
+    // A verified card may come without a Background (it failed its own check): the definition
+    // stays in that panel, labelled as such.
+    const background = verified ? state.background : null;
+    this.bgLabel.textContent =
+      background || (loading && this.definitionText) ? BACKGROUND_LABEL : DEFINITION_LABEL;
+    this.background.textContent = background ?? this.definitionText;
+    this.bgSection.hidden = !this.background.textContent;
     this.says.hidden = !(verified || loading);
     this.authorSays.textContent = verified ? (state.author_says ?? "") : "";
-    const frame = verified ? state.analogy_domain : null;
+    const frame = background && verified ? state.analogy_domain : null;
     this.frame.textContent = frame ? `Analogy · ${frame}` : "";
     this.frame.hidden = !frame;
-    this.status.textContent = state === "reported" ? REPORTED_TEXT : loading ? LOADING_TEXT : "";
-    this.status.classList.toggle(`${C}__status--visible`, state === "reported");
+    const empty = !verified && !loading && state !== "reported" && !this.definitionText;
+    this.status.textContent =
+      state === "reported"
+        ? REPORTED_TEXT
+        : loading
+          ? LOADING_TEXT
+          : empty && state !== "none"
+            ? NO_EXPLANATION_TEXT
+            : "";
+    this.status.classList.toggle(
+      `${C}__status--visible`,
+      state === "reported" || (empty && state !== "none"),
+    );
     const reported = this.report.getAttribute("aria-pressed") === "true";
     this.report.disabled = !verified;
     this.report.hidden = !(verified || loading || reported);

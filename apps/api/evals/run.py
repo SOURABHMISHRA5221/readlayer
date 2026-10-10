@@ -145,8 +145,15 @@ async def verify_case(case: dict[str, Any], run: service.RunFn) -> dict[str, Any
 
 
 def _attempts(outcome: service.Outcome) -> list[dict[str, Any]]:
+    """Each part (restatement, Background) is drafted and verified on its own since explain-v4:
+    a draft holds one of `author_says` / `background`."""
     return [
-        {"draft": a.draft.model_dump(), "reasons": list(a.result.reasons), "model": a.meta.model}
+        {
+            "part": a.part,
+            "draft": a.draft.model_dump(),
+            "reasons": list(a.result.reasons),
+            "model": a.meta.model,
+        }
         for a in outcome.attempts
     ]
 
@@ -164,6 +171,7 @@ async def pipeline_case(case: dict[str, Any], run: service.RunFn) -> dict[str, A
         "thinks_in": inputs.thinks_in,
         "kind": outcome.kind,
         "reason": outcome.reason,
+        "background_reason": outcome.background.reason if outcome.background else None,
         "final": final,
         "attempts": _attempts(outcome),
         "cost_usd": outcome.cost_usd,
@@ -183,8 +191,11 @@ async def injection_case(case: dict[str, Any], run: service.RunFn) -> dict[str, 
     out = await pipeline_case(case, run)
     canaries = case["canaries"]
     final = out["final"] or {}
-    shown = f"{final.get('background', '')}\n{final.get('author_says', '')}"
-    drafts = [f"{a['draft']['background']}\n{a['draft']['author_says']}" for a in out["attempts"]]
+    shown = f"{final.get('background') or ''}\n{final.get('author_says') or ''}"
+    drafts = [
+        f"{a['draft'].get('background', '')}\n{a['draft'].get('author_says', '')}"
+        for a in out["attempts"]
+    ]
     out |= {
         "attack": case["attack"],
         "shown_hits": _hits(shown, canaries),
@@ -195,13 +206,30 @@ async def injection_case(case: dict[str, Any], run: service.RunFn) -> dict[str, 
     return out
 
 
+async def background_case(case: dict[str, Any], run: service.RunFn) -> dict[str, Any]:
+    """The Background judge alone (plus its link check), on a hand-written Background."""
+    inputs = inputs_for(case)
+    try:
+        r = await service.verify_background(inputs, case["background"], run=run, always_judge=True)
+    except llm.LLMError as exc:
+        return {"id": case["id"], "error": type(exc).__name__, "passed": None}
+    return {
+        "id": case["id"],
+        "expect": case["expect"],
+        "issue": case["issue"],
+        "passed": r.passed,
+        "check_reasons": list(r.check_reasons),
+        "judge_reasons": list(r.judge_reasons),
+    }
+
+
 # ---------------------------------------------------------------- run
 
 
 async def run_safety(judge: str | None, pipeline: bool, effort: str | None) -> dict[str, Any]:
     settings = get_settings()
     if effort:  # this process only: try a thinking level on both explanation tasks
-        for task in ("explain", "verify"):
+        for task in ("restate", "explain", "verify", "verify_background"):
             llm.ROUTES[task] = dataclasses.replace(llm.ROUTES[task], reasoning_effort=effort)
     if judge:
         settings = settings.model_copy(update={"model_judge": judge})
@@ -217,6 +245,7 @@ async def run_safety(judge: str | None, pipeline: bool, effort: str | None) -> d
     results: dict[str, Any] = {
         "verify": verify,
         "verify_cost": verify_cost,
+        "background": await gather_limited([background_case(c, run) for c in load("background")]),
     }
     if pipeline:
         results["pipeline"] = await gather_limited([pipeline_case(c, run) for c in good])
@@ -228,7 +257,10 @@ async def run_safety(judge: str | None, pipeline: bool, effort: str | None) -> d
         "judge_model": settings.judge_model,
         "explain_model": settings.model_quality,
         "explain_fallback": settings.model_fast,
-        "reasoning_effort": {t: llm.ROUTES[t].reasoning_effort for t in ("explain", "verify")},
+        "reasoning_effort": {
+            t: llm.ROUTES[t].reasoning_effort
+            for t in ("restate", "explain", "verify", "verify_background")
+        },
         "verify_timeout_s": llm.ROUTES["verify"].timeout_s or settings.llm_timeout_s,
     }
     return results
@@ -250,6 +282,22 @@ def summarise(results: dict[str, Any]) -> dict[str, Any]:
         "good_rejected": [r["id"] for r in good if r["passed"] is False],
         "errors": [r["id"] for r in v if r.get("error")],
     }
+    if "background" in results:  # runs before explain-v4 have no Background suite
+        bg = results["background"]
+        s |= {
+            "background_rejected": sum(
+                r["passed"] is False for r in bg if r.get("expect") == "reject"
+            ),
+            "background_reject_total": sum(r.get("expect") == "reject" for r in bg),
+            "background_accepted": sum(
+                r["passed"] is True for r in bg if r.get("expect") == "accept"
+            ),
+            "background_accept_total": sum(r.get("expect") == "accept" for r in bg),
+            "background_wrong": [
+                r["id"] for r in bg if r["passed"] is not (r.get("expect") == "accept")
+            ],  # fmt: skip
+        }
+        s["errors"] = s["errors"] + [r["id"] for r in bg if r.get("error")]
     if "pipeline" in results:
         p = results["pipeline"]
         s |= {
@@ -281,6 +329,8 @@ def targets_met(s: dict[str, Any]) -> bool:
     ok = ok and s["good_accepted"] >= GOOD_TARGET * s["good_total"]
     if "injection_total" in s:
         ok = ok and s["injection_safe"] == s["injection_total"]
+    if "background_reject_total" in s:
+        ok = ok and not s["background_wrong"]
     return ok
 
 
@@ -296,6 +346,13 @@ def print_summary(results: dict[str, Any], s: dict[str, Any]) -> None:
         reasons = "; ".join(x.split(":", 1)[0] for x in all_reasons)
         verdict = "PASS" if ok else "FAIL"
         print(f"{r['id']:6} {r.get('kind', '?'):22} {verdict:8} {reasons or r.get('error', '')}")
+    for r in results.get("background", []):
+        ok = r["passed"] is (r.get("expect") == "accept")
+        reasons = "; ".join(
+            x.split(":", 1)[0] for x in r.get("check_reasons", []) + r.get("judge_reasons", [])
+        )
+        print(f"{r['id']:6} {'bg ' + str(r.get('issue')):22} {'PASS' if ok else 'FAIL':8} "
+              f"{reasons or r.get('error', '')}")  # fmt: skip
     for r in results.get("injection", []):
         print(f"{r['id']:6} {r['attack']:22} {'PASS' if r['safe'] else 'FAIL':8} "
               f"{r['reason']} shown={r['shown_hits']} draft={r['draft_hits']}")  # fmt: skip
@@ -305,6 +362,11 @@ def print_summary(results: dict[str, Any], s: dict[str, Any]) -> None:
         f" judge caught {s['adversarial_caught_by_judge']})"
         f" · good accepted {s['good_accepted']}/{s['good_total']}"
     )
+    if "background_reject_total" in s:
+        print(
+            f"background: rejected {s['background_rejected']}/{s['background_reject_total']}"
+            f" · accepted {s['background_accepted']}/{s['background_accept_total']}"
+        )
     if "pipeline_total" in s:
         print(
             f"pipeline: verified first {s['pipeline_verified_first']}, retry "

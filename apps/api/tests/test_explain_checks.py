@@ -7,6 +7,7 @@ import pytest
 from app.explain import checks
 from app.explain.inputs import (
     PROMPT_VAR_KEYS,
+    RESTATE_VAR_KEYS,
     ExplainInputs,
     locate,
     paragraph_inputs,
@@ -120,8 +121,12 @@ def test_span_inputs_use_the_readers_band_and_only_allowed_vars():
     assert novice.sentence == "The yield_curve flattened."
     assert "Bond" in novice.prompt_vars()["concepts"]  # prerequisite definitions included
     assert set(novice.prompt_vars()) == PROMPT_VAR_KEYS
-    assert novice.cache_key("v1") != expert.cache_key("v1")
-    assert novice.cache_key("v1") != novice.cache_key("v2")
+    assert novice.background_key("v1") != expert.background_key("v1")
+    assert novice.background_key("v1") != novice.background_key("v2")
+    # The restatement doesn't depend on the reader: same key for novice and expert.
+    assert novice.restate_key("v1") == expert.restate_key("v1")
+    assert novice.restate_key("v1") != novice.restate_key("v2")
+    assert set(novice.restate_vars()) == RESTATE_VAR_KEYS
 
 
 def test_unlinked_demand_has_no_inputs():

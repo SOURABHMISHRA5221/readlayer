@@ -87,6 +87,38 @@ def test_dismissal_counts_for_offset_but_adds_no_evidence():
     assert [e.type for e in out.edges["c_repo"].evidence] == ["knew_this"]
 
 
+def test_text_search_on_an_unannotated_paragraph_moves_the_offset_only():
+    out = apply_events(
+        [
+            ReaderEvent("t1", "text_searched", NOW, content_id="a1", paragraph_id="p4"),
+            ReaderEvent("t2", "text_searched", NOW, content_id="a1"),  # neither: ignored
+        ],
+        {},
+        {},
+        REFS,
+        NOW,
+    )
+    assert out.applied == ("t1",) and out.ignored == ("t2",)
+    assert out.applied_types == ("text_searched",)
+    assert out.edges == {} and out.theta == {}
+    assert out.content_ids == frozenset({"a1"})
+
+
+def test_repeat_dwell_events_with_zero_words_add_no_words():
+    # The client sends a paragraph's words on its first dwell per page view only.
+    out = apply_events(
+        [
+            ReaderEvent("d1", "paragraph_dwell", NOW, paragraph_id="p1", words=80, ms=9000),
+            ReaderEvent("d2", "paragraph_dwell", NOW, paragraph_id="p1", words=0, ms=4000),
+        ],
+        {},
+        {},
+        REFS,
+        NOW,
+    )
+    assert out.words_read == 80 and out.applied == ("d1", "d2")
+
+
 def test_existing_edges_are_updated_not_replaced():
     edge = Edge(alpha=3.0, beta=1.0, last_seen=NOW, band="understands")
     out = apply_events([ev("e1", "text_searched")], {"c_repo": edge}, {}, REFS, NOW)

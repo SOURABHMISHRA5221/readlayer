@@ -6,6 +6,7 @@
  */
 
 import type { Anchor } from "./types";
+import { UI_ATTR } from "./ui";
 
 export interface TextIndex {
   text: string;
@@ -19,13 +20,22 @@ export interface TextRange {
   end: number;
 }
 
+/** The scope's text, in document order, leaving out the annotator's own controls. */
 export function indexText(scope: Node): TextIndex {
   const doc = scope.ownerDocument ?? (scope as Document);
-  const walker = doc.createTreeWalker(scope, 4 /* NodeFilter.SHOW_TEXT */);
+  const walker = doc.createTreeWalker(scope, 1 | 4 /* SHOW_ELEMENT | SHOW_TEXT */, {
+    acceptNode: (node) =>
+      node.nodeType === 3
+        ? 1 /* FILTER_ACCEPT */
+        : (node as Element).hasAttribute(UI_ATTR)
+          ? 2 /* FILTER_REJECT: skip the whole control */
+          : 3 /* FILTER_SKIP: look inside */,
+  });
   const nodes: Text[] = [];
   const starts: number[] = [];
   let text = "";
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (n.nodeType !== 3) continue;
     const t = n as Text;
     nodes.push(t);
     starts.push(text.length);

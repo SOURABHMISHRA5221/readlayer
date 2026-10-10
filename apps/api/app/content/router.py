@@ -19,12 +19,13 @@ from app.content import catalog
 from app.content.summary import article_domain
 from app.context import ReaderContext, reader_context
 from app.graph.loader import get_graph
-from app.ingest.models import ContentDoc
+from app.ingest.models import ContentDoc, PendingDoc
 from app.reader.state import Density, PersonaKey
 from app.scoring import scorer
 from app.scoring.scorer import Annotations, ExplainerRef, ScoringInputs
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
+from app.store.pending_repo import get_pending_repo
 from app.store.reader_repo import ReaderRepo
 
 log = logging.getLogger(__name__)
@@ -66,6 +67,8 @@ class ContentDetail(BaseModel):
     image: str | None
     domain: str | None
     paragraphs: list[ParagraphOut]
+    # "analysing": fetched, notes not ready yet; the client calls POST .../analyse.
+    status: Literal["ready", "analysing"]
 
 
 class AnchorOut(BaseModel):
@@ -253,11 +256,14 @@ def _summary(doc: ContentDoc, domain: str | None, concepts_new: int) -> ContentS
     )
 
 
-async def _doc_or_404(content_id: str) -> ContentDoc:
+async def doc_or_error(content_id: str) -> ContentDoc:
+    """An analysed article; 409 while it is fetched but not analysed yet, else 404."""
     doc = await get_content_store().get(content_id)
-    if doc is None:
-        raise HTTPException(status_code=404, detail="content not found")
-    return doc
+    if doc is not None:
+        return doc
+    if await get_pending_repo().get(content_id) is not None:
+        raise HTTPException(status_code=409, detail="content_pending")
+    raise HTTPException(status_code=404, detail="content not found")
 
 
 @router.get("/content", response_model=list[ContentSummary])
@@ -275,7 +281,12 @@ async def list_content(
 
 @router.get("/content/{content_id}", response_model=ContentDetail)
 async def get_content(content_id: str) -> ContentDetail:
-    doc = await _doc_or_404(content_id)
+    doc = await get_content_store().get(content_id)
+    if doc is None:
+        pending = await get_pending_repo().get(content_id)
+        if pending is None:
+            raise HTTPException(status_code=404, detail="content not found")
+        return _pending_detail(pending)
     return ContentDetail(
         id=doc.content_id,
         title=doc.title,
@@ -288,6 +299,25 @@ async def get_content(content_id: str) -> ContentDetail:
         image=doc.image,
         domain=article_domain(doc, get_graph()),
         paragraphs=[ParagraphOut(id=p.id, text=p.text) for p in doc.paragraphs],
+        status="ready",
+    )
+
+
+def _pending_detail(doc: PendingDoc) -> ContentDetail:
+    """A fetched article still being analysed: shown at once, notes follow (two-phase)."""
+    return ContentDetail(
+        id=doc.content_id,
+        title=doc.title,
+        site=doc.site,
+        url=doc.final_url or doc.url,
+        word_count=sum(len(p.text.split()) for p in doc.paragraphs),
+        description=doc.description,
+        author=doc.author,
+        published=doc.published,
+        image=doc.image,
+        domain=None,
+        paragraphs=[ParagraphOut(id=p.id, text=p.text) for p in doc.paragraphs],
+        status="analysing",
     )
 
 
@@ -303,7 +333,7 @@ async def get_annotations(
     density: Density | None = None,
     debug: bool = False,
 ) -> AnnotationsResponse:
-    doc = await _doc_or_404(content_id)
+    doc = await doc_or_error(content_id)
     density = density or ctx.density
     now = datetime.now(UTC)
     result = await score_for(ctx, doc, density, now)

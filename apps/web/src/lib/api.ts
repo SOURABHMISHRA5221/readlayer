@@ -1,4 +1,9 @@
-import type { Annotation, CardAnnotation } from "@readlayer/annotator";
+import type {
+  CardAnnotation,
+  ParagraphMarker,
+  PrereadAnnotation,
+  PromptAnnotation,
+} from "@readlayer/annotator";
 
 import { idToken } from "./auth";
 import type { Density, PersonaKey } from "./personas";
@@ -28,6 +33,8 @@ export interface ContentDetail {
   image: string | null;
   domain: string | null;
   paragraphs: { id: string; text: string }[];
+  /** "analysing": fetched, notes not ready (two-phase "Open here"). Older APIs omit it: ready. */
+  status?: "ready" | "analysing";
 }
 
 export interface AnnotationsResponse {
@@ -37,22 +44,26 @@ export interface AnnotationsResponse {
   count: number;
   /** Span annotations only, ranked. */
   annotations: CardAnnotation[];
-  /** Paragraph markers, the pre-read path and the "Know this?" prompt: shown from M6. */
-  extras: { id: string; kind: Exclude<Annotation["kind"], "span"> }[];
+  /** Paragraph markers and the "Know this?" prompt, drawn by the annotator. */
+  extras: (ParagraphMarker | PromptAnnotation)[];
+  /** The pre-read card, drawn above the article. */
+  preread: PrereadAnnotation | null;
 }
 
-type RawAnnotations = Omit<AnnotationsResponse, "annotations" | "extras"> & {
-  annotations: (CardAnnotation | AnnotationsResponse["extras"][number])[];
+type RawAnnotations = Omit<AnnotationsResponse, "annotations" | "extras" | "preread"> & {
+  annotations: (CardAnnotation | ParagraphMarker | PromptAnnotation | PrereadAnnotation)[];
 };
 
 function splitAnnotations(raw: RawAnnotations): AnnotationsResponse {
   const spans: CardAnnotation[] = [];
   const extras: AnnotationsResponse["extras"] = [];
+  let preread: PrereadAnnotation | null = null;
   for (const a of raw.annotations) {
     if (a.kind === "span") spans.push(a as CardAnnotation);
-    else extras.push(a as AnnotationsResponse["extras"][number]);
+    else if (a.kind === "preread") preread = a as PrereadAnnotation;
+    else extras.push(a as ParagraphMarker | PromptAnnotation);
   }
-  return { ...raw, annotations: spans, extras };
+  return { ...raw, annotations: spans, extras, preread };
 }
 
 export type RecFormat = "article" | "video" | "podcast";
@@ -86,7 +97,7 @@ export interface RecsResponse {
   web_formats: RecFormat[];
 }
 
-export type ApiErrorKind = "not_found" | "unauthorized" | "server" | "offline";
+export type ApiErrorKind = "not_found" | "unauthorized" | "server" | "offline" | "pending";
 
 export class ApiError extends Error {
   constructor(
@@ -98,7 +109,13 @@ export class ApiError extends Error {
   }
 }
 
-export type ReaderEventType = "explain_opened" | "knew_this" | "explain_helpful";
+export type ReaderEventType =
+  | "explain_opened"
+  | "knew_this"
+  | "explain_helpful"
+  | "annotation_dismissed"
+  | "text_searched"
+  | "paragraph_dwell";
 
 /** POST /v1/explain (DESIGN §7): a verified two-part card, or the definition only. */
 export interface ExplanationResponse {
@@ -119,12 +136,19 @@ export interface ReaderEvent {
   at: string;
   concept_id: string | null;
   content_id: string | null;
+  paragraph_id?: string;
+  words?: number;
+  ms?: number;
 }
+
+/** What POST /v1/explain explains: a span (demand) or a whole paragraph. */
+export type ExplainTarget = { demand_id: string } | { paragraph_id: string };
 
 /** The API's origin in production (Cloud Run); empty locally, where Vite proxies /v1. */
 const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?? "").replace(/\/$/, "");
 
 function kindOf(status: number): ApiErrorKind {
+  if (status === 409) return "pending";
   return status === 404 ? "not_found" : status === 401 ? "unauthorized" : "server";
 }
 
@@ -197,16 +221,34 @@ export const api = {
   recEvents: (persona: PersonaKey | null, events: { id: string; type: RecEventType; item_id: string }[]) =>
     post<{ applied: number; ignored: number }>("/v1/recs/events", { persona, events }),
   openWeb: (url: string, signal?: AbortSignal) =>
-    post<{ content_id: string; new: boolean }>("/v1/recs/open", { url }, signal),
+    post<{ content_id: string; new: boolean; ready?: boolean }>("/v1/recs/open", { url }, signal),
+  /** Phase 2 of "Open here": 200 ready, 202 another request is analysing it (retry). */
+  analyse: async (id: string, signal?: AbortSignal): Promise<"ready" | "analysing"> => {
+    const res = await request(
+      `/v1/content/${encodeURIComponent(id)}/analyse`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+      signal,
+    );
+    if (res.status === 202) return "analysing";
+    if (!res.ok) throw await failure(res);
+    return "ready";
+  },
+  /** "Know this?" answer: the reader's own word, strong evidence (DESIGN §6.5). */
+  correct: (conceptId: string, known: boolean, persona: PersonaKey | null) =>
+    send<{ concept_id: string; band: string; p_know: number }>(
+      "PATCH",
+      `/v1/me/graph/${encodeURIComponent(conceptId)}${personaQuery(persona)}`,
+      { state: known ? "known" : "unknown" },
+    ),
   annotations: (id: string, persona: PersonaKey | null, density: Density, debug: boolean, signal?: AbortSignal) =>
     get<RawAnnotations>(
       `/v1/content/${encodeURIComponent(id)}/annotations?density=${density}${personaParam(persona)}${debug ? "&debug=1" : ""}`,
       signal,
     ).then(splitAnnotations),
-  explain: (contentId: string, demandId: string, persona: PersonaKey | null) =>
+  explain: (contentId: string, target: ExplainTarget, persona: PersonaKey | null) =>
     post<ExplanationResponse>(`/v1/explain${personaQuery(persona)}`, {
       content_id: contentId,
-      demand_id: demandId,
+      ...target,
     }),
   reportExplanation: (
     explanationId: string,

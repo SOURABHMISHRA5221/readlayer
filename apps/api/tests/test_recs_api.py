@@ -4,13 +4,14 @@ from fastapi.testclient import TestClient
 from app import config
 from app.content import router as read_router
 from app.graph.loader import get_graph, set_graph
+from app.ingest.urls import url_hash
 from app.main import app
 from app.recs import router as recs_router
 from app.recs import web_search as ws
 from app.recs.models import WebResult
 from app.store.content_repo import InMemoryContentStore, set_content_store
-from tests.fakes import auth
-from tests.test_recs_library import DOCS, GRAPH, doc
+from tests.fakes import auth, fake_fetch_and_extract
+from tests.test_recs_library import DOCS, GRAPH
 
 VIDEO = WebResult(
     url="https://www.youtube.com/watch?v=v1",
@@ -161,22 +162,17 @@ def test_open_ingests_within_the_daily_cap(env, monkeypatch):
     monkeypatch.setenv("ANON_INGEST_DAILY_CAP", "1")
     config.get_settings.cache_clear()
 
-    sources = []
-
-    async def fake_ingest(url, source="fetch"):
-        from app.ingest.urls import url_hash
-
-        sources.append(source)
-        d = doc(url_hash(url), "Opened", "explainer.example", [], url=url)
-        store.docs[d.content_id] = d
-        return d
-
-    monkeypatch.setattr(recs_router, "ingest_url", fake_ingest)
+    sources: list[str] = []
+    monkeypatch.setattr(recs_router, "fetch_and_extract", fake_fetch_and_extract(sources))
     first = client.post("/v1/recs/open", json={"url": "https://explainer.example/yield"})
-    assert first.status_code == 200 and first.json()["new"] is True
+    assert first.status_code == 200
+    assert first.json() == {"content_id": url_hash("https://explainer.example/yield"),
+                            "new": True, "ready": False}  # fmt: skip
     assert sources == ["user_ingested"]  # reader-opened pages never become corpus data
     again = client.post("/v1/recs/open", json={"url": "https://explainer.example/yield"})
-    assert again.status_code == 200 and again.json()["new"] is False  # cached: free
+    # Pending (fetched, not analysed): free, no second fetch.
+    assert again.status_code == 200 and again.json()["new"] is False
+    assert again.json()["ready"] is False and sources == ["user_ingested"]
     capped = client.post("/v1/recs/open", json={"url": "https://explainer.example/other"})
     assert capped.status_code == 429 and capped.json()["error"] == "ingest_cap_reached"
     unsafe = client.post("/v1/recs/open", json={"url": "http://127.0.0.1/admin"})

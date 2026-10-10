@@ -30,3 +30,19 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
   newcomer. After (`explain-v3`): verifier unchanged (15/15, 25/25), pipeline 24/1/0 → 25/0/0,
   injection 10/10, $0.0070 per explanation, explanation p50 / p95 18.0 / 38.9 s → 14.9 / 21.8 s.
   **v3 is the shipped prompt.**
+- **2026-10-10 split card, explain-v4 / restate-v1 / verify-v2 / verify-background-v1** (M6,
+  M5 review item 1). Before: the shipped `explain-v3` row (prompts `explain-v3+verify-v1`; the
+  runner and judge settings for that row are unchanged, so it is cited, not re-run). The card is
+  now two tasks: `restate` (What the author is saying, once per span and style, shared by every
+  reader; no band or frame) and `explain` (Background only, per reader), each with its own judge
+  (`verify` claims only; new `verify_background`). Runner change committed before the run with no
+  case edited: each frozen card's `author_says` goes to the restatement verifier and its
+  `background` to the Background verifier (both always judged), attempts are tagged by part.
+  New, separately reported **Background suite** (5 cases, committed before any model run).
+  After (`explain-v4-split`): adversarial 15/15 (checks 12, judge **15**, up from 14: A06 is now
+  caught by the claims judge too), good 25/25, Background suite 3/3 rejected and 2/2 accepted,
+  pipeline 24 / 1 / 0, injection 10/10 (I06 ended as a definition card, nothing planted shown).
+  A card made from scratch costs **$0.0090** (was $0.0070: two judge calls instead of one) and
+  takes p50 **9.6 s** (was 14.9 s; the parts run in parallel) but p95 **31.4 s** (was 21.8 s).
+  The saving is in reuse: three personas on one span now pay one restatement and three
+  Backgrounds (≈ $0.005 + 3 × $0.004) instead of three full cards (3 × $0.007).

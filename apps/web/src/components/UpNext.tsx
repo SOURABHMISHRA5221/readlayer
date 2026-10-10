@@ -338,8 +338,7 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
           <div className="rec__progress" role="status">
             <span className="rec__bar" aria-hidden="true" />
             <span>
-              Reading the page and finding the ideas you may miss. A new article can take up to a
-              minute.{" "}
+              Fetching the page. It opens as soon as it's in; your notes follow.{" "}
               <span className="tnum" aria-hidden="true">
                 {Math.round((Date.now() - opening.since) / 1000)} s
               </span>

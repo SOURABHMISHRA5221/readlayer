@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     concepts_uri: str = ""
     link_threshold: float = 0.80  # calibrated by scripts/build_concepts.py
     dedupe_threshold: float = 0.88
+    # Phase 2 of an ingest (demand extraction + linking) is cut off after this; its lease on the
+    # pending doc lasts 30 s longer, so an expired lease always means the run has stopped.
+    analyse_timeout_s: float = 120.0
 
     llm_daily_budget_usd: float = 8.0
     llm_timeout_s: float = 20.0

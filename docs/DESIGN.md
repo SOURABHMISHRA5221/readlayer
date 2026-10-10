@@ -123,6 +123,17 @@ One domain for the hackathon: business & economy news.
   client-side), `user_ingested` (a reader opened a web recommendation with "Open here", §16).
   `user_ingested` docs are readable like any other but are never corpus or held-out data:
   `build_concepts` and `eval_heldout` skip them even if their URL is listed.
+- **Two-phase ingest (M6).** Phase 1 (safe_fetch, extraction, paragraph ids; no LLM) stores
+  `pending_contents/{url_hash}`: the article text and publisher metadata only, no user data,
+  plus `attempts`, `lease_until` and a 24 h `expire_at` (Firestore TTL). Phase 2 (structure
+  features, demand extraction, linking) takes a 150 s lease in a transaction, runs under a
+  120 s timeout (so an expired lease always means the earlier run stopped), writes `contents/`
+  with the **same paragraphs** and deletes the pending doc. Only analyses that ran and failed
+  count as attempts (not budget refusals, a busy lease or a dropped request); after 3 the
+  article is not retried (410). "Open here" runs phase 1 in its request and phase 2 in a second
+  request from the reader page, so the article shows in seconds; POST /v1/content and the scripts
+  run both back to back through the same pending doc and lease. A URL that is pending counts as
+  known everywhere: no second fetch and no second ingest slot.
 
 ## 4. Reader model (Firestore)
 ```
@@ -212,8 +223,10 @@ Thresholds (before per-user `threshold_offset` and density dial):
 
 `threshold_offset` adapts: +0.02 per dismissal/knew_this, −0.02 per text_searched or slowdown on
 an unannotated paragraph; clamp to [−0.15, +0.15]. It is added to all three thresholds.
-Dismissal is the `annotation_dismissed` event (no Beta evidence); slowdown waits for dwell
-medians (M6).
+Dismissal is the `annotation_dismissed` event (no Beta evidence). A `text_searched` on a marked
+term carries that concept (evidence and offset); on a paragraph with no span or prompt marks it
+carries only `paragraph_id` (offset only, M6). Slowdown (dwell against the reader's medians) is
+not computed yet.
 
 **Worked example** (`tests/test_scorer.py::test_design_worked_example`). Balanced density; the
 reader has θ = −0.5 in finance and economics, an edge on *bond yield* (α 0.44, β 1.56 → 0.22)
@@ -272,7 +285,8 @@ frame and `explanation_style` (short | normal | detailed, §15.3). Demo personas
 frames: newcomer software, trader cricket, policy student law (`PERSONA_THINKS_IN`); a signed-in
 reader uses their first THINKS_IN choice, else no analogy.
 
-Gemini output schema (`app/explain/models.py`, `extra="forbid"`):
+The served card (`app/explain/models.py`, `extra="forbid"` on each part's schema: `Restatement`
+`{author_says}` from `restate`, `BackgroundDraft` `{background, analogy_domain}` from `explain`):
 ```json
 {
   "background": "≤ 3 sentences of general knowledge; analogy from the reader's frame allowed here only",
@@ -302,32 +316,52 @@ delimiters and stated to be data.
 3. On fail: regenerate once with the failure reasons; on second fail, fall back to the concept's
    `definition` as a plain gloss (no `author_says`).
 
-Cache: Firestore `explanations/{sha1(span_hash | band | thinks_in | style | prompt_version)}`,
-`span_hash = sha1(content_id | paragraph_id | anchor.exact)` (paragraph mode hashes the
-paragraph text), `prompt_version = explain-vN+verify-vN`. Each entry stores `kind`, the text,
-model ids, prompt version, key parts, cost and created_at. Verified cards are cached; so is a
-definition-only outcome after two rejected drafts (no generated text stored), so a hard span
-doesn't re-spend on every hover. A judge outage or the budget guard gives the definition and
-caches nothing. One generation per key per instance at a time (prefetch and hover share it).
-Uncached generations count against a daily cap per reader (100; 40 anonymous, 400 for all
-anonymous readers together), past which the card shows the definition.
+**Two parts, generated and cached separately (M6).** "What the author is saying" depends only on
+the span and the style, so it is made once and shared by every reader; only the Background
+depends on the reader:
+- restatement: `restate` (prompt `restate-vN`: span, sentence, paragraph, concept definitions,
+  style; no band, no frame) → deterministic checks → claims judge (`verify`) → regenerate once.
+  Cache `explanations/{sha1("restate" | span_hash | style | restate-vN+verify-vN)}`.
+- Background: `explain` (prompt `explain-vN`: as above plus band and frame) → link check →
+  Background judge (`verify_background`: contradicts the paragraph, or states facts about this
+  article) → regenerate once. Cache `explanations/{sha1(span_hash | band | thinks_in | style |
+  explain-vN+verify-background-vN)}`.
+`span_hash = sha1(content_id | paragraph_id | anchor.exact)` (paragraph mode hashes the paragraph
+text). On a miss both parts run at the same time.
+
+| Restatement | Background | Card | `kind` |
+|---|---|---|---|
+| verified | verified | both parts | `verified` |
+| verified | rejected twice | the restatement; the definition stays in the Background panel (`background: null`) | `verified` |
+| rejected twice | (not made, or either) | the definition only | `definition` |
+
+Each entry stores `part`, `kind`, the text (none when rejected), model ids, prompt version, key
+parts, cost and created_at. Verified parts are cached, and so is a part rejected twice (no text
+stored), so a hard span doesn't re-spend on every hover; a judge outage or the budget guard
+caches nothing. One generation per part per instance at a time, keyed by the part's cache key
+(a prefetch and a hover share it, and so do two personas loading the same span cold).
+A request that generates anything counts **once** against a daily cap per reader (100;
+40 anonymous, 400 for all anonymous readers together); past the cap a shared restatement still
+shows and the Background stays the definition. The card id is `restatement_key-background_key`.
 
 Prefetch: the web client asks for the top 3 spans by score as soon as the annotations arrive
 (the annotations route itself stays LLM-free); other cards load on open with a skeleton.
 
-"This is wrong" (POST /v1/explain/{id}/report): evicts the entry for everyone, copies it to
-`explanation_reports/{id}` for review (no user identifier), and records a `report_wrong` event
-(idempotent by event id, subject to pause). The next open regenerates.
+"This is wrong" (POST /v1/explain/{id}/report): evicts both entries named by the card id (the
+shared restatement for everyone, and this Background), copies each to `explanation_reports/{id}`
+for review (no user identifier), and records a `report_wrong` event (idempotent by event id,
+subject to pause). The next open regenerates.
 
 ## 8. API (FastAPI, `/v1`, Firebase ID token in `Authorization: Bearer`)
 | method | path | purpose |
 |---|---|---|
 | POST | /v1/content | `{url}` (server fetches via safe_fetch) or `{url, title, paragraphs[]}` (extension, already extracted and redacted) → `{content_id, title, paragraphs}`; ingests if new. Requires auth and the per-user daily cap; disabled in prod until both are in place |
 | GET | /v1/content?q=&persona=&density= | library list: `{id, title, site, word_count, description, author, published, image, domain, concepts_new}`; `domain` = graph domain with the most linked salience; `concepts_new` = span annotations this reader would get |
-| GET | /v1/content/{id} | article for rendering: metadata + `paragraphs[{id, text}]` |
+| GET | /v1/content/{id} | article for rendering: metadata + `paragraphs[{id, text}]` + `status: ready \| analysing` (a pending article, §3; annotations and recommendations answer 409 until it is ready) |
+| POST | /v1/content/{id}/analyse | phase 2 of "Open here" (§3): 200 `{status: ready}` (no LLM call if already analysed), 202 `{status: analysing}` while another request holds the lease, 410 after 3 failed analyses, 504 on the 120 s timeout; no ingest slot (taken in phase 1) |
 | GET | /v1/content/{id}/recommendations?prefer= | Up next (§16): up to 6 items, `pending` while web lookups run |
 | POST | /v1/recs/events | `{events: [{id, type: rec_shown\|rec_clicked\|rec_dismissed\|rec_completed, item_id}]}` → `{applied, ignored}`; idempotent by event id |
-| POST | /v1/recs/open | `{url}` → `{content_id, new}`: ingest a web recommendation via safe_fetch as `user_ingested`, within the per-user daily cap (429 past it) |
+| POST | /v1/recs/open | `{url}` → `{content_id, new, ready}`: phase 1 of ingesting a web recommendation via safe_fetch as `user_ingested` (§3), within the per-user daily cap (429 past it); `ready: false` until POST .../analyse completes |
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
 | DELETE | /v1/me | delete all of the caller's data and their Auth user |
 | GET | /v1/content/{id}/annotations | ranked, budgeted annotations for the caller |
@@ -372,11 +406,22 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   the room it has; a deliberate open scrolls its line up under the top bar to make room), bottom
   sheet below 640px. Cards stay below the host's fixed bar (`--rl-top-inset`). A persona switch
   reloads an open card and resets its actions.
-- Paragraph: small margin marker → "What this paragraph is saying".
-- Events batched every 5 s and on `visibilitychange`: explain_opened, knew_this, explain_helpful,
-  report_wrong, annotation_dismissed (closing an annotation without acting, M6), text_searched
-  (selection + copy or right-click search), paragraph_dwell
-  (IntersectionObserver, ms visible, words).
+- Paragraph: small margin marker (a pilcrow; floats at the paragraph's top right below 900 px) →
+  the shared card in paragraph mode, "What this paragraph is saying" (no Knew this: no concept).
+- "Know this?" prompt: an inline chip after its term (Yes / Not really → PATCH /v1/me/graph),
+  collapsing to "Noted, thanks."; the pre-read card sits above the article (`renderPreread`),
+  steps most basic first, each a link to its library explainer or a disclosure with the
+  definition.
+- Controls the annotator inserts carry `data-rl-ui`: anchor resolution skips them, they are
+  `user-select: none`, and a copy across one gives back only the article's words.
+- Events batched every 5 s and on `visibilitychange` / `pagehide` (dwell flushed first), one
+  retry per failed batch, idempotent by event id: explain_opened, knew_this, explain_helpful,
+  report_wrong, annotation_dismissed (a **span** card opened deliberately, by click, tap or
+  keyboard, and closed without an action; hover peeks and paragraph cards never count),
+  text_searched (copy or right-click with a selection: the overlapped mark's concept, or the
+  paragraph only when it has no marks; never the text), paragraph_dwell (IntersectionObserver at
+  50% visibility while the page is visible; stretches under 1 s dropped; `words` on a
+  paragraph's first dwell per page view, 0 after, so re-reading doesn't inflate words read).
 
 ## 10. LLM layer (`app/llm.py`)
 - Backend: LiteLLM Python SDK, in-process. Not the LiteLLM proxy: a separate gateway service is
@@ -389,8 +434,8 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   |---|---|---|
   | extract_demands, link_merge, concept_define, concept_prereqs, concept_wikidata, profile_edit | MODEL_FAST | MODEL_FALLBACK |
   | embed (`llm.embed`) | MODEL_EMBED | none: vectors from another model aren't comparable |
-  | explain, link_confirm (timeout 45 s, batches of 10) | MODEL_QUALITY | MODEL_FAST |
-  | verify | MODEL_JUDGE (empty = MODEL_QUALITY) | none: if the verifier is unavailable, show definition gloss only |
+  | restate, explain, link_confirm (timeout 45 s, batches of 10) | MODEL_QUALITY | MODEL_FAST |
+  | verify, verify_background | MODEL_JUDGE (empty = MODEL_QUALITY) | none: if a judge is unavailable, show definition gloss only |
 - Error handling per model (`classify_error` in `llm.py`):
   - retry the same model with backoff (max `LLM_MAX_RETRIES`), then fall back: timeout (20 s),
     429, 5xx;
@@ -399,7 +444,8 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   - raise `LLMRejected` immediately, never fall back, logged at ERROR with task and model:
     400, 401, 403 and any other unclassified error. A bad request or bad credentials would fail
     the same way on the fallback model and hide a real bug.
-- `verify` never falls back for any error; it raises (`LLMUnavailable` / `LLMRejected`).
+- `verify` and `verify_background` never fall back for any error; they raise
+  (`LLMUnavailable` / `LLMRejected`).
 - Every fallback logs a WARNING with task, failed model, error class and fallback model, and
   increments `llm_fallbacks` in the daily spend doc, so a silent quality drop is visible.
 - Structured output: pass the Pydantic JSON schema as `response_format`; always re-validate
@@ -471,7 +517,9 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 - Rate limits per uid: 60 annotation reads/min, 30 explain calls/min, 20 new URLs/day,
   10 profile-edit parses/day (§15.3), 120 requests/min overall, 30 event batches/min.
   Per-minute limits are in memory per instance (≤ 3 instances); daily caps are in Firestore,
-  reserved in a transaction before the work and refunded if it fails.
+  reserved in a transaction before the work and refunded if it fails. Two-phase ingest (§3):
+  the slot is taken in phase 1 and refunded if phase 1 fails; an article whose analysis later
+  fails 3 times (410) does **not** refund it, because the pending doc holds no uid to refund.
 - **Anonymous (demo) readers** (Firebase Anonymous sign-in, M3): 30 annotation reads/min,
   60 requests/min, 3 new URLs/day per uid, and shared caps across *all* anonymous readers so
   minting accounts can't multiply them: 30 new URLs/day (`ops/ingest/days/{day}`) and 100

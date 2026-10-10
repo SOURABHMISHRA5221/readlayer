@@ -38,3 +38,15 @@ def test_cases_build_inputs_and_cards():
         checks.check(inputs, case["card"]["author_says"])  # runs without error
     for case in load("injection"):
         assert case["canaries"] and inputs_for(case).span in case["paragraph"]
+
+
+def test_background_cases_are_well_formed():
+    cases = load("background")
+    assert [c["id"] for c in cases] == ["B01", "B02", "B03", "B04", "B05"]
+    assert {c["expect"] for c in cases} == {"reject", "accept"}
+    assert {c["issue"] for c in cases if c["expect"] == "reject"} == {
+        "article_claim", "contradicts", "link",
+    }  # fmt: skip
+    for c in cases:
+        inputs = inputs_for(c)
+        assert inputs.paragraph and c["background"]

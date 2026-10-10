@@ -94,7 +94,10 @@ apps/api/scripts/    corpus ingestion, concept-graph build, demo persona seeding
 ## Cost guardrails (GCP budget is $300 total)
 - Cloud Run: min instances 0 (except during judging), max instances ≤ 3.
 - Per-user daily cap on ingesting new URLs (default 20). Cache everything by URL hash.
-- Explanation cache key: `(span_hash, knowledge_band, thinks_in_domain, explanation_style)`.
+- Explanation cache keys (two entries per card, DESIGN §7): the restatement ("What the author is
+  saying") by `(span_hash, explanation_style)`, shared by every reader; the Background by
+  `(span_hash, knowledge_band, thinks_in_domain, explanation_style)`. Both include their prompt
+  versions.
 - Prefer `MODEL_FAST` unless the output is user-visible prose. Exception: `link_confirm`
   (entity linking) uses `MODEL_QUALITY`, which met the 95% precision target where `MODEL_FAST`
   did not (M2: 97% vs 89%).
@@ -102,8 +105,13 @@ apps/api/scripts/    corpus ingestion, concept-graph build, demo persona seeding
 - Never deploy GPU endpoints or self-host open models; use managed, pay-per-token models only.
 
 ## Working agreement
-- Work one milestone from `docs/BUILD_PLAN.md` at a time. Start in plan mode, show the plan,
-  then implement.
+- Work one milestone from `docs/BUILD_PLAN.md` at a time. Write the plan, run the
+  `plan-reviewer` subagent and apply every REVISE item until it says APPROVE; that loop replaces
+  plan mode and the user's plan approval (autopilot run agreed 2026-10-10, see
+  `docs/AUTOPILOT_LOG.md`). Then implement on a milestone branch.
+- Before merging, run the `milestone-reviewer` subagent and fix until it says SHIP; merge only
+  when CI is green. Deploys and `git push` still need the user's yes on the permission prompt;
+  production writes only within the counts the plan lists.
 - A milestone is done only when its acceptance checks pass. Run them; don't assume.
 - Commit at the end of each milestone with message `M<n>: <summary>`.
 - If a requirement here conflicts with a request, ask instead of guessing.

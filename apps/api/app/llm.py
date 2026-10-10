@@ -110,10 +110,14 @@ ROUTES: dict[str, Route] = {
     "concept_prereqs": Route("model_fast", "model_fallback"),
     "concept_wikidata": Route("model_fast", "model_fallback"),
     "smoke": Route("model_fast", "model_fallback"),
+    # Explanation cards come in two parts (DESIGN §7): the restatement of the author, made once
+    # per (span, style) and shared by every reader, and the reader's own Background.
+    "restate": Route("model_quality", "model_fast"),
     "explain": Route("model_quality", "model_fast"),
-    # No fallback: if the verifier is down, callers show the definition gloss only.
+    # No fallback: if a judge is down, callers show the definition gloss only.
     # judge_model = MODEL_JUDGE, or MODEL_QUALITY when that is empty.
-    "verify": Route("judge_model", None),
+    "verify": Route("judge_model", None),  # the restatement's claims
+    "verify_background": Route("judge_model", None),  # the Background
 }
 
 

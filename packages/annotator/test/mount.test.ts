@@ -130,7 +130,7 @@ describe("mount", () => {
     const mark = root.querySelector<HTMLElement>(".rl-mark")!;
     key(mark, " ");
     const [knew, helpful] = [btn("knew_this"), btn("explain_helpful")];
-    expect(helpful!.getAttribute("aria-label")).toBe("Helpful");
+    expect(helpful!.textContent).toBe("Helpful"); // a visible word, not a bare icon
     knew!.click();
     helpful!.click();
     expect(events.map((e) => e.type)).toEqual(["explain_opened", "knew_this", "explain_helpful"]);

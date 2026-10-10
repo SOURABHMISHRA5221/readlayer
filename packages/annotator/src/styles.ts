@@ -244,6 +244,141 @@ const CSS = `
 .rl-btn[aria-pressed="true"] { color: var(--rl-accent, #1f5f5b); background: var(--rl-accent-wash, #e6f0ee); }
 .rl-btn--ghost[aria-pressed="true"]::before { content: "✓"; }
 .rl-btn--icon[aria-pressed="true"] path { fill: currentColor; fill-opacity: 0.2; }
+.rl-btn--helpful { margin-left: auto; margin-right: -12px; }
+.rl-btn--helpful[aria-pressed="true"]::before { content: none; }
+.rl-btn--helpful[aria-pressed="true"] path { fill: currentColor; fill-opacity: 0.2; }
+
+[data-rl-ui] { -webkit-user-select: none; user-select: none; }
+
+/* The "Know this?" term: no underline; the chip after it does the asking. */
+.rl-mark--ask { text-decoration-line: none; cursor: auto; }
+.rl-ask {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 2px 0 6px;
+  padding: 1px 2px 1px 8px;
+  vertical-align: 0.1em;
+  border: 1px solid var(--rl-hairline, #e7e1d6);
+  border-radius: 999px;
+  background: var(--rl-paper, transparent);
+  font: 500 12px/1 var(--rl-font-ui, system-ui, sans-serif);
+  color: var(--rl-muted, #6b675f);
+  white-space: nowrap;
+  text-indent: 0;
+}
+.rl-ask__q { margin-right: 4px; letter-spacing: 0.01em; }
+.rl-ask__q[hidden], .rl-ask__btn[hidden] { display: none; }
+.rl-ask__btn {
+  min-height: 24px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rl-accent, #1f5f5b);
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 150ms var(--rl-ease, ease-out);
+}
+.rl-ask__btn:hover { background: var(--rl-accent-wash, #e6f0ee); }
+.rl-ask__btn:focus-visible { outline: 2px solid var(--rl-focus, var(--rl-accent, #1f5f5b)); outline-offset: 1px; }
+.rl-ask__btn:disabled { opacity: 0.5; cursor: default; }
+.rl-ask__status:empty { display: none; }
+.rl-ask__status { padding-right: 8px; outline: none; }
+.rl-ask[data-state="done"] { border-style: dashed; }
+
+/* Paragraph markers: a pilcrow in the margin, quiet until hovered or focused. */
+[data-rl-has-marker] { position: relative; }
+.rl-pmark {
+  position: absolute;
+  top: 0.15em;
+  left: var(--rl-pmark-left, -40px);
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--rl-accent, #1f5f5b) 55%, transparent);
+  cursor: pointer;
+  transition: color 150ms var(--rl-ease, ease-out), background-color 150ms var(--rl-ease, ease-out), border-color 150ms var(--rl-ease, ease-out);
+}
+.rl-pmark__glyph::before { content: "¶"; font: 600 15px/1 var(--rl-font-read, Georgia, serif); }
+.rl-pmark:hover, .rl-pmark[aria-expanded="true"] {
+  color: var(--rl-accent, #1f5f5b);
+  background: var(--rl-accent-wash, #e6f0ee);
+  border-color: color-mix(in srgb, var(--rl-accent, #1f5f5b) 25%, transparent);
+}
+.rl-pmark:focus-visible { outline: 2px solid var(--rl-focus, var(--rl-accent, #1f5f5b)); outline-offset: 2px; color: var(--rl-accent, #1f5f5b); }
+@media (max-width: 639px) {
+  /* No margin on phones: the marker floats at the paragraph's top right instead. */
+  .rl-pmark { position: static; float: right; width: 36px; height: 36px; margin: -4px -6px 2px 8px; }
+}
+
+/* Pre-read card */
+.rl-preread {
+  margin: 0 0 2rem;
+  padding: 16px 18px 14px;
+  border: 1px solid var(--rl-hairline, #e7e1d6);
+  border-left: 3px solid var(--rl-accent, #1f5f5b);
+  border-radius: var(--rl-radius, 10px);
+  background: color-mix(in srgb, var(--rl-accent-wash, #e6f0ee) 45%, var(--rl-surface, #fffdf9));
+  font: 400 14px/1.5 var(--rl-font-ui, system-ui, sans-serif);
+  color: var(--rl-ink, #1c1b19);
+}
+.rl-preread__title {
+  margin: 0;
+  font: 600 11px/1.2 var(--rl-font-ui, system-ui, sans-serif);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rl-accent, #1f5f5b);
+}
+.rl-preread__lede { margin: 6px 0 10px; color: var(--rl-ink-soft, var(--rl-ink, #1c1b19)); text-wrap: pretty; }
+.rl-preread__steps { margin: 0; padding: 0; list-style: none; counter-reset: rl-step; display: grid; gap: 4px; }
+.rl-preread__step { counter-increment: rl-step; display: grid; grid-template-columns: 24px 1fr; align-items: start; }
+.rl-preread__step::before {
+  content: counter(rl-step);
+  margin-top: 6px;
+  font: 600 12px/1 var(--rl-font-ui, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  color: var(--rl-muted, #6b675f);
+}
+.rl-preread__link, .rl-preread__details > summary {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-height: 28px;
+  padding: 3px 6px;
+  margin-left: -6px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.rl-preread__label { font: 500 15px/1.35 var(--rl-font-read, Georgia, serif); }
+.rl-preread__link .rl-preread__label { text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--rl-accent, #1f5f5b) 45%, transparent); text-underline-offset: 3px; }
+.rl-preread__via { font-size: 12px; color: var(--rl-muted, #6b675f); }
+.rl-preread__link:hover, .rl-preread__details > summary:hover { background: var(--rl-accent-wash, #e6f0ee); }
+.rl-preread__link:focus-visible, .rl-preread__details > summary:focus-visible { outline: 2px solid var(--rl-focus, var(--rl-accent, #1f5f5b)); outline-offset: 1px; }
+.rl-preread__details > summary { list-style: none; }
+.rl-preread__details > summary::-webkit-details-marker { display: none; }
+/* A step without a library explainer expands to its definition: say so with a chevron. */
+.rl-preread__details > summary::after {
+  content: "";
+  align-self: center;
+  width: 6px;
+  height: 6px;
+  margin-left: 2px;
+  border-right: 1.5px solid var(--rl-muted, #6b675f);
+  border-bottom: 1.5px solid var(--rl-muted, #6b675f);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 150ms var(--rl-ease, ease-out);
+}
+.rl-preread__details[open] > summary::after { transform: translateY(1px) rotate(225deg); }
+.rl-preread__definition { margin: 2px 0 6px; font-size: 13px; color: var(--rl-ink-soft, var(--rl-ink, #1c1b19)); text-wrap: pretty; }
 
 .rl-scrim {
   position: fixed;
@@ -284,7 +419,7 @@ const CSS = `
 @keyframes rl-shimmer { to { background-position: -200% 0; } }
 @keyframes rl-text-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .rl-mark, .rl-card, .rl-scrim, .rl-btn, .rl-card__skeleton-line, .rl-card__text {
+  .rl-mark, .rl-card, .rl-scrim, .rl-btn, .rl-card__skeleton-line, .rl-card__text, .rl-pmark, .rl-ask__btn {
     transition: none; animation: none !important;
   }
 }

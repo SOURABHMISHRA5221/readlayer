@@ -2,7 +2,11 @@
 
 Inputs are ONLY the span, its sentence and paragraph, the concept's definition and
 prerequisites, the reader's band, one THINKS_IN frame and the explanation style. Never a uid,
-uid_hash, email or reading history: `prompt_vars` returns a fixed key set (tested).
+uid_hash, email or reading history: the prompt variable sets are fixed (tested).
+
+A card has two parts with their own prompts and cache entries: the restatement of the author
+(`restate_vars`, no band or frame: shared by every reader) and the reader's Background
+(`prompt_vars`, per band, frame and style).
 """
 
 import hashlib
@@ -28,6 +32,12 @@ STYLE_RULES: Mapping[ExplanationStyle, str] = {
     "short": "Background: one sentence, at most 25 words.",
     "normal": "Background: at most 3 short sentences, about 60 words in all.",
     "detailed": "Background: at most 5 sentences, about 110 words in all.",
+}
+# The restatement's length per style: faithfulness first, so these only trim.
+RESTATE_STYLE_RULES: Mapping[ExplanationStyle, str] = {
+    "short": "As few words as a faithful restatement allows.",
+    "normal": "Plain sentences, about as long as the passage needs.",
+    "detailed": "Plain sentences; you may unpack each clause of the passage in turn.",
 }
 BAND_RULES: Mapping[Band, str] = {
     "unaware": "The reader has probably never met this idea. Assume no prior knowledge, define "
@@ -85,11 +95,30 @@ class ExplainInputs:
         source = self.span if self.mode == "span" else f"para|{self.paragraph}"
         return sha1(f"{self.content_id}|{self.paragraph_id}|{source}")
 
-    def cache_key(self, prompt_version: str) -> str:
+    def restate_key(self, prompt_version: str) -> str:
+        """The restatement: the same for every reader of this span at this style."""
+        return sha1(f"restate|{self.span_hash}|{self.style}|{prompt_version}")
+
+    def background_key(self, prompt_version: str) -> str:
+        """The Background: per reader level, frame and style."""
         frame = self.thinks_in or "none"
         return sha1(f"{self.span_hash}|{self.band}|{frame}|{self.style}|{prompt_version}")
 
+    def restate_vars(self, feedback: str = "none") -> dict[str, str]:
+        """No band and no frame: the restatement must not depend on who reads it."""
+        return {
+            "mode": self.mode,
+            "span": self.span,
+            "sentence": self.sentence,
+            "paragraph": self.paragraph,
+            "concepts": _concepts_text(self.concepts),
+            "style": self.style,
+            "style_rule": RESTATE_STYLE_RULES[self.style],
+            "feedback": feedback,
+        }
+
     def prompt_vars(self, feedback: str = "none") -> dict[str, str]:
+        """The Background prompt."""
         return {
             "mode": self.mode,
             "span": self.span,
@@ -104,13 +133,20 @@ class ExplainInputs:
             "feedback": feedback,
         }
 
-    def verify_vars(self, background: str, author_says: str) -> dict[str, str]:
+    def verify_vars(self, author_says: str) -> dict[str, str]:
+        return {
+            "mode": self.mode,
+            "span": self.span,
+            "paragraph": self.paragraph,
+            "author_says": author_says,
+        }
+
+    def verify_background_vars(self, background: str) -> dict[str, str]:
         return {
             "mode": self.mode,
             "span": self.span,
             "paragraph": self.paragraph,
             "background": background,
-            "author_says": author_says,
         }
 
 
@@ -120,6 +156,9 @@ PROMPT_VAR_KEYS = frozenset(
         "style", "style_rule", "feedback",
     }
 )  # fmt: skip
+RESTATE_VAR_KEYS = frozenset(
+    {"mode", "span", "sentence", "paragraph", "concepts", "style", "style_rule", "feedback"}
+)
 
 
 def sha1(text: str) -> str:

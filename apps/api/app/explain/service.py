@@ -1,7 +1,14 @@
-"""Verified explanations (DESIGN §7): cache → generate → checks → judge → regenerate once →
-definition-only card. Nothing unverified is ever returned as an explanation or cached.
+"""Verified explanations (DESIGN §7), in two parts, each generated, verified and cached on its own:
 
-Logs carry reason codes, models, cost and latency; never drafts or article text.
+- the restatement ("What the author is saying"): `restate` → deterministic checks → claims
+  judge (`verify`) → regenerate once. Keyed by (span, style): made once, shared by every reader.
+- the Background: `explain` → link check → Background judge (`verify_background`) → regenerate
+  once. Keyed by (span, band, frame, style): the only per-reader part.
+
+On a miss both run at the same time. A rejected restatement means the definition-only card; a
+rejected Background means the verified restatement with the definition in the Background panel.
+Nothing unverified is ever returned or cached. Logs carry reason codes, models, cost and
+latency; never drafts or article text.
 """
 
 import asyncio
@@ -16,23 +23,49 @@ from typing import Any, Literal
 from app import llm
 from app.explain import checks
 from app.explain.inputs import ExplainInputs
-from app.explain.models import Explanation, Verdict
+from app.explain.models import (
+    BackgroundDraft,
+    BackgroundVerdict,
+    Card,
+    Explanation,
+    Restatement,
+    Verdict,
+)
 from app.store.explain_repo import ExplainRepo
 
 log = logging.getLogger(__name__)
 
 RunFn = Callable[..., Awaitable[llm.LLMResult[Any]]]
 Kind = Literal["verified", "definition"]
-Reason = Literal[
-    "hit", "verified_first", "verified_retry", "rejected_twice", "judge_unavailable",
-    "generate_unavailable", "budget", "capped",
+Part = Literal["restatement", "background"]
+PartReason = Literal[
+    "verified_first", "verified_retry", "rejected_twice", "judge_unavailable",
+    "generate_unavailable", "budget",
 ]  # fmt: skip
+Reason = Literal[PartReason, "hit", "capped"]
 LATENCY_WINDOW = 200
 LATENCY_LOG_EVERY = 25
 
 
+def restate_version() -> str:
+    return f"{llm.load_prompt('restate').version}+{llm.load_prompt('verify').version}"
+
+
+def background_version() -> str:
+    return f"{llm.load_prompt('explain').version}+{llm.load_prompt('verify_background').version}"
+
+
 def prompt_version() -> str:
-    return f"{llm.load_prompt('explain').version}+{llm.load_prompt('verify').version}"
+    return f"{restate_version()}|{background_version()}"
+
+
+def card_id(restate_key: str, background_key: str) -> str:
+    """What the client holds and "This is wrong" names: both entries."""
+    return f"{restate_key}-{background_key}"
+
+
+def split_card_id(card: str) -> list[str]:
+    return card.split("-")
 
 
 @dataclass(frozen=True)
@@ -40,8 +73,7 @@ class VerifyResult:
     check_reasons: tuple[str, ...]
     judge_reasons: tuple[str, ...]
     judged: bool
-    verdict: Verdict | None = None
-    meta: llm.CallMeta | None = None
+    metas: tuple[llm.CallMeta, ...] = ()
 
     @property
     def passed(self) -> bool:
@@ -51,87 +83,198 @@ class VerifyResult:
     def reasons(self) -> tuple[str, ...]:
         return self.check_reasons + self.judge_reasons
 
-
-@dataclass(frozen=True)
-class Attempt:
-    draft: Explanation
-    meta: llm.CallMeta
-    result: VerifyResult
-
-
-@dataclass(frozen=True)
-class Outcome:
-    kind: Kind
-    reason: Reason
-    explanation: Explanation | None
-    attempts: tuple[Attempt, ...] = ()
-
-    @property
-    def cacheable(self) -> bool:
-        """Verified cards, and the definition after two rejected drafts (stores no draft).
-        Never a transient failure: the judge or budget may be back on the next hover."""
-        return self.kind == "verified" or self.reason == "rejected_twice"
-
     @property
     def cost_usd(self) -> float:
-        return round(
-            sum(a.meta.cost_usd + (a.result.meta.cost_usd if a.result.meta else 0.0)
-                for a in self.attempts),
-            8,
-        )  # fmt: skip
+        return sum(m.cost_usd for m in self.metas)
 
-    @property
-    def models(self) -> dict[str, str | None]:
-        last = self.attempts[-1] if self.attempts else None
-        judged = next((a.result.meta for a in reversed(self.attempts) if a.result.meta), None)
-        return {"explain": last.meta.model if last else None,
-                "verify": judged.model if judged else None}  # fmt: skip
+
+async def verify_restatement(
+    inputs: ExplainInputs, author_says: str, *, run: RunFn, always_judge: bool = False
+) -> VerifyResult:
+    """Deterministic checks, then the claims judge (skipped when the checks already failed,
+    unless `always_judge`, which the evals use to see what each layer catches)."""
+    reasons = tuple(checks.check_restatement(inputs, author_says))
+    if reasons and not always_judge:
+        return VerifyResult(reasons, (), judged=False)
+    result = await run("verify", Verdict, inputs.verify_vars(author_says))
+    return VerifyResult(reasons, tuple(result.output.reasons()), True, (result.meta,))
+
+
+async def verify_background(
+    inputs: ExplainInputs, background: str, *, run: RunFn, always_judge: bool = False
+) -> VerifyResult:
+    reasons = tuple(checks.check_background(inputs, background))
+    if reasons and not always_judge:
+        return VerifyResult(reasons, (), judged=False)
+    result = await run(
+        "verify_background", BackgroundVerdict, inputs.verify_background_vars(background)
+    )
+    return VerifyResult(reasons, tuple(result.output.reasons()), True, (result.meta,))
 
 
 async def verify_draft(
     inputs: ExplainInputs, draft: Explanation, *, run: RunFn, always_judge: bool = False
 ) -> VerifyResult:
-    """Deterministic checks, then the judge (skipped when the checks already failed, unless
-    `always_judge`, which the evals use to see what each layer catches)."""
-    reasons = tuple(checks.check(inputs, draft.author_says, draft.background))
-    if reasons and not always_judge:
-        return VerifyResult(reasons, (), judged=False)
-    result = await run("verify", Verdict, inputs.verify_vars(draft.background, draft.author_says))
-    verdict: Verdict = result.output
-    return VerifyResult(reasons, tuple(verdict.reasons()), True, verdict, result.meta)
+    """A whole card (the eval cases hold whole cards): each part to its own verifier."""
+    r, b = await asyncio.gather(
+        verify_restatement(inputs, draft.author_says, run=run, always_judge=always_judge),
+        verify_background(inputs, draft.background, run=run, always_judge=always_judge),
+    )
+    return VerifyResult(
+        r.check_reasons + b.check_reasons,
+        r.judge_reasons + b.judge_reasons,
+        r.judged and b.judged,
+        r.metas + b.metas,
+    )
 
 
-def _frame(draft: Explanation, inputs: ExplainInputs) -> Explanation:
+@dataclass(frozen=True)
+class Attempt:
+    part: Part
+    draft: Restatement | BackgroundDraft
+    meta: llm.CallMeta
+    result: VerifyResult
+
+
+@dataclass(frozen=True)
+class PartOutcome:
+    part: Part
+    reason: PartReason
+    text: str | None = None  # author_says or background, only when verified
+    analogy_domain: str | None = None
+    attempts: tuple[Attempt, ...] = ()
+
+    @property
+    def verified(self) -> bool:
+        return self.reason in ("verified_first", "verified_retry")
+
+    @property
+    def cacheable(self) -> bool:
+        """Verified, or rejected twice (stores no draft). Never a transient failure: the judge
+        or budget may be back on the next hover."""
+        return self.verified or self.reason == "rejected_twice"
+
+    @property
+    def nothing_ran(self) -> bool:
+        return not self.attempts and self.reason in ("budget", "generate_unavailable")
+
+    @property
+    def cost_usd(self) -> float:
+        return sum(a.meta.cost_usd + a.result.cost_usd for a in self.attempts)
+
+
+def _frame(draft: BackgroundDraft, inputs: ExplainInputs) -> BackgroundDraft:
     """An analogy is only allowed from the reader's own frame; drop a mismatched label."""
     if draft.analogy_domain is not None and draft.analogy_domain != inputs.thinks_in:
         return draft.model_copy(update={"analogy_domain": None})
     return draft
 
 
-async def generate_verified(inputs: ExplainInputs, *, run: RunFn | None = None) -> Outcome:
-    run = run or llm.run_with_meta
+async def _draft(part: Part, inputs: ExplainInputs, feedback: str, run: RunFn):
+    if part == "restatement":
+        gen = await run("restate", Restatement, inputs.restate_vars(feedback))
+        return gen.output, gen.meta
+    gen = await run("explain", BackgroundDraft, inputs.prompt_vars(feedback))
+    return _frame(gen.output, inputs), gen.meta
+
+
+async def _verify(part: Part, inputs: ExplainInputs, draft: Any, run: RunFn) -> VerifyResult:
+    if part == "restatement":
+        return await verify_restatement(inputs, draft.author_says, run=run)
+    return await verify_background(inputs, draft.background, run=run)
+
+
+async def generate_part(part: Part, inputs: ExplainInputs, *, run: RunFn) -> PartOutcome:
     attempts: list[Attempt] = []
     feedback = "none"
     for n in range(2):
         try:
-            gen = await run("explain", Explanation, inputs.prompt_vars(feedback))
-            draft = _frame(gen.output, inputs)
+            draft, meta = await _draft(part, inputs, feedback, run)
         except llm.BudgetExceeded:
-            return Outcome("definition", "budget", None, tuple(attempts))
+            return PartOutcome(part, "budget", attempts=tuple(attempts))
         except llm.LLMError:
-            return Outcome("definition", "generate_unavailable", None, tuple(attempts))
+            return PartOutcome(part, "generate_unavailable", attempts=tuple(attempts))
         try:
-            result = await verify_draft(inputs, draft, run=run)
+            result = await _verify(part, inputs, draft, run)
         except llm.BudgetExceeded:
-            return Outcome("definition", "budget", None, tuple(attempts))
-        except llm.LLMError:  # verify never falls back (DESIGN §10): show the definition
-            return Outcome("definition", "judge_unavailable", None, tuple(attempts))
-        attempts.append(Attempt(draft, gen.meta, result))
+            return PartOutcome(part, "budget", attempts=tuple(attempts))
+        except llm.LLMError:  # judges never fall back (DESIGN §10): show the definition
+            return PartOutcome(part, "judge_unavailable", attempts=tuple(attempts))
+        attempts.append(Attempt(part, draft, meta, result))
         if result.passed:
-            reason: Reason = "verified_first" if n == 0 else "verified_retry"
-            return Outcome("verified", reason, draft, tuple(attempts))
+            text = draft.author_says if part == "restatement" else draft.background
+            frame = getattr(draft, "analogy_domain", None)
+            reason: PartReason = "verified_first" if n == 0 else "verified_retry"
+            return PartOutcome(part, reason, text, frame, tuple(attempts))
         feedback = "\n".join(f"- {r}" for r in result.reasons)
-    return Outcome("definition", "rejected_twice", None, tuple(attempts))
+    return PartOutcome(part, "rejected_twice", attempts=tuple(attempts))
+
+
+@dataclass(frozen=True)
+class Outcome:
+    """A whole card from both parts (either may have come from the cache: None here)."""
+
+    kind: Kind
+    reason: Reason
+    explanation: Card | None
+    restatement: PartOutcome | None = None
+    background: PartOutcome | None = None
+
+    @property
+    def attempts(self) -> tuple[Attempt, ...]:
+        parts = (self.restatement, self.background)
+        return tuple(a for p in parts if p for a in p.attempts)
+
+    @property
+    def cost_usd(self) -> float:
+        return round(sum(p.cost_usd for p in (self.restatement, self.background) if p), 8)
+
+    @property
+    def models(self) -> dict[str, str | None]:
+        def last(task_part: Part, judge: bool) -> str | None:
+            for a in reversed(self.attempts):
+                if a.part == task_part:
+                    if not judge:
+                        return a.meta.model
+                    if a.result.metas:
+                        return a.result.metas[-1].model
+            return None
+
+        return {
+            "restate": last("restatement", False),
+            "explain": last("background", False),
+            "verify": last("restatement", True) or last("background", True),
+        }
+
+
+def compose(
+    author_says: str | None,
+    background: str | None,
+    analogy: str | None,
+    reason: Reason,
+    restatement: PartOutcome | None = None,
+    background_part: PartOutcome | None = None,
+) -> Outcome:
+    """The served card (DESIGN §7): no verified restatement → definition only; a verified
+    restatement without a verified Background → the definition stays in that panel."""
+    if author_says is None:
+        return Outcome("definition", reason, None, restatement, background_part)
+    card = Card(
+        background=background,
+        author_says=author_says,
+        analogy_domain=analogy if background else None,
+    )
+    return Outcome("verified", reason, card, restatement, background_part)
+
+
+async def generate_verified(inputs: ExplainInputs, *, run: RunFn | None = None) -> Outcome:
+    """Both parts from scratch, at the same time (the evals and the demo script use this)."""
+    run = run or llm.run_with_meta
+    r, b = await asyncio.gather(
+        generate_part("restatement", inputs, run=run),
+        generate_part("background", inputs, run=run),
+    )
+    return compose(r.text, b.text, b.analogy_domain, r.reason, r, b)
 
 
 # ---------------------------------------------------------------- serving with the cache
@@ -142,52 +285,89 @@ class Served:
     key: str
     kind: Kind
     reason: Reason
-    explanation: Explanation | None
+    explanation: Card | None
     cached: bool
     cost_usd: float = 0.0
     counts: dict[str, int] = field(default_factory=dict)  # ops/explain counters to add
 
 
-def entry_doc(inputs: ExplainInputs, outcome: Outcome, version: str, now: datetime) -> dict:
-    e = outcome.explanation
+def _base(inputs: ExplainInputs, outcome: PartOutcome, version: str, now: datetime) -> dict:
+    last = outcome.attempts[-1] if outcome.attempts else None
+    judged = next((a.result.metas[-1] for a in reversed(outcome.attempts) if a.result.metas), None)
     return {
-        "kind": outcome.kind,
+        "part": outcome.part,
+        "kind": "verified" if outcome.verified else "definition",
         "reason": outcome.reason,
-        "verified": outcome.kind == "verified",
+        "verified": outcome.verified,
         "mode": inputs.mode,
-        "background": e.background if e else None,
-        "author_says": e.author_says if e else None,
-        "analogy_domain": e.analogy_domain if e else None,
         "content_id": inputs.content_id,
         "paragraph_id": inputs.paragraph_id,
         "concept_id": inputs.concept_id,
         "span_hash": inputs.span_hash,
-        "band": inputs.band,
-        "thinks_in": inputs.thinks_in,
         "style": inputs.style,
         "prompt_version": version,
-        "models": outcome.models,
+        "models": {
+            "generate": last.meta.model if last else None,
+            "verify": judged.model if judged else None,
+        },
         "attempts": len(outcome.attempts),
-        "cost_usd": outcome.cost_usd,
+        "cost_usd": round(outcome.cost_usd, 8),
         "created_at": now,
     }
 
 
-def _from_entry(key: str, doc: dict) -> Served:
-    explanation = (
-        Explanation(
-            background=doc["background"],
-            author_says=doc["author_says"],
-            analogy_domain=doc.get("analogy_domain"),
-        )
-        if doc.get("kind") == "verified"
-        else None
-    )
-    kind: Kind = "verified" if explanation else "definition"
-    return Served(key, kind, "hit", explanation, cached=True, counts={"hits": 1})
+def restatement_doc(
+    inputs: ExplainInputs, outcome: PartOutcome, version: str, now: datetime
+) -> dict:
+    """Shared by every reader: no band, no frame."""
+    return _base(inputs, outcome, version, now) | {"author_says": outcome.text}
 
 
-_inflight: dict[str, asyncio.Task[Served]] = {}
+def background_doc(
+    inputs: ExplainInputs, outcome: PartOutcome, version: str, now: datetime
+) -> dict:
+    return _base(inputs, outcome, version, now) | {
+        "background": outcome.text,
+        "analogy_domain": outcome.analogy_domain if outcome.text else None,
+        "band": inputs.band,
+        "thinks_in": inputs.thinks_in,
+    }
+
+
+def _text(entry: dict | None, field_name: str) -> str | None:
+    return entry.get(field_name) if entry and entry.get("verified") else None
+
+
+# One generation per part per instance at a time, keyed by the part's cache key: a prefetch and
+# a hover share it, and so do two personas loading the same span cold (one restatement, not two).
+_inflight: dict[str, asyncio.Task[PartOutcome]] = {}
+
+
+def _part_task(
+    key: str,
+    part: Part,
+    inputs: ExplainInputs,
+    repo: ExplainRepo,
+    version: str,
+    run: RunFn,
+) -> tuple[asyncio.Task[PartOutcome], bool]:
+    """The in-flight generation for this part, or a new one (True). Only the creator writes the
+    cache entry."""
+    if (task := _inflight.get(key)) is not None:
+        return task, False
+
+    async def make() -> PartOutcome:
+        out = await generate_part(part, inputs, run=run)
+        if out.cacheable:
+            doc = restatement_doc if part == "restatement" else background_doc
+            await repo.put(key, doc(inputs, out, version, datetime.now(UTC)))
+        _log(inputs, out)
+        return out
+
+    task = asyncio.ensure_future(make())
+    _inflight[key] = task
+    task.add_done_callback(lambda _: _inflight.pop(key, None))
+    return task, True
 
 
 async def serve(
@@ -198,54 +378,79 @@ async def serve(
     refund: Callable[[], Awaitable[None]],
     run: RunFn | None = None,
 ) -> Served:
-    """The cached card, or a new one. One generation per key per instance at a time: a
-    prefetch and a hover on the same span share it. Only a new generation counts against the
-    reader's daily cap (`reserve`), refunded if no model call could be made."""
-    version = prompt_version()
-    key = inputs.cache_key(version)
-    entry = await repo.get(key)
-    if entry is not None:
-        return _from_entry(key, entry)
-    if (task := _inflight.get(key)) is not None:
-        shared = await asyncio.shield(task)
-        return Served(key, shared.kind, shared.reason, shared.explanation, cached=False)
-    if not await reserve():
-        return Served(key, "definition", "capped", None, cached=False, counts={"capped": 1})
+    """The cached card, or the missing parts made now (each part single-flight). A request that
+    starts a generation counts once against the reader's daily cap (`reserve`), refunded if no
+    model call could be made; joining generations already running costs nothing."""
+    rv, bv = restate_version(), background_version()
+    rkey, bkey = inputs.restate_key(rv), inputs.background_key(bv)
+    key = card_id(rkey, bkey)
+    r_entry, b_entry = await asyncio.gather(repo.get(rkey), repo.get(bkey))
+    need_r = r_entry is None
+    # A rejected restatement means a definition card: no Background is worth making.
+    need_b = b_entry is None and (r_entry is None or bool(r_entry.get("verified")))
+    if not need_r and not need_b:
+        out = compose(
+            _text(r_entry, "author_says"),
+            _text(b_entry, "background"),
+            (b_entry or {}).get("analogy_domain"),
+            "hit",
+        )
+        return Served(key, out.kind, "hit", out.explanation, cached=True, counts={"hits": 1})
+    wanted = [k for k, need in ((rkey, need_r), (bkey, need_b)) if need]
+    joining = all(k in _inflight for k in wanted)
+    if not joining and not await reserve():
+        # Past the cap: a shared restatement still shows; the Background stays the definition.
+        out = compose(_text(r_entry, "author_says"), None, None, "capped")
+        return Served(key, out.kind, "capped", out.explanation, cached=False, counts={"capped": 1})
 
-    async def fill() -> Served:
-        outcome = await generate_verified(inputs, run=run)
-        if outcome.reason in ("budget", "generate_unavailable") and not outcome.attempts:
-            await refund()
-        if outcome.cacheable:
-            await repo.put(key, entry_doc(inputs, outcome, version, datetime.now(UTC)))
-        _log(inputs, outcome, version)
-        counts = {"generated": 1, outcome.reason: 1}
-        return Served(
-            key, outcome.kind, outcome.reason, outcome.explanation, cached=False,
-            cost_usd=outcome.cost_usd, counts=counts,
-        )  # fmt: skip
+    run_ = run or llm.run_with_meta
+    tasks: dict[Part, tuple[asyncio.Task[PartOutcome], bool]] = {}
+    if need_r:
+        tasks["restatement"] = _part_task(rkey, "restatement", inputs, repo, rv, run_)
+    if need_b:
+        tasks["background"] = _part_task(bkey, "background", inputs, repo, bv, run_)
+    results = dict(
+        zip(
+            tasks,
+            await asyncio.gather(*(asyncio.shield(t) for t, _ in tasks.values())),
+            strict=True,
+        )
+    )
+    r_out, b_out = results.get("restatement"), results.get("background")
+    made = [results[part] for part, (_, created) in tasks.items() if created]
+    if made and all(p.nothing_ran for p in made):
+        await refund()
+    elif not made and not joining:
+        await refund()  # reserved, but another request started every part meanwhile
+    author_says = r_out.text if r_out is not None else _text(r_entry, "author_says")
+    background = b_out.text if b_out is not None else _text(b_entry, "background")
+    analogy = b_out.analogy_domain if b_out is not None else (b_entry or {}).get("analogy_domain")
+    reason: Reason = (r_out or b_out).reason  # type: ignore[union-attr]
+    out = compose(author_says, background, analogy, reason, r_out, b_out)
+    counts = ({"generated": 1} if made else {}) | {f"{p.part}_{p.reason}": 1 for p in made}
+    return Served(
+        key, out.kind, out.reason, out.explanation, cached=False,
+        cost_usd=sum(p.cost_usd for p in made), counts=counts,
+    )  # fmt: skip
 
-    task = asyncio.ensure_future(fill())
-    _inflight[key] = task
-    task.add_done_callback(lambda _: _inflight.pop(key, None))
-    return await asyncio.shield(task)
 
-
-def _log(inputs: ExplainInputs, outcome: Outcome, version: str) -> None:
+def _log(inputs: ExplainInputs, outcome: PartOutcome) -> None:
     codes = [r.split(":", 1)[0] for a in outcome.attempts for r in a.result.reasons]
     log.info(
-        "explanation generated",
+        "explanation part generated",
         extra={
+            "part": outcome.part,
             "mode": inputs.mode,
-            "kind": outcome.kind,
+            "verified": outcome.verified,
             "reason": outcome.reason,
             "attempts": len(outcome.attempts),
             "reason_codes": codes,
-            "models": outcome.models,
-            "prompt_version": version,
-            "cost_usd": outcome.cost_usd,
-            "band": inputs.band,
-            "thinks_in": inputs.thinks_in,
+            "prompt_version": restate_version()
+            if outcome.part == "restatement"
+            else background_version(),
+            "cost_usd": round(outcome.cost_usd, 8),
+            "band": inputs.band if outcome.part == "background" else None,
+            "thinks_in": inputs.thinks_in if outcome.part == "background" else None,
             "style": inputs.style,
         },
     )
