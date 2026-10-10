@@ -364,3 +364,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   passed (5 concepts, environment) → fold (backup seeded file) → 00016 loads 2026-10-10-folded-5206
   → web deployed (index-oV20XPLM.js; Delete fix live in ProfilePage/WelcomePage CSS).
 - Issues seen live: same-article duplicates (Forever chemicals / PFAS), PFOS → PHOSITA prerequisite.
+
+## M7.5 ("For you" feed, "Read any link", reading goals; decisions 33, 37, 38)
+
+### Plan
+- Sourabh: generalise the explanation prompts in M7.5 and keep society (decision 37); demo
+  personas get a predefined, pre-seeded feed with a subtle "prepared in advance, may be dated,
+  sign in for a live feed" note (decision 38).
