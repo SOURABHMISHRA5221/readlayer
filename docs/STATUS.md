@@ -1,7 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): rest of M6 merged (#14), deployed and verified live (§14);
-autopilot run log in `docs/AUTOPILOT_LOG.md`. Previous: M5 (#13).
+Last updated: 2026-10-10 (IST): M7 built and verified on the local emulator harness (§15); M6
+live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -314,8 +314,8 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
 
 ## 9. Next actions, in order
 
-Autopilot order (decision 27); BUILD_PLAN.md has the prompts. M5 merged (#13); the rest of M6
-is built (§14) and awaits merge and deploy.
+Autopilot order (decision 27); BUILD_PLAN.md has the prompts. M6 is merged and live (#14, #15);
+M7 is built and verified on the local harness (§15) and awaits review, merge and deploy.
 
 | When | Action |
 |---|---|
