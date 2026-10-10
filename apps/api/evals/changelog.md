@@ -74,3 +74,9 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
   one good card rejected is a verifier-only case (fixed card, unchanged judge prompt), so it is
   judge run-to-run variation, not an effect of the prompt change. Pipeline p95 24.6 s (11.8 s
   before) came from a single slow call; p50 9.5 s vs 9.1 s.
+- **Judge variation, after-run (`20261010T161404_m7-5-after`):** the judge passed A06 (dropped
+  attribution, "said he would hold out" → "decided to hold out"); only the deterministic
+  attribution check rejected it. The report's "Missed: none" counts rejections by either layer,
+  so it hides this. Same class of run-to-run variation as G21 above; the before-run's judge
+  rejected A06.
+

@@ -1,8 +1,8 @@
-# M7.5 harness acceptance (2026-10-10, emulator harness, final branch code)
+# M7.5 harness acceptance (2026-10-10, emulator harness, branch m7.5)
 
-## Google reader (health + sports), goals, map, export, delete
-[onboarded] hs-654274@example.com at /
-[feed google A] 0.0s topics ['health', 'sports'] snapshot False pending False items 10 counts {"health": {"video": 2, "article": 3, "podcast": 1}, "sports": {"article": 3, "podcast": 1}}
+## 1. Cold day cache: Google reader with only Health and Sports (run that later stopped at the goals step)
+[onboarded] hs-654080@example.com at /
+[feed google A] 4.2s topics ['health', 'sports'] snapshot False pending False items 10 counts {"health": {"video": 2, "article": 3, "podcast": 1}, "sports": {"article": 3, "podcast": 1}}
    - health/video Health Insurance Claim Ka 10% Ab Aapko Dena Hoga? | New Proposal Expla | Health · 1 idea new to you | goal None
    - sports/article Ravens announce bad Lamar Jackson news for Week 5 Falcons matchup - Ya | Sports · 1 idea new to you | goal None
    - health/article Around the MHS - October 8, 2026 | Health.mil | Health · 1 idea new to you | goal None
@@ -11,9 +11,9 @@
    - sports/article Sports/Rec calendar: Oct. 9–18, 2026 | Sports · 2 ideas new to you | goal None
    - health/article The Week in Health: SUS Clinics, WHO Leadership, Medicine Nobel | Health · 1 idea new to you | goal None
    - sports/podcast Business of Sports: NFL Business Podcast - Podcast - Apple Podcasts | Sports · 1 idea new to you | goal None
-[searches] reader A: 0 feed searches
-[feed-google 1440-light] axe [] hscroll 0 small ["wordmark wordmark--lg 110x26", "icon-btn 40x40", "account__chip 40x40"] m75-feed-google-1440-light.png
-...
+[searches] reader A: 6 feed searches
+
+## 2. Full run (warm day cache): feed screenshots, goals, habit, map goal view, export, second reader, delete
 [onboarded] hs-654478@example.com at /
 [feed google A] 0.0s topics ['health', 'sports'] snapshot False pending False items 10 counts {"health": {"video": 2, "article": 3, "podcast": 1}, "sports": {"article": 3, "podcast": 1}}
    - health/video Health Insurance Claim Ka 10% Ab Aapko Dena Hoga? | New Proposal Expla | Health · 1 idea new to you | goal None
@@ -67,7 +67,7 @@
 [searches] reader B: 0 feed searches (expect 0)
 [delete] reader A uid PpouTvcxbIeJLZHmZLa7KebMOVBD: DELETE /v1/me → 204
 
-## Demo reader: snapshot, Read any link, cap
+## 3. Demo reader: snapshot, Read any link (3 new URLs, then the cap)
 [feed demo newcomer] 0.0s topics ['technology', 'economics'] snapshot True pending False items 9 counts {"technology": {"video": 2, "article": 3, "podcast": 1}, "economics": {"video": 2, "article": 1}}
    - technology/video AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova | Technology · 1 idea new to you | goal None
    - economics/video Has Inequality Ever Been Worse? | Economics · 2 ideas new to you | goal None
@@ -94,13 +94,15 @@
 [anylink-cap 1440-light] axe [] hscroll 0 small ["skip-link 131x37", "wordmark wordmark--lg 110x26", "persona__chip 151x40", "icon-btn 40x40", "account__chip 51x40", "filter 96x36", "filter 87x36", "filter 74x36", "SELECT 179x36"] m75-anylink-cap-1440-light.png
 [anylink-cap 390-dark] axe [] hscroll 0 small ["skip-link 131x37", "wordmark wordmark--lg 110x26", "persona__chip 78x40", "icon-btn 40x40", "account__chip 51x40", "filter 96x36", "filter 87x36", "filter 74x36", "SELECT 179x36"] m75-anylink-cap-390-dark.png
 [privacy] opened ['6a61ac687d4058d4ee4c4eb6d4db7a40', '4b2477a4509391dd523118ac27a4bc4e', 'e3f8710b1f36e3054c240c6cc70c1321'] listed for me: [False, False, False]
+(the script then failed to find a Trader button; privacy is checked in section 4 instead)
 
-## Privacy after notes finished (fresh demo readers, same persona)
+## 4. Privacy after the notes finished (fresh demo readers, same persona)
 [open] 70d7dca80ef12e78409fa2f6028ac95b article visible in 1.0 s
 [notes] done after 63.2 s
 [privacy] listed for the paster: True
-[privacy] listed for a second demo reader (same persona): False
+[privacy] listed for a second demo reader (same persona): False | library size 5
 [by id] second reader can open it by id: 200
 
-## Feed page reloads after batching rec signals (was 0.5 → 31 s and timeouts before)
-7 reloads at 1440/390, light/dark: all 0.5 s
+## 5. Feed page reloads (demo reader), before and after batching rec signals
+before: 0.5, 10.5, 20.7, 31.2, 18.4 s, then two timeouts (per-card rec_shown transactions contending)
+after:  7 reloads at 1440/390, light/dark: 0.5 s each

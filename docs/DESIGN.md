@@ -851,8 +851,8 @@ is ready to learn. No LLM anywhere on this path.
   news explained" (YouTube, 4–20 minutes, published in the last 30 days). Never reader text,
   ids, history or the current article (property test over all 14 domains). A changed phrase
   makes that day's cache entry stale.
-- **Shared and day-keyed.** Each (topic, format, UTC day) is searched at most once for everyone
-  and cached in `rec_cache` under `feed:<domain>:<day>`. Results pass the blocklist, a page-shape
+- **Shared and day-keyed.** Each (topic, format, UTC day) is searched once for everyone and
+  cached in `rec_cache` under `feed:<domain>:<day>`. Results pass the blocklist, a page-shape
   check (an article URL must not be a section, tag or home page: a ≥ 3-word slug or a date/id
   in the path; podcast chart and genre pages are dropped), the 14-day article filter (when a
   date is given), an English-only check (≥ 70% of title letters in Latin script; YouTube's
@@ -865,8 +865,12 @@ is ready to learn. No LLM anywhere on this path.
 - **In-request only.** Missing searches run inside the request with a 6 s limit (Cloud Run
   throttles CPU after a response). What doesn't finish is `pending: true`; the client asks again
   and joins the same in-flight task, so a re-ask never searches twice. Provider results vary
-  from run to run, so a day entry that came back empty may be searched again after an hour
-  (within the caps); non-empty entries last the day.
+  from run to run, so a day entry that came back empty may be searched again after an hour.
+  Bound: each API instance makes at most 2 searches per (topic, format, day), so at most 6 with
+  ≤ 3 instances, all inside `FEED_SEARCH_DAILY_CAP`.
+- **When a search can't run** (a cap, a provider failure, or that bound) and today has no
+  entry, yesterday's entry for the same topic and format is served if there is one; after a
+  cap hit or failure that instance waits 10 minutes before trying again.
 
 ### 17.2 Ranking (`app/recs/feed_rank.py`, pure)
 ```

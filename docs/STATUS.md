@@ -1,7 +1,8 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): M2.2 merged (#18) and live: seeded graph, growth on, live growth
-check passed (§16; frozen-graph headline missed, decision 36). Next M7.5. M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
+Last updated: 2026-10-11 (IST): M7.5 built and accepted on the harness (§17), milestone review
+fixes applied; next PR, merge, deploy and live checks, then the Design pass (decisions 39, 40).
+M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -171,6 +172,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M2.2: growth timeout 30 s, not the plan's 20 s (still min(30 s, phase-2 time left − 5 s)) | Harness timing with growth on: 4 concepts in 20.0 s (cold instance), 3 in 6.9 s; 20 s would drop growth on a slow model answer | Keep; watch `growth_ms` live |
 | M2.2: linker suite has 16 cases, not the planned 14 | Added a German chancellor negative and a second Chancellor case before any run | Keep |
 | M7.5: pages brought in through POST /v1/recs/open ("Open here", Read any link, feed articles) or the extension (`NOT_CORPUS`) are private to the readers who brought them in; the library list and Up next hide them from everyone else. Production holds **7** `user_ingested` docs and 0 `extension` docs (read-only count, 2026-10-10), which disappear from other readers' libraries on deploy | A pasted page is a reader's choice, not editorial content, and M8 extension pages will be the same. Intended, not data loss: the docs stay reachable by id. M8 must keep "visible to the reader who brought it in" | Keep (DESIGN §17.4) |
+| M7.5: feed phrases are "news this week" / "podcast" / "news explained", not the plan's "latest news" / "podcast episode" / "explained"; feed results also pass a page-shape check (article-shaped URL, no podcast chart or genre pages) and an English-only title check; feed news searches send no `exclude_domains`; YouTube feed searches ask for 4–20 minutes from the last 30 days; topics need interest ≥ 0.5 | Harness acceptance: the plan's phrases returned section pages, kids' videos and chart pages, and `exclude_domains` made Tavily return 0 articles of 9 (§17). Still only a taxonomy label + fixed phrase | Keep (DESIGN §17.1) |
+| M7.5: an empty feed day entry may be searched again after an hour (≤ 2 searches per instance per (topic, format, day), ≤ 6 in all) | Tavily's results vary run to run; without a retry one bad sample empties a topic for the whole day | Keep (DESIGN §17.1) |
+| M7.5: `seed_demo_feed` checks articles until 6 per topic pass (up to ≈ 20 fetch-and-extract checks per persona, not the plan's ≤ 12 in total), gained `--persona`, and its `--dry-run` performs the real searches (writing shared `rec_cache` entries and `ops/search` counters; only the `persona_feeds` write is skipped) | Feed searches return up to 10 articles and many fail the 400-word check (paywalls, 403); a dry run that can't see real results can't show what the snapshot will hold, and the real run the same day reuses the cache | Keep; production writes for the post-merge seeding are listed in §9 |
+| M7.5: the web tests for the feed are logic-level (re-ask policy, waiting line, snapshot note, hiding a dismissed card in `lib/feedView.ts`), not rendered components; the `why` text is asserted in API tests | `apps/web` has no DOM test environment and adding one wasn't worth a new dependency days before the freeze | Keep |
 | M7.5: For you searches only for the reader's topics (taxonomy label + fixed phrase), shared per day; demo personas get a pre-seeded snapshot and never search | Decisions 33 and 38: no reader data in queries, bounded cost, and judges always see a full page | Keep (DESIGN §17) |
 | M2.2: variant-precision baseline is 83% on the newly frozen 150-mention sample, not M2's 93% | M2's figure used a different sample and candidate floor; not comparable | Keep |
 ---
@@ -205,6 +210,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Up next article searches still send Tavily `exclude_domains`, which made the news topic return only section pages in M7.5 testing; Up next uses the general topic and its results looked fine in M6.5, but this is unverified (feed articles no longer send it) |
 | Low | For you quality depends on Tavily's news results, which vary run to run (the same query gave 2 or 10 real articles); empty day entries are retried after an hour. "News this week" also pulls event pages ("Mental Health Week") |
 | Low | A pasted page stays pending (not in the library) if its reader leaves before the notes finish and the analyse request never ran; the next open of that link analyses it |
+| Low | The English-only filter checks script, not language: a Hinglish title in Latin script passes ("Health Insurance Claim Ka 10% Ab Aapko Dena Hoga?") |
 | Low | Learning-goal resolution takes 8–19 s on the harness (embedding + link_confirm); the form says it is looking the idea up |
 | Low | Header controls (theme toggle, account chip 40×40, persona chip 40 px tall) are under 44 px; pre-existing, rebuilt in the Design pass |
 | Low | `rec_shown` relies on IntersectionObserver, which browsers pause in background tabs (seen in automated testing; real readers have the tab in front) |
@@ -286,10 +292,23 @@ about 12 calls for a new article (3 concepts × 3 formats; YouTube counts 2), 0 
 | Hosting after submission: Cloud Run min-instances 1 during judging (Oct 19 – Nov 6) | ~$15–25 |
 | **Total remaining** | **≈ $25–45 of the $300 credit** |
 
-**For you (M7.5) search projection:** at most 14 topics × 3 formats = 42 searches a day if every
-domain is someone's topic (Tavily 28 credits, YouTube 14 searches = 28 calls), capped at 60 calls
-by `FEED_SEARCH_DAILY_CAP`; realistic judging traffic touches 4–8 topics, ≈ 10–20 Tavily
-credits a day. Demo snapshots are seeded once (≤ 18 searches).
+**For you (M7.5) search projection:** one search per (topic, format, day) is 14 × 3 = 42 a day
+if every domain is someone's topic, but empty-entry retries allow up to 6 per (topic, format,
+day), so the real ceiling is the feed cap: **60 calls a day** (`FEED_SEARCH_DAILY_CAP`), of which
+YouTube can take up to 30 searches (60 calls) of its 90-search daily bucket, which Up next
+shares; past the cap the feed serves today's or yesterday's entries. Realistic judging traffic
+touches 4–8 topics: ≈ 10–20 Tavily credits and 4–8 YouTube searches a day. Demo snapshots are
+seeded once per run (≤ 18 searches, plus ≈ 60 local fetch-and-extract checks, no LLM).
+
+**2026-10-10 UTC (M7.5, local):** safety evals $0.53 (before) + $0.54 (after); harness LLM
+≈ $0.52 after the restart (4 Read any link ingests with growth, 3 learning-goal resolutions,
+reader-page explanation prefetches); the emulator ledger from before the restart was lost with
+it (estimated < $0.10 and ≈ 40 search calls: snapshot seeding attempts and one 6-topic feed);
+provider probes while fixing feed quality ≈ 30 Tavily credits and ≈ 6 YouTube searches (direct
+calls, not in any `ops/search`); harness searches after the restart 48 calls (36 feed). Production
+ledger for the UTC day: $6.71 LLM, 118 search calls, at the time of the review (the M2.2 and
+earlier work of the same UTC day). Tavily plan and remaining credits: to record before the live
+check (§9).
 
 Tavily cost depends on the plan in use (check the free monthly credit before M9); YouTube
 quota is free within the daily buckets.
@@ -337,8 +356,10 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
   script reads production through a separate client and writes only to `demo-readlayer`; the
   harness budget is min($1, $8 − today's production spend).
 - **For you (M7.5):** `FEED_SEARCH_DAILY_CAP` 60 calls/day shared by all readers, reserved under
-  the same lock as the global and YouTube caps; each (topic, format) is searched once per UTC
-  day for everyone; demo readers never search (snapshots). Queries are a taxonomy label plus a
+  the same lock as the global and YouTube caps; each (topic, format, UTC day) is searched once
+  for everyone, with at most 2 searches per instance (≤ 6 in all) when an empty entry is
+  retried; past a cap or on a failure, today's or yesterday's entry is served; demo readers never
+  search (snapshots). Queries are a taxonomy label plus a
   fixed phrase only (tested over all 14 domains).
 - **Reading goals (M7.5):** signed-in readers only, after consent, ≤ 5 goals, 10 learning-goal
   resolutions/day (≤ 1 embed + ≤ 1 link_confirm each); the goal text is never stored or logged.
@@ -363,20 +384,24 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
 
 ## 9. Next actions, in order
 
-Autopilot order (decisions 27 and 33): M2.2 → M7.5 → M8-local → M9; BUILD_PLAN.md has the prompts. M6 is merged and live (#14, #15);
-M7 is built and verified on the local harness (§15) and awaits review, merge and deploy.
+Autopilot order (decisions 33, 39): M2.2 (done) → M7.5 → Design pass → M8-local → M9.
+BUILD_PLAN.md has the prompts. M6, M7 and M2.2 are merged and live.
 
 | When | Action |
 |---|---|
-| Done | **M7:** merged #16 and live; only Sourabh's Google check left. Was: merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
-| Done | **M2.2** merged (#18) and live (revisions 00013–00016, web redeployed); all post-merge steps run with Sourabh's yes (§16) |
-| Now | **M7.5**: "For you" feed, "Read any link", reading goals (plan, plan-reviewer, build). Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut (first questions: the map's goal ring/filter, podcasts in the feed) |
-| Oct 12–13 | **M7.5**: "For you" feed, "Read any link", reading goals (DESIGN gets feed and goals sections with the plan) |
-| Oct 13 | **Design pass** (decision 39), after M7.5 is merged and deployed |
-| Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done) |
+| Done | **M7** merged #16 and live; **M2.2** merged #18 and live (§16) |
+| Now | **M7.5** (§17): built, harness acceptance passed, milestone-review fixes applied. Post-merge steps, in order: (1) PR, milestone-reviewer SHIP, merge on green CI; (2) `make check-gcp`, deploy the API, then the web (Sourabh's yes on each); (3) `seed_demo_feed --dry-run`, then the real run: ≤ 18 searches (≤ 24 calls) counted in production's `ops/search`, ≤ 18 shared `rec_cache` feed entries, 3 `persona_feeds/{persona}` docs, ≈ 60 local fetch-and-extract checks, no LLM; check each persona has ≥ 2 readable articles per topic (re-run one persona with `--persona` if not); (4) record Tavily's plan and remaining credits here and in §7; (5) `warm_demo --dry-run`, then the real run (≈ 42 explanation entries, ≈ $0.25; today's production ledger is $6.71 of $8, so run it after 00:00 UTC if the deploy lands late on Oct 10 UTC); (6) `live_check_m7_5.py` (one demo reader pastes one non-business article, deleted after); (7) Sourabh's Google check: For you, one learning goal, open a feed article. Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut |
+| Oct 13 | **Design pass** (decisions 39, 40: Gloss name, `docs/design/mockup.html`, Margo, reader details, mobile). Decision 40 adds API work ("Say it simpler" / "Go deeper", "What this article changed"), which squeezes M8 and M9: size it in the plan and ask Sourabh what to cut if it threatens the freeze |
+| Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done; keep M7.5's "visible to the reader who brought it in") |
 | Oct 15 | **M9** hardening and evals, plus four M2.2 follow-ups required before the freeze (Sourabh, 2026-10-10): (1) merge check within one growth batch (same-article duplicates, e.g. Forever chemicals / PFAS); (2) validate grown prerequisites against the domain or drop low-confidence ones (PFOS → PHOSITA); (3) grown-concept precision on a fresh, independent sample of 30, reported with the 87% and 97% samples; (4) README and deck state the frozen-graph misses (64% / 13%) next to the after-growth numbers |
-| Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
+| Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles, **re-run `seed_demo_feed`** so the demo feed isn't dated "10 Oct" during judging), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
+
+**Video line:** sign in as a demo persona → library → open an article → hover and open notes →
+"Not really" on a prompt → reload shows the change → Up next → **For you** (demo snapshot with
+its note; then a Google reader's live topics and a "helps your goal" line) → **Read any link**
+(paste a non-business article; it opens in seconds and concepts grow) → profile: **reading
+goals** (a habit and "understand X" with progress) and the knowledge map's goal view.
 
 **If late:** stop and ask Sourabh what to cut (decision 27). The old cut order (edit-by-prompt →
 knowledge-map graph → M2.2 online growth → extension popup extras) is no longer applied
@@ -691,14 +716,14 @@ after, non-business cases reported separately).
 
 | # | Check | Result |
 |---|---|---|
-| 1 | Google reader with only Health and Sports gets articles, videos and podcasts for those topics | Pass: topics `[health, sports]`, 10 items (health 3 articles, 2 videos, 1 podcast; sports 3 articles, 1 podcast) in 4.2 s on a cold day cache, 6 searches |
+| 1 | Google reader with only Health and Sports gets articles, videos and podcasts for those topics | Pass: topics `[health, sports]`, 10 items (health 3 articles, 2 videos, 1 podcast; sports 3 articles, 1 podcast) in 4.2 s on a cold day cache, 6 searches (evidence §1) |
 | 1 | Queries are only topic names; a second reader makes no new search; caps hold | Pass: property test over 14 domains; reader B 0 searches (live harness count); cap tests |
 | 1 | Demo personas see the snapshot with the note | Pass: newcomer snapshot (technology 3 articles, 2 videos, 1 podcast; economics 1 article, 2 videos), 0 searches, note shown |
 | 2 | Opening a pasted or feed article shows it within 5 s | Pass on the harness: 2.0, 1.0, 0.8 and 1.0 s (Read any link, same two-phase route as the feed's "Read here"); notes 63 s with growth. Live check after deploy |
 | 3 | Read any link: 3 new URLs, then the cap message; other readers don't see them | Pass: 3 opened, the 4th got "The demo can analyse only a few new articles a day…"; after its notes finished, the page is listed for the paster and not for a second demo reader on the same persona (still reachable by id) |
 | 4 | Habit progress matches the week's page loads | Pass: 0 of 3, read one article, 1 of 3 |
 | 4 | Learning goal resolves, shows progress on the profile and the map | Pass: "understand insulin resistance" → Insulin resistance + 6 prerequisites (6 of 7 known); "Show on map" draws the 7-node chain |
-| 4 | Goal boost shows in the feed's `why` | Covered by tests only: no live feed item named an insulin-resistance target that day |
+| 4 | Goal boost shows in the feed's `why` | Not seen on the harness (no live item named an insulin-resistance target that day); covered offline end to end: POST a learning goal, GET /v1/feed, the item naming the target ranks first with "helps your goal: …" (`test_a_learning_goal_boosts_the_feed_item_that_names_its_target`) |
 | 4 | Goals in export, gone on delete | Pass: `goals`, `ingested`, `goal_resolve_counts` in export; after DELETE /v1/me no user doc, goals, ingested or weekly docs remain |
 | — | Accessibility and layout | axe: 0 serious or critical on For you (Google and demo), Goals, the map's goal view and the Read any link box, at 1440 and 390, light and dark; no horizontal scroll |
 | 5 | Prompts meet the M5 targets; demo cards re-warmed live | Evals pass (before 25/25, after 24/25 good cards, G21 judge variation; all adversarial rejected; injections 10/10). Re-warm after deploy |
@@ -708,3 +733,4 @@ Found and fixed during acceptance:
 - **Topics:** onboarding's 0.3 "not chosen" interest made every business domain a topic; now ≥ 0.5.
 - **Rec signals:** one request per card contended on the reader's signals doc (30 s latencies, failed commits) and stalled page loads (0.5 → 31 s). Now batched to one request per 400 ms; reloads 0.5 s.
 - **Copy and UI:** progress note while a learning goal resolves, library intro spacing, sign-in copy for any subject, failed thumbnails hidden.
+- **Milestone review (FIX → fixes):** "Not interested" now hides the card at once and the server drops dismissed items; searches bounded to ≤ 2 per instance per (topic, format, day) with a yesterday fallback and a 10-minute backoff after a cap hit or failure; goal ids validated; end-to-end goal boost test; feed page logic tests; STATUS §4/§7/§8/§9 and the eval changelog (A06) updated.
