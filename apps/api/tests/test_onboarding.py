@@ -160,7 +160,12 @@ def test_calibration_eight_answers_then_done(env, docs):
         cid = nxt["item"]["concept_id"]
         # Answering anything but the current item is refused.
         wrong = "c_policy_9" if cid != "c_policy_9" else "c_policy_8"
-        assert g.post("/v1/calibration/answer", json={"concept_id": wrong, "answer": "explain"}).status_code == 409  # noqa: E501
+        assert (
+            g.post(
+                "/v1/calibration/answer", json={"concept_id": wrong, "answer": "explain"}
+            ).status_code
+            == 409
+        )  # noqa: E501
         body = g.post("/v1/calibration/answer", json={"concept_id": cid, "answer": "heard"}).json()
         assert body["asked"] == i + 1
         assert docs.docs[f"users/g1/knows/{cid}"]["evidence"][-1]["type"] == "calibration_answer"

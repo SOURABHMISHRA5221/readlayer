@@ -42,7 +42,10 @@ GRAPH = ConceptGraph(
         concepts=[
             concept("c_options", "finance", 0.5, 50, "Options"),
             concept("c_repo_rate", "economics", -0.5, 40, "Repo rate"),
-            *[concept(f"c_fin_{i}", "finance", round(-1.5 + i * 0.3, 2), 30 - i) for i in range(12)],
+            *[
+                concept(f"c_fin_{i}", "finance", round(-1.5 + i * 0.3, 2), 30 - i)
+                for i in range(12)
+            ],
         ],
     )
 )
@@ -214,9 +217,10 @@ def test_preview_writes_nothing_to_the_reader_model(env, docs):
         {"setting": "explanation_style", "before": "normal", "after": "short"},
         {"setting": "thinks_in", "before": [], "after": ["software"]},
     ]
+    edit_paths = ("/profile_edits/", "/profile_edit_counts/")
     after = {
         p: d for p, d in docs.docs.items()
-        if p.startswith("users/g1") and "/profile_edits/" not in p and "/profile_edit_counts/" not in p
+        if p.startswith("users/g1") and not any(e in p for e in edit_paths)
     }  # fmt: skip
     assert after == before
 
@@ -327,7 +331,8 @@ def test_demo_edits_change_only_this_sessions_persona_and_reset_restores_it(env,
     assert profile["thinks_in"] == ["software"]
     # Another persona and the shared template are untouched.
     assert "users/a1/demo_graphs/newcomer" not in docs.docs
-    assert {p: d for p, d in docs.docs.items() if p.startswith("persona_templates/")} == template_before
+    templates = {p: d for p, d in docs.docs.items() if p.startswith("persona_templates/")}
+    assert templates == template_before
     # Applying with another persona's scope is refused.
     edit2 = parse(anon, persona="trader").json()["edit_id"]
     assert anon.post(f"/v1/me/profile/edits/{edit2}/apply?persona=newcomer").status_code == 409
