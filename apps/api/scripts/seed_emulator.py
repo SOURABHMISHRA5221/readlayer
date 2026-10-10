@@ -5,7 +5,8 @@ writes only to the emulator.
 
 Copies a few library articles, the three persona templates and today's LLM spend ledger (so the
 budget guard sees the real day's spend) from production into the emulator's demo project, then
-prints the harness budget: min(1, cap − today's production spend). Two separate clients: the
+prints the harness budget: today's production spend + min(1, cap − that spend), since the
+emulator ledger starts from the copied spend. Two separate clients: the
 production one is built with the emulator variable removed from the environment; the emulator
 one is built for project `demo-readlayer` with the emulator host asserted. Refuses to run if
 both would point at the same target.
@@ -71,9 +72,12 @@ async def main() -> None:
     spend = float((spend_snap.to_dict() or {}).get("cost_usd", 0.0)) if spend_snap.exists else 0.0
     if spend_snap.exists:
         await emu.document(f"ops/spend/days/{day}").set(spend_snap.to_dict())
-    budget = max(0.0, min(HARNESS_MAX_USD, DAILY_CAP_USD - spend))
+    # The emulator ledger starts at today's production spend, so its cap is that spend plus the
+    # harness allowance: new harness spend ≤ min($1, $8 − today's spend).
+    allowance = max(0.0, min(HARNESS_MAX_USD, DAILY_CAP_USD - spend))
     print(f"seeded {copied} docs into {EMULATOR_PROJECT}; production spend today ${spend:.4f}")
-    print(f"HARNESS_BUDGET_USD={budget:.4f}")
+    print(f"harness allowance ${allowance:.4f}")
+    print(f"HARNESS_BUDGET_USD={spend + allowance:.4f}")
 
 
 if __name__ == "__main__":
