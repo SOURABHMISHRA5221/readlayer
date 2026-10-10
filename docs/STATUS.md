@@ -1,7 +1,8 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): M7.5 built and accepted on the harness (§17), milestone review
-fixes applied; next PR, merge, deploy and live checks, then the Design pass (decisions 39, 40).
+Last updated: 2026-10-11 (IST): M7.5 merged (#20) and live (API revision 00017, web redeployed);
+demo snapshots seeded, demo cards re-warmed, live check passed (§17). Left: Sourabh's Google
+check. Next: the Design pass (decisions 39, 40).
 M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
@@ -31,7 +32,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
-| M7.5 | harness acceptance passed on branch `m7.5` (§17); review, merge, deploy and live checks next | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
+| M7.5 | **merged #20 and live** (§17); Sourabh's Google check left | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -187,7 +188,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
-| Medium | "Open here" (M6, two-phase): the article shows in 1.4 s locally but took **7.3 s live** on the first ingest of the new revision (phase 1 5.2 s server-side: deferred ingestion imports on a 1-vCPU instance shared with other readers' requests). A second live run (Wikipedia "Forward guidance", instance warm for health checks but its first ingest) gave the same: phase 1 6.6 s, article 7.5 s, notes 43.7 s. Phase-1 timing fields (`fetch_ms`, `extract_ms`) ship with M7 to split the cost; the likely cause is the deferred ingestion imports on a 1-vCPU instance. M9: preload them at startup while min instances = 1 (judging), where cold-start time no longer matters. Notes 20–55 s after; the reader shows "Preparing your notes… N s" |
+| Medium | "Open here" (M6, two-phase): the article shows in 1.4 s locally but took **7.3 s live** (M7.5 live check, first ingest on revision 00017: 6.8 s; a known pending link 0.2 s) on the first ingest of the new revision (phase 1 5.2 s server-side: deferred ingestion imports on a 1-vCPU instance shared with other readers' requests). A second live run (Wikipedia "Forward guidance", instance warm for health checks but its first ingest) gave the same: phase 1 6.6 s, article 7.5 s, notes 43.7 s. Phase-1 timing fields (`fetch_ms`, `extract_ms`) ship with M7 to split the cost; the likely cause is the deferred ingestion imports on a 1-vCPU instance. M9: preload them at startup while min instances = 1 (judging), where cold-start time no longer matters. Notes 20–55 s after; the reader shows "Preparing your notes… N s" |
 | Low | Deleted-account revocation is per instance and in memory, so it is also lost on a restart. Seen in M6 local testing: a demo session deleted at 07:02:41 UTC sent one event batch at 07:10:19 after the dev server restarted, leaving `users/{uid}` + 6 `events` + 1 `demo_graphs/newcomer` (8 docs) under a deleted Auth user (Sourabh's own session). Left for the M9 anonymous cleanup unless Sourabh asks for a delete now; events expire by TTL in 90 days |
 | Low | A cold explanation card (both parts missing) costs $0.0090 and p95 31 s (was $0.0070, 22 s): two judge calls. Reuse across readers repays it |
 | Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
@@ -208,6 +209,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Headlines keep publisher SEO suffixes (" \| Stock Market News"); we don't alter publisher text |
 | Low | In-process catalog cache: docs ingested by another process need an API restart to appear (Open here appends directly) |
 | Low | Up next article searches still send Tavily `exclude_domains`, which made the news topic return only section pages in M7.5 testing; Up next uses the general topic and its results looked fine in M6.5, but this is unverified (feed articles no longer send it) |
+| Medium | Demo snapshots seeded 2026-10-10 are thin on articles for three topics: newcomer economics 1, trader business 1, policy student politics 0 readable articles (every topic has videos and podcasts). Before the Oct 16 re-seed: a second fixed phrase for thin topics in `seed_demo_feed` (≤ 1 extra search per thin topic; ask before the extra production searches) |
+| Medium | Tavily is on the free Researcher plan: 398 of 1,000 monthly credits used on 2026-10-10. Realistic feed + Up next use is ≈ 15–30 credits a day; a day at the feed cap could use ≈ 40. If credits run out, searches fail and the feed serves cached and yesterday's entries |
 | Low | For you quality depends on Tavily's news results, which vary run to run (the same query gave 2 or 10 real articles); empty day entries are retried after an hour. "News this week" also pulls event pages ("Mental Health Week") |
 | Low | A pasted page stays pending (not in the library) if its reader leaves before the notes finish and the analyse request never ran; the next open of that link analyses it |
 | Low | The English-only filter checks script, not language: a Hinglish title in Latin script passes ("Health Insurance Claim Ka 10% Ab Aapko Dena Hoga?") |
@@ -307,8 +310,10 @@ it (estimated < $0.10 and ≈ 40 search calls: snapshot seeding attempts and one
 provider probes while fixing feed quality ≈ 30 Tavily credits and ≈ 6 YouTube searches (direct
 calls, not in any `ops/search`); harness searches after the restart 48 calls (36 feed). Production
 ledger for the UTC day: $6.71 LLM, 118 search calls, at the time of the review (the M2.2 and
-earlier work of the same UTC day). Tavily plan and remaining credits: to record before the live
-check (§9).
+earlier work of the same UTC day). Tavily: free Researcher plan, 398 of 1,000 monthly credits used
+(2026-10-10, after the demo seeding). Post-merge production: `seed_demo_feed` 24 search calls (12
+Tavily, 6 YouTube searches), `warm_demo` 24 cards, live check 1 ingest; the day's `ops/search`
+reached 142 calls (feed 24).
 
 Tavily cost depends on the plan in use (check the free monthly credit before M9); YouTube
 quota is free within the daily buckets.
@@ -390,7 +395,7 @@ BUILD_PLAN.md has the prompts. M6, M7 and M2.2 are merged and live.
 | When | Action |
 |---|---|
 | Done | **M7** merged #16 and live; **M2.2** merged #18 and live (§16) |
-| Now | **M7.5** (§17): built, harness acceptance passed, milestone-review fixes applied. Post-merge steps, in order: (1) PR, milestone-reviewer SHIP, merge on green CI; (2) `make check-gcp`, deploy the API, then the web (Sourabh's yes on each); (3) `seed_demo_feed --dry-run`, then the real run: ≤ 18 searches (≤ 24 calls) counted in production's `ops/search`, ≤ 18 shared `rec_cache` feed entries, 3 `persona_feeds/{persona}` docs, ≈ 60 local fetch-and-extract checks, no LLM; check each persona has ≥ 2 readable articles per topic (re-run one persona with `--persona` if not); (4) record Tavily's plan and remaining credits here and in §7; (5) `warm_demo --dry-run`, then the real run (≈ 42 explanation entries, ≈ $0.25; today's production ledger is $6.71 of $8, so run it after 00:00 UTC if the deploy lands late on Oct 10 UTC); (6) `live_check_m7_5.py` (one demo reader pastes one non-business article, deleted after); (7) Sourabh's Google check: For you, one learning goal, open a feed article. Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut |
+| Now | **M7.5** merged #20 and live; steps (1)–(6) below done 2026-10-10 (§17). **Left: (7) Sourabh's Google check.** Post-merge steps, as run: (1) PR, milestone-reviewer SHIP, merge on green CI; (2) `make check-gcp`, deploy the API, then the web (Sourabh's yes on each); (3) `seed_demo_feed --dry-run`, then the real run: ≤ 18 searches (≤ 24 calls) counted in production's `ops/search`, ≤ 18 shared `rec_cache` feed entries, 3 `persona_feeds/{persona}` docs, ≈ 60 local fetch-and-extract checks, no LLM; check each persona has ≥ 2 readable articles per topic (re-run one persona with `--persona` if not); (4) record Tavily's plan and remaining credits here and in §7; (5) `warm_demo --dry-run`, then the real run (≈ 42 explanation entries, ≈ $0.25; today's production ledger is $6.71 of $8, so run it after 00:00 UTC if the deploy lands late on Oct 10 UTC); (6) `live_check_m7_5.py` (one demo reader pastes one non-business article, deleted after); (7) Sourabh's Google check: For you, one learning goal, open a feed article. Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut |
 | Oct 13 | **Design pass** (decisions 39, 40: Gloss name, `docs/design/mockup.html`, Margo, reader details, mobile). Decision 40 adds API work ("Say it simpler" / "Go deeper", "What this article changed"), which squeezes M8 and M9: size it in the plan and ask Sourabh what to cut if it threatens the freeze |
 | Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done; keep M7.5's "visible to the reader who brought it in") |
 | Oct 15 | **M9** hardening and evals, plus four M2.2 follow-ups required before the freeze (Sourabh, 2026-10-10): (1) merge check within one growth batch (same-article duplicates, e.g. Forever chemicals / PFAS); (2) validate grown prerequisites against the domain or drop low-confidence ones (PFOS → PHOSITA); (3) grown-concept precision on a fresh, independent sample of 30, reported with the 87% and 97% samples; (4) README and deck state the frozen-graph misses (64% / 13%) next to the after-growth numbers |
@@ -734,3 +739,13 @@ Found and fixed during acceptance:
 - **Rec signals:** one request per card contended on the reader's signals doc (30 s latencies, failed commits) and stalled page loads (0.5 → 31 s). Now batched to one request per 400 ms; reloads 0.5 s.
 - **Copy and UI:** progress note while a learning goal resolves, library intro spacing, sign-in copy for any subject, failed thumbnails hidden.
 - **Milestone review (FIX → fixes):** "Not interested" now hides the card at once and the server drops dismissed items; searches bounded to ≤ 2 per instance per (topic, format, day) with a yesterday fallback and a 10-minute backoff after a cap hit or failure; goal ids validated; end-to-end goal boost test; feed page logic tests; STATUS §4/§7/§8/§9 and the eval changelog (A06) updated.
+
+**Live (2026-10-10 UTC, after merge #20; API revision 00017, web redeployed):**
+
+| Check | Result |
+|---|---|
+| Demo snapshots | 3 `persona_feeds` docs written after a dry run: newcomer 31 items (technology 4 readable articles, economics 1), trader 32 (finance 4, business 1), policy student 27 (policy 3, politics 0); 24 search calls, no LLM. Thin topics: §5 |
+| Demo cards re-warmed (`warm_demo`) | 24 requests listed by the dry run; real run pass 1: 24 verified, 0 definition-only, slowest 22.0 s; pass 2: 24 cache hits, slowest 149 ms |
+| `live_check_m7_5.py` (Wikipedia "Photosynthesis", new to production) | Feed: snapshot, 10 items, Technology and Economics. Goals: 403 for a demo reader. Read any link: article visible in **6.8 s** on the first run (over the 5 s target: first ingest on the new revision, the known §5 cold-import cost) and 0.2 s when re-opened; listed for the pasting reader, not for a second demo reader. Both readers deleted (204) |
+| Live axe | For you (demo) at 1440 and 390, light and dark, and the library with Read any link: 0 serious or critical, no horizontal scroll; the page shows the "prepared in advance" note. The test reader was deleted through the API (204) |
+| Sourabh's Google check | Pending: For you with his own topics, one learning goal, open a feed article |

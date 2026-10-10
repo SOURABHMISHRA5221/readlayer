@@ -411,3 +411,13 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   learning-goal progress note, intro spacing, sign-in copy, failed thumbnails. All checks pass
   except the live-only items; goal boost covered by tests only (no matching live item). STATUS
   §17, `docs/evidence/M7.5-harness.txt`. Next: milestone-reviewer.
+- milestone-reviewer round 1: **FIX** (7 items: Not interested did nothing, unbounded empty
+  retries, missing yesterday fallback and unrecorded seeding deviations, an unsupported evidence
+  number, missing tests, stale STATUS, two notes). All fixed; round 2: **SHIP**.
+- PR #20 opened, CI green, squash-merged. Deployed API (revision 00017) then web, each with
+  Sourabh's yes. `seed_demo_feed` dry run then real (24 search calls; three topics thin on
+  articles, recorded in §5 for the Oct 16 re-seed). Tavily: Researcher plan, 398/1,000 credits.
+  `warm_demo` 24/24 verified, pass 2 all cache hits. `live_check_m7_5` passed on a re-run: the
+  first run stopped at its 5 s assertion (6.8 s, first ingest on the new revision, known cold
+  imports). Live axe clean. A browser test reader was first "deleted" against the Hosting origin
+  (SPA 200); caught and deleted through the API (204). Left: Sourabh's Google check.
