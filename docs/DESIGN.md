@@ -72,7 +72,36 @@ personas stay curated on the original four.
   whatever concept they merged into (even transitively) and become their own, always-kept
   concept; `rename` replaces a label (the id follows it, the old label is hidden from aliases).
   `scripts.apply_overrides` patches an already-built graph the same way and re-links only the
-  affected docs, without a rebuild.
+  affected docs, without a rebuild. M2.2 adds `remove_alias` (aliases that made wrong exact-match
+  links, e.g. "Tax" on Tax levy, "Russell Indexes" on S&P Dow Jones Indices), `add` (hand-written
+  concepts with a required kept kind, e.g. Chancellor of the Exchequer, FTSE Russell) and
+  `never_merge_kind` (an institution, regulator, committee, index or index provider never
+  absorbs a differently-labelled concept).
+- **Kind and jurisdiction (M2.2).** Every concept stores its `kind` (the concept_define kinds,
+  plus `role`, `index_provider`, `condition`, `method`, `organism_type`) and a `jurisdiction`
+  (ISO country code, `EU` or `global`). Pre-M2.2 concepts got both from `concept_jurisdiction`.
+- **Glossary seeding (M2.2, decision 34).** Domains the business corpus never covered are seeded
+  from Wikipedia glossaries (`data/glossaries.yaml`), fetched through `safe_fetch` and parsed
+  deterministically (`app/graph/glossary.py`: glossary and plain definition lists, bold-term
+  lists, heading-per-term pages). Exact matches of existing concepts are dropped; each glossary
+  group keeps its 300 most common terms; dedupe (nearest graph concept and the 3 nearest
+  candidates, ≥ DEDUPE_THRESHOLD, then `link_merge`); `concept_define` v3 writes our own
+  definition (Wikipedia's text is a context snippet only, never stored); kept kinds only; **never
+  a single everyday word** (one word with Zipf ≥ 4.5: "Health", "Level" would carry a glossary
+  sense onto every ordinary use under exact-match linking); prerequisites from the 20 nearest and
+  20 most basic same-domain concepts. `scripts.seed_glossaries --dry-run` writes only a local
+  file and `apps/api/evals/seed_report.md`; the upload waits for Sourabh's yes.
+- **Online growth (M2.2, decision 35).** After linking, a new article's unlinked concept/term
+  demands may grow verified concepts (taxonomy domain, kept kind, specialization ≥ 2, not an
+  everyday word, prerequisites existing ids only, acyclic): one batched `link_merge` against near
+  graph concepts, one batched `concept_define`, one batched `concept_prereqs`. Slots are reserved
+  when the article is first fetched, for any reader within the ingest caps (demo readers too):
+  ≤ 5 per article, 25 per reader and 100 per day for the service. Growth has its own timeout
+  inside phase 2 and never fails the ingest; held-out URLs never grow. Concepts are stored
+  create-if-absent in Firestore `graph_growth/` (no user data), merged at startup and polled
+  every 60 s by each instance (server timestamps, 120 s overlap window), and folded into
+  `concepts.json` later by `scripts.fold_growth` (backup first). `GROWTH_ENABLED` in
+  `deploy.env.yaml` is the switch. Persona templates never change through growth.
 - Wikidata ids: robots.txt disallows the Wikipedia/Wikidata APIs for our agent, so ids come from
   the `/wiki/` article page (`wgWikibaseItemId`). Seeds get theirs at corpus collection; other
   concepts best-effort (≤ 1 request/s, 10-minute cap, Gemini confirms the page matches).
@@ -86,13 +115,22 @@ personas stay curated on the original four.
   a concept from its near neighbours (95% precision would need cosine 0.98), so the model
   decides; MODEL_QUALITY measured 95% precision vs 89% for MODEL_FAST.
   Anything else is `unlinked` (still usable as a term demand).
+  **Jurisdiction (M2.2):** before the model sees them, candidates of a jurisdictional kind
+  (role, institution, regulator, committee, policy, tax, scheme) from a country the paragraph
+  gives no sign of (site, web address, currency symbols, country names and demonyms;
+  `app/graph/jurisdiction.py`) are dropped; `link_confirm` v3 sees each candidate's kind and
+  jurisdiction and the article's country signs, and refuses to link a specific named levy or
+  scheme to its generic category. M2.2 keeps `LINK_THRESHOLD` at 0.865 for every run.
 - **Held-out evaluation.** Coverage on the corpus the graph was built from is inflated
   (single-article concepts are made from those very mentions), so linker quality is measured on
   `data/heldout_urls.txt`: 15 fresh articles from the same feeds, ingested through the production
   path and reported by `scripts.eval_heldout`. **Rule:** held-out articles are never added to the
   corpus or used to build the graph; `build_concepts` refuses to run if the two lists overlap.
   The held-out number is the one to quote (M2.1: 57% exact-name, 5% model-confirmed, 38%
-  unlinked).
+  unlinked). M2.2 grows the set to 30 (15 non-business, domain labels fixed before measuring,
+  their demand set frozen with a sha256) and reports, per domain, the frozen-graph link rate (the
+  headline), the after-growth rate (production behaviour) and grown-concept precision on a
+  judged sample (`scripts.heldout_headline`, `apps/api/evals/heldout_report.md`).
 
 ## 3. Demand profile (Firestore `contents/{url_hash}`)
 ```json
@@ -203,9 +241,10 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   from comfort: new −1.5, some −0.5, comfortable 0.5, expert 1.5 (the same targets as a profile
   edit's `set_domain_level`); interest 1.0 for chosen domains, 0.3 otherwise; each liked article
   adds `liked_article_mention` (+0.2) to its ≤ 15 linked concepts with salience ≥ 0.7.
-- Calibration: 8 items, round-robin over the interest domains (all four if none); within a
-  domain, among its 150 highest-`doc_freq` concepts, the one with b closest to θ, never one already
-  asked (deterministic). Answers: explain +3.0, **heard −1.5**, none −3.0 (`calibration_answer`),
+- Calibration: 8 items, round-robin over the interest domains that have ≥ 30 concepts (the four
+  business domains if none does); within a domain, among its 150 highest-`doc_freq` concepts
+  (seeded and grown concepts have doc_freq 0 and order most basic first), the one with b closest
+  to θ, never one already asked (deterministic). Answers: explain +3.0, **heard −1.5**, none −3.0 (`calibration_answer`),
   and an Elo step with K = 0.3 and outcome explain 1, **heard 0.5**, none 0. Only the current item
   can be answered; "Skip" ends calibration with what was answered.
 
