@@ -197,6 +197,8 @@ async def _analyse(pending: PendingDoc) -> ContentDoc:
         result.demands,
         {p.id: p.text for p in paragraphs},
         get_settings().link_threshold,
+        site=pending.site,
+        url=pending.final_url,
     )
     doc = ContentDoc(
         content_id=pending.content_id,

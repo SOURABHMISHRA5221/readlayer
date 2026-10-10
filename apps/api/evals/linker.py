@@ -23,7 +23,7 @@ import yaml
 
 from app import llm
 from app.config import get_settings
-from app.graph import enrich
+from app.graph import enrich, jurisdiction
 from app.graph.enrich import Entry, LinkQuestion
 from app.graph.graph import ConceptGraph
 from app.graph.linking import CANDIDATES, phrase, sentence_around
@@ -41,15 +41,27 @@ def load(name: str) -> list[dict[str, Any]]:
     return yaml.safe_load((CASES / f"{name}.yaml").read_text(encoding="utf-8"))
 
 
-def case_question(case: dict[str, Any]) -> LinkQuestion:
+def case_question(case: dict[str, Any], filtered: bool = True) -> LinkQuestion:
+    """The question the linker would ask. With `filtered`, the code jurisdiction filter runs
+    first (as plan_links does), so the suite tests the whole linker, not only the prompt."""
+    sentence = " ".join(case["sentence"].split())
+    site = case.get("site", "")
+    article = jurisdiction.cues(site, "", sentence)
+    cands = [
+        c
+        for c in case["candidates"]
+        if not filtered
+        or jurisdiction.allowed(c.get("kind"), c.get("jurisdiction") or "global", article)
+    ]
     return LinkQuestion(
         case["id"],
         case["phrase"],
-        " ".join(case["sentence"].split()),
-        tuple((c["id"], c["label"], c["definition"], 1.0) for c in case["candidates"]),
-        site=case.get("site", ""),
-        kinds=tuple(c.get("kind") or "" for c in case["candidates"]),
-        jurisdictions=tuple(c.get("jurisdiction") or "global" for c in case["candidates"]),
+        sentence,
+        tuple((c["id"], c["label"], c["definition"], 1.0) for c in cands),
+        site=site,
+        kinds=tuple(c.get("kind") or "" for c in cands),
+        jurisdictions=tuple(c.get("jurisdiction") or "global" for c in cands),
+        article=tuple(sorted(article)),
     )
 
 
@@ -59,7 +71,10 @@ def score_case(case: dict[str, Any], pick: str | None) -> bool:
 
 async def run_link_confirm(cache: BuildCache, ledger: list) -> list[dict[str, Any]]:
     cases = load("link_confirm")
-    answers = await enrich.confirm_links([case_question(c) for c in cases], cache.run, ledger)
+    questions = [case_question(c) for c in cases]
+    asked = [i for i, q in enumerate(questions) if q.candidates]  # all filtered out → null
+    got = await enrich.confirm_links([questions[i] for i in asked], cache.run, ledger)
+    answers = {asked[k]: v for k, v in got.items()}
     out = []
     for i, c in enumerate(cases):
         pick = answers.get(i)
@@ -84,7 +99,12 @@ async def run_variants(graph: ConceptGraph, cache: BuildCache, ledger: list) -> 
             continue
         para = next((p.text for p in doc.paragraphs if p.id == demand.paragraph_id), "")
         near = graph.nearest(vecs[r["label"]], CANDIDATES)
-        cands = tuple((c.id, c.label, c.definition, s) for c, s in near if s >= LINK_THRESHOLD)
+        article = jurisdiction.cues(doc.site, doc.final_url or doc.url, para)
+        cands = tuple(
+            (c.id, c.label, c.definition, s)
+            for c, s in near
+            if s >= LINK_THRESHOLD and jurisdiction.allowed(c.kind, c.jurisdiction, article)
+        )
         questions.append(
             LinkQuestion(
                 demand.id,
@@ -94,6 +114,7 @@ async def run_variants(graph: ConceptGraph, cache: BuildCache, ledger: list) -> 
                 site=doc.site,
                 kinds=tuple(graph.get(cid).kind or "" for cid, *_ in cands),
                 jurisdictions=tuple(graph.get(cid).jurisdiction for cid, *_ in cands),
+                article=tuple(sorted(article)),
             )
         )
         kept.append(r)

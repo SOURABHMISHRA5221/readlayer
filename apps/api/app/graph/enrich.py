@@ -114,6 +114,7 @@ class LinkQuestion:
     site: str = ""
     kinds: tuple[str, ...] = ()
     jurisdictions: tuple[str, ...] = ()
+    article: tuple[str, ...] = ()  # countries the article gives signs of (jurisdiction.cues)
 
 
 @dataclass(frozen=True)
@@ -161,13 +162,16 @@ def render_wiki(items: Sequence[WikiCandidate]) -> str:
 
 
 def render_link_questions(questions: Sequence[LinkQuestion]) -> str:
+    """link_confirm-v3 layout: the article's country signs and, per candidate, its kind and
+    jurisdiction (empty for pre-M2.2 concepts)."""
     blocks = []
     for i, q in enumerate(questions):
         lines = [f"[{i}] phrase: {q.phrase}", f"    sentence: {q.sentence[:SNIPPET_CHARS]}"]
-        lines += [
-            f"    candidate {cid}: {label}: {definition}"
-            for cid, label, definition, _ in q.candidates
-        ]
+        lines.append(f"    article from: {', '.join(q.article) or 'unknown'}")
+        for k, (cid, label, definition, _) in enumerate(q.candidates):
+            kind = q.kinds[k] if k < len(q.kinds) and q.kinds[k] else "concept"
+            where = q.jurisdictions[k] if k < len(q.jurisdictions) else "global"
+            lines.append(f"    candidate {cid}: {label} [{kind}, {where}]: {definition}")
         blocks.append("\n".join(lines))
     return "\n".join(blocks)
 

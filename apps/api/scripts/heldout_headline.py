@@ -90,6 +90,7 @@ async def load_docs() -> list[dict[str, Any]]:
             {
                 "content_id": doc.content_id,
                 "site": doc.site,
+                "url": doc.final_url or doc.url,
                 "domain": e.domain,
                 "group": "old",
                 "paragraphs": {p.id: p.text for p in doc.paragraphs},
@@ -105,6 +106,7 @@ async def load_docs() -> list[dict[str, Any]]:
             {
                 "content_id": frozen["content_id"],
                 "site": cached.get("site") or "",
+                "url": cached.get("final_url") or frozen["url"],
                 "domain": frozen["domain"],
                 "group": "new",
                 "paragraphs": {p["id"]: p["text"] for p in cached["paragraphs"]},
@@ -189,7 +191,14 @@ async def run(graph_path: Path, label: str) -> dict[str, Any]:
     per_doc = []
     for doc in await load_docs():
         _, links = await link_demands(
-            graph, doc["demands"], doc["paragraphs"], LINK_THRESHOLD, embed=embed, confirm=confirm
+            graph,
+            doc["demands"],
+            doc["paragraphs"],
+            LINK_THRESHOLD,
+            embed=embed,
+            confirm=confirm,
+            site=doc["site"],
+            url=doc["url"],
         )
         types = {d.id: d.type for d in doc["demands"]}
         counts = Counter(lk.method for lk in links if types[lk.demand_id] in EMBED_TYPES)
