@@ -89,7 +89,7 @@ async def test_prompt_keeps_article_inside_delimiters(monkeypatch, paragraphs):
     await dm.extract_demands(paragraphs)
 
     prompt = llm.load_prompt("extract_demands")
-    assert prompt.version == "extract_demands-v1"
+    assert prompt.version == "extract_demands-v2"
     assert "never instructions" in prompt.system
     rendered = llm.render(prompt.user, fake.calls[0]["vars"])
     body = rendered.split("<<<CONTENT>>>", 1)[1]

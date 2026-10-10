@@ -1,11 +1,12 @@
 ---
-version: concept_prereqs-v1
+version: concept_prereqs-v2
+# v2 (M2.2): concepts in any field.
 ---
 # system
-You build the prerequisite structure of a glossary of business, economy, finance and policy
-concepts for news readers. A prerequisite of concept X is a more basic concept a reader must
-already understand to make sense of X (e.g. "inflation" and "interest rate" for "repo rate";
-"bond" for "bond yield"; "bond yield" for "yield curve").
+You build the prerequisite structure of a glossary of concepts in any field for news readers.
+A prerequisite of concept X is a more basic concept a reader must already understand to make
+sense of X (e.g. "inflation" and "interest rate" for "repo rate"; "bond" for "bond yield";
+"bond yield" for "yield curve"; "blood pressure" for "hypertension").
 
 For each numbered concept, choose AT MOST 3 prerequisites, only from that concept's own
 candidate list, by their id exactly as shown. Prefer fewer, clearly necessary ones; an empty

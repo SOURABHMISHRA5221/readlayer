@@ -22,6 +22,8 @@ PREFETCH_SPANS = 3
 def runs() -> list[dict[str, Any]]:
     out = []
     for path in sorted(RESULTS.glob("*.json")):
+        if path.name.startswith(("linker-", "heldout-")):  # own sections (M2.2)
+            continue
         data = json.loads(path.read_text(encoding="utf-8"))
         data["file"] = path.name
         out.append(data)
@@ -229,6 +231,35 @@ def profile_edit_lines() -> list[str]:
     return report_lines()
 
 
+def linker_lines() -> list[str]:
+    """Every linker suite run (M2.2), in order: frozen cases, no picking the best run."""
+    rows = [
+        "Frozen cases (evals/cases/link_confirm.yaml, link_variants.yaml, link_merge.yaml),",
+        "committed before any model run. Variant precision = correct / (correct + wrong) on the",
+        "150-mention sample frozen from the M2.1 graph; it is not comparable with M2's 93%, which",
+        "used a different sample and candidate floor. Fallbacks = batches answered by the",
+        "fallback model after a timeout. Merge agreement is against the M2 decision derived from",
+        "the M2.1 graph (see freeze_link_cases.py), so v-to-v changes matter more than the level.",
+        "",
+        "| run | link_confirm | link_merge | regression cases | variant precision "
+        "| merge agreement | fallbacks | new spend |",
+        "|---|---|---|---|---|---|---|---|",
+    ]
+    for path in sorted(RESULTS.glob("linker-*.json")):
+        r = json.loads(path.read_text(encoding="utf-8"))
+        m, s = r["meta"], r["summary"]
+        v = r["variants"]
+        rows.append(
+            f"| {m.get('label', path.stem)} | {m['prompts']['link_confirm']} "
+            f"| {m['prompts']['link_merge']} "
+            f"| {s['link_confirm_passed']}/{s['link_confirm_total']} "
+            f"| {v['precision']:.0%} ({v['correct']}✓ {v['wrong']}✗ {v['none']} none) "
+            f"| {s['merge_agreement']}/{s['merge_total']} | {m.get('fallbacks', 'n/a')} "
+            f"| ${m['cost_usd']:.3f} |"
+        )
+    return rows
+
+
 def write_report() -> None:
     all_runs = runs()
     if not all_runs:
@@ -268,6 +299,10 @@ def write_report() -> None:
         "## Background judge (own suite, since explain-v4)",
         "",
         *_background(all_runs),
+        "",
+        "## Linker (own suite, M2.2)",
+        "",
+        *linker_lines(),
         "",
         "## Profile edit by prompt (own suite, M7)",
         "",

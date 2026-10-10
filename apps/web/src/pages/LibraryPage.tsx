@@ -62,6 +62,13 @@ export function LibraryPage({ url }: { url: URL }) {
     return [...new Set(load.items.map((i) => sourceName(i.site)))].sort((a, b) => a.localeCompare(b));
   }, [load]);
 
+  // Only topics the library actually has (the taxonomy has 14; the corpus covers fewer).
+  const topics = useMemo(() => {
+    if (load.status !== "ready") return [];
+    const present = new Set(load.items.map((i) => i.domain));
+    return DOMAINS.filter((d) => present.has(d));
+  }, [load]);
+
   const items = useMemo(() => {
     if (load.status !== "ready") return [];
     return load.items
@@ -149,7 +156,7 @@ export function LibraryPage({ url }: { url: URL }) {
             <button type="button" className="filter" aria-pressed={!topic} onClick={() => setParam("topic", null)}>
               All topics
             </button>
-            {DOMAINS.map((d) => (
+            {topics.map((d) => (
               <button
                 key={d}
                 type="button"

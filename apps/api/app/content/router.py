@@ -157,7 +157,7 @@ class AnnotationsResponse(BaseModel):
 # Library rows per (catalog version, reader state revision, density): pure computation over
 # the shared catalog, cached because the list endpoint is hit on every library view. Demo
 # readers who haven't interacted share their persona template's revision. Bounded.
-_rows: dict[tuple[int, str, Density], list[ContentSummary]] = {}
+_rows: dict[tuple[int, str, str, Density], list[ContentSummary]] = {}  # catalog, graph, view
 MAX_CACHED_VIEWS = 64
 # Catalog-derived scoring inputs, rebuilt when the doc set changes.
 _index: tuple[int, dict[str, ContentDoc], dict[str, ExplainerRef]] | None = None
@@ -170,6 +170,15 @@ def reset_catalog() -> None:
     catalog.reset()
     _rows.clear()
     _index = None
+
+
+async def refresh_growth() -> None:
+    """Pick up concepts grown on other instances (at most once per GROWTH_REFRESH_S; a
+    Firestore query, never an LLM call). Off while growth is off."""
+    if get_settings().growth_enabled:
+        from app.graph.refresh import get_refresher
+
+        await get_refresher().maybe_refresh()
 
 
 async def _catalog_index() -> tuple[dict[str, ContentDoc], dict[str, ExplainerRef]]:
@@ -222,7 +231,7 @@ async def score_for(
 
 async def _summaries(ctx: ReaderContext, density: Density) -> list[ContentSummary]:
     docs = await catalog.all_docs()
-    key = (catalog.version(), ctx.view_key, density)
+    key = (catalog.version(), get_graph().version, ctx.view_key, density)
     if key not in _rows:
         graph = get_graph()
         now = datetime.now(UTC)
@@ -272,6 +281,7 @@ async def list_content(
     q: Annotated[str, Query(max_length=MAX_QUERY_CHARS)] = "",
     density: Density | None = None,
 ) -> list[ContentSummary]:
+    await refresh_growth()
     needle = q.strip().casefold()
     items = await _summaries(ctx, density or ctx.density)
     if not needle:
@@ -281,6 +291,7 @@ async def list_content(
 
 @router.get("/content/{content_id}", response_model=ContentDetail)
 async def get_content(content_id: str) -> ContentDetail:
+    await refresh_growth()
     doc = await get_content_store().get(content_id)
     if doc is None:
         pending = await get_pending_repo().get(content_id)
@@ -333,6 +344,7 @@ async def get_annotations(
     density: Density | None = None,
     debug: bool = False,
 ) -> AnnotationsResponse:
+    await refresh_growth()
     doc = await doc_or_error(content_id)
     density = density or ctx.density
     now = datetime.now(UTC)

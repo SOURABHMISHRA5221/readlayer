@@ -44,6 +44,12 @@ class ConceptGraph:
             np.asarray([c.embedding for c in self._concepts], dtype=np.float32)
         )
 
+    def with_concepts(self, new: list[Concept], version: str) -> "ConceptGraph":
+        """A new graph with `new` added (ids already present are skipped); this one is unchanged.
+        Online growth replaces the process graph with the result (copy-on-write)."""
+        fresh = [c for c in new if c.id not in self._by_id]
+        return ConceptGraph(ConceptGraphFile(version=version, concepts=[*self._concepts, *fresh]))
+
     @classmethod
     def empty(cls) -> "ConceptGraph":
         return cls(ConceptGraphFile(version="empty", concepts=[]))

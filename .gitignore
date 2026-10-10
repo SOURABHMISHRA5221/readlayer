@@ -28,3 +28,6 @@ ui-debug.log
 
 # macOS
 .DS_Store
+
+# M2.2 seeding (local only)
+data/concepts.seeded.json

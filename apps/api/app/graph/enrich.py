@@ -43,10 +43,22 @@ class ConceptInfo(BaseModel):
     specialization: int = Field(ge=1, le=5)
     domain: Domain
     kind: Kind
+    # concept_define-v3 (M2.2); v2 cached outputs have none, so they read as global.
+    jurisdiction: str = Field(default="global", pattern=r"^([A-Z]{2}|global)$")
 
 
 class ConceptInfos(BaseModel):
     concepts: list[ConceptInfo]
+
+
+class KindJurisdiction(BaseModel):
+    id: int
+    kind: Kind
+    jurisdiction: str = Field(default="global", pattern=r"^([A-Z]{2}|global)$")
+
+
+class KindJurisdictions(BaseModel):
+    concepts: list[KindJurisdiction]
 
 
 class PrereqPick(BaseModel):
@@ -108,6 +120,11 @@ class LinkQuestion:
     phrase: str
     sentence: str
     candidates: tuple[tuple[str, str, str, float], ...]  # (id, label, definition, cosine)
+    # M2.2 jurisdiction inputs, parallel to `candidates` (rendered by link_confirm v3 only).
+    site: str = ""
+    kinds: tuple[str, ...] = ()
+    jurisdictions: tuple[str, ...] = ()
+    article: tuple[str, ...] = ()  # countries the article gives signs of (jurisdiction.cues)
 
 
 @dataclass(frozen=True)
@@ -155,13 +172,16 @@ def render_wiki(items: Sequence[WikiCandidate]) -> str:
 
 
 def render_link_questions(questions: Sequence[LinkQuestion]) -> str:
+    """link_confirm-v3 layout: the article's country signs and, per candidate, its kind and
+    jurisdiction (empty for pre-M2.2 concepts)."""
     blocks = []
     for i, q in enumerate(questions):
         lines = [f"[{i}] phrase: {q.phrase}", f"    sentence: {q.sentence[:SNIPPET_CHARS]}"]
-        lines += [
-            f"    candidate {cid}: {label}: {definition}"
-            for cid, label, definition, _ in q.candidates
-        ]
+        lines.append(f"    article from: {', '.join(q.article) or 'unknown'}")
+        for k, (cid, label, definition, _) in enumerate(q.candidates):
+            kind = q.kinds[k] if k < len(q.kinds) and q.kinds[k] else "concept"
+            where = q.jurisdictions[k] if k < len(q.jurisdictions) else "global"
+            lines.append(f"    candidate {cid}: {label} [{kind}, {where}]: {definition}")
         blocks.append("\n".join(lines))
     return "\n".join(blocks)
 
@@ -223,6 +243,24 @@ async def define_concepts(
         return {c.id: c for c in res.output.concepts}
 
     return await _run_batches(entries, 25, call)
+
+
+async def classify_kind_jurisdiction(
+    entries: Sequence[Entry], runner: Runner, ledger: list[llm.CallMeta]
+) -> dict[int, KindJurisdiction]:
+    """M2.2 backfill for pre-M2.2 concepts: label and definition in, kind and jurisdiction out."""
+
+    async def call(batch: Sequence[Entry]) -> dict[int, KindJurisdiction]:
+        text = "\n".join(f"[{i}] {e.label}: {e.definition}" for i, e in enumerate(batch))
+        res = await runner(
+            "concept_jurisdiction",
+            KindJurisdictions,
+            {"concept_count": len(batch), "concepts": text},
+        )
+        ledger.append(res.meta)
+        return {c.id: c for c in res.output.concepts}
+
+    return await _run_batches(entries, 50, call)
 
 
 async def propose_prereqs(

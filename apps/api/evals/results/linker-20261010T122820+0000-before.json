@@ -1,0 +1,262 @@
+{
+ "meta": {
+  "time": "2026-10-10T12:28:20+00:00",
+  "graph": "2026-10-04",
+  "prompts": {
+   "link_confirm": "link_confirm-v2",
+   "link_merge": "link_merge-v1"
+  },
+  "link_threshold": 0.865,
+  "cost_usd": 0.1463,
+  "cost_cached_usd": 0.0,
+  "label": "before"
+ },
+ "link_confirm": [
+  {
+   "id": "L01",
+   "pick": "c_chancellor_of_the_exchequer",
+   "expect": [
+    "c_chancellor_of_the_exchequer"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L02",
+   "pick": "c_chancellor_of_the_exchequer",
+   "expect": [
+    "c_chancellor_of_the_exchequer"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L03",
+   "pick": "c_tax_levy",
+   "expect": [],
+   "passed": false
+  },
+  {
+   "id": "L04",
+   "pick": null,
+   "expect": [
+    "c_preferential_tariffs",
+    "c_market_access"
+   ],
+   "passed": false
+  },
+  {
+   "id": "L05",
+   "pick": null,
+   "expect": [
+    "c_ftse_russell"
+   ],
+   "passed": false
+  },
+  {
+   "id": "L06",
+   "pick": "c_ftse_russell",
+   "expect": [
+    "c_ftse_russell"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L07",
+   "pick": "c_energy_levy",
+   "expect": [
+    "c_energy_levy"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L08",
+   "pick": "c_repo_rate",
+   "expect": [
+    "c_repo_rate"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L09",
+   "pick": "c_bond_yields",
+   "expect": [
+    "c_bond_yields"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L10",
+   "pick": "c_inflation",
+   "expect": [
+    "c_inflation"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L11",
+   "pick": "c_gst",
+   "expect": [
+    "c_gst"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L12",
+   "pick": "c_s_p_500",
+   "expect": [
+    "c_s_p_500"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L13",
+   "pick": "c_duck_cricket",
+   "expect": [
+    "c_duck_cricket"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L14",
+   "pick": "c_leg_before_wicket",
+   "expect": [
+    "c_leg_before_wicket"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L15",
+   "pick": "c_hypertension",
+   "expect": [
+    "c_hypertension"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L16",
+   "pick": null,
+   "expect": [],
+   "passed": true
+  }
+ ],
+ "variants": {
+  "correct": 75,
+  "wrong": 15,
+  "none": 60,
+  "n": 150,
+  "missing": 0,
+  "precision": 0.8333
+ },
+ "merges": {
+  "n": 100,
+  "agree_with_m2": 71,
+  "answers": [
+   false,
+   true,
+   true,
+   false,
+   false,
+   false,
+   true,
+   false,
+   true,
+   true,
+   true,
+   true,
+   true,
+   false,
+   true,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   true,
+   false,
+   true,
+   false,
+   true,
+   false,
+   false,
+   false,
+   true,
+   false,
+   true,
+   true,
+   true,
+   false,
+   false,
+   false,
+   false,
+   true,
+   true,
+   false,
+   false,
+   false,
+   true,
+   true,
+   false,
+   false,
+   true,
+   false,
+   true,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   true,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false
+  ]
+ },
+ "summary": {
+  "link_confirm_passed": 13,
+  "link_confirm_total": 16,
+  "variant_precision": 0.8333,
+  "merge_agreement": 71,
+  "merge_total": 100
+ }
+}

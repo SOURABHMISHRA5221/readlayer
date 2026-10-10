@@ -16,29 +16,32 @@ import os
 import random
 import sys
 from collections import Counter
+from datetime import UTC, datetime
 from functools import partial
 
 import numpy as np
 
 from app import llm
 from app.config import get_settings
+from app.content.summary import article_domain
 from app.graph.graph import ConceptGraph
 from app.graph.linking import EMBED_TYPES, alias_target, sentence_around
 from app.graph.loader import set_graph
 from app.graph.models import ConceptGraphFile
 from app.ingest.models import USER_INGESTED, ContentDoc
-from app.ingest.safe_fetch import SafeFetcher
+from app.ingest.safe_fetch import FetchError, SafeFetcher
 from app.ingest.urls import normalize_url, url_hash
 from app.log import configure_logging
 from app.store.content_repo import get_content_store
 from scripts.apply_overrides import calibrated_floor
 from scripts.build_cache import BuildCache
 from scripts.build_concepts import CACHE_DIR, CONCEPTS_FILE, HELDOUT_FILE, corpus_sources
-from scripts.collect_corpus import SOURCES, collect_source
+from scripts.collect_corpus import SOURCES, Source, collect_source
 from scripts.ingest_corpus import DATA_DIR, CorpusEntry, append_state, parse_corpus, run
 
 HELDOUT_PER_SOURCE = 3
 HELDOUT_TARGET = 15
+HELDOUT_FULL = 30  # M2.2: the 15 business articles plus 15 non-business ones
 STATE_FILE = DATA_DIR / "heldout_state.jsonl"
 REPORT_FILE = DATA_DIR / "heldout_report.md"
 COST_LIMIT_USD = 1.0
@@ -46,6 +49,8 @@ SEED = 5
 
 
 async def collect() -> list[CorpusEntry]:
+    if HELDOUT_FILE.exists() and len(read_heldout()) > HELDOUT_TARGET:
+        raise SystemExit("held-out list is frozen at 30; --collect would overwrite it")
     corpus = set(corpus_sources())
     fetcher = SafeFetcher()
     results = await asyncio.gather(*(collect_source(fetcher, s) for s in SOURCES))
@@ -75,6 +80,126 @@ async def collect() -> list[CorpusEntry]:
         header + "".join(f"{e.url}\t{e.source}\n" for e in picked), encoding="utf-8"
     )
     return picked
+
+
+# ---------------------------------------------------------------- M2.2: non-business held-out
+
+# Section feeds per taxonomy domain (plan §E.1) and how many articles each domain gets.
+OPEN_SPREAD: dict[str, int] = {
+    "technology": 2, "science": 2, "health": 2, "sports": 2, "environment": 2,
+    "politics": 2, "law": 1, "culture": 1, "education": 1,
+}  # fmt: skip
+_BBC = "https://feeds.bbci.co.uk/news/{}/rss.xml"
+_GUARDIAN = "https://www.theguardian.com/{}/rss"
+OPEN_SOURCES: dict[str, tuple[Source, ...]] = {
+    "technology": (
+        Source("bbc", (_BBC.format("technology"),), ("/news/articles/",)),
+        Source("guardian", (_GUARDIAN.format("technology"),), ("/technology/",)),
+    ),
+    "science": (
+        Source("bbc", (_BBC.format("science_and_environment"),), ("/news/articles/",)),
+        Source("guardian", (_GUARDIAN.format("science"),), ("/science/",)),
+    ),
+    "health": (
+        Source("bbc", (_BBC.format("health"),), ("/news/articles/",)),
+        Source("guardian", (_GUARDIAN.format("society/health"),), ("/society/",)),
+    ),
+    "sports": (
+        Source("bbc", ("https://feeds.bbci.co.uk/sport/rss.xml",), ("/sport/",)),
+        Source("guardian", (_GUARDIAN.format("sport"),), ("/sport/", "/football/")),
+    ),
+    "environment": (
+        Source("guardian", (_GUARDIAN.format("environment"),), ("/environment/",)),
+        Source("bbc", (_BBC.format("science_and_environment"),), ("/news/articles/",)),
+    ),
+    "politics": (
+        Source("bbc", (_BBC.format("politics"),), ("/news/articles/",)),
+        Source("guardian", (_GUARDIAN.format("politics"),), ("/politics/",)),
+    ),
+    "law": (Source("guardian", (_GUARDIAN.format("law"),), ("/law/",)),),
+    "culture": (
+        Source("guardian", (_GUARDIAN.format("culture"),), ("/culture/", "/books/", "/music/",
+                                                             "/film/", "/artanddesign/")),
+        Source("bbc", (_BBC.format("entertainment_and_arts"),), ("/news/articles/",)),
+    ),
+    "education": (
+        Source("guardian", (_GUARDIAN.format("education"),), ("/education/",)),
+        Source("thehindu", ("https://www.thehindu.com/education/feeder/default.rss",),
+               ("/education/",)),
+    ),
+}  # fmt: skip
+OPEN_MIN_WORDS = 400
+OPEN_PUBLISHED_AFTER = "2026-10-01"
+OPEN_HEADER = (
+    "# ReadLayer held-out linker evaluation set. NEVER add these to the corpus; build_concepts\n"
+    "# refuses any overlap. format: url<TAB>source<TAB>domain. Lines 1–15: M2.1 (business);\n"
+    "# 16–30: M2.2 non-business, appended by --collect-open. Domains fixed before measuring.\n"
+)
+
+
+def read_heldout() -> list[CorpusEntry]:
+    return parse_corpus(HELDOUT_FILE.read_text(encoding="utf-8").splitlines())
+
+
+def write_heldout(entries: list[CorpusEntry]) -> None:
+    lines = "".join(f"{e.url}\t{e.source}\t{e.domain}\n" for e in entries)
+    HELDOUT_FILE.write_text(OPEN_HEADER + lines, encoding="utf-8")
+
+
+async def _long_enough(fetcher: SafeFetcher, url: str) -> bool:
+    from app.ingest.extract import extract
+
+    try:
+        page = await fetcher.fetch(url)
+    except FetchError:
+        return False
+    html = page.body.decode(page.encoding, errors="replace") if page.encoding else page.body
+    extracted = await asyncio.to_thread(extract, html, page.url)
+    return sum(len(p.split()) for p in extracted.paragraphs) >= OPEN_MIN_WORDS
+
+
+async def collect_open(graph: ConceptGraph) -> list[CorpusEntry]:
+    """Append 15 non-business articles (OPEN_SPREAD) to the 15 business ones. The first 15
+    keep their url and source; they gain their domain (the dominant one among their linked
+    concepts on the current graph). No ingest, no LLM: only feeds, fetch and extraction."""
+    old = read_heldout()
+    if len(old) != HELDOUT_TARGET:
+        raise SystemExit(f"expected {HELDOUT_TARGET} held-out lines, found {len(old)}")
+    content = get_content_store()
+    labelled = []
+    for e in old:
+        doc = await content.get(url_hash(e.url))
+        domain = (article_domain(doc, graph) if doc else None) or "business"
+        labelled.append(CorpusEntry(e.url, e.source, e.domain or domain))
+    taken = set(corpus_sources()) | {normalize_url(e.url) for e in old}
+    fetcher = SafeFetcher()
+    cutoff = datetime.fromisoformat(OPEN_PUBLISHED_AFTER).replace(tzinfo=UTC).timestamp()
+    picked: list[CorpusEntry] = []
+    for domain, want in OPEN_SPREAD.items():
+        got: list[CorpusEntry] = []
+        for source in OPEN_SOURCES[domain]:
+            if len(got) >= want:
+                break
+            result = await collect_source(fetcher, source)
+            if result.skipped:
+                print(f"{domain}/{source.tag}: skipped ({result.skipped})")
+                continue
+            for item in result.items:
+                if len(got) >= want:
+                    break
+                key = normalize_url(item.url)
+                if key in taken or item.published < cutoff or "/wiki/" in key:
+                    continue
+                if not await _long_enough(fetcher, item.url):
+                    continue
+                taken.add(key)
+                got.append(CorpusEntry(item.url, source.tag, domain))
+        if len(got) < want:
+            raise SystemExit(f"{domain}: found {len(got)} of {want} eligible articles")
+        picked += got
+        print(f"{domain}: " + ", ".join(f"{e.source} {e.url}" for e in got))
+    write_heldout(labelled + picked)
+    return labelled + picked
 
 
 def method(graph: ConceptGraph, d) -> str:
@@ -165,6 +290,10 @@ async def main(args: argparse.Namespace) -> int:
     store = llm.get_spend_store()
     spent_before = await store.get_today()
 
+    if args.collect_open:
+        entries = await collect_open(graph)
+        print(f"wrote {len(entries)} held-out lines to {HELDOUT_FILE}; nothing ingested")
+        return 0
     if args.collect or not HELDOUT_FILE.exists():
         entries = await collect()
     else:
@@ -195,4 +324,9 @@ async def main(args: argparse.Namespace) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--collect", action="store_true", help="re-pick the held-out articles")
+    parser.add_argument(
+        "--collect-open",
+        action="store_true",
+        help="M2.2: append 15 non-business articles (no ingest, no LLM)",
+    )
     sys.exit(asyncio.run(main(parser.parse_args())))

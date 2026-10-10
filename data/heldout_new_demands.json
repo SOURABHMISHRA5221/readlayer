@@ -1,0 +1,5348 @@
+{
+ "docs": [
+  {
+   "content_id": "eee32b1054e9ad9babe03c9183149ee9",
+   "url": "https://www.bbc.co.uk/news/articles/cqkg50j1yd5lo",
+   "domain": "technology",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16"
+   ],
+   "paragraphs_sha256": "81cf617650db7e1c2970b98e788302141542b47705956a923fd131c72af49e5a",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "Anthropic",
+      "prefix": "igence (AI) agent, developed by ",
+      "suffix": ", went rogue and sent US police ",
+      "start": 52,
+      "end": 61
+     },
+     "type": "context",
+     "label": "Anthropic",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.93
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "went rogue",
+      "prefix": " agent, developed by Anthropic, ",
+      "suffix": " and sent US police a fake tip a",
+      "start": 63,
+      "end": 73
+     },
+     "type": "concept",
+     "label": "Rogue AI",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.88
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "Anthropic",
+      "prefix": "Citing ",
+      "suffix": ", the police department said the",
+      "start": 904,
+      "end": 913
+     },
+     "type": "context",
+     "label": "Anthropic",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 1.93
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p5",
+     "anchor": {
+      "exact": "Anthropic",
+      "prefix": "",
+      "suffix": " discovered the breach on 28 Sep",
+      "start": 1067,
+      "end": 1076
+     },
+     "type": "context",
+     "label": "Anthropic",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 1.93
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "Anthropic",
+      "prefix": "",
+      "suffix": " this week published a report, e",
+      "start": 1992,
+      "end": 2001
+     },
+     "type": "context",
+     "label": "Anthropic",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 1.93
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "visa applications",
+      "prefix": " said the AI agent had filed 20 ",
+      "suffix": " using a form on its website, bu",
+      "start": 2289,
+      "end": 2306
+     },
+     "type": "concept",
+     "label": "Visa application",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 4.01
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p14",
+     "anchor": {
+      "exact": "Donald Trump",
+      "prefix": "President ",
+      "suffix": " recently announced an AI taskfo",
+      "start": 2418,
+      "end": 2430
+     },
+     "type": "context",
+     "label": "Donald Trump",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.33
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "Open AI",
+      "prefix": "ue agent by rival tech company, ",
+      "suffix": ", hacked an Australian governmen",
+      "start": 2662,
+      "end": 2669
+     },
+     "type": "context",
+     "label": "OpenAI",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.21
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "Medicare",
+      "prefix": "'s universal healthcare scheme, ",
+      "suffix": ".",
+      "start": 2783,
+      "end": 2791
+     },
+     "type": "context",
+     "label": "Medicare (Australia)",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.94
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p16",
+     "anchor": {
+      "exact": "OpenAI",
+      "prefix": "other instance, more than 1,200 ",
+      "suffix": " agents went rogue and started u",
+      "start": 2831,
+      "end": 2837
+     },
+     "type": "context",
+     "label": "OpenAI",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 1.63
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p16",
+     "anchor": {
+      "exact": "Hugging Face",
+      "prefix": "gether to hack into AI platform ",
+      "suffix": ".",
+      "start": 2963,
+      "end": 2975
+     },
+     "type": "context",
+     "label": "Hugging Face",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.48
+    }
+   ]
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "url": "https://www.bbc.co.uk/news/articles/cwm24n9v8rdeo",
+   "domain": "technology",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19",
+    "p20",
+    "p21",
+    "p22",
+    "p23",
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p28",
+    "p29",
+    "p30",
+    "p31",
+    "p32",
+    "p33",
+    "p34",
+    "p35",
+    "p36",
+    "p37",
+    "p38",
+    "p39",
+    "p40",
+    "p41",
+    "p42"
+   ],
+   "paragraphs_sha256": "5cc3904076d888838e8e09369952b6e0c9eb8d8f7bfaa5e3e7a3135fa1a8f8d9",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false,
+    "p20": false,
+    "p21": false,
+    "p22": false,
+    "p23": false,
+    "p24": false,
+    "p25": false,
+    "p26": false,
+    "p27": false,
+    "p28": false,
+    "p29": false,
+    "p30": false,
+    "p31": false,
+    "p32": false,
+    "p33": false,
+    "p34": false,
+    "p35": false,
+    "p36": false,
+    "p37": false,
+    "p38": false,
+    "p39": false,
+    "p40": false,
+    "p41": false,
+    "p42": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "Cairngorms National Park",
+      "prefix": " Short for a dawn patrol in the ",
+      "suffix": ".",
+      "start": 76,
+      "end": 100
+     },
+     "type": "context",
+     "label": "Cairngorms National Park",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.12
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "thermal drone",
+      "prefix": "o the woodland, Pete launches a ",
+      "suffix": " into the early morning sky.",
+      "start": 466,
+      "end": 479
+     },
+     "type": "concept",
+     "label": "Thermal imaging drone",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.72
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "thermal flight",
+      "prefix": "one,\" he tells me. \"On the last ",
+      "suffix": " I did we found eight.\"",
+      "start": 685,
+      "end": 699
+     },
+     "type": "concept",
+     "label": "Thermal flight",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.98
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "thermal image",
+      "prefix": " as a white glow appears on the ",
+      "suffix": " beneath a tree.",
+      "start": 798,
+      "end": 811
+     },
+     "type": "concept",
+     "label": "Thermal imaging",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.99
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "thermal technology",
+      "prefix": "\"Without the ",
+      "suffix": " we would be totally blind to th",
+      "start": 1230,
+      "end": 1248
+     },
+     "type": "concept",
+     "label": "Thermal imaging",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 4.0
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p14",
+     "anchor": {
+      "exact": "Cairngorms National Park Authority",
+      "prefix": " km – of land, according to the ",
+      "suffix": ".",
+      "start": 1405,
+      "end": 1439
+     },
+     "type": "context",
+     "label": "Cairngorms National Park Authority",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.12
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p17",
+     "anchor": {
+      "exact": "hot spots",
+      "prefix": "ic flames have disappeared, but ",
+      "suffix": " can continue to burn beneath th",
+      "start": 1833,
+      "end": 1842
+     },
+     "type": "concept",
+     "label": "Underground wildfire hot spots",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": true,
+     "zipf": 4.27
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p19",
+     "anchor": {
+      "exact": "RSPB",
+      "prefix": "es, senior site manager for the ",
+      "suffix": " at Abernethy, knowing exactly w",
+      "start": 2059,
+      "end": 2063
+     },
+     "type": "context",
+     "label": "Royal Society for the Protection of Birds",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.47
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p21",
+     "anchor": {
+      "exact": "hot spots",
+      "prefix": "ed to know where these specific ",
+      "suffix": " are - where we should be sendin",
+      "start": 2393,
+      "end": 2402
+     },
+     "type": "concept",
+     "label": "Underground wildfire hot spots",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.27
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p23",
+     "anchor": {
+      "exact": "hot spots",
+      "prefix": "\"Each of these ",
+      "suffix": " has got the potential to reigni",
+      "start": 2606,
+      "end": 2615
+     },
+     "type": "concept",
+     "label": "Underground wildfire hot spots",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.27
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p28",
+     "anchor": {
+      "exact": "Cairngorms National Park Authority",
+      "prefix": "ll, head of conservation at the ",
+      "suffix": ", says it is too early to know t",
+      "start": 3107,
+      "end": 3141
+     },
+     "type": "context",
+     "label": "Cairngorms National Park Authority",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.12
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p33",
+     "anchor": {
+      "exact": "waypoints",
+      "prefix": "Using predetermined ",
+      "suffix": ", photographs and video can be t",
+      "start": 3650,
+      "end": 3659
+     },
+     "type": "term",
+     "label": "Navigation waypoints",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 2.25
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p36",
+     "anchor": {
+      "exact": "tree canopy",
+      "prefix": "lieves getting a view above the ",
+      "suffix": " quickly could prove critical.",
+      "start": 4180,
+      "end": 4191
+     },
+     "type": "concept",
+     "label": "Tree canopy",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 3.5
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p38",
+     "anchor": {
+      "exact": "hot spot",
+      "prefix": "d, our patrol has found another ",
+      "suffix": ".",
+      "start": 4407,
+      "end": 4415
+     },
+     "type": "concept",
+     "label": "Underground wildfire hot spot",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.7
+    }
+   ]
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "url": "https://www.bbc.co.uk/news/articles/c3vgx4450v2lo",
+   "domain": "science",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19",
+    "p20",
+    "p21",
+    "p22",
+    "p23",
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p28",
+    "p29",
+    "p30",
+    "p31"
+   ],
+   "paragraphs_sha256": "136c4a2af6f2647343824987fd1b7ddcb09bf6446db64b2278c64374f722ac69",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false,
+    "p20": false,
+    "p21": false,
+    "p22": false,
+    "p23": false,
+    "p24": false,
+    "p25": false,
+    "p26": false,
+    "p27": false,
+    "p28": false,
+    "p29": false,
+    "p30": false,
+    "p31": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "post-tropical cyclone",
+      "prefix": "Isaias has been downgraded to a ",
+      "suffix": " the day after it made landfall ",
+      "start": 42,
+      "end": 63
+     },
+     "type": "concept",
+     "label": "Post-tropical cyclone",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.42
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "state of emergency",
+      "prefix": "er, and each state has issued a ",
+      "suffix": ". There are currently no warning",
+      "start": 416,
+      "end": 434
+     },
+     "type": "concept",
+     "label": "State of emergency",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.68
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "El Niño",
+      "prefix": " and Southern California in the ",
+      "suffix": " fuelled warm waters of the Paci",
+      "start": 650,
+      "end": 657
+     },
+     "type": "concept",
+     "label": "El Niño",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.79
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "mandatory evacuations",
+      "prefix": " Florida and Alabama instituted ",
+      "suffix": " to thousands of people due to t",
+      "start": 737,
+      "end": 758
+     },
+     "type": "concept",
+     "label": "Evacuation order",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.77
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p5",
+     "anchor": {
+      "exact": "Rick Scott",
+      "prefix": " of the powerful storm. Senator ",
+      "suffix": " encouraged residents in designa",
+      "start": 905,
+      "end": 915
+     },
+     "type": "context",
+     "label": "Rick Scott",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 4.17
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "Kay Ivey",
+      "prefix": "Governor of Alabama ",
+      "suffix": " issued a mandatory evacuation f",
+      "start": 1076,
+      "end": 1084
+     },
+     "type": "context",
+     "label": "Kay Ivey",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 2.64
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "Homeland Security Secretary",
+      "prefix": "On Saturday, ",
+      "suffix": " Markwayne Mullin said the US pr",
+      "start": 1234,
+      "end": 1261
+     },
+     "type": "concept",
+     "label": "United States Secretary of Homeland Security",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.89
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "Markwayne Mullin",
+      "prefix": "ay, Homeland Security Secretary ",
+      "suffix": " said the US president had appro",
+      "start": 1262,
+      "end": 1278
+     },
+     "type": "context",
+     "label": "Markwayne Mullin",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 0.0
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "emergency declarations",
+      "prefix": "d the US president had approved ",
+      "suffix": " for the two states to \"ensure f",
+      "start": 1314,
+      "end": 1336
+     },
+     "type": "concept",
+     "label": "Emergency declaration",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.22
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p8",
+     "anchor": {
+      "exact": "El Niño",
+      "prefix": "largely has been delayed due to ",
+      "suffix": " conditions in the Pacific.",
+      "start": 1528,
+      "end": 1535
+     },
+     "type": "concept",
+     "label": "El Niño",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.79
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "National Hurricane Center",
+      "prefix": "Ahead of the storm, the ",
+      "suffix": " (NHC) warned it was likely to b",
+      "start": 1681,
+      "end": 1706
+     },
+     "type": "context",
+     "label": "National Hurricane Center",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.05
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "NHC",
+      "prefix": " the National Hurricane Center (",
+      "suffix": ") warned it was likely to bring ",
+      "start": 1708,
+      "end": 1711
+     },
+     "type": "term",
+     "label": "National Hurricane Center",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.55
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "storm surge",
+      "prefix": "kely to bring \"life-threatening ",
+      "suffix": "\" to the US Gulf Coast.",
+      "start": 1761,
+      "end": 1772
+     },
+     "type": "concept",
+     "label": "Storm surge",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.76
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "NHC",
+      "prefix": "tinued on Saturday morning, the ",
+      "suffix": " said.",
+      "start": 1878,
+      "end": 1881
+     },
+     "type": "term",
+     "label": "National Hurricane Center",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 2.55
+    },
+    {
+     "id": "d14",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "post-tropical cyclone",
+      "prefix": "The ",
+      "suffix": " is currently moving north and i",
+      "start": 1893,
+      "end": 1914
+     },
+     "type": "concept",
+     "label": "Post-tropical cyclone",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.42
+    },
+    {
+     "id": "d15",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "Tennessee Valley",
+      "prefix": "d to cross Alabama and into the ",
+      "suffix": " later on Saturday and Sunday, a",
+      "start": 1987,
+      "end": 2003
+     },
+     "type": "context",
+     "label": "Tennessee Valley",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 4.09
+    },
+    {
+     "id": "d16",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "Hurricane-force winds",
+      "prefix": "",
+      "suffix": " on Friday evening extended outw",
+      "start": 2078,
+      "end": 2099
+     },
+     "type": "concept",
+     "label": "Hurricane-force wind",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.84
+    },
+    {
+     "id": "d17",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "tropical storm-force winds",
+      "prefix": "55 km) from Isaias' centre, and ",
+      "suffix": " extended as far as 205 miles (3",
+      "start": 2183,
+      "end": 2209
+     },
+     "type": "concept",
+     "label": "Tropical storm-force wind",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.81
+    },
+    {
+     "id": "d18",
+     "paragraph_id": "p25",
+     "anchor": {
+      "exact": "category one hurricane",
+      "prefix": "he Pacific coast of Mexico as a ",
+      "suffix": ". It is set to pick up speed and",
+      "start": 4073,
+      "end": 4095
+     },
+     "type": "concept",
+     "label": "Saffir-Simpson scale",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.97
+    },
+    {
+     "id": "d19",
+     "paragraph_id": "p25",
+     "anchor": {
+      "exact": "category four",
+      "prefix": "set to pick up speed and become ",
+      "suffix": " by Saturday, eventually making ",
+      "start": 4135,
+      "end": 4148
+     },
+     "type": "concept",
+     "label": "Saffir-Simpson scale",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.53
+    },
+    {
+     "id": "d20",
+     "paragraph_id": "p25",
+     "anchor": {
+      "exact": "making landfall",
+      "prefix": "ry four by Saturday, eventually ",
+      "suffix": " near Puerto Vallarta on Sunday,",
+      "start": 4173,
+      "end": 4188
+     },
+     "type": "concept",
+     "label": "Landfall",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.07
+    },
+    {
+     "id": "d21",
+     "paragraph_id": "p26",
+     "anchor": {
+      "exact": "Tropical Storm",
+      "prefix": "Further north, ",
+      "suffix": " Rachel, a downgraded hurricane,",
+      "start": 4259,
+      "end": 4273
+     },
+     "type": "concept",
+     "label": "Tropical storm",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.06
+    },
+    {
+     "id": "d22",
+     "paragraph_id": "p28",
+     "anchor": {
+      "exact": "tropical storm swells",
+      "prefix": "a, through a combination of the ",
+      "suffix": " at sea and high tide.",
+      "start": 4651,
+      "end": 4672
+     },
+     "type": "concept",
+     "label": "Ocean swell",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.05
+    },
+    {
+     "id": "d23",
+     "paragraph_id": "p28",
+     "anchor": {
+      "exact": "high tide",
+      "prefix": "ropical storm swells at sea and ",
+      "suffix": ".",
+      "start": 4684,
+      "end": 4693
+     },
+     "type": "concept",
+     "label": "Tide",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 4.04
+    },
+    {
+     "id": "d24",
+     "paragraph_id": "p29",
+     "anchor": {
+      "exact": "Balboa Peninsula",
+      "prefix": "ch advised people to \"avoid the ",
+      "suffix": " due to street flooding caused b",
+      "start": 4780,
+      "end": 4796
+     },
+     "type": "context",
+     "label": "Balboa Peninsula",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 2.92
+    }
+   ]
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "url": "https://www.bbc.co.uk/news/articles/c574p9rdk2mko",
+   "domain": "science",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19",
+    "p20",
+    "p21",
+    "p22",
+    "p23",
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p28",
+    "p29",
+    "p30",
+    "p31",
+    "p32",
+    "p33",
+    "p34",
+    "p35",
+    "p36",
+    "p37",
+    "p38",
+    "p39",
+    "p40",
+    "p41",
+    "p42",
+    "p43",
+    "p44",
+    "p45",
+    "p46",
+    "p47",
+    "p48",
+    "p49",
+    "p50",
+    "p51"
+   ],
+   "paragraphs_sha256": "32ee3476bd5d6677b2cc78b5900704a387a31be53f467817f5f1dd0e3507543e",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false,
+    "p20": false,
+    "p21": false,
+    "p22": false,
+    "p23": false,
+    "p24": false,
+    "p25": false,
+    "p26": false,
+    "p27": false,
+    "p28": false,
+    "p29": false,
+    "p30": false,
+    "p31": false,
+    "p32": false,
+    "p33": false,
+    "p34": false,
+    "p35": false,
+    "p36": false,
+    "p37": false,
+    "p38": false,
+    "p39": false,
+    "p40": false,
+    "p41": false,
+    "p42": false,
+    "p43": false,
+    "p44": false,
+    "p45": false,
+    "p46": false,
+    "p47": false,
+    "p48": false,
+    "p49": false,
+    "p50": false,
+    "p51": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "asbestos",
+      "prefix": "For more than six years, ",
+      "suffix": " has been washing up with the ti",
+      "start": 25,
+      "end": 33
+     },
+     "type": "concept",
+     "label": "Asbestos",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "asbestos fibres",
+      "prefix": "r tests in April and July found ",
+      "suffix": " in sand samples at levels that ",
+      "start": 336,
+      "end": 351
+     },
+     "type": "concept",
+     "label": "Asbestos",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.03
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p5",
+     "anchor": {
+      "exact": "asbestos",
+      "prefix": "5 tonnes of material containing ",
+      "suffix": ", external, including both white",
+      "start": 840,
+      "end": 848
+     },
+     "type": "concept",
+     "label": "Asbestos",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "RAF Mount Batten",
+      "prefix": "tion waste linked to the former ",
+      "suffix": " base, where coastal erosion is ",
+      "start": 1085,
+      "end": 1101
+     },
+     "type": "context",
+     "label": "RAF Mount Batten",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.68
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "coastal erosion",
+      "prefix": "er RAF Mount Batten base, where ",
+      "suffix": " is thought to be exposing the b",
+      "start": 1114,
+      "end": 1129
+     },
+     "type": "concept",
+     "label": "Coastal erosion",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.53
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p18",
+     "anchor": {
+      "exact": "airborne asbestos",
+      "prefix": "sting have found no evidence of ",
+      "suffix": " on the beach, the discovery of ",
+      "start": 2883,
+      "end": 2900
+     },
+     "type": "concept",
+     "label": "Asbestos",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.3
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p23",
+     "anchor": {
+      "exact": "flying boat",
+      "prefix": "one of Britain's most important ",
+      "suffix": " bases, with Sunderland aircraft",
+      "start": 3590,
+      "end": 3601
+     },
+     "type": "concept",
+     "label": "Flying boat",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.41
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p23",
+     "anchor": {
+      "exact": "Sunderland aircraft",
+      "prefix": "portant flying boat bases, with ",
+      "suffix": " carrying out anti-submarine pat",
+      "start": 3614,
+      "end": 3633
+     },
+     "type": "context",
+     "label": "Short Sunderland",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.59
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p25",
+     "anchor": {
+      "exact": "Maritime archaeologist",
+      "prefix": "",
+      "suffix": " Mallory Haas, director of the S",
+      "start": 3787,
+      "end": 3809
+     },
+     "type": "concept",
+     "label": "Maritime archaeology",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.06
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p25",
+     "anchor": {
+      "exact": "coastal erosion",
+      "prefix": " were now being exposed through ",
+      "suffix": ".",
+      "start": 3996,
+      "end": 4011
+     },
+     "type": "concept",
+     "label": "Coastal erosion",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.53
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p27",
+     "anchor": {
+      "exact": "MPA",
+      "prefix": "ational Marine Park and it's an ",
+      "suffix": " [Marine Protected Area].",
+      "start": 4288,
+      "end": 4291
+     },
+     "type": "term",
+     "label": "Marine Protected Area",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": true,
+     "zipf": 2.97
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p29",
+     "anchor": {
+      "exact": "asbestos cement",
+      "prefix": "ildings and ships against fire; ",
+      "suffix": " for roofing sheets and pipes.",
+      "start": 4616,
+      "end": 4631
+     },
+     "type": "concept",
+     "label": "Asbestos cement",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.39
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p32",
+     "anchor": {
+      "exact": "Asbestosis",
+      "prefix": "",
+      "suffix": " is a rare but serious lung cond",
+      "start": 4872,
+      "end": 4882
+     },
+     "type": "concept",
+     "label": "Asbestosis",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": true,
+     "zipf": 1.93
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p35",
+     "anchor": {
+      "exact": "GP",
+      "prefix": "The advice is to visit a ",
+      "suffix": " if you have symptoms of asbesto",
+      "start": 5176,
+      "end": 5178
+     },
+     "type": "term",
+     "label": "General Practitioner",
+     "target_id": null,
+     "salience": 0.4,
+     "explained_in_text": false,
+     "zipf": 3.88
+    },
+    {
+     "id": "d14",
+     "paragraph_id": "p36",
+     "anchor": {
+      "exact": "UKHSA",
+      "prefix": "Sources: ",
+      "suffix": ", external and NHS, external",
+      "start": 5269,
+      "end": 5274
+     },
+     "type": "context",
+     "label": "UK Health Security Agency",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 0.0
+    }
+   ]
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "url": "https://www.bbc.co.uk/news/articles/c8x2z22wdeglo",
+   "domain": "health",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19",
+    "p20",
+    "p21",
+    "p22",
+    "p23",
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p28",
+    "p29",
+    "p30",
+    "p31",
+    "p32",
+    "p33",
+    "p34",
+    "p35",
+    "p36",
+    "p37",
+    "p38",
+    "p39",
+    "p40",
+    "p41",
+    "p42",
+    "p43",
+    "p44"
+   ],
+   "paragraphs_sha256": "43fce714e7b924ac1a4d9e821c03f9c725fe23af936642bf97f1e51394e84ef8",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false,
+    "p20": false,
+    "p21": false,
+    "p22": false,
+    "p23": false,
+    "p24": false,
+    "p25": false,
+    "p26": false,
+    "p27": false,
+    "p28": false,
+    "p29": false,
+    "p30": false,
+    "p31": false,
+    "p32": false,
+    "p33": false,
+    "p34": false,
+    "p35": false,
+    "p36": false,
+    "p37": false,
+    "p38": false,
+    "p39": false,
+    "p40": false,
+    "p41": false,
+    "p42": false,
+    "p43": false,
+    "p44": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "PSA levels",
+      "prefix": "ly, Rex regularly monitored his ",
+      "suffix": ".",
+      "start": 726,
+      "end": 736
+     },
+     "type": "concept",
+     "label": "Prostate-specific antigen",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.47
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "chemotherapy",
+      "prefix": "Rex underwent ",
+      "suffix": " but said the treatment took a s",
+      "start": 860,
+      "end": 872
+     },
+     "type": "concept",
+     "label": "Chemotherapy",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.56
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "hormone treatment",
+      "prefix": " lives with the side effects of ",
+      "suffix": ", including intense fatigue.",
+      "start": 971,
+      "end": 988
+     },
+     "type": "concept",
+     "label": "Hormone therapy",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.79
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "GP",
+      "prefix": "stopped doing a job I love as a ",
+      "suffix": " practice manager,\" he said.",
+      "start": 1053,
+      "end": 1055
+     },
+     "type": "term",
+     "label": "General Practitioner",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 3.88
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p16",
+     "anchor": {
+      "exact": "PTSD",
+      "prefix": "ght help and was diagnosed with ",
+      "suffix": ".",
+      "start": 1944,
+      "end": 1948
+     },
+     "type": "concept",
+     "label": "Post-traumatic stress disorder",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p19",
+     "anchor": {
+      "exact": "PTSD",
+      "prefix": "Research suggests delayed ",
+      "suffix": " diagnoses are not uncommon, wit",
+      "start": 2149,
+      "end": 2153
+     },
+     "type": "concept",
+     "label": "Post-traumatic stress disorder",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p20",
+     "anchor": {
+      "exact": "PTSD",
+      "prefix": "ernalare expected to experience ",
+      "suffix": " at some point in their lives.",
+      "start": 2317,
+      "end": 2321
+     },
+     "type": "concept",
+     "label": "Post-traumatic stress disorder",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p22",
+     "anchor": {
+      "exact": "Cognitive Behavioural Therapy (CBT)",
+      "prefix": "But ",
+      "suffix": " and Eye Movement Desensitisatio",
+      "start": 2406,
+      "end": 2441
+     },
+     "type": "concept",
+     "label": "Cognitive behavioural therapy",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 2.8
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p22",
+     "anchor": {
+      "exact": "Eye Movement Desensitisation and Reprocessing (EMDR)",
+      "prefix": "e Behavioural Therapy (CBT) and ",
+      "suffix": " therapy gradually transformed t",
+      "start": 2446,
+      "end": 2498
+     },
+     "type": "concept",
+     "label": "Eye movement desensitization and reprocessing",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 1.35
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p32",
+     "anchor": {
+      "exact": "rooks",
+      "prefix": "\"I was watching ",
+      "suffix": " floating on the wind,\" he said.",
+      "start": 3311,
+      "end": 3316
+     },
+     "type": "concept",
+     "label": "Rook",
+     "target_id": null,
+     "salience": 0.4,
+     "explained_in_text": false,
+     "zipf": 2.56
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p37",
+     "anchor": {
+      "exact": "Longfield Hospice",
+      "prefix": " also taken part in sessions at ",
+      "suffix": " in Minchinhampton that help peo",
+      "start": 3754,
+      "end": 3771
+     },
+     "type": "context",
+     "label": "Longfield Hospice",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.79
+    }
+   ]
+  },
+  {
+   "content_id": "319771e0bb4536ac6a313a04ff5252a0",
+   "url": "https://www.bbc.co.uk/news/articles/crn8wyl4n42yo",
+   "domain": "health",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19",
+    "p20",
+    "p21",
+    "p22",
+    "p23",
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p28",
+    "p29",
+    "p30",
+    "p31",
+    "p32",
+    "p33"
+   ],
+   "paragraphs_sha256": "d5212adfa59fb83f575cb3bf1abf0254c2a5ed0fd454b8e0b0cba7b5c36d97dd",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": true,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false,
+    "p20": false,
+    "p21": false,
+    "p22": false,
+    "p23": false,
+    "p24": false,
+    "p25": false,
+    "p26": false,
+    "p27": false,
+    "p28": false,
+    "p29": false,
+    "p30": false,
+    "p31": false,
+    "p32": false,
+    "p33": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "ADHD",
+      "prefix": "th mental health conditions and ",
+      "suffix": " and autism.",
+      "start": 105,
+      "end": 109
+     },
+     "type": "concept",
+     "label": "ADHD",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 3.49
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "autism",
+      "prefix": " health conditions and ADHD and ",
+      "suffix": ".",
+      "start": 114,
+      "end": 120
+     },
+     "type": "concept",
+     "label": "Autism spectrum disorder",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 3.97
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Wes Streeting",
+      "prefix": "sioned by then-health secretary ",
+      "suffix": " 10 months ago after saying youn",
+      "start": 173,
+      "end": 186
+     },
+     "type": "context",
+     "label": "Wes Streeting",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.27
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "NHS",
+      "prefix": "uld have major implications for ",
+      "suffix": " services, the benefits system, ",
+      "start": 308,
+      "end": 311
+     },
+     "type": "context",
+     "label": "National Health Service",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.0
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "over-diagnosed",
+      "prefix": "saying young people were being \"",
+      "suffix": "\" and \"written off\", could have ",
+      "start": 239,
+      "end": 253
+     },
+     "type": "concept",
+     "label": "Over-diagnosis",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 4.05
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "over-diagnosis",
+      "prefix": " there is an increasing risk of ",
+      "suffix": ", but only when it comes to ADHD",
+      "start": 541,
+      "end": 555
+     },
+     "type": "concept",
+     "label": "Over-diagnosis",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 4.19
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p9",
+     "anchor": {
+      "exact": "cognition",
+      "prefix": "an variation in brain function, ",
+      "suffix": " and behaviour\".",
+      "start": 1731,
+      "end": 1740
+     },
+     "type": "concept",
+     "label": "Cognition",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.34
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "Prof Peter Fonagy",
+      "prefix": "tal health. In fact, the chair, ",
+      "suffix": ", has said Streeting was \"comple",
+      "start": 1871,
+      "end": 1888
+     },
+     "type": "context",
+     "label": "Peter Fonagy",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 0.0
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "schizophrenia",
+      "prefix": "al illness. Population rates of ",
+      "suffix": " and bipolar disorder, for examp",
+      "start": 2548,
+      "end": 2561
+     },
+     "type": "concept",
+     "label": "Schizophrenia",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.56
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "bipolar disorder",
+      "prefix": "tion rates of schizophrenia and ",
+      "suffix": ", for example, have remained sta",
+      "start": 2566,
+      "end": 2582
+     },
+     "type": "concept",
+     "label": "Bipolar disorder",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p14",
+     "anchor": {
+      "exact": "self-harm",
+      "prefix": "ns such as anxiety, depression, ",
+      "suffix": " and eating disorders.",
+      "start": 2697,
+      "end": 2706
+     },
+     "type": "concept",
+     "label": "Self-harm",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.4
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p19",
+     "anchor": {
+      "exact": "NEET",
+      "prefix": "cation, employment or training (",
+      "suffix": ") report their mental health or ",
+      "start": 3159,
+      "end": 3163
+     },
+     "type": "term",
+     "label": "Not in Education, Employment, or Training",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": true,
+     "zipf": 2.62
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p20",
+     "anchor": {
+      "exact": "NEET",
+      "prefix": " four times more likely to be a ",
+      "suffix": " than those without.",
+      "start": 3298,
+      "end": 3302
+     },
+     "type": "term",
+     "label": "Not in Education, Employment, or Training",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 2.62
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p22",
+     "anchor": {
+      "exact": "neurological conditions",
+      "prefix": "need for both mental health and ",
+      "suffix": " such as ADHD and autism.",
+      "start": 3656,
+      "end": 3679
+     },
+     "type": "concept",
+     "label": "Neurological disorder",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.53
+    },
+    {
+     "id": "d14",
+     "paragraph_id": "p24",
+     "anchor": {
+      "exact": "NHS Alliance",
+      "prefix": "p to publication of the report, ",
+      "suffix": ", which represents health bosses",
+      "start": 3980,
+      "end": 3992
+     },
+     "type": "context",
+     "label": "NHS Alliance",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.85
+    },
+    {
+     "id": "d15",
+     "paragraph_id": "p32",
+     "anchor": {
+      "exact": "direct-to-public advertising",
+      "prefix": " said it wanted to see a ban on ",
+      "suffix": " of assessments.",
+      "start": 5347,
+      "end": 5375
+     },
+     "type": "concept",
+     "label": "Direct-to-consumer advertising",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 4.36
+    }
+   ]
+  },
+  {
+   "content_id": "abbac75c17a8ecca8852c3e6c47bfce7",
+   "url": "https://www.theguardian.com/football/2026/oct/10/manchester-city-enzo-maresca",
+   "domain": "sports",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17"
+   ],
+   "paragraphs_sha256": "47f2cbacc33c88c5ebe1944963db63d6ca61ea9f00223f17a45759a6e9a82755",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": true,
+    "p9": false,
+    "p10": false,
+    "p11": true,
+    "p12": true,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "Tony Hadley",
+      "prefix": " and I find myself interviewing ",
+      "suffix": " on TalkSport about his upcoming",
+      "start": 66,
+      "end": 77
+     },
+     "type": "context",
+     "label": "Tony Hadley",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.23
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "Spandau Ballet",
+      "prefix": "big band tour. We play a bit of ",
+      "suffix": ", chat about the classics and hi",
+      "start": 142,
+      "end": 156
+     },
+     "type": "context",
+     "label": "Spandau Ballet",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.26
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Arteta",
+      "prefix": "n Arsenal fan, there’s a bit of ",
+      "suffix": ", Leeds at the weekend. Tony bri",
+      "start": 427,
+      "end": 433
+     },
+     "type": "context",
+     "label": "Mikel Arteta",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 2.6
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Billy Bremner",
+      "prefix": " at the weekend. Tony brings up ",
+      "suffix": " and suggests that my co-host Ch",
+      "start": 472,
+      "end": 485
+     },
+     "type": "context",
+     "label": "Billy Bremner",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.43
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "Manchester City",
+      "prefix": " cumbersome question/joke about ",
+      "suffix": ". “And I know Manchester City ar",
+      "start": 689,
+      "end": 704
+     },
+     "type": "context",
+     "label": "Manchester City F.C.",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 4.5
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "Boy George",
+      "prefix": "ght be. Quick, put a call in to ",
+      "suffix": ". What’s Midge Ure saying? Simon",
+      "start": 1330,
+      "end": 1340
+     },
+     "type": "context",
+     "label": "Boy George",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 4.8
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "Midge Ure",
+      "prefix": "a call in to Boy George. What’s ",
+      "suffix": " saying? Simon Le Bon has things",
+      "start": 1349,
+      "end": 1358
+     },
+     "type": "context",
+     "label": "Midge Ure",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 2.5
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "Simon Le Bon",
+      "prefix": "eorge. What’s Midge Ure saying? ",
+      "suffix": " has things to say, but they are",
+      "start": 1367,
+      "end": 1379
+     },
+     "type": "context",
+     "label": "Simon Le Bon",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 3.59
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p5",
+     "anchor": {
+      "exact": "Enzo Maresca",
+      "prefix": "Perhaps this is ",
+      "suffix": "’s best strategy. The City manag",
+      "start": 1457,
+      "end": 1469
+     },
+     "type": "context",
+     "label": "Enzo Maresca",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 1.72
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "Premier League",
+      "prefix": "ly add to the monotony of every ",
+      "suffix": " manager giving us their prepare",
+      "start": 1770,
+      "end": 1784
+     },
+     "type": "context",
+     "label": "Premier League",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.46
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p8",
+     "anchor": {
+      "exact": "John Stones",
+      "prefix": " if City couldn’t have afforded ",
+      "suffix": " (height: 1.88m) and had settled",
+      "start": 2587,
+      "end": 2598
+     },
+     "type": "context",
+     "label": "John Stones",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.27
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p8",
+     "anchor": {
+      "exact": "Victor Lindelöf",
+      "prefix": ".88m) and had settled for, say, ",
+      "suffix": " (1.87m)? How vital was that ext",
+      "start": 2641,
+      "end": 2656
+     },
+     "type": "context",
+     "label": "Victor Lindelöf",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 1.25
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p9",
+     "anchor": {
+      "exact": "Calciopoli",
+      "prefix": "where you stand on Juventus and ",
+      "suffix": ": “I think that’s the truth that",
+      "start": 2996,
+      "end": 3006
+     },
+     "type": "context",
+     "label": "Calciopoli scandal",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 1.36
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p9",
+     "anchor": {
+      "exact": "Juventus",
+      "prefix": "depending on where you stand on ",
+      "suffix": " and Calciopoli: “I think that’s",
+      "start": 2983,
+      "end": 2991
+     },
+     "type": "context",
+     "label": "Juventus F.C.",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.49
+    },
+    {
+     "id": "d14",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "Premier League",
+      "prefix": " future that lies ahead for the ",
+      "suffix": ". You’re going to have two alter",
+      "start": 3535,
+      "end": 3549
+     },
+     "type": "context",
+     "label": "Premier League",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.46
+    },
+    {
+     "id": "d15",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "Juventus",
+      "prefix": "where the number of titles that ",
+      "suffix": " has won is constantly repeated ",
+      "start": 3661,
+      "end": 3669
+     },
+     "type": "context",
+     "label": "Juventus F.C.",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.49
+    },
+    {
+     "id": "d16",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "Sergio Agüero",
+      "prefix": "hildren. It’s one thing telling ",
+      "suffix": " that the goal isn’t real, but w",
+      "start": 4427,
+      "end": 4440
+     },
+     "type": "context",
+     "label": "Sergio Agüero",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.32
+    },
+    {
+     "id": "d17",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "Spooks",
+      "prefix": ", or on one of those benches in ",
+      "suffix": " or Slow Horses when two people ",
+      "start": 4778,
+      "end": 4784
+     },
+     "type": "context",
+     "label": "Spooks (TV series)",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 2.76
+    },
+    {
+     "id": "d18",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "Slow Horses",
+      "prefix": "e of those benches in Spooks or ",
+      "suffix": " when two people sit on a bench ",
+      "start": 4788,
+      "end": 4799
+     },
+     "type": "context",
+     "label": "Slow Horses (TV series)",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.31
+    },
+    {
+     "id": "d19",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "League Two",
+      "prefix": "anchester City are relegated to ",
+      "suffix": "? It’s ridiculous that the two a",
+      "start": 5056,
+      "end": 5066
+     },
+     "type": "context",
+     "label": "EFL League Two",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 5.09
+    },
+    {
+     "id": "d20",
+     "paragraph_id": "p14",
+     "anchor": {
+      "exact": "Erling Haaland",
+      "prefix": "ill be the first player to tell ",
+      "suffix": " to look forward to Salford away",
+      "start": 5450,
+      "end": 5464
+     },
+     "type": "context",
+     "label": "Erling Haaland",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.69
+    },
+    {
+     "id": "d21",
+     "paragraph_id": "p14",
+     "anchor": {
+      "exact": "Enzo Fernández",
+      "prefix": "ar? My money would have been on ",
+      "suffix": " until I remembered he’s probabl",
+      "start": 5536,
+      "end": 5550
+     },
+     "type": "context",
+     "label": "Enzo Fernández",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.59
+    },
+    {
+     "id": "d22",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "Elliot Anderson",
+      "prefix": "I’d imagine it’ll be hard for ",
+      "suffix": " to spend much time thinking abo",
+      "start": 5721,
+      "end": 5736
+     },
+     "type": "context",
+     "label": "Elliot Anderson",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.65
+    },
+    {
+     "id": "d23",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "Dominik Szoboszlai",
+      "prefix": "s while he’s trying to fend off ",
+      "suffix": " and Florian Wirtz. Regardless o",
+      "start": 5824,
+      "end": 5842
+     },
+     "type": "context",
+     "label": "Dominik Szoboszlai",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 0.0
+    },
+    {
+     "id": "d24",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "Florian Wirtz",
+      "prefix": "fend off Dominik Szoboszlai and ",
+      "suffix": ". Regardless of the result on Su",
+      "start": 5847,
+      "end": 5860
+     },
+     "type": "context",
+     "label": "Florian Wirtz",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.05
+    },
+    {
+     "id": "d25",
+     "paragraph_id": "p16",
+     "anchor": {
+      "exact": "Emmeline Pankhurst",
+      "prefix": "comparing this rule-breaking to ",
+      "suffix": "’s fight for female suffrage. Bu",
+      "start": 6096,
+      "end": 6114
+     },
+     "type": "context",
+     "label": "Emmeline Pankhurst",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.01
+    },
+    {
+     "id": "d26",
+     "paragraph_id": "p16",
+     "anchor": {
+      "exact": "suffrage",
+      "prefix": "ne Pankhurst’s fight for female ",
+      "suffix": ". But that complete loss of obje",
+      "start": 6134,
+      "end": 6142
+     },
+     "type": "concept",
+     "label": "Women's suffrage",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.38
+    }
+   ]
+  },
+  {
+   "content_id": "9f38ed85cf54dd9700675f19d7a057ef",
+   "url": "https://www.theguardian.com/football/2026/oct/09/chelsea-xabi-alonso-cole-palmer-england-thomas-tuchel",
+   "domain": "sports",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7"
+   ],
+   "paragraphs_sha256": "da8ddde32e7450c0f07127e09b76fac0b3ae77103ad61e351e8c32416cd44279",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "international break",
+      "prefix": "led Chelsea’s No 10 missed this ",
+      "suffix": " with a problem related to the g",
+      "start": 110,
+      "end": 129
+     },
+     "type": "concept",
+     "label": "International break",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.96
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Nations League",
+      "prefix": " for the start of his country’s ",
+      "suffix": " campaign last month. Tuchel sai",
+      "start": 395,
+      "end": 409
+     },
+     "type": "context",
+     "label": "UEFA Nations League",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.63
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "caps",
+      "prefix": "Palmer has won five ",
+      "suffix": " since scoring against Spain in ",
+      "start": 594,
+      "end": 598
+     },
+     "type": "concept",
+     "label": "International cap",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.15
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "pubalgia",
+      "prefix": "ver. It’s a little bit from the ",
+      "suffix": " he had.”",
+      "start": 1614,
+      "end": 1622
+     },
+     "type": "concept",
+     "label": "Pubalgia",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 0.0
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "bottle job",
+      "prefix": "r Piers Morgan calling Palmer a ",
+      "suffix": " for failing to represent Englan",
+      "start": 2179,
+      "end": 2189
+     },
+     "type": "term",
+     "label": "Bottle job",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.52
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "Piers Morgan",
+      "prefix": "d to hear about the broadcaster ",
+      "suffix": " calling Palmer a bottle job for",
+      "start": 2149,
+      "end": 2161
+     },
+     "type": "context",
+     "label": "Piers Morgan",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.46
+    }
+   ]
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "url": "https://www.theguardian.com/environment/2026/oct/10/climate-crisis-putting-world-best-surf-breaks-at-risk",
+   "domain": "environment",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16"
+   ],
+   "paragraphs_sha256": "92ea3b89c393dd59b6b59d0d93265dd0bd2b6c9b9e7fb59f30c817b869d3960c",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "surf breaks",
+      "prefix": "or some of the world’s greatest ",
+      "suffix": ", submerging some as sea level r",
+      "start": 62,
+      "end": 73
+     },
+     "type": "concept",
+     "label": "Surf break",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.76
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "world surfing reserves",
+      "prefix": "is of dozens of famous waves in ",
+      "suffix": " (WSR) found more than three-qua",
+      "start": 231,
+      "end": 253
+     },
+     "type": "context",
+     "label": "World Surfing Reserves",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.6
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "point breaks",
+      "prefix": "e beach in north Devon, UK, the ",
+      "suffix": " at Noosa in Australia and Orien",
+      "start": 681,
+      "end": 693
+     },
+     "type": "concept",
+     "label": "Point break",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.42
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "Surf breaks",
+      "prefix": "ape, swell direction and tide. “",
+      "suffix": " are incredibly unique oceanogra",
+      "start": 931,
+      "end": 942
+     },
+     "type": "concept",
+     "label": "Surf break",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.76
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "Save the Waves Coalition",
+      "prefix": " a senior programmes manager at ",
+      "suffix": ", which launched the WSR program",
+      "start": 1592,
+      "end": 1616
+     },
+     "type": "context",
+     "label": "Save the Waves Coalition",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.96
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "Climatic Change",
+      "prefix": "study, published in the journal ",
+      "suffix": ", concludes: “Climate change and",
+      "start": 2033,
+      "end": 2048
+     },
+     "type": "context",
+     "label": "Climatic Change (journal)",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.2
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p9",
+     "anchor": {
+      "exact": "groynes",
+      "prefix": " such as sea walls, jetties and ",
+      "suffix": " made the beaches and waves less",
+      "start": 2728,
+      "end": 2735
+     },
+     "type": "concept",
+     "label": "Groyne",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.5
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "longboarding",
+      "prefix": "Saunton Sands, a world-renowned ",
+      "suffix": " wave with really long, mellow r",
+      "start": 2979,
+      "end": 2991
+     },
+     "type": "concept",
+     "label": "Longboarding",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 1.82
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "beach break",
+      "prefix": "mellow rides, and the UK’s best ",
+      "suffix": " at Croyde. We’ve got left- and ",
+      "start": 3047,
+      "end": 3058
+     },
+     "type": "concept",
+     "label": "Beach break",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.73
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "point breaks",
+      "prefix": " We’ve got left- and right-hand ",
+      "suffix": " and a sheltered spot for when i",
+      "start": 3101,
+      "end": 3113
+     },
+     "type": "concept",
+     "label": "Point break",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.42
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "Ley de rompientes",
+      "prefix": "ional significance”; and Peru’s ",
+      "suffix": " (law of the breakers) that prot",
+      "start": 3956,
+      "end": 3973
+     },
+     "type": "context",
+     "label": "Ley de rompientes",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": true,
+     "zipf": 0.0
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p16",
+     "anchor": {
+      "exact": "point break",
+      "prefix": "u have some of the most perfect ",
+      "suffix": " waves you will find, and the en",
+      "start": 4329,
+      "end": 4340
+     },
+     "type": "concept",
+     "label": "Point break",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 5.02
+    }
+   ]
+  },
+  {
+   "content_id": "a25f287fea187a92c602c553ce71aac0",
+   "url": "https://www.theguardian.com/environment/2026/oct/09/cop31-host-wealthy-countries-climate-crisis-spending-defence-nato",
+   "domain": "environment",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19",
+    "p20",
+    "p21",
+    "p22",
+    "p23"
+   ],
+   "paragraphs_sha256": "265d432b926e7b05dabd5c6cb2aadf86295f16adad68eef0ad1e75c6db939b42",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": true,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false,
+    "p20": false,
+    "p21": false,
+    "p22": false,
+    "p23": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "Nato",
+      "prefix": " than the 5% of GDP promised by ",
+      "suffix": " members for defence because “th",
+      "start": 106,
+      "end": 110
+     },
+     "type": "context",
+     "label": "NATO",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 4.01
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "UN summit",
+      "prefix": "ty issue”, the host of the next ",
+      "suffix": " has said.",
+      "start": 203,
+      "end": 212
+     },
+     "type": "concept",
+     "label": "UN Climate Change Conference",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.13
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Cop31",
+      "prefix": "ikely to prove contentious, the ",
+      "suffix": " president-designate, Murat Kuru",
+      "start": 283,
+      "end": 288
+     },
+     "type": "context",
+     "label": "COP31",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 0.36
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "transition away from fossil fuels",
+      "prefix": "repeat a previous agreement to “",
+      "suffix": "” – the primary cause of the cli",
+      "start": 397,
+      "end": 430
+     },
+     "type": "concept",
+     "label": "Transition away from fossil fuels",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "Cop31",
+      "prefix": "n Fiji this week to prepare for ",
+      "suffix": ", which will take place in the T",
+      "start": 815,
+      "end": 820
+     },
+     "type": "context",
+     "label": "COP31",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 0.36
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "pre-Cop",
+      "prefix": "t Cop31, had pushed to hold the ",
+      "suffix": " meeting in the Pacific to bring",
+      "start": 986,
+      "end": 993
+     },
+     "type": "concept",
+     "label": "Pre-COP meeting",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.27
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "climate-denying US administration",
+      "prefix": "crisis and an unpredictable and ",
+      "suffix": " – combined with the knowledge t",
+      "start": 1137,
+      "end": 1170
+     },
+     "type": "context",
+     "label": "US presidential administration climate stance",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 3.84
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "Tuvalu",
+      "prefix": " a delegation flew north to see ",
+      "suffix": ", a low-lying atoll country of a",
+      "start": 1667,
+      "end": 1673
+     },
+     "type": "context",
+     "label": "Tuvalu",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.31
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "atoll",
+      "prefix": "orth to see Tuvalu, a low-lying ",
+      "suffix": " country of about 10,000 people ",
+      "start": 1687,
+      "end": 1692
+     },
+     "type": "concept",
+     "label": "Atoll",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 2.85
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "land reclamation",
+      "prefix": "re shown a 20-hectare (49-acre) ",
+      "suffix": " project and heard stories of li",
+      "start": 1819,
+      "end": 1835
+     },
+     "type": "concept",
+     "label": "Land reclamation",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 3.14
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p9",
+     "anchor": {
+      "exact": "pre-Cop",
+      "prefix": "Tabuya said: “This ",
+      "suffix": " draws to a close tonight. Our r",
+      "start": 2507,
+      "end": 2514
+     },
+     "type": "concept",
+     "label": "Pre-COP meeting",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.27
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "UN environment programme",
+      "prefix": "ing met. A recent report by the ",
+      "suffix": " warned that under the most opti",
+      "start": 2713,
+      "end": 2737
+     },
+     "type": "context",
+     "label": "United Nations Environment Programme",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.19
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "1.5C ceiling",
+      "prefix": " at least 1.8C, well beyond the ",
+      "suffix": " of the Paris climate agreement.",
+      "start": 2842,
+      "end": 2854
+     },
+     "type": "concept",
+     "label": "1.5C global warming target",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.12
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "Paris climate agreement",
+      "prefix": " beyond the 1.5C ceiling of the ",
+      "suffix": ". It called for immediate and su",
+      "start": 2862,
+      "end": 2885
+     },
+     "type": "context",
+     "label": "Paris Agreement",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.32
+    },
+    {
+     "id": "d14",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "keep 1.5C alive",
+      "prefix": "ds: that countries must act to “",
+      "suffix": "”, that climate finance must be ",
+      "start": 3133,
+      "end": 3148
+     },
+     "type": "concept",
+     "label": "Limiting global warming to 1.5C",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.12
+    },
+    {
+     "id": "d15",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "climate finance",
+      "prefix": " act to “keep 1.5C alive”, that ",
+      "suffix": " must be easily accessible for p",
+      "start": 3156,
+      "end": 3171
+     },
+     "type": "concept",
+     "label": "Climate finance",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.38
+    },
+    {
+     "id": "d16",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "climate finance",
+      "prefix": "Bowen, said only 0.2% of global ",
+      "suffix": " was spent helping small island ",
+      "start": 3415,
+      "end": 3430
+     },
+     "type": "concept",
+     "label": "Climate finance",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.38
+    },
+    {
+     "id": "d17",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "small island developing countries",
+      "prefix": "imate finance was spent helping ",
+      "suffix": " adapt, and that the countries t",
+      "start": 3449,
+      "end": 3482
+     },
+     "type": "concept",
+     "label": "Small Island Developing States",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.37
+    },
+    {
+     "id": "d18",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "Nato",
+      "prefix": "Kurum said ",
+      "suffix": " countries should be much more f",
+      "start": 3653,
+      "end": 3657
+     },
+     "type": "context",
+     "label": "NATO",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.01
+    },
+    {
+     "id": "d19",
+     "paragraph_id": "p18",
+     "anchor": {
+      "exact": "transition away from fossil fuels",
+      "prefix": "n Fiji that supported a global “",
+      "suffix": "”, echoing language adopted by t",
+      "start": 4800,
+      "end": 4833
+     },
+     "type": "concept",
+     "label": "Transition away from fossil fuels",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d20",
+     "paragraph_id": "p18",
+     "anchor": {
+      "exact": "Cop28",
+      "prefix": "pted by the global community at ",
+      "suffix": " in Dubai three years ago. But b",
+      "start": 4888,
+      "end": 4893
+     },
+     "type": "context",
+     "label": "COP28",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 0.51
+    },
+    {
+     "id": "d21",
+     "paragraph_id": "p19",
+     "anchor": {
+      "exact": "renewable energy",
+      "prefix": " dirty fuel but to build enough ",
+      "suffix": " so there would be no need for f",
+      "start": 5219,
+      "end": 5235
+     },
+     "type": "concept",
+     "label": "Renewable energy",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.89
+    },
+    {
+     "id": "d22",
+     "paragraph_id": "p20",
+     "anchor": {
+      "exact": "transitioning away from fossil fuels",
+      "prefix": " climate talks on wording about ",
+      "suffix": " might not be productive as he d",
+      "start": 5402,
+      "end": 5438
+     },
+     "type": "concept",
+     "label": "Transition away from fossil fuels",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.09
+    },
+    {
+     "id": "d23",
+     "paragraph_id": "p20",
+     "anchor": {
+      "exact": "Cop30",
+      "prefix": " opposed naming fossil fuels at ",
+      "suffix": " in Brazil.",
+      "start": 5649,
+      "end": 5654
+     },
+     "type": "context",
+     "label": "COP30",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 0.36
+    },
+    {
+     "id": "d24",
+     "paragraph_id": "p21",
+     "anchor": {
+      "exact": "UN",
+      "prefix": "strated with what they see as a ",
+      "suffix": " stalemate on the issue met sepa",
+      "start": 5722,
+      "end": 5724
+     },
+     "type": "context",
+     "label": "United Nations",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.62
+    },
+    {
+     "id": "d25",
+     "paragraph_id": "p22",
+     "anchor": {
+      "exact": "Fossil Fuel Non-Proliferation Treaty Initiative",
+      "prefix": "eporah Berman, the chair of the ",
+      "suffix": ", said Pacific leaders had been ",
+      "start": 5963,
+      "end": 6010
+     },
+     "type": "context",
+     "label": "Fossil Fuel Non-Proliferation Treaty Initiative",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.33
+    }
+   ]
+  },
+  {
+   "content_id": "f085a98d9dd3b103ccccdef91f327077",
+   "url": "https://www.bbc.co.uk/news/articles/cmewe5lvl2rqo",
+   "domain": "politics",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19",
+    "p20",
+    "p21",
+    "p22",
+    "p23",
+    "p24",
+    "p25",
+    "p26",
+    "p27",
+    "p28",
+    "p29",
+    "p30",
+    "p31",
+    "p32",
+    "p33",
+    "p34",
+    "p35",
+    "p36",
+    "p37",
+    "p38",
+    "p39",
+    "p40",
+    "p41",
+    "p42",
+    "p43",
+    "p44",
+    "p45"
+   ],
+   "paragraphs_sha256": "ad6036a8f50c4d2bd208bcc0476bb3feed7535b968c290c3e83cfce874b2d32e",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": true,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false,
+    "p20": false,
+    "p21": false,
+    "p22": false,
+    "p23": false,
+    "p24": false,
+    "p25": false,
+    "p26": false,
+    "p27": false,
+    "p28": false,
+    "p29": false,
+    "p30": false,
+    "p31": false,
+    "p32": false,
+    "p33": false,
+    "p34": false,
+    "p35": false,
+    "p36": false,
+    "p37": false,
+    "p38": false,
+    "p39": false,
+    "p40": false,
+    "p41": false,
+    "p42": false,
+    "p43": false,
+    "p44": false,
+    "p45": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "by-election",
+      "prefix": "as Green Party leader after his ",
+      "suffix": " defeat, as he faced pressure fr",
+      "start": 67,
+      "end": 78
+     },
+     "type": "concept",
+     "label": "By-election",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 5.07
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Zionism",
+      "prefix": "conference motion that declared ",
+      "suffix": " a form of racism.",
+      "start": 341,
+      "end": 348
+     },
+     "type": "concept",
+     "label": "Zionism",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.1
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "Zionism",
+      "prefix": "ing to show leadership over the ",
+      "suffix": " row.",
+      "start": 484,
+      "end": 491
+     },
+     "type": "concept",
+     "label": "Zionism",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.1
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "Holborn and St Pancras",
+      "prefix": "cond to Labour overnight in the ",
+      "suffix": " by-election, told BBC Breakfast",
+      "start": 551,
+      "end": 573
+     },
+     "type": "context",
+     "label": "Holborn and St Pancras",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.4
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "Sir Keir Starmer",
+      "prefix": "y held by former Prime Minister ",
+      "suffix": ", after a by-election success ea",
+      "start": 771,
+      "end": 787
+     },
+     "type": "context",
+     "label": "Keir Starmer",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 2.14
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p5",
+     "anchor": {
+      "exact": "general election",
+      "prefix": "2 percentage points on the 2024 ",
+      "suffix": ".",
+      "start": 1034,
+      "end": 1050
+     },
+     "type": "concept",
+     "label": "General election",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 4.93
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "Zionism",
+      "prefix": "would leave the party after the ",
+      "suffix": " row.",
+      "start": 1426,
+      "end": 1433
+     },
+     "type": "concept",
+     "label": "Zionism",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.1
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "Zionism",
+      "prefix": " official party policy, defined ",
+      "suffix": " as an ideology supporting \"an e",
+      "start": 2294,
+      "end": 2301
+     },
+     "type": "concept",
+     "label": "Zionism",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": true,
+     "zipf": 3.1
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "ethnonationalist",
+      "prefix": "m as an ideology supporting \"an ",
+      "suffix": " Jewish state\" and backed a \"sin",
+      "start": 2332,
+      "end": 2348
+     },
+     "type": "concept",
+     "label": "Ethnonationalism",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 1.1
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p17",
+     "anchor": {
+      "exact": "Netanyahu",
+      "prefix": "urrent Israeli government under ",
+      "suffix": "\".",
+      "start": 3019,
+      "end": 3028
+     },
+     "type": "context",
+     "label": "Benjamin Netanyahu",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.33
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p18",
+     "anchor": {
+      "exact": "constitutional settlement",
+      "prefix": "ves to decide what the ultimate ",
+      "suffix": " should look like in their regio",
+      "start": 3122,
+      "end": 3147
+     },
+     "type": "concept",
+     "label": "Constitutional settlement",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.1
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p24",
+     "anchor": {
+      "exact": "Zionism",
+      "prefix": "ot answered questions about the ",
+      "suffix": " vote for most of this week, Pol",
+      "start": 3779,
+      "end": 3786
+     },
+     "type": "concept",
+     "label": "Zionism",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.1
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p25",
+     "anchor": {
+      "exact": "genocide",
+      "prefix": ", he said \"the displacement and ",
+      "suffix": " of the Palestinian people is cl",
+      "start": 3980,
+      "end": 3988
+     },
+     "type": "concept",
+     "label": "Genocide",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.91
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p26",
+     "anchor": {
+      "exact": "war crimes",
+      "prefix": "sraeli government of committing ",
+      "suffix": " which amount to genocide in Gaz",
+      "start": 4131,
+      "end": 4141
+     },
+     "type": "concept",
+     "label": "War crime",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.39
+    },
+    {
+     "id": "d14",
+     "paragraph_id": "p26",
+     "anchor": {
+      "exact": "genocide",
+      "prefix": "ting war crimes which amount to ",
+      "suffix": " in Gaza. Israel has repeatedly ",
+      "start": 4158,
+      "end": 4166
+     },
+     "type": "concept",
+     "label": "Genocide",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.91
+    },
+    {
+     "id": "d15",
+     "paragraph_id": "p27",
+     "anchor": {
+      "exact": "Zionism",
+      "prefix": "n Friday morning, following the ",
+      "suffix": " row, Polanski was asked repeate",
+      "start": 4261,
+      "end": 4268
+     },
+     "type": "concept",
+     "label": "Zionism",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.1
+    },
+    {
+     "id": "d16",
+     "paragraph_id": "p28",
+     "anchor": {
+      "exact": "apartheid",
+      "prefix": "e right to oppress or to commit ",
+      "suffix": " and certainly not genocide on a",
+      "start": 4452,
+      "end": 4461
+     },
+     "type": "concept",
+     "label": "Apartheid (crime)",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.61
+    },
+    {
+     "id": "d17",
+     "paragraph_id": "p28",
+     "anchor": {
+      "exact": "genocide",
+      "prefix": "mit apartheid and certainly not ",
+      "suffix": " on another people,\" he said, ad",
+      "start": 4480,
+      "end": 4488
+     },
+     "type": "concept",
+     "label": "Genocide",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.91
+    },
+    {
+     "id": "d18",
+     "paragraph_id": "p35",
+     "anchor": {
+      "exact": "Zionism motion",
+      "prefix": "ares some of my concerns on the ",
+      "suffix": "\".",
+      "start": 5731,
+      "end": 5745
+     },
+     "type": "concept",
+     "label": "Zionism motion",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.09
+    },
+    {
+     "id": "d19",
+     "paragraph_id": "p39",
+     "anchor": {
+      "exact": "Jeremy Corbyn",
+      "prefix": "f the Labour Party, maybe from [",
+      "suffix": "'s] Your Party\" but \"we're losin",
+      "start": 6325,
+      "end": 6338
+     },
+     "type": "context",
+     "label": "Jeremy Corbyn",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.25
+    },
+    {
+     "id": "d20",
+     "paragraph_id": "p42",
+     "anchor": {
+      "exact": "Zionism motion",
+      "prefix": "faced days of pressure over the ",
+      "suffix": ". Four of the five Green MPs and",
+      "start": 6816,
+      "end": 6830
+     },
+     "type": "concept",
+     "label": "Zionism motion",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.09
+    },
+    {
+     "id": "d21",
+     "paragraph_id": "p43",
+     "anchor": {
+      "exact": "Andy Burnham",
+      "prefix": "Prime Minister ",
+      "suffix": " has called on Polanski to rever",
+      "start": 7075,
+      "end": 7087
+     },
+     "type": "context",
+     "label": "Andy Burnham",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.16
+    },
+    {
+     "id": "d22",
+     "paragraph_id": "p44",
+     "anchor": {
+      "exact": "Bridget Phillipson",
+      "prefix": "Meanwhile, Labour chair ",
+      "suffix": " drew comparisons with her party",
+      "start": 7178,
+      "end": 7196
+     },
+     "type": "context",
+     "label": "Bridget Phillipson",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.82
+    },
+    {
+     "id": "d23",
+     "paragraph_id": "p44",
+     "anchor": {
+      "exact": "antisemitism",
+      "prefix": "isons with her party's previous ",
+      "suffix": " scandal, telling the BBC she fe",
+      "start": 7240,
+      "end": 7252
+     },
+     "type": "concept",
+     "label": "Antisemitism",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.15
+    },
+    {
+     "id": "d24",
+     "paragraph_id": "p45",
+     "anchor": {
+      "exact": "anti-Zionism",
+      "prefix": "Polanski has said ",
+      "suffix": " and antisemitism are distinct f",
+      "start": 7365,
+      "end": 7377
+     },
+     "type": "concept",
+     "label": "Anti-Zionism",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.09
+    },
+    {
+     "id": "d25",
+     "paragraph_id": "p45",
+     "anchor": {
+      "exact": "antisemitism",
+      "prefix": "anski has said anti-Zionism and ",
+      "suffix": " are distinct from each other an",
+      "start": 7382,
+      "end": 7394
+     },
+     "type": "concept",
+     "label": "Antisemitism",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.15
+    }
+   ]
+  },
+  {
+   "content_id": "9f0e65eb9d89a918a531993b798e630d",
+   "url": "https://www.bbc.co.uk/news/articles/cw4g13j4mdxjo",
+   "domain": "politics",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19",
+    "p20",
+    "p21",
+    "p22"
+   ],
+   "paragraphs_sha256": "d466eb09193de42ca1f79de43f2505136fb2f3c7f047361ce7e7ab6f6871dd99",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": true,
+    "p16": true,
+    "p17": false,
+    "p18": false,
+    "p19": true,
+    "p20": false,
+    "p21": false,
+    "p22": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "frontbench",
+      "prefix": "d has resigned from the party's ",
+      "suffix": " and wants to see Sir Ed Davey r",
+      "start": 66,
+      "end": 76
+     },
+     "type": "concept",
+     "label": "Frontbench",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.94
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Witney",
+      "prefix": " Financial Times, external, the ",
+      "suffix": " MP left his role as Treasury sp",
+      "start": 184,
+      "end": 190
+     },
+     "type": "context",
+     "label": "Witney",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.48
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Treasury spokesman",
+      "prefix": " the Witney MP left his role as ",
+      "suffix": " on Friday.",
+      "start": 211,
+      "end": 229
+     },
+     "type": "concept",
+     "label": "Treasury spokesman",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.66
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "David Cameron",
+      "prefix": "ervative seat, formerly held by ",
+      "suffix": ", with a majority of more than 4",
+      "start": 1881,
+      "end": 1894
+     },
+     "type": "context",
+     "label": "David Cameron",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.2
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "mergers and acquisitions",
+      "prefix": " an MP, he ran an international ",
+      "suffix": " advisory firm.",
+      "start": 1980,
+      "end": 2004
+     },
+     "type": "concept",
+     "label": "Mergers and acquisitions",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.24
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "vote of no confidence",
+      "prefix": "p contest can be triggered if a ",
+      "suffix": " in the leader is passed by the ",
+      "start": 2351,
+      "end": 2372
+     },
+     "type": "concept",
+     "label": "Vote of no confidence",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 4.51
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p19",
+     "anchor": {
+      "exact": "triple lock",
+      "prefix": "he leader for his stance on the ",
+      "suffix": " - the mechanism which guarantee",
+      "start": 3017,
+      "end": 3028
+     },
+     "type": "concept",
+     "label": "Triple lock",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": true,
+     "zipf": 4.1
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p20",
+     "anchor": {
+      "exact": "Andy Burnham",
+      "prefix": "Last week, Sir Ed criticised ",
+      "suffix": "'s announcement that he would ad",
+      "start": 3205,
+      "end": 3217
+     },
+     "type": "context",
+     "label": "Andy Burnham",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.16
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p21",
+     "anchor": {
+      "exact": "millennials",
+      "prefix": " who are working hard now - the ",
+      "suffix": " - when they retire would have a",
+      "start": 3380,
+      "end": 3391
+     },
+     "type": "concept",
+     "label": "Millennials",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 3.51
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p22",
+     "anchor": {
+      "exact": "millennials",
+      "prefix": "nse\", while another said: \"Most ",
+      "suffix": " don't think there will be a sta",
+      "start": 3538,
+      "end": 3549
+     },
+     "type": "concept",
+     "label": "Millennials",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 3.51
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p22",
+     "anchor": {
+      "exact": "state pension",
+      "prefix": "als don't think there will be a ",
+      "suffix": " when they retire so this isn't ",
+      "start": 3578,
+      "end": 3591
+     },
+     "type": "concept",
+     "label": "State pension",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.21
+    }
+   ]
+  },
+  {
+   "content_id": "facb6846ba7cf4f921a529ebaea671bd",
+   "url": "https://www.theguardian.com/law/2026/oct/07/two-men-freed-indefinite-sentences-for-public-protection-ipp",
+   "domain": "law",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19"
+   ],
+   "paragraphs_sha256": "b45d7aa3e68977723390725562f020504e599fefd93e7bb8d97e0e4185de46d4",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "indefinite sentences for public protection",
+      "prefix": "Two men jailed with ",
+      "suffix": " (IPPs) have been freed after ea",
+      "start": 20,
+      "end": 62
+     },
+     "type": "concept",
+     "label": "Imprisonment for Public Protection",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 3.32
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Criminal Cases Review Commission",
+      "prefix": "an appeal after a review by the ",
+      "suffix": " (CCRC) told Luke Ings and Liam ",
+      "start": 265,
+      "end": 297
+     },
+     "type": "context",
+     "label": "Criminal Cases Review Commission",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 4.33
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "indeterminate sentence",
+      "prefix": " be freed, and also replaced an ",
+      "suffix": " given to a third man, James War",
+      "start": 379,
+      "end": 401
+     },
+     "type": "concept",
+     "label": "Indeterminate sentence",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.87
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "recalled to prison",
+      "prefix": " one-year minimum and was later ",
+      "suffix": ", was also in court, sitting in ",
+      "start": 533,
+      "end": 551
+     },
+     "type": "concept",
+     "label": "Prison recall",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.92
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "Wolverhampton crown court",
+      "prefix": "hugged in the public gallery at ",
+      "suffix": " on Wednesday as Mr Justice Chou",
+      "start": 704,
+      "end": 729
+     },
+     "type": "context",
+     "label": "Crown Court",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.03
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "extended licence",
+      "prefix": "gs to 42 months with a 30-month ",
+      "suffix": ".",
+      "start": 944,
+      "end": 960
+     },
+     "type": "concept",
+     "label": "Licence conditions",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.89
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p5",
+     "anchor": {
+      "exact": "quashed",
+      "prefix": "e men’s original sentences were ",
+      "suffix": " and replaced after they argued ",
+      "start": 1003,
+      "end": 1010
+     },
+     "type": "concept",
+     "label": "Quashed conviction",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 2.74
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "appellants",
+      "prefix": "agistrate Norma Grant, told the ",
+      "suffix": ": “You have already spent consid",
+      "start": 1200,
+      "end": 1210
+     },
+     "type": "term",
+     "label": "Appellant",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.42
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "CCRC",
+      "prefix": "The ruling came after the ",
+      "suffix": " referred the cases of the three",
+      "start": 1502,
+      "end": 1506
+     },
+     "type": "context",
+     "label": "Criminal Cases Review Commission",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 1.73
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "crown court",
+      "prefix": "es of the three men back to the ",
+      "suffix": " to review minimum terms imposed",
+      "start": 1555,
+      "end": 1566
+     },
+     "type": "context",
+     "label": "Crown Court",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.5
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p8",
+     "anchor": {
+      "exact": "indeterminate sentences",
+      "prefix": "s dangerous offenders and given ",
+      "suffix": " with respective minimum terms o",
+      "start": 1821,
+      "end": 1844
+     },
+     "type": "concept",
+     "label": "Indeterminate sentence",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 2.86
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p9",
+     "anchor": {
+      "exact": "reckless arson",
+      "prefix": "007 after being found guilty of ",
+      "suffix": " for setting fire to items in th",
+      "start": 2023,
+      "end": 2037
+     },
+     "type": "concept",
+     "label": "Arson",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.26
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p9",
+     "anchor": {
+      "exact": "criminal damage",
+      "prefix": "council property, and admitting ",
+      "suffix": " and burglary.",
+      "start": 2126,
+      "end": 2141
+     },
+     "type": "concept",
+     "label": "Criminal damage",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.52
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p9",
+     "anchor": {
+      "exact": "burglary",
+      "prefix": "d admitting criminal damage and ",
+      "suffix": ".",
+      "start": 2146,
+      "end": 2154
+     },
+     "type": "concept",
+     "label": "Burglary",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.44
+    },
+    {
+     "id": "d14",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "detention for public protection",
+      "prefix": "Ings was sentenced to ",
+      "suffix": " after appearing at East Berkshi",
+      "start": 2179,
+      "end": 2210
+     },
+     "type": "concept",
+     "label": "Imprisonment for Public Protection",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": false,
+     "zipf": 3.9
+    },
+    {
+     "id": "d15",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "recalled to prison",
+      "prefix": "released in 2017, but was later ",
+      "suffix": " and remained in custody until A",
+      "start": 2654,
+      "end": 2672
+     },
+     "type": "concept",
+     "label": "Prison recall",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.92
+    },
+    {
+     "id": "d16",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "Muin Boase",
+      "prefix": "",
+      "suffix": ", representing Bennett, successf",
+      "start": 2722,
+      "end": 2732
+     },
+     "type": "context",
+     "label": "Muin Boase",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 1.01
+    },
+    {
+     "id": "d17",
+     "paragraph_id": "p13",
+     "anchor": {
+      "exact": "dangerousness",
+      "prefix": "sis for the original finding of ",
+      "suffix": ".",
+      "start": 3024,
+      "end": 3037
+     },
+     "type": "concept",
+     "label": "Dangerous offender",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 1.84
+    },
+    {
+     "id": "d18",
+     "paragraph_id": "p14",
+     "anchor": {
+      "exact": "Detention for public protection and imprisonment for public protection (DPP and IPP) sentences",
+      "prefix": "",
+      "suffix": " were abolished in 2012, having ",
+      "start": 3040,
+      "end": 3134
+     },
+     "type": "concept",
+     "label": "Imprisonment for Public Protection",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": true,
+     "zipf": 2.21
+    },
+    {
+     "id": "d19",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "retrospective",
+      "prefix": "dely, but the abolition was not ",
+      "suffix": ", meaning many prisoners serving",
+      "start": 3403,
+      "end": 3416
+     },
+     "type": "concept",
+     "label": "Retrospective law",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.48
+    },
+    {
+     "id": "d20",
+     "paragraph_id": "p16",
+     "anchor": {
+      "exact": "Ken Clarke",
+      "prefix": "th the former justice secretary ",
+      "suffix": " saying last month that minister",
+      "start": 3587,
+      "end": 3597
+     },
+     "type": "context",
+     "label": "Ken Clarke",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.82
+    },
+    {
+     "id": "d21",
+     "paragraph_id": "p17",
+     "anchor": {
+      "exact": "Alex Norris",
+      "prefix": " the current justice secretary, ",
+      "suffix": ", told MPs that the government p",
+      "start": 3725,
+      "end": 3736
+     },
+     "type": "context",
+     "label": "Alex Norris",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.56
+    },
+    {
+     "id": "d22",
+     "paragraph_id": "p17",
+     "anchor": {
+      "exact": "parliament",
+      "prefix": "and for all” by the end of this ",
+      "suffix": ".",
+      "start": 3863,
+      "end": 3873
+     },
+     "type": "context",
+     "label": "Parliament",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.74
+    },
+    {
+     "id": "d23",
+     "paragraph_id": "p18",
+     "anchor": {
+      "exact": "tariff",
+      "prefix": "s, with 99% past their original ",
+      "suffix": " and 80% having served 10 years ",
+      "start": 3977,
+      "end": 3983
+     },
+     "type": "concept",
+     "label": "Tariff (prison sentence)",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.49
+    },
+    {
+     "id": "d24",
+     "paragraph_id": "p19",
+     "anchor": {
+      "exact": "Press Association",
+      "prefix": "Additional reporting by the ",
+      "suffix": "",
+      "start": 4053,
+      "end": 4070
+     },
+     "type": "context",
+     "label": "Press Association",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 4.78
+    }
+   ]
+  },
+  {
+   "content_id": "0c69cbb6dbb4d1d6e5a95b86d9f6d4fb",
+   "url": "https://www.theguardian.com/culture/2026/oct/10/my-cultural-awakening-amelie-autism-neurodivergence",
+   "domain": "culture",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7"
+   ],
+   "paragraphs_sha256": "29f9281358a5a9ad75ec969d7c4b46aba818fc3d7ca4e44f859f93552da65511",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": true,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "neurodivergent-coded",
+      "prefix": "Amélie was not the first ",
+      "suffix": " woman I’d seen depicted in film",
+      "start": 293,
+      "end": 313
+     },
+     "type": "concept",
+     "label": "Neurodivergent",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 1.31
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "titular character",
+      "prefix": " centre of the story; she’s the ",
+      "suffix": " and we see things through her e",
+      "start": 571,
+      "end": 588
+     },
+     "type": "term",
+     "label": "Titular character",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 2.9
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "hyperfixations",
+      "prefix": ". They thought I was odd. I had ",
+      "suffix": " and obsessive special interests",
+      "start": 1090,
+      "end": 1104
+     },
+     "type": "concept",
+     "label": "Hyperfixation",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 0.0
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "mask",
+      "prefix": "fferently in girls, who tend to ",
+      "suffix": " (assimilate the behaviours of n",
+      "start": 1275,
+      "end": 1279
+     },
+     "type": "concept",
+     "label": "Masking (autism)",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": true,
+     "zipf": 4.31
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "neurotypical",
+      "prefix": "k (assimilate the behaviours of ",
+      "suffix": " people) a lot more. My sense of",
+      "start": 1310,
+      "end": 1322
+     },
+     "type": "concept",
+     "label": "Neurotypical",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 1.86
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "stimming",
+      "prefix": " behaviours I now recognise as “",
+      "suffix": "” (repetitive movements, sounds ",
+      "start": 1846,
+      "end": 1854
+     },
+     "type": "concept",
+     "label": "Stimming",
+     "target_id": null,
+     "salience": 1.0,
+     "explained_in_text": true,
+     "zipf": 1.54
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p3",
+     "anchor": {
+      "exact": "Paris Métro",
+      "prefix": "ematography. When she takes the ",
+      "suffix": ", the wide lens and intensified ",
+      "start": 2086,
+      "end": 2097
+     },
+     "type": "context",
+     "label": "Paris Metro",
+     "target_id": null,
+     "salience": 0.4,
+     "explained_in_text": false,
+     "zipf": 2.03
+    }
+   ]
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "url": "https://www.theguardian.com/education/2026/oct/10/pre-apprenticeship-scheme-landmark-alan-milburn-youth-jobs-crisis-report",
+   "domain": "education",
+   "paragraph_ids": [
+    "p0",
+    "p1",
+    "p2",
+    "p3",
+    "p4",
+    "p5",
+    "p6",
+    "p7",
+    "p8",
+    "p9",
+    "p10",
+    "p11",
+    "p12",
+    "p13",
+    "p14",
+    "p15",
+    "p16",
+    "p17",
+    "p18",
+    "p19"
+   ],
+   "paragraphs_sha256": "696bfd20b57026f095f6d618d718d6f28f7648966e1821b36fc804aa003e41d7",
+   "prompt_version": "extract_demands-v2",
+   "dense": {
+    "p0": false,
+    "p1": false,
+    "p2": false,
+    "p3": false,
+    "p4": false,
+    "p5": false,
+    "p6": false,
+    "p7": false,
+    "p8": false,
+    "p9": false,
+    "p10": false,
+    "p11": false,
+    "p12": false,
+    "p13": false,
+    "p14": false,
+    "p15": false,
+    "p16": false,
+    "p17": false,
+    "p18": false,
+    "p19": false
+   },
+   "demands": [
+    {
+     "id": "d0",
+     "paragraph_id": "p0",
+     "anchor": {
+      "exact": "apprenticeship readiness scheme",
+      "prefix": "A national ",
+      "suffix": " should be introduced in England",
+      "start": 11,
+      "end": 42
+     },
+     "type": "concept",
+     "label": "Apprenticeship readiness scheme",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.21
+    },
+    {
+     "id": "d1",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "Alan Milburn",
+      "prefix": "",
+      "suffix": ", who is leading a major review ",
+      "start": 182,
+      "end": 194
+     },
+     "type": "context",
+     "label": "Alan Milburn",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.54
+    },
+    {
+     "id": "d2",
+     "paragraph_id": "p1",
+     "anchor": {
+      "exact": "pre-apprenticeship route",
+      "prefix": ", will call for a new “national ",
+      "suffix": "” to offer young people further ",
+      "start": 290,
+      "end": 314
+     },
+     "type": "concept",
+     "label": "Pre-apprenticeship route",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": false,
+     "zipf": 3.43
+    },
+    {
+     "id": "d3",
+     "paragraph_id": "p2",
+     "anchor": {
+      "exact": "budget",
+      "prefix": "elayed until after this month’s ",
+      "suffix": " – the former Labour cabinet min",
+      "start": 506,
+      "end": 512
+     },
+     "type": "concept",
+     "label": "National budget",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 4.82
+    },
+    {
+     "id": "d4",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "Andy Burnham",
+      "prefix": "The detail comes as ",
+      "suffix": "’s government delays Milburn’s f",
+      "start": 918,
+      "end": 930
+     },
+     "type": "context",
+     "label": "Andy Burnham",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.16
+    },
+    {
+     "id": "d5",
+     "paragraph_id": "p4",
+     "anchor": {
+      "exact": "Downing Street",
+      "prefix": "east November, amid concerns in ",
+      "suffix": " that his report could sit uneas",
+      "start": 1024,
+      "end": 1038
+     },
+     "type": "context",
+     "label": "Downing Street",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.43
+    },
+    {
+     "id": "d6",
+     "paragraph_id": "p5",
+     "anchor": {
+      "exact": "Tony Blair",
+      "prefix": "A former minister in ",
+      "suffix": "’s cabinet, Milburn has signalle",
+      "start": 1129,
+      "end": 1139
+     },
+     "type": "context",
+     "label": "Tony Blair",
+     "target_id": null,
+     "salience": 0.4,
+     "explained_in_text": false,
+     "zipf": 3.91
+    },
+    {
+     "id": "d7",
+     "paragraph_id": "p6",
+     "anchor": {
+      "exact": "disability benefit",
+      "prefix": " including scrapping a critical ",
+      "suffix": " for under-25s and replacing it ",
+      "start": 1436,
+      "end": 1454
+     },
+     "type": "concept",
+     "label": "Disability benefit",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 4.11
+    },
+    {
+     "id": "d8",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "John Healey",
+      "prefix": "Burnham and his chancellor, ",
+      "suffix": ", have signalled readiness to st",
+      "start": 1578,
+      "end": 1589
+     },
+     "type": "context",
+     "label": "John Healey",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 2.9
+    },
+    {
+     "id": "d9",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "Pat McFadden",
+      "prefix": "he work and pensions secretary, ",
+      "suffix": ", have said there is both a mora",
+      "start": 1735,
+      "end": 1747
+     },
+     "type": "context",
+     "label": "Pat McFadden",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 2.93
+    },
+    {
+     "id": "d10",
+     "paragraph_id": "p7",
+     "anchor": {
+      "exact": "public finances",
+      "prefix": " in the Middle East rattles the ",
+      "suffix": ".",
+      "start": 1880,
+      "end": 1895
+     },
+     "type": "concept",
+     "label": "Public finances",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.89
+    },
+    {
+     "id": "d11",
+     "paragraph_id": "p8",
+     "anchor": {
+      "exact": "Keir Starmer",
+      "prefix": " welfare rebellion which forced ",
+      "suffix": " and Rachel Reeves into an embar",
+      "start": 2018,
+      "end": 2030
+     },
+     "type": "context",
+     "label": "Keir Starmer",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 2.14
+    },
+    {
+     "id": "d12",
+     "paragraph_id": "p8",
+     "anchor": {
+      "exact": "Rachel Reeves",
+      "prefix": "n which forced Keir Starmer and ",
+      "suffix": " into an embarrassing and costly",
+      "start": 2035,
+      "end": 2048
+     },
+     "type": "context",
+     "label": "Rachel Reeves",
+     "target_id": null,
+     "salience": 0.5,
+     "explained_in_text": false,
+     "zipf": 3.43
+    },
+    {
+     "id": "d13",
+     "paragraph_id": "p8",
+     "anchor": {
+      "exact": "U-turn",
+      "prefix": "into an embarrassing and costly ",
+      "suffix": ".",
+      "start": 2081,
+      "end": 2087
+     },
+     "type": "term",
+     "label": "U-turn",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.9
+    },
+    {
+     "id": "d14",
+     "paragraph_id": "p10",
+     "anchor": {
+      "exact": "Timms review",
+      "prefix": "ther big reviews, including the ",
+      "suffix": " into disability benefits, as we",
+      "start": 2364,
+      "end": 2376
+     },
+     "type": "context",
+     "label": "Timms review",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.29
+    },
+    {
+     "id": "d15",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "Neet",
+      "prefix": "cation, employment or training (",
+      "suffix": ") to almost 1 million at the top",
+      "start": 2592,
+      "end": 2596
+     },
+     "type": "term",
+     "label": "NEET",
+     "target_id": null,
+     "salience": 0.9,
+     "explained_in_text": true,
+     "zipf": 2.62
+    },
+    {
+     "id": "d16",
+     "paragraph_id": "p11",
+     "anchor": {
+      "exact": "technical education",
+      "prefix": "ding sweeping changes to retool ",
+      "suffix": " and apprenticeships.",
+      "start": 2691,
+      "end": 2710
+     },
+     "type": "concept",
+     "label": "Technical education",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.64
+    },
+    {
+     "id": "d17",
+     "paragraph_id": "p12",
+     "anchor": {
+      "exact": "Neet",
+      "prefix": "apprenticeships were previously ",
+      "suffix": ".",
+      "start": 2808,
+      "end": 2812
+     },
+     "type": "term",
+     "label": "NEET",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 2.62
+    },
+    {
+     "id": "d18",
+     "paragraph_id": "p14",
+     "anchor": {
+      "exact": "further education colleges",
+      "prefix": "Delivered mainly through ",
+      "suffix": ", it would combine English and m",
+      "start": 3109,
+      "end": 3135
+     },
+     "type": "concept",
+     "label": "Further education college",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 4.18
+    },
+    {
+     "id": "d19",
+     "paragraph_id": "p14",
+     "anchor": {
+      "exact": "pre-vocational pathway",
+      "prefix": " would be similar to a one-year ",
+      "suffix": " in Austria that is designed to ",
+      "start": 3282,
+      "end": 3304
+     },
+     "type": "concept",
+     "label": "Pre-vocational pathway",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 3.39
+    },
+    {
+     "id": "d20",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "Neet",
+      "prefix": "Other countries with much lower ",
+      "suffix": " rates than the UK have placed m",
+      "start": 3428,
+      "end": 3432
+     },
+     "type": "term",
+     "label": "NEET",
+     "target_id": null,
+     "salience": 0.7,
+     "explained_in_text": false,
+     "zipf": 2.62
+    },
+    {
+     "id": "d21",
+     "paragraph_id": "p15",
+     "anchor": {
+      "exact": "vocational routes",
+      "prefix": "placed much greater emphasis on ",
+      "suffix": ", including the Netherlands and ",
+      "start": 3488,
+      "end": 3505
+     },
+     "type": "concept",
+     "label": "Vocational education",
+     "target_id": null,
+     "salience": 0.8,
+     "explained_in_text": false,
+     "zipf": 3.54
+    },
+    {
+     "id": "d22",
+     "paragraph_id": "p16",
+     "anchor": {
+      "exact": "regional mayors",
+      "prefix": "ng, in a programme delivered by ",
+      "suffix": ", across two years, to double th",
+      "start": 3792,
+      "end": 3807
+     },
+     "type": "concept",
+     "label": "Regional mayor",
+     "target_id": null,
+     "salience": 0.6,
+     "explained_in_text": false,
+     "zipf": 3.39
+    }
+   ]
+  }
+ ]
+}

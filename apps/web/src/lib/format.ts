@@ -4,8 +4,7 @@ const SOURCE_NAMES: Record<string, string> = {
   "Wikimedia Foundation, Inc.": "Wikipedia",
 };
 
-export const DOMAINS = ["economics", "finance", "business", "policy"] as const;
-export type Domain = (typeof DOMAINS)[number];
+export { DOMAINS, type Domain } from "./taxonomy";
 
 export function sourceName(site: string): string {
   return SOURCE_NAMES[site] ?? (site || "Unknown source");

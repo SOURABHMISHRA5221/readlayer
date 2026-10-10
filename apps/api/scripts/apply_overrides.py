@@ -27,8 +27,11 @@ from app.graph.overrides import (
     Overrides,
     Split,
     add_concepts,
+    patch_adds,
+    patch_remove_aliases,
     patch_renames,
     patch_split_sources,
+    pending_adds,
 )
 from app.ingest.models import ContentDoc
 from app.log import configure_logging
@@ -140,6 +143,18 @@ async def relabel_embeddings(
     )
 
 
+async def apply_adds(
+    file: ConceptGraphFile, overrides: Overrides, cache: BuildCache
+) -> tuple[ConceptGraphFile, list[Concept]]:
+    """Hand-written `add` concepts not in the graph yet; only their label embeddings are new."""
+    adds = pending_adds(file, overrides)
+    if not adds:
+        return file, []
+    vecs = await cache.embed([a.label for a in adds], "SEMANTIC_SIMILARITY")
+    vectors = {a.label: list(v) for a, v in zip(adds, vecs, strict=True)}
+    return patch_adds(file, adds, vectors, lambda s: zipf_frequency(s, "en"), unique_id)
+
+
 def break_cycles(file: ConceptGraphFile) -> tuple[ConceptGraphFile, list[tuple[str, str]]]:
     edges = {c.id: [build.Prereq(p, 1.0) for p in c.prerequisites] for c in file.concepts}
     clean, removed = build.break_cycles(edges, {c.id: c.base_difficulty for c in file.concepts})
@@ -178,6 +193,9 @@ async def main(args: argparse.Namespace) -> int:
     file, todo = patch_split_sources(file, overrides)
     added = [await new_concept(s, file, docs, cache, ledger) for s, _ in todo]
     file = add_concepts(file, added)
+    file = patch_remove_aliases(file, overrides)
+    file, hand_added = await apply_adds(file, overrides, cache)
+    added += hand_added
     file, removed = break_cycles(file)
     CONCEPTS_FILE.write_text(file.model_dump_json(), encoding="utf-8")
 
@@ -185,6 +203,11 @@ async def main(args: argparse.Namespace) -> int:
     changed_ids = set(moved) | {src for _, src in todo if src}
     keys = {build.normalize_label(r.from_) for r in overrides.rename}
     keys |= {k for s in overrides.split for k in s.keys}
+    stripped = {build.normalize_label(a) for r in overrides.remove_alias for a in r.aliases}
+    keys |= stripped
+    keys |= {build.normalize_label(x) for a in overrides.add for x in [a.label, *a.aliases]}
+    patched = {build.normalize_label(r.label) for r in overrides.remove_alias}
+    changed_ids |= {c.id for c in file.concepts if build.normalize_label(c.label) in patched}
     targets = affected_docs(docs, changed_ids, keys)
     old = {doc.content_id: {d.id: d.target_id for d in doc.demands} for doc in targets}
     vecs = await label_vectors(targets, cache)

@@ -179,5 +179,7 @@
 .btn--link-danger { color: var(--danger); }
 .welcome__confirm { display: flex; flex-wrap: wrap; gap: var(--s2); align-items: center; font: 400 var(--text-ui) var(--font-ui); }
 .welcome__confirm .btn { min-height: 44px; }
-.btn--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--hairline)); }
+/* Outlined here; account.css's global .btn--danger is filled, so reset its background
+   (otherwise the label is danger-on-danger and invisible). */
+.btn--danger { color: var(--danger); background: transparent; border-color: color-mix(in srgb, var(--danger) 40%, var(--hairline)); }
 .welcome__bar .wordmark { display: inline-flex; align-items: center; min-height: 44px; }

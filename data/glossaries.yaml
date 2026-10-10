@@ -1,0 +1,53 @@
+# Wikipedia glossaries used to seed the taxonomy domains (M2.2, decision 34). Fetched through
+# safe_fetch only; entries are parsed deterministically (app/graph/glossary.py); definitions are
+# written by concept_define, never copied. `domain` is a hint; concept_define picks the final
+# taxonomy domain. Entry counts in comments were probed on 2026-10-10.
+technology:
+  - Glossary_of_computer_science          # 301
+  - Glossary_of_artificial_intelligence   # 397
+  - Glossary_of_computer_hardware_terms   # 150
+  - Glossary_of_video_game_terms          # 750
+science:
+  - Glossary_of_biology                   # 397
+  - Glossary_of_chemistry_terms           # 699
+  - Glossary_of_physics                   # 653
+  - Glossary_of_astronomy                 # 460
+  - Glossary_of_genetics_and_evolutionary_biology  # 492
+health:
+  - Glossary_of_medicine                  # 334
+  - Glossary_of_diabetes                  # 382
+  - Glossary_of_neuroscience              # 516
+sports:
+  - Glossary_of_cricket_terms             # 730
+  - Glossary_of_association_football_terms
+  - Glossary_of_American_football         # 371
+  - Glossary_of_basketball_terms          # 272
+  - Glossary_of_tennis_terms              # 375
+environment:
+  - Glossary_of_environmental_science     # 352
+  - Glossary_of_climate_change            # 169
+  - Glossary_of_ecology                   # 345
+politics:
+  - Glossary_of_American_politics         # 104
+  - Glossary_of_international_relations_terms
+  - Glossary_of_European_Union_concepts,_acronyms,_and_jargon
+law:
+  - Glossary_of_law                       # 20
+  - Glossary_of_patent_law_terms          # heading layout
+  - Glossary_of_land_law                  # 13
+culture:
+  - Glossary_of_literary_terms            # 762
+  - Glossary_of_music_terminology         # 717
+  - Glossary_of_architecture              # 279
+  - Glossary_of_journalism                # 227
+  - Glossary_of_philosophy                # 346
+education:
+  - Glossary_of_education_terms_(A–C)
+  - Glossary_of_education_terms_(D–F)
+  - Glossary_of_education_terms_(G–L)
+  - Glossary_of_education_terms_(M–O)
+  - Glossary_of_education_terms_(P–R)
+  - Glossary_of_education_terms_(S)
+  - Glossary_of_education_terms_(T–Z)
+economics:
+  - Glossary_of_economics                 # 1051; common terms the business corpus missed

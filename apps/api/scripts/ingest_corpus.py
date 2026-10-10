@@ -48,6 +48,7 @@ EST_TOKENS_IN, EST_TOKENS_OUT = 4000, 2000  # per build call, generous
 class CorpusEntry:
     url: str
     source: str
+    domain: str = ""  # held-out list only (M2.2): the taxonomy domain, fixed before measuring
 
 
 @dataclass(frozen=True)
@@ -72,11 +73,11 @@ def parse_corpus(lines: Iterable[str]) -> list[CorpusEntry]:
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
-        url, _, source = line.partition("\t")
+        url, source, domain = (line.split("\t") + ["", ""])[:3]
         if url in seen:
             continue
         seen.add(url)
-        entries.append(CorpusEntry(url.strip(), source.strip() or "unknown"))
+        entries.append(CorpusEntry(url.strip(), source.strip() or "unknown", domain.strip()))
     return entries
 
 

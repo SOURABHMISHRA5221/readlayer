@@ -31,6 +31,9 @@ class Demand(BaseModel):
     salience: float = Field(ge=0, le=1)
     explained_in_text: bool
     zipf: float
+    # True when target_id is a concept grown from this very article (M2.2): evals keep these out
+    # of the frozen-graph headline (decision 34).
+    grown: bool = False
 
 
 class StoredParagraph(BaseModel):
@@ -96,6 +99,8 @@ class PendingDoc(BaseModel):
     published: str | None = None
     image: str | None = None
     paragraphs: list[PendingParagraph]
+    # Concept-growth slots reserved for this article in phase 1 (M2.2); no uid is stored.
+    grow_slots: int = Field(default=0, ge=0)
     # Analyses that ran and failed (not budget refusals or a busy lease); capped.
     attempts: int = 0
     lease_until: datetime | None = None

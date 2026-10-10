@@ -1,0 +1,3558 @@
+{
+ "meta": {
+  "label": "seeded-growth-v2",
+  "time": "2026-10-10T13:46:57+00:00",
+  "graph": "2026-10-10-seeded",
+  "graph_sha256": "0cc0554780aec275",
+  "concepts": 5201,
+  "link_confirm": "link_confirm-v3",
+  "link_threshold": 0.865,
+  "cost_usd": 0.1523,
+  "fallbacks": 0
+ },
+ "rows": {
+  "business (total)": {
+   "alias": 111,
+   "unlinked": 67,
+   "confirmed": 8
+  },
+  "non-business (total)": {
+   "unlinked": 135,
+   "alias": 17,
+   "confirmed": 4
+  },
+  "new 15 (untuned)": {
+   "unlinked": 135,
+   "alias": 17,
+   "confirmed": 4
+  },
+  "all 30": {
+   "alias": 128,
+   "unlinked": 202,
+   "confirmed": 12
+  },
+  "  business": {
+   "unlinked": 20,
+   "alias": 15,
+   "confirmed": 2
+  },
+  "  culture": {
+   "unlinked": 6
+  },
+  "  education": {
+   "unlinked": 8,
+   "alias": 5,
+   "confirmed": 1
+  },
+  "  environment": {
+   "unlinked": 18,
+   "confirmed": 3,
+   "alias": 1
+  },
+  "  finance": {
+   "alias": 72,
+   "unlinked": 28,
+   "confirmed": 3
+  },
+  "  health": {
+   "unlinked": 19,
+   "alias": 3
+  },
+  "  law": {
+   "unlinked": 14,
+   "alias": 2
+  },
+  "  policy": {
+   "alias": 24,
+   "confirmed": 3,
+   "unlinked": 19
+  },
+  "  politics": {
+   "unlinked": 25,
+   "alias": 3
+  },
+  "  science": {
+   "unlinked": 29,
+   "alias": 2
+  },
+  "  sports": {
+   "unlinked": 4,
+   "alias": 1
+  },
+  "  technology": {
+   "unlinked": 12
+  }
+ },
+ "after_growth_rows": {
+  "business (total)": {
+   "alias": 111,
+   "unlinked": 21,
+   "confirmed": 9,
+   "grown": 45
+  },
+  "non-business (total)": {
+   "unlinked": 53,
+   "confirmed": 6,
+   "grown": 80,
+   "alias": 17
+  },
+  "new 15 (untuned)": {
+   "unlinked": 53,
+   "confirmed": 6,
+   "grown": 80,
+   "alias": 17
+  },
+  "all 30": {
+   "alias": 128,
+   "unlinked": 74,
+   "confirmed": 15,
+   "grown": 125
+  },
+  "  business": {
+   "unlinked": 2,
+   "alias": 15,
+   "confirmed": 2,
+   "grown": 18
+  },
+  "  culture": {
+   "unlinked": 1,
+   "confirmed": 0,
+   "grown": 5
+  },
+  "  education": {
+   "unlinked": 4,
+   "alias": 5,
+   "confirmed": 1,
+   "grown": 4
+  },
+  "  environment": {
+   "unlinked": 6,
+   "confirmed": 3,
+   "grown": 12,
+   "alias": 1
+  },
+  "  finance": {
+   "alias": 72,
+   "unlinked": 11,
+   "confirmed": 4,
+   "grown": 16
+  },
+  "  health": {
+   "unlinked": 6,
+   "confirmed": 2,
+   "grown": 11,
+   "alias": 3
+  },
+  "  law": {
+   "unlinked": 8,
+   "alias": 2,
+   "confirmed": 0,
+   "grown": 6
+  },
+  "  policy": {
+   "alias": 24,
+   "unlinked": 8,
+   "confirmed": 3,
+   "grown": 11
+  },
+  "  politics": {
+   "unlinked": 12,
+   "confirmed": 0,
+   "grown": 13,
+   "alias": 3
+  },
+  "  science": {
+   "unlinked": 14,
+   "alias": 2,
+   "confirmed": 0,
+   "grown": 15
+  },
+  "  sports": {
+   "unlinked": 0,
+   "confirmed": 0,
+   "grown": 4,
+   "alias": 1
+  },
+  "  technology": {
+   "unlinked": 2,
+   "confirmed": 0,
+   "grown": 10
+  }
+ },
+ "per_doc": [
+  {
+   "content_id": "4aa61bed4c097570d2a8d4af69883e96",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "alias": 3
+   },
+   "after_growth": {
+    "alias": 3,
+    "unlinked": 0,
+    "confirmed": 0,
+    "grown": 0
+   }
+  },
+  {
+   "content_id": "e07f941d22b1227c9766f03f7cd2ab1a",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 6,
+    "unlinked": 2
+   },
+   "after_growth": {
+    "alias": 6,
+    "unlinked": 1,
+    "confirmed": 0,
+    "grown": 1
+   }
+  },
+  {
+   "content_id": "c4a4eb899a77d85dba3614aaefc92849",
+   "domain": "business",
+   "group": "old",
+   "counts": {
+    "unlinked": 6,
+    "alias": 2,
+    "confirmed": 1
+   },
+   "after_growth": {
+    "unlinked": 0,
+    "alias": 2,
+    "confirmed": 1,
+    "grown": 6
+   }
+  },
+  {
+   "content_id": "8087b2858b36a43f9767df292f5ddac8",
+   "domain": "business",
+   "group": "old",
+   "counts": {
+    "alias": 7,
+    "unlinked": 6,
+    "confirmed": 1
+   },
+   "after_growth": {
+    "alias": 7,
+    "unlinked": 0,
+    "confirmed": 1,
+    "grown": 6
+   }
+  },
+  {
+   "content_id": "7ae03f5e6d53599efb75ad57263c5477",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 17,
+    "confirmed": 1,
+    "unlinked": 4
+   },
+   "after_growth": {
+    "alias": 17,
+    "confirmed": 1,
+    "unlinked": 0,
+    "grown": 4
+   }
+  },
+  {
+   "content_id": "2da08777e772a4a732d536d15dedaf23",
+   "domain": "business",
+   "group": "old",
+   "counts": {
+    "unlinked": 4,
+    "alias": 2
+   },
+   "after_growth": {
+    "unlinked": 0,
+    "alias": 2,
+    "confirmed": 0,
+    "grown": 4
+   }
+  },
+  {
+   "content_id": "1671c274dacad719da99ee58203b0a4f",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "alias": 1
+   },
+   "after_growth": {
+    "alias": 1,
+    "unlinked": 0,
+    "confirmed": 0,
+    "grown": 0
+   }
+  },
+  {
+   "content_id": "08b2c0939ae758066a81489513efe236",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 15,
+    "unlinked": 8,
+    "confirmed": 1
+   },
+   "after_growth": {
+    "alias": 15,
+    "unlinked": 3,
+    "confirmed": 1,
+    "grown": 5
+   }
+  },
+  {
+   "content_id": "48c50380877e8e4ab18e958ee1a4fb93",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 18,
+    "unlinked": 14,
+    "confirmed": 1
+   },
+   "after_growth": {
+    "alias": 18,
+    "unlinked": 7,
+    "confirmed": 2,
+    "grown": 6
+   }
+  },
+  {
+   "content_id": "0a2e823d82efaeb060457cf574a07042",
+   "domain": "business",
+   "group": "old",
+   "counts": {},
+   "after_growth": {
+    "unlinked": 0,
+    "confirmed": 0,
+    "grown": 0
+   }
+  },
+  {
+   "content_id": "1c97d191d9bc1c57f4aa8d0462c95428",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "alias": 9,
+    "confirmed": 1,
+    "unlinked": 3
+   },
+   "after_growth": {
+    "alias": 9,
+    "confirmed": 1,
+    "unlinked": 0,
+    "grown": 3
+   }
+  },
+  {
+   "content_id": "fb49a499327e2da11974cd1c718282fe",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 16
+   },
+   "after_growth": {
+    "alias": 16,
+    "unlinked": 0,
+    "confirmed": 0,
+    "grown": 0
+   }
+  },
+  {
+   "content_id": "c6e8eee6c2b2026f671b25971ffae5d8",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "unlinked": 12,
+    "confirmed": 1,
+    "alias": 5
+   },
+   "after_growth": {
+    "unlinked": 7,
+    "confirmed": 1,
+    "alias": 5,
+    "grown": 5
+   }
+  },
+  {
+   "content_id": "353cc985ab6119b8a749907c4bc64abf",
+   "domain": "business",
+   "group": "old",
+   "counts": {
+    "alias": 4,
+    "unlinked": 4
+   },
+   "after_growth": {
+    "alias": 4,
+    "unlinked": 2,
+    "confirmed": 0,
+    "grown": 2
+   }
+  },
+  {
+   "content_id": "a9db9e1bc1c5f3a110e7426154ea82e8",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "alias": 6,
+    "unlinked": 4,
+    "confirmed": 1
+   },
+   "after_growth": {
+    "alias": 6,
+    "unlinked": 1,
+    "confirmed": 1,
+    "grown": 3
+   }
+  },
+  {
+   "content_id": "eee32b1054e9ad9babe03c9183149ee9",
+   "domain": "technology",
+   "group": "new",
+   "counts": {
+    "unlinked": 2
+   },
+   "after_growth": {
+    "unlinked": 1,
+    "confirmed": 0,
+    "grown": 1
+   }
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "domain": "technology",
+   "group": "new",
+   "counts": {
+    "unlinked": 10
+   },
+   "after_growth": {
+    "unlinked": 1,
+    "confirmed": 0,
+    "grown": 9
+   }
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain": "science",
+   "group": "new",
+   "counts": {
+    "unlinked": 17,
+    "alias": 2
+   },
+   "after_growth": {
+    "unlinked": 10,
+    "alias": 2,
+    "confirmed": 0,
+    "grown": 7
+   }
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain": "science",
+   "group": "new",
+   "counts": {
+    "unlinked": 12
+   },
+   "after_growth": {
+    "unlinked": 4,
+    "confirmed": 0,
+    "grown": 8
+   }
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain": "health",
+   "group": "new",
+   "counts": {
+    "unlinked": 10
+   },
+   "after_growth": {
+    "unlinked": 3,
+    "confirmed": 0,
+    "grown": 7
+   }
+  },
+  {
+   "content_id": "319771e0bb4536ac6a313a04ff5252a0",
+   "domain": "health",
+   "group": "new",
+   "counts": {
+    "unlinked": 9,
+    "alias": 3
+   },
+   "after_growth": {
+    "unlinked": 3,
+    "alias": 3,
+    "confirmed": 2,
+    "grown": 4
+   }
+  },
+  {
+   "content_id": "abbac75c17a8ecca8852c3e6c47bfce7",
+   "domain": "sports",
+   "group": "new",
+   "counts": {
+    "unlinked": 1
+   },
+   "after_growth": {
+    "unlinked": 0,
+    "confirmed": 0,
+    "grown": 1
+   }
+  },
+  {
+   "content_id": "9f38ed85cf54dd9700675f19d7a057ef",
+   "domain": "sports",
+   "group": "new",
+   "counts": {
+    "alias": 1,
+    "unlinked": 3
+   },
+   "after_growth": {
+    "alias": 1,
+    "unlinked": 0,
+    "confirmed": 0,
+    "grown": 3
+   }
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "domain": "environment",
+   "group": "new",
+   "counts": {
+    "unlinked": 8
+   },
+   "after_growth": {
+    "unlinked": 1,
+    "confirmed": 0,
+    "grown": 7
+   }
+  },
+  {
+   "content_id": "a25f287fea187a92c602c553ce71aac0",
+   "domain": "environment",
+   "group": "new",
+   "counts": {
+    "unlinked": 10,
+    "confirmed": 3,
+    "alias": 1
+   },
+   "after_growth": {
+    "unlinked": 5,
+    "confirmed": 3,
+    "alias": 1,
+    "grown": 5
+   }
+  },
+  {
+   "content_id": "f085a98d9dd3b103ccccdef91f327077",
+   "domain": "politics",
+   "group": "new",
+   "counts": {
+    "unlinked": 20
+   },
+   "after_growth": {
+    "unlinked": 10,
+    "confirmed": 0,
+    "grown": 10
+   }
+  },
+  {
+   "content_id": "9f0e65eb9d89a918a531993b798e630d",
+   "domain": "politics",
+   "group": "new",
+   "counts": {
+    "unlinked": 5,
+    "alias": 3
+   },
+   "after_growth": {
+    "unlinked": 2,
+    "alias": 3,
+    "confirmed": 0,
+    "grown": 3
+   }
+  },
+  {
+   "content_id": "facb6846ba7cf4f921a529ebaea671bd",
+   "domain": "law",
+   "group": "new",
+   "counts": {
+    "unlinked": 14,
+    "alias": 2
+   },
+   "after_growth": {
+    "unlinked": 8,
+    "alias": 2,
+    "confirmed": 0,
+    "grown": 6
+   }
+  },
+  {
+   "content_id": "0c69cbb6dbb4d1d6e5a95b86d9f6d4fb",
+   "domain": "culture",
+   "group": "new",
+   "counts": {
+    "unlinked": 6
+   },
+   "after_growth": {
+    "unlinked": 1,
+    "confirmed": 0,
+    "grown": 5
+   }
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain": "education",
+   "group": "new",
+   "counts": {
+    "unlinked": 8,
+    "alias": 5,
+    "confirmed": 1
+   },
+   "after_growth": {
+    "unlinked": 4,
+    "alias": 5,
+    "confirmed": 1,
+    "grown": 4
+   }
+  }
+ ],
+ "grown": [
+  {
+   "content_id": "e07f941d22b1227c9766f03f7cd2ab1a",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_relief_rally",
+    "label": "Relief rally",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "A temporary recovery in prices of securities or a market after a prolonged period of decline or selling pressure.",
+    "base_difficulty": -0.032,
+    "prerequisites": [
+     "c_market_rebound",
+     "c_share_price"
+    ],
+    "doc_freq": 0,
+    "kind": "market_event",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Market rebound",
+    "Share price"
+   ],
+   "trigger": "relief rally",
+   "sentence": "Expecting a relief rally after the successive sell-off in the Indian stock market, Shrikant Chouhan, Head Equity Research at Kotak Securities, said, \u201cThe market consistently faced selling pressure at higher levels during the week."
+  },
+  {
+   "content_id": "c4a4eb899a77d85dba3614aaefc92849",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_assisted_living",
+    "label": "Assisted living",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "society",
+    "definition": "A residential housing option for elderly individuals who need help with everyday activities such as medication management, bathing, or meals.",
+    "base_difficulty": -0.768,
+    "prerequisites": [
+     "c_accommodation",
+     "c_health_care"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Accommodation",
+    "Health care"
+   ],
+   "trigger": "assisted living",
+   "sentence": "Organized senior living supply has grown at 14.2% annually since 2024, yet penetration remains at just 1.5%, while assisted living accounts for less than 10% of organized stock, as per a report released by The Association of Senior Living India in September."
+  },
+  {
+   "content_id": "c4a4eb899a77d85dba3614aaefc92849",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_senior_living",
+    "label": "Senior living",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "society",
+    "definition": "Housing and communities specifically designed to meet the needs and lifestyle of older adults, often offering various levels of care and social activities.",
+    "base_difficulty": -0.942,
+    "prerequisites": [
+     "c_accommodation"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Accommodation"
+   ],
+   "trigger": "retirement living segment",
+   "sentence": "Bengaluru: Real estate major DLF Ltd on Sunday said it has fully sold out its project named The Aureva in Gurugram's Sector 63, marking its entry into the retirement living segment."
+  },
+  {
+   "content_id": "c4a4eb899a77d85dba3614aaefc92849",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_expression_of_interest",
+    "label": "Expression of interest",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "business",
+    "definition": "A formal statement or document submitted by an interested party to indicate their intent to participate in a business transaction, project, or bidding process.",
+    "base_difficulty": -0.115,
+    "prerequisites": [
+     "c_participation"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Participation"
+   ],
+   "trigger": "EOIs",
+   "sentence": "We got 406 confirmed EOIs (expressions of interest) within the first 48 hours."
+  },
+  {
+   "content_id": "c4a4eb899a77d85dba3614aaefc92849",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_first_quarter",
+    "label": "First quarter",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "The first three-month period of a company's financial or calendar year, frequently used for reporting quarterly earnings and business performance.",
+    "base_difficulty": -0.925,
+    "prerequisites": [
+     "c_financial_quarter"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Financial quarter"
+   ],
+   "trigger": "Q1",
+   "sentence": "Q1 revenue from operations fell 52.8% to \u20b91,280.34 crore from \u20b92,716.70 crore a year earlier, while net profit rose 3.9% to \u20b9794 crore."
+  },
+  {
+   "content_id": "c4a4eb899a77d85dba3614aaefc92849",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_sales_bookings",
+    "label": "Sales bookings",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "business",
+    "definition": "The total value of residential or commercial properties agreed to be sold by a developer during a specific period, often before construction is fully completed.",
+    "base_difficulty": 0.17,
+    "prerequisites": [
+     "c_revenues",
+     "c_order_book"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Revenues",
+    "Order book"
+   ],
+   "trigger": "sales bookings",
+   "sentence": "DLF's new sales bookings in the April-June quarter, in the absence of fresh project launches, stood at \u20b9657 crore, down 94.25% from \u20b911,425 crore in the corresponding year-ago quarter."
+  },
+  {
+   "content_id": "8087b2858b36a43f9767df292f5ddac8",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_preferential_trade_access",
+    "label": "Preferential trade access",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "economics",
+    "definition": "Special trade conditions or reduced tariffs granted by one nation to another to facilitate easier commerce of specific goods or resources.",
+    "base_difficulty": 0.2,
+    "prerequisites": [
+     "c_international_trade"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "International trade"
+   ],
+   "trigger": "Preferential access",
+   "sentence": "Preferential access is important for India as it seeks to diversify supplies of minerals needed for electronics manufacturing, electric vehicles, renewable energy and other industrial applications."
+  },
+  {
+   "content_id": "8087b2858b36a43f9767df292f5ddac8",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_preferential_trade_agreement",
+    "label": "Preferential trade agreement",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "economics",
+    "definition": "A pact between countries that lowers or eliminates tariffs on certain imported products to encourage bilateral commerce.",
+    "base_difficulty": 0.2,
+    "prerequisites": [
+     "c_international_trade",
+     "c_preferential_tariffs"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "International trade",
+    "Preferential tariffs"
+   ],
+   "trigger": "preferential trade agreement (PTA)",
+   "sentence": "India and Chile signed a preferential trade agreement (PTA) in 2006, which was expanded in 2017."
+  },
+  {
+   "content_id": "8087b2858b36a43f9767df292f5ddac8",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_copper_concentrate",
+    "label": "Copper concentrate",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "business",
+    "definition": "An intermediate product obtained by refining copper ore, containing a high percentage of copper and intended for further smelting.",
+    "base_difficulty": 0.785,
+    "prerequisites": [
+     "c_feedstock",
+     "c_commodity"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Feedstock",
+    "Commodity"
+   ],
+   "trigger": "copper concentrate",
+   "sentence": "Chile\u2019s exports to India comprise mainly bulk minerals and ores, including copper concentrate, molybdenum, iodine and gold, as well as inorganic chemicals and agricultural products such as fruits."
+  },
+  {
+   "content_id": "8087b2858b36a43f9767df292f5ddac8",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_trade_diversification",
+    "label": "Trade diversification",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "economics",
+    "definition": "A business strategy aimed at expanding import and export channels across different markets to reduce economic vulnerability.",
+    "base_difficulty": -0.552,
+    "prerequisites": [
+     "c_diversification",
+     "c_international_trade"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Diversification",
+    "International trade"
+   ],
+   "trigger": "trade diversification strategy",
+   "sentence": "Striking trade deals with Latin American countries is an important part of India\u2019s trade diversification strategy, with the urgency rising as US tariffs hit exports."
+  },
+  {
+   "content_id": "7ae03f5e6d53599efb75ad57263c5477",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_self_listing",
+    "label": "Self-listing",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "Self-listing refers to the practice where a stock exchange lists its own shares on its own platform for public trading.",
+    "base_difficulty": -0.067,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "self-listing",
+   "sentence": "Injeti: Any decision on self-listing must be guided by market integrity and regulatory architecture."
+  },
+  {
+   "content_id": "7ae03f5e6d53599efb75ad57263c5477",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_electronic_gold_receipt",
+    "label": "Electronic Gold Receipt",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "An Electronic Gold Receipt is a financial instrument representing physical gold in dematerialized form, allowing investors to trade gold securely on stock exchanges.",
+    "base_difficulty": 0.047,
+    "prerequisites": [
+     "c_depository_receipt",
+     "c_financial_instrument"
+    ],
+    "doc_freq": 0,
+    "kind": "instrument",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Depository receipt",
+    "Financial instrument"
+   ],
+   "trigger": "Electronic Gold Receipts",
+   "sentence": "Our effort is to broaden the revenue base further through products such as electricity futures, bond-index futures, Electronic Gold Receipts and expanded market-data and technology offerings."
+  },
+  {
+   "content_id": "2da08777e772a4a732d536d15dedaf23",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_core_catcher",
+    "label": "core catcher",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "A protective device installed at the bottom of a nuclear reactor pressure vessel to contain and cool molten core material in the event of a severe accident.",
+    "base_difficulty": 0.873,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "core catcher",
+   "sentence": "Erection of core catcher is completed."
+  },
+  {
+   "content_id": "2da08777e772a4a732d536d15dedaf23",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_nuclear_fuel_cycle",
+    "label": "nuclear fuel cycle",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "The progression of nuclear fuel through various stages, including the mining, processing, fabrication, use in a reactor, and eventual reprocessing or disposal.",
+    "base_difficulty": -0.05,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "fuel cycle",
+   "sentence": "\u201cSince 2022, we have been supplying India with advanced nuclear fuel for Rosatom designed VVER-1000 reactors, enabling both operating units of the Kudankulam NPP to switch to an extended 18-month fuel cycle."
+  },
+  {
+   "content_id": "2da08777e772a4a732d536d15dedaf23",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_vver_1000_reactor",
+    "label": "VVER-1000 reactor",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "A specific design of a pressurized water nuclear reactor developed in Russia, characterized by its horizontal steam generators and high power output.",
+    "base_difficulty": 1.25,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "VVER-1000",
+   "sentence": "\u201cSince 2022, we have been supplying India with advanced nuclear fuel for Rosatom designed VVER-1000 reactors, enabling both operating units of the Kudankulam NPP to switch to an extended 18-month fuel cycle."
+  },
+  {
+   "content_id": "2da08777e772a4a732d536d15dedaf23",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_physical_start_up",
+    "label": "physical start-up",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "The initial phase of testing a newly constructed nuclear reactor by loading nuclear fuel and achieving a sustained, controlled self-sustaining chain reaction.",
+    "base_difficulty": 0.542,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "physical start-up",
+   "sentence": "Kirill Komarov, the first deputy director general for corporate development and international business at Rosatom, told businessline: \u201cUnit number three is very close to physical start-up."
+  },
+  {
+   "content_id": "08b2c0939ae758066a81489513efe236",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_52_week_high_low",
+    "label": "52-week high/low",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "The highest and lowest prices at which a security has traded over the past year. Investors use these figures to gauge a stock's current price volatility and momentum.",
+    "base_difficulty": -0.89,
+    "prerequisites": [
+     "c_share_price",
+     "c_price_range"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Share price",
+    "Price range"
+   ],
+   "trigger": "52-week highs",
+   "sentence": "Among the ones which hit their 52-week highs on NSE included Welspun India, Sterlite Tech, Syrma SGS Technologies and Cupid."
+  },
+  {
+   "content_id": "08b2c0939ae758066a81489513efe236",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_lumpsum_investing",
+    "label": "Lumpsum investing",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "A method of investing a large sum of money into an asset all at once, rather than spreading the contributions out over time.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_portfolio_investment",
+     "c_assets"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Portfolio investment",
+    "Assets"
+   ],
+   "trigger": "lumpsum investments",
+   "sentence": "Also read | 73% equity mutual funds lost money on lumpsum investments over last 2 years."
+  },
+  {
+   "content_id": "08b2c0939ae758066a81489513efe236",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_stoxx_europe_600",
+    "label": "STOXX Europe 600",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "A major stock index tracking 600 large, mid, and small-capitalization companies across European countries. It serves as a benchmark for the region's overall equity market performance.",
+    "base_difficulty": 0.5,
+    "prerequisites": [
+     "c_share_price"
+    ],
+    "doc_freq": 0,
+    "kind": "index",
+    "jurisdiction": "EU"
+   },
+   "prerequisite_labels": [
+    "Share price"
+   ],
+   "trigger": "STOXX 600",
+   "sentence": "The pan-European STOXX 600 closed 0.8% higher after touching a more than three-month low on Thursday."
+  },
+  {
+   "content_id": "08b2c0939ae758066a81489513efe236",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_trading_turnover",
+    "label": "Trading turnover",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "The total monetary value of all shares or contracts bought and sold in a security or market during a given trading period.",
+    "base_difficulty": 0.07,
+    "prerequisites": [
+     "c_trading_volumes",
+     "c_share_price"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Trading volumes",
+    "Share price"
+   ],
+   "trigger": "trading turnovers",
+   "sentence": "Higher activity in a counter in value terms can help identify the counters with the highest trading turnovers in the day."
+  },
+  {
+   "content_id": "48c50380877e8e4ab18e958ee1a4fb93",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_structural_downgrade",
+    "label": "Structural downgrade",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "A permanent downward revision in the long-term profitability or financial outlook of an industry or company.",
+    "base_difficulty": 0.205,
+    "prerequisites": [
+     "c_credit_downgrade",
+     "c_rate_of_return",
+     "c_assets"
+    ],
+    "doc_freq": 0,
+    "kind": "market_event",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Credit downgrade",
+    "Rate of return",
+    "Assets"
+   ],
+   "trigger": "structural downgrade",
+   "sentence": "Is this a genuine valuation reset, or does it reflect a structural downgrade in the sector\u2019s earnings potential?"
+  },
+  {
+   "content_id": "48c50380877e8e4ab18e958ee1a4fb93",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_budget_reallocation",
+    "label": "Budget reallocation",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "business",
+    "definition": "The process of shifting existing financial resources from one category of operational or capital expenditure to another.",
+    "base_difficulty": -0.325,
+    "prerequisites": [
+     "c_budget",
+     "c_resource_allocation"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Budget",
+    "Resource allocation"
+   ],
+   "trigger": "reallocating",
+   "sentence": "Could AI-led spending become incremental to traditional IT budgets, or will enterprises largely fund it by reallocating spending from existing outsourcing and maintenance contracts?"
+  },
+  {
+   "content_id": "48c50380877e8e4ab18e958ee1a4fb93",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_cloud_migration",
+    "label": "Cloud migration",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "The practice of moving digital business operations, data, and applications from on-premise physical servers to remote cloud-based infrastructure.",
+    "base_difficulty": -0.743,
+    "prerequisites": [
+     "c_cloud_computing",
+     "c_data_center",
+     "c_computer_network"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Cloud computing",
+    "Data center",
+    "Computer network"
+   ],
+   "trigger": "cloud migration",
+   "sentence": "Haria says the focus should now shift to companies that can adapt to AI and capture new demand in data engineering, cloud migration, legacy modernisation and AI integration."
+  },
+  {
+   "content_id": "48c50380877e8e4ab18e958ee1a4fb93",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_data_engineering",
+    "label": "Data engineering",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "The field of designing and building systems for collecting, storing, and analyzing large volumes of data for processing and business intelligence.",
+    "base_difficulty": -0.173,
+    "prerequisites": [
+     "c_computer_science",
+     "c_data_storage",
+     "c_software_development"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Computer science",
+    "Data storage",
+    "Software development"
+   ],
+   "trigger": "data engineering",
+   "sentence": "Haria says the focus should now shift to companies that can adapt to AI and capture new demand in data engineering, cloud migration, legacy modernisation and AI integration."
+  },
+  {
+   "content_id": "1c97d191d9bc1c57f4aa8d0462c95428",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_digital_identity",
+    "label": "Digital identity",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "An electronic form of identification that allows individuals to verify who they are online securely. It often uses biometric data, passwords, or encrypted tokens managed by government or private systems.",
+    "base_difficulty": -0.857,
+    "prerequisites": [
+     "c_computer_security"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Computer security"
+   ],
+   "trigger": "digital ID",
+   "sentence": "He identified \"putting digital ID on hold\" as an example of how he had already \"taken difficult decisions in this job in relation to reprioritising government spending\" and vowed to continue to \"take difficult decisions to make sure the economy remains on track\"."
+  },
+  {
+   "content_id": "1c97d191d9bc1c57f4aa8d0462c95428",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_fiscal_credibility",
+    "label": "Fiscal credibility",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "economics",
+    "definition": "The degree of trust that investors, credit rating agencies, and the public have in a government's ability to manage its public finances responsibly and sustainably.",
+    "base_difficulty": 0.068,
+    "prerequisites": [
+     "c_fiscal_policy",
+     "c_public_finances"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Fiscal policy",
+    "Public finances"
+   ],
+   "trigger": "fiscal credibility",
+   "sentence": "There are also those who fear the adverse political consequences of a Labour government seeking to go out of its way to demonstrate its fiscal credibility."
+  },
+  {
+   "content_id": "1c97d191d9bc1c57f4aa8d0462c95428",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_financial_market_confidence",
+    "label": "Financial market confidence",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "The level of trust and optimism that investors and traders have in the stability and reliability of financial markets. High confidence typically encourages investment, while low confidence can trigger capital flight and sell-offs.",
+    "base_difficulty": -0.113,
+    "prerequisites": [
+     "c_financial_markets",
+     "c_financial_stability"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Financial markets",
+    "Financial stability"
+   ],
+   "trigger": "soothe the markets",
+   "sentence": "Arguably this presents a more fundamental tension: are the kinds of policies needed to soothe the markets politically deliverable given Labour's electoral coalition and its need to shore up the 'progressive' vote?"
+  },
+  {
+   "content_id": "c6e8eee6c2b2026f671b25971ffae5d8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_dementia_tax",
+    "label": "Dementia tax",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "policy",
+    "definition": "A colloquial term for policy proposals requiring elderly individuals to fund more of their own long-term care costs from personal assets like property.",
+    "base_difficulty": 0.065,
+    "prerequisites": [
+     "c_tax_policy",
+     "c_property_tax"
+    ],
+    "doc_freq": 0,
+    "kind": "tax",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Tax policy",
+    "Property tax"
+   ],
+   "trigger": "dementia tax",
+   "sentence": "Frankly, having reported on that 2017 campaign, when May\u2019s plans were quickly dubbed a \u201cdementia tax\u201d (there already is one, for goodness sake), Burnham\u2019s hopes of achieving political consensus are high-minded but almost certainly hopeless."
+  },
+  {
+   "content_id": "c6e8eee6c2b2026f671b25971ffae5d8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_health_and_care_levy",
+    "label": "Health and care levy",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "policy",
+    "definition": "A dedicated public funding mechanism or tax surcharge intended to finance health services and social care systems.",
+    "base_difficulty": 0.042,
+    "prerequisites": [
+     "c_tax_surcharge",
+     "c_health_care"
+    ],
+    "doc_freq": 0,
+    "kind": "tax",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Tax surcharge",
+    "Health care"
+   ],
+   "trigger": "health and care levy",
+   "sentence": "While it seems to have been memory-holed by the political class, Boris Johnson was prepared to bust a Conservative manifesto promise in 2021 and introduce a \u00a312bn-a-year \u201chealth and care levy\u201d to \u201cfix social care\u201d."
+  },
+  {
+   "content_id": "c6e8eee6c2b2026f671b25971ffae5d8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_residential_social_care",
+    "label": "Residential social care",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "Accommodation and personal assistance provided in a dedicated facility for individuals who need help with daily living activities due to age, disability, or illness.",
+    "base_difficulty": -0.817,
+    "prerequisites": [
+     "c_health_care",
+     "c_accommodation"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Health care",
+    "Accommodation"
+   ],
+   "trigger": "residential social care",
+   "sentence": "In practice, personal care makes up a minority of the total cost of residential social care."
+  },
+  {
+   "content_id": "c6e8eee6c2b2026f671b25971ffae5d8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_social_care",
+    "label": "Social care",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A range of services and support provided to help elderly, disabled, or chronically ill people maintain their daily living and personal well-being.",
+    "base_difficulty": -1.045,
+    "prerequisites": [
+     "c_health_care",
+     "c_welfare"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Health care",
+    "Welfare"
+   ],
+   "trigger": "social care",
+   "sentence": "As one of many hundreds of thousands of people in the UK with a parent with Alzheimer\u2019s, the passage in Andy Burnham\u2019s speech about social care moved me to tears."
+  },
+  {
+   "content_id": "c6e8eee6c2b2026f671b25971ffae5d8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_social_insurance",
+    "label": "Social insurance",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "policy",
+    "definition": "A system where individuals pool financial contributions to share the risks and costs of specific life events, such as medical treatment or long-term care needs.",
+    "base_difficulty": -0.205,
+    "prerequisites": [
+     "c_health_insurance",
+     "c_social_safety_net"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Health insurance",
+    "Social safety net"
+   ],
+   "trigger": "social insurance",
+   "sentence": "So it was arresting to hear Burnham speak with clarity about his belief that personal care should be a question of \u201csocial insurance\u201d \u2013 sharing the risk across families."
+  },
+  {
+   "content_id": "353cc985ab6119b8a749907c4bc64abf",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_matcha",
+    "label": "Matcha",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "culture",
+    "definition": "A finely ground powder made from specially processed green tea leaves, traditionally whisked into hot water.",
+    "base_difficulty": -0.417,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "matcha",
+   "sentence": "Costa\u2019s main coffee shop arm has returned to an operating profit after revamping its high street outlets and broadening its menu with iced drinks, matcha and fresher pastries."
+  },
+  {
+   "content_id": "a9db9e1bc1c5f3a110e7426154ea82e8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_dormant_account",
+    "label": "Dormant account",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "A bank or financial account that has shown no activity or customer-initiated transactions for a prolonged period.",
+    "base_difficulty": -0.6,
+    "prerequisites": [
+     "c_financial_account",
+     "c_financial_transaction"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Financial account",
+    "Financial transaction"
+   ],
+   "trigger": "dormant accounts",
+   "sentence": "Those with pending transactions, dormant accounts, lockers or important standing instructions should contact the bank or visit the new branch to ensure that everything has been transferred correctly."
+  },
+  {
+   "content_id": "a9db9e1bc1c5f3a110e7426154ea82e8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_equated_monthly_instalment",
+    "label": "Equated Monthly Instalment",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "A fixed payment amount made by a borrower to a lender at a specified date every month to pay off a loan.",
+    "base_difficulty": -0.425,
+    "prerequisites": [
+     "c_principal",
+     "c_interest_rates",
+     "c_financial_transaction"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Principal",
+    "Interest rates",
+    "Financial transaction"
+   ],
+   "trigger": "EMIs",
+   "sentence": "Salary credits, pension payments, EMIs and investment-related transactions should be monitored to ensure they continue without any disruption."
+  },
+  {
+   "content_id": "a9db9e1bc1c5f3a110e7426154ea82e8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_standing_instruction",
+    "label": "Standing instruction",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "An instruction given by a bank customer to automatically transfer a fixed amount of money at regular intervals.",
+    "base_difficulty": -0.765,
+    "prerequisites": [
+     "c_financial_transaction",
+     "c_commercial_bank"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Financial transaction",
+    "Commercial bank"
+   ],
+   "trigger": "standing instructions",
+   "sentence": "This includes the new branch address, IFSC, cheque book and passbook requirements, as well as any standing instructions linked to the account."
+  },
+  {
+   "content_id": "eee32b1054e9ad9babe03c9183149ee9",
+   "domain_label": "technology",
+   "concept": {
+    "id": "c_rogue_ai",
+    "label": "Rogue AI",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "An artificial intelligence system that deviates from its intended programming, instructions, or ethical boundaries to act unpredictably or autonomously.",
+    "base_difficulty": 0.068,
+    "prerequisites": [
+     "c_ai",
+     "c_computer_program"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "AI",
+    "Computer program"
+   ],
+   "trigger": "went rogue",
+   "sentence": "An artificial intelligence (AI) agent, developed by Anthropic, went rogue and sent US police a fake tip about an unsolved murder earlier this year, authorities have revealed."
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "domain_label": "technology",
+   "concept": {
+    "id": "c_thermal_imaging",
+    "label": "Thermal imaging",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "A technique that uses infrared cameras to detect and visualize heat patterns emitted by objects and living beings.",
+    "base_difficulty": -0.67,
+    "prerequisites": [
+     "c_heat_transfer",
+     "c_physics"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Heat transfer",
+    "Physics"
+   ],
+   "trigger": "thermal image",
+   "sentence": "\"We might have something here,\" Pete says, as a white glow appears on the thermal image beneath a tree."
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "domain_label": "technology",
+   "concept": {
+    "id": "c_thermal_imaging_drone",
+    "label": "Thermal imaging drone",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "An unmanned aerial vehicle equipped with infrared sensors to detect heat sources and temperature variations from the air.",
+    "base_difficulty": 0.123,
+    "prerequisites": [
+     "c_drone"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Drone"
+   ],
+   "trigger": "thermal drone",
+   "sentence": "After a bumpy drive into the woodland, Pete launches a thermal drone into the early morning sky."
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "domain_label": "technology",
+   "concept": {
+    "id": "c_underground_wildfire_hot_spots",
+    "label": "Underground wildfire hot spots",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "Localized areas beneath the ground surface where smoldering fires continue to burn without visible flames.",
+    "base_difficulty": 0.182,
+    "prerequisites": [
+     "c_heat_transfer",
+     "c_soil"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Heat transfer",
+    "Soil"
+   ],
+   "trigger": "hot spots",
+   "sentence": "The dramatic flames have disappeared, but hot spots can continue to burn beneath the earth."
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "domain_label": "technology",
+   "concept": {
+    "id": "c_thermal_flight",
+    "label": "Thermal flight",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "An aerial mission conducted using thermal imaging equipment to detect heat signatures or monitor temperatures.",
+    "base_difficulty": 0.005,
+    "prerequisites": [
+     "c_drone",
+     "c_heat_transfer"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Drone",
+    "Heat transfer"
+   ],
+   "trigger": "thermal flight",
+   "sentence": "\"On the last thermal flight I did we found eight.\""
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "domain_label": "technology",
+   "concept": {
+    "id": "c_navigation_waypoints",
+    "label": "Navigation waypoints",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "Predefined geographical coordinates used to guide travel, mapping, or automated navigation along a specific route.",
+    "base_difficulty": -0.31,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "waypoints",
+   "sentence": "Using predetermined waypoints, photographs and video can be taken from the same positions month after month and year after year, allowing conservationists to build up a picture of how the landscape changes."
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_national_hurricane_center",
+    "label": "National Hurricane Center",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "science",
+    "definition": "A government agency responsible for tracking and forecasting tropical weather systems and issuing watches and warnings for the United States.",
+    "base_difficulty": -0.762,
+    "prerequisites": [
+     "c_tropical",
+     "c_atmosphere"
+    ],
+    "doc_freq": 0,
+    "kind": "institution",
+    "jurisdiction": "US"
+   },
+   "prerequisite_labels": [
+    "Tropical",
+    "Atmosphere"
+   ],
+   "trigger": "NHC",
+   "sentence": "Ahead of the storm, the National Hurricane Center (NHC) warned it was likely to bring \"life-threatening storm surge\" to the US Gulf Coast."
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_post_tropical_cyclone",
+    "label": "Post-tropical cyclone",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "science",
+    "definition": "A former tropical cyclone that has lost its tropical characteristics, such as a warm core, while still retaining heavy rains and strong winds.",
+    "base_difficulty": 0.145,
+    "prerequisites": [
+     "c_tropical"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Tropical"
+   ],
+   "trigger": "post-tropical cyclone",
+   "sentence": "Hurricane Isaias has been downgraded to a post-tropical cyclone the day after it made landfall along the northern Gulf Coast of Florida, bringing with it heavy rains and powerful winds."
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_saffir_simpson_scale",
+    "label": "Saffir-Simpson scale",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "science",
+    "definition": "A 1-to-5 rating system that estimates potential property damage and sustained wind speeds of a hurricane.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_tropical"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Tropical"
+   ],
+   "trigger": "category one hurricane",
+   "sentence": "Hurricane Simon is bearing down on the Pacific coast of Mexico as a category one hurricane."
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_emergency_declaration",
+    "label": "Emergency declaration",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "policy",
+    "definition": "An official executive action that unlocks federal funds and resources to assist state and local governments during a disaster or crisis.",
+    "base_difficulty": -0.752,
+    "prerequisites": [
+     "c_budget"
+    ],
+    "doc_freq": 0,
+    "kind": "policy",
+    "jurisdiction": "US"
+   },
+   "prerequisite_labels": [
+    "Budget"
+   ],
+   "trigger": "emergency declarations",
+   "sentence": "On Saturday, Homeland Security Secretary Markwayne Mullin said the US president had approved emergency declarations for the two states to \"ensure federal resources are available\" for support."
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_asbestos",
+    "label": "Asbestos",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "Asbestos is a group of naturally occurring silicate minerals known for their fibrous structure, heat resistance, and durability, formerly widely used in construction and manufacturing.",
+    "base_difficulty": -0.635,
+    "prerequisites": [
+     "c_fiber",
+     "c_material_properties"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Fiber",
+    "Material properties"
+   ],
+   "trigger": "asbestos",
+   "sentence": "For more than six years, asbestos has been washing up with the tide, turning one of Plymouth's handful of swimming spots into the centre of a growing environmental mystery."
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_asbestosis",
+    "label": "Asbestosis",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "Asbestosis is a chronic lung disease caused by inhaling asbestos fibers, leading to severe scarring of lung tissue and breathing difficulties.",
+    "base_difficulty": 0.5,
+    "prerequisites": [
+     "c_fiber",
+     "c_lung",
+     "c_respiratory_system"
+    ],
+    "doc_freq": 0,
+    "kind": "condition",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Fiber",
+    "Lung",
+    "Respiratory system"
+   ],
+   "trigger": "Asbestosis",
+   "sentence": "Asbestosis is a rare but serious lung condition that affects people exposed to asbestos."
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_marine_protected_area",
+    "label": "Marine Protected Area",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "A marine protected area is a designated section of the ocean where human activity is restricted to protect marine ecosystems, wildlife, and habitats.",
+    "base_difficulty": -0.8,
+    "prerequisites": [
+     "c_wildlife"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Wildlife"
+   ],
+   "trigger": "MPA",
+   "sentence": "She added: \"It's Britain's Ocean City, the UK's first National Marine Park and it's an MPA [Marine Protected Area]."
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_asbestos_cement",
+    "label": "Asbestos cement",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "Asbestos cement is a composite material made by mixing asbestos fibers with cement, commonly used for roofing, pipes, and insulation due to its strength and fire-retardant properties.",
+    "base_difficulty": 0.152,
+    "prerequisites": [
+     "c_fiber",
+     "c_material_properties"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Fiber",
+    "Material properties"
+   ],
+   "trigger": "asbestos cement",
+   "sentence": "The properties of asbestos made it an ideal material for use in a number of products, including insulation material for buildings, boilers and pipes; car brakes and floor tiles, insulating board to protect buildings and ships against fire; asbestos cement for roofing sheets and pipes."
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_maritime_archaeology",
+    "label": "Maritime archaeology",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "science",
+    "definition": "Maritime archaeology is the scientific study of human interaction with the sea, lakes, and rivers through the analysis of physical remains such as shipwrecks, submerged structures, and artifacts.",
+    "base_difficulty": 0.145,
+    "prerequisites": [
+     "c_natural_science"
+    ],
+    "doc_freq": 0,
+    "kind": "method",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Natural science"
+   ],
+   "trigger": "Maritime archaeologist",
+   "sentence": "Maritime archaeologist Mallory Haas, director of the Ships Project CIC in Plymouth, said she believed asbestos-containing roofing materials from the RAF base had been buried and were now being exposed through coastal erosion."
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_post_traumatic_stress_disorder",
+    "label": "Post-traumatic stress disorder",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A mental health condition triggered by experiencing or seeing a terrifying event, leading to flashbacks, severe anxiety, and uncontrollable thoughts about the event.",
+    "base_difficulty": -0.657,
+    "prerequisites": [
+     "c_trauma",
+     "c_nervous_system"
+    ],
+    "doc_freq": 0,
+    "kind": "condition",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Trauma",
+    "Nervous system"
+   ],
+   "trigger": "PTSD",
+   "sentence": "He later sought help and was diagnosed with PTSD."
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_cognitive_behavioural_therapy",
+    "label": "Cognitive behavioural therapy",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A type of psychotherapy that helps patients understand the thoughts and feelings that influence behaviors by changing negative patterns.",
+    "base_difficulty": 0.193,
+    "prerequisites": [
+     "c_conventional_therapy"
+    ],
+    "doc_freq": 0,
+    "kind": "method",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Conventional therapy"
+   ],
+   "trigger": "Cognitive Behavioural Therapy (CBT)",
+   "sentence": "But Cognitive Behavioural Therapy (CBT) and Eye Movement Desensitisation and Reprocessing (EMDR) therapy gradually transformed the way he experienced life."
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_eye_movement_desensitization_and_reprocessing",
+    "label": "Eye movement desensitization and reprocessing",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A psychotherapy treatment designed to alleviate the distress associated with traumatic memories through specific eye movements while recalling the trauma.",
+    "base_difficulty": 1.215,
+    "prerequisites": [
+     "c_trauma",
+     "c_conventional_therapy"
+    ],
+    "doc_freq": 0,
+    "kind": "method",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Trauma",
+    "Conventional therapy"
+   ],
+   "trigger": "Eye Movement Desensitisation and Reprocessing (EMDR)",
+   "sentence": "But Cognitive Behavioural Therapy (CBT) and Eye Movement Desensitisation and Reprocessing (EMDR) therapy gradually transformed the way he experienced life."
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_prostate_specific_antigen",
+    "label": "Prostate-specific antigen",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A protein produced by the prostate gland whose levels in the blood can be measured to help screen for and monitor prostate conditions, including cancer.",
+    "base_difficulty": 0.23,
+    "prerequisites": [
+     "c_prostate",
+     "c_anatomy"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Prostate",
+    "Anatomy"
+   ],
+   "trigger": "PSA levels",
+   "sentence": "Because prostate cancer runs in his family, Rex regularly monitored his PSA levels."
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_chemotherapy",
+    "label": "Chemotherapy",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A drug treatment that uses powerful chemicals to kill fast-growing cells in the body, most frequently used to treat cancer.",
+    "base_difficulty": -0.64,
+    "prerequisites": [
+     "c_chemistry",
+     "c_conventional_therapy"
+    ],
+    "doc_freq": 0,
+    "kind": "method",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Chemistry",
+    "Conventional therapy"
+   ],
+   "trigger": "chemotherapy",
+   "sentence": "Rex underwent chemotherapy but said the treatment took a significant physical toll and he now lives with the side effects of hormone treatment, including intense fatigue."
+  },
+  {
+   "content_id": "319771e0bb4536ac6a313a04ff5252a0",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_adhd",
+    "label": "ADHD",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A neurodevelopmental condition characterized by persistent patterns of inattention, hyperactivity, and impulsivity that interfere with daily functioning.",
+    "base_difficulty": -0.623,
+    "prerequisites": [
+     "c_working_memory"
+    ],
+    "doc_freq": 0,
+    "kind": "condition",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Working memory"
+   ],
+   "trigger": "ADHD",
+   "sentence": "It has been called a \"generational opportunity\" to rethink support for both mental health conditions and ADHD and autism."
+  },
+  {
+   "content_id": "319771e0bb4536ac6a313a04ff5252a0",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_over_diagnosis",
+    "label": "Over-diagnosis",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "The diagnosis of a medical or psychological condition that is either incorrect or not clinically significant enough to warrant treatment.",
+    "base_difficulty": -0.048,
+    "prerequisites": [
+     "c_medical_diagnosis"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Medical diagnosis"
+   ],
+   "trigger": "over-diagnosed",
+   "sentence": "The review, commissioned by then-health secretary Wes Streeting 10 months ago after saying young people were being \"over-diagnosed\" and \"written off\", could have major implications for NHS services, the benefits system, schools and employment support."
+  },
+  {
+   "content_id": "319771e0bb4536ac6a313a04ff5252a0",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_schizophrenia",
+    "label": "Schizophrenia",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A severe mental health disorder characterized by disruptions in thought processes, perceptions, emotional responsiveness, and social interactions.",
+    "base_difficulty": 0.11,
+    "prerequisites": [
+     "c_nervous_system"
+    ],
+    "doc_freq": 0,
+    "kind": "condition",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Nervous system"
+   ],
+   "trigger": "schizophrenia",
+   "sentence": "Population rates of schizophrenia and bipolar disorder, for example, have remained stable."
+  },
+  {
+   "content_id": "abbac75c17a8ecca8852c3e6c47bfce7",
+   "domain_label": "sports",
+   "concept": {
+    "id": "c_women_s_suffrage",
+    "label": "Women's suffrage",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "Women's suffrage is the right of women to vote in political elections on equal terms with men. It was achieved in many nations through decades of organized campaigning and advocacy.",
+    "base_difficulty": -0.59,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "suffrage",
+   "sentence": "Perhaps not the guy on a radio phone-in comparing this rule-breaking to Emmeline Pankhurst\u2019s fight for female suffrage."
+  },
+  {
+   "content_id": "9f38ed85cf54dd9700675f19d7a057ef",
+   "domain_label": "sports",
+   "concept": {
+    "id": "c_pubalgia",
+    "label": "Pubalgia",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "Pubalgia is a medical condition characterized by chronic pain in the groin or lower abdomen, often caused by athletic strain.",
+    "base_difficulty": 1.25,
+    "prerequisites": [
+     "c_muscle",
+     "c_muscular_system"
+    ],
+    "doc_freq": 0,
+    "kind": "condition",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Muscle",
+    "Muscular system"
+   ],
+   "trigger": "pubalgia",
+   "sentence": "It\u2019s a little bit from the pubalgia he had.\u201d"
+  },
+  {
+   "content_id": "9f38ed85cf54dd9700675f19d7a057ef",
+   "domain_label": "sports",
+   "concept": {
+    "id": "c_bottle_job",
+    "label": "Bottle job",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "sports",
+    "definition": "A bottle job is a slang term used in sports to describe a team or individual that fails under pressure or loses their nerve at a crucial moment.",
+    "base_difficulty": -0.88,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "bottle job",
+   "sentence": "Alonso was nonplussed to hear about the broadcaster Piers Morgan calling Palmer a bottle job for failing to represent England."
+  },
+  {
+   "content_id": "9f38ed85cf54dd9700675f19d7a057ef",
+   "domain_label": "sports",
+   "concept": {
+    "id": "c_international_cap",
+    "label": "International cap",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "sports",
+    "definition": "An international cap is a symbolic unit of appearance awarded to a player for representing their national team in an official sporting fixture.",
+    "base_difficulty": -0.863,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "caps",
+   "sentence": "Palmer has won five caps since scoring against Spain in the Euro 2024 final but his latest withdrawal was for genuine reasons."
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_surf_break",
+    "label": "Surf break",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "sports",
+    "definition": "A surf break is an area near the shore where ocean waves break, creating ridable surf due to underwater topography and wave dynamics.",
+    "base_difficulty": -0.71,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "surf breaks",
+   "sentence": "The climate crisis is coming for some of the world\u2019s greatest surf breaks, submerging some as sea level rises and wiping out others as classic breaks get crushed against coastal developments."
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_groyne",
+    "label": "Groyne",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "A groyne is a rigid hydraulic structure built out from a coast into the sea to interrupt water flow and limit the movement of sediment.",
+    "base_difficulty": 0.5,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "groynes",
+   "sentence": "Development such as sea walls, jetties and groynes made the beaches and waves less resilient, Reineman said."
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_beach_break",
+    "label": "Beach break",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "sports",
+    "definition": "A beach break is a type of surf spot where waves break over a sandy seabed, which shifts continuously with tides and swells.",
+    "base_difficulty": -0.933,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "beach break",
+   "sentence": "We have Saunton Sands, a world-renowned longboarding wave with really long, mellow rides, and the UK\u2019s best beach break at Croyde."
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_point_break",
+    "label": "Point break",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "sports",
+    "definition": "A point break is a surf spot where waves encounter a projecting point of land or rock, creating long, peeling rides that travel consistently along the coast.",
+    "base_difficulty": -1.005,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "point breaks",
+   "sentence": "The waves rated at most risk in the study include the \u201cbombing barrels\u201d of Croyde beach in north Devon, UK, the point breaks at Noosa in Australia and Oriente Salvaje, El Salvador, and Santa Cruz reefs of California such as Sewer Peak and Wind and Sea."
+  },
+  {
+   "content_id": "a25f287fea187a92c602c553ce71aac0",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_1_5c_global_warming_target",
+    "label": "1.5C global warming target",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "An international goal to limit the long-term increase in global average temperatures to 1.5 degrees Celsius above pre-industrial levels to avoid the worst impacts of climate change.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_climate_change"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Climate change"
+   ],
+   "trigger": "1.5C ceiling",
+   "sentence": "A recent report by the UN environment programme warned that under the most optimistic future, global heating would reach at least 1.8C, well beyond the 1.5C ceiling of the Paris climate agreement."
+  },
+  {
+   "content_id": "a25f287fea187a92c602c553ce71aac0",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_climate_finance",
+    "label": "Climate finance",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "Funding provided from public, private, and alternative sources to support mitigation and adaptation actions that address climate change.",
+    "base_difficulty": -0.845,
+    "prerequisites": [
+     "c_climate_change",
+     "c_public_finances"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Climate change",
+    "Public finances"
+   ],
+   "trigger": "climate finance",
+   "sentence": "Throughout the pre-Cop, Pacific leaders repeated their demands: that countries must act to \u201ckeep 1.5C alive\u201d, that climate finance must be easily accessible for poor and vulnerable communities who have not caused the problem but are most at risk, and that the health of oceans must be prioritised."
+  },
+  {
+   "content_id": "a25f287fea187a92c602c553ce71aac0",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_limiting_global_warming_to_1_5c",
+    "label": "Limiting global warming to 1.5C",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "The concerted global effort and policy measures aimed at holding the increase in global temperatures to 1.5 degrees Celsius.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_climate_change",
+     "c_carbon_budget"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Climate change",
+    "Carbon budget"
+   ],
+   "trigger": "keep 1.5C alive",
+   "sentence": "Throughout the pre-Cop, Pacific leaders repeated their demands: that countries must act to \u201ckeep 1.5C alive\u201d, that climate finance must be easily accessible for poor and vulnerable communities who have not caused the problem but are most at risk, and that the health of oceans must be prioritised."
+  },
+  {
+   "content_id": "a25f287fea187a92c602c553ce71aac0",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_small_island_developing_states",
+    "label": "Small Island Developing States",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "A distinct group of developing countries that share similar vulnerabilities to climate change, sea-level rise, and economic isolation.",
+    "base_difficulty": -0.855,
+    "prerequisites": [
+     "c_climate_change",
+     "c_sea_level_rise"
+    ],
+    "doc_freq": 0,
+    "kind": "entity_type",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Climate change",
+    "Sea level rise"
+   ],
+   "trigger": "small island developing countries",
+   "sentence": "Australia\u2019s climate change minister, Chris Bowen, said only 0.2% of global climate finance was spent helping small island developing countries adapt, and that the countries that needed it the most, such as Tuvalu, \u201cget it the least\u201d."
+  },
+  {
+   "content_id": "f085a98d9dd3b103ccccdef91f327077",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_anti_zionism",
+    "label": "Anti-Zionism",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "Anti-Zionism is a political movement or ideology that opposes the establishment, existence, or policies of the State of Israel as a Jewish nation.",
+    "base_difficulty": 0.228,
+    "prerequisites": [
+     "c_diaspora"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Diaspora"
+   ],
+   "trigger": "anti-Zionism",
+   "sentence": "Polanski has said anti-Zionism and antisemitism are distinct from each other and said nobody will be excluded from the party on the basis of their faith, place of worship or religious body."
+  },
+  {
+   "content_id": "f085a98d9dd3b103ccccdef91f327077",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_antisemitism",
+    "label": "Antisemitism",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "society",
+    "definition": "Antisemitism refers to hostility, prejudice, or discrimination directed against Jewish people as a religious, ethnic, or racial group.",
+    "base_difficulty": -0.537,
+    "prerequisites": [
+     "c_diaspora"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Diaspora"
+   ],
+   "trigger": "antisemitism",
+   "sentence": "Meanwhile, Labour chair Bridget Phillipson drew comparisons with her party's previous antisemitism scandal, telling the BBC she felt the Greens now face a \"serious problem\" with antisemitism."
+  },
+  {
+   "content_id": "f085a98d9dd3b103ccccdef91f327077",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_zionism",
+    "label": "Zionism",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "Zionism is the nationalist movement that emerged in the late 19th century supporting the establishment and support of a Jewish homeland and state in Palestine.",
+    "base_difficulty": 0.225,
+    "prerequisites": [
+     "c_diaspora"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Diaspora"
+   ],
+   "trigger": "Zionism",
+   "sentence": "The leader of the Jewish Greens, Vivien Lichtenstein, said on Friday he should resign, adding it was a \"big mistake\" for him to have dodged a debate about a party conference motion that declared Zionism a form of racism."
+  },
+  {
+   "content_id": "f085a98d9dd3b103ccccdef91f327077",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_apartheid_crime",
+    "label": "Apartheid (crime)",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "law",
+    "definition": "Apartheid as an international crime involves inhumane acts committed in the context of an institutionalized regime of systematic oppression and domination by one racial group over another.",
+    "base_difficulty": 0.103,
+    "prerequisites": [
+     "c_international_law"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "International law"
+   ],
+   "trigger": "apartheid",
+   "sentence": "\"I don't believe any state has the right to oppress or to commit apartheid and certainly not genocide on another people,\" he said, adding: \"I don't believe that's a state that anyone should be supporting.\""
+  },
+  {
+   "content_id": "9f0e65eb9d89a918a531993b798e630d",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_vote_of_no_confidence",
+    "label": "Vote of no confidence",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "A formal vote in a legislature or organization on whether members still support its current leadership.",
+    "base_difficulty": -0.877,
+    "prerequisites": [
+     "c_political_party"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Political party"
+   ],
+   "trigger": "vote of no confidence",
+   "sentence": "Under Liberal Democrat rules, a leadership contest can be triggered if a vote of no confidence in the leader is passed by the majority of all the party's MPs."
+  },
+  {
+   "content_id": "9f0e65eb9d89a918a531993b798e630d",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_frontbench",
+    "label": "Frontbench",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "The senior group of opposition or governing party members who hold specific portfolio responsibilities in parliament.",
+    "base_difficulty": 0.5,
+    "prerequisites": [
+     "c_political_party"
+    ],
+    "doc_freq": 0,
+    "kind": "entity_type",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Political party"
+   ],
+   "trigger": "frontbench",
+   "sentence": "Liberal Democrat MP Charlie Maynard has resigned from the party's frontbench and wants to see Sir Ed Davey replaced as leader."
+  },
+  {
+   "content_id": "9f0e65eb9d89a918a531993b798e630d",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_treasury_spokesman",
+    "label": "Treasury spokesman",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "A designated representative of a political party who speaks on economic, budgetary, and financial matters.",
+    "base_difficulty": 0.085,
+    "prerequisites": [
+     "c_political_party"
+    ],
+    "doc_freq": 0,
+    "kind": "role",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Political party"
+   ],
+   "trigger": "Treasury spokesman",
+   "sentence": "As first reported by the Financial Times, external, the Witney MP left his role as Treasury spokesman on Friday."
+  },
+  {
+   "content_id": "facb6846ba7cf4f921a529ebaea671bd",
+   "domain_label": "law",
+   "concept": {
+    "id": "c_imprisonment_for_public_protection",
+    "label": "Imprisonment for Public Protection",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "law",
+    "definition": "A form of indefinite custodial sentence used to detain individuals deemed to pose a high risk of future harm, even after serving a designated minimum term.",
+    "base_difficulty": 0.79,
+    "prerequisites": [
+     "c_simple_imprisonment",
+     "c_statute"
+    ],
+    "doc_freq": 0,
+    "kind": "policy",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Simple imprisonment",
+    "Statute"
+   ],
+   "trigger": "indefinite sentences for public protection",
+   "sentence": "Two men jailed with indefinite sentences for public protection (IPPs) have been freed after each serving about two decades in custody despite receiving minimum terms of two years or less."
+  },
+  {
+   "content_id": "facb6846ba7cf4f921a529ebaea671bd",
+   "domain_label": "law",
+   "concept": {
+    "id": "c_indeterminate_sentence",
+    "label": "Indeterminate sentence",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "law",
+    "definition": "A prison sentence that does not set a fixed release date, requiring the offender to serve a minimum term before becoming eligible to apply for parole.",
+    "base_difficulty": 0.282,
+    "prerequisites": [
+     "c_simple_imprisonment",
+     "c_statute"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Simple imprisonment",
+    "Statute"
+   ],
+   "trigger": "indeterminate sentence",
+   "sentence": "A high court judge and a magistrate hearing an appeal after a review by the Criminal Cases Review Commission (CCRC) told Luke Ings and Liam Bennett they would be freed, and also replaced an indeterminate sentence given to a third man, James Ward."
+  },
+  {
+   "content_id": "facb6846ba7cf4f921a529ebaea671bd",
+   "domain_label": "law",
+   "concept": {
+    "id": "c_dangerous_offender",
+    "label": "Dangerous offender",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "law",
+    "definition": "A legal designation given to certain convicted criminals whom a court assesses as presenting a significant danger of committing further serious offences.",
+    "base_difficulty": 0.083,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "dangerousness",
+   "sentence": "In its ruling, the appeal court said there had been no proper basis for the original finding of dangerousness."
+  },
+  {
+   "content_id": "0c69cbb6dbb4d1d6e5a95b86d9f6d4fb",
+   "domain_label": "culture",
+   "concept": {
+    "id": "c_stimming",
+    "label": "Stimming",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "Self-stimulatory behavior involving repetitive movements or sounds that can help individuals regulate their sensory input and emotions.",
+    "base_difficulty": 0.5,
+    "prerequisites": [
+     "c_sensory_processing",
+     "c_stimulus"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Sensory processing",
+    "Stimulus"
+   ],
+   "trigger": "stimming",
+   "sentence": "In the opening credits, young Am\u00e9lie flaps her hands over her ears, spins a coin and runs a finger round the rim of a glass \u2013 behaviours I now recognise as \u201cstimming\u201d (repetitive movements, sounds or words that help process sensory input or manage emotions)."
+  },
+  {
+   "content_id": "0c69cbb6dbb4d1d6e5a95b86d9f6d4fb",
+   "domain_label": "culture",
+   "concept": {
+    "id": "c_masking_autism",
+    "label": "Masking (autism)",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "The conscious or unconscious suppression of autistic traits and adoption of neurotypical behaviors in order to fit in socially.",
+    "base_difficulty": 0.233,
+    "prerequisites": [
+     "c_autism",
+     "c_consciousness"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Autism",
+    "Consciousness"
+   ],
+   "trigger": "mask",
+   "sentence": "Doctors were trained to look out for the stereotypical signs of autism in boys, and autism can show up differently in girls, who tend to mask (assimilate the behaviours of neurotypical people) a lot more."
+  },
+  {
+   "content_id": "0c69cbb6dbb4d1d6e5a95b86d9f6d4fb",
+   "domain_label": "culture",
+   "concept": {
+    "id": "c_neurodivergent",
+    "label": "Neurodivergent",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A term used to describe individuals whose brain functions differently from what is considered typical, including conditions like autism and ADHD.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_nervous_system",
+     "c_adhd",
+     "c_autism"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Nervous system",
+    "ADHD",
+    "Autism"
+   ],
+   "trigger": "neurodivergent-coded",
+   "sentence": "Am\u00e9lie was not the first neurodivergent-coded woman I\u2019d seen depicted in film."
+  },
+  {
+   "content_id": "0c69cbb6dbb4d1d6e5a95b86d9f6d4fb",
+   "domain_label": "culture",
+   "concept": {
+    "id": "c_hyperfixation",
+    "label": "Hyperfixation",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "An intense and deeply focused concentration on a specific topic, hobby, or object that goes beyond a normal interest.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_adhd",
+     "c_consciousness"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "ADHD",
+    "Consciousness"
+   ],
+   "trigger": "hyperfixations",
+   "sentence": "I had hyperfixations and obsessive special interests."
+  },
+  {
+   "content_id": "0c69cbb6dbb4d1d6e5a95b86d9f6d4fb",
+   "domain_label": "culture",
+   "concept": {
+    "id": "c_neurotypical",
+    "label": "Neurotypical",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "Describing individuals whose neurological development and functioning match the societal standard or majority expectation.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_nervous_system"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Nervous system"
+   ],
+   "trigger": "neurotypical",
+   "sentence": "Doctors were trained to look out for the stereotypical signs of autism in boys, and autism can show up differently in girls, who tend to mask (assimilate the behaviours of neurotypical people) a lot more."
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain_label": "education",
+   "concept": {
+    "id": "c_apprenticeship_readiness_scheme",
+    "label": "Apprenticeship readiness scheme",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "education",
+    "definition": "A structured program designed to prepare individuals with the basic academic and technical skills required to enter a formal apprenticeship.",
+    "base_difficulty": -0.552,
+    "prerequisites": [
+     "c_apprenticeship"
+    ],
+    "doc_freq": 0,
+    "kind": "scheme",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Apprenticeship"
+   ],
+   "trigger": "apprenticeship readiness scheme",
+   "sentence": "A national apprenticeship readiness scheme should be introduced in England to close the gap for young people between leaving school and starting work, the government is to be told."
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain_label": "education",
+   "concept": {
+    "id": "c_pre_apprenticeship_route",
+    "label": "Pre-apprenticeship route",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "education",
+    "definition": "An educational or training pathway intended to equip young people with the foundational experience needed to successfully secure and complete an apprenticeship.",
+    "base_difficulty": -0.608,
+    "prerequisites": [
+     "c_apprenticeship"
+    ],
+    "doc_freq": 0,
+    "kind": "method",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Apprenticeship"
+   ],
+   "trigger": "pre-apprenticeship route",
+   "sentence": "Alan Milburn, who is leading a major review into Britain\u2019s youth jobs crisis, will call for a new \u201cnational pre-apprenticeship route\u201d to offer young people further education, training and work experience."
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain_label": "education",
+   "concept": {
+    "id": "c_vocational_education",
+    "label": "Vocational education",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "education",
+    "definition": "Education and training focused on practical skills and direct preparation for specific trades or occupations rather than purely academic study.",
+    "base_difficulty": -0.66,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "vocational routes",
+   "sentence": "Other countries with much lower Neet rates than the UK have placed much greater emphasis on vocational routes, including the Netherlands and Austria, where more than half of 15- to 19-year olds in upper-secondary education enrol in vocational programmes."
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain_label": "education",
+   "concept": {
+    "id": "c_pre_vocational_pathway",
+    "label": "Pre-vocational pathway",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "education",
+    "definition": "An introductory educational stage that builds foundational competencies to help students transition smoothly into career-focused vocational training.",
+    "base_difficulty": -0.598,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "method",
+    "jurisdiction": "AT"
+   },
+   "prerequisite_labels": [],
+   "trigger": "pre-vocational pathway",
+   "sentence": "The proposal would be similar to a one-year pre-vocational pathway in Austria that is designed to prepare young people for progression into apprenticeships."
+  }
+ ],
+ "grown_sample": [
+  {
+   "content_id": "a25f287fea187a92c602c553ce71aac0",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_1_5c_global_warming_target",
+    "label": "1.5C global warming target",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "An international goal to limit the long-term increase in global average temperatures to 1.5 degrees Celsius above pre-industrial levels to avoid the worst impacts of climate change.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_climate_change"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Climate change"
+   ],
+   "trigger": "1.5C ceiling",
+   "sentence": "A recent report by the UN environment programme warned that under the most optimistic future, global heating would reach at least 1.8C, well beyond the 1.5C ceiling of the Paris climate agreement."
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_emergency_declaration",
+    "label": "Emergency declaration",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "policy",
+    "definition": "An official executive action that unlocks federal funds and resources to assist state and local governments during a disaster or crisis.",
+    "base_difficulty": -0.752,
+    "prerequisites": [
+     "c_budget"
+    ],
+    "doc_freq": 0,
+    "kind": "policy",
+    "jurisdiction": "US"
+   },
+   "prerequisite_labels": [
+    "Budget"
+   ],
+   "trigger": "emergency declarations",
+   "sentence": "On Saturday, Homeland Security Secretary Markwayne Mullin said the US president had approved emergency declarations for the two states to \"ensure federal resources are available\" for support."
+  },
+  {
+   "content_id": "f085a98d9dd3b103ccccdef91f327077",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_apartheid_crime",
+    "label": "Apartheid (crime)",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "law",
+    "definition": "Apartheid as an international crime involves inhumane acts committed in the context of an institutionalized regime of systematic oppression and domination by one racial group over another.",
+    "base_difficulty": 0.103,
+    "prerequisites": [
+     "c_international_law"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "International law"
+   ],
+   "trigger": "apartheid",
+   "sentence": "\"I don't believe any state has the right to oppress or to commit apartheid and certainly not genocide on another people,\" he said, adding: \"I don't believe that's a state that anyone should be supporting.\""
+  },
+  {
+   "content_id": "c4a4eb899a77d85dba3614aaefc92849",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_expression_of_interest",
+    "label": "Expression of interest",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "business",
+    "definition": "A formal statement or document submitted by an interested party to indicate their intent to participate in a business transaction, project, or bidding process.",
+    "base_difficulty": -0.115,
+    "prerequisites": [
+     "c_participation"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Participation"
+   ],
+   "trigger": "EOIs",
+   "sentence": "We got 406 confirmed EOIs (expressions of interest) within the first 48 hours."
+  },
+  {
+   "content_id": "c6e8eee6c2b2026f671b25971ffae5d8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_residential_social_care",
+    "label": "Residential social care",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "Accommodation and personal assistance provided in a dedicated facility for individuals who need help with daily living activities due to age, disability, or illness.",
+    "base_difficulty": -0.817,
+    "prerequisites": [
+     "c_health_care",
+     "c_accommodation"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Health care",
+    "Accommodation"
+   ],
+   "trigger": "residential social care",
+   "sentence": "In practice, personal care makes up a minority of the total cost of residential social care."
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain_label": "education",
+   "concept": {
+    "id": "c_apprenticeship_readiness_scheme",
+    "label": "Apprenticeship readiness scheme",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "education",
+    "definition": "A structured program designed to prepare individuals with the basic academic and technical skills required to enter a formal apprenticeship.",
+    "base_difficulty": -0.552,
+    "prerequisites": [
+     "c_apprenticeship"
+    ],
+    "doc_freq": 0,
+    "kind": "scheme",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Apprenticeship"
+   ],
+   "trigger": "apprenticeship readiness scheme",
+   "sentence": "A national apprenticeship readiness scheme should be introduced in England to close the gap for young people between leaving school and starting work, the government is to be told."
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_asbestos_cement",
+    "label": "Asbestos cement",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "Asbestos cement is a composite material made by mixing asbestos fibers with cement, commonly used for roofing, pipes, and insulation due to its strength and fire-retardant properties.",
+    "base_difficulty": 0.152,
+    "prerequisites": [
+     "c_fiber",
+     "c_material_properties"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Fiber",
+    "Material properties"
+   ],
+   "trigger": "asbestos cement",
+   "sentence": "The properties of asbestos made it an ideal material for use in a number of products, including insulation material for buildings, boilers and pipes; car brakes and floor tiles, insulating board to protect buildings and ships against fire; asbestos cement for roofing sheets and pipes."
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_asbestos",
+    "label": "Asbestos",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "Asbestos is a group of naturally occurring silicate minerals known for their fibrous structure, heat resistance, and durability, formerly widely used in construction and manufacturing.",
+    "base_difficulty": -0.635,
+    "prerequisites": [
+     "c_fiber",
+     "c_material_properties"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Fiber",
+    "Material properties"
+   ],
+   "trigger": "asbestos",
+   "sentence": "For more than six years, asbestos has been washing up with the tide, turning one of Plymouth's handful of swimming spots into the centre of a growing environmental mystery."
+  },
+  {
+   "content_id": "8087b2858b36a43f9767df292f5ddac8",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_copper_concentrate",
+    "label": "Copper concentrate",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "business",
+    "definition": "An intermediate product obtained by refining copper ore, containing a high percentage of copper and intended for further smelting.",
+    "base_difficulty": 0.785,
+    "prerequisites": [
+     "c_feedstock",
+     "c_commodity"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Feedstock",
+    "Commodity"
+   ],
+   "trigger": "copper concentrate",
+   "sentence": "Chile\u2019s exports to India comprise mainly bulk minerals and ores, including copper concentrate, molybdenum, iodine and gold, as well as inorganic chemicals and agricultural products such as fruits."
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_prostate_specific_antigen",
+    "label": "Prostate-specific antigen",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A protein produced by the prostate gland whose levels in the blood can be measured to help screen for and monitor prostate conditions, including cancer.",
+    "base_difficulty": 0.23,
+    "prerequisites": [
+     "c_prostate",
+     "c_anatomy"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Prostate",
+    "Anatomy"
+   ],
+   "trigger": "PSA levels",
+   "sentence": "Because prostate cancer runs in his family, Rex regularly monitored his PSA levels."
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "domain_label": "technology",
+   "concept": {
+    "id": "c_underground_wildfire_hot_spots",
+    "label": "Underground wildfire hot spots",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "environment",
+    "definition": "Localized areas beneath the ground surface where smoldering fires continue to burn without visible flames.",
+    "base_difficulty": 0.182,
+    "prerequisites": [
+     "c_heat_transfer",
+     "c_soil"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Heat transfer",
+    "Soil"
+   ],
+   "trigger": "hot spots",
+   "sentence": "The dramatic flames have disappeared, but hot spots can continue to burn beneath the earth."
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_post_tropical_cyclone",
+    "label": "Post-tropical cyclone",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "science",
+    "definition": "A former tropical cyclone that has lost its tropical characteristics, such as a warm core, while still retaining heavy rains and strong winds.",
+    "base_difficulty": 0.145,
+    "prerequisites": [
+     "c_tropical"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Tropical"
+   ],
+   "trigger": "post-tropical cyclone",
+   "sentence": "Hurricane Isaias has been downgraded to a post-tropical cyclone the day after it made landfall along the northern Gulf Coast of Florida, bringing with it heavy rains and powerful winds."
+  },
+  {
+   "content_id": "2da08777e772a4a732d536d15dedaf23",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_core_catcher",
+    "label": "core catcher",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "A protective device installed at the bottom of a nuclear reactor pressure vessel to contain and cool molten core material in the event of a severe accident.",
+    "base_difficulty": 0.873,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "core catcher",
+   "sentence": "Erection of core catcher is completed."
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain_label": "education",
+   "concept": {
+    "id": "c_pre_apprenticeship_route",
+    "label": "Pre-apprenticeship route",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "education",
+    "definition": "An educational or training pathway intended to equip young people with the foundational experience needed to successfully secure and complete an apprenticeship.",
+    "base_difficulty": -0.608,
+    "prerequisites": [
+     "c_apprenticeship"
+    ],
+    "doc_freq": 0,
+    "kind": "method",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Apprenticeship"
+   ],
+   "trigger": "pre-apprenticeship route",
+   "sentence": "Alan Milburn, who is leading a major review into Britain\u2019s youth jobs crisis, will call for a new \u201cnational pre-apprenticeship route\u201d to offer young people further education, training and work experience."
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_beach_break",
+    "label": "Beach break",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "sports",
+    "definition": "A beach break is a type of surf spot where waves break over a sandy seabed, which shifts continuously with tides and swells.",
+    "base_difficulty": -0.933,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "beach break",
+   "sentence": "We have Saunton Sands, a world-renowned longboarding wave with really long, mellow rides, and the UK\u2019s best beach break at Croyde."
+  },
+  {
+   "content_id": "08b2c0939ae758066a81489513efe236",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_trading_turnover",
+    "label": "Trading turnover",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "The total monetary value of all shares or contracts bought and sold in a security or market during a given trading period.",
+    "base_difficulty": 0.07,
+    "prerequisites": [
+     "c_trading_volumes",
+     "c_share_price"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Trading volumes",
+    "Share price"
+   ],
+   "trigger": "trading turnovers",
+   "sentence": "Higher activity in a counter in value terms can help identify the counters with the highest trading turnovers in the day."
+  },
+  {
+   "content_id": "9f0e65eb9d89a918a531993b798e630d",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_treasury_spokesman",
+    "label": "Treasury spokesman",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "A designated representative of a political party who speaks on economic, budgetary, and financial matters.",
+    "base_difficulty": 0.085,
+    "prerequisites": [
+     "c_political_party"
+    ],
+    "doc_freq": 0,
+    "kind": "role",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Political party"
+   ],
+   "trigger": "Treasury spokesman",
+   "sentence": "As first reported by the Financial Times, external, the Witney MP left his role as Treasury spokesman on Friday."
+  },
+  {
+   "content_id": "a9db9e1bc1c5f3a110e7426154ea82e8",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_standing_instruction",
+    "label": "Standing instruction",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "An instruction given by a bank customer to automatically transfer a fixed amount of money at regular intervals.",
+    "base_difficulty": -0.765,
+    "prerequisites": [
+     "c_financial_transaction",
+     "c_commercial_bank"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Financial transaction",
+    "Commercial bank"
+   ],
+   "trigger": "standing instructions",
+   "sentence": "This includes the new branch address, IFSC, cheque book and passbook requirements, as well as any standing instructions linked to the account."
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_saffir_simpson_scale",
+    "label": "Saffir-Simpson scale",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "science",
+    "definition": "A 1-to-5 rating system that estimates potential property damage and sustained wind speeds of a hurricane.",
+    "base_difficulty": -0.25,
+    "prerequisites": [
+     "c_tropical"
+    ],
+    "doc_freq": 0,
+    "kind": "jargon",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Tropical"
+   ],
+   "trigger": "category one hurricane",
+   "sentence": "Hurricane Simon is bearing down on the Pacific coast of Mexico as a category one hurricane."
+  },
+  {
+   "content_id": "e07f941d22b1227c9766f03f7cd2ab1a",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_relief_rally",
+    "label": "Relief rally",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "A temporary recovery in prices of securities or a market after a prolonged period of decline or selling pressure.",
+    "base_difficulty": -0.032,
+    "prerequisites": [
+     "c_market_rebound",
+     "c_share_price"
+    ],
+    "doc_freq": 0,
+    "kind": "market_event",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Market rebound",
+    "Share price"
+   ],
+   "trigger": "relief rally",
+   "sentence": "Expecting a relief rally after the successive sell-off in the Indian stock market, Shrikant Chouhan, Head Equity Research at Kotak Securities, said, \u201cThe market consistently faced selling pressure at higher levels during the week."
+  },
+  {
+   "content_id": "9f0e65eb9d89a918a531993b798e630d",
+   "domain_label": "politics",
+   "concept": {
+    "id": "c_frontbench",
+    "label": "Frontbench",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "The senior group of opposition or governing party members who hold specific portfolio responsibilities in parliament.",
+    "base_difficulty": 0.5,
+    "prerequisites": [
+     "c_political_party"
+    ],
+    "doc_freq": 0,
+    "kind": "entity_type",
+    "jurisdiction": "GB"
+   },
+   "prerequisite_labels": [
+    "Political party"
+   ],
+   "trigger": "frontbench",
+   "sentence": "Liberal Democrat MP Charlie Maynard has resigned from the party's frontbench and wants to see Sir Ed Davey replaced as leader."
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain_label": "education",
+   "concept": {
+    "id": "c_pre_vocational_pathway",
+    "label": "Pre-vocational pathway",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "education",
+    "definition": "An introductory educational stage that builds foundational competencies to help students transition smoothly into career-focused vocational training.",
+    "base_difficulty": -0.598,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "method",
+    "jurisdiction": "AT"
+   },
+   "prerequisite_labels": [],
+   "trigger": "pre-vocational pathway",
+   "sentence": "The proposal would be similar to a one-year pre-vocational pathway in Austria that is designed to prepare young people for progression into apprenticeships."
+  },
+  {
+   "content_id": "7ae03f5e6d53599efb75ad57263c5477",
+   "domain_label": "finance",
+   "concept": {
+    "id": "c_electronic_gold_receipt",
+    "label": "Electronic Gold Receipt",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "finance",
+    "definition": "An Electronic Gold Receipt is a financial instrument representing physical gold in dematerialized form, allowing investors to trade gold securely on stock exchanges.",
+    "base_difficulty": 0.047,
+    "prerequisites": [
+     "c_depository_receipt",
+     "c_financial_instrument"
+    ],
+    "doc_freq": 0,
+    "kind": "instrument",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Depository receipt",
+    "Financial instrument"
+   ],
+   "trigger": "Electronic Gold Receipts",
+   "sentence": "Our effort is to broaden the revenue base further through products such as electricity futures, bond-index futures, Electronic Gold Receipts and expanded market-data and technology offerings."
+  },
+  {
+   "content_id": "8087b2858b36a43f9767df292f5ddac8",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_preferential_trade_agreement",
+    "label": "Preferential trade agreement",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "economics",
+    "definition": "A pact between countries that lowers or eliminates tariffs on certain imported products to encourage bilateral commerce.",
+    "base_difficulty": 0.2,
+    "prerequisites": [
+     "c_international_trade",
+     "c_preferential_tariffs"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "International trade",
+    "Preferential tariffs"
+   ],
+   "trigger": "preferential trade agreement (PTA)",
+   "sentence": "India and Chile signed a preferential trade agreement (PTA) in 2006, which was expanded in 2017."
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain_label": "science",
+   "concept": {
+    "id": "c_asbestosis",
+    "label": "Asbestosis",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "Asbestosis is a chronic lung disease caused by inhaling asbestos fibers, leading to severe scarring of lung tissue and breathing difficulties.",
+    "base_difficulty": 0.5,
+    "prerequisites": [
+     "c_fiber",
+     "c_lung",
+     "c_respiratory_system"
+    ],
+    "doc_freq": 0,
+    "kind": "condition",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Fiber",
+    "Lung",
+    "Respiratory system"
+   ],
+   "trigger": "Asbestosis",
+   "sentence": "Asbestosis is a rare but serious lung condition that affects people exposed to asbestos."
+  },
+  {
+   "content_id": "353cc985ab6119b8a749907c4bc64abf",
+   "domain_label": "business",
+   "concept": {
+    "id": "c_matcha",
+    "label": "Matcha",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "culture",
+    "definition": "A finely ground powder made from specially processed green tea leaves, traditionally whisked into hot water.",
+    "base_difficulty": -0.417,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "matcha",
+   "sentence": "Costa\u2019s main coffee shop arm has returned to an operating profit after revamping its high street outlets and broadening its menu with iced drinks, matcha and fresher pastries."
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "domain_label": "environment",
+   "concept": {
+    "id": "c_point_break",
+    "label": "Point break",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "sports",
+    "definition": "A point break is a surf spot where waves encounter a projecting point of land or rock, creating long, peeling rides that travel consistently along the coast.",
+    "base_difficulty": -1.005,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "point breaks",
+   "sentence": "The waves rated at most risk in the study include the \u201cbombing barrels\u201d of Croyde beach in north Devon, UK, the point breaks at Noosa in Australia and Oriente Salvaje, El Salvador, and Santa Cruz reefs of California such as Sewer Peak and Wind and Sea."
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain_label": "health",
+   "concept": {
+    "id": "c_post_traumatic_stress_disorder",
+    "label": "Post-traumatic stress disorder",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "health",
+    "definition": "A mental health condition triggered by experiencing or seeing a terrifying event, leading to flashbacks, severe anxiety, and uncontrollable thoughts about the event.",
+    "base_difficulty": -0.657,
+    "prerequisites": [
+     "c_trauma",
+     "c_nervous_system"
+    ],
+    "doc_freq": 0,
+    "kind": "condition",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Trauma",
+    "Nervous system"
+   ],
+   "trigger": "PTSD",
+   "sentence": "He later sought help and was diagnosed with PTSD."
+  },
+  {
+   "content_id": "1c97d191d9bc1c57f4aa8d0462c95428",
+   "domain_label": "policy",
+   "concept": {
+    "id": "c_digital_identity",
+    "label": "Digital identity",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "technology",
+    "definition": "An electronic form of identification that allows individuals to verify who they are online securely. It often uses biometric data, passwords, or encrypted tokens managed by government or private systems.",
+    "base_difficulty": -0.857,
+    "prerequisites": [
+     "c_computer_security"
+    ],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [
+    "Computer security"
+   ],
+   "trigger": "digital ID",
+   "sentence": "He identified \"putting digital ID on hold\" as an example of how he had already \"taken difficult decisions in this job in relation to reprioritising government spending\" and vowed to continue to \"take difficult decisions to make sure the economy remains on track\"."
+  },
+  {
+   "content_id": "abbac75c17a8ecca8852c3e6c47bfce7",
+   "domain_label": "sports",
+   "concept": {
+    "id": "c_women_s_suffrage",
+    "label": "Women's suffrage",
+    "aliases": [],
+    "wikidata": null,
+    "domain": "politics",
+    "definition": "Women's suffrage is the right of women to vote in political elections on equal terms with men. It was achieved in many nations through decades of organized campaigning and advocacy.",
+    "base_difficulty": -0.59,
+    "prerequisites": [],
+    "doc_freq": 0,
+    "kind": "idea",
+    "jurisdiction": "global"
+   },
+   "prerequisite_labels": [],
+   "trigger": "suffrage",
+   "sentence": "Perhaps not the guy on a radio phone-in comparing this rule-breaking to Emmeline Pankhurst\u2019s fight for female suffrage."
+  }
+ ],
+ "stop": [
+  "business under 75%",
+  "non-business total under 50%",
+  "culture under 50% (n=6)",
+  "education under 50% (n=14)",
+  "environment under 50% (n=22)",
+  "health under 50% (n=22)",
+  "law under 50% (n=16)",
+  "politics under 50% (n=28)",
+  "science under 50% (n=31)",
+  "sports under 50% (n=5)",
+  "technology under 50% (n=12)"
+ ]
+}

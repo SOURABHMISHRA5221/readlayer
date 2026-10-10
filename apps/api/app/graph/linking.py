@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from app import llm
+from app.graph import jurisdiction
 from app.graph.enrich import LinkQuestion, confirm_links
 from app.graph.graph import ConceptGraph
 from app.ingest.models import Demand
@@ -101,7 +102,11 @@ def plan_links(
     label_vectors: dict[str, list[float]],
     paragraphs: dict[str, str],
     threshold: float,
+    site: str = "",
+    url: str = "",
 ) -> LinkPlan:
+    """Candidates of a jurisdictional kind from a country the paragraph gives no sign of are
+    dropped before the model sees them (app/graph/jurisdiction.py)."""
     alias: dict[str, str] = {}
     questions: list[LinkQuestion] = []
     best: dict[str, float] = {}
@@ -115,11 +120,28 @@ def plan_links(
             continue
         near = graph.nearest(label_vectors[d.label], CANDIDATES)
         best[d.id] = near[0][1]
-        cands = tuple((c.id, c.label, c.definition, s) for c, s in near if s >= threshold)
-        if cands:
-            para = paragraphs.get(d.paragraph_id, "")
+        para = paragraphs.get(d.paragraph_id, "")
+        article = jurisdiction.cues(site, url, para)
+        kept = [
+            c
+            for c, s in near
+            if s >= threshold and jurisdiction.allowed(c.kind, c.jurisdiction, article)
+        ]
+        score = {c.id: s for c, s in near}
+        if kept:
             sentence = sentence_around(para, d.anchor.exact, d.anchor.prefix)
-            questions.append(LinkQuestion(d.id, phrase(d), sentence, cands))
+            questions.append(
+                LinkQuestion(
+                    d.id,
+                    phrase(d),
+                    sentence,
+                    tuple((c.id, c.label, c.definition, score[c.id]) for c in kept),
+                    site=site,
+                    kinds=tuple(c.kind or "" for c in kept),
+                    jurisdictions=tuple(c.jurisdiction for c in kept),
+                    article=tuple(sorted(article)),
+                )
+            )
     return LinkPlan(alias, questions, best)
 
 
@@ -163,6 +185,8 @@ async def link_demands(
     threshold: float,
     embed: EmbedTexts = _embed_labels,
     confirm: Confirm | None = None,
+    site: str = "",
+    url: str = "",
 ) -> tuple[list[Demand], list[Link]]:
     """Link at ingest. If embeddings or the model are unavailable, alias links still apply."""
     if confirm is None:
@@ -172,12 +196,12 @@ async def link_demands(
 
     labels = pending_labels(graph, demands)
     vectors: dict[str, list[float]] = {}
-    plan = plan_links(graph, demands, {}, paragraphs, threshold)
+    plan = plan_links(graph, demands, {}, paragraphs, threshold, site, url)
     answers: dict[int, str | None] = {}
     try:
         if labels:
             vectors = dict(zip(labels, await embed(labels), strict=True))
-        plan = plan_links(graph, demands, vectors, paragraphs, threshold)
+        plan = plan_links(graph, demands, vectors, paragraphs, threshold, site, url)
         if plan.questions:
             answers = await confirm(plan.questions)
     except llm.LLMError as exc:

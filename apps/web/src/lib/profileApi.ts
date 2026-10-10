@@ -1,14 +1,15 @@
 import { api } from "./api";
 import type { PersonaKey } from "./personas";
+import type { Domain } from "./taxonomy";
+
+export { DOMAINS, type Domain } from "./taxonomy";
 
 /** Reading profile, onboarding and profile edits (DESIGN §8, §15; M7). */
 
 export type Band = "unaware" | "heard of" | "understands" | "can explain";
-export type Domain = "economics" | "finance" | "business" | "policy";
 export type Level = "new" | "some" | "comfortable" | "expert";
 export type ExplanationStyle = "short" | "normal" | "detailed";
 export type Density = "minimal" | "balanced" | "guided";
-export const DOMAINS: readonly Domain[] = ["economics", "finance", "business", "policy"];
 export const FRAMES = [
   "software", "engineering", "science", "medicine", "law", "design", "teaching", "music",
   "cooking", "cricket", "football", "gaming",
@@ -33,7 +34,7 @@ export interface Onboarding {
 export interface Profile {
   summary: { text: string; top_domain: string | null; moved_up_this_week: number; learning_paused: boolean };
   /** `rated`: the reader rated, reads in, or has concepts in this domain. */
-  domains: { domain: Domain; theta: number; interest: number; rated: boolean }[];
+  domains: { domain: Domain; theta: number; interest: number; rated: boolean; concepts: number }[];
   thinks_in: Frame[];
   week: {
     moved_up: { concept_id: string; label: string; from: Band; to: Band }[];

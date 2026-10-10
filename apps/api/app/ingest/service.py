@@ -18,6 +18,7 @@ from datetime import UTC, datetime, timedelta
 
 from app import llm
 from app.config import get_settings
+from app.graph.heldout import is_heldout
 from app.graph.linking import link_demands
 from app.graph.loader import get_graph
 from app.ingest import safe_fetch as fetch
@@ -32,6 +33,8 @@ from app.ingest.extract import (
 from app.ingest.features import parse_structure, structure
 from app.ingest.models import (
     ContentDoc,
+    Demand,
+    LLMCall,
     PendingDoc,
     PendingParagraph,
     Source,
@@ -53,18 +56,22 @@ MIN_ARTICLE_WORDS = 80  # below this it's a paywall stub, a gallery or a failed 
 LEASE_MARGIN = timedelta(seconds=30)
 
 
-async def ingest_url(url: str, source: Source = "fetch") -> ContentDoc:
-    """Fetch, extract and analyse a URL once. A cached doc keeps the source it was made with."""
+async def ingest_url(url: str, source: Source = "fetch", grow_slots: int = 0) -> ContentDoc:
+    """Fetch, extract and analyse a URL once. A cached doc keeps the source it was made with.
+    `grow_slots`: concept-growth slots reserved for this ingest (0 = no growth; the corpus
+    scripts never pass any)."""
     fetch.validate_url(url)
     content_id = url_hash(url)
     if cached := await _cached(content_id):
         return cached
     if await get_pending_repo().get(content_id) is None:
-        await fetch_and_extract(url, source)
+        await fetch_and_extract(url, source, grow_slots)
     return await analyse_pending(content_id)
 
 
-async def ingest_submitted(url: str, title: str, paragraphs: list[str]) -> ContentDoc:
+async def ingest_submitted(
+    url: str, title: str, paragraphs: list[str], grow_slots: int = 0
+) -> ContentDoc:
     """Extension shape: text already extracted (and redacted) client-side."""
     host = fetch.validate_url(url).host
     content_id = url_hash(url)
@@ -72,11 +79,14 @@ async def ingest_submitted(url: str, title: str, paragraphs: list[str]) -> Conte
         return cached
     if await get_pending_repo().get(content_id) is None:
         texts = clean_paragraphs(paragraphs)
-        await _store_pending(content_id, url, url, title.strip() or host, host, texts, "extension")
+        await _store_pending(
+            content_id, url, url, title.strip() or host, host, texts, "extension",
+            grow_slots=grow_slots,
+        )  # fmt: skip
     return await analyse_pending(content_id)
 
 
-async def fetch_and_extract(url: str, source: Source = "fetch") -> PendingDoc:
+async def fetch_and_extract(url: str, source: Source = "fetch", grow_slots: int = 0) -> PendingDoc:
     """Phase 1: safe_fetch, extraction and paragraph ids; no LLM call. Stores the pending doc
     (or returns the one another request stored first)."""
     fetch.validate_url(url)
@@ -102,6 +112,7 @@ async def fetch_and_extract(url: str, source: Source = "fetch") -> PendingDoc:
         extracted.paragraphs,
         source,
         extracted.metadata,
+        grow_slots=grow_slots,
     )
 
 
@@ -121,8 +132,9 @@ async def analyse_pending(content_id: str) -> ContentDoc:
     if status == "exhausted":
         raise AnalysisFailed(content_id)
     try:
+        deadline = asyncio.get_running_loop().time() + settings.analyse_timeout_s
         async with asyncio.timeout(settings.analyse_timeout_s):
-            doc = await _analyse(pending)
+            doc = await _analyse(pending, deadline)
     except llm.BudgetExceeded:
         await repo.release(content_id, failed=False)
         raise
@@ -152,6 +164,7 @@ async def _store_pending(
     texts: list[str],
     source: Source,
     metadata: Metadata | None = None,
+    grow_slots: int = 0,
 ) -> PendingDoc:
     if sum(len(t.split()) for t in texts) < MIN_ARTICLE_WORDS:
         raise fetch.FetchError(
@@ -172,6 +185,7 @@ async def _store_pending(
         published=metadata.published if metadata else None,
         image=metadata.image if metadata else None,
         paragraphs=[PendingParagraph(id=p.id, text=p.text) for p in build_paragraphs(texts)],
+        grow_slots=0 if is_heldout(content_id) else grow_slots,
         expire_at=now + PENDING_TTL,
     )
     stored = await get_pending_repo().create(doc)
@@ -188,7 +202,77 @@ def _paragraphs(pending: PendingDoc) -> list[Paragraph]:
     return build_paragraphs([p.text for p in pending.paragraphs])
 
 
-async def _analyse(pending: PendingDoc) -> ContentDoc:
+async def _grow(
+    pending: PendingDoc, demands: list[Demand], paragraphs: list[Paragraph], deadline: float
+) -> tuple[list[Demand], list[LLMCall]]:
+    """Online concept growth for this article's unlinked demands (M2.2 §C). Bounded by its own
+    timeout and by the time phase 2 has left; any failure skips growth, never the ingest."""
+    settings = get_settings()
+    if not settings.growth_enabled or pending.grow_slots <= 0 or is_heldout(pending.content_id):
+        return demands, []
+    budget = min(settings.growth_timeout_s, deadline - asyncio.get_running_loop().time() - 5)
+    if budget <= 0:
+        return demands, []
+    from app.graph.grow import grow
+    from app.graph.refresh import get_refresher
+    from app.store.growth_repo import get_growth_repo
+
+    started = time.perf_counter()
+    try:
+        async with asyncio.timeout(budget):
+            outcome = await grow(
+                get_graph(),
+                demands,
+                {p.id: p.text for p in paragraphs},
+                pending.grow_slots,
+                pending.content_id,
+                get_growth_repo(),
+            )
+    except Exception as exc:  # budget refusals, model errors, timeout: the article still ingests
+        log.warning(
+            "concept growth skipped",
+            extra={
+                "content_id": pending.content_id,
+                "error_class": type(exc).__name__,
+                "growth_ms": round((time.perf_counter() - started) * 1000),
+                "budget_s": round(budget, 1),
+            },
+        )
+        return demands, []
+    get_refresher().apply(outcome.added)
+    log.info(
+        "concept growth",
+        extra={
+            "content_id": pending.content_id,
+            "added": len(outcome.added),
+            "merged": outcome.merged,
+            "rejected": outcome.rejected,
+            "cost_usd": round(outcome.cost_usd, 6),
+            "growth_ms": round((time.perf_counter() - started) * 1000),
+        },
+    )
+    linked = [
+        d.model_copy(update={"target_id": outcome.links[d.id], "grown": d.id in outcome.grown})
+        if d.id in outcome.links
+        else d
+        for d in demands
+    ]
+    return linked, [_llm_call(m) for m in outcome.calls]
+
+
+def _llm_call(m: llm.CallMeta) -> LLMCall:
+    return LLMCall(
+        task=m.task,
+        model=m.model,
+        prompt_version=m.prompt_version,
+        tokens_in=m.tokens_in,
+        tokens_out=m.tokens_out,
+        cost_usd=m.cost_usd,
+        fell_back=m.fell_back,
+    )
+
+
+async def _analyse(pending: PendingDoc, deadline: float = float("inf")) -> ContentDoc:
     paragraphs = _paragraphs(pending)
     parse_scores = await asyncio.to_thread(lambda: [parse_structure(p.text) for p in paragraphs])
     result = await extract_demands(paragraphs)
@@ -197,7 +281,10 @@ async def _analyse(pending: PendingDoc) -> ContentDoc:
         result.demands,
         {p.id: p.text for p in paragraphs},
         get_settings().link_threshold,
+        site=pending.site,
+        url=pending.final_url,
     )
+    demands, growth_calls = await _grow(pending, demands, paragraphs, deadline)
     doc = ContentDoc(
         content_id=pending.content_id,
         url=pending.url,
@@ -218,7 +305,7 @@ async def _analyse(pending: PendingDoc) -> ContentDoc:
         ],
         demands=demands,
         demands_dropped=result.dropped,
-        llm_calls=result.calls,
+        llm_calls=[*result.calls, *growth_calls],
     )
     await get_content_store().put(doc)
     log.info(

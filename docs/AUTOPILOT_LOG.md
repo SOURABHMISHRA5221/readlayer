@@ -255,3 +255,103 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Live: live_check_m7 all pass; browser pass clean (axe 0 ×3, console 0, 44 px header confirmed);
   demo annotations identical before/after; 1 pre-M7 Google user doc now gated at consent.
 - Pending: Sourabh's live Google check.
+
+---
+
+## Scope change (Sourabh, 2026-10-10)
+- M2.2 is **full scope** (decision 32): online growth, jurisdiction in link_confirm, strictness,
+  Russell mislink, 30-article held-out set, ≥ 75% linked. BUILD_PLAN gets a full M2.2 section
+  (out of M9 and the post-hackathon list); STATUS milestone rows, deviations and next actions
+  updated.
+
+## Scope change 2 (Sourabh, 2026-10-10, decision 33)
+- Not a business-only reader. New order: M2.2 (full scope + open domains) → new M7.5 ("For you"
+  feed, "Read any link", reading goals) → M8-local → M9. Demo personas unchanged.
+- M8 paused on branch `m8` (local commit 2f037a1: redaction format and false positives,
+  NOT_CORPUS exclusions; 512 tests pass). Plan stays approved; resumes after M7.5.
+- Taxonomy chosen (14 domains, old four ids kept so existing data stays valid): economics,
+  finance, business, policy, politics, law, technology, science, health, environment, sports,
+  culture, education, society.
+- Freeze check: tight but not yet judged at risk (M6 rest and M7 each took a few hours). Real
+  risks are non-coding: seeding non-business concepts needs production writes beyond current
+  counts, and each deploy waits on Sourabh. Re-checked after the M2.2 plan is sized.
+- DESIGN feed and goals sections are written with the M7.5 plan, so plan-reviewer sees them.
+- Asked how the 75% applies with non-business articles. Sourabh (decision 34): headline is the
+  frozen-graph rate (business ≥ 75%, non-business aim 60%, < 50% → stop and tell him); after-growth
+  rate reported as production behaviour; grown-concept precision ≥ 90% on a judged sample. Seed new
+  domains from Wikipedia glossaries via safe_fetch + deterministic parsing; show counts and writes
+  before writing.
+
+## M2.2 (full scope + open domains, decisions 32–34)
+
+### Plan
+- docs/plans/M2.2.md. Glossary sources probed live through safe_fetch (entry counts in §B.1);
+  society has no parsable glossary, so it keeps 0 seeds and Sourabh decides.
+- plan-reviewer: REVISE ×4 (11, 8, 10, 2 items, all applied), then **APPROVE** in round 5 (2
+  nits applied). Key changes: no explain/restate/verify bumps (warm demo caches stay valid);
+  API deploy before the seeded graph; growth only for Google readers with phase-1 slots and a
+  `growth_counts` subcollection; `GROWTH_ENABLED` in deploy.env.yaml, default false; frozen
+  held-out demand set committed before any model run; held-out report committed under evals/;
+  Concept.kind stored; Chancellor of the Exchequer and FTSE Russell added by override.
+- Checkpoint: end of day Oct 11 IST, unfinished parts go to Sourabh as a cut question.
+- Sourabh (decision 35): growth applies to demo readers too, within the existing caps; persona
+  graphs untouched. Plan §C.1 amended (reverses round-1 item 6), live check now runs as an
+  anonymous demo reader pasting a link (no operator script). Amendment sent to plan-reviewer.
+- plan-reviewer on the decision-35 amendment: **APPROVE**; its 5 nits applied (cleanup via
+  DELETE /v1/me, pre-flight cap check, evidence before cleanup, complete write list, fold review
+  list to Sourabh).
+
+### Build (in progress, paused at usage limit, 2026-10-10)
+- Done and committed: 14-domain taxonomy (API, web, calibration gate); overrides remove_alias /
+  add / never_merge_kind (Russell, Tax alias, Chancellor of the Exchequer, FTSE Russell);
+  concept_define v3; extract_demands v2; frozen eval inputs (link_confirm 16 cases,
+  link_variants 150, link_merge 100, held-out list to 30 with domains, frozen demand set for the
+  new 15 with sha256); linker eval suite; held-out headline script; jurisdiction module + tests.
+- Before (linker suite, v2): link_confirm 13/16 (fails: levy, preferential, Russell Indexes),
+  variant precision 83% (1 of 15 batches answered by the fallback model after a 45 s timeout,
+  both runs logged), merge agreement 71/100. Old-15 extract counts v1 186 → v2 169
+  (evals/results/heldout_extract_counts_v1_v2.md).
+- Before headline (held-out, frozen graph) was running in the background at the pause; check
+  evals/heldout_report.md, and rerun `uv run python -m scripts.heldout_headline --label before`
+  if it has no "before" block.
+- Next: link_confirm v3 prompt + rendering of site/kind/jurisdiction and the code filter in
+  plan_links; kind/jurisdiction backfill; glossary parser and seeding dry run; then the counts
+  message to Sourabh (plan run order step 6).
+- Before headline (held-out, M2.1 graph, link_confirm-v2): business 61%, non-business 11%
+  (n per domain 5–31; sports 5 and culture 6 are very small for a per-domain stop rule).
+- Linker v3 (code jurisdiction filter on stored kind + link_confirm-v3) and link_merge-v2,
+  concept_prereqs-v2: suite 13/16 → 14/16 (levy fixed; preferential still null; Russell
+  Indexes → null, defensible since the phrase means the indices; in production it links by the
+  new FTSE Russell alias), variant precision 83% → 86%, merge agreement 71 → 72, 0 fallbacks.
+- profile_edit: "before" is the shipped M7 run (profile-edit-v3, 6/6, 4/4), since the code
+  already sends 14 domains. v4 broke P06 (5/6: the fan line dropped the cricket frame); v5 fixes
+  it with a football example (6/6, 4/4). Both runs kept in evals/report.md.
+- Seeding dry run, first attempt stopped: dedupe compared every candidate pair ≥ 0.88 (~12,000
+  link_merge pairs, 619 calls, $0.74 before I stopped it; projection had guessed 39 calls). Fixed:
+  each candidate is compared with its nearest graph concept and at most its 3 nearest
+  candidates (the build's top-k rule), and --project now counts the real pairs (7,686,
+  projected $1.71). Deviations from the plan, both logged: kind for pre-M2.2 concepts comes from
+  concept_jurisdiction for all of them (the build cache keys can't be mapped back to concepts);
+  exact matches of existing concepts are dropped rather than adding their aliases.
+- **STOP (decision 34 stop rule), 2026-10-10 ~19:15 IST.** Local frozen-graph headline on the
+  seeded graph (5,201 concepts, link_confirm-v3): business 64% (target 75%), non-business 13%
+  (aim 60%, floor 50%; every non-business domain under 50%). Before: 61% / 11%. After growth
+  (production behaviour): business 89%, non-business 69%, all 80%. Grown-concept precision
+  26/30 = 87% (target 90%). Nothing written to production; seeding upload, re-link and
+  held-out storage NOT done. Asked Sourabh how to proceed.
+- Sourabh (decision 36): go with the recommendation. Next: tighten growth to ≥ 90% precision,
+  then show the exact production writes with the deploy request, ship, then M7.5.
+- Growth tightened: link_confirm check on each new concept + concept_define v4 scopes. Rerun
+  (seeded-growth-v2): after growth business 89%, non-business 66%, all 78%; grown precision
+  29/30 = 97% (not independent of the first sample; disclosed in the report).
+- Open domains on the harness (seeded graph): 14 interest chips, axe 0 and no h-scroll at 1440/390
+  light/dark; Health+Sports reader's calibration filled health (16) and sports (8) concepts;
+  profile leads with Health/Sports, 12 others folded; map lists all 14.
+- Found and fixed a live bug from M7: the Delete my data label was invisible (account.css filled
+  .btn--danger + profile.css outlined rule = danger text on danger background), both themes.
+- milestone-reviewer round 1: FIX (9 items: STATUS accuracy, deviations, open decisions, missing
+  tests, startup guard); all applied. Round 2: **SHIP**; follow-ups applied (cost line, injection
+  test renders the real prompt against a forged delimiter).
+- Harness fix: the emulator budget refused every call once production spend passed $1 (cap now
+  copied spend + allowance). Growth timing on the harness (growth on, seeded graph): technology
+  article 4 concepts in 20.0 s, health 3 in 6.9 s; growth timeout raised to 30 s (deviation logged).

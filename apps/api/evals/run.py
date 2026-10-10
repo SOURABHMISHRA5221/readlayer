@@ -386,7 +386,7 @@ def print_summary(results: dict[str, Any], s: dict[str, Any]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--suite", choices=["safety", "profile_edit"], required=True)
+    parser.add_argument("--suite", choices=["safety", "profile_edit", "linker"], required=True)
     parser.add_argument("--judge", help="judge model id for this run (overrides MODEL_JUDGE)")
     parser.add_argument("--label", default="run", help="name saved with the run")
     parser.add_argument("--no-pipeline", action="store_true", help="verifier cases only")
@@ -397,6 +397,21 @@ def main() -> int:
     if not re.fullmatch(r"[a-z0-9-]+", args.label):
         parser.error("--label: lowercase letters, digits and dashes")
 
+    if args.suite == "linker":
+        from evals import linker
+
+        lk = asyncio.run(linker.run_suite())
+        path = linker.save(lk, args.label)
+        for c in lk["link_confirm"]:
+            verdict = "PASS" if c["passed"] else "FAIL"
+            print(f"{c['id']:4} {verdict} pick={c['pick']} expect={c['expect']}")
+        s = lk["summary"]
+        cost = lk["meta"]["cost_usd"]
+        print(f"link_confirm {s['link_confirm_passed']}/{s['link_confirm_total']} · variant "
+              f"precision {s['variant_precision']} ({lk['variants']}) · merge agreement "
+              f"{s['merge_agreement']}/{s['merge_total']} · ${cost:.4f}")  # fmt: skip
+        print(f"saved {path.relative_to(ROOT.parent)}")
+        return 0
     if args.suite == "profile_edit":
         from evals import profile_edit
         from evals.report import write_report

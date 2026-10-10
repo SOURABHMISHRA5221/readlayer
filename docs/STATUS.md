@@ -1,7 +1,8 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-10 (IST): M7 built and verified on the local emulator harness (§15); M6
-live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
+Last updated: 2026-10-10 (IST): M2.2 built on branch `m2.2` (§16; frozen-graph headline missed,
+shipped under decision 36), post-merge production steps pending Sourabh's yes; then M7.5. M8
+paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -22,7 +23,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M2.1 | merged | #5 | Graph grown to 3,327 concepts, overrides file, held-out linker evaluation (15 articles) |
 | docs | merged | #7 | Reading profile page spec (DESIGN §15) |
 | docs | merged | #8 | DESIGN §2 brought up to date with the M2.1 build |
-| M2.2 | **open issue** | #6 | Online concept growth + linker tuning, target ≥ 75% held-out linking. Not started |
+| M2.2 | **built** on branch `m2.2`; frozen-graph headline **missed** (business 64%, non-business 13%), shipped under decision 36 | #6 | 14-domain taxonomy, kind/jurisdiction, overrides (Russell, Tax alias, Chancellor, FTSE Russell), jurisdiction-aware linker (link_confirm v3), glossary seeding (+1,874 concepts, dry run), online growth with a link_confirm check (off until the seeded graph serves). Pending post-merge, each with Sourabh's yes, in Ship order: deploy API → upload seeded graph (backup first) → roll → re-link 42 docs / 62 demands → roll → warm_demo (0 spans) → store the 15 held-out docs → flip `GROWTH_ENABLED` → live growth check → fold → deploy web. Acceptance 3 (live growth) and 4 (GCS version + backup) stay open until then. See §16 |
 | M6 slice + redesign + M6.5 | merged (squash) | #9 | See below. One commit on `main`: `M6-slice: vertical slice, redesign, recommendations` |
 | M3 | merged (squash) | #10 | Reader model, auth, rate limits, events, export/delete, reading-profile API, rec state + ingest counter in Firestore, first full deploy. See §11 |
 | M4 | merged (squash) | #11 | Real gap scorer, seeded personas, closed loop, deploy guard. See §12 |
@@ -30,7 +31,9 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
-| M8-local, M2.2 (trimmed), M9 | not started | — | Autopilot order (decision 27) |
+| M7.5 | not started | — | "For you" feed, "Read any link", reading goals (decision 33) |
+| M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
+| M9 | not started | — | Hardening and evals |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
 1. `e7c131c` M6 local vertical slice: `DEV_AUTH_BYPASS` (refuses to start on Cloud Run / ENV=prod),
@@ -115,6 +118,9 @@ profile-edit count). All per-user data is in
 | Publisher metadata backfilled | 306/306 dates, 273 authors, 236 standfirsts, 271 images (before the 3 docs added later) |
 | Concept graph | version `2026-10-04` (+ `doc_freq` on 3,325 concepts, uploaded 2026-10-05), 3,327 concepts (finance 1,279, economics 1,064, policy 557, business 427), 4,053 prerequisite edges, 680 Wikidata ids, acyclic |
 | Held-out linking (M2.1) | 186 concept/term demands: 57% exact-name, 5% model-confirmed, **62% linked**, 38% unlinked. LINK_THRESHOLD 0.865 |
+| Held-out set (M2.2, 2026-10-10) | 30 URLs (15 business + 15 non-business, domain column fixed before measuring); the new 15's demands frozen (`data/heldout_new_demands.json` + sha256), not yet stored in Firestore |
+| Held-out linking (M2.2, local, seeded graph) | frozen graph: business 64%, non-business 13%; after growth (production behaviour): 89% / 66%. `apps/api/evals/heldout_report.md` |
+| Seeded graph (local only, not uploaded) | `data/concepts.seeded.json`: 5,201 concepts (+1,874), 14 domains, kind + jurisdiction on all; sha256 `0cc0554780aec275…` |
 | Search cache | 87 `rec_cache` entries, 21 of them empty (no result passed the blocklist + relevance gate) |
 
 The held-out guard (`build_concepts.corpus_sources()` refuses any corpus/held-out overlap) passes,
@@ -149,7 +155,6 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Annotation response carries `definition`, `domain`, `prerequisites`, `debug` beyond the §8 shape | Kept in M5: the card shows them instantly and falls back to the definition (now in DESIGN §8) | Keep |
 
 | Extension (M8-local) is unpacked, activeTab only: no allowlisted-domain activation, no host permissions, no automatic injection; not on the Web Store | Re-plan 2026-10-10 (decision 21): smallest permission set, no store review in the time left. DESIGN §11.3's allowlist activation is not built | Web Store release post-hackathon |
-| M2.2 trimmed to the jurisdiction fix and the Russell mislink; online concept growth and the 30-article held-out set deferred | Re-plan 2026-10-10 (decision 20) | Post-hackathon (issue #6) |
 | Explanation prefetch (top 3 spans) runs in the web client after annotations load, not on the server | Keeps the annotations route LLM-free (CLAUDE.md); Cloud Run throttles CPU after a response, so server background prefetch is unreliable | Keep (DESIGN §7) |
 | Verifier hedge/attribution/negation checks are scoped to the span's sentence in span mode, not the whole paragraph | A hedge elsewhere in the paragraph says nothing about the restated sentence; paragraph mode checks the whole paragraph | Keep (DESIGN §7) |
 | A definition-only outcome after two rejected drafts is cached (no generated text) | Otherwise every hover on a hard span re-spends two generations; judge outages and the budget guard are not cached | Keep (DESIGN §7) |
@@ -159,6 +164,13 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M6 accessibility: axe-core run in the live reader through headless Chrome instead of the Lighthouse CLI | Same engine (Lighthouse's accessibility audit is axe); no Lighthouse install in the repo | Keep |
 | M6 keyboard: "Tab reaches pre-read links" not exercised live (the test article's pre-read steps are all definition disclosures, reached and toggled by keyboard); the "Yes" answer not checked live | Covered offline: vitest renders and clicks link steps; `tests/test_loop_e2e.py::test_corrections_change_the_next_load` covers both answers | Live check after deploy on an article with link steps if one is found |
 | `explanation_reports` (review queue) stores the evicted entry with no user identifier, so it is outside export/delete; the report_wrong event itself is in `users/{uid}/events` | Shared content, not user data | Keep |
+| M2.2: kind for the 3,327 pre-M2.2 concepts comes from `concept_jurisdiction`, not the v2 build cache | The build cache keys hash whole batches, so entries can't be mapped back to concepts | Keep |
+| M2.2: glossary terms that exactly match an existing concept are dropped, not turned into link_merge-gated alias additions | Short acronyms are ambiguous across domains; dropping is safer | Keep |
+| M2.2: growth is stored in Firestore `graph_growth/` and folded into `concepts.json` later (BUILD_PLAN said growth writes `concepts.json`) | The runtime account has no Storage write (an IAM change), and rewriting a 12 MB file per article is heavy | Keep (DESIGN §2) |
+| M2.2: growth makes a fourth batched call, `link_confirm` on MODEL_QUALITY, to confirm each new concept (decision 36 tightening; the plan had 3 MODEL_FAST calls ≈ $0.004/article) | Raised judged precision from 87% to 97%; adds ≈ $0.004 and up to ~30 s per growing article (within growth's own timeout) | Keep; measure growth time before the flag flip |
+| M2.2: growth timeout 30 s, not the plan's 20 s (still min(30 s, phase-2 time left − 5 s)) | Harness timing with growth on: 4 concepts in 20.0 s (cold instance), 3 in 6.9 s; 20 s would drop growth on a slow model answer | Keep; watch `growth_ms` live |
+| M2.2: linker suite has 16 cases, not the planned 14 | Added a German chancellor negative and a second Chancellor case before any run | Keep |
+| M2.2: variant-precision baseline is 83% on the newly frozen 150-mention sample, not M2's 93% | M2's figure used a different sample and candidate floor; not comparable | Keep |
 ---
 
 ## 5. Known issues and tech debt
@@ -172,10 +184,17 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Deleted-account revocation is per instance and in memory, so it is also lost on a restart. Seen in M6 local testing: a demo session deleted at 07:02:41 UTC sent one event batch at 07:10:19 after the dev server restarted, leaving `users/{uid}` + 6 `events` + 1 `demo_graphs/newcomer` (8 docs) under a deleted Auth user (Sourabh's own session). Left for the M9 anonymous cleanup unless Sourabh asks for a delete now; events expire by TTL in 90 days |
 | Low | A cold explanation card (both parts missing) costs $0.0090 and p95 31 s (was $0.0070, 22 s): two judge calls. Reuse across readers repays it |
 | Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
-| Medium | Build-time merge error: "Russell Indexes"/"FTSE Russell" are aliases of S&P Dow Jones Indices, so Russell mentions link there by exact name (issue #6 comment) |
+| Low | Russell mislink fixed on `m2.2` (aliases moved to a new FTSE Russell concept); live once the seeded graph serves |
 | Low | Persona templates are cached per API process: re-seeding needs a restart (or a deploy) to take effect, and demo readers who already have a copy keep their old one |
 | Low | Recommendation format priors per persona are still the hand-set M6.5 values (`PERSONA_FORMAT_PRIORS`) |
-| Medium | Held-out linking 62% (target ≥ 75%), Chancellor→Treasury Secretary and levy over-generalisation (issue #6) |
+| Medium | Held-out linking (M2.2, 30 articles, frozen graph): business 64% (target 75%), non-business 13% (floor 50%); glossary seeds don't match news phrasing. After growth 89% / 66%. Chancellor and levy fixed (decision 36) |
+| Medium | Linker spot-check 3/10 wrong (target ≤ 2): links to a broader field or narrower concept, and to a generic seeded category ("molybdenum" → Element) |
+| Medium | `explain` and `restate` prompts still say "business and economy news", while non-business articles now get explanations (open decision, §10) |
+| Low | Grown concepts can carry an invented label (1/30 in the judged sample: "Underground wildfire hot spots") |
+| Low | `society` has 28 concepts, under calibration's 30, so it never appears in calibration (open decision, §10) |
+| Low | Anonymous traffic alone can use up the service's 100/day growth cap (30 × 5 = 150); accepted by decision 35, growth then stops for the day |
+| Low | The cross-instance catalog refresh only covers articles that grew concepts; other new docs still need a restart on other instances |
+| Low | Seeded multi-word everyday phrases ("Up and down", "One down") can be calibration items; the everyday-word rule covers single words only |
 | Low | Publisher images set third-party cookies (Lighthouse best-practices 96 on the library). Broken hotlinks fall back to the typographic tile everywhere |
 | Low | Web result quality varies (some generic podcasts, an exam-prep video); 21 of 87 cache entries empty |
 | Low | Headlines keep publisher SEO suffixes (" \| Stock Market News"); we don't alter publisher text |
@@ -268,6 +287,13 @@ v3 $0.0049); emulator harness ≈ $0.10 over two runs (explanations and edits; i
 seeded with production's $0.82, so with the cap at min($1, $8 − spend) checked against that seeded
 ledger the harness had about $0.18 of headroom, not $1). Production spend today before M7 work: $0.82.
 
+**2026-10-10 UTC (M2.2, local): ledger $5.43 for the day at the end of M2.2 work.** Linker
+suite runs ≈ $0.31, held-out extraction freeze $0.08 + old-15 counts $0.07, held-out headline
+runs ≈ $0.48, seeding dry runs $0.45 (final) + $0.74 (aborted all-pairs dedupe, fixed) + $1.72
+(first full run), re-link dry run $0.53, profile_edit suite ≈ $0.01, harness ≈ $0.05, the second
+judged growth run and the kind/jurisdiction backfill inside the seeding runs ≈ $0.49 (the rest of the
+ledger; the rest of M6 earlier that UTC day was ≈ $0.50). Under the $8 cap.
+
 **2026-10-10 UTC (rest of M6, local): ≈ $0.50 LLM.** Safety evals `explain-v4-split` $0.46,
 local explanations while testing ≈ $0.03, one "Open here" ingest $0.0024. Under the $8 cap.
 
@@ -317,13 +343,16 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
 
 ## 9. Next actions, in order
 
-Autopilot order (decision 27); BUILD_PLAN.md has the prompts. M6 is merged and live (#14, #15);
+Autopilot order (decisions 27 and 33): M2.2 → M7.5 → M8-local → M9; BUILD_PLAN.md has the prompts. M6 is merged and live (#14, #15);
 M7 is built and verified on the local harness (§15) and awaits review, merge and deploy.
 
 | When | Action |
 |---|---|
 | Done | **M7:** merged #16 and live; only Sourabh's Google check left. Was: merge `m7` (CI green, milestone-reviewer SHIP), deploy API then web, live check with one anonymous user (profile, map, node card, axe), then **Sourabh's live Google check** (consent → onboarding → calibration → profile and map → one edit preview/apply/undo → Delete → sign in again lands on consent) |
-| Next | **M8-local** (unpacked extension), then **M2.2 trimmed** (jurisdiction in `link_confirm`, Russell mislink), then **M9** hardening and evals |
+| Now | **M2.2 merge and production steps**, each needing Sourabh's yes: PR (milestone-reviewer SHIP, CI green) → deploy API → upload seeded graph with backup → roll → re-link 42 docs / 62 demands → roll → warm_demo (0 new spans) → store the 15 held-out docs → flip `GROWTH_ENABLED` (one-line commit, deploy) → live growth check → fold → deploy web. Checkpoint end of day Oct 11 IST: anything unfinished goes to Sourabh as a cut question |
+| Oct 12–13 | **M7.5**: "For you" feed, "Read any link", reading goals (DESIGN gets feed and goals sections with the plan) |
+| Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done) |
+| Oct 15 | **M9** hardening and evals |
 | Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles), README refresh, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
 
@@ -372,8 +401,18 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 29 | Two-phase "Open here" (M6) | Two synchronous requests (no work after a response on Cloud Run): phase 1 stores `pending_contents/`, phase 2 under a 150 s lease with a 120 s timeout; 3 counted failures → 410 |
 | 30 | Edit-by-prompt for demo readers (M7, Sourabh 2026-10-10) | Allowed, session-only: changes the session's persona copy and settings, never the template; "Reset persona" returns to the original; caps 3/uid, 30/day shared |
 | 31 | M7 harness (2026-10-10) | Local end-to-end on Firestore + Auth emulators seeded read-only from production; emulator "Google" readers for acceptance; real-account check by Sourabh after deploy |
+| 32 | M2.2 scope (Sourabh, 2026-10-10) | Full scope, not trimmed: online concept growth, jurisdiction in `link_confirm`, strictness, the Russell mislink, a 30-article held-out set and ≥ 75% linked on it. Supersedes the M2.2 part of decisions 20 and 22 |
+| 33 | Open domains, new order (Sourabh, 2026-10-10) | Not a business-only reader. M2.2 adds a fixed 14-domain taxonomy (old four ids kept), growth into it, non-business held-out articles and a per-domain report. New M7.5: "For you" feed (Tavily, YouTube; taxonomy topic names as the only query text; shared cache per topic/format/day), "Read any link" box, reading goals (`users/{uid}/goals`). Demo personas unchanged; open domains for Google readers. Order M2.2 → M7.5 → M8 → M9; if the Oct 16 freeze is at risk, ask what to cut |
+| 34 | M2.2 targets with open domains (Sourabh, 2026-10-10) | New domains are seeded from Wikipedia glossaries (medicine, computer science, cricket, association football, biology, law, …) fetched through safe_fetch, parsed deterministically from definition lists, then the normal dedupe/define pipeline; concept counts and production writes shown to Sourabh before writing. Per domain on the 30-article held-out set: (1) frozen-graph link rate, the headline: business ≥ 75%, non-business aim 60%, **under 50% → stop and tell Sourabh**; (2) after-growth link rate, labelled production behaviour (links to concepts grown from the same article never count in the headline); (3) precision on a judged sample of grown concepts ≥ 90% |
+| 35 | Growth for demo readers too (Sourabh, 2026-10-10) | Concept growth applies to any ingest that passes the existing caps, anonymous/demo readers included (3 per uid, 30 shared per day already bound the cost); judges mostly use demo mode and must see growth on a pasted link. Persona graphs stay as they are; only the global concept graph grows. Supersedes the "Google readers only" growth gate in the M2.2 plan |
+| 36 | M2.2 after the stop rule (Sourabh, 2026-10-10) | Frozen-graph headline missed (business 64%, non-business 13%) even with 1,874 glossary seeds: glossaries hold textbook terms, news uses specific phrases. Go with the recommendation: tighten growth until grown-concept precision clears 90%, ship seeding plus growth (judges see concepts grow on a pasted link), report the headline miss honestly, move on to M7.5. News-corpus seeding per domain not done (about a day; freeze risk) |
 
-No decisions are open.
+**Open decisions (Sourabh):**
+1. Keep `society` as a domain (28 concepts, grows only through articles; hidden in calibration
+   until 30), or fold it into culture? (M2.2 plan §A.1)
+2. Generalise the `explain`, `restate`, `verify` and `verify_background` prompts beyond "business
+   and economy news"? Needs before/after safety evals on the frozen cases (≈ $2) and a `warm_demo`
+   re-run as a production write, since the cache keys carry the prompt versions. (M2.2 plan §D.1)
 
 ---
 
@@ -601,3 +640,24 @@ e7f06f0 after #16, API then web back to back):**
 | Existing signed-in users gated at consent | 1 Google user doc from before M7 (of 4 user docs); it sees the consent screen on its next visit and records nothing until then |
 | Sourabh's Google check | Pending (consent → onboarding → 8 taps land on the library → profile and map → edit preview/Apply (map updates)/Undo → Delete → sign in again lands on consent) |
 
+---
+
+## 16. M2.2 acceptance (2026-10-10, local; decisions 32–36)
+
+Branch `m2.2`. Full numbers and every verdict: `apps/api/evals/heldout_report.md`, `evals/report.md`
+(linker suite, profile_edit), `evals/seed_report.md` (seeding dry run, production writes).
+
+| Check | Result |
+|---|---|
+| Frozen-graph headline, business ≥ 75% | **Missed: 64%** (61% before) |
+| Frozen-graph headline, non-business aim 60%, floor 50% | **Missed: 13%** (11% before); stop rule hit, Sourabh chose to ship and report it (decision 36) |
+| After growth (production behaviour, never the headline) | business 89%, non-business 66%, all 78% |
+| Grown-concept precision ≥ 90% (judged) | 26/30 (87%) first; **29/30 (97%)** after the link_confirm check and v4 scopes (not independent of the first sample) |
+| Linker suite (16 frozen cases) | **Partly missed**: 13/16 → 14/16. Chancellor ×2, German chancellor and levy pass; preferential access and "Russell Indexes" (as a phrase) still null, which plan Acceptance 2 required. Russell no longer links to S&P DJI and resolves by the FTSE Russell alias |
+| Variant precision (plan: ≥ 93%; BUILD_PLAN: not lower than before) | **≥ 93% not met (86%)**; not comparable with M2's sample; "not lower than before" met (83% → 86%) |
+| Spot-check ≤ 2/10 wrong | **Missed: 3/10 wrong** |
+| Growth: verified concept, prerequisites existing ids, acyclic, linked, caps | Tests offline; live check after deploy (judge-style, demo reader) |
+| `concepts.json` new version + backup, API loads it | After Sourabh's yes (apply_seeded, fold_growth) |
+| Taxonomy only domain list; open-domain onboarding, calibration, profile, map | Pass on the harness (seeded graph): 14 chips, axe 0, no h-scroll at 1440/390 light/dark; Health+Sports reader calibrated in health (16) and sports (8) |
+| Seeding dry run | +1,874 concepts (5,201 total), no single everyday word; 42 docs / 62 demands re-link (held-out excluded); demo spans unchanged |
+| Bug found on the way | Delete my data label invisible since M7 (both themes); fixed |

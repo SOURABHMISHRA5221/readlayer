@@ -109,6 +109,7 @@ ROUTES: dict[str, Route] = {
     "concept_define": Route("model_fast", "model_fallback"),
     "concept_prereqs": Route("model_fast", "model_fallback"),
     "concept_wikidata": Route("model_fast", "model_fallback"),
+    "concept_jurisdiction": Route("model_fast", "model_fallback"),  # M2.2 backfill
     "smoke": Route("model_fast", "model_fallback"),
     "profile_edit": Route("model_fast", "model_fallback"),  # DESIGN §15.3
     # Explanation cards come in two parts (DESIGN §7): the restatement of the author, made once

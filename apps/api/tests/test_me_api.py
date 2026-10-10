@@ -332,7 +332,7 @@ def test_rec_signals_survive_a_restart(env):
 
 
 def _fake_ingest(store):
-    async def ingest(url, source="fetch"):
+    async def ingest(url, source="fetch", grow_slots=0):
         from app.ingest.urls import url_hash
 
         d = doc(url_hash(url), "New", "news.example", [], url=url)
@@ -380,7 +380,7 @@ def test_anonymous_caps_per_reader_and_shared(env, monkeypatch):
 def test_failed_ingest_refunds_the_slot(env, monkeypatch, docs):
     from app.ingest.safe_fetch import FetchError
 
-    async def failing(url, source="fetch"):
+    async def failing(url, source="fetch", grow_slots=0):
         raise FetchError("timeout", "too slow")
 
     monkeypatch.setattr(ingest_router, "ingest_url", failing)

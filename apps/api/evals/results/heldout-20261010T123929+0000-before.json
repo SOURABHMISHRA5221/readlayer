@@ -1,0 +1,361 @@
+{
+ "meta": {
+  "label": "before",
+  "time": "2026-10-10T12:39:29+00:00",
+  "graph": "2026-10-04",
+  "graph_sha256": "58447b11ca3a2534",
+  "concepts": 3327,
+  "link_confirm": "link_confirm-v2",
+  "link_threshold": 0.865,
+  "cost_usd": 0.1554,
+  "fallbacks": 0
+ },
+ "rows": {
+  "business (total)": {
+   "alias": 106,
+   "unlinked": 73,
+   "confirmed": 7
+  },
+  "non-business (total)": {
+   "unlinked": 139,
+   "alias": 13,
+   "confirmed": 4
+  },
+  "new 15 (untuned)": {
+   "unlinked": 139,
+   "alias": 13,
+   "confirmed": 4
+  },
+  "all 30": {
+   "alias": 119,
+   "unlinked": 212,
+   "confirmed": 11
+  },
+  "  business": {
+   "unlinked": 20,
+   "alias": 15,
+   "confirmed": 2
+  },
+  "  culture": {
+   "unlinked": 6
+  },
+  "  education": {
+   "unlinked": 8,
+   "alias": 5,
+   "confirmed": 1
+  },
+  "  environment": {
+   "unlinked": 19,
+   "confirmed": 3
+  },
+  "  finance": {
+   "alias": 69,
+   "unlinked": 31,
+   "confirmed": 3
+  },
+  "  health": {
+   "unlinked": 20,
+   "alias": 2
+  },
+  "  law": {
+   "unlinked": 15,
+   "alias": 1
+  },
+  "  policy": {
+   "alias": 22,
+   "unlinked": 22,
+   "confirmed": 2
+  },
+  "  politics": {
+   "unlinked": 25,
+   "alias": 3
+  },
+  "  science": {
+   "unlinked": 29,
+   "alias": 2
+  },
+  "  sports": {
+   "unlinked": 5
+  },
+  "  technology": {
+   "unlinked": 12
+  }
+ },
+ "per_doc": [
+  {
+   "content_id": "4aa61bed4c097570d2a8d4af69883e96",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "alias": 3
+   }
+  },
+  {
+   "content_id": "e07f941d22b1227c9766f03f7cd2ab1a",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 6,
+    "unlinked": 2
+   }
+  },
+  {
+   "content_id": "c4a4eb899a77d85dba3614aaefc92849",
+   "domain": "business",
+   "group": "old",
+   "counts": {
+    "unlinked": 5,
+    "alias": 2,
+    "confirmed": 2
+   }
+  },
+  {
+   "content_id": "8087b2858b36a43f9767df292f5ddac8",
+   "domain": "business",
+   "group": "old",
+   "counts": {
+    "alias": 7,
+    "unlinked": 7
+   }
+  },
+  {
+   "content_id": "7ae03f5e6d53599efb75ad57263c5477",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 17,
+    "confirmed": 1,
+    "unlinked": 4
+   }
+  },
+  {
+   "content_id": "2da08777e772a4a732d536d15dedaf23",
+   "domain": "business",
+   "group": "old",
+   "counts": {
+    "unlinked": 4,
+    "alias": 2
+   }
+  },
+  {
+   "content_id": "1671c274dacad719da99ee58203b0a4f",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "alias": 1
+   }
+  },
+  {
+   "content_id": "08b2c0939ae758066a81489513efe236",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 15,
+    "unlinked": 9
+   }
+  },
+  {
+   "content_id": "48c50380877e8e4ab18e958ee1a4fb93",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 16,
+    "unlinked": 16,
+    "confirmed": 1
+   }
+  },
+  {
+   "content_id": "0a2e823d82efaeb060457cf574a07042",
+   "domain": "business",
+   "group": "old",
+   "counts": {}
+  },
+  {
+   "content_id": "1c97d191d9bc1c57f4aa8d0462c95428",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "alias": 7,
+    "unlinked": 6
+   }
+  },
+  {
+   "content_id": "fb49a499327e2da11974cd1c718282fe",
+   "domain": "finance",
+   "group": "old",
+   "counts": {
+    "alias": 15,
+    "confirmed": 1
+   }
+  },
+  {
+   "content_id": "c6e8eee6c2b2026f671b25971ffae5d8",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "unlinked": 12,
+    "confirmed": 1,
+    "alias": 5
+   }
+  },
+  {
+   "content_id": "353cc985ab6119b8a749907c4bc64abf",
+   "domain": "business",
+   "group": "old",
+   "counts": {
+    "alias": 4,
+    "unlinked": 4
+   }
+  },
+  {
+   "content_id": "a9db9e1bc1c5f3a110e7426154ea82e8",
+   "domain": "policy",
+   "group": "old",
+   "counts": {
+    "alias": 6,
+    "unlinked": 4,
+    "confirmed": 1
+   }
+  },
+  {
+   "content_id": "eee32b1054e9ad9babe03c9183149ee9",
+   "domain": "technology",
+   "group": "new",
+   "counts": {
+    "unlinked": 2
+   }
+  },
+  {
+   "content_id": "cf6c17cd90200fb5f66a2277ae6679be",
+   "domain": "technology",
+   "group": "new",
+   "counts": {
+    "unlinked": 10
+   }
+  },
+  {
+   "content_id": "f6d312031e4f881e8b78ca6ada1996ae",
+   "domain": "science",
+   "group": "new",
+   "counts": {
+    "unlinked": 17,
+    "alias": 2
+   }
+  },
+  {
+   "content_id": "f90abee5b6899e4242bc3831986290dc",
+   "domain": "science",
+   "group": "new",
+   "counts": {
+    "unlinked": 12
+   }
+  },
+  {
+   "content_id": "72bab7e2ed44efe00da7d4caf9181790",
+   "domain": "health",
+   "group": "new",
+   "counts": {
+    "unlinked": 10
+   }
+  },
+  {
+   "content_id": "319771e0bb4536ac6a313a04ff5252a0",
+   "domain": "health",
+   "group": "new",
+   "counts": {
+    "unlinked": 10,
+    "alias": 2
+   }
+  },
+  {
+   "content_id": "abbac75c17a8ecca8852c3e6c47bfce7",
+   "domain": "sports",
+   "group": "new",
+   "counts": {
+    "unlinked": 1
+   }
+  },
+  {
+   "content_id": "9f38ed85cf54dd9700675f19d7a057ef",
+   "domain": "sports",
+   "group": "new",
+   "counts": {
+    "unlinked": 4
+   }
+  },
+  {
+   "content_id": "f1006192f6f673279963429e9818278f",
+   "domain": "environment",
+   "group": "new",
+   "counts": {
+    "unlinked": 8
+   }
+  },
+  {
+   "content_id": "a25f287fea187a92c602c553ce71aac0",
+   "domain": "environment",
+   "group": "new",
+   "counts": {
+    "unlinked": 11,
+    "confirmed": 3
+   }
+  },
+  {
+   "content_id": "f085a98d9dd3b103ccccdef91f327077",
+   "domain": "politics",
+   "group": "new",
+   "counts": {
+    "unlinked": 20
+   }
+  },
+  {
+   "content_id": "9f0e65eb9d89a918a531993b798e630d",
+   "domain": "politics",
+   "group": "new",
+   "counts": {
+    "unlinked": 5,
+    "alias": 3
+   }
+  },
+  {
+   "content_id": "facb6846ba7cf4f921a529ebaea671bd",
+   "domain": "law",
+   "group": "new",
+   "counts": {
+    "unlinked": 15,
+    "alias": 1
+   }
+  },
+  {
+   "content_id": "0c69cbb6dbb4d1d6e5a95b86d9f6d4fb",
+   "domain": "culture",
+   "group": "new",
+   "counts": {
+    "unlinked": 6
+   }
+  },
+  {
+   "content_id": "fa1902b806612ae8c39d26c71c04bc5f",
+   "domain": "education",
+   "group": "new",
+   "counts": {
+    "unlinked": 8,
+    "alias": 5,
+    "confirmed": 1
+   }
+  }
+ ],
+ "stop": [
+  "business under 75%",
+  "non-business total under 50%",
+  "culture under 50% (n=6)",
+  "education under 50% (n=14)",
+  "environment under 50% (n=22)",
+  "health under 50% (n=22)",
+  "law under 50% (n=16)",
+  "politics under 50% (n=28)",
+  "science under 50% (n=31)",
+  "sports under 50% (n=5)",
+  "technology under 50% (n=12)"
+ ]
+}
