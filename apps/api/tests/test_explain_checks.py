@@ -143,3 +143,17 @@ def test_paragraph_inputs_pick_top_concepts_and_domain_band():
     assert i is not None and i.mode == "paragraph"
     assert [c.concept_id for c in i.concepts] == ["c_yield_curve", "c_inflation"]
     assert i.band == "can explain"  # finance carries more salience: σ(2.0) = 0.88
+
+
+def test_explanation_prompts_are_general_not_business_only():
+    """Decision 37 (M7.5): explain v5 and restate v2 address news on any subject; the judge
+    prompts never had business wording and stay as they were."""
+    from app import llm
+
+    for task, version in (("explain", "explain-v5"), ("restate", "restate-v2")):
+        prompt = llm.load_prompt(task)
+        assert prompt.version == version
+        assert "business and economy" not in prompt.system
+        assert "business or economy" not in prompt.system
+    assert llm.load_prompt("verify").version == "verify-v2"
+    assert llm.load_prompt("verify_background").version == "verify-background-v1"

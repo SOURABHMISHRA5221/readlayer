@@ -57,3 +57,14 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
   equities for a living") got no finance level, the model treating it as a job title.
   `profile-edit-v3` (doing a domain's work for a living is a statement of comfort; a bare job
   title is still only a frame hint): **6/6, 4/4**, $0.0049, same frozen cases.
+
+## 2026-10-10 — M7.5, decision 37: general explanation prompts
+
+- New, separate suite `faithfulness_open.yaml` (7 non-business cards: health, sports, science ×2,
+  technology, culture, environment), committed before any prompt edit and reported outside the
+  M5 targets. **Case flaw found by the judge, left unedited:** O06's card names "Niffenegger",
+  but its paragraph only says "she" — the judge's `judge_not_entailed` rejection is correct.
+  The case stays as written (decision 26); read O06 rejections as a correct catch.
+- Before (same day, shipped `explain-v4` + `restate-v1`, verify-v2, verify-background-v1):
+  adversarial 15/15, good 25/25, background 3/3 + 2/2, injection 10/10; non-business verifier
+  6/7 (O06), pipeline verified 7/7. $0.53.
