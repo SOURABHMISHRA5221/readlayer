@@ -317,3 +317,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Next: link_confirm v3 prompt + rendering of site/kind/jurisdiction and the code filter in
   plan_links; kind/jurisdiction backfill; glossary parser and seeding dry run; then the counts
   message to Sourabh (plan run order step 6).
+- Before headline (held-out, M2.1 graph, link_confirm-v2): business 61%, non-business 11%
+  (n per domain 5–31; sports 5 and culture 6 are very small for a per-domain stop rule).
+- Linker v3 (code jurisdiction filter on stored kind + link_confirm-v3) and link_merge-v2,
+  concept_prereqs-v2: suite 13/16 → 14/16 (levy fixed; preferential still null; Russell
+  Indexes → null, defensible since the phrase means the indices; in production it links by the
+  new FTSE Russell alias), variant precision 83% → 86%, merge agreement 71 → 72, 0 fallbacks.
+- profile_edit: "before" is the shipped M7 run (profile-edit-v3, 6/6, 4/4), since the code
+  already sends 14 domains. v4 broke P06 (5/6: the fan line dropped the cricket frame); v5 fixes
+  it with a football example (6/6, 4/4). Both runs kept in evals/report.md.
