@@ -124,6 +124,53 @@
   font: 400 var(--text-ui) / 1.5 var(--font-ui);
 }
 
+.reader__notice--working {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+.reader__pulse {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: notes-pulse 1.4s var(--ease) infinite;
+}
+@keyframes notes-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader__pulse { animation: none; opacity: 0.7; }
+}
+
+.reader__preread {
+  max-width: var(--measure);
+}
+.reader__preread:not(:empty) {
+  margin-top: var(--s10);
+}
+.reader__preread .rl-preread {
+  margin: 0;
+  animation: rise var(--dur-slow) var(--ease) both;
+}
+
+/* Paragraph markers sit in the left margin where there is one; below 900px the column has no
+   room, so they float at the paragraph's top right (the annotator does the same under 640px). */
+.prose {
+  --rl-pmark-left: -44px;
+}
+@media (max-width: 899px) {
+  .prose .rl-pmark {
+    position: static;
+    float: right;
+    width: 36px;
+    height: 36px;
+    margin: -4px -6px 2px 8px;
+  }
+}
+
 /* Prose */
 .reader__body {
   position: relative;
@@ -158,15 +205,21 @@
   padding: 0;
   list-style: none;
 }
+/* An open card sits over the rail column: the chips step out of the way entirely (a faded chip
+   fails contrast, and the same concepts are in the end block). */
 .rail[data-card-open="true"] .rail__item {
-  opacity: 0.28;
+  opacity: 0;
+  visibility: hidden;
+  /* hide after the fade; on close, visible at once so the fade-in shows */
+  transition: transform var(--dur-slow) var(--ease), opacity var(--dur) var(--ease),
+    visibility 0s linear var(--dur);
 }
 .rail__item {
   position: absolute;
   top: 0;
   left: 0;
   max-width: 100%;
-  transition: transform var(--dur-slow) var(--ease), opacity var(--dur) var(--ease);
+  transition: transform var(--dur-slow) var(--ease), opacity var(--dur) var(--ease), visibility 0s;
   animation: fade-in var(--dur-slow) var(--ease) both;
 }
 .rail .chip {

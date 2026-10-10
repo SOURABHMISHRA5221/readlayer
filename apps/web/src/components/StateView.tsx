@@ -36,4 +36,8 @@ export const ERROR_COPY: Record<ApiErrorKind, { title: string; body: string }> =
     title: "ReadLayer can't reach its API",
     body: "Check your connection, then try again.",
   },
+  pending: {
+    title: "This article is still being prepared",
+    body: "Its notes aren't ready yet. Try again in a moment.",
+  },
 };

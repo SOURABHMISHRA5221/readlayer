@@ -1,4 +1,4 @@
-import type { CardAnnotation } from "@readlayer/annotator";
+import { renderPreread, type CardAnnotation, type PrereadAnnotation } from "@readlayer/annotator";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArticleImage } from "../components/ArticleImage";
@@ -10,15 +10,34 @@ import { SourceMark } from "../components/SourceMark";
 import { ERROR_COPY, StateView } from "../components/StateView";
 import { useAnnotator } from "../hooks/useAnnotator";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { api, errorKind, type AnnotationsResponse, type ApiErrorKind, type ContentDetail } from "../lib/api";
+import {
+  api,
+  ApiError,
+  errorKind,
+  type AnnotationsResponse,
+  type ApiErrorKind,
+  type ContentDetail,
+} from "../lib/api";
 import { domainLabel, formatByline, formatDate, readingMinutes, sourceName } from "../lib/format";
 import { useIsDemo } from "../lib/auth";
-import { DEFAULT_DENSITY, DEFAULT_PERSONA, parseDensity, personaParam, readerPersona } from "../lib/personas";
+import {
+  DEFAULT_DENSITY,
+  DEFAULT_PERSONA,
+  parseDensity,
+  personaParam,
+  readerPersona,
+  type PersonaKey,
+} from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
 
 type Load<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; kind: ApiErrorKind };
+type Analysis = { status: "idle" } | { status: "running"; since: number } | { status: "failed"; message: string };
 
 const RAIL_QUERY = "(min-width: 1200px)";
+// Two-phase "Open here": the server's analysis is cut off at 120 s; past this we stop waiting.
+const ANALYSE_WINDOW_MS = 180_000;
+const ANALYSE_RETRY_MS = 3000;
+const ANALYSE_FAILED = "Notes are unavailable for this article; it's complete without them.";
 
 export function ReaderPage({ id, url }: { id: string; url: URL }) {
   const persona = readerPersona(url, useIsDemo());
@@ -29,6 +48,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
 
   const [content, setContent] = useState<Load<ContentDetail>>({ status: "loading" });
   const [notes, setNotes] = useState<Load<AnnotationsResponse>>({ status: "loading" });
+  const [analysis, setAnalysis] = useState<Analysis>({ status: "idle" });
   const [attempt, setAttempt] = useState(0);
   const articleRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -74,7 +94,38 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
     return () => ctrl.abort();
   }, [id, attempt]);
 
+  // A missing status (older API) means ready.
+  const analysing = content.status === "ready" && content.data.status === "analysing";
+  const ready = content.status === "ready" && !analysing;
+
+  // Phase 2: the article is on screen; ask the API to analyse it, then let the notes ink in.
   useEffect(() => {
+    if (!analysing) return;
+    const ctrl = new AbortController();
+    const since = Date.now();
+    setAnalysis({ status: "running", since });
+    void (async () => {
+      while (!ctrl.signal.aborted && Date.now() - since < ANALYSE_WINDOW_MS) {
+        try {
+          if ((await api.analyse(id, ctrl.signal)) === "ready") {
+            setAnalysis({ status: "idle" });
+            setContent((c) => (c.status === "ready" ? { status: "ready", data: { ...c.data, status: "ready" } } : c));
+            return;
+          }
+        } catch (e: unknown) {
+          if (ctrl.signal.aborted) return;
+          setAnalysis({ status: "failed", message: e instanceof ApiError && e.detail ? e.detail : ANALYSE_FAILED });
+          return;
+        }
+        await new Promise((r) => setTimeout(r, ANALYSE_RETRY_MS));
+      }
+      if (!ctrl.signal.aborted) setAnalysis({ status: "failed", message: ANALYSE_FAILED });
+    })();
+    return () => ctrl.abort();
+  }, [id, analysing]);
+
+  useEffect(() => {
+    if (!ready) return;
     const ctrl = new AbortController();
     api
       .annotations(id, persona, density, debug, ctrl.signal)
@@ -83,7 +134,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
         if (!ctrl.signal.aborted) setNotes({ status: "error", kind: errorKind(e) });
       });
     return () => ctrl.abort();
-  }, [id, persona, density, debug, attempt]);
+  }, [id, persona, density, debug, attempt, ready]);
 
   useEffect(() => {
     document.title =
@@ -95,9 +146,9 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   }, [content]);
 
   const article = content.status === "ready" ? content.data : null;
-  const annotations =
-    article && notes.status === "ready" && notes.data.content_id === id ? notes.data.annotations : null;
-  const handle = useAnnotator(articleRef, article?.id ?? null, annotations, persona);
+  const notesData = article && notes.status === "ready" && notes.data.content_id === id ? notes.data : null;
+  const annotations = notesData?.annotations ?? null;
+  const handle = useAnnotator(articleRef, article?.id ?? null, annotations, notesData?.extras ?? null, persona);
 
   const marked = useMemo<CardAnnotation[]>(() => {
     if (!annotations || !handle.resolved) return [];
@@ -163,11 +214,18 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
         {article && (
           <div className="reader__grid">
             <ArticleHeader article={article} />
-            {notes.status === "error" && (
+            {analysis.status === "running" && <PreparingNotice since={analysis.since} />}
+            {analysis.status === "failed" && (
+              <p className="reader__notice" role="status">
+                {analysis.message}
+              </p>
+            )}
+            {notes.status === "error" && ready && (
               <p className="reader__notice" role="status">
                 Notes are unavailable right now; the article is complete without them.
               </p>
             )}
+            {notesData?.preread && <PrereadCard item={notesData.preread} persona={persona} />}
             <div className="reader__body" ref={bodyRef}>
               <ArticleBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} />
               {wide && annotations && handle.resolved && <ConceptRail items={marked} body={bodyRef} {...link} />}
@@ -183,6 +241,44 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
       {!wide && <ConceptDrawer items={marked} hidden={endVisible} {...link} />}
     </>
   );
+}
+
+/** Phase 2 in progress: the article is readable; say what's coming and how long it's been. */
+function PreparingNotice({ since }: { since: number }) {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => tick((n) => n + 1), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const seconds = Math.round((Date.now() - since) / 1000);
+  return (
+    <p className="reader__notice reader__notice--working" role="status">
+      <span className="reader__pulse" aria-hidden="true" />
+      Preparing your notes… <span className="tnum">{seconds} s</span>
+    </p>
+  );
+}
+
+/** The pre-read card (DESIGN §6.4), drawn by the annotator package so the extension shares it. */
+function PrereadCard({ item, persona }: { item: PrereadAnnotation; persona: PersonaKey | null }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const href = (contentId: string) =>
+      withParams(new URL(`/read/${contentId}`, window.location.origin), { persona: personaParam(persona) });
+    const handle = renderPreread(el, item, {
+      href: (step) => href(step.content_id ?? ""),
+      onOpen: (step, e) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !step.content_id) return;
+        e.preventDefault();
+        navigate(href(step.content_id));
+        window.scrollTo(0, 0);
+      },
+    });
+    return () => handle.destroy();
+  }, [item, persona]);
+  return <div ref={ref} className="reader__preread" />;
 }
 
 function ArticleHeader({ article }: { article: ContentDetail }) {

@@ -4,7 +4,7 @@ import { api } from "./api";
 import type { PersonaKey } from "./personas";
 
 /**
- * Verified explanations for span cards (DESIGN §7). One request per (persona, article, span)
+ * Verified explanations for span and paragraph cards (DESIGN §7). One request per (persona, article, note)
  * per page session; the top spans are fetched as soon as the annotations arrive, so their
  * first hover fills at once, and the rest load when their card opens. A failed load is
  * forgotten so the next open tries again; the card shows the definition meanwhile.
@@ -24,7 +24,10 @@ export function loadExplanation(
   const key = keyOf(persona, contentId, annotation.id);
   const hit = cache.get(key);
   if (hit) return hit;
-  const pending = api.explain(contentId, annotation.id, persona).then(
+  // Paragraph markers are explained by paragraph; spans by their demand id.
+  const target =
+    annotation.kind === "paragraph" ? { paragraph_id: annotation.paragraph_id } : { demand_id: annotation.id };
+  const pending = api.explain(contentId, target, persona).then(
     (r): Explanation => ({
       id: r.id,
       kind: r.kind,

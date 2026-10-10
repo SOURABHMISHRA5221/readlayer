@@ -3,11 +3,14 @@ import {
   type Annotator,
   type AnnotatorEvent,
   type CardAnnotation,
+  type ParagraphMarker,
+  type PromptAnnotation,
   type SidenoteBox,
 } from "@readlayer/annotator";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
-import { trackEvent } from "../lib/events";
+import { api } from "../lib/api";
+import { onBeforeFlush, trackEvent } from "../lib/events";
 import { loadExplanation, prefetchExplanations, reportExplanation } from "../lib/explanations";
 import type { PersonaKey } from "../lib/personas";
 
@@ -36,12 +39,14 @@ export interface AnnotatorHandle {
 
 /**
  * One annotator per rendered article (keyed by `articleKey`). Annotation changes go through
- * update(), so a persona or density switch animates only the notes that differ.
+ * update(), so a persona or density switch animates only the notes that differ. `extras` are
+ * the paragraph markers and the "Know this?" prompt.
  */
 export function useAnnotator(
   root: RefObject<HTMLElement | null>,
   articleKey: string | null,
   annotations: CardAnnotation[] | null,
+  extras: (ParagraphMarker | PromptAnnotation)[] | null,
   persona: PersonaKey | null,
 ): AnnotatorHandle {
   const annotatorRef = useRef<Annotator | null>(null);
@@ -58,24 +63,34 @@ export function useAnnotator(
     const onEvent = (event: AnnotatorEvent) => {
       // A report evicts the shared entry and records report_wrong in one server call.
       if (event.type === "report_wrong") {
-        if (event.explanation_id) {
+        if (event.explanation_id && event.annotation_id) {
           void reportExplanation(
             articleKey, personaRef.current, event.annotation_id, event.explanation_id, event.concept_id,
           ).catch(() => undefined);
         }
         return;
       }
-      trackEvent(event.type, event.concept_id, articleKey, personaRef.current);
+      trackEvent(event.type, event.concept_id, articleKey, personaRef.current, {
+        ...(event.paragraph_id ? { paragraph_id: event.paragraph_id } : {}),
+        ...(event.words !== undefined ? { words: event.words } : {}),
+        ...(event.ms !== undefined ? { ms: event.ms } : {}),
+      });
     };
     const annotator = createAnnotator(el, {
       onEvent,
+      // "Know this?": the reader's own word goes straight to their graph (DESIGN §6.5).
+      onAnswer: async (prompt, known) => {
+        await api.correct(prompt.concept_id, known, personaRef.current);
+      },
       loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
       sidenote: () => railColumn(el),
       onHover: setHovered,
       onActive: setActive,
     });
     annotatorRef.current = annotator;
+    const unhook = onBeforeFlush(() => annotator.flush());
     return () => {
+      unhook();
       annotator.destroy();
       annotatorRef.current = null;
       setResolved(null);
@@ -90,7 +105,7 @@ export function useAnnotator(
     let cancelled = false;
     if (articleKey) prefetchExplanations(articleKey, personaRef.current, annotations);
     // The persona is the reader: switching it reloads an open card and resets its actions.
-    annotator.update(annotations, { reader: personaRef.current ?? "me" }).then((result) => {
+    annotator.update([...annotations, ...(extras ?? [])], { reader: personaRef.current ?? "me" }).then((result) => {
       if (cancelled) return;
       setResolved(result.resolved);
       if (result.unresolved.length) console.warn("[readlayer] anchors not found", result.unresolved);
@@ -98,7 +113,7 @@ export function useAnnotator(
     return () => {
       cancelled = true;
     };
-  }, [annotations, articleKey]);
+  }, [annotations, extras, articleKey]);
 
   const highlight = useCallback((id: string | null) => annotatorRef.current?.highlight(id), []);
   const open = useCallback((id: string, focus = false) => annotatorRef.current?.open(id, { focus }), []);
