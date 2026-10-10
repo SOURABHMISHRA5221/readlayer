@@ -11,6 +11,7 @@ import { matchRoute, navigate, onboardingRedirect, useUrl } from "./lib/router";
 // Route chunks: the main bundle doesn't carry onboarding or the profile page (M7).
 const WelcomePage = lazy(() => import("./pages/WelcomePage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const FeedPage = lazy(() => import("./pages/FeedPage"));
 
 /** A signed-in (Google) reader goes through consent and onboarding first; demo readers never. */
 function useOnboardingDone(uid: string | null, isDemo: boolean): boolean | null {
@@ -84,6 +85,12 @@ function SignedIn({ url, uid, isDemo }: { url: URL; uid: string; isDemo: boolean
     return (
       <Suspense fallback={loading}>
         <ProfilePage url={url} />
+      </Suspense>
+    );
+  if (route.name === "feed")
+    return (
+      <Suspense fallback={loading}>
+        <FeedPage url={url} />
       </Suspense>
     );
   if (route.name === "library") return <LibraryPage url={url} />;

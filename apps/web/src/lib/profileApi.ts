@@ -94,9 +94,35 @@ export interface EditSummary {
 
 const q = (persona: PersonaKey | null, first = true) => (persona ? `${first ? "?" : "&"}persona=${persona}` : "");
 
+/** Reading goals (M7.5 §C). */
+export interface GoalTarget {
+  concept_id: string;
+  label: string;
+  known: boolean;
+}
+export interface Goal {
+  id: string;
+  type: "habit" | "learning";
+  label: string;
+  metric: "articles" | "minutes" | null;
+  per_week: number | null;
+  targets: GoalTarget[];
+  done: number;
+  total: number;
+  fraction: number;
+  paused: boolean;
+}
+
 export const profileApi = {
   profile: (persona: PersonaKey | null, signal?: AbortSignal) =>
     api.raw.get<Profile>(`/v1/me/profile${q(persona)}`, signal),
+  goals: (signal?: AbortSignal) => api.raw.get<Goal[]>("/v1/me/goals", signal),
+  addHabit: (metric: "articles" | "minutes", per_week: number) =>
+    api.raw.send<Goal>("POST", "/v1/me/goals", { type: "habit", metric, per_week }),
+  addLearning: (text: string) => api.raw.send<Goal>("POST", "/v1/me/goals", { type: "learning", text }),
+  deleteGoal: (id: string) => api.raw.send<null>("DELETE", `/v1/me/goals/${id}`, undefined),
+  goalGraph: (goalId: string, signal?: AbortSignal) =>
+    api.raw.get<Subgraph>(`/v1/me/graph?goal=${encodeURIComponent(goalId)}`, signal),
   graph: (persona: PersonaKey | null, domain: Domain, search = "", signal?: AbortSignal) =>
     api.raw.get<Subgraph>(
       `/v1/me/graph?domain=${domain}${search ? `&q=${encodeURIComponent(search)}` : ""}${q(persona, false)}`,

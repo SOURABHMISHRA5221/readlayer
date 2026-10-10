@@ -300,3 +300,14 @@ svg {
   letter-spacing: var(--tracking-caps);
   text-transform: uppercase;
 }
+
+/* "Library · For you" tabs (M7.5; restyled in the design pass). */
+.libtabs { display: flex; gap: var(--s2); padding: var(--s2) 0; border-bottom: 1px solid var(--hairline); }
+.libtabs__tab {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s3);
+  font: 500 var(--text-ui) / 1.2 var(--font-ui); color: var(--muted); text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+.libtabs__tab:hover { color: var(--ink); }
+.libtabs__tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.libtabs__tab[aria-current="page"] { color: var(--ink); border-bottom-color: var(--ink); }

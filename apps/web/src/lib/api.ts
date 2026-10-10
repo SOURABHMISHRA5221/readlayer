@@ -192,6 +192,7 @@ async function send<T>(method: string, path: string, body: unknown, signal?: Abo
     signal,
   );
   if (!res.ok) throw await failure(res);
+  if (res.status === 204) return null as T; // e.g. DELETE /v1/me/goals/{id}
   return (await res.json()) as T;
 }
 

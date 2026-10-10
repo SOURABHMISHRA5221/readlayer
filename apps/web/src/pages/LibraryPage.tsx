@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { ArticleImage } from "../components/ArticleImage";
 import { Search } from "../components/Icons";
+import { LibraryTabs } from "../components/LibraryTabs";
 import { PersonaPicker } from "../components/PersonaPicker";
 import { ReadAnyLink } from "../components/ReadAnyLink";
 import { SourceMark } from "../components/SourceMark";
@@ -118,6 +119,7 @@ export function LibraryPage({ url }: { url: URL }) {
             <AccountMenu />
           </div>
         </div>
+        <LibraryTabs current="library" persona={persona} />
         <div className="masthead__hero">
           <h1 className="masthead__tagline">
             Read anything. <em>Understand it your way.</em>
