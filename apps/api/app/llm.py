@@ -196,7 +196,7 @@ def set_spend_store(store: SpendStore | None) -> None:
 def get_spend_store() -> SpendStore:
     global _spend_store
     if _spend_store is None:
-        _spend_store = FirestoreSpendStore(get_settings().gcp_project)
+        _spend_store = FirestoreSpendStore(get_settings().db_project)
     return _spend_store
 
 

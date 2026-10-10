@@ -58,7 +58,7 @@ _store: ContentStore | None = None
 def get_content_store() -> ContentStore:
     global _store
     if _store is None:
-        _store = FirestoreContentStore(get_settings().gcp_project)
+        _store = FirestoreContentStore(get_settings().db_project)
     return _store
 
 

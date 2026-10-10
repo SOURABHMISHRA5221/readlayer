@@ -562,8 +562,8 @@ def build_service(settings: Settings | None = None) -> WebSearch:
     )
     return WebSearch(
         providers,
-        FirestoreRecCache(settings.gcp_project),
-        FirestoreSearchCalls(settings.gcp_project),
+        FirestoreRecCache(settings.db_project),
+        FirestoreSearchCalls(settings.db_project),
         settings,
         blocklist,
     )

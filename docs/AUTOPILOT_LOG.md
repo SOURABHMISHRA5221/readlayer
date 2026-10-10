@@ -179,3 +179,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   Demo profile shows the persona's frame. Existing signed-in test readers now consent first.
 - B (API): map nodes carry `recent` (last 3 evidence items, newest first).
 - Tests: 10 new (onboarding); API suite 451 pass.
+- Sourabh decided C1: edit-by-prompt **for demo accounts too, session-scoped**: edits apply to
+  that demo session's copy of the persona only and reset to the original afterwards (new
+  session; End demo deletes it). Added a "Reset persona" button (POST /v1/me/demo/reset) so a
+  demo reader can return to the original within the session, and session-only frames for demo
+  `set_thinks_in`. Plan updated.
+- Harness groundwork: Settings refuse `FIREBASE_AUTH_EMULATOR_HOST` / `FIRESTORE_EMULATOR_HOST` on
+  Cloud Run or ENV=prod (tests); `FIRESTORE_PROJECT` / `db_project` so Firestore can point at the
+  emulator's demo project while Vertex and GCS keep the real project.

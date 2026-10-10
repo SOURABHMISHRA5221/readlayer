@@ -161,7 +161,7 @@ def get_doc_store() -> DocStore:
     if _store is None:
         from app.config import get_settings
 
-        _store = FirestoreDocStore(get_settings().gcp_project)
+        _store = FirestoreDocStore(get_settings().db_project)
     return _store
 
 

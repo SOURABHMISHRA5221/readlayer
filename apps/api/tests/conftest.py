@@ -23,7 +23,9 @@ from tests.fakes import FakeAuthAdmin  # noqa: E402
 Settings.model_config["env_file"] = None
 
 # Settings fields, plus credentials Google SDKs pick up on their own.
-_SCRUB = [name.upper() for name in Settings.model_fields] + [
+# The emulator hosts stay: `make test-emulator` sets them for the emulator-marked tests.
+_KEEP = {"FIRESTORE_EMULATOR_HOST", "FIREBASE_AUTH_EMULATOR_HOST"}
+_SCRUB = [name.upper() for name in Settings.model_fields if name.upper() not in _KEEP] + [
     "GOOGLE_APPLICATION_CREDENTIALS",
     "GOOGLE_CLOUD_PROJECT",
     "CLOUDSDK_CONFIG",
