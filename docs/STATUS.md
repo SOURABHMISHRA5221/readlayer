@@ -610,3 +610,24 @@ e7f06f0 after #16, API then web back to back):**
 | Existing signed-in users gated at consent | 1 Google user doc from before M7 (of 4 user docs); it sees the consent screen on its next visit and records nothing until then |
 | Sourabh's Google check | Pending (consent → onboarding → 8 taps land on the library → profile and map → edit preview/Apply (map updates)/Undo → Delete → sign in again lands on consent) |
 
+---
+
+## 16. M2.2 acceptance (2026-10-10, local; decisions 32–36)
+
+Branch `m2.2`. Full numbers and every verdict: `apps/api/evals/heldout_report.md`, `evals/report.md`
+(linker suite, profile_edit), `evals/seed_report.md` (seeding dry run, production writes).
+
+| Check | Result |
+|---|---|
+| Frozen-graph headline, business ≥ 75% | **Missed: 64%** (61% before) |
+| Frozen-graph headline, non-business aim 60%, floor 50% | **Missed: 13%** (11% before); stop rule hit, Sourabh chose to ship and report it (decision 36) |
+| After growth (production behaviour, never the headline) | business 89%, non-business 66%, all 78% |
+| Grown-concept precision ≥ 90% (judged) | 26/30 (87%) first; **29/30 (97%)** after the link_confirm check and v4 scopes (not independent of the first sample) |
+| Linker suite (16 frozen cases) | 13/16 → 14/16: Chancellor ×2, German chancellor, levy fixed; preferential access and "Russell Indexes" (as a phrase) still null — Russell no longer links to S&P DJI and resolves by the FTSE Russell alias |
+| Variant precision not lower than before | 83% → 86% (frozen 150-mention sample; M2's 93% used a different sample) |
+| Spot-check ≤ 2/10 wrong | **Missed: 3/10 wrong** |
+| Growth: verified concept, prerequisites existing ids, acyclic, linked, caps | Tests offline; live check after deploy (judge-style, demo reader) |
+| `concepts.json` new version + backup, API loads it | After Sourabh's yes (apply_seeded, fold_growth) |
+| Taxonomy only domain list; open-domain onboarding, calibration, profile, map | Pass on the harness (seeded graph): 14 chips, axe 0, no h-scroll at 1440/390 light/dark; Health+Sports reader calibrated in health (16) and sports (8) |
+| Seeding dry run | +1,874 concepts (5,201 total), no single everyday word; 42 docs / 62 demands re-link (held-out excluded); demo spans unchanged |
+| Bug found on the way | Delete my data label invisible since M7 (both themes); fixed |

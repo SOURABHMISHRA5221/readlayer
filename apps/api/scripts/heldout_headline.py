@@ -201,6 +201,7 @@ async def run(graph_path: Path, label: str, with_growth: bool = False) -> dict[s
 
     per_doc: list[dict[str, Any]] = []
     grown_all: list[dict[str, Any]] = []
+    confirmed_all: list[dict[str, Any]] = []
     growth_graph = graph
     growth_repo = GrowthRepo(InMemoryDocStore())  # held-out text never grows the real graph
     for doc in await load_docs():
@@ -217,6 +218,18 @@ async def run(graph_path: Path, label: str, with_growth: bool = False) -> dict[s
         types = {d.id: d.type for d in doc["demands"]}
         counts = Counter(lk.method for lk in links if types[lk.demand_id] in EMBED_TYPES)
         row = {**{k: doc[k] for k in ("content_id", "domain", "group")}, "counts": counts}
+        by_id = {d.id: d for d in doc["demands"]}
+        for lk in links:
+            if lk.method == "confirmed" and types[lk.demand_id] in EMBED_TYPES:
+                d = by_id[lk.demand_id]
+                concept = graph.get(lk.target_id)
+                para = doc["paragraphs"].get(d.paragraph_id, "")
+                confirmed_all.append({
+                    "content_id": doc["content_id"], "domain_label": doc["domain"],
+                    "exact": d.anchor.exact, "label": d.label,
+                    "concept": concept.label if concept else lk.target_id,
+                    "sentence": sentence_around(para, d.anchor.exact),
+                })  # fmt: skip
         if with_growth:
             growth_graph = await _grow_one(
                 doc, linked, links, types, counts, row, growth_graph, growth_repo,
@@ -247,6 +260,9 @@ async def run(graph_path: Path, label: str, with_growth: bool = False) -> dict[s
             for d in per_doc
         ],
         "grown": grown_all,
+        "confirmed_spot_check": random.Random(GROWTH_SEED).sample(
+            confirmed_all, min(10, len(confirmed_all))
+        ),
         "grown_sample": sample,
         "stop": stop_check(rows),
     }

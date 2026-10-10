@@ -200,3 +200,57 @@ Concepts grown in memory: 90; a seeded sample of 30 is saved with the run for Nu
 | 28 | Post-traumatic stress disorder | pass |  |
 | 29 | Digital identity | pass |  |
 | 30 | Women's suffrage | pass | explains 'female suffrage' |
+
+### 2026-10-10T13:50:24+00:00 · seeded-final
+
+Graph 2026-10-10-seeded (5201 concepts, sha 0cc0554780aec275), link_confirm-v3, threshold 0.865, new spend $0.0000, model fallbacks 0.
+
+| group | n | exact-name | model-confirmed | unlinked | **linked** |
+|---|---|---|---|---|---|
+| business (total) | 186 | 111 (60%) | 8 (4%) | 67 (36%) | **64%** |
+| non-business (total) | 156 | 17 (11%) | 4 (3%) | 135 (87%) | **13%** |
+| new 15 (untuned) | 156 | 17 (11%) | 4 (3%) | 135 (87%) | **13%** |
+| all 30 | 342 | 128 (37%) | 12 (4%) | 202 (59%) | **41%** |
+|   business | 37 | 15 (41%) | 2 (5%) | 20 (54%) | **46%** |
+|   culture | 6 | 0 (0%) | 0 (0%) | 6 (100%) | **0%** |
+|   education | 14 | 5 (36%) | 1 (7%) | 8 (57%) | **43%** |
+|   environment | 22 | 1 (5%) | 3 (14%) | 18 (82%) | **18%** |
+|   finance | 103 | 72 (70%) | 3 (3%) | 28 (27%) | **73%** |
+|   health | 22 | 3 (14%) | 0 (0%) | 19 (86%) | **14%** |
+|   law | 16 | 2 (12%) | 0 (0%) | 14 (88%) | **12%** |
+|   policy | 46 | 24 (52%) | 3 (7%) | 19 (41%) | **59%** |
+|   politics | 28 | 3 (11%) | 0 (0%) | 25 (89%) | **11%** |
+|   science | 31 | 2 (6%) | 0 (0%) | 29 (94%) | **6%** |
+|   sports | 5 | 1 (20%) | 0 (0%) | 4 (80%) | **20%** |
+|   technology | 12 | 0 (0%) | 0 (0%) | 12 (100%) | **0%** |
+
+Stop check: business under 75%; non-business total under 50%; culture under 50% (n=6); education under 50% (n=14); environment under 50% (n=22); health under 50% (n=22); law under 50% (n=16); politics under 50% (n=28); science under 50% (n=31); sports under 50% (n=5); technology under 50% (n=12)
+
+**Number 2, after growth (production behaviour: includes concepts grown from the article itself; never the headline):**
+
+| group | n | exact-name | model-confirmed | grown here | unlinked | **linked** |
+|---|---|---|---|---|---|---|
+| business (total) | 186 | 111 (60%) | 9 (5%) | 45 (24%) | 21 (11%) | **89%** |
+| non-business (total) | 156 | 17 (11%) | 6 (4%) | 80 (51%) | 53 (34%) | **66%** |
+| new 15 (untuned) | 156 | 17 (11%) | 6 (4%) | 80 (51%) | 53 (34%) | **66%** |
+| all 30 | 342 | 128 (37%) | 15 (4%) | 125 (37%) | 74 (22%) | **78%** |
+|   business | 37 | 15 (41%) | 2 (5%) | 18 (49%) | 2 (5%) | **95%** |
+|   culture | 6 | 0 (0%) | 0 (0%) | 5 (83%) | 1 (17%) | **83%** |
+|   education | 14 | 5 (36%) | 1 (7%) | 4 (29%) | 4 (29%) | **71%** |
+|   environment | 22 | 1 (5%) | 3 (14%) | 12 (55%) | 6 (27%) | **73%** |
+|   finance | 103 | 72 (70%) | 4 (4%) | 16 (16%) | 11 (11%) | **89%** |
+|   health | 22 | 3 (14%) | 2 (9%) | 11 (50%) | 6 (27%) | **73%** |
+|   law | 16 | 2 (12%) | 0 (0%) | 6 (38%) | 8 (50%) | **50%** |
+|   policy | 46 | 24 (52%) | 3 (7%) | 11 (24%) | 8 (17%) | **83%** |
+|   politics | 28 | 3 (11%) | 0 (0%) | 13 (46%) | 12 (43%) | **57%** |
+|   science | 31 | 2 (6%) | 0 (0%) | 15 (48%) | 14 (45%) | **55%** |
+|   sports | 5 | 1 (20%) | 0 (0%) | 4 (80%) | 0 (0%) | **100%** |
+|   technology | 12 | 0 (0%) | 0 (0%) | 10 (83%) | 2 (17%) | **83%** |
+
+Concepts grown in memory: 90; a seeded sample of 30 is saved with the run for Number 3 (verdicts below).
+
+**Spot-check of 10 model-confirmed links (seeded-final run, seed 34): 3 wrong (target ≤ 2) — missed.**
+Correct: "transition away from fossil fuels" → Energy transition (×2), "equity mutual funds" → Mutual funds,
+"regional mayors" → Metro mayors, "amalgamation" → Merger, "SMEs" → MSME, "national care service" → National
+social care service. Wrong: "tax and spend" → Fiscal policy (a broader field), "net profit" → Consolidated net
+profit (a narrower concept), "molybdenum" → Element (a generic category; a seeded chemistry concept).
