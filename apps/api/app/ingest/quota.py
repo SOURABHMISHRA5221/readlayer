@@ -34,6 +34,23 @@ async def reserve(caller: Caller, settings: Settings) -> bool:
     )
 
 
+async def reserve_growth(caller: Caller, settings: Settings) -> int:
+    """Concept-growth slots for a new article (M2.2, decision 35: any reader within the caps):
+    up to GROWTH_PER_ARTICLE within the reader's and the service's daily growth caps. 0 when
+    growth is off. Reserved with the ingest slot, never refunded (bounded, simple)."""
+    if not settings.growth_enabled:
+        return 0
+    from app.store.growth_repo import GrowthRepo
+
+    return await GrowthRepo(get_doc_store()).reserve_slots(
+        caller.uid,
+        today_utc(),
+        settings.growth_per_article,
+        settings.growth_per_uid_day,
+        settings.growth_per_day,
+    )
+
+
 async def refund(caller: Caller) -> None:
     day = today_utc()
     await ReaderRepo(get_doc_store()).refund_ingest(caller.uid, day, _global_path(caller, day))

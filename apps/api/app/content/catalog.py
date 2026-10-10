@@ -37,3 +37,9 @@ def add(doc: ContentDoc) -> None:
     if _docs is not None and doc.content_id not in _docs:
         _docs[doc.content_id] = doc
         _version += 1
+
+
+def missing(content_id: str) -> bool:
+    """True only when the catalog is loaded and lacks this doc (an unloaded catalog reads the
+    whole store on first use, so nothing is missing yet)."""
+    return _docs is not None and content_id not in _docs

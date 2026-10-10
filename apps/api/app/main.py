@@ -14,7 +14,7 @@ from app.auth import get_auth_admin
 from app.config import get_settings
 from app.content.router import router as read_router
 from app.explain.router import router as explain_router
-from app.graph.loader import load_graph, set_graph
+from app.graph.loader import get_graph, load_graph, set_graph
 from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
 from app.me.onboarding import router as onboarding_router
@@ -32,12 +32,19 @@ log = logging.getLogger("app.http")
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     start = time.perf_counter()
     set_graph(await load_graph(settings.concepts_uri))
+    grown = 0
+    if settings.concepts_uri:  # concepts grown online since the file was written (M2.2)
+        from app.graph.refresh import get_refresher
+
+        grown = await get_refresher().load_startup()
     graph_ms = (time.perf_counter() - start) * 1000
     get_auth_admin()
     log.info(
         "startup",
         extra={
             "graph_load_ms": round(graph_ms, 1),
+            "graph_version": get_graph().version,
+            "grown_concepts": grown,
             "startup_ms": round((time.perf_counter() - start) * 1000, 1),
             "cors_origins": settings.cors_origin_list,
         },

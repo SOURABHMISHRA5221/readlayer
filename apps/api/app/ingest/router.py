@@ -68,24 +68,30 @@ def _error(status: int, code: str, message: str, retry_after: int | None = None)
     return JSONResponse({"error": code, "message": message}, status_code=status, headers=headers)
 
 
-async def ingest_url(url: str, source: Literal["fetch", "user_ingested"] = "fetch") -> ContentDoc:
+async def ingest_url(
+    url: str, source: Literal["fetch", "user_ingested"] = "fetch", grow_slots: int = 0
+) -> ContentDoc:
     """The ingestion pipeline (spaCy, trafilatura, wordfreq, LiteLLM) loads on the first new
     article, so read-only requests and cold starts never import it."""
     from app.ingest import service
 
-    return await service.ingest_url(url, source=source)
+    return await service.ingest_url(url, source=source, grow_slots=grow_slots)
 
 
-async def ingest_submitted(url: str, title: str, paragraphs: list[str]) -> ContentDoc:
+async def ingest_submitted(
+    url: str, title: str, paragraphs: list[str], grow_slots: int = 0
+) -> ContentDoc:
     from app.ingest import service
 
-    return await service.ingest_submitted(url, title, paragraphs)
+    return await service.ingest_submitted(url, title, paragraphs, grow_slots)
 
 
-async def fetch_and_extract(url: str, source: Literal["fetch", "user_ingested"]) -> PendingDoc:
+async def fetch_and_extract(
+    url: str, source: Literal["fetch", "user_ingested"], grow_slots: int = 0
+) -> PendingDoc:
     from app.ingest import service
 
-    return await service.fetch_and_extract(url, source)
+    return await service.fetch_and_extract(url, source, grow_slots)
 
 
 async def analyse_pending(content_id: str) -> ContentDoc:
@@ -127,10 +133,11 @@ async def post_content(
     if not known and not await quota.reserve(caller, settings):
         return quota.cap_reached(caller, settings, "Articles already in the library stay free.")
     try:
+        slots = 0 if known else await quota.reserve_growth(caller, settings)
         if isinstance(body, SubmittedRequest):
-            doc = await ingest_submitted(body.url, body.title, body.paragraphs)
+            doc = await ingest_submitted(body.url, body.title, body.paragraphs, slots)
         else:
-            doc = await ingest_url(body.url)
+            doc = await ingest_url(body.url, grow_slots=slots)
     except Exception as exc:
         if not known:
             await quota.refund(caller)

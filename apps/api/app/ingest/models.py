@@ -99,6 +99,8 @@ class PendingDoc(BaseModel):
     published: str | None = None
     image: str | None = None
     paragraphs: list[PendingParagraph]
+    # Concept-growth slots reserved for this article in phase 1 (M2.2); no uid is stored.
+    grow_slots: int = Field(default=0, ge=0)
     # Analyses that ran and failed (not budget refusals or a busy lease); capped.
     attempts: int = 0
     lease_until: datetime | None = None

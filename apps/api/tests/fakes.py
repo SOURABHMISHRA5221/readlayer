@@ -110,7 +110,7 @@ def pending_doc(url: str, source: str = "user_ingested", texts: list[str] | None
 def fake_fetch_and_extract(sources: list[str] | None = None):
     """Replaces the router's fetch_and_extract: stores a pending doc, no network, no LLM."""
 
-    async def fetch_and_extract(url, source="fetch"):
+    async def fetch_and_extract(url, source="fetch", grow_slots=0):
         from app.store.pending_repo import get_pending_repo
 
         if sources is not None:

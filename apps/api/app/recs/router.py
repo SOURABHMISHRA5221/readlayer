@@ -346,7 +346,8 @@ async def open_web_article(
     if not await quota.reserve(caller, settings):
         return quota.cap_reached(caller, settings, "Use “Open original” for this one.")
     try:
-        await fetch_and_extract(body.url, "user_ingested")
+        slots = await quota.reserve_growth(caller, settings)
+        await fetch_and_extract(body.url, "user_ingested", slots)
     except Exception as exc:
         await quota.refund(caller)
         if isinstance(exc, INGEST_ERRORS):
