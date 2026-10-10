@@ -135,6 +135,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M7: new route POST /v1/me/consent (and /v1/calibration/skip, GET /v1/me/profile/edits, POST /v1/me/demo/reset) | Consent recorded by the API so the gate is enforced server-side | In DESIGN §8 |
 | M7: profile_edit uses a flat response schema re-validated locally against the strict whitelist | Vertex returns 400 for tagged-union schemas and for an outer maxItems next to inner limits | Keep (DESIGN §15.3) |
 | M7: edit-by-prompt for demo readers is session-only (their persona copy + session settings; reset button) | Sourabh's decision 2026-10-10 (judges are anonymous) | Keep (DESIGN §15.3) |
+| M7: "this week" trend is a table only, no sparkline (the plan said sparkline with a table fallback) | The table carries the numbers accessibly; a sparkline is decoration for a few weeks of data | Revisit in M9 if time |
+| M7: the live check is an API script plus a headless-browser pass on the live site, not one browser script | The demo flows are cheapest to assert through the API; the browser pass covers rendering, focus, axe and console | Keep |
 | Per-minute rate limits are in memory per instance (≤ 3× a limit in the worst case); daily caps are in Firestore | Cheap; money-protecting caps are exact | Keep |
 | A deleted account's still-valid ID token (≤ 1 h) is refused only on the instance that ran the delete | No per-request revocation check (an extra Auth call per request) | M9 if needed |
 | Web search queries are `label + graph domain + format suffix`, not label + suffix only | Bare labels were ambiguous ("separation principle" returned a marine-engineering video). Domain is concept data, never reader data | Accepted as the rule (decision 4, DESIGN §16.3) |
@@ -262,8 +264,9 @@ quota is free within the daily buckets.
 ---
 
 **2026-10-10 UTC (M7, so far):** profile-edit evals ≈ $0.01 (v1 rejected at $0, v2 $0.0047,
-v3 $0.0049); emulator harness $0.07 (explanations and edits; its ledger is separate and was seeded
-with production's $0.82 so the cap held). Production spend today before M7 work: $0.82.
+v3 $0.0049); emulator harness ≈ $0.10 over two runs (explanations and edits; its ledger is separate and was
+seeded with production's $0.82, so with the cap at min($1, $8 − spend) checked against that seeded
+ledger the harness had about $0.18 of headroom, not $1). Production spend today before M7 work: $0.82.
 
 **2026-10-10 UTC (rest of M6, local): ≈ $0.50 LLM.** Safety evals `explain-v4-split` $0.46,
 local explanations while testing ≈ $0.03, one "Open here" ingest $0.0024. Under the $8 cap.
@@ -366,9 +369,9 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 26 | Eval integrity (M5) | Cases committed before the first model run; any prompt change bumps its version and is reported before/after in evals/report.md; cases are never edited to pass |
 | 27 | Autopilot (2026-10-10) | Plan-reviewer loop replaces plan mode and plan approval; milestone-reviewer SHIP + green CI before merge; deploys and `git push` still need Sourabh's yes; production writes only within each plan's counts. M7 keeps the knowledge map and edit-by-prompt (no cuts without asking). Log: `docs/AUTOPILOT_LOG.md` |
 | 28 | Shared restatement (M6) | "What the author is saying" is one cache entry per (span, style) for every reader; the Background is per (band, frame, style). Restatement rejected → definition card; Background rejected → restatement with the definition in that panel. One cap count per request |
+| 29 | Two-phase "Open here" (M6) | Two synchronous requests (no work after a response on Cloud Run): phase 1 stores `pending_contents/`, phase 2 under a 150 s lease with a 120 s timeout; 3 counted failures → 410 |
 | 30 | Edit-by-prompt for demo readers (M7, Sourabh 2026-10-10) | Allowed, session-only: changes the session's persona copy and settings, never the template; "Reset persona" returns to the original; caps 3/uid, 30/day shared |
 | 31 | M7 harness (2026-10-10) | Local end-to-end on Firestore + Auth emulators seeded read-only from production; emulator "Google" readers for acceptance; real-account check by Sourabh after deploy |
-| 29 | Two-phase "Open here" (M6) | Two synchronous requests (no work after a response on Cloud Run): phase 1 stores `pending_contents/`, phase 2 under a 150 s lease with a 120 s timeout; 3 counted failures → 410 |
 
 No decisions are open.
 
@@ -562,22 +565,27 @@ personas), live check hits only.
 
 ---
 
-## 15. M7 acceptance (2026-10-10, local harness; live after deploy)
+## 15. M7 acceptance (2026-10-10, local harness on the final code; live after deploy)
 
 **Built.** API: consent (`consent-v1`), onboarding, calibration (8 taps, skip), consent gate,
 map-node evidence, edit-by-prompt (flat schema + strict whitelist, redaction, name cap, resolver,
-preview/apply/undo with exact deltas, demo session-only + reset), emulator-safety settings,
-transaction contention retry. Web: `/welcome`, `/profile` (summary, bars, Cytoscape map + list
-view + node dialog, this week, analogy chips, preferences, edit box, data controls), onboarding
-gate, lazy route chunks. Harness: `make dev-emulator`. Tests: API 484, annotator 36, web 4;
-profile-edit evals `profile-edit-v3` 6/6 phrasings, 4/4 attacks.
+preview/apply/undo with exact deltas, demo session-only + reset that also restores session
+settings), emulator-safety settings, transaction contention retry, rated domains in the profile.
+Web: `/welcome` (with export/delete before consent), `/profile` (summary, bars with "not rated
+yet", Cytoscape map + list view + node dialog, this week, analogy chips, preferences with visible
+errors, edit box, data controls), onboarding gate (re-checked when the flow finishes), lazy
+route chunks. Harness: `make dev-emulator`. Tests: API 489, annotator 36, web 7; profile-edit
+evals `profile-edit-v3` 6/6 phrasings, 4/4 attacks. Raw harness output:
+`docs/evidence/M7-harness.txt`.
 
-| Check | Result |
+| Check | Result (from `docs/evidence/M7-harness.txt`) |
 |---|---|
-| Two fresh accounts get different annotations and analogies on the same article | Emulator "Google" readers: software engineer (finance, new, frame software, calibration "new to me") vs commerce student (business + economics, some, frames commerce→cricket, mixed answers). Guardian UK bonds: **8 vs 2** spans; Guardian Polymarket/HSBC: **9 vs 4**; RoDTEP card Background: software analogy ("billing rebate … deployment fees") vs cricket ("touring cricket team … kit expenses") |
-| Delete my data signs out; fresh sign-in starts onboarding | Profile → Delete my data → Delete everything: back on the sign-in page; signing in again lands on `/welcome` at the consent step |
-| Profile page keyboard + axe | List item Enter opens the node dialog with focus inside; Escape closes and focus returns to the item; axe 0 serious/critical at 1440 light, 1440 dark, 390, 320 (welcome flow too: consent, field, comfort, calibration at 1440 light and 390 dark) |
-| Mobile | No horizontal scroll at 320 px (after letting the topic toggle wrap); list view is the default below 640 px; interactive targets ≥ 44 px (the pause checkbox's 44 px label is its target) |
-| Profile edit tests | Off-schema output rejected whole, cross-op fields rejected, id-shaped names rejected, unknown names reported and never stored, apply→undo restores α, β, θ and settings, 11th parse → 429, >30 names refused before linking, ≤ 3 link_confirm batches (24 tests) |
-| "I'm a backend engineer, I know options well, keep explanations short" | Preview: 1 concept known (options), length normal → short (frames unchanged once the no-op line was dropped); settings unchanged before Apply; after Apply the next explanation on "Bond sell-off" was a **cache miss** at style short: **23 words vs 56** |
+| Two fresh accounts get different annotations and analogies on the same article | Emulator "Google" readers: software engineer vs commerce student. Guardian UK bonds **8 vs 2** spans, Guardian Polymarket/HSBC **9 vs 5**; RoDTEP card: "Analogy · software" (billing rebate / deployment fees) vs "Analogy · cricket" (touring team's kit expenses) |
+| Onboarding ends on the library without a reload | After the 8th answer and after "Skip the rest": path `/`, library shown, 0 full page loads |
+| Delete my data signs out; fresh sign-in starts onboarding | Confirm focuses Cancel, Escape cancels and returns focus; Delete everything → sign-in page; signing in again → `/welcome` consent step. Delete from the consent screen (before consent) also works |
+| Profile page keyboard + axe | Tab walk: **31 stops for 31 tabbable controls**; list item Enter opens the node dialog, Escape returns focus to the item; axe 0 serious/critical at 1440 light, 1440 dark, 390, 320 |
+| Mobile | No horizontal scroll at 320 px; list view default below 640 px; no target under 44 px in the page, node card or open preview (header items raised to 44 px after the first run flagged the 40 px icons and 21 px wordmark) |
+| Knowledge map | Renders at 1440 light and dark (3 canvases, not busy); after Apply, "Options" appears in the finance list as Understands without a reload or domain switch |
+| Profile edit tests | 26 tests: whitelist, cross-op fields, id-shaped names, unresolved names never stored, apply→undo exact, 11th parse → 429, >30 names refused before linking, ≤ 3 link_confirm batches, reset restores session settings |
+| "I'm a backend engineer, I know options well, keep explanations short" | Preview: 1 concept known, length normal → short; settings unchanged before Apply; after Apply the "Bond sell-off" Background is **23 words vs 56** at style short. First run: a cache miss (harness log); the evidence re-run hit the cache because the first run had already made that short Background |
 
