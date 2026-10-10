@@ -16,7 +16,9 @@ from app.ingest.models import ContentDoc, PendingDoc
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import url_hash
 from app.store.content_repo import get_content_store
+from app.store.docstore import get_doc_store
 from app.store.pending_repo import AnalysisBusy, AnalysisFailed, NotPending, get_pending_repo
+from app.store.reader_repo import ReaderRepo
 
 router = APIRouter()
 
@@ -136,6 +138,10 @@ async def post_content(
         slots = 0 if known else await quota.reserve_growth(caller, settings)
         if isinstance(body, SubmittedRequest):
             doc = await ingest_submitted(body.url, body.title, body.paragraphs, slots)
+            # Submitted text is a reader-brought page: visible to its submitter (M7.5).
+            await ReaderRepo(get_doc_store()).add_ingested(
+                caller.uid, doc.content_id, datetime.now(UTC).isoformat()
+            )
         else:
             doc = await ingest_url(body.url, grow_slots=slots)
     except Exception as exc:

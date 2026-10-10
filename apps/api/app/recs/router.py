@@ -21,11 +21,11 @@ from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
 from app.content.router import doc_or_error, score_for
-from app.context import ReaderContext, reader_context, scope_persona
+from app.context import ReaderContext, hidden_ids, reader_context, scope_persona
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph
 from app.ingest import quota
-from app.ingest.models import ContentDoc
+from app.ingest.models import NOT_CORPUS, ContentDoc, is_corpus
 from app.ingest.router import (
     FETCH_ERROR_STATUS,
     INGEST_ERRORS,
@@ -33,7 +33,6 @@ from app.ingest.router import (
     _error,
     _ingest_error,
     fetch_and_extract,  # lazy: loads the ingestion pipeline on first use
-    is_known,
 )
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import url_hash
@@ -46,6 +45,7 @@ from app.recs.web_search import build_query, get_web_search
 from app.scoring.scorer import word_count
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
+from app.store.pending_repo import get_pending_repo
 from app.store.reader_repo import ReaderRepo
 
 log = logging.getLogger("app.recs")
@@ -226,10 +226,11 @@ async def recommendations(
     triggers = [s.concept_id for s in spans]  # highest score first
 
     index = await _library_index()
-    lib = library_candidates(index, doc, graph, theta, triggers)
+    hidden = hidden_ids(index.docs.values(), ctx)  # per request, after the shared index
+    lib = library_candidates(index, doc, graph, theta, triggers, hidden)
 
     web = get_web_search()
-    known_urls = {d.final_url or d.url for d in index.docs.values()}
+    known_urls = {d.final_url or d.url for cid, d in index.docs.items() if cid not in hidden}
     web_results: dict[str, tuple[WebResult, str, float]] = {}
     pending = False
     anonymous = ctx.caller.is_anonymous
@@ -337,10 +338,16 @@ async def open_web_article(
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
     content_id = url_hash(body.url)
-    if await get_content_store().get(content_id) is not None:
+    existing = await get_content_store().get(content_id)
+    if existing is not None:
+        if not is_corpus(existing):
+            await _remember_ingested(caller, content_id)
         log.info("rec opened", extra={"content_id": content_id, "new": False, "ready": True})
         return OpenResponse(content_id=content_id, new=False, ready=True)
-    if await is_known(content_id):  # fetched by someone else, not analysed yet
+    pending = await get_pending_repo().get(content_id)
+    if pending is not None:  # fetched by someone else, not analysed yet
+        if pending.source in NOT_CORPUS:
+            await _remember_ingested(caller, content_id)
         log.info("rec opened", extra={"content_id": content_id, "new": False, "ready": False})
         return OpenResponse(content_id=content_id, new=False, ready=False)
     if not await quota.reserve(caller, settings):
@@ -353,5 +360,13 @@ async def open_web_article(
         if isinstance(exc, INGEST_ERRORS):
             return _ingest_error(exc)
         raise
+    await _remember_ingested(caller, content_id)
     log.info("rec opened", extra={"content_id": content_id, "new": True, "ready": False})
     return OpenResponse(content_id=content_id, new=True, ready=False)
+
+
+async def _remember_ingested(caller: Caller, content_id: str) -> None:
+    """This reader brought the page in: their library and Up next list it (M7.5)."""
+    await ReaderRepo(get_doc_store()).add_ingested(
+        caller.uid, content_id, datetime.now(UTC).isoformat()
+    )

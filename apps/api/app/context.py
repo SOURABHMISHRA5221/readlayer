@@ -7,17 +7,22 @@ learns separately. Signed-in readers are themselves: their own graph, neutral (Î
 edges) until they read, no persona.
 """
 
-from collections.abc import Mapping
+import asyncio
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, Query
 
 from app.auth import Caller, current_caller
+from app.ingest.models import is_corpus
 from app.reader.state import Density, PersonaKey, ReaderState
 from app.recs.state import DEFAULT_KEY
 from app.store.docstore import get_doc_store
 from app.store.reader_repo import DomainState, ReaderRepo, UserProfile
+
+if TYPE_CHECKING:
+    from app.ingest.models import ContentDoc
 
 DEMO_DEFAULT: PersonaKey = "newcomer"
 
@@ -29,6 +34,9 @@ class ReaderContext:
     state: ReaderState
     user: UserProfile
     domains: Mapping[str, DomainState]
+    # Pages this reader brought in (M7.5): the only NOT_CORPUS docs their library and Up next
+    # list. Read once per request.
+    ingested: frozenset[str] = frozenset()
 
     @property
     def uid(self) -> str:
@@ -63,5 +71,16 @@ async def reader_context(
     persona: Annotated[PersonaKey | None, Query()] = None,
 ) -> ReaderContext:
     scope = scope_persona(caller, persona)
-    state, user, domains = await ReaderRepo(get_doc_store()).load_state(caller.uid, scope)
-    return ReaderContext(caller, scope, state, user, domains)
+    repo = ReaderRepo(get_doc_store())
+    (state, user, domains), ingested = await asyncio.gather(
+        repo.load_state(caller.uid, scope), repo.ingested_ids(caller.uid)
+    )
+    return ReaderContext(caller, scope, state, user, domains, ingested)
+
+
+def hidden_ids(docs: Iterable["ContentDoc"], ctx: ReaderContext) -> frozenset[str]:
+    """Reader-brought pages (NOT_CORPUS) this reader didn't bring in: filtered per request,
+    after any shared cache, never part of a cache key."""
+    return frozenset(
+        d.content_id for d in docs if not is_corpus(d) and d.content_id not in ctx.ingested
+    )

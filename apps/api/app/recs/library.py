@@ -231,8 +231,10 @@ def library_candidates(
     graph: ConceptGraph,
     theta: Mapping[str, float],
     triggers: Sequence[str],
+    hidden: frozenset[str] = frozenset(),
 ) -> list[LibraryCandidate]:
-    """Best candidate per (relation, doc), at most PER_RELATION_LIMIT per relation."""
+    """Best candidate per (relation, doc), at most PER_RELATION_LIMIT per relation. `hidden`
+    (other readers' pages) is dropped before the cut, so it never takes this reader's slots."""
     trigger_set = set(triggers)
     groups = [
         same_story(index, doc, trigger_set),
@@ -244,6 +246,8 @@ def library_candidates(
     for group in groups:
         best: dict[str, LibraryCandidate] = {}
         for c in group:
+            if c.content_id in hidden:
+                continue
             if c.content_id not in best or c.relevance > best[c.content_id].relevance:
                 best[c.content_id] = c
         ranked = sorted(best.values(), key=lambda c: (-c.relevance, c.content_id))
