@@ -117,3 +117,86 @@ Concepts grown in memory: 94; a seeded sample of 30 is saved with the run for Nu
 | 28 | Hyperfixation | pass | real concept, matches |
 | 29 | Budget reallocation | FAIL | generic word ('reallocating') dressed as a concept (criterion 1) |
 | 30 | Dangerous offender | pass | explains 'dangerousness', law |
+
+### 2026-10-10T13:46:57+00:00 · seeded-growth-v2
+
+Graph 2026-10-10-seeded (5201 concepts, sha 0cc0554780aec275), link_confirm-v3, threshold 0.865, new spend $0.1523, model fallbacks 0.
+
+| group | n | exact-name | model-confirmed | unlinked | **linked** |
+|---|---|---|---|---|---|
+| business (total) | 186 | 111 (60%) | 8 (4%) | 67 (36%) | **64%** |
+| non-business (total) | 156 | 17 (11%) | 4 (3%) | 135 (87%) | **13%** |
+| new 15 (untuned) | 156 | 17 (11%) | 4 (3%) | 135 (87%) | **13%** |
+| all 30 | 342 | 128 (37%) | 12 (4%) | 202 (59%) | **41%** |
+|   business | 37 | 15 (41%) | 2 (5%) | 20 (54%) | **46%** |
+|   culture | 6 | 0 (0%) | 0 (0%) | 6 (100%) | **0%** |
+|   education | 14 | 5 (36%) | 1 (7%) | 8 (57%) | **43%** |
+|   environment | 22 | 1 (5%) | 3 (14%) | 18 (82%) | **18%** |
+|   finance | 103 | 72 (70%) | 3 (3%) | 28 (27%) | **73%** |
+|   health | 22 | 3 (14%) | 0 (0%) | 19 (86%) | **14%** |
+|   law | 16 | 2 (12%) | 0 (0%) | 14 (88%) | **12%** |
+|   policy | 46 | 24 (52%) | 3 (7%) | 19 (41%) | **59%** |
+|   politics | 28 | 3 (11%) | 0 (0%) | 25 (89%) | **11%** |
+|   science | 31 | 2 (6%) | 0 (0%) | 29 (94%) | **6%** |
+|   sports | 5 | 1 (20%) | 0 (0%) | 4 (80%) | **20%** |
+|   technology | 12 | 0 (0%) | 0 (0%) | 12 (100%) | **0%** |
+
+Stop check: business under 75%; non-business total under 50%; culture under 50% (n=6); education under 50% (n=14); environment under 50% (n=22); health under 50% (n=22); law under 50% (n=16); politics under 50% (n=28); science under 50% (n=31); sports under 50% (n=5); technology under 50% (n=12)
+
+**Number 2, after growth (production behaviour: includes concepts grown from the article itself; never the headline):**
+
+| group | n | exact-name | model-confirmed | grown here | unlinked | **linked** |
+|---|---|---|---|---|---|---|
+| business (total) | 186 | 111 (60%) | 9 (5%) | 45 (24%) | 21 (11%) | **89%** |
+| non-business (total) | 156 | 17 (11%) | 6 (4%) | 80 (51%) | 53 (34%) | **66%** |
+| new 15 (untuned) | 156 | 17 (11%) | 6 (4%) | 80 (51%) | 53 (34%) | **66%** |
+| all 30 | 342 | 128 (37%) | 15 (4%) | 125 (37%) | 74 (22%) | **78%** |
+|   business | 37 | 15 (41%) | 2 (5%) | 18 (49%) | 2 (5%) | **95%** |
+|   culture | 6 | 0 (0%) | 0 (0%) | 5 (83%) | 1 (17%) | **83%** |
+|   education | 14 | 5 (36%) | 1 (7%) | 4 (29%) | 4 (29%) | **71%** |
+|   environment | 22 | 1 (5%) | 3 (14%) | 12 (55%) | 6 (27%) | **73%** |
+|   finance | 103 | 72 (70%) | 4 (4%) | 16 (16%) | 11 (11%) | **89%** |
+|   health | 22 | 3 (14%) | 2 (9%) | 11 (50%) | 6 (27%) | **73%** |
+|   law | 16 | 2 (12%) | 0 (0%) | 6 (38%) | 8 (50%) | **50%** |
+|   policy | 46 | 24 (52%) | 3 (7%) | 11 (24%) | 8 (17%) | **83%** |
+|   politics | 28 | 3 (11%) | 0 (0%) | 13 (46%) | 12 (43%) | **57%** |
+|   science | 31 | 2 (6%) | 0 (0%) | 15 (48%) | 14 (45%) | **55%** |
+|   sports | 5 | 1 (20%) | 0 (0%) | 4 (80%) | 0 (0%) | **100%** |
+|   technology | 12 | 0 (0%) | 0 (0%) | 10 (83%) | 2 (17%) | **83%** |
+
+Concepts grown in memory: 90; a seeded sample of 30 is saved with the run for Number 3 (verdicts below).
+
+**Number 3 after tightening (growth confirms each concept with link_confirm; concept_define v4 scopes): 29/30 = 97% (target ≥ 90%).** Not independent of the first sample: both fixes were prompted by its failures, and about two-thirds of this sample overlaps it (same articles, same seed). Gone vs the first sample: 'Nuclear fuel cycle' and 'Budget reallocation' (rejected by the confirm step); 'Core catcher' now technology. Still failing: an invented label.
+
+| # | concept | verdict | note |
+|---|---|---|---|
+| 1 | 1.5C global warming target | pass |  |
+| 2 | Emergency declaration | pass | definition is the US federal sense; jurisdiction left global |
+| 3 | Apartheid (crime) | pass |  |
+| 4 | Expression of interest | pass |  |
+| 5 | Residential social care | pass |  |
+| 6 | Apprenticeship readiness scheme | pass (borderline) | a proposed scheme, defined generically |
+| 7 | Asbestos cement | pass |  |
+| 8 | Asbestos | pass |  |
+| 9 | Copper concentrate | pass |  |
+| 10 | Prostate-specific antigen | pass |  |
+| 11 | Underground wildfire hot spots | FAIL | invented label (criterion 1); the confirm step accepts the definition |
+| 12 | Post-tropical cyclone | pass |  |
+| 13 | Core catcher | pass | now technology (concept_define v4 scopes) |
+| 14 | Pre-apprenticeship route | pass (borderline) |  |
+| 15 | Beach break | pass |  |
+| 16 | Trading turnover | pass |  |
+| 17 | Treasury spokesman | pass |  |
+| 18 | Standing instruction | pass |  |
+| 19 | Saffir-Simpson scale | pass |  |
+| 20 | Relief rally | pass |  |
+| 21 | Frontbench | pass |  |
+| 22 | Pre-vocational pathway | pass |  |
+| 23 | Electronic Gold Receipt | pass |  |
+| 24 | Preferential trade agreement | pass | distinct from Preferential tariffs and Free trade agreement |
+| 25 | Asbestosis | pass |  |
+| 26 | Matcha | pass (borderline) |  |
+| 27 | Point break | pass |  |
+| 28 | Post-traumatic stress disorder | pass |  |
+| 29 | Digital identity | pass |  |
+| 30 | Women's suffrage | pass | explains 'female suffrage' |

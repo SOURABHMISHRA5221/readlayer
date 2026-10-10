@@ -341,3 +341,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   held-out storage NOT done. Asked Sourabh how to proceed.
 - Sourabh (decision 36): go with the recommendation. Next: tighten growth to ≥ 90% precision,
   then show the exact production writes with the deploy request, ship, then M7.5.
+- Growth tightened: link_confirm check on each new concept + concept_define v4 scopes. Rerun
+  (seeded-growth-v2): after growth business 89%, non-business 66%, all 78%; grown precision
+  29/30 = 97% (not independent of the first sample; disclosed in the report).
+- Open domains on the harness (seeded graph): 14 interest chips, axe 0 and no h-scroll at 1440/390
+  light/dark; Health+Sports reader's calibration filled health (16) and sports (8) concepts;
+  profile leads with Health/Sports, 12 others folded; map lists all 14.
+- Found and fixed a live bug from M7: the Delete my data label was invisible (account.css filled
+  .btn--danger + profile.css outlined rule = danger text on danger background), both themes.
