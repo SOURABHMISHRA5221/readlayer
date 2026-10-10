@@ -30,7 +30,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
-| M7.5 | not started | — | "For you" feed, "Read any link", reading goals (decision 33) |
+| M7.5 | building on branch `m7.5` (plan approved; API, web, prompts, scripts and docs done; harness acceptance next) | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -170,6 +170,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M2.2: growth makes a fourth batched call, `link_confirm` on MODEL_QUALITY, to confirm each new concept (decision 36 tightening; the plan had 3 MODEL_FAST calls ≈ $0.004/article) | Raised judged precision from 87% to 97%; adds ≈ $0.004 and up to ~30 s per growing article (within growth's own timeout) | Keep; measure growth time before the flag flip |
 | M2.2: growth timeout 30 s, not the plan's 20 s (still min(30 s, phase-2 time left − 5 s)) | Harness timing with growth on: 4 concepts in 20.0 s (cold instance), 3 in 6.9 s; 20 s would drop growth on a slow model answer | Keep; watch `growth_ms` live |
 | M2.2: linker suite has 16 cases, not the planned 14 | Added a German chancellor negative and a second Chancellor case before any run | Keep |
+| M7.5: pages brought in through POST /v1/recs/open ("Open here", Read any link, feed articles) or the extension (`NOT_CORPUS`) are private to the readers who brought them in; the library list and Up next hide them from everyone else. Production holds **7** `user_ingested` docs and 0 `extension` docs (read-only count, 2026-10-10), which disappear from other readers' libraries on deploy | A pasted page is a reader's choice, not editorial content, and M8 extension pages will be the same. Intended, not data loss: the docs stay reachable by id. M8 must keep "visible to the reader who brought it in" | Keep (DESIGN §17.4) |
+| M7.5: For you searches only for the reader's topics (taxonomy label + fixed phrase), shared per day; demo personas get a pre-seeded snapshot and never search | Decisions 33 and 38: no reader data in queries, bounded cost, and judges always see a full page | Keep (DESIGN §17) |
 | M2.2: variant-precision baseline is 83% on the newly frozen 150-mention sample, not M2's 93% | M2's figure used a different sample and candidate floor; not comparable | Keep |
 ---
 
@@ -189,11 +191,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Recommendation format priors per persona are still the hand-set M6.5 values (`PERSONA_FORMAT_PRIORS`) |
 | Medium | Held-out linking (M2.2, 30 articles, frozen graph): business 64% (target 75%), non-business 13% (floor 50%); glossary seeds don't match news phrasing. After growth 89% / 66%. Chancellor and levy fixed (decision 36) |
 | Medium | Linker spot-check 3/10 wrong (target ≤ 2): links to a broader field or narrower concept, and to a generic seeded category ("molybdenum" → Element) |
-| Medium | `explain` and `restate` prompts still say "business and economy news", while non-business articles now get explanations (open decision, §10) |
 | Low | Grown concepts can carry an invented label (1/30 in the judged sample: "Underground wildfire hot spots") |
 | Medium | Growth doesn't dedupe concepts grown from the same article against each other: the live check grew both "Forever chemicals" and "PFAS" |
 | Low | Grown/seeded prerequisites can be lexically near but wrong (live: PFOS → PHOSITA, a patent-law term; harness: Cilia waveform → Proper motion) |
-| Low | `society` has 28 concepts, under calibration's 30, so it never appears in calibration (open decision, §10) |
+| Low | `society` has 28 concepts, under calibration's 30, so it never appears in calibration (decision 37: domain kept as is) |
 | Low | Anonymous traffic alone can use up the service's 100/day growth cap (30 × 5 = 150); accepted by decision 35, growth then stops for the day |
 | Low | The cross-instance catalog refresh only covers articles that grew concepts; other new docs still need a restart on other instances |
 | Low | Seeded multi-word everyday phrases ("Up and down", "One down") can be calibration items; the everyday-word rule covers single words only |
@@ -201,7 +202,6 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Web result quality varies (some generic podcasts, an exam-prep video); 21 of 87 cache entries empty |
 | Low | Headlines keep publisher SEO suffixes (" \| Stock Market News"); we don't alter publisher text |
 | Low | In-process catalog cache: docs ingested by another process need an API restart to appear (Open here appends directly) |
-| Low | `rec_signals` keeps `seen` and `shown_counts` unbounded (served items and event ids are capped); a very heavy reader could approach the 1 MiB doc limit after thousands of items |
 | Low | `rec_shown` relies on IntersectionObserver, which browsers pause in background tabs (seen in automated testing; real readers have the tab in front) |
 | Low | Web main bundle 137.7 KB gzip (budget 150 KB); M7 pages are lazy chunks (profile 6.8 KB, welcome 3.3 KB), Cytoscape + dagre 155 KB load only when the map opens |
 | Low | The weekly trend is per uid, so a demo session's trend mixes the personas it read as (the page says "this demo session") |
@@ -234,6 +234,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | VITE_FIREBASE_*, VITE_API_BASE | web Firebase config, API origin | `apps/web/.env.local` / `.env.production.local` (gitignored, `make web-config`) | baked into the Hosting build | — |
 | SEARCH_DAILY_CAP, YOUTUBE_SEARCH_DAILY_CAP, SEARCH_TIMEOUT_S, RECS_CACHE_TTL_H | search guardrails | defaults in `config.py`, overridable in `.env` | no | — |
 | INGEST_DAILY_CAP | new URLs per reader per day | default 20 | default | — |
+| FEED_SEARCH_DAILY_CAP | For you search calls per day, all readers (inside the global search caps) | default 60 | default | — |
+| GOAL_RESOLVE_DAILY_CAP | learning-goal resolutions per signed-in reader per day | default 10 | default | — |
 | DEV_AUTH_BYPASS | curl/scripts only: a request **without** an Authorization header acts as an anonymous dev uid | opt-in; `make dev` no longer sets it | **must never be set**; refused at startup (verified live, §11) and re-checked per request | — |
 | K_SERVICE | set by Cloud Run; used to refuse the bypass | — | automatic | — |
 | CLOUDSDK_CONFIG, GOOGLE_APPLICATION_CREDENTIALS | isolated gcloud config + project ADC | Makefile exports, `.claude/settings.local.json` | — | — |
@@ -278,6 +280,11 @@ about 12 calls for a new article (3 concepts × 3 formats; YouTube counts 2), 0 
 | M9 gold-set evals (30 articles × 2 personas) and demo pre-ingest | $3–6 |
 | Hosting after submission: Cloud Run min-instances 1 during judging (Oct 19 – Nov 6) | ~$15–25 |
 | **Total remaining** | **≈ $25–45 of the $300 credit** |
+
+**For you (M7.5) search projection:** at most 14 topics × 3 formats = 42 searches a day if every
+domain is someone's topic (Tavily 28 credits, YouTube 14 searches = 28 calls), capped at 60 calls
+by `FEED_SEARCH_DAILY_CAP`; realistic judging traffic touches 4–8 topics, ≈ 10–20 Tavily
+credits a day. Demo snapshots are seeded once (≤ 18 searches).
 
 Tavily cost depends on the plan in use (check the free monthly credit before M9); YouTube
 quota is free within the daily buckets.
@@ -324,6 +331,12 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
 - **Emulator harness (M7):** Settings refuse emulator hosts on Cloud Run or ENV=prod; the seed
   script reads production through a separate client and writes only to `demo-readlayer`; the
   harness budget is min($1, $8 − today's production spend).
+- **For you (M7.5):** `FEED_SEARCH_DAILY_CAP` 60 calls/day shared by all readers, reserved under
+  the same lock as the global and YouTube caps; each (topic, format) is searched once per UTC
+  day for everyone; demo readers never search (snapshots). Queries are a taxonomy label plus a
+  fixed phrase only (tested over all 14 domains).
+- **Reading goals (M7.5):** signed-in readers only, after consent, ≤ 5 goals, 10 learning-goal
+  resolutions/day (≤ 1 embed + ≤ 1 link_confirm each); the goal text is never stored or logged.
 - **Anonymous search cap:** uncached web searches triggered by anonymous readers share 100 calls
   a day; past it they get cached web items and library items only.
 - **Rate limits:** per uid per minute (general, annotations, events), tighter for anonymous.
