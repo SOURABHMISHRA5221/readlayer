@@ -42,7 +42,14 @@ from app.graph.linking import (
     sentence_around,
 )
 from app.graph.models import Concept, ConceptGraphFile
-from app.graph.overrides import Overrides, filter_pairs, split_groups
+from app.graph.overrides import (
+    Overrides,
+    filter_pairs,
+    patch_adds,
+    patch_remove_aliases,
+    pending_adds,
+    split_groups,
+)
 from app.ingest.models import USER_INGESTED, ContentDoc, Demand
 from app.ingest.safe_fetch import FetchError, SafeFetcher
 from app.ingest.urls import normalize_url
@@ -620,11 +627,28 @@ async def build_graph(
             base_difficulty=diffs[i],
             prerequisites=[p.id for p in edges[cid]],
             doc_freq=freq[i],
+            kind=info.kind,
             embedding=[round(float(x), 4) for x in label_vecs[i]],
         )
         for i, (cid, (m, info)) in enumerate(zip(ids, kept, strict=True))
     ]
     graph_file = ConceptGraphFile(version=datetime.now(UTC).date().isoformat(), concepts=concepts)
+    # M2.2 overrides that patch concepts rather than candidates: a rebuild can't undo them.
+    graph_file = patch_remove_aliases(graph_file, overrides)
+    adds = pending_adds(graph_file, overrides)
+    if adds:
+        add_vecs = await cache.embed([a.label for a in adds], "SEMANTIC_SIMILARITY")
+        graph_file, _ = patch_adds(
+            graph_file,
+            adds,
+            {a.label: list(v) for a, v in zip(adds, add_vecs, strict=True)},
+            lambda s: zipf_frequency(s, "en"),
+            lambda label, taken: next(
+                cid
+                for n in range(1, 100)
+                if (cid := build.slug_ids([label])[0] + ("" if n == 1 else f"_{n}")) not in taken
+            ),
+        )
     return build_report.BuildResult(
         graph_file,
         dict(zip(ids, freq, strict=True)),

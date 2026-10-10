@@ -20,3 +20,38 @@ rename:
   # M2.1: label copied from a typo in a source article.
   - from: Bimallic coin
     to: Bimetallic coin
+
+# M2.2 (issue #6). remove_alias: aliases that made wrong exact-match links.
+remove_alias:
+  # Every bare "tax" linked to Tax levy through this alias.
+  - label: Tax levy
+    aliases: [Tax]
+  # FTSE Russell is a different index provider (LSEG), not part of S&P Dow Jones Indices.
+  - label: S&P Dow Jones Indices
+    aliases: [FTSE Russell, Russell Indexes]
+
+# add: concepts the corpus never produced. Definitions are our own.
+add:
+  - label: Chancellor of the Exchequer
+    # no bare "Chancellor" alias: a German chancellor would exact-match it; a UK "Chancellor"
+    # reaches it through embedding candidates and link_confirm's jurisdiction rule
+    domain: policy
+    kind: role
+    jurisdiction: GB
+    specialization: 2
+    definition: >-
+      The UK government minister in charge of the Treasury, responsible for taxes, public
+      spending and the annual Budget.
+    prerequisites: [Fiscal policy, Budget]
+  - label: FTSE Russell
+    aliases: [Russell Indexes]
+    domain: finance
+    kind: index_provider
+    specialization: 3
+    definition: >-
+      A company that designs and publishes stock market indices, including the FTSE 100 and the
+      Russell 2000, and licenses them to investors and fund managers.
+    prerequisites: [Benchmark index]
+
+# never_merge_kind: a concept of one of these kinds never absorbs a differently-labelled one.
+never_merge_kind: [institution, regulator, committee, index, index_provider]

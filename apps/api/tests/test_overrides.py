@@ -5,8 +5,11 @@ from app.graph.models import Concept, ConceptGraphFile
 from app.graph.overrides import (
     Overrides,
     filter_pairs,
+    patch_adds,
+    patch_remove_aliases,
     patch_renames,
     patch_split_sources,
+    pending_adds,
     split_groups,
 )
 from scripts import build_concepts
@@ -170,3 +173,90 @@ def test_user_ingested_docs_are_never_corpus(tmp_path):
     sources = {"https://x.test/a": "mint", "https://x.test/b": "mint"}
     picked = build_concepts.select_corpus([listed, reader, unlisted], sources)
     assert [d.content_id for d in picked] == ["a"]
+
+
+# ---------------------------------------------------------------- M2.2: remove_alias, add, kinds
+
+
+def _c(cid, label, aliases=(), kind=None, domain="finance"):
+    return Concept(
+        id=cid,
+        label=label,
+        aliases=list(aliases),
+        domain=domain,
+        definition=f"Definition of {label}.",
+        base_difficulty=0.0,
+        kind=kind,
+        embedding=[1.0, 0.0],
+    )
+
+
+M22_GRAPH = ConceptGraphFile(
+    version="t",
+    concepts=[
+        _c("c_tax_levy", "Tax levy", ["levies", "Tax"], "tax", "policy"),
+        _c(
+            "c_s_p_dow_jones_indices",
+            "S&P Dow Jones Indices",
+            ["FTSE Russell", "Russell Indexes"],
+            "index_provider",
+        ),  # fmt: skip
+        _c("c_fiscal_policy", "Fiscal policy", kind="policy", domain="policy"),
+        _c("c_budget", "Budget", kind="idea", domain="policy"),
+        _c("c_benchmark_index", "Benchmark index", kind="index"),
+    ],
+)
+
+
+def _apply_m22(file, ov):
+    file = patch_remove_aliases(file, ov)
+    adds = pending_adds(file, ov)
+    vectors = {a.label: [0.0, 1.0] for a in adds}
+    return patch_adds(file, adds, vectors, lambda _s: 3.0, unique_id)
+
+
+def test_committed_m22_overrides_fix_russell_tax_and_add_the_chancellor():
+    ov = Overrides.load(OVERRIDES_FILE)
+    file, added = _apply_m22(M22_GRAPH, ov)
+    by_label = {c.label: c for c in file.concepts}
+    assert by_label["S&P Dow Jones Indices"].aliases == []
+    assert by_label["Tax levy"].aliases == ["levies"]
+    chancellor = by_label["Chancellor of the Exchequer"]
+    assert chancellor.kind == "role" and chancellor.jurisdiction == "GB"
+    assert chancellor.aliases == []  # no bare "Chancellor": a German chancellor would match
+    assert chancellor.prerequisites == ["c_fiscal_policy", "c_budget"]
+    russell = by_label["FTSE Russell"]
+    assert russell.kind == "index_provider" and russell.aliases == ["Russell Indexes"]
+    assert {c.label for c in added} == {"Chancellor of the Exchequer", "FTSE Russell"}
+    # "Russell Indexes" now resolves to FTSE Russell, not S&P Dow Jones Indices
+    from app.graph.graph import ConceptGraph
+
+    assert ConceptGraph(file).lookup("Russell Indexes").label == "FTSE Russell"
+    # re-applying is a no-op
+    again, more = _apply_m22(file, ov)
+    assert more == [] and len(again.concepts) == len(file.concepts)
+
+
+def test_add_rejects_a_dropped_kind_and_an_unknown_prerequisite():
+    base = {"label": "X thing", "domain": "finance", "specialization": 2,
+            "definition": "A definition long enough to pass."}  # fmt: skip
+    with pytest.raises(ValueError, match="kept kind"):
+        Overrides.model_validate({"add": [{**base, "kind": "company"}]})
+    ov = Overrides.model_validate({"add": [{**base, "kind": "idea", "prerequisites": ["Nope"]}]})
+    with pytest.raises(ValueError, match="unknown prerequisite"):
+        _apply_m22(M22_GRAPH, ov)
+
+
+def test_remove_alias_for_a_missing_concept_is_an_error():
+    ov = Overrides.model_validate({"remove_alias": [{"label": "Gone", "aliases": ["x"]}]})
+    with pytest.raises(ValueError, match="no concept"):
+        patch_remove_aliases(M22_GRAPH, ov)
+
+
+def test_named_organisations_never_absorb_a_differently_labelled_candidate():
+    ov = Overrides.load(OVERRIDES_FILE)
+    spdji = M22_GRAPH.concepts[1]
+    assert ov.merge_refused(spdji, "Russell 2000 index family")
+    assert not ov.merge_refused(spdji, "S&P Dow Jones Indices")  # identity is not a merge
+    assert not ov.merge_refused(M22_GRAPH.concepts[3], "Union budget")  # kind idea: allowed
+    assert not ov.merge_refused(_c("c_old", "Old", kind=None), "Older")  # pre-M2.2 concept

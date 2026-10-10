@@ -45,6 +45,14 @@ def test_prompt_states_the_keep_and_drop_contract():
     assert "{{concepts}}" in prompt.user and "<<<CONTENT>>>" in prompt.user
 
 
+def test_prompt_lists_exactly_the_taxonomy_domains():
+    from app.graph.taxonomy import scope_lines
+
+    text = llm.load_prompt("concept_define").system
+    assert scope_lines() in text
+    assert "`jurisdiction`" in text and '"global"' in text
+
+
 class ScriptedRunner:
     """Replies per call from a function of the rendered prompt vars."""
 

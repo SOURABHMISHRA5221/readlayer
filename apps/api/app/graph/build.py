@@ -154,6 +154,14 @@ KEEP_KINDS = frozenset(
         "entity_type",
         "market_event",
         "unit",
+        # M2.2 open domains: an office or position (Chancellor of the Exchequer), a firm that
+        # publishes market indices (FTSE Russell), a disease or disorder, a technique, procedure
+        # or rule of a game, a kind of organism.
+        "role",
+        "index_provider",
+        "condition",
+        "method",
+        "organism_type",
     }
 )
 DROP_KINDS = frozenset({"company", "person", "place", "event", "generic"})

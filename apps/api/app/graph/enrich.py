@@ -43,6 +43,8 @@ class ConceptInfo(BaseModel):
     specialization: int = Field(ge=1, le=5)
     domain: Domain
     kind: Kind
+    # concept_define-v3 (M2.2); v2 cached outputs have none, so they read as global.
+    jurisdiction: str = Field(default="global", pattern=r"^([A-Z]{2}|global)$")
 
 
 class ConceptInfos(BaseModel):

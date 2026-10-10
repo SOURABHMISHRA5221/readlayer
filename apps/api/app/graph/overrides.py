@@ -3,7 +3,10 @@
 The build applies them on every run, so a rebuild can't undo a fix: `never_merge` pairs are
 never joined by dedupe, `split` entries are pulled out of whatever concept they merged into and
 become their own concept, `rename` entries replace a concept's label (its id follows the label).
-`scripts.apply_overrides` patches an already-built graph the same way. Pure: no I/O but `load`.
+M2.2 adds `remove_alias` (strip aliases that cause wrong exact-match links), `add` (hand-written
+concepts the corpus never produced) and `never_merge_kind` (named organisations never absorb a
+differently-labelled concept). `scripts.apply_overrides` patches an already-built graph the same
+way. Pure: no I/O but `load`.
 """
 
 from collections.abc import Callable, Iterable, Sequence
@@ -12,8 +15,8 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.graph.build import normalize_label
-from app.graph.models import Concept, ConceptGraphFile
+from app.graph.build import KEEP_KINDS, difficulty, normalize_label
+from app.graph.models import Concept, ConceptGraphFile, Domain
 
 
 class Split(BaseModel):
@@ -35,12 +38,50 @@ class Rename(BaseModel):
     to: str
 
 
+class RemoveAlias(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    label: str  # the concept to strip them from
+    aliases: list[str] = Field(min_length=1)
+
+
+class AddConcept(BaseModel):
+    """A concept written by hand: our own definition, never copied text."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    label: str
+    aliases: list[str] = Field(default_factory=list)
+    domain: Domain
+    kind: str
+    jurisdiction: str = Field(default="global", pattern=r"^([A-Z]{2}|global)$")
+    specialization: int = Field(ge=1, le=5)
+    definition: str = Field(min_length=20)
+    prerequisites: list[str] = Field(default_factory=list, max_length=3)  # existing labels
+
+    def model_post_init(self, _context: object) -> None:
+        if self.kind not in KEEP_KINDS:
+            raise ValueError(f"add {self.label!r}: kind {self.kind!r} is not a kept kind")
+
+
 class Overrides(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     never_merge: list[tuple[str, str]] = Field(default_factory=list)
     split: list[Split] = Field(default_factory=list)
     rename: list[Rename] = Field(default_factory=list)
+    remove_alias: list[RemoveAlias] = Field(default_factory=list)
+    add: list[AddConcept] = Field(default_factory=list)
+    never_merge_kind: list[str] = Field(default_factory=list)
+
+    def merge_refused(self, existing: Concept, candidate_label: str) -> bool:
+        """A differently-labelled candidate never merges into a named organisation (Russell
+        Indexes into S&P Dow Jones Indices). Exact label/alias identity is the exact-match path,
+        never a merge, so it isn't affected."""
+        if existing.kind not in self.never_merge_kind:
+            return False
+        names = {normalize_label(x) for x in [existing.label, *existing.aliases]}
+        return normalize_label(candidate_label) not in names
 
     @classmethod
     def load(cls, path: Path) -> "Overrides":
@@ -146,3 +187,62 @@ def patch_split_sources(
 
 def add_concepts(file: ConceptGraphFile, new: Sequence[Concept]) -> ConceptGraphFile:
     return file.model_copy(update={"concepts": [*file.concepts, *new]})
+
+
+def patch_remove_aliases(file: ConceptGraphFile, overrides: Overrides) -> ConceptGraphFile:
+    """Strip listed aliases from their concepts (a missing concept is an error: a stale entry)."""
+    concepts = list(file.concepts)
+    by_label = {normalize_label(c.label): i for i, c in enumerate(concepts)}
+    for r in overrides.remove_alias:
+        i = by_label.get(normalize_label(r.label))
+        if i is None:
+            raise ValueError(f"remove_alias: no concept labelled {r.label!r}")
+        keys = {normalize_label(a) for a in r.aliases}
+        kept = _without(concepts[i].aliases, keys)
+        concepts[i] = concepts[i].model_copy(update={"aliases": kept})
+    return file.model_copy(update={"concepts": concepts})
+
+
+def pending_adds(file: ConceptGraphFile, overrides: Overrides) -> list[AddConcept]:
+    """`add` entries not in the graph yet (by normalised label): re-running is a no-op."""
+    have = {normalize_label(c.label) for c in file.concepts}
+    return [a for a in overrides.add if normalize_label(a.label) not in have]
+
+
+def patch_adds(
+    file: ConceptGraphFile,
+    adds: Sequence[AddConcept],
+    vectors: dict[str, list[float]],
+    zipf: Callable[[str], float],
+    new_id: Callable[[str, set[str]], str],
+) -> tuple[ConceptGraphFile, list[Concept]]:
+    """Add hand-written concepts. `vectors` holds each label's embedding; prerequisites are
+    existing labels, resolved to ids (an unknown one is an error)."""
+    by_label = {normalize_label(c.label): c.id for c in file.concepts}
+    taken = {c.id for c in file.concepts}
+    added: list[Concept] = []
+    for a in adds:
+        prereqs = []
+        for label in a.prerequisites:
+            pid = by_label.get(normalize_label(label))
+            if pid is None:
+                raise ValueError(f"add {a.label!r}: unknown prerequisite {label!r}")
+            prereqs.append(pid)
+        cid = new_id(a.label, taken)
+        taken.add(cid)
+        added.append(
+            Concept(
+                id=cid,
+                label=a.label,
+                aliases=a.aliases,
+                domain=a.domain,
+                definition=a.definition,
+                base_difficulty=difficulty(a.specialization, zipf(a.label)),
+                prerequisites=prereqs,
+                kind=a.kind,
+                jurisdiction=a.jurisdiction,
+                embedding=[round(float(x), 4) for x in vectors[a.label]],
+            )
+        )
+        by_label[normalize_label(a.label)] = cid
+    return add_concepts(file, added), added
