@@ -16,6 +16,7 @@ import argparse
 import asyncio
 import hashlib
 import json
+import random
 import sys
 from collections import Counter
 from datetime import UTC, datetime
@@ -26,13 +27,16 @@ from app import llm
 from app.config import get_settings
 from app.graph import enrich
 from app.graph.graph import ConceptGraph
-from app.graph.linking import EMBED_TYPES, link_demands
+from app.graph.grow import grow
+from app.graph.linking import EMBED_TYPES, link_demands, sentence_around
 from app.graph.models import ConceptGraphFile
 from app.graph.taxonomy import BUSINESS_DOMAINS
 from app.ingest.models import Demand
 from app.ingest.urls import url_hash
 from app.log import configure_logging
 from app.store.content_repo import get_content_store
+from app.store.docstore import InMemoryDocStore
+from app.store.growth_repo import GrowthRepo
 from scripts.build_cache import BuildCache
 from scripts.build_concepts import CACHE_DIR, CONCEPTS_FILE
 from scripts.eval_heldout import HELDOUT_TARGET, read_heldout
@@ -118,20 +122,23 @@ async def load_docs() -> list[dict[str, Any]]:
 
 def rate(c: Counter[str]) -> str:
     n = sum(c.values())
-    linked = c["alias"] + c["confirmed"]
+    linked = c["alias"] + c["confirmed"] + c["grown"]
     return f"{linked / n:.0%}" if n else "–"
 
 
-def table(rows: dict[str, Counter[str]]) -> list[str]:
+def table(rows: dict[str, Counter[str]], grown: bool = False) -> list[str]:
+    kinds = (
+        ("alias", "confirmed", "grown", "unlinked") if grown else ("alias", "confirmed", "unlinked")
+    )
+    names = {"alias": "exact-name", "confirmed": "model-confirmed", "grown": "grown here",
+             "unlinked": "unlinked"}  # fmt: skip
     out = [
-        "| group | n | exact-name | model-confirmed | unlinked | **linked** |",
-        "|---|---|---|---|---|---|",
+        "| group | n | " + " | ".join(names[k] for k in kinds) + " | **linked** |",
+        "|---|---|" + "---|" * len(kinds) + "---|",
     ]
     for name, c in rows.items():
         n = sum(c.values())
-        cells = [
-            f"{c[k]} ({c[k] / n:.0%})" if n else "0" for k in ("alias", "confirmed", "unlinked")
-        ]
+        cells = [f"{c[k]} ({c[k] / n:.0%})" if n else "0" for k in kinds]
         out.append(f"| {name} | {n} | " + " | ".join(cells) + f" | **{rate(c)}** |")
     return out
 
@@ -173,7 +180,11 @@ def stop_check(rows: dict[str, Counter[str]]) -> list[str]:
     return problems
 
 
-async def run(graph_path: Path, label: str) -> dict[str, Any]:
+GROWTH_SAMPLE = 30
+GROWTH_SEED = 34  # decision 34
+
+
+async def run(graph_path: Path, label: str, with_growth: bool = False) -> dict[str, Any]:
     settings = get_settings()
     if prod_threshold() != LINK_THRESHOLD:
         raise SystemExit(f"deploy.env.yaml LINK_THRESHOLD is {prod_threshold()}, M2.2 fixes 0.865")
@@ -188,9 +199,12 @@ async def run(graph_path: Path, label: str) -> dict[str, Any]:
     async def confirm(questions):
         return await enrich.confirm_links(questions, cache.run, ledger)
 
-    per_doc = []
+    per_doc: list[dict[str, Any]] = []
+    grown_all: list[dict[str, Any]] = []
+    growth_graph = graph
+    growth_repo = GrowthRepo(InMemoryDocStore())  # held-out text never grows the real graph
     for doc in await load_docs():
-        _, links = await link_demands(
+        linked, links = await link_demands(
             graph,
             doc["demands"],
             doc["paragraphs"],
@@ -202,8 +216,18 @@ async def run(graph_path: Path, label: str) -> dict[str, Any]:
         )
         types = {d.id: d.type for d in doc["demands"]}
         counts = Counter(lk.method for lk in links if types[lk.demand_id] in EMBED_TYPES)
-        per_doc.append({**{k: doc[k] for k in ("content_id", "domain", "group")}, "counts": counts})
+        row = {**{k: doc[k] for k in ("content_id", "domain", "group")}, "counts": counts}
+        if with_growth:
+            growth_graph = await _grow_one(
+                doc, linked, links, types, counts, row, growth_graph, growth_repo,
+                cache, ledger, embed, grown_all,
+            )  # fmt: skip
+        per_doc.append(row)
     rows = summarise(per_doc)
+    after_rows = (
+        summarise([{**d, "counts": d["after_growth"]} for d in per_doc]) if with_growth else {}
+    )
+    sample = random.Random(GROWTH_SEED).sample(grown_all, min(GROWTH_SAMPLE, len(grown_all)))
     return {
         "meta": {
             "label": label,
@@ -217,9 +241,53 @@ async def run(graph_path: Path, label: str) -> dict[str, Any]:
             "fallbacks": sum(1 for m in ledger if m.fell_back),
         },
         "rows": {k: dict(v) for k, v in rows.items()},
-        "per_doc": [{**d, "counts": dict(d["counts"])} for d in per_doc],
+        "after_growth_rows": {k: dict(v) for k, v in after_rows.items()},
+        "per_doc": [
+            {**d, "counts": dict(d["counts"]), "after_growth": dict(d.get("after_growth", {}))}
+            for d in per_doc
+        ],
+        "grown": grown_all,
+        "grown_sample": sample,
         "stop": stop_check(rows),
     }
+
+
+async def _grow_one(doc, linked, links, types, counts, row, graph, repo, cache, ledger, embed,
+                    grown_all) -> ConceptGraph:  # fmt: skip
+    """Number 2 for one article: grow from it, in order, against the in-memory graph so far."""
+    outcome = await grow(
+        graph, linked, doc["paragraphs"], get_settings().growth_per_article,
+        doc["content_id"], repo, cache.run, embed,
+    )  # fmt: skip
+    ledger.extend(outcome.calls)
+    new_graph = graph.with_concepts(outcome.added, f"{graph.version.split('+')[0]}+held")
+    moved = {lk.demand_id for lk in links
+             if lk.method == "unlinked" and lk.demand_id in outcome.links
+             and types[lk.demand_id] in EMBED_TYPES}  # fmt: skip
+    grown_ids = moved & outcome.grown
+    after = Counter(counts)
+    after["unlinked"] -= len(moved)
+    after["confirmed"] += len(moved - grown_ids)  # merged into an existing concept
+    after["grown"] += len(grown_ids)
+    row["after_growth"] = after
+    by_id = {d.id: d for d in linked}
+    for c in outcome.added:
+        did = next((d for d, cid in outcome.links.items() if cid == c.id), None)
+        trigger = by_id.get(did) if did else None
+        sentence = (
+            sentence_around(doc["paragraphs"].get(trigger.paragraph_id, ""), trigger.anchor.exact)
+            if trigger else None
+        )  # fmt: skip
+        grown_all.append({
+            "content_id": doc["content_id"],
+            "domain_label": doc["domain"],
+            "concept": c.model_dump(exclude={"embedding"}),
+            "prerequisite_labels": [new_graph.get(p).label for p in c.prerequisites
+                                    if new_graph.get(p)],
+            "trigger": trigger.anchor.exact if trigger else None,
+            "sentence": sentence,
+        })  # fmt: skip
+    return new_graph
 
 
 def append_report(result: dict[str, Any]) -> None:
@@ -237,12 +305,24 @@ def append_report(result: dict[str, Any]) -> None:
         "",
         "Stop check: " + ("; ".join(result["stop"]) if result["stop"] else "pass"),
     ]
+    if result.get("after_growth_rows"):
+        rows = {k: Counter(v) for k, v in result["after_growth_rows"].items()}
+        block += [
+            "",
+            "**Number 2, after growth (production behaviour: includes concepts grown from the "
+            "article itself; never the headline):**",
+            "",
+            *table(rows, grown=True),
+            "",
+            f"Concepts grown in memory: {len(result['grown'])}; a seeded sample of "
+            f"{len(result['grown_sample'])} is saved with the run for Number 3 (verdicts below).",
+        ]
     REPORT.write_text(text.rstrip("\n") + "\n" + "\n".join(block) + "\n", encoding="utf-8")
 
 
 async def main(args: argparse.Namespace) -> int:
     configure_logging("WARNING")
-    result = await run(Path(args.graph), args.label)
+    result = await run(Path(args.graph), args.label, args.growth)
     RESULTS.mkdir(exist_ok=True)
     stamp = result["meta"]["time"].replace(":", "").replace("-", "")
     (RESULTS / f"heldout-{stamp}-{args.label}.json").write_text(
@@ -258,4 +338,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--label", required=True)
     parser.add_argument("--graph", default=str(CONCEPTS_FILE))
+    parser.add_argument("--growth", action="store_true", help="also Numbers 2 and 3 (in memory)")
     sys.exit(asyncio.run(main(parser.parse_args())))
