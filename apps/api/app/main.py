@@ -36,7 +36,10 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     if settings.concepts_uri:  # concepts grown online since the file was written (M2.2)
         from app.graph.refresh import get_refresher
 
-        grown = await get_refresher().load_startup()
+        try:
+            grown = await get_refresher().load_startup()
+        except Exception as exc:  # serve the file graph rather than fail to start
+            log.warning("grown concepts not loaded", extra={"error_class": type(exc).__name__})
     graph_ms = (time.perf_counter() - start) * 1000
     get_auth_admin()
     log.info(

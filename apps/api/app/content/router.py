@@ -157,7 +157,7 @@ class AnnotationsResponse(BaseModel):
 # Library rows per (catalog version, reader state revision, density): pure computation over
 # the shared catalog, cached because the list endpoint is hit on every library view. Demo
 # readers who haven't interacted share their persona template's revision. Bounded.
-_rows: dict[tuple[int, str, Density], list[ContentSummary]] = {}
+_rows: dict[tuple[int, str, str, Density], list[ContentSummary]] = {}  # catalog, graph, view
 MAX_CACHED_VIEWS = 64
 # Catalog-derived scoring inputs, rebuilt when the doc set changes.
 _index: tuple[int, dict[str, ContentDoc], dict[str, ExplainerRef]] | None = None

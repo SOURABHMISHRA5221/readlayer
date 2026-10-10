@@ -67,6 +67,7 @@ async def checks(client: httpx.AsyncClient, api: str, url: str, persona: str) ->
         await asyncio.sleep(10)
     assert listed, "the article never appeared in the library"
     print(f"3. listed in the library: concepts_new={listed['concepts_new']}")
+    assert listed["concepts_new"] >= 1, "the library row doesn't count any new concept"
     ann = (await client.get(f"{api}/v1/content/{cid}/annotations?persona={persona}")).json()
     hits = sorted({a["concept_id"] for a in ann["annotations"] if a.get("concept_id") in ids})
     print(f"4. grown concepts annotated for {persona}: {hits}")

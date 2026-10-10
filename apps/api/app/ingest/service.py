@@ -217,6 +217,7 @@ async def _grow(
     from app.graph.refresh import get_refresher
     from app.store.growth_repo import get_growth_repo
 
+    started = time.perf_counter()
     try:
         async with asyncio.timeout(budget):
             outcome = await grow(
@@ -230,7 +231,12 @@ async def _grow(
     except Exception as exc:  # budget refusals, model errors, timeout: the article still ingests
         log.warning(
             "concept growth skipped",
-            extra={"content_id": pending.content_id, "error_class": type(exc).__name__},
+            extra={
+                "content_id": pending.content_id,
+                "error_class": type(exc).__name__,
+                "growth_ms": round((time.perf_counter() - started) * 1000),
+                "budget_s": round(budget, 1),
+            },
         )
         return demands, []
     get_refresher().apply(outcome.added)
@@ -242,6 +248,7 @@ async def _grow(
             "merged": outcome.merged,
             "rejected": outcome.rejected,
             "cost_usd": round(outcome.cost_usd, 6),
+            "growth_ms": round((time.perf_counter() - started) * 1000),
         },
     )
     linked = [

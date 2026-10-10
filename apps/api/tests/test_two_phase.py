@@ -196,3 +196,15 @@ def test_phase_one_failure_refunds_the_slot(store, monkeypatch):
         assert c.post("/v1/recs/open", json={"url": URL}).status_code == 200
     finally:
         sf.set_fetcher(None)
+
+
+def test_analyse_by_another_reader_charges_no_growth_slots(store, fake_llm, monkeypatch):
+    from app.ingest import quota
+
+    async def never(*a, **k):
+        raise AssertionError("phase 2 must not reserve growth slots")
+
+    monkeypatch.setattr(quota, "reserve_growth", never)
+    asyncio.run(_pending())
+    resp = client("someone-else", anonymous=True).post(f"/v1/content/{CID}/analyse")
+    assert resp.status_code == 200 and resp.json()["status"] == "ready"
