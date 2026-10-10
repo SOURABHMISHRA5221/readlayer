@@ -31,6 +31,9 @@ class Demand(BaseModel):
     salience: float = Field(ge=0, le=1)
     explained_in_text: bool
     zipf: float
+    # True when target_id is a concept grown from this very article (M2.2): evals keep these out
+    # of the frozen-graph headline (decision 34).
+    grown: bool = False
 
 
 class StoredParagraph(BaseModel):
