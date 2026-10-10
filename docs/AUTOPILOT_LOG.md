@@ -220,3 +220,8 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - `scripts/live_check_m7.py` (demo side of M7: persona profile/frame, map evidence, session-only
   edit preview/apply/undo/reset, onboarding refused for demo readers); dry-run on the harness
   with `--emulator`: all pass, test user deleted (204).
+- Sourabh approved one more live URL for the warm "Open here" timing. Wikipedia "Forward guidance"
+  (dry run: new): open 6.64 s, article 7.54 s, notes 43.7 s, no reload — same as the first live
+  run, so it isn't instance cold start; phase 1 itself is slow on Cloud Run (local 0.84 s).
+  Added `fetch_ms`/`extract_ms` to phase 1 logs (M7). M9 item: preload the ingestion imports at
+  startup during judging (min instances 1). contents/ now 312; ops/ingest anonymous 3.

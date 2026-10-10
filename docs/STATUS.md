@@ -107,7 +107,7 @@ profile-edit count). All per-user data is in
 
 | Item | Value |
 |---|---|
-| Content docs in Firestore | 311 total (309 + 2 M6 "Open here" tests) |
+| Content docs in Firestore | 312 total (309 + 3 "Open here" tests: M6 local, M6 live, M6 warm-timing live) |
 | Corpus (in `data/corpus_urls.txt`) | 290 |
 | Held-out (in `data/heldout_urls.txt`) | 15, never used to build the graph |
 | `user_ingested` ("Open here" testing) | 4: chain.link "Singleness of money", ECB macroprudential explainer, Wikipedia "Yield curve control" (M6 local), Wikipedia "Quantitative tightening" (M6 live) |
@@ -166,7 +166,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
-| Medium | "Open here" (M6, two-phase): the article shows in 1.4 s locally but took **7.3 s live** on the first ingest of the new revision (phase 1 5.2 s server-side: deferred ingestion imports on a 1-vCPU instance shared with other readers' requests). The 5 s warm target is unmeasured live (needs one more new URL). Notes 20–55 s after; the reader shows "Preparing your notes… N s" |
+| Medium | "Open here" (M6, two-phase): the article shows in 1.4 s locally but took **7.3 s live** on the first ingest of the new revision (phase 1 5.2 s server-side: deferred ingestion imports on a 1-vCPU instance shared with other readers' requests). A second live run (Wikipedia "Forward guidance", instance warm for health checks but its first ingest) gave the same: phase 1 6.6 s, article 7.5 s, notes 43.7 s. Phase-1 timing fields (`fetch_ms`, `extract_ms`) ship with M7 to split the cost; the likely cause is the deferred ingestion imports on a 1-vCPU instance. M9: preload them at startup while min instances = 1 (judging), where cold-start time no longer matters. Notes 20–55 s after; the reader shows "Preparing your notes… N s" |
 | Low | Deleted-account revocation is per instance and in memory, so it is also lost on a restart. Seen in M6 local testing: a demo session deleted at 07:02:41 UTC sent one event batch at 07:10:19 after the dev server restarted, leaving `users/{uid}` + 6 `events` + 1 `demo_graphs/newcomer` (8 docs) under a deleted Auth user (Sourabh's own session). Left for the M9 anonymous cleanup unless Sourabh asks for a delete now; events expire by TTL in 90 days |
 | Low | A cold explanation card (both parts missing) costs $0.0090 and p95 31 s (was $0.0070, 22 s): two judge calls. Reuse across readers repays it |
 | Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
