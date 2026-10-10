@@ -281,3 +281,16 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   rate reported as production behaviour; grown-concept precision ≥ 90% on a judged sample. Seed new
   domains from Wikipedia glossaries via safe_fetch + deterministic parsing; show counts and writes
   before writing.
+
+## M2.2 (full scope + open domains, decisions 32–34)
+
+### Plan
+- docs/plans/M2.2.md. Glossary sources probed live through safe_fetch (entry counts in §B.1);
+  society has no parsable glossary, so it keeps 0 seeds and Sourabh decides.
+- plan-reviewer: REVISE ×4 (11, 8, 10, 2 items, all applied), then **APPROVE** in round 5 (2
+  nits applied). Key changes: no explain/restate/verify bumps (warm demo caches stay valid);
+  API deploy before the seeded graph; growth only for Google readers with phase-1 slots and a
+  `growth_counts` subcollection; `GROWTH_ENABLED` in deploy.env.yaml, default false; frozen
+  held-out demand set committed before any model run; held-out report committed under evals/;
+  Concept.kind stored; Chancellor of the Exchequer and FTSE Russell added by override.
+- Checkpoint: end of day Oct 11 IST, unfinished parts go to Sourabh as a cut question.
