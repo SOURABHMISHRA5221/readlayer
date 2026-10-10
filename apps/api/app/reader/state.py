@@ -35,6 +35,8 @@ class ReaderState:
     threshold_offset: float = 0.0
     engaged: Mapping[str, datetime] = field(default_factory=dict)  # content_id → last engaged
     prompts: Mapping[str, tuple[str, ...]] = field(default_factory=dict)  # UTC day → content ids
+    # A demo session's own analogy frames for this persona (set by a profile edit), else empty.
+    thinks_in: tuple[str, ...] = ()
     # Changes whenever the stored state changes; derived caches key on it.
     rev: str = "neutral"
 

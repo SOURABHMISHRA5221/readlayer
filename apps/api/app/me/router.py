@@ -264,7 +264,11 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     theta = {d: float(ctx.theta.get(d, 0.0)) for d in DOMAINS}
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
     # A demo reader's frame is the persona's, the one explanations use (not users/{uid}).
-    frames = [PERSONA_THINKS_IN[ctx.persona]] if ctx.persona else list(user.thinks_in)
+    frames = (
+        list(ctx.state.thinks_in or [PERSONA_THINKS_IN[ctx.persona]])
+        if ctx.persona
+        else list(user.thinks_in)
+    )
     return {
         "summary": {
             "text": profile.summary_text(theta, frames, len(moves)),

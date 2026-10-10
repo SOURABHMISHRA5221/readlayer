@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     # Phase 2 of an ingest (demand extraction + linking) is cut off after this; its lease on the
     # pending doc lasts 30 s longer, so an expired lease always means the run has stopped.
     analyse_timeout_s: float = 120.0
+    # Profile edits by prompt per UTC day (DESIGN §15.3, §11.5): per reader, and for demo readers
+    # per uid plus a cap shared across all anonymous readers.
+    profile_edit_daily_cap: int = 10
+    anon_profile_edit_daily_cap: int = 3
+    anon_global_profile_edit_daily_cap: int = 30
 
     llm_daily_budget_usd: float = 8.0
     llm_timeout_s: float = 20.0

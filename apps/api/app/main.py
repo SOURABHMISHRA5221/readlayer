@@ -18,6 +18,7 @@ from app.graph.loader import load_graph, set_graph
 from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
 from app.me.onboarding import router as onboarding_router
+from app.me.profile_edit import router as profile_edit_router
 from app.me.router import router as me_router
 from app.recs.router import router as recs_router
 
@@ -101,6 +102,7 @@ v1.include_router(recs_router)
 v1.include_router(explain_router)
 v1.include_router(me_router)
 v1.include_router(onboarding_router)
+v1.include_router(profile_edit_router)
 app.include_router(v1)
 
 # Added last so it wraps everything: preflights and error responses carry CORS headers too.

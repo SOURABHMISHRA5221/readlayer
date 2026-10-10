@@ -44,6 +44,7 @@ USER_SUBCOLLECTIONS = (
     "ingest_counts",
     "demo_graphs",
     "explain_counts",
+    "profile_edit_counts",
 )
 EVENT_TTL = timedelta(days=90)
 MAX_WEEKLY_CONTENT_IDS = 500
@@ -215,6 +216,7 @@ def state_from_demo(uid: str, persona: PersonaKey, doc: Doc, copied: bool) -> Re
         edges={cid: edge_from_doc(e) for cid, e in (doc.get("knows") or {}).items()},
         threshold_offset=float(doc.get("threshold_offset", 0.0)),
         engaged=dict(doc.get("engaged") or {}),
+        thinks_in=tuple(doc.get("thinks_in") or ()),
         rev=rev,
     )
 

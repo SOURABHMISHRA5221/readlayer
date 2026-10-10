@@ -110,6 +110,7 @@ ROUTES: dict[str, Route] = {
     "concept_prereqs": Route("model_fast", "model_fallback"),
     "concept_wikidata": Route("model_fast", "model_fallback"),
     "smoke": Route("model_fast", "model_fallback"),
+    "profile_edit": Route("model_fast", "model_fallback"),  # DESIGN §15.3
     # Explanation cards come in two parts (DESIGN §7): the restatement of the author, made once
     # per (span, style) and shared by every reader, and the reader's own Background.
     "restate": Route("model_quality", "model_fast"),
