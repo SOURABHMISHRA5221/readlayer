@@ -195,3 +195,6 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   unsigned emulator Google identity; the Vite build refuses emulator mode). Smoke: emulator
   "Google" reader → API 200, onboarding step "consent". First run: production spend today
   $0.82, harness budget $1.00.
+- Profile-edit evals: v1 schema rejected by Vertex (0/6, 0/4 at $0; tagged unions and an outer
+  maxItems are refused); flat schema + local strict whitelist; v2 5/6 · 4/4; v3 (domain-work rule)
+  6/6 · 4/4, $0.0049. Cases unchanged (decision 26); before/after in evals/report.md + changelog.

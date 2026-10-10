@@ -71,12 +71,17 @@ async def run_suite() -> dict[str, Any]:
             "frames": ", ".join(THINKS_IN),
         }
         try:
-            res = await llm.run_with_meta("profile_edit", pe.ProfileEditOps, variables)
+            res = await llm.run_with_meta("profile_edit", pe.ModelEditOps, variables)
+            typed = pe.strict(res.output)
         except llm.LLMError as exc:
             rows.append({"id": case["id"], "passed": False, "error": type(exc).__name__})
             continue
+        except ValueError as exc:  # pydantic ValidationError: off the whitelist
+            cost += res.meta.cost_usd
+            rows.append({"id": case["id"], "passed": False, "error": f"whitelist: {exc}"[:200]})
+            continue
         cost += res.meta.cost_usd
-        ops = [op.model_dump() for op in res.output.ops]
+        ops = [op.model_dump() for op in typed.ops]
         problems = judge(case, ops)
         rows.append({"id": case["id"], "attack": case.get("attack"), "passed": not problems,
                      "problems": problems, "ops": ops})  # fmt: skip

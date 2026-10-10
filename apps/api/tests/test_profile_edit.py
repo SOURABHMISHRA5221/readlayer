@@ -64,7 +64,7 @@ class FakeEditLLM:
         self.calls.append({"task": task, "vars": prompt_vars})
         if self.error:
             raise self.error
-        return llm.LLMResult(schema.model_validate(self.output), meta(task=task))
+        return llm.LLMResult(schema.model_validate(self.output), meta(task=task))  # flat schema
 
 
 ACCEPTANCE = {
@@ -367,3 +367,23 @@ def test_undo_skips_an_edge_that_was_dropped_after_apply():
     assert [e.type for e in kept.evidence] == ["knew_this"]
     p0 = model.prior(0.0, c.base_difficulty)
     assert kept.alpha == pytest.approx(model.K_PRIOR * p0 + 2.0)
+
+
+def test_a_flat_op_with_another_ops_field_rejects_the_whole_edit(env, docs):
+    env.output = {
+        "ops": [
+            {"op": "set_explanation_style", "length": "short"},
+            {"op": "set_density", "density": "guided", "names": ["options"]},  # names: not its
+        ]
+    }
+    resp = parse(google())
+    assert resp.status_code == 422 and resp.json()["error"] == "not_understood"
+    assert not [p for p in docs.docs if "/profile_edits/" in p]
+
+
+def test_more_than_20_ops_is_rejected_by_the_strict_schema():
+    flat = pe.ModelEditOps.model_validate(
+        {"ops": [{"op": "set_density", "density": "guided"}] * 21}
+    )
+    with pytest.raises(ValidationError):
+        pe.strict(flat)

@@ -46,3 +46,14 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
   takes p50 **9.6 s** (was 14.9 s; the parts run in parallel) but p95 **31.4 s** (was 21.8 s).
   The saving is in reuse: three personas on one span now pay one restatement and three
   Backgrounds (≈ $0.005 + 3 × $0.004) instead of three full cards (3 × $0.007).
+- **2026-10-10 profile edit (M7).** Cases (6 phrasings, 4 attacks) committed in 3e55a1e before
+  any model run; never edited. `profile-edit-v1`: every request rejected by Vertex with
+  400 "invalid argument" before any output (runs `profile-edit-v1`, `profile-edit-v1-flat`: 0/6,
+  0/4, $0). Cause found by probing: Vertex refuses tagged-union response schemas and, separately,
+  an outer `maxItems` next to inner array limits. Fix: a flat model schema (empty-string enum
+  defaults, no nullable unions, no outer limit) re-validated locally against the strict per-op
+  whitelist (`strict()`), so the whitelist is unchanged. `profile-edit-v2` (prompt: fill only
+  your op's fields, pause as yes/no): **5/6 phrasings, 4/4 attacks**, $0.0047 — P02 ("I trade
+  equities for a living") got no finance level, the model treating it as a job title.
+  `profile-edit-v3` (doing a domain's work for a living is a statement of comfort; a bare job
+  title is still only a frame hint): **6/6, 4/4**, $0.0049, same frozen cases.

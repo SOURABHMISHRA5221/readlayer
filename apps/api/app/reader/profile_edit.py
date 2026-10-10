@@ -83,6 +83,50 @@ class ProfileEditOps(BaseModel):
     ops: list[Op] = Field(max_length=MAX_OPS)
 
 
+OpName = Literal[
+    "set_domain_level", "mark_concepts", "set_thinks_in", "set_explanation_style", "set_density",
+    "pause_learning",
+]  # fmt: skip
+
+
+class FlatOp(BaseModel):
+    """What the model fills. Vertex rejects tagged-union response schemas and, past a size,
+    schemas full of nullable (anyOf) fields, so every optional field is a plain enum or list with
+    an empty default. `strict()` maps it onto the op's own schema and re-validates."""
+
+    model_config = ConfigDict(extra="forbid")
+    op: OpName
+    domain: Literal["", "economics", "finance", "business", "policy"] = ""
+    level: Literal["", "new", "some", "comfortable", "expert"] = ""
+    names: list[Name] = Field(default_factory=list, max_length=MAX_NAMES_PER_OP)
+    state: Literal["", "known", "unknown"] = ""
+    domains: list[ThinksIn] = Field(default_factory=list, max_length=3)
+    length: Literal["", "short", "normal", "detailed"] = ""
+    density: Literal["", "minimal", "balanced", "guided"] = ""
+    paused: Literal["", "yes", "no"] = ""
+
+
+class ModelEditOps(BaseModel):
+    """The `profile_edit` response schema. No maxItems here: Vertex rejects an outer array limit
+    alongside the inner ones; `strict()` enforces MAX_OPS (ProfileEditOps)."""
+
+    model_config = ConfigDict(extra="forbid")
+    ops: list[FlatOp]
+
+
+def strict(flat: ModelEditOps) -> ProfileEditOps:
+    """Each op against its own schema: a field that doesn't belong to the op, or a missing one,
+    rejects the whole edit (pydantic ValidationError)."""
+    ops = []
+    for op in flat.ops:
+        fields = op.model_dump(exclude_defaults=True)
+        fields["op"] = op.op
+        if "paused" in fields:
+            fields["paused"] = fields["paused"] == "yes"
+        ops.append(fields)
+    return ProfileEditOps.model_validate({"ops": ops})
+
+
 class EditRejected(ValueError):
     """The ops are well-formed but not acceptable (too many names, an id in place of a name)."""
 

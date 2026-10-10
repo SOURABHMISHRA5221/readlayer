@@ -97,12 +97,15 @@ async def parse_edit(
         "frames": ", ".join(THINKS_IN),
     }
     try:
-        result = await llm.run_with_meta("profile_edit", pe.ProfileEditOps, variables)
+        result = await llm.run_with_meta("profile_edit", pe.ModelEditOps, variables)
         ledger.append(result.meta)
-        names = pe.check_names(result.output.ops)
+        ops = pe.strict(result.output).ops
+        names = pe.check_names(ops)
     except llm.BudgetExceeded:
         await readers.refund_daily("profile_edit_counts", caller.uid, day, shared)
         return _error(503, "llm_budget_exceeded", "Today's AI budget is used up. Try tomorrow.")
+    except ValidationError:
+        return _error(422, "not_understood", "Couldn't understand that, try rephrasing.")
     except pe.EditRejected as exc:
         code = str(exc)
         message = (
@@ -116,7 +119,7 @@ async def parse_edit(
             return _error(422, "not_understood", "Couldn't understand that, try rephrasing.")
         return _error(503, "llm_unavailable", "The AI model is unavailable. Try again shortly.")
     ids, unresolved = await resolve_names(graph, names, settings.link_threshold, ledger=ledger)
-    resolved = pe.resolve(result.output.ops, ids)
+    resolved = pe.resolve(ops, ids)
     touched = pe.touched(resolved, graph)
     domains = sorted(set(resolved.domains) | {c.domain for c in touched.values()})
     repo = _repo()
@@ -128,7 +131,7 @@ async def parse_edit(
     log.info(
         "profile edit parsed",
         extra={
-            "ops": len(result.output.ops),
+            "ops": len(ops),
             "concepts": len(resolved.concepts),
             "unresolved": len(unresolved),
             "cost_usd": round(sum(m.cost_usd for m in ledger), 6),
