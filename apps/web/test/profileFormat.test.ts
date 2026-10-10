@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BAND_GLYPH, evidenceText, previewLines, thetaPercent, thetaWord } from "../src/lib/profileFormat";
+import { BAND_GLYPH, evidenceText, previewLines, thetaPercent, thetaText, thetaWord } from "../src/lib/profileFormat";
 
 describe("profile wording", () => {
   it("turns evidence into plain language with a date", () => {
@@ -14,8 +14,10 @@ describe("profile wording", () => {
     expect(thetaPercent(0)).toBe(50);
     expect(thetaPercent(5)).toBe(100);
     expect([thetaWord(1.2), thetaWord(0.3), thetaWord(-0.5), thetaWord(-1.5)]).toEqual([
-      "advanced", "comfortable", "building", "new to",
+      "advanced", "comfortable", "building", "new",
     ]); // prettier-ignore
+    expect([thetaText(-0.03), thetaText(0.64), thetaText(-1.5)]).toEqual(["0.0", "+0.6", "−1.5"]);
+    expect(thetaWord(-0.03)).toBe("comfortable"); // judged as shown: 0.0
   });
 
   it("gives every band a shape, not only a colour", () => {

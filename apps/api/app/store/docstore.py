@@ -8,6 +8,7 @@ not have side effects beyond the transaction.
 
 import asyncio
 import copy
+import random
 from collections.abc import Awaitable, Callable
 from typing import Any, Protocol, TypeVar
 
@@ -38,6 +39,24 @@ class DocStore(Protocol):
 
 
 # ---------------------------------------------------------------- Firestore
+
+CONTENTION_ROUNDS = 3  # after the client's own 5 attempts
+
+
+async def retry_contention[R](
+    attempt: Callable[[], Awaitable[R]], rounds: int = CONTENTION_ROUNDS
+) -> R:
+    """Concurrent transactions on one document (e.g. three prefetched explanations reserving
+    the same daily counter) can exhaust the client's retries; back off with jitter and try again
+    rather than failing the request. The body is idempotent by design (reads, then writes)."""
+    for n in range(rounds + 1):
+        try:
+            return await attempt()
+        except ValueError as exc:
+            if "Failed to commit transaction" not in str(exc) or n == rounds:
+                raise
+            await asyncio.sleep(random.uniform(0.05, 0.2) * (n + 1))
+    raise AssertionError("unreachable")
 
 
 class _FirestoreTxn:
@@ -89,7 +108,7 @@ class FirestoreDocStore:
         async def wrapped(txn: firestore.AsyncTransaction) -> T:
             return await body(_FirestoreTxn(self._db, txn))
 
-        return await wrapped(self._db.transaction())
+        return await retry_contention(lambda: wrapped(self._db.transaction()))
 
 
 # ---------------------------------------------------------------- in memory

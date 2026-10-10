@@ -42,11 +42,21 @@ export function thetaPercent(theta: number): number {
   return Math.round(((Math.max(-2, Math.min(2, theta)) + 2) / 4) * 100);
 }
 
+/** The word for an ability, judged on the value as shown (one decimal), so "0.0" never says
+ * "building". */
 export function thetaWord(theta: number): string {
-  if (theta >= 1) return "advanced";
-  if (theta >= 0) return "comfortable";
-  if (theta >= -1) return "building";
-  return "new to";
+  const shown = Math.round(theta * 10) / 10;
+  if (shown >= 1) return "advanced";
+  if (shown >= 0) return "comfortable";
+  if (shown >= -1) return "building";
+  return "new";
+}
+
+/** "+0.6", "0.0", "−1.5": one decimal, a real minus sign, no "−0.0". */
+export function thetaText(theta: number): string {
+  const shown = Math.round(theta * 10) / 10;
+  if (shown === 0) return "0.0";
+  return shown > 0 ? `+${shown.toFixed(1)}` : `−${Math.abs(shown).toFixed(1)}`;
 }
 
 const SETTING_LABEL: Record<string, string> = {

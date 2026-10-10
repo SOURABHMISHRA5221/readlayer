@@ -387,3 +387,10 @@ def test_more_than_20_ops_is_rejected_by_the_strict_schema():
     )
     with pytest.raises(ValidationError):
         pe.strict(flat)
+
+
+def test_the_preview_leaves_out_settings_that_wouldnt_change(env, docs):
+    g = google()
+    g.patch("/v1/me/settings", json={"thinks_in": ["software"]})
+    settings = parse(g).json()["preview"]["settings"]
+    assert [s["setting"] for s in settings] == ["explanation_style"]

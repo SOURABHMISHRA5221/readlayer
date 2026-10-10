@@ -13,7 +13,7 @@ import { signOutUser, useIsDemo } from "../lib/auth";
 import { domainLabel } from "../lib/format";
 import { personaOf, personaParam, readerPersona } from "../lib/personas";
 import { FRAMES, profileApi, type Domain, type Frame, type Profile } from "../lib/profileApi";
-import { thetaPercent, thetaWord } from "../lib/profileFormat";
+import { thetaPercent, thetaText, thetaWord } from "../lib/profileFormat";
 import { navigate, withParams } from "../lib/router";
 import "../styles/profile.css";
 
@@ -121,8 +121,7 @@ function DomainBars({ profile }: { profile: Profile }) {
                 <span className="bars__fill bars__fill--ability" style={{ width: `${thetaPercent(d.theta)}%` }} />
               </span>
               <span className="bars__value">
-                Ability {d.theta >= 0 ? "+" : ""}
-                {d.theta.toFixed(1)} · {thetaWord(d.theta)}
+                Ability {thetaText(d.theta)} · {thetaWord(d.theta)}
               </span>
               <span className="bars__bar" aria-hidden="true">
                 <span className="bars__fill bars__fill--interest" style={{ width: `${Math.round(d.interest * 100)}%` }} />

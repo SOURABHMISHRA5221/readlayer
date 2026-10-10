@@ -56,7 +56,9 @@ export function KnowledgeMap({ persona, domains, initial, onChanged }: Props) {
 
   const close = () => {
     setSelected(null);
-    opener.current?.focus();
+    // After the modal has closed: while it is open, everything behind it is inert.
+    const back = opener.current;
+    requestAnimationFrame(() => back?.focus());
   };
 
   const correct = async (node: GraphNode, known: boolean) => {
@@ -293,7 +295,7 @@ function NodeCard({
     }
   };
   return (
-    <dialog ref={ref} className="ncard" aria-labelledby="ncard-title" onClose={onClose} onCancel={onClose}>
+    <dialog ref={ref} className="ncard" aria-labelledby="ncard-title" onClose={onClose}>
       <p className="eyebrow">{domainLabel(node.domain)}</p>
       <h3 id="ncard-title" className="ncard__title">
         {node.label}

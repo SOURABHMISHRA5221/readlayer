@@ -375,6 +375,7 @@ def preview(
         "settings": [
             {"setting": k, "before": applied.previous_settings.get(k), "after": v}
             for k, v in sorted(applied.settings.items())
+            if applied.previous_settings.get(k) != v  # no "software → software"
         ],
         "unresolved": list(unresolved),
     }

@@ -64,17 +64,20 @@
 .bars__list { display: grid; gap: var(--s5); margin: 0; padding: 0; list-style: none; }
 .bars__row { display: grid; grid-template-columns: 120px 1fr; gap: var(--s4); align-items: start; }
 .bars__domain { font: 500 17px / 1.3 var(--font-read); color: var(--ink); padding-top: 2px; }
-.bars__pair { display: grid; grid-template-columns: 1fr auto; gap: 6px var(--s3); align-items: center; }
+.bars__pair { display: grid; grid-template-columns: 1fr 13em; gap: 6px var(--s3); align-items: center; }
 .bars__bar { height: 6px; border-radius: var(--radius-pill); background: var(--hairline); overflow: hidden; }
 .bars__fill { display: block; height: 100%; border-radius: inherit; transition: width var(--dur-slow) var(--ease); }
 .bars__fill--ability { background: var(--accent); }
 .bars__fill--interest { background: color-mix(in srgb, var(--accent) 40%, var(--hairline)); }
 .bars__value { font: 400 var(--text-ui-sm) var(--font-ui); color: var(--ink-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-.kmap__head { display: grid; gap: var(--s4); }
+.kmap__head { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s4); }
 .kmap__head .profile__h2 { margin: 0; }
 .kmap__controls { display: flex; flex-wrap: wrap; gap: var(--s4); }
-.kmap__controls .segmented__option { min-height: 40px; }
+.kmap__controls .segmented__option { min-height: 44px; }
+/* Four topics don't fit on a 320 px phone in one row: let the toggle wrap inside the column. */
+.kmap__controls .segmented,
+.kmap__controls .segmented__track { max-width: 100%; flex-wrap: wrap; }
 .kmap__search input {
   width: 100%;
   min-height: 44px;
@@ -220,5 +223,6 @@
   .profile__main { padding-top: var(--s8); }
   .summary__text { font-size: 19px; }
   .bars__row { grid-template-columns: 1fr; gap: var(--s2); }
+  .bars__pair { grid-template-columns: 1fr 11.5em; }
   .clist__items { grid-template-columns: 1fr; }
 }
