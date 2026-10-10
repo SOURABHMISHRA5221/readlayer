@@ -289,8 +289,9 @@ ledger the harness had about $0.18 of headroom, not $1). Production spend today 
 **2026-10-10 UTC (M2.2, local): ledger $5.43 for the day at the end of M2.2 work.** Linker
 suite runs ≈ $0.31, held-out extraction freeze $0.08 + old-15 counts $0.07, held-out headline
 runs ≈ $0.48, seeding dry runs $0.45 (final) + $0.74 (aborted all-pairs dedupe, fixed) + $1.72
-(first full run), re-link dry run $0.53, profile_edit suite ≈ $0.01, harness ≈ $0.05. Under the
-$8 cap.
+(first full run), re-link dry run $0.53, profile_edit suite ≈ $0.01, harness ≈ $0.05, the second
+judged growth run and the kind/jurisdiction backfill inside the seeding runs ≈ $0.49 (the rest of the
+ledger; the rest of M6 earlier that UTC day was ≈ $0.50). Under the $8 cap.
 
 **2026-10-10 UTC (rest of M6, local): ≈ $0.50 LLM.** Safety evals `explain-v4-split` $0.46,
 local explanations while testing ≈ $0.03, one "Open here" ingest $0.0024. Under the $8 cap.
