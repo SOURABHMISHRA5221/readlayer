@@ -51,6 +51,16 @@ class ConceptInfos(BaseModel):
     concepts: list[ConceptInfo]
 
 
+class KindJurisdiction(BaseModel):
+    id: int
+    kind: Kind
+    jurisdiction: str = Field(default="global", pattern=r"^([A-Z]{2}|global)$")
+
+
+class KindJurisdictions(BaseModel):
+    concepts: list[KindJurisdiction]
+
+
 class PrereqPick(BaseModel):
     id: str
     confidence: float = Field(ge=0, le=1)
@@ -233,6 +243,24 @@ async def define_concepts(
         return {c.id: c for c in res.output.concepts}
 
     return await _run_batches(entries, 25, call)
+
+
+async def classify_kind_jurisdiction(
+    entries: Sequence[Entry], runner: Runner, ledger: list[llm.CallMeta]
+) -> dict[int, KindJurisdiction]:
+    """M2.2 backfill for pre-M2.2 concepts: label and definition in, kind and jurisdiction out."""
+
+    async def call(batch: Sequence[Entry]) -> dict[int, KindJurisdiction]:
+        text = "\n".join(f"[{i}] {e.label}: {e.definition}" for i, e in enumerate(batch))
+        res = await runner(
+            "concept_jurisdiction",
+            KindJurisdictions,
+            {"concept_count": len(batch), "concepts": text},
+        )
+        ledger.append(res.meta)
+        return {c.id: c for c in res.output.concepts}
+
+    return await _run_batches(entries, 50, call)
 
 
 async def propose_prereqs(
