@@ -17,14 +17,30 @@ interface Props {
   /** Changes when anything else on the page changed the model (an applied or undone edit). */
   refreshKey: number;
   onChanged: () => void;
+  /** A learning goal to show instead of a topic (M7.5 §C.5); null shows topics. */
+  goal?: { id: string; label: string } | null;
+  onClearGoal?: () => void;
+  /** Every learning-goal target, ringed in the map and badged in the list. */
+  goalTargets?: ReadonlySet<string>;
 }
+
+const NO_TARGETS: ReadonlySet<string> = new Set();
 
 /**
  * The reader's knowledge in one domain (DESIGN §15.1 item 3): a layered map (Cytoscape + dagre,
  * loaded only when the map is shown) and the same subgraph as a keyboard-navigable list, the
  * default on phones. Either opens the node card: band, last evidence, and corrections.
  */
-export function KnowledgeMap({ persona, domains, initial, refreshKey, onChanged }: Props) {
+export function KnowledgeMap({
+  persona,
+  domains,
+  initial,
+  refreshKey,
+  onChanged,
+  goal = null,
+  onClearGoal,
+  goalTargets = NO_TARGETS,
+}: Props) {
   const narrow = typeof window !== "undefined" && window.matchMedia(NARROW).matches;
   const [domain, setDomain] = useState<Domain>(initial);
   const [view, setView] = useState<View>(narrow ? "list" : "map");
@@ -44,12 +60,11 @@ export function KnowledgeMap({ persona, domains, initial, refreshKey, onChanged 
   useEffect(() => {
     const ctrl = new AbortController();
     setFailed(false);
-    profileApi
-      .graph(persona, domain, search, ctrl.signal)
+    (goal ? profileApi.goalGraph(goal.id, ctrl.signal) : profileApi.graph(persona, domain, search, ctrl.signal))
       .then(setGraph)
       .catch(() => !ctrl.signal.aborted && setFailed(true));
     return () => ctrl.abort();
-  }, [persona, domain, search, version, refreshKey]);
+  }, [persona, domain, search, version, refreshKey, goal]);
 
   const open = (node: GraphNode, from: HTMLElement | null) => {
     opener.current = from;
@@ -79,12 +94,21 @@ export function KnowledgeMap({ persona, domains, initial, refreshKey, onChanged 
           Knowledge map
         </h2>
         <div className="kmap__controls">
-          <Segmented
-            label="Topic"
-            options={domains.map((d) => ({ key: d, label: domainLabel(d) ?? d }))}
-            value={domain}
-            onChange={setDomain}
-          />
+          {goal ? (
+            <p className="kmap__goal">
+              Goal: <strong>{goal.label}</strong>{" "}
+              <button type="button" className="btn btn--sm" onClick={onClearGoal}>
+                Back to topics
+              </button>
+            </p>
+          ) : (
+            <Segmented
+              label="Topic"
+              options={domains.map((d) => ({ key: d, label: domainLabel(d) ?? d }))}
+              value={domain}
+              onChange={setDomain}
+            />
+          )}
           <Segmented
             label="View"
             options={[
@@ -107,8 +131,12 @@ export function KnowledgeMap({ persona, domains, initial, refreshKey, onChanged 
           {search ? `Nothing in ${domainLabel(domain)} matches “${search}”.` : "Read a few articles and your map fills in."}
         </p>
       )}
-      {graph && graph.nodes.length > 0 && view === "map" && <MapCanvas graph={graph} onOpen={(n) => open(n, null)} />}
-      {graph && graph.nodes.length > 0 && view === "list" && <ConceptList graph={graph} onOpen={open} />}
+      {graph && graph.nodes.length > 0 && view === "map" && (
+        <MapCanvas graph={graph} goalTargets={goalTargets} onOpen={(n) => open(n, null)} />
+      )}
+      {graph && graph.nodes.length > 0 && view === "list" && (
+        <ConceptList graph={graph} goalTargets={goalTargets} onOpen={open} />
+      )}
       {graph?.truncated && <p className="profile__note">Showing your 60 most relevant concepts here.</p>}
       {current && <NodeCard node={current} onClose={close} onCorrect={correct} />}
     </section>
@@ -128,7 +156,15 @@ function Legend() {
   );
 }
 
-function ConceptList({ graph, onOpen }: { graph: Subgraph; onOpen: (n: GraphNode, from: HTMLElement) => void }) {
+function ConceptList({
+  graph,
+  goalTargets,
+  onOpen,
+}: {
+  graph: Subgraph;
+  goalTargets: ReadonlySet<string>;
+  onOpen: (n: GraphNode, from: HTMLElement) => void;
+}) {
   const levels = useMemo(() => {
     const by = new Map<number, GraphNode[]>();
     for (const n of graph.nodes) by.set(n.depth, [...(by.get(n.depth) ?? []), n]);
@@ -152,6 +188,7 @@ function ConceptList({ graph, onOpen }: { graph: Subgraph; onOpen: (n: GraphNode
                       {BAND_GLYPH[n.band]}
                     </span>
                     <span className="clist__label">{n.label}</span>
+                    {goalTargets.has(n.id) && <span className="clist__goal">Goal</span>}
                     <span className="clist__band">{BAND_LABEL[n.band]}</span>
                   </button>
                 </li>
@@ -168,7 +205,15 @@ function cssVar(name: string): string {
 }
 
 /** Cytoscape + dagre, imported on first use (its own chunk). Not keyboard-operable: the list is. */
-function MapCanvas({ graph, onOpen }: { graph: Subgraph; onOpen: (n: GraphNode) => void }) {
+function MapCanvas({
+  graph,
+  goalTargets,
+  onOpen,
+}: {
+  graph: Subgraph;
+  goalTargets: ReadonlySet<string>;
+  onOpen: (n: GraphNode) => void;
+}) {
   const box = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   // Read at tap time, so a new callback each render doesn't rebuild the map.
@@ -195,7 +240,7 @@ function MapCanvas({ graph, onOpen }: { graph: Subgraph; onOpen: (n: GraphNode) 
         container: box.current,
         elements: [
           ...graph.nodes.map((n) => ({
-            data: { id: n.id, label: `${BAND_GLYPH[n.band]} ${n.label}`, band: n.band },
+            data: { id: n.id, label: `${BAND_GLYPH[n.band]} ${n.label}`, band: n.band, goal: goalTargets.has(n.id) },
           })),
           ...graph.edges.map((e) => ({ data: { id: `${e.from}->${e.to}`, source: e.from, target: e.to } })),
         ],
@@ -232,6 +277,10 @@ function MapCanvas({ graph, onOpen }: { graph: Subgraph; onOpen: (n: GraphNode) 
             },
           })),
           {
+            selector: "node[?goal]",
+            style: { "border-width": 3, "border-color": accent },
+          },
+          {
             selector: "edge",
             style: {
               width: 1,
@@ -255,7 +304,7 @@ function MapCanvas({ graph, onOpen }: { graph: Subgraph; onOpen: (n: GraphNode) 
       destroyed = true;
       cy?.destroy();
     };
-  }, [graph]);
+  }, [graph, goalTargets]);
   return (
     <div className="kmap__canvas-wrap">
       <div

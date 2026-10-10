@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AccountMenu } from "../components/AccountMenu";
 import { ArrowLeft } from "../components/Icons";
 import { EditBox } from "../components/profile/EditBox";
+import { Goals } from "../components/profile/Goals";
 import { KnowledgeMap } from "../components/profile/KnowledgeMap";
 import { Segmented } from "../components/Segmented";
 import { StateView } from "../components/StateView";
@@ -12,7 +13,7 @@ import { api } from "../lib/api";
 import { signOutUser, useIsDemo } from "../lib/auth";
 import { domainLabel } from "../lib/format";
 import { personaOf, personaParam, readerPersona } from "../lib/personas";
-import { FRAMES, profileApi, type Domain, type Frame, type Profile } from "../lib/profileApi";
+import { FRAMES, profileApi, type Domain, type Frame, type Goal, type Profile } from "../lib/profileApi";
 import { BUSINESS_DOMAINS } from "../lib/taxonomy";
 import { thetaPercent, thetaText, thetaWord } from "../lib/profileFormat";
 import { navigate, withParams } from "../lib/router";
@@ -27,6 +28,12 @@ export default function ProfilePage({ url }: { url: URL }) {
   const [failed, setFailed] = useState(false);
   const [version, setVersion] = useState(0);
   const refresh = useCallback(() => setVersion((v) => v + 1), []);
+  const [goalList, setGoalList] = useState<Goal[]>([]);
+  const [mapGoal, setMapGoal] = useState<{ id: string; label: string } | null>(null);
+  const goalTargets = useMemo(
+    () => new Set(goalList.flatMap((g) => g.targets.map((t) => t.concept_id))),
+    [goalList],
+  );
 
   useEffect(() => {
     document.title = "Your reading profile · ReadLayer";
@@ -89,12 +96,17 @@ export default function ProfilePage({ url }: { url: URL }) {
               <p className="summary__text">{profile.summary.text}</p>
             </section>
             <DomainBars profile={profile} />
+            <Goals demo={!!persona} refreshKey={version} onGoals={setGoalList}
+              onShowOnMap={(g) => setMapGoal({ id: g.id, label: g.label })} />
             <KnowledgeMap
               persona={persona}
               domains={profile.domains.filter((d) => d.concepts > 0).map((d) => d.domain)}
               initial={(profile.summary.top_domain as Domain) ?? "finance"}
               refreshKey={version}
               onChanged={refresh}
+              goal={mapGoal}
+              onClearGoal={() => setMapGoal(null)}
+              goalTargets={goalTargets}
             />
             <WeekCard profile={profile} demo={!!persona} />
             <Frames profile={profile} demoName={name} onChanged={refresh} />
