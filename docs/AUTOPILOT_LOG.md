@@ -471,3 +471,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   the CORS list (first version passed vacuously because FastAPI wraps included routers; rewritten
   and shown to fail without the fix).
 - #23 merged on green CI, API redeployed (revision 00019, Sourabh's yes). Live re-check: Save works (preflight allows PUT; saved article in the Saved tab). Design pass done. Next: M8-local, starting with the m8 rebase.
+
+## Landing and onboarding (decision 41) — started 2026-10-11
+
+- Sourabh (decision 41): a Landing and onboarding milestone after the Design pass, before M8.
+  Recorded in BUILD_PLAN and STATUS. Before screenshots of the current live sign-in landing:
+  `docs/evidence/landing/before/`.
+- Plan `docs/plans/landing-onboarding.md`. plan-reviewer round 1: REVISE (21: static-hero flash on
+  other routes, hint key, fonts and the no-network definition, the 60 KB budget meaning, Lighthouse
+  install, free-text tests, consent order, discover cost abuse, pick trusting the client, know rules,
+  onboarding step, the demo build script's cache precheck, an inaccurate trust line, persona names,
+  dead card buttons, routing gaps, acceptance gaps, the extension line, the eval parser, " and "
+  splitting, docs and deploy). Round 2: **APPROVE**; nits applied.
+- Open question to Sourabh: none of "F1", "startups", "Indian politics", "Formula One" resolve on the
+  live graph (checked live, $0.002); proposed taxonomy-topic fallback. The resolve response reserves
+  `topics: []`; work proceeds on everything else.
+
