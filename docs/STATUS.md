@@ -779,5 +779,5 @@ after three rounds).
 | 3b | Non-text contrast ≥ 3:1, both themes | Pass after one fix: accent-line 4.07 / 5.68, goal dashes 4.40 / 7.96, new-highlight underline over its fill 3.54 / 3.96; the heard-of map dot (fill ≈ 2:1) now carries an accent-line outline |
 | 3c | Both highlight styles on a demo article | Pass: trader on the ET markets article, 4 new + 4 refresher (corpus share 8–16% per persona) |
 | 4 | Flows | Pass: a note opens in the margin; "Say it simpler" returned a verified Background one band lower (can explain → understands); recap after Knew this listed Heard of → Understands and Undo showed the resulting band; no interaction → no changes; Helpful recorded one `article_helpful` event; Saved tab and export list the saved article; persona chip switches; a new Google reader's map has 48 solid nodes and 16 rings |
-| 5 | Two-phase Open here and annotations unchanged | Pass: article visible in 1.5 s, notes inked in after; API 616 tests, annotator 40, web 20 |
+| 5 | Two-phase Open here and annotations unchanged | Pass: article visible in 1.5 s, notes inked in after; API 615 tests, annotator 40, web 20 |
 | 6 | Bundle | Pass: main 138.7 → 143.3 KB gzip (budget 150); Cytoscape chunk gone; For you, Saved and Profile lazy |
