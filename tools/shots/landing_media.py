@@ -4,7 +4,7 @@
     uv run --project apps/api python tools/shots/landing_media.py --confirmed
 
 As one temporary anonymous demo reader on the live site (deleted at the end with DELETE /v1/me,
-which also deletes the Auth user): the desktop and phone product shots of the "bps" note on the
+which also deletes the Auth user): the phone product shot of the "bps" note on the
 demo markets article, then four short clips. Writes AVIF/WebP images and WebM/MP4 clips with WebP
 posters to apps/web/public/landing/. The precheck prints the exact production writes.
 """
@@ -26,7 +26,6 @@ CID = "2332418841faa08d5f5e157c2d038d1d"
 OUT = Path(__file__).resolve().parents[2] / "apps/web/public/landing"
 CLIP_W = 720  # decision 45 nit: sharp in the wider clip grid
 CLIP_MAX_BYTES = 400_000
-SHOT_DESKTOP_W = 760  # 1x; 2x is double
 SHOT_PHONE_W = 300
 
 READY = "!!document.querySelector('.rl-card:not([hidden]) .rl-card__explain[data-state=ready]')"
@@ -128,21 +127,7 @@ async def record(p, seconds_before, action, seconds_after):
 
 
 async def product_shots(p, tmp: Path):
-    await p.viewport(1440)
-    await p.send("Emulation.setDeviceMetricsOverride", width=1440, height=900, deviceScaleFactor=2, mobile=False)
-    await open_reader(p, "newcomer")
-    await center(p, '[data-rl-paragraph="p5"]')
-    await click_mark(p, "bps")
-    await wait_js(p, READY)
-    await asyncio.sleep(0.6)
-    box = union(await p.eval(js_rect('[data-rl-paragraph="p5"]')), await p.eval(js_rect(".rl-card")), pad=40)
-    # A clipped capture under a DPR override came back blank: take the viewport, crop with ffmpeg.
-    r = await p.send("Page.captureScreenshot", format="png")
-    full, desktop = tmp / "desktop-full.png", tmp / "desktop.png"
-    full.write_bytes(cdp.base64.b64decode(r["data"]))
-    run("ffmpeg", "-y", "-i", str(full), "-vf", f"crop={box['w'] * 2}:{box['h'] * 2}:{box['x'] * 2}:{box['y'] * 2}", str(desktop))
-    encode_image(desktop, "shot-desktop", SHOT_DESKTOP_W)
-
+    # Decision 46 P3: only the phone shot is used (it sits on the hero card's corner).
     await p.send("Emulation.setDeviceMetricsOverride", width=390, height=844, deviceScaleFactor=2, mobile=True)
     await open_reader(p, "newcomer")
     await center(p, '[data-rl-paragraph="p5"]')
@@ -153,7 +138,7 @@ async def product_shots(p, tmp: Path):
     phone = tmp / "phone.png"
     phone.write_bytes(cdp.base64.b64decode(r["data"]))
     encode_image(phone, "shot-phone", SHOT_PHONE_W)
-    return {"desktop_box": box}
+    return {"phone": "shot-phone"}
 
 
 async def clips(p, only=None):

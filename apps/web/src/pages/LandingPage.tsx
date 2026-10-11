@@ -9,7 +9,7 @@ import evals from "../landing/evals.json";
 import { Hero, HeroCtas } from "../landing/Hero";
 import { Clip } from "../landing/Clip";
 import { ProblemArt } from "../landing/ProblemArt";
-import { ProductShot } from "../landing/ProductShot";
+import { HeroPhone } from "../landing/HeroPhone";
 import { MargoHero } from "../landing/MargoHero";
 import { MiniDemo } from "../landing/MiniDemo";
 import { REPO_URL } from "../landing/links";
@@ -82,21 +82,26 @@ export default function LandingPage({ url }: { url: URL }) {
           ) : null
         }
         ctas={ctas}
-        demo={<MiniDemo persona={persona} onPersona={setPersona} onTry={demo} />}
+        demo={<MiniDemo persona={persona} onPersona={setPersona} onTry={demo} phone={<HeroPhone />} />}
         footer={<Footer />}
       >
-        <ProductShot />
         <Problem />
         <Solution />
         <HowItWorks />
         <Trust />
         <Formats />
         <section className="lp-final" aria-labelledby="lp-final-title">
-          <MargoHero mood="happy" className="lp-final__margo" />
-          <h2 id="lp-final-title" className="lp-final__title">
-            Your next article, explained for you.
-          </h2>
-          <HeroCtas onDemo={demo} onGoogle={google} busy={busy} />
+          <div className="lp-final__copy">
+            <MargoHero mood="happy" className="lp-final__margo" />
+            <h2 id="lp-final-title" className="lp-final__title">
+              Your next article, explained for you.
+            </h2>
+            <HeroCtas onDemo={demo} onGoogle={google} busy={busy} />
+          </div>
+          <figure className="lp-final__map">
+            <Clip {...MAP_CLIP} />
+            <figcaption>Your map of what you know fills in as you read.</figcaption>
+          </figure>
         </section>
       </Hero>
     </div>
@@ -106,9 +111,12 @@ export default function LandingPage({ url }: { url: URL }) {
 function Problem() {
   return (
     <section className="lp-section lp-problem" aria-labelledby="lp-problem-title">
-      <h2 id="lp-problem-title" className="lp-section__title">
-        Everyone reads past something.
-      </h2>
+      <header className="lp-problem__head">
+        <h2 id="lp-problem-title" className="lp-section__title">
+          Everyone reads past something.
+        </h2>
+        <p className="lp-problem__intro">Three ways a good article loses its reader.</p>
+      </header>
       <ol className="lp-problem__list">
         <li className="lp-problem__item">
           <ProblemArt
@@ -238,10 +246,12 @@ const STEPS: { title: string; body: string; clip: { name: string; label: string;
     clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 720, height: 520 },
   },
 ];
+/** The map clip again, beside the final call to action (decision 46 P4). */
+const MAP_CLIP = { ...STEPS[3]!.clip, label: "your knowledge map filling in" };
 
 function HowItWorks() {
   return (
-    <section className="lp-section lp-how" aria-labelledby="lp-how-title">
+    <section id="how-it-works" className="lp-section lp-how" aria-labelledby="lp-how-title">
       <h2 id="lp-how-title" className="lp-section__title">
         How it works
       </h2>
@@ -351,6 +361,7 @@ function Footer() {
       <p className="lp-footer__built">Built on Gemini and Google Cloud</p>
       <p className="lp-footer__built">Illustrations made with Google's image model.</p>
       <nav className="lp-footer__links" aria-label="About Gloss">
+        <a href="#how-it-works">How it works</a>
         <a href={REPO_URL} target="_blank" rel="noreferrer">
           GitHub
         </a>
