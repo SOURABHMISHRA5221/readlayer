@@ -545,3 +545,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    `docs/evidence/landing/`.
 2. Checkpoint 1 (end of Oct 12 IST), then the onboarding API (§C incl. decision 42) and the
    2-screen WelcomePage (§B).
+
+- Resumed after /clear (2026-10-11). Dark illustrations re-verified on a fresh build: the invert
+  filter gives white strokes and lighter teal on the dark wash at 390 and 1440, clearly visible;
+  no backing needed (shots in `docs/evidence/landing/illustrations/`). Landing checks on the
+  fresh build: axe 0 and no horizontal scroll everywhere, first view at 390 = 211 KB.
+- **Decision 46** (Sourabh, landing polish, 9 items: payoff-first hero with an open note, Margo on
+  the note, fuller nav and a higher hero, phone-only product shot on the hero card, sentence-case
+  labels, halved section padding, problem row + pull quote, re-cropped clips, no empty halves).
+  Recorded in STATUS §10. Before shots: `docs/evidence/landing/d46-before/`. Plan amendment P1–P6
+  drafted. plan-reviewer round 1: REVISE (10: whole demo inside 1440×900, a 390 fallback order,
+  small-caps and tracking too, inline card semantics, persona-switch race, one-frame static→live
+  swap, phone geometry, measured clip legibility, removals together, slip plan); plus 2 found in
+  the annotator (no focus trap, no hover peeks inline). Round 2: **APPROVE**; nits applied (12 px
+  phone clip figure in STATUS; if the phone only fits from 1280, it gets logged and noted in the
+  decision 46 row). Lighthouse moves after the polish.

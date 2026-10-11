@@ -462,3 +462,158 @@ scan, added to M9). Built as part 0 of the landing (before §C/§B), same checkp
 - Reviewer nits applied: illustrations are encoded at ~460px and ~920px (2x) wide and clips at
   ~720px wide (each still ≤ 400 KB), so the wider rows stay sharp; BUILD_PLAN acceptance lists
   axe and screenshots at 1280, 1440, 1920 and 390.
+
+## Amendment: decision 46, landing polish (Sourabh, 2026-10-11)
+
+Sourabh reviewed the landing in the browser after V3 (commit 22e111c): the opening is weak and the
+page feels loose. Before screenshots (fresh build, same commit): `docs/evidence/landing/d46-before/`.
+Same checkpoint 1 (end of Oct 12 IST); built before §C/§B. Dark illustrations re-verified first
+(invert filter, white strokes on the dark wash at 390 and 1440; shots in
+`docs/evidence/landing/illustrations/`), no change needed.
+
+### P1. Hero opens on the payoff (items 1, 2, 5)
+- **Annotator 0.7.0: `inline` card host.** New option `inline?: HTMLElement`. When set, the card
+  renders into that element in normal flow at every width (mode `"inline"`: no popover, sidenote,
+  bottom sheet or scrim), `open()` doesn't scroll the page, and outside clicks, scroll and Escape
+  don't close it (Escape moves focus back to the mark). The close button is hidden; exactly one
+  note stays open, and tapping another mark swaps it. Everything else (marks, demo action,
+  loadExplanation, scrollable body region) is unchanged; the reader never sets `inline`.
+  Vitest: inline renders inside the host with no scrim at a narrow width; open() calls no
+  scrollIntoView; outside click / scroll / Escape leave it open; tapping another mark swaps it; axe 0.
+- **Open note on load.** `DemoFrame` gets a note slot under the paragraph inside the sheet;
+  `MiniDemo` passes it as `inline` and, after each `update()`, opens that persona's **featured
+  note**: the first note with an analogy, preferring "bps" (Software engineer → bps, Cricket fan →
+  tighter policy because its bps refresher has no analogy, Policy student → bps). The map lives in
+  `demoPersonas.ts` (`FEATURED_NOTE`), with a vitest that each featured note exists in demo.json
+  and has an analogy. Switching "Read as" swaps the open note. Focus is never moved on load or on
+  a persona switch.
+- **No empty area.** The sheet's fixed min-height goes; the sheet is as tall as source line +
+  paragraph + open note. The note body keeps its own max-height (desktop ~330px, phone ~260px)
+  and scrolls inside (already a focusable region), so the hero height stays stable across
+  personas. Check: the gap between the note's last visible line and the sheet's bottom edge ≤ 24px
+  for all three personas (measured in `tools/shots/landing.py`).
+- **First paint.** `HeroStatic` (and so index.html) renders the default persona's featured note
+  as plain, inert markup in the slot (`DemoNoteStatic`: domain, term, level line, Background,
+  "What the author is saying", from demo.json, styled by landing CSS to the inline card's box:
+  same padding, max-height and fonts). The annotator replaces it in the same box. CLS < 0.1
+  (Lighthouse) and a measured slot-height difference ≤ 4px between static and live at 1440 and 390.
+  The static hero test keeps index.html pinned (`UPDATE_HERO=1`).
+- **Margo attached to the note.** `MargoHero` moves from the head row's corner to the note slot:
+  absolutely positioned at the open note's top-right edge, arm and hand reaching onto the card's
+  top edge (handing it over), ~120px at ≥ 1024, ~88px below. Moods per persona as now. It never
+  covers note text (bounding-box check: no intersection with the card's text nodes).
+- **Sentence case.** "Read as:" (visible label, sentence case); "From The Economic Times" in
+  sentence case; inside `.lp`, card labels (domain, Background, What the author is saying) and
+  every other landing label lose `text-transform: uppercase` and letter-spacing (scoped override
+  in landing.css; the reader's card styles are untouched). Check: no element on "/" or /privacy
+  has computed `text-transform: uppercase` (script, both themes).
+
+### P2. Nav and a higher hero (item 3)
+- Bar: wordmark · "How it works" (anchor to `#how-it-works`, the section gets that id) ·
+  "Privacy" (client route) · "Sign in" (Google, same handler and busy state as the hero) · a small
+  primary "Try the demo" button (same demo handler, current persona) · theme toggle. Below 720px:
+  wordmark, "Sign in", "Try the demo", toggle; "How it works" and "Privacy" stay in the footer
+  (Privacy already is; "How it works" added). Static first paint: links and buttons present but
+  inert until the chunk loads (as the hero CTAs today). 44px targets.
+- Spacing: the bar-to-headline gap drops to ~24–40px (clamp); headline clamp max reduced so it
+  sits in 2 lines at 1440 ("Read anything. / Understand all of it."). **1440×900 first view:**
+  headline, subline, both CTAs and the demo with the open note's title and first lines of
+  Background all inside the viewport. **390×844 first view:** headline, CTAs and the open note's
+  title plus at least one Background line inside the viewport (mobile hero spacing tightened to
+  fit; copy unchanged). Both checked by bounding boxes in the script, screenshots in the log.
+
+### P3. Product shot becomes a phone at the hero card (item 4)
+- The laptop frame, desktop shot and the `lp-shot` section are removed (desktop shot files
+  deleted from `public/landing/`). The phone frame, smaller (~180px wide at ≥ 1024), sits
+  absolutely at the bottom-right of the hero demo card, overlapping its corner, never its text
+  (bounding-box check against paragraph and note); hidden below 1024 (`display: none`, so not
+  requested: `<picture>` inside a `display:none` subtree still loads, so it is rendered only when
+  `matchMedia('(min-width: 1024px)')` matches, via a small hook). Not in the static paint; it
+  doesn't affect layout (absolute), so no shift. The caption moves into the demo caption: "A real
+  paragraph from The Economic Times and real notes; the words are unchanged. Tap a highlighted
+  term."
+
+### P4. Tighter sections (items 6, 7, 9)
+- `--lp-space: clamp(56px, 6.5vw, 96px)` (was 64–128). No section with an empty half.
+- Problem: on ≥ 1024 the heading and a one-line intro share a row (heading left, intro right,
+  baseline-aligned): intro "Three ways a good article loses its reader." (stacked below 1024). The
+  italic line becomes a pull quote right under the three cards (larger italic serif, teal rule).
+- "What you can read": centred, the four formats as one row of four at ≥ 768 (2×2 below), heading
+  centred above.
+- Final CTA: two columns at ≥ 1024: left Margo (happy) + title + CTAs; right the knowledge-map
+  clip (`Clip` with `clip-map`, same lazy load, pause control and reduced-motion poster). Below
+  1024: stacked, centred, clip under the CTAs.
+
+### P5. How it works clips re-cropped (item 8)
+- `landing_media.py --clips` re-records the four clips (no product shots) with tight crops: the
+  highlighted term and the opening card only (clip-note, clip-simpler: the term's line + the card;
+  clip-know: the chip + the term; clip-map: the map's changing region), recorded at
+  deviceScaleFactor 2 and encoded at 720px wide so text renders at ≥ ~14 CSS px in the grid
+  (checked on the posters at 1440 and 390). Poster = a frame with the card open (for clip-note,
+  the last frame after the card has slid in, verified non-blank by a pixel-variance check in the
+  script). Same budgets: ≤ 400 KB per file, WebM + MP4, WebP poster; `STEPS` sizes updated.
+- **Production writes (this amendment):** ≤ 2 runs of `landing_media.py --clips`, each 1
+  anonymous demo reader and its docs, deleted with `DELETE /v1/me`; per run 1 "Know this?" answer,
+  ≤ 3 "Knew this", explain hit counters (+N); "Say it simpler" is cached (0 generations; the
+  dry run confirms, and the run refuses if not cached). No LLM spend expected.
+
+### P6. Checks and docs
+- `tools/shots/landing.py`: first-view boxes at 1440×900 and 390×844, the note-gap check per
+  persona, the no-uppercase check, Margo/phone overlap checks, static vs live slot height; axe 0 at
+  1920/1440/1280/390 light and dark (card open is now the default state); no horizontal scroll;
+  first view at 390×844 < 1.5 MB; landing chunk < 60 KB gzip, main < 150 KB.
+- Lighthouse (next step in the log) runs after P1–P5 on the polished page.
+- After screenshots: `docs/evidence/landing/d46-after/` (1440×900 and 390×844 folds, full pages,
+  each persona's open note, dark). STATUS §10 decision 46; BUILD_PLAN landing section; DESIGN §20.
+- Build order: P1 → P2 → P3 → P4 → P5 → checks. If checkpoint 1 is at risk, ask Sourabh before
+  dropping P5 (the current clips stay).
+
+### Decision 46 round 1 (plan-reviewer REVISE, 10 items + 2 found while reading the annotator; all applied, these override P1–P6)
+1. **1440×900 = the whole demo.** The script requires the entire demo figure (toggle, sheet,
+   open note box at its max-height, caption) plus headline, subline and CTAs inside y ≤ 900, for
+   all three personas. 390×844 stays: headline, CTAs, note title + one Background line.
+2. **390×844 fallback order (mobile only), decided now:** (a) the fine print moves below the
+   demo; (b) the CTAs sit side by side (shorter visual width, same labels; if a label wraps, the
+   pair stacks again and we go on to c); (c) the note's level line is hidden. Anything beyond that
+   goes to Sourabh.
+3. **All-caps really gone.** The `.lp` override resets `text-transform: none`, `font-variant:
+   normal` and `letter-spacing: normal`, with selectors more specific than the annotator's
+   runtime-injected ones (e.g. `.lp .rl-card .rl-card__domain`). Script: on "/" and /privacy, both
+   themes, no element has computed `text-transform: uppercase`, a `font-variant` containing
+   `small-caps`, or `letter-spacing` > 0.02em.
+4. **Inline semantics.** In `inline` mode the card is `role="group"` (same
+   aria-labelledby/describedby), no `role="dialog"`/`aria-modal`; the status live region stays
+   silent on load and on persona switches (it announces only after a reader-initiated open, as
+   today). Vitest: inline has no dialog role.
+5. **Persona-switch race.** `MiniDemo` awaits `update()`, keeps a sequence number and opens the
+   featured note only if it is still the latest switch; `open(id, { focus: false })` never scrolls
+   in inline mode. Vitest: A→B→A toggled fast ends with A's featured note open.
+6. **Static → live swap in one frame.** `DemoNoteStatic` stays until the live inline card has
+   its explanation rendered (no skeleton visible: the demo explanation is resolved before the card
+   is revealed), then the static note is removed and the live card shown in the same frame. The
+   static markup includes the demo action button's box and the footer label. The script samples
+   the slot height every animation frame from load through the swap (max − min ≤ 4px).
+7. **Phone geometry.** The phone overlaps only the card's border/padding corner and hangs outside
+   the right and bottom edges; the hero gets bottom padding so it ends above the next section.
+   Bounding-box checks: no intersection with paragraph, note body (also after scrolling the note
+   body to its end), figcaption, Margo, or the next section's heading. No horizontal scroll at
+   1024 and 1280 (smallest right gutter); if the phone + Margo don't fit at 1024, the phone shows
+   from 1280 only.
+8. **Clip legibility measured.** `landing_media.py` records each crop's CSS width; the landing
+   script computes displayed clip width ÷ crop CSS width × 14 px (smallest card body size) and
+   requires ≥ 14 at 1440 and ≥ 12 at 390 (single column, phone); numbers logged in
+   `docs/evidence/landing/d46-after/clips.txt`.
+9. **Removals updated together:** the V6 vitest over `public/landing/` (names and sizes),
+   `landing_media.py` loses the desktop product-shot capture (phone shot kept, `--clips` added),
+   `lp-shot` styles removed, DESIGN §20 and the V2 caption text updated, `ProductShot.tsx` reduced
+   to the phone.
+10. **Slip plan.** If checkpoint 1 is at risk, ask Sourabh about dropping, in order: P5 (current
+    clips stay), then the final-CTA map clip (centred Margo + CTAs instead). A log line with the
+    time after P1 and P2 so the risk call happens early.
+11. **No focus trap inline.** The card's Tab cycling (`onCardKeyDown`) is off in inline mode; Tab
+    moves through the card and on to the page.
+12. **No hover peeks inline.** Hovering another mark doesn't open or schedule a close in inline
+    mode (the open note never disappears); click, tap, Enter or Space swaps it; clicking the open
+    note's own mark is a no-op.
+- Round 2: **APPROVE**. Nits: the 12 px phone clip figure is in STATUS §10's decision 46 row; if
+  item 7's fallback (phone from 1280 only) is used, it is logged and added to that row.
