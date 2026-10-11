@@ -408,3 +408,41 @@ scan, added to M9). Built as part 0 of the landing (before §C/§B), same checkp
 - STATUS §10 decision 44; BUILD_PLAN landing section (visuals) and M9 (repo public at submission
   after a gitleaks scan); DESIGN §19 (light default) and §20 (landing visuals, image model,
   prompts, cost); README third-party credit unchanged except the illustration line.
+
+### Amendment round 1 (plan-reviewer REVISE, 9 items; all applied, these override V1–V8)
+1. **Spend needs Sourabh's yes.** `landing_art.py --dry-run` prints scenes, variants and the
+   estimate; the real run waits for Sourabh's explicit yes, recorded in AUTOPILOT_LOG. Default
+   3 scenes × 2 variants + ≤ 2 re-rolls = **≤ 8 images, hard stop $0.60**; more needs his yes.
+2. **The cap doesn't trust LiteLLM pricing.** `generate_image` charges images ×
+   `MODEL_IMAGE_PRICE_USD` (new setting, default 0.0672) whenever `completion_cost` is missing or
+   0, on both the LiteLLM and google-genai paths. The script counts images itself and stops before
+   the call that would cross the cap.
+3. **`generate_image` contract in llm.py.** Route `"landing_art": Route("model_image", None)`,
+   explicitly no fallback (Gemma can't make images). Output validation replaces the Pydantic
+   schema: exactly one decodable PNG/JPEG ≥ 512×512 (Pillow), else retry with backoff, then
+   raise. Returns bytes + model + prompt version + cost; the version goes to DESIGN §20.
+4. **Offline tests** (fake LiteLLM / google-genai, `InMemorySpendStore`, no network): refuses
+   over budget; missing/invalid image retried then raises; per-image cost recorded when
+   `completion_cost` gives nothing; the prompt holds only the scene variables (no article or reader
+   fields); `landing_art.py`'s cap stops at the limit.
+5. **Reference image.** The Margo SVG (idle) is rasterised by headless Chrome (`tools/shots/cdp`,
+   `Page.captureScreenshot` of the inline SVG) to a 512×512 PNG in the scratchpad, never
+   committed.
+6. **Where spend lands, headroom first.** The ledger is production Firestore
+   `ops/spend/days/{date}`; before the real run the script reads today's spend and refuses if
+   spend + cap > $8 (`LLM_DAILY_BUDGET_USD`), as STATUS §9 step (5) did.
+7. **`landing_media.py --dry-run`** (read-only): checks that the Newcomer "bps" Background and
+   its "Say it simpler" (band − 1) entry on `2332418841…` are cached (keys from the explain
+   service's own functions, as `build_landing_demo.py` does); prints the exact steps and writes:
+   1 anonymous Auth user and its reader docs (removed by `DELETE /v1/me`, which also deletes the
+   Auth user: `app/me/router.py` → `delete_user`), explain hit counters as an exact N, 1 "Know
+   this?" answer, ≤ 3 "Knew this"; generations: 0 if both are cached, else the count (≈ $0.005 each).
+8. **Pause control (WCAG 2.2.2).** Clips loop while on screen, pause when they leave the viewport
+   (IntersectionObserver), and each has a visible 44px Pause/Play button (`aria-pressed`,
+   labelled per clip). Reduced motion: poster only, no video element. Vitest: the button pauses
+   and resumes; reduced motion renders no video.
+9. **Build order and slip plan** (decision 27): V5 → V1 (cheap, above the fold) → V2 → V3 → V4.
+   If checkpoint 1 (end of Oct 12 IST) is at risk, ask Sourabh before dropping V4's clips (posters
+   stay as stills) or V3. Nothing is dropped without his answer.
+- Nit applied: the dark illustration treatment is contrast-checked against the dark wash in the
+  dark screenshots (pixel sample of the teal strokes), not by eye.
