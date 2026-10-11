@@ -621,3 +621,28 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   more; on phones the framed full-UI shots are pictures of the product, that's fine. Keep a 'tap to
   play' with the poster on phones if autoplay is blocked." Amendment S1–S5 drafted; plan-reviewer
   running.
+- 46e plan-reviewer: round 1 REVISE (4: feed capture must cost nothing, final CTA in the same frame,
+  pause stops the zoom, media checks' viewports + slip rule), round 2 **APPROVE** (nit applied: 1x
+  loops for < 1024 via `<source media>`, small first). Precheck extended: the Newcomer feed is the
+  seeded `persona_feeds/newcomer` snapshot (31 items, anonymous feeds never search) and every
+  Up-next query for the demo personas is a fresh cache hit (0 searches), refusing otherwise.
+- 46e media from the live site, 3 runs (the plan's cap), each 1 temporary reader deleted (204):
+  run 1 stills OK (2880×1800 / 780×1688 captures; 1x ≤ 107 KB, 2x ≤ 245 KB) but loop frames were
+  1440 wide and clip 2 found no note in the first view; run 2 frames still 1440 (screencast
+  ignores emulated DPR) and clip 2's notes arrived with the text; run 3 with Chrome launched at
+  device scale 2 and 700 ms emulated latency for clip 2's take: all four loops native 2880×1800
+  (≤ 546 KB; 1x ≤ 242 KB; posters ≤ 102 KB), clip 2 starts plain (0 → 12 marks). 0 generations,
+  0 searches. Found and fixed: annotator 0.7.3 (an inline card's first reveal grew from a
+  skeleton height, an 88/172 px jump at the swap; test fails without the fix); stills render only
+  when near (Chrome's lazy margin fetched the phone still in the 390 first view).
+- Checks (local build): all decision 46 checks pass; axe 0 at 1920/1440/1280/390 light and dark;
+  first view at 390 = 175 KB, no landing media before scroll; swap ≤ 1.3 px. Lighthouse 12.8.2:
+  desktop perf 99, a11y 100, LCP 0.9 s, CLS 0; **mobile perf 81, a11y 100, CLS 0.048, LCP 4.9 s
+  (gate 2.5 s fails)**: observed LCP 212 ms (the demo paragraph once the serif web font lands);
+  the simulated figure follows the font and script downloads. Experiments (reverted): fonts
+  without the opsz axis (−150 KB) → 4.6 s; `display=optional` → 1.8 s, perf 98, CLS 0. Asked
+  Sourabh (optional fonts app-wide vs keep vs self-hosted subsets).
+- Sourabh (screenshot): no gap under the nav and a high empty band at the bottom on a tall window.
+  The desktop hero now fills the first view (`min-height: 100svh − bar`) and centres its content;
+  1440×900: 71 px under the bar, whole hero in view; 1280×800 still fits (card bottom 797);
+  1600×1100: equal room above and below. All checks re-run green.

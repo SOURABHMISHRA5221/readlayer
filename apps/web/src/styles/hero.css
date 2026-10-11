@@ -559,8 +559,12 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
     gap: clamp(40px, 5vw, 80px);
-    padding-top: 0;
-    padding-bottom: var(--lp-space);
+    /* The hero fills the first view and centres its content in it (Sourabh: room under the nav,
+       no empty band at the bottom on a tall window); the two columns stay top-aligned. */
+    min-height: calc(100svh - 56px);
+    align-content: center;
+    padding-top: 12px;
+    padding-bottom: 12px;
   }
   .lp-hero__mark {
     white-space: nowrap;
