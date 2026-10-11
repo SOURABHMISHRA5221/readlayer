@@ -333,6 +333,95 @@ copied assets.
      teach what the reader said they didn't know. Margo (happy) heads it.
 10. **Mobile:** note card as a bottom sheet; paragraph markers only where a paragraph note exists.
 
+## Landing and onboarding (decision 41; after the Design pass, before M8)
+**Scope (Sourabh, 2026-10-11): everything below is required.** Normal plan-reviewer and
+milestone-reviewer loop, design critique screenshots (desktop, mobile, dark) and before/after
+shots in `docs/AUTOPILOT_LOG.md`. If this puts M8 or M9 at risk for the Oct 16 freeze, stop and
+ask Sourabh what to cut; never cut anything ourselves.
+
+**Goal.** A first-time visitor (and a judge) understands in under 30 seconds what problem Gloss
+solves, why existing options fail, how Gloss solves it and why it can be trusted. Margo guides the
+page. Onboarding takes 2 screens and visibly uses the web to understand the reader.
+
+**A. Landing page** (route "/" for signed-out visitors, replacing the sign-in landing; signed-in
+readers still go straight to the feed). Keep the meaning and tone of this draft copy; adjust
+wording only for accuracy; never claim anything that isn't live.
+1. **Hero.** "Read anything. Understand all of it." / "Gloss explains the parts you'd miss, in
+   words you already know, without changing a word of the original." A **live mini-demo** (not a
+   screenshot): one real paragraph from a demo article with 2 highlighted terms, Margo in the
+   margin, a highlight opens a real note card (the reader's component). A toggle "Read as:
+   Software engineer · Cricket fan · Policy student" switches the 3 demo personas and the note
+   visibly changes (which terms are highlighted, the analogy software / cricket / law, the depth).
+   Pre-verified cached explanations shipped as static JSON; **no live LLM or API call** on the
+   landing page. CTAs: "Try it as a demo reader" (one click, anonymous, lands in the feed) and
+   "Sign in with Google".
+2. **The problem: "Everyone reads past something."** Three cards: "Jargon and references"
+   (articles assume terms like 'repo rate', 'PFAS' or 'Powerplay'; most readers skip them and think
+   they understood); "Looking things up breaks the flow" (a new tab, a generic definition written
+   for nobody, your place lost); "Summaries replace the author" (AI summaries rewrite the article;
+   you lose the author's words, hedges and numbers and can't tell what was invented). Closing line:
+   "Every reader gets the same article, but no two readers need the same help." **No invented
+   statistics**; a number only with a source cited in DESIGN with a link.
+3. **The solution: "Gloss reads with you."** "Gloss keeps a private map of what you already know,
+   and uses it to explain only what you're likely to miss, in terms you already understand." A
+   static side-by-side of the same paragraph for two readers from the demo data (newcomer: 3 notes
+   with a software analogy; expert: 1). Caption: "Same article. Different help."
+4. **How it works**, 4 numbered steps, each with a Margo mood: "Margo learns what you know"
+   (idle: a 2-minute start, then every note you open, skip or mark 'Knew this' updates your map);
+   "Finds what you'd miss" (thinking: every term and idea scored against your map; plain maths, no
+   AI guessing); "Explains it your way" (idle: Background in your analogies, What the author is
+   saying keeps their hedges and numbers); "Your map grows" (happy: a small animated knowledge map
+   where 2–3 nodes fill in, the **one** orchestrated animation on the page; respects reduced
+   motion).
+5. **Why you can trust it: "Checked before you see it."** "Never changes the original";
+   "Every explanation is verified" (checked against the source paragraph before it's shown, else a
+   plain definition; quote the real eval numbers from evals/report.md at build time with a link to
+   the methodology in the README, never rounded up or invented); "Your reading stays yours" (we
+   never send who you are or what you read to the AI; export or delete anytime).
+6. **What you can read**: articles, YouTube videos and podcasts in the feed, any pasted link, the
+   browser extension. A format is "with notes" only if notes work on it live today; else "in your
+   feed".
+7. **Final CTA band**: Margo (happy), "Your next article, explained for you.", the same two CTAs.
+8. **Footer**: Gloss wordmark, "Built on Gemini and Google Cloud", GitHub link, privacy page link.
+Design rules: Gloss tokens and type; generous whitespace; real demo content, no lorem ipsum or
+stock photos; Margo only in hero, how-it-works, trust (optional) and final CTA; **LCP < 2.5 s on
+mobile, landing JS chunk < 60 KB gzip**, axe 0, keyboard-reachable toggle and highlights, 44px
+targets.
+
+**B. Onboarding in 2 screens** (replaces consent → field → interests → comfort → frames → liked
+articles → 8 calibration taps).
+- **Screen 1 "Tell Margo about you"**: field as one chip row (suggests the analogy frame; frames
+  stay editable on the profile); topic chips from the taxonomy plus an optional free-text box
+  "Anything else you follow?" (e.g. "F1, startups, Indian politics"); consent inline (a checkbox,
+  one plain sentence, a "What we store" link; still explicit and recorded via /v1/me/consent
+  before anything else is stored; Continue disabled until ticked); Margo (idle): "Pick a few, I'll
+  find the rest."
+- **Screen 2 "Here's what's out there for you"**: live web results for the chosen topics (Tavily
+  articles and podcasts, YouTube video), 6–9 cards shown as they arrive with Margo (thinking)
+  while loading. Each card: "I'd read this" / "Not for me" (sets interest, same signals as the
+  feed) and **one** highlighted term with "Know this? Yes / Not really" (replaces the 8
+  calibration taps, same Elo/Beta updates as calibration). After 5+ answers Margo (happy) reads back
+  what it learned in one sentence (e.g. "You know your finance; I'll go easy on policy and use
+  software analogies.") with an "Edit" link. "Start reading" lands in the personalised For you feed.
+
+**C. Web search to guess the persona** (the privacy rule stays absolute). Free text is never
+sent to search or to an LLM as-is and is not stored: it is resolved through the graph linker to
+concept ids (deterministic first, link_confirm only if needed); queries use concept or taxonomy
+labels plus a fixed phrase, as today; unresolved words are dropped and shown back as "didn't
+recognise: …". Calibration terms come from concepts linked in the returned articles, choosing b
+close to the reader's current θ per domain, as calibration does. Onboarding searches count against
+the feed search caps and share the (topic/concept, format, day) cache; on failure or a cap, fall
+back to cached feed items, then library items. Demo readers skip onboarding.
+
+**D. Acceptance.** A new mobile visitor understands problem and solution without scrolling past
+section 3 (screenshots in the log); the landing toggle changes highlights, analogy and depth for
+all 3 personas with no network calls after load; a new Google reader reaches the feed in 2 screens
+in under 90 s, the feed reflects their picks and calibration answers show up as band changes on the
+profile; free text like "F1, startups" produces concept-label queries only (a test asserts no raw
+text in any outbound request) and nothing of the free text is stored; Lighthouse mobile LCP <
+2.5 s and accessibility 100; axe 0 at 1440/390, light and dark. Update DESIGN (§4 onboarding,
+§11.4 consent, §17 feed search, a new landing section), STATUS and BUILD_PLAN.
+
 ## M8-local — Chrome extension, unpacked (Oct 14)
 Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not
 published to the Chrome Web Store (a post-hackathon item).
