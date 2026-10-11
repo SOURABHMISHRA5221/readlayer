@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { profileApi } from "../lib/profileApi";
 import { navigate } from "../lib/router";
-import { AboutScreen, chosenDomains, EMPTY_ABOUT, frameFor, type About } from "./welcome/AboutScreen";
+import { AboutScreen, chosenDomains, EMPTY_ABOUT, frameFor, MAX_TOPICS, type About } from "./welcome/AboutScreen";
 import { DiscoverScreen } from "./welcome/DiscoverScreen";
 import { Shell } from "./welcome/parts";
 import "../styles/welcome.css";
@@ -28,7 +28,7 @@ export default function WelcomePage() {
       .then((p) => {
         const o = p.onboarding;
         setConsented(o.consented);
-        setAbout((cur) => ({ ...cur, field: o.field ?? cur.field, topics: o.interests?.length ? o.interests : cur.topics }));
+        setAbout((cur) => ({ ...cur, field: o.field ?? cur.field, topics: o.interests?.length ? o.interests.slice(0, MAX_TOPICS) : cur.topics }));
         setScreen(o.step === "discover" ? "discover" : "about");
       })
       .catch(() => setScreen("about"));
