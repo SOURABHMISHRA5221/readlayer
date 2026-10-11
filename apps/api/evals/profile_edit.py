@@ -16,14 +16,29 @@ from typing import Any
 import yaml
 
 from app import llm
+from app.config import get_settings
+from app.graph.graph import ConceptGraph
+from app.graph.loader import load_graph
 from app.graph.models import DOMAINS
 from app.privacy.redact import redact
+from app.reader import onboarding_text as ot
 from app.reader import profile_edit as pe
 from app.reader.state import THINKS_IN
 
 ROOT = Path(__file__).parent
 RESULTS = ROOT / "results" / "profile_edit"
 CASES = ROOT / "cases" / "profile_edit.yaml"
+
+
+def deterministic_topic(graph: ConceptGraph | None, phrase: str) -> str | None:
+    """set_interest scoring: alias, then words, never an embedding (cases' header)."""
+    if (topic := ot.alias_topic(phrase)) is not None:
+        return topic
+    match = ot.word_topic(graph, phrase) if graph is not None else None
+    return match.topic if match else None
+
+
+_GRAPH: ConceptGraph | None = None
 
 
 def _matches(op: dict[str, Any], want: dict[str, Any]) -> bool:
@@ -38,6 +53,9 @@ def _matches(op: dict[str, Any], want: dict[str, Any]) -> bool:
                 return False
         elif key == "domains_include":
             if not set(value) <= set(op.get("domains", [])):
+                return False
+        elif key == "topic_domain":
+            if deterministic_topic(_GRAPH, op.get("topic", "")) != value:
                 return False
         elif op.get(key) != value:
             return False
@@ -62,6 +80,8 @@ def judge(case: dict[str, Any], ops: list[dict[str, Any]]) -> list[str]:
 
 
 async def run_suite() -> dict[str, Any]:
+    global _GRAPH
+    _GRAPH = await load_graph(get_settings().concepts_uri)
     cases = yaml.safe_load(CASES.read_text(encoding="utf-8"))
     rows, cost = [], 0.0
     for case in cases:

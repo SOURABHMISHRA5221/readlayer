@@ -25,6 +25,9 @@ MAX_OPS = 20
 MAX_NAMES_PER_OP = 30
 MAX_NAMES_PER_EDIT = 30  # distinct names across all ops, checked before any linking
 MAX_TEXT_CHARS = 500
+MAX_TOPICS_PER_EDIT = 3  # distinct set_interest topics, checked before any embedding (d48)
+INTEREST_MORE = 1.0  # a chosen topic (onboarding)
+INTEREST_LESS = 0.3  # out of the feed's topics, which need ≥ 0.5
 CONCEPT_WEIGHT = 3.0  # DESIGN §4: profile_edit concept claim
 DOMAIN_WEIGHT = 2.0  # per core concept
 CORE_CONCEPTS = 10
@@ -70,8 +73,22 @@ class PauseLearning(_Op):
     paused: bool
 
 
+class SetInterest(_Op):
+    """Decision 48: the reader's own words for a subject; the server maps them to a topic."""
+
+    op: Literal["set_interest"]
+    topic: Name
+    direction: Literal["more", "less"]
+
+
 Op = Annotated[
-    SetDomainLevel | MarkConcepts | SetThinksIn | SetExplanationStyle | SetDensity | PauseLearning,
+    SetDomainLevel
+    | MarkConcepts
+    | SetThinksIn
+    | SetExplanationStyle
+    | SetDensity
+    | PauseLearning
+    | SetInterest,
     Field(discriminator="op"),
 ]
 
@@ -85,7 +102,7 @@ class ProfileEditOps(BaseModel):
 
 OpName = Literal[
     "set_domain_level", "mark_concepts", "set_thinks_in", "set_explanation_style", "set_density",
-    "pause_learning",
+    "pause_learning", "set_interest",
 ]  # fmt: skip
 
 
@@ -105,6 +122,8 @@ class FlatOp(BaseModel):
     length: Literal["", "short", "normal", "detailed"] = ""
     density: Literal["", "minimal", "balanced", "guided"] = ""
     paused: Literal["", "yes", "no"] = ""
+    topic: str = Field(default="", max_length=80)
+    direction: Literal["", "more", "less"] = ""
 
 
 class ModelEditOps(BaseModel):
@@ -141,6 +160,25 @@ def distinct_names(ops: Sequence[Any]) -> list[str]:
     return list(seen.values())
 
 
+def distinct_topics(ops: Sequence[Any]) -> list[str]:
+    seen: dict[str, str] = {}
+    for op in ops:
+        if isinstance(op, SetInterest):
+            seen.setdefault(op.topic.strip().casefold(), op.topic.strip())
+    return list(seen.values())
+
+
+def check_topics(ops: Sequence[Any]) -> list[str]:
+    """The distinct set_interest phrases to match, or EditRejected (over the per-edit cap, or
+    id-shaped), before any embedding."""
+    topics = distinct_topics(ops)
+    if len(topics) > MAX_TOPICS_PER_EDIT:
+        raise EditRejected("too_many_topics")
+    if any(_ID_LIKE.match(t) for t in topics):
+        raise EditRejected("concept_id_from_model")
+    return topics
+
+
 def check_names(ops: Sequence[Any]) -> list[str]:
     """The distinct names to resolve, or EditRejected: over the per-edit cap, or the model
     supplied something shaped like a concept id (ids only ever come from the linker)."""
@@ -162,18 +200,27 @@ class Resolved:
     concepts: dict[str, bool] = field(default_factory=dict)  # concept id → known
     domains: dict[str, Level] = field(default_factory=dict)
     settings: dict[str, Any] = field(default_factory=dict)  # thinks_in/explanation_style/...
+    interests: dict[str, str] = field(default_factory=dict)  # domain → "more" | "less" (d48)
 
     def to_doc(self) -> dict[str, Any]:
-        return {"concepts": self.concepts, "domains": self.domains, "settings": self.settings}
+        return {"concepts": self.concepts, "domains": self.domains, "settings": self.settings,
+                "interests": self.interests}  # fmt: skip
 
     @classmethod
     def from_doc(cls, doc: Mapping[str, Any]) -> "Resolved":
-        return cls(dict(doc["concepts"]), dict(doc["domains"]), dict(doc["settings"]))
+        """Edits stored before decision 48 have no `interests`."""
+        return cls(dict(doc["concepts"]), dict(doc["domains"]), dict(doc["settings"]),
+                   dict(doc.get("interests", {})))  # fmt: skip
 
 
-def resolve(ops: Sequence[Any], ids: Mapping[str, str]) -> Resolved:
+def resolve(
+    ops: Sequence[Any], ids: Mapping[str, str], topics: Mapping[str, str] | None = None
+) -> Resolved:
     """Later ops win over earlier ones for the same target. `ids` maps a casefolded name to a
-    concept id; names missing from it are dropped (reported as unresolved by the caller)."""
+    concept id and `topics` a casefolded set_interest phrase to a domain; anything missing is
+    dropped (reported as unresolved by the caller)."""
+    topics = topics or {}
+    interests: dict[str, str] = {}
     concepts: dict[str, bool] = {}
     domains: dict[str, Level] = {}
     settings: dict[str, Any] = {}
@@ -192,7 +239,37 @@ def resolve(ops: Sequence[Any], ids: Mapping[str, str]) -> Resolved:
             settings["density"] = op.density
         elif isinstance(op, PauseLearning):
             settings["learning_paused"] = op.paused
-    return Resolved(concepts, domains, settings)
+        elif (
+            isinstance(op, SetInterest)
+            and (domain := topics.get(op.topic.strip().casefold())) is not None
+        ):
+            interests[domain] = op.direction
+    return Resolved(concepts, domains, settings, interests)
+
+
+def interest_after(current: float, direction: str) -> float:
+    if direction == "more":
+        return max(current, INTEREST_MORE)
+    return min(current, INTEREST_LESS)
+
+
+def apply_interests(
+    interests: Mapping[str, str], current: Mapping[str, float]
+) -> dict[str, tuple[float, float]]:
+    """domain → (previous, applied) interest."""
+    return {
+        d: (current.get(d, 0.0), interest_after(current.get(d, 0.0), how))
+        for d, how in interests.items()
+    }
+
+
+def undo_interests(
+    recorded: Mapping[str, Sequence[float]], current: Mapping[str, float]
+) -> dict[str, float]:
+    """Restore the previous interest only where it still equals what the edit applied: a later
+    pick, Redo setup or another edit wins (like settings in `undo`)."""
+    return {d: float(prev) for d, (prev, applied) in recorded.items()
+            if abs(current.get(d, 0.0) - float(applied)) < 1e-9}  # fmt: skip
 
 
 def core_concepts(graph: ConceptGraph, domain: str) -> list[Concept]:
@@ -342,6 +419,11 @@ def deltas_to_doc(a: Applied) -> dict[str, Any]:
     }  # fmt: skip
 
 
+def interests_from_doc(doc: Mapping[str, Any]) -> dict[str, tuple[float, float]]:
+    """Edits applied before decision 48 have no `interest`."""
+    return {d: (float(v[0]), float(v[1])) for d, v in doc.get("interest", {}).items()}
+
+
 def deltas_from_doc(doc: Mapping[str, Any]) -> tuple[dict[str, EdgeDelta], dict[str, float]]:
     edges = {cid: EdgeDelta(**d) for cid, d in doc["edges"].items()}
     return edges, dict(doc["theta"])
@@ -356,6 +438,7 @@ def preview(
     applied: Applied,
     theta: Mapping[str, float],
     unresolved: Sequence[str],
+    note: str | None = None,
 ) -> dict[str, Any]:
     """What the reader sees before Apply: domains θ before → after, concepts by direction,
     settings before → after. Labels only, from the graph; never anything the reader typed
@@ -378,5 +461,9 @@ def preview(
             for k, v in sorted(applied.settings.items())
             if applied.previous_settings.get(k) != v  # no "software → software"
         ],
+        "interests": [
+            {"domain": d, "direction": how} for d, how in sorted(resolved.interests.items())
+        ],
         "unresolved": list(unresolved),
+        "note": note,
     }

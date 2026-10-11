@@ -58,8 +58,8 @@ def test_profile_edit_cases_and_judge():
     from evals.profile_edit import CASES, judge
 
     cases = yaml.safe_load(CASES.read_text(encoding="utf-8"))
-    assert len([c for c in cases if c["id"].startswith("P")]) == 6
-    assert len([c for c in cases if c["id"].startswith("X")]) == 4
+    assert len([c for c in cases if c["id"].startswith("P")]) == 10  # P11–P14: decision 48
+    assert len([c for c in cases if c["id"].startswith("X")]) == 5
     p01 = cases[0]
     good = [
         {"op": "set_thinks_in", "domains": ["software"]},
@@ -72,3 +72,18 @@ def test_profile_edit_cases_and_judge():
     ]
     assert "id-shaped name" in judge(p01, [*good, {"op": "mark_concepts", "names": ["c_x"],
                                                     "state": "known"}])  # fmt: skip
+
+
+def test_set_interest_scoring_uses_the_deterministic_matcher_only():
+    import yaml
+
+    from evals import profile_edit as ev
+
+    cases = {c["id"]: c for c in yaml.safe_load(ev.CASES.read_text(encoding="utf-8"))}
+    ok = [{"op": "set_interest", "topic": "Indian politics", "direction": "more"}]
+    assert ev.judge(cases["P11"], ok) == []
+    wrong_way = [{"op": "set_interest", "topic": "Indian politics", "direction": "less"}]
+    assert ev.judge(cases["P11"], wrong_way)
+    unknown = [{"op": "set_interest", "topic": "zz unknown thing", "direction": "more"}]
+    assert ev.judge(cases["P11"], unknown)  # no embedding fallback in scoring
+    assert "forbidden op set_interest" in ev.judge(cases["X05"], ok)
