@@ -83,3 +83,32 @@ export const HeadphonesIcon = (p: IconProps) => (
     <rect x="13.5" y="12" width="3.5" height="5" rx="1.2" />
   </Icon>
 );
+export const LinkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8.5 11.5l3-3M7 9L5.5 10.5a2.5 2.5 0 003.5 3.5L10.5 12.5M13 11l1.5-1.5a2.5 2.5 0 00-3.5-3.5L9.5 7.5" />
+  </Icon>
+);
+export const Bookmark = (p: IconProps & { filled?: boolean }) => {
+  const { filled, ...rest } = p;
+  return (
+    <Icon {...rest}>
+      <path d="M6 3.5h8v13l-4-3-4 3z" fill={filled ? "currentColor" : "none"} />
+    </Icon>
+  );
+};
+export const LessIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="10" cy="10" r="6.5" />
+    <path d="M6.5 10h7" />
+  </Icon>
+);
+export const CopyLink = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M8.5 11.5l3-3M7 9L5.5 10.5a2.5 2.5 0 003.5 3.5L10.5 12.5M13 11l1.5-1.5a2.5 2.5 0 00-3.5-3.5L9.5 7.5" />
+  </Icon>
+);
+export const ThumbUp = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M7 9v7H4.5V9H7zm0 0l3-5.5c1 0 1.8.8 1.6 1.8L11.2 8h3.3c1 0 1.7.9 1.5 1.8l-1 5c-.2.7-.8 1.2-1.5 1.2H7" />
+  </Icon>
+);

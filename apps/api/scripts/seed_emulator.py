@@ -68,6 +68,7 @@ async def main() -> None:
         copied += await _copy(prod, emu, f"contents/{cid}")
     for persona in PERSONAS:
         copied += await _copy(prod, emu, f"persona_templates/{persona}")
+        copied += await _copy(prod, emu, f"persona_feeds/{persona}")  # demo For you snapshots
     spend_snap = await prod.document(f"ops/spend/days/{day}").get()
     spend = float((spend_snap.to_dict() or {}).get("cost_usd", 0.0)) if spend_snap.exists else 0.0
     if spend_snap.exists:

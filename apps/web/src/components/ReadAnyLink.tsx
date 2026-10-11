@@ -3,12 +3,15 @@ import { useId, useState, type FormEvent } from "react";
 import { api, ApiError, errorKind } from "../lib/api";
 import { personaParam, type PersonaKey } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
+import { Margo } from "./Margo";
 
 type State = { status: "idle" } | { status: "busy" } | { status: "error"; message: string };
 
 /** Paste any article URL: it opens in the reader at once (two-phase "Open here", M7.5 §B).
  *  Sends the URL and nothing else; the page stays visible only to readers who bring it in. */
-export function ReadAnyLink({ persona }: { persona: PersonaKey | null }) {
+type Props = { persona: PersonaKey | null; hideLabel?: boolean; id?: string };
+
+export function ReadAnyLink({ persona, hideLabel = false, id }: Props) {
   const [url, setUrl] = useState("");
   const [state, setState] = useState<State>({ status: "idle" });
   const hintId = useId();
@@ -34,8 +37,8 @@ export function ReadAnyLink({ persona }: { persona: PersonaKey | null }) {
   };
 
   return (
-    <form className="anylink" onSubmit={submit} aria-describedby={hintId}>
-      <label className="anylink__label" htmlFor={`${hintId}-url`}>
+    <form className="anylink" id={id} onSubmit={submit} aria-describedby={hintId}>
+      <label className={hideLabel ? "visually-hidden" : "anylink__label"} htmlFor={`${hintId}-url`}>
         Read any link
       </label>
       <div className="anylink__row">
@@ -56,8 +59,9 @@ export function ReadAnyLink({ persona }: { persona: PersonaKey | null }) {
           {state.status === "busy" ? "Opening…" : "Read"}
         </button>
       </div>
-      <p id={hintId} className="anylink__hint" aria-live="polite">
-        {state.status === "error" ? state.message : "Any public article. Notes appear a few seconds after the text."}
+      <p id={hintId} className={`anylink__hint${state.status === "error" ? " anylink__hint--error" : ""}`} aria-live="polite">
+        {state.status === "error" && <Margo mood="oops" size={28} />}
+        <span>{state.status === "error" ? state.message : "Opens here with notes for you. The original stays untouched."}</span>
       </p>
     </form>
   );
