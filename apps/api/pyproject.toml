@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "en-core-web-sm",
     "fastapi[standard]>=0.142.2",
+    "feedparser>=6.0.14",
     "firebase-admin>=6.9",
     "google-cloud-aiplatform>=1.38",
     "google-cloud-firestore>=2.34.0",
@@ -24,7 +25,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "feedparser>=6.0.14",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "ruff>=0.16.10",
