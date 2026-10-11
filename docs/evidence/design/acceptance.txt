@@ -32,4 +32,4 @@ new Google (emulator) reader's map: domains economics/finance/business/policy, 6
 two-phase Read any link (Photosynthesis): article visible in 1.5 s, "Reading the article and preparing your notes…", notes after 88 s
 
 ## Bundle
-main 138.7 KB gzip before → 143.3 KB after (budget 150); For you, Saved, Profile are lazy chunks; Cytoscape chunk (155 KB) gone
+main 138.7 KB gzip before → 143.6 KB after (budget 150); For you, Saved, Profile are lazy chunks; Cytoscape chunk (155 KB) gone

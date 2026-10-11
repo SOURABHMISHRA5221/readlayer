@@ -69,7 +69,8 @@ export function Recap({ contentId, persona, before, labels, answers }: Props) {
     }
   };
 
-  const moves = movesExcept(rows ?? [], new Set(answers.keys()));
+  // Only "Not really" answers get their own row; a "Yes" stays a band move with its Undo.
+  const moves = movesExcept(rows ?? [], new Set(unknown.map(([id]) => id)));
   const nothing = rows !== null && !moves.length && !unknown.length;
   return (
     <section className="recap" ref={ref} aria-labelledby="recap-h">

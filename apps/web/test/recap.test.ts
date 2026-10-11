@@ -30,6 +30,13 @@ describe("recap", () => {
     expect(movesExcept(moves, new Set(["tp"])).map((m) => m.conceptId)).toEqual(["yc"]);
   });
 
+  it("a Yes answer stays a band move (with its Undo)", () => {
+    const moves = bandMoves({ yc: "heard of", tp: "heard of" }, { yc: "understands", tp: "unaware" }, {});
+    const answers = new Map([["yc", { known: true }], ["tp", { known: false }]]);
+    const unknown = new Set([...answers].filter(([, a]) => !a.known).map(([id]) => id));
+    expect(movesExcept(moves, unknown).map((m) => m.conceptId)).toEqual(["yc"]);
+  });
+
   it("falls back to Up next's top two under a neutral label", () => {
     const items = [{ id: 1, triggers: [{ id: "x" }] }, { id: 2, triggers: [{ id: "y" }] }, { id: 3, triggers: [] }];
     expect(nextReads(items, new Set(["tp"]))).toEqual({ items: items.slice(0, 2), teaches: false });
