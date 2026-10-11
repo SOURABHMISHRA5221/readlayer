@@ -1,5 +1,9 @@
 ---
-version: profile-edit-v5
+version: profile-edit-v7
+# v7 (decision 48): `read_more` / `read_less` for "more/less of a subject in my feed"; the
+# reader's own words for the subject go in `topic` (the server maps them to a domain), never a
+# domain id. v6 had one `set_interest` op with a `direction` field, which the model left empty
+# (for "more" and once for "less"); the direction is now the op's name.
 # v5: v4's "a fan is not a domain level" line made the model drop the analogy hint too (P06);
 # a hobby is still a `set_thinks_in` hint when it is an allowed frame.
 # v4 (M2.2, decision 33): news on any subject; the domain list is the 14-domain taxonomy; working
@@ -29,6 +33,11 @@ explains news on any subject. Return only operations from this list:
 - `set_density`: `minimal`, `balanced` or `guided` when they say how many notes they want.
 - `pause_learning`: only when they explicitly ask to pause (`paused: yes`) or resume
   (`paused: no`) learning.
+- `read_more`: they want more of a subject in what they read ("I want to learn about Indian
+  politics", "more climate news"). `topic` is their own short words for the subject ("Indian
+  politics").
+- `read_less`: they want less of a subject ("less cricket, please"). `topic` as for `read_more`.
+  Being a fan of something or working in it is not a request for more of it.
 
 Each operation fills only its own fields; leave every other field empty.
 

@@ -98,6 +98,13 @@ the M2.1 graph (see freeze_link_cases.py), so v-to-v changes matter more than th
 | `20261010T083303_profile-edit-v3.json` | profile-edit-v3 | 6/6 | 4/4 | $0.0049 |
 | `20261010T124744_m2-2-v4.json` | profile-edit-v4 | 5/6 | 4/4 | $0.0052 |
 | `20261010T124909_m2-2-v5.json` | profile-edit-v5 | 6/6 | 4/4 | $0.0054 |
+| `20261011T162435_d48-before-v5.json` | profile-edit-v5 | 7/10 | 5/5 | $0.0079 |
+| `20261011T162525_d48-after-v6.json` | profile-edit-v6 | 9/10 | 5/5 | $0.0090 |
+| `20261011T162609_d48-after-v7.json` | profile-edit-v7 | 8/10 | 5/5 | $0.0104 |
+| `20261011T162650_d48-after-v6-empty-is-more.json` | profile-edit-v6 | 10/10 | 5/5 | $0.0090 |
+| `20261011T162741_d48-after-v6-empty-is-more-r2.json` | profile-edit-v6 | 9/10 | 5/5 | $0.0089 |
+| `20261011T162829_d48-after-v7-r1.json` | profile-edit-v7 | 10/10 | 5/5 | $0.0087 |
+| `20261011T162855_d48-after-v7-r2.json` | profile-edit-v7 | 10/10 | 5/5 | $0.0084 |
 
 | Case | Result | Problems |
 |---|---|---|
@@ -111,6 +118,11 @@ the M2.1 graph (see freeze_link_cases.py), so v-to-v changes matter more than th
 | X02 | pass | – |
 | X03 | pass | – |
 | X04 | pass | – |
+| P11 | pass | – |
+| P12 | pass | – |
+| P13 | pass | – |
+| P14 | pass | – |
+| X05 | pass | – |
 
 ## Injection cases (same run)
 
@@ -209,3 +221,14 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
 - Before (same day, shipped `explain-v4` + `restate-v1`, verify-v2, verify-background-v1):
   adversarial 15/15, good 25/25, background 3/3 + 2/2, injection 10/10; non-business verifier
   6/7 (O06), pipeline verified 7/7. $0.53.
+- After (same day, `explain-v5` + `restate-v2`; judge prompts unchanged): adversarial 15/15,
+  good 24/25, background 3/3 + 2/2, injection 10/10, pipeline 25/25 verified first; non-business
+  verifier 6/7 (O06, as before), pipeline verified 7/7. $0.54. **Targets met; v5/v2 ship.** The
+  one good card rejected is a verifier-only case (fixed card, unchanged judge prompt), so it is
+  judge run-to-run variation, not an effect of the prompt change. Pipeline p95 24.6 s (11.8 s
+  before) came from a single slow call; p50 9.5 s vs 9.1 s.
+- **Judge variation, after-run (`20261010T161404_m7-5-after`):** the judge passed A06 (dropped
+  attribution, "said he would hold out" → "decided to hold out"); only the deterministic
+  attribution check rejected it. The report's "Missed: none" counts rejections by either layer,
+  so it hides this. Same class of run-to-run variation as G21 above; the before-run's judge
+  rejected A06.

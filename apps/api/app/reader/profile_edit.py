@@ -102,7 +102,7 @@ class ProfileEditOps(BaseModel):
 
 OpName = Literal[
     "set_domain_level", "mark_concepts", "set_thinks_in", "set_explanation_style", "set_density",
-    "pause_learning", "set_interest",
+    "pause_learning", "read_more", "read_less",
 ]  # fmt: skip
 
 
@@ -122,8 +122,7 @@ class FlatOp(BaseModel):
     length: Literal["", "short", "normal", "detailed"] = ""
     density: Literal["", "minimal", "balanced", "guided"] = ""
     paused: Literal["", "yes", "no"] = ""
-    topic: str = Field(default="", max_length=80)
-    direction: Literal["", "more", "less"] = ""
+    topic: str = Field(default="", max_length=80)  # read_more / read_less only
 
 
 class ModelEditOps(BaseModel):
@@ -143,6 +142,11 @@ def strict(flat: ModelEditOps) -> ProfileEditOps:
         fields["op"] = op.op
         if "paused" in fields:
             fields["paused"] = fields["paused"] == "yes"
+        if op.op in ("read_more", "read_less"):
+            # The direction is the op's name (prompt v7): with a separate `direction` field the
+            # model left it empty, for "more" and once for "less" (evals d48 v6 runs).
+            fields = {"op": "set_interest", "topic": op.topic,
+                      "direction": "more" if op.op == "read_more" else "less"}  # fmt: skip
         ops.append(fields)
     return ProfileEditOps.model_validate({"ops": ops})
 
