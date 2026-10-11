@@ -1,0 +1,9 @@
+{
+  "rec_width": 1024,
+  "crop_css_w": {
+    "clip-note": 400,
+    "clip-simpler": 400,
+    "clip-know": 400,
+    "clip-map": 480
+  }
+}

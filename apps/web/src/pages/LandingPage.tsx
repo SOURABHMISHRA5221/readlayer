@@ -228,22 +228,22 @@ const STEPS: { title: string; body: string; clip: { name: string; label: string;
   {
     title: "Margo learns what you know",
     body: "A two-minute start, then every note you open, skip or mark \u201cKnew this\u201d, and every \u201cKnow this?\u201d you answer, updates your map.",
-    clip: { name: "clip-know", label: "answering Know this? turns the term into a note", width: 720, height: 204 },
+    clip: { name: "clip-know", label: "answering Know this? turns the term into a note", width: 720, height: 396 },
   },
   {
     title: "Finds what you'd miss",
     body: "Every term and idea in the article is scored against your map. Plain maths, no AI guessing.",
-    clip: { name: "clip-note", label: "tapping a highlighted term opens its note", width: 720, height: 482 },
+    clip: { name: "clip-note", label: "tapping a highlighted term opens its note", width: 720, height: 782 },
   },
   {
     title: "Explains it your way",
     body: "The Background uses analogies from your world, and can say it simpler. What the author is saying keeps their hedges and numbers.",
-    clip: { name: "clip-simpler", label: "Say it simpler rewrites the Background one level down", width: 720, height: 414 },
+    clip: { name: "clip-simpler", label: "Say it simpler rewrites the Background one level down", width: 720, height: 748 },
   },
   {
     title: "Your map grows",
     body: "What you learn fills in, so the notes thin out as you read more.",
-    clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 720, height: 520 },
+    clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 720, height: 384 },
   },
 ];
 /** The map clip again, beside the final call to action (decision 46 P4). */

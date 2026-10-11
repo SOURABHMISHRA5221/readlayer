@@ -12,6 +12,7 @@ posters to apps/web/public/landing/. The precheck prints the exact production wr
 import asyncio
 import json
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
@@ -95,6 +96,12 @@ def encode_clip(segments, crop, name: str):
                 k += 1
             (tmp / f"{i:05}.jpg").write_bytes(frames[k][1])
             i, t = i + 1, t + step
+    if crop.get("css"):
+        # CSS px → frame px, from the frames as they actually arrived (not an assumed DPR).
+        probe = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width",
+                                "-of", "csv=p=0", str(tmp / "00000.jpg")], check=True, capture_output=True, text=True)
+        k = int(probe.stdout.strip()) / REC_W
+        crop = {key: int(crop[key] * k) // 2 * 2 for key in ("x", "y", "w", "h")}
     vf = f"crop={crop['w']}:{crop['h']}:{crop['x']}:{crop['y']},scale={CLIP_W}:-2,format=yuv420p"
     src = ["-framerate", "24", "-i", str(tmp / "%05d.jpg"), "-vf", vf, "-an"]
     for crf in (36, 40, 44, 48):
@@ -110,6 +117,12 @@ def encode_clip(segments, crop, name: str):
     last = tmp / "poster.png"
     run("ffmpeg", "-y", "-sseof", "-0.1", "-i", str(OUT / f"{name}.mp4"), "-frames:v", "1", str(last))
     run("cwebp", "-quiet", "-q", "78", str(last), "-o", str(OUT / f"{name}-poster.webp"))
+    # Decision 46: a poster must show the card, not a blank page.
+    gray = subprocess.run(["ffmpeg", "-v", "error", "-i", str(last), "-vf", "scale=200:-1,format=gray", "-f", "rawvideo", "-"],
+                          check=True, capture_output=True).stdout
+    spread = statistics.pstdev(gray)
+    if spread < 12:
+        raise SystemExit(f"{name}: poster looks blank (luma stddev {spread:.1f})")
     shutil.rmtree(tmp)
     total = sum(len(f) for frames, _ in segments for _, f in frames)
     spans = [round(ended - frames[0][0], 2) for frames, ended in segments]
@@ -163,60 +176,115 @@ async def clips(p, only=None):
     return report
 
 
+# Decision 46 P5: clips are recorded at 1024×900 and deviceScaleFactor 2, where the note pops
+# up right under its term (no margin rail below 1200px), and cropped tight to the term and the
+# card, so card text stays readable in the landing grid (crop CSS widths go to CROPS_FILE, which
+# tools/shots/landing.py turns into displayed text sizes).
+REC_W, REC_H, DPR = 1024, 900, 2
+CROP_W = 400  # CSS px: the card (360) and a margin either side
+CROPS_FILE = Path(__file__).resolve().parent / "clip_crops.json"
+
+
+async def rec_view(p):
+    await p.send("Emulation.setDeviceMetricsOverride", width=REC_W, height=REC_H, deviceScaleFactor=DPR, mobile=False)
+
+
+def tight(*rects, pad=20, min_w=CROP_W, min_h=0, max_h=REC_H):
+    """A crop around the rects (CSS px), widened to min_w and min_h (centred) and cut at max_h
+    from the top, so a tall card doesn't make a tall clip."""
+    box = union(*rects, pad=pad, vw=REC_W, vh=REC_H)
+    if box["w"] < min_w:
+        x = max(0, min(REC_W - min_w, box["x"] - (min_w - box["w"]) // 2))
+        box = {**box, "x": x, "w": min_w}
+    if box["h"] < min_h:
+        y = max(0, min(REC_H - min_h, box["y"] - (min_h - box["h"]) // 2))
+        box = {**box, "y": y, "h": min_h}
+    box = {**box, "h": min(box["h"], max_h) // 2 * 2}
+    return {"css_w": box["w"], "css": True, **box}
+
+
+async def term_high(p, selector):
+    """The term in the upper third, so its card opens below it."""
+    await p.eval(f"""(() => {{ const e = document.querySelector({json.dumps(selector)});
+      scrollBy(0, e.getBoundingClientRect().top - 150); return true; }})()""")
+    await asyncio.sleep(1.2)
+
+
+async def card_cut(p, term):
+    """Crop height (CSS px) that ends just under the card's Background panel."""
+    bg = await p.eval(js_rect(".rl-card:not([hidden]) .rl-card__bg"))
+    return int(bg["y"] + bg["h"] + 20 - (term["y"] - 20))
+
+
+def mark_rect(text):
+    return f"""(() => {{ const m = [...document.querySelectorAll('.rl-mark')].find(m => m.textContent.trim() === {json.dumps(text)});
+      const r = m.getBoundingClientRect(); return {{x: r.left, y: r.top, w: r.width, h: r.height}}; }})()"""
+
+
 async def clip_note(p, report):
+    await rec_view(p)
     await open_reader(p, "newcomer")
-    await center(p, '[data-rl-paragraph="p5"]')
-    para, rail = await p.eval(js_rect('[data-rl-paragraph="p5"]')), await p.eval(js_rect(".rail"))
-    # The sidenote is up to 360px wide from the rail's left edge and may rise to the top bars.
-    top = 120  # below the fixed bars
-    right = min(1440, int(rail["x"]) + 380)
-    crop = {"x": int(para["x"]) - 40, "y": top, "w": (right - int(para["x"]) + 40) // 2 * 2, "h": (900 - top) // 2 * 2}
+    await term_high(p, '[data-rl-paragraph="p5"] .rl-mark')
+    term = await p.eval(mark_rect("tighter policy"))
     frames = await record(p, 0.8, lambda: click_mark(p, "tighter policy"), 3.2)
-    report["clip-note"] = encode_clip([frames], crop, "clip-note")
+    await wait_js(p, READY)
+    crop = tight(term, await p.eval(js_rect(".rl-card")), max_h=await card_cut(p, term))
+    report["clip-note"] = {**encode_clip([frames], crop, "clip-note"), "crop_css_w": crop["css_w"]}
 
 
 async def clip_simpler(p, report):
     """"Say it simpler" (the cricket fan's "tighter policy" is one band above the lowest)."""
+    await rec_view(p)
     await open_reader(p, "trader")
-    await center(p, '[data-rl-paragraph="p5"]')
+    await term_high(p, '[data-rl-paragraph="p5"] .rl-mark')
+    term = await p.eval(mark_rect("tighter policy"))
     await click_mark(p, "tighter policy")
     await wait_js(p, READY)
     await asyncio.sleep(0.5)
-    crop = union(await p.eval(js_rect('[data-rl-paragraph="p5"]')), await p.eval(js_rect(".rl-card")), pad=40)
 
     async def simpler():
         await p.click_text(".rl-card button", "Say it simpler", 0.3)
         await wait_js(p, READY, 60)
 
     frames = await record(p, 0.8, simpler, 2.4)
-    report["clip-simpler"] = encode_clip([frames], crop, "clip-simpler")
+    crop = tight(term, await p.eval(js_rect(".rl-card")), max_h=await card_cut(p, term))
+    report["clip-simpler"] = {**encode_clip([frames], crop, "clip-simpler"), "crop_css_w": crop["css_w"]}
 
 
 async def clip_know(p, report, nothing):
     """"Know this?" → "Not really": after a reload the term is a highlighted note."""
+    await rec_view(p)
     await open_reader(p, "newcomer")
-    await center(p, '[data-rl-paragraph="p16"]')
-    crop = union(await p.eval(js_rect('[data-rl-paragraph="p16"]')), pad=40)
+    term = await p.eval("document.querySelector('.rl-mark--ask').textContent.trim()")
+    await term_high(p, ".rl-mark--ask")
+    crop = tight(await p.eval(js_rect(".rl-mark--ask")), await p.eval(js_rect(".rl-ask")), pad=28, min_h=220)
     a = await record(p, 0.8, lambda: p.click_text("button", "Not really", 0.2), 1.6)
     await open_reader(p, "newcomer")
-    await center(p, '[data-rl-paragraph="p16"]')
-    crop2 = union(await p.eval(js_rect('[data-rl-paragraph="p16"]')), pad=40)
-    crop = {"x": min(crop["x"], crop2["x"]), "y": crop2["y"], "w": max(crop["w"], crop2["w"]), "h": max(crop["h"], crop2["h"])}
+    # The same term at the same height after the reload, now a highlighted note.
+    await p.eval(f"""(() => {{ const m = [...document.querySelectorAll('.rl-mark')].find(m => m.textContent.trim() === {json.dumps(term)});
+      scrollBy(0, m.getBoundingClientRect().top - 150); return true; }})()""")
+    await asyncio.sleep(1.2)
     b = await record(p, 0.2, nothing, 2.2)
-    report["clip-know"] = encode_clip([a, b], crop, "clip-know")
+    report["clip-know"] = {**encode_clip([a, b], crop, "clip-know"), "crop_css_w": crop["css_w"]}
+
+
+NODE_RECTS = """(labels => labels.map(l => { const g = [...document.querySelectorAll('.kmap__node')]
+  .find(n => (n.getAttribute('aria-label') || '').startsWith(l)); if (!g) return null;
+  const r = g.getBoundingClientRect(); return {x: r.left, y: r.top, w: r.width, h: r.height}; }).filter(Boolean))"""
 
 
 async def clip_map(p, report, nothing):
-    """The map gains nodes: the profile map, three ready-to-learn ideas marked known, the map again."""
+    """The map gains nodes: three ready-to-learn ideas marked known, cropped to where they change."""
+    await rec_view(p)
+    overview = (await p.api(API, "GET", "/v1/me/graph?view=overview&persona=newcomer"))["body"]
+    rings = [n for n in overview["nodes"] if n["ready"]][:3]
+    labels = [n["label"] for n in rings]
     await p.goto(f"{WEB}/profile?persona=newcomer", wait=3)
     await wait_js(p, "!!document.querySelector('.kmap svg')", 60)
     await center(p, ".kmap")
-    crop = union(await p.eval(js_rect(".kmap")), pad=16)
+    rects = await p.eval(f"{NODE_RECTS}({json.dumps(labels)})")
+    crop = tight(*rects, pad=70, min_w=480) if rects else tight(await p.eval(js_rect(".kmap")), pad=16)
     a = await record(p, 0.2, nothing, 1.6)
-    await open_reader(p, "newcomer")
-    await center(p, '[data-rl-paragraph="p5"]')
-    overview = (await p.api(API, "GET", "/v1/me/graph?view=overview&persona=newcomer"))["body"]
-    rings = [n for n in overview["nodes"] if n["ready"]][:3]
     for n in rings:  # the "Know this? Yes" correction, as the reader would give it
         r = await p.api(API, "PATCH", f"/v1/me/graph/{n['id']}?persona=newcomer", {"state": "known"})
         report.setdefault("map_marked", []).append((n["label"], r["status"]))
@@ -224,7 +292,7 @@ async def clip_map(p, report, nothing):
     await wait_js(p, "!!document.querySelector('.kmap svg')", 60)
     await center(p, ".kmap")
     b = await record(p, 0.2, nothing, 2.4)
-    report["clip-map"] = encode_clip([a, b], crop, "clip-map")
+    report["clip-map"] = {**encode_clip([a, b], crop, "clip-map"), "crop_css_w": crop["css_w"]}
 
 
 async def main():
@@ -242,9 +310,15 @@ async def main():
         if not await p.click_text("button", "Newcomer", 5):
             raise SystemExit("no Newcomer button on the live front door")
         only = next((a.split("=", 1)[1].split(",") for a in sys.argv if a.startswith("--only=")), None)
+        if "--clips" in sys.argv:  # decision 46 P5: the four clips, no product shot
+            only = ["clip-note", "clip-simpler", "clip-know", "clip-map"]
         if only is None or "product" in only:
             report["product"] = await product_shots(p, tmp)
         report["clips"] = await clips(p, only)
+        crops = {k: v["crop_css_w"] for k, v in report["clips"].items() if isinstance(v, dict) and "crop_css_w" in v}
+        if crops:
+            old = json.loads(CROPS_FILE.read_text())["crop_css_w"] if CROPS_FILE.exists() else {}
+            CROPS_FILE.write_text(json.dumps({"rec_width": REC_W, "crop_css_w": {**old, **crops}}, indent=2) + "\n")
     finally:
         try:
             await p.send("Emulation.setDeviceMetricsOverride", width=1440, height=900, deviceScaleFactor=1, mobile=False)
