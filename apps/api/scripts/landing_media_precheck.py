@@ -27,6 +27,9 @@ from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
 from app.store.explain_repo import ExplainRepo
 from app.store.persona_repo import get_template
+from app.recs.feed import SnapshotRepo
+from app.recs.router import WEB_TRIGGERS
+from app.recs.web_search import build_query, get_web_search
 from app.store.reader_repo import state_from_demo
 
 CONTENT_ID = "2332418841faa08d5f5e157c2d038d1d"
@@ -54,7 +57,7 @@ async def main() -> int:
         return 1
     corpus = [d for d in docs.values() if is_corpus(d)]
     explainers = scorer.explainer_index(corpus)
-    states, out = {}, {"spans": {}, "prompt": {}}
+    states, out, triggers = {}, {"spans": {}, "prompt": {}}, {}
     for persona in ("newcomer", "trader"):
         states[persona] = state_from_demo(
             "landing", persona, await get_template(store, persona), copied=False
@@ -65,6 +68,7 @@ async def main() -> int:
         out["spans"][persona] = [
             (s.paragraph_id, s.label, s.band) for s in result.spans if s.paragraph_id == PARAGRAPH
         ]
+        triggers[persona] = result.spans[:WEB_TRIGGERS]  # what Up next searches (recs router)
         out["prompt"][persona] = (
             (result.prompt.paragraph_id, result.prompt.label) if result.prompt else None
         )
@@ -85,8 +89,22 @@ async def main() -> int:
         out.setdefault("opened", []).append((persona, concept, shift, inputs.band, ok))
         if not ok:
             missing.append(f"{persona} {concept} shift {shift}")
+    # Decision 46e round 1 item 1: the captures cost no searches. The anonymous feed is served
+    # from the seeded snapshot only; Up next (mounted with the reader) searches only on a cache
+    # miss for the article's top concepts, so every one must be fresh.
+    snap = await SnapshotRepo(store).get("newcomer")
+    out["feed_snapshot"] = {"items": len(snap.items) if snap else 0, "prepared_at": snap.prepared_at if snap else None}
+    web, searches = get_web_search(), []
+    for persona, spans in triggers.items():
+        for span in spans:
+            for fmt in sorted(web.formats):
+                _, fresh = await web.cached(span.concept_id, fmt, build_query(span.label, fmt, span.domain))
+                if not fresh:
+                    searches.append(f"{persona} {span.concept_id} {fmt}")
     print(json.dumps(out, indent=2, default=str))
     print(f"\nexplanations to generate if run: {len(missing)} (≈ $0.005 each) {missing}")
+    print(f"web searches if run (Up next cache misses): {len(searches)} {searches}")
+    print(f"feed: served from persona_feeds/newcomer ({out['feed_snapshot']['items']} items), 0 searches")
     print(
         "production writes if run: 1 anonymous Auth user and its reader docs (DELETE /v1/me "
         "removes both); explain hits +"
@@ -94,6 +112,9 @@ async def main() -> int:
         f"plus the clips; not reversible); 1 'Know this?' answer (if a prompt exists) and "
         f"{len(KNEW_THIS)} 'Knew this' in the demo graph (deleted with the reader)"
     )
+    if missing or searches or not snap or not snap.items:
+        print("REFUSE: the run would generate, search or build a feed (decision 46e: 0 of each)")
+        return 1
     return 0
 
 

@@ -9,7 +9,7 @@
      look intentional. */
   --lp-max: 1280px;
   --lp-gutter: clamp(16px, 4vw, 64px);
-  --lp-space: clamp(56px, 6.5vw, 96px); /* decision 46: about half the old rhythm */
+  --lp-space: clamp(72px, 9vw, 128px); /* decision 46e: ~72px on phones, ~128px on desktop */
   min-height: 100vh;
   background: var(--paper);
   overflow-x: clip;
@@ -81,7 +81,7 @@
   gap: var(--s8);
   max-width: calc(var(--lp-max) + 2 * var(--lp-gutter));
   margin: 0 auto;
-  padding: var(--s2) var(--lp-gutter) var(--s12);
+  padding: var(--s2) var(--lp-gutter) var(--lp-space);
 }
 
 .lp-hero__title {
@@ -181,7 +181,7 @@
 
 /* The live demo: a sheet of paper with the open note under the paragraph. */
 .lp-demo {
-  --lp-margo-w: 76px;
+  --lp-margo-w: 68px;
   position: relative;
   z-index: 0; /* a stacking context, so the under-sheet sits above the page background */
   margin: 0;
@@ -560,7 +560,7 @@
     align-items: start;
     gap: clamp(40px, 5vw, 80px);
     padding-top: 0;
-    padding-bottom: var(--s10);
+    padding-bottom: var(--lp-space);
   }
   .lp-hero__mark {
     white-space: nowrap;

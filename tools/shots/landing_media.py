@@ -1,12 +1,14 @@
-"""Landing media from the live reader (decision 44 V2 product shot, V4 clips).
+"""Landing media from the live site (decision 46e: full-window stills and loops in device frames).
 
     cd apps/api && uv run python -m scripts.landing_media_precheck      # read-only; run first
-    uv run --project apps/api python tools/shots/landing_media.py --confirmed
+    uv run --project apps/api python tools/shots/landing_media.py --confirmed --stills --clips
 
 As one temporary anonymous demo reader on the live site (deleted at the end with DELETE /v1/me,
-which also deletes the Auth user): the phone product shot of the "bps" note on the
-demo markets article, then four short clips. Writes AVIF/WebP images and WebM/MP4 clips with WebP
-posters to apps/web/public/landing/. The precheck prints the exact production writes.
+which also deletes the Auth user): the full-window stills for "See it in action" (the reader with
+the "bps" note, the For you feed, the phone sheet) and the four How it works loops. Writes
+AVIF/WebP stills, WebM/MP4 loops (2x and 1x) with WebP posters to apps/web/public/landing/ and the
+loops' focus boxes to apps/web/src/landing/clipFocus.json. The precheck prints the exact production
+writes and refuses if anything would generate, search or build a feed.
 """
 
 import asyncio
@@ -26,9 +28,6 @@ WEB = "https://readlayer-sourabh-26.web.app"
 API = "https://readlayer-api-751104670850.asia-south1.run.app"
 CID = "2332418841faa08d5f5e157c2d038d1d"
 OUT = Path(__file__).resolve().parents[2] / "apps/web/public/landing"
-CLIP_W = 720  # decision 45 nit: sharp in the wider clip grid
-CLIP_MAX_BYTES = 400_000
-SHOT_PHONE_W = 300
 
 READY = "!!document.querySelector('.rl-card:not([hidden]) .rl-card__explain[data-state=ready]')"
 
@@ -76,12 +75,87 @@ def run(*args):
     subprocess.run(args, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-def encode_image(png: Path, name: str, width: int):
+# Decision 46e: device frames with HD full-window captures. Every still and loop is the whole
+# Gloss window at a 1440×900 viewport and deviceScaleFactor 2 (2880×1800 frames), light theme, no
+# crop; the phone still is 390×844 at DPR 2. Never upscaled: 2x files are native, 1x files are
+# downscales. Loops ≤ 600 KB (2x, else the 1x encode ships as the large file too), a 1x encode
+# for small screens, posters ≤ 120 KB. Each loop's area of action (fractions of the frame) goes to
+# apps/web/src/landing/clipFocus.json for the tile's gentle zoom.
+FULL_W, FULL_H, DPR = 1440, 900, 2
+PHONE_W, PHONE_H = 390, 844
+LOOP_MAX = 600_000
+POSTER_MAX = 120_000
+STILL_MAX = {1: 120_000, 2: 250_000}
+FOCUS_FILE = Path(__file__).resolve().parents[2] / "apps/web/src/landing/clipFocus.json"
+
+
+async def view(p, width=FULL_W, height=FULL_H, mobile=False):
+    await p.send("Emulation.setDeviceMetricsOverride", width=width, height=height, deviceScaleFactor=DPR, mobile=mobile)
+
+
+async def light(p):
+    await p.eval("localStorage.setItem('readlayer:theme', 'light'); document.documentElement.dataset.theme = 'light'; true")
+
+
+async def capture(p, path: Path) -> Path:
+    r = await p.send("Page.captureScreenshot", format="png")
+    path.write_bytes(cdp.base64.b64decode(r["data"]))
+    return path
+
+
+def png_width(path: Path) -> int:
+    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width",
+                          "-of", "csv=p=0", str(path)], check=True, capture_output=True, text=True)
+    return int(out.stdout.strip())
+
+
+def encode_still(png: Path, name: str, css_w: int) -> dict:
+    """1x (downscaled) and 2x (native) AVIF + WebP within STILL_MAX; refuses an upscale."""
+    if png_width(png) < css_w * DPR:
+        raise SystemExit(f"{name}: capture narrower than {css_w * DPR}px, would need an upscale")
+    sizes = {}
     for scale, suffix in ((1, ""), (2, "@2x")):
-        w = width * scale
-        run("cwebp", "-quiet", "-q", "80", "-resize", str(w), "0", str(png), "-o", str(OUT / f"{name}{suffix}.webp"))
-        run("ffmpeg", "-y", "-i", str(png), "-vf", f"scale={w}:-2,format=yuv420p", "-c:v", "libsvtav1",
-            "-crf", "34", "-frames:v", "1", str(OUT / f"{name}{suffix}.avif"))
+        w = css_w * scale
+        for q in (80, 72, 64, 56):
+            webp = OUT / f"{name}{suffix}.webp"
+            run("cwebp", "-quiet", "-q", str(q), "-resize", str(w), "0", str(png), "-o", str(webp))
+            if webp.stat().st_size <= STILL_MAX[scale]:
+                break
+        for crf in (34, 40, 46):
+            avif = OUT / f"{name}{suffix}.avif"
+            run("ffmpeg", "-y", "-i", str(png), "-vf", f"scale={w}:-2,format=yuv420p", "-c:v", "libsvtav1",
+                "-crf", str(crf), "-frames:v", "1", str(avif))
+            if avif.stat().st_size <= STILL_MAX[scale]:
+                break
+        sizes[f"{scale}x"] = {"webp": webp.stat().st_size, "avif": avif.stat().st_size}
+        if max(sizes[f"{scale}x"].values()) > STILL_MAX[scale]:
+            raise SystemExit(f"{name} {scale}x over {STILL_MAX[scale]} bytes: {sizes[f'{scale}x']}")
+    return sizes
+
+
+async def stills(p, tmp: Path, report):
+    """See it in action: the reader with the bps note open, the For you feed, the phone sheet."""
+    await view(p)
+    await light(p)
+    await open_reader(p, "newcomer")
+    await center(p, '[data-rl-paragraph="p5"]')
+    await click_mark(p, "bps")
+    await wait_js(p, READY)
+    await asyncio.sleep(0.8)
+    report["shot-reader"] = encode_still(await capture(p, tmp / "reader.png"), "shot-reader", FULL_W)
+
+    await p.goto(f"{WEB}/for-you?persona=newcomer", wait=3)
+    await wait_js(p, "document.querySelectorAll('article.row').length >= 4", 40)
+    await asyncio.sleep(1.5)  # thumbnails
+    report["shot-feed"] = encode_still(await capture(p, tmp / "feed.png"), "shot-feed", FULL_W)
+
+    await view(p, PHONE_W, PHONE_H, mobile=True)
+    await open_reader(p, "newcomer")
+    await center(p, '[data-rl-paragraph="p5"]')
+    await click_mark(p, "bps")
+    await wait_js(p, READY)
+    await asyncio.sleep(0.8)
+    report["shot-phone"] = encode_still(await capture(p, tmp / "phone.png"), "shot-phone", PHONE_W)
 
 
 async def record(p, seconds_before, action, seconds_after):
@@ -91,225 +165,153 @@ async def record(p, seconds_before, action, seconds_after):
     await action()
     await asyncio.sleep(seconds_after)
     frames = await rec.stop()
-    return frames, rec.ended
+    return frames, rec.ended  # 2880×1800 frames: Chrome runs at device scale 2 (cdp.launch(scale=2))
 
 
-async def product_shots(p, tmp: Path):
-    # Decision 46 P3: only the phone shot is used (it sits on the hero card's corner).
-    await p.send("Emulation.setDeviceMetricsOverride", width=390, height=844, deviceScaleFactor=2, mobile=True)
-    await open_reader(p, "newcomer")
-    await center(p, '[data-rl-paragraph="p5"]')
-    await click_mark(p, "bps")
-    await wait_js(p, READY)
-    await asyncio.sleep(0.8)
-    r = await p.send("Page.captureScreenshot", format="png")
-    phone = tmp / "phone.png"
-    phone.write_bytes(cdp.base64.b64decode(r["data"]))
-    encode_image(phone, "shot-phone", SHOT_PHONE_W)
-    return {"phone": "shot-phone"}
+def trim(recording, t):
+    """Drop frames before t; the last earlier frame becomes the first, at t."""
+    frames, ended = recording
+    before = [f for f in frames if f[0] <= t]
+    after = [f for f in frames if f[0] > t]
+    return ([(t, before[-1][1])] if before else []) + after, ended
 
 
-async def clips(p, only=None):
-    await p.viewport(1440)
-    report = {}
-
-    def want(name):
-        return only is None or name in only
-
-    async def nothing():
-        return None
-
-    # The four steps, in the landing's order (decision 46d).
-    if want("clip-know"):
-        await clip_know(p, report, nothing)
-    if want("clip-note"):
-        await clip_note(p, report)
-    if want("clip-simpler"):
-        await clip_simpler(p, report)
-    if want("clip-map"):
-        await clip_map(p, report, nothing)
-    return report
-
-
-# Decision 46d: every clip is a 16:10 tile at natural zoom. Recorded at deviceScaleFactor 2 in a
-# 680px-wide viewport (body text 21px, column ≈ 600px, cards float under their term) and cropped
-# to 660×412 CSS px around the whole text column, so lines are never cut; encoded at the crop's
-# native 1320×824 (downscaled only if a clip can't meet the size budget, never upscaled). The
-# margin's "N notes for you" list only exists ≥ 1200px, so clip 2's second take is recorded at
-# 1280 and cropped to the rail, padded with the page colour to the same tile.
-REC_W, REC_H, DPR = 680, 900, 2
-WIDE_W = 1280
-TILE_W, TILE_H = 660, 412  # CSS px, 16:10
-CROPS_FILE = Path(__file__).resolve().parent / "clip_crops.json"
-
-
-async def rec_view(p, width=REC_W):
-    await p.send("Emulation.setDeviceMetricsOverride", width=width, height=REC_H, deviceScaleFactor=DPR, mobile=False)
-
-
-def tile(x, y, width=REC_W, w=TILE_W, h=TILE_H):
-    """A tile-sized crop (CSS px) at x, y, kept inside the viewport."""
-    x = max(0, min(width - w, int(x)))
-    y = max(0, min(REC_H - h, int(y)))
-    return {"x": x, "y": y, "w": w, "h": h, "vw": width}
-
-
-async def column_tile(p, y_top):
-    """The tile centred on the article's text column, starting at y_top (CSS px)."""
-    col = await p.eval(js_rect("[data-rl-paragraph]"))
-    if col["w"] > TILE_W - 16:
-        raise SystemExit(f"text column {col['w']:.0f}px doesn't fit a {TILE_W}px tile with padding")
-    return tile(col["x"] + col["w"] / 2 - TILE_W / 2, y_top)
-
-
-async def bring_to(p, selector, y=140):
-    """Scroll so the element's top sits at y (CSS px) in the viewport."""
-    await p.eval(f"""(() => {{ const e = document.querySelector({json.dumps(selector)});
-      scrollBy(0, e.getBoundingClientRect().top - {y}); return true; }})()""")
-    await asyncio.sleep(1.2)
-
-
-async def paper_hex(p):
-    rgb = await p.eval("getComputedStyle(document.body).backgroundColor")
-    nums = [int(n) for n in rgb[rgb.index("(") + 1 : rgb.index(")")].split(",")[:3]]
-    return "0x" + "".join(f"{n:02X}" for n in nums)
-
-
-def encode_tiles(segments, name, poster_at=None, pad_color="0xFFFFFF"):
-    """segments: [(frames, ended, crop)]; each crop in CSS px of its own viewport. Every segment is
-    cropped at native resolution, padded (never scaled up) to the 1320×824 tile, then all are
-    encoded as one clip. poster_at: seconds into the clip for the poster (default: last frame)."""
-    tmp = Path(tempfile.mkdtemp(prefix="gloss-clip-"))
-    out_dir = tmp / "out"
-    out_dir.mkdir()
-    tw, th = TILE_W * DPR, TILE_H * DPR - 1  # 1320×823 → even below
-    tw, th = tw // 2 * 2, th // 2 * 2
-    n = 0
-    step = 1 / 24
-    for si, (frames, ended, crop) in enumerate(segments):
-        seg = tmp / f"s{si}"
-        seg.mkdir()
-        i, k, t = 0, 0, frames[0][0]
+def encode_loop(segments, name: str, poster_at: float | None = None) -> dict:
+    """Full frames (one or more takes, hard cuts) → name.webm/.mp4 (2x if ≤ LOOP_MAX, else the 1x
+    encode), name-1x.webm/.mp4 for small screens, and a WebP poster ≤ POSTER_MAX."""
+    tmp = Path(tempfile.mkdtemp(prefix="gloss-loop-"))
+    i, step = 0, 1 / 24
+    for frames, ended in segments:
+        k, t = 0, frames[0][0]
         while t < ended:
             while k + 1 < len(frames) and frames[k + 1][0] <= t:
                 k += 1
-            (seg / f"{i:05}.jpg").write_bytes(frames[k][1])
+            (tmp / f"{i:05}.jpg").write_bytes(frames[k][1])
             i, t = i + 1, t + step
-        probe = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width",
-                                "-of", "csv=p=0", str(seg / "00000.jpg")], check=True, capture_output=True, text=True)
-        kx = int(probe.stdout.strip()) / crop["vw"]
-        cx, cy, cw, ch = (int(crop[key] * kx) // 2 * 2 for key in ("x", "y", "w", "h"))
-        cw, ch = min(cw, tw), min(ch, th)
-        vf = f"crop={cw}:{ch}:{cx}:{cy},pad={tw}:{th}:(ow-iw)/2:(oh-ih)/2:color={pad_color}"
-        run("ffmpeg", "-y", "-framerate", "24", "-i", str(seg / "%05d.jpg"), "-vf", vf,
-            "-start_number", str(n), str(out_dir / "%05d.png"))
-        n += i
-    src = ["-framerate", "24", "-i", str(out_dir / "%05d.png"), "-an"]
-    sizes, width = None, tw
-    for width in (tw, 1188, 1056):
-        scale = [] if width == tw else [f"scale={width}:-2"]
-        vf = ",".join([*scale, "format=yuv420p"])
-        for crf in (36, 40, 44, 48):
-            run("ffmpeg", "-y", *src, "-vf", vf, "-c:v", "libvpx-vp9", "-b:v", "0", "-crf", str(crf), "-row-mt", "1",
-                str(OUT / f"{name}.webm"))
-            run("ffmpeg", "-y", *src, "-vf", vf, "-c:v", "libx264", "-preset", "slow", "-crf", str(crf - 8),
-                "-movflags", "+faststart", str(OUT / f"{name}.mp4"))
-            sizes = [(OUT / f"{name}.{ext}").stat().st_size for ext in ("webm", "mp4")]
-            if max(sizes) <= CLIP_MAX_BYTES:
-                break
-        else:
-            continue
-        break
-    else:
-        raise SystemExit(f"{name}: still over {CLIP_MAX_BYTES} bytes at {width}px: {sizes}")
+    native = png_width(tmp / "00000.jpg")
+    src = ["-framerate", "24", "-i", str(tmp / "%05d.jpg"), "-an"]
+
+    def encode(width: int, out: str) -> list[int] | None:
+        scale = "" if width >= native else f"scale={width}:-2,"
+        for crf in (34, 38, 42, 46, 50):
+            run("ffmpeg", "-y", *src, "-vf", f"{scale}format=yuv420p", "-c:v", "libvpx-vp9", "-b:v", "0",
+                "-crf", str(crf), "-row-mt", "1", str(OUT / f"{out}.webm"))
+            run("ffmpeg", "-y", *src, "-vf", f"{scale}format=yuv420p", "-c:v", "libx264", "-preset", "slow",
+                "-crf", str(crf - 10), "-movflags", "+faststart", str(OUT / f"{out}.mp4"))
+            sizes = [(OUT / f"{out}.{ext}").stat().st_size for ext in ("webm", "mp4")]
+            if max(sizes) <= LOOP_MAX:
+                return sizes
+        return None
+
+    small = encode(FULL_W, f"{name}-1x")
+    if small is None:
+        raise SystemExit(f"{name}: even the 1x encode is over {LOOP_MAX} bytes")
+    large = encode(native, name)
+    shipped = native
+    if large is None:  # the 2x doesn't fit: the 1x encode is the large file too (a downscale)
+        for ext in ("webm", "mp4"):
+            shutil.copy(OUT / f"{name}-1x.{ext}", OUT / f"{name}.{ext}")
+        large, shipped = small, FULL_W
     poster = tmp / "poster.png"
-    at = ["-ss", f"{poster_at:.2f}"] if poster_at is not None else ["-sseof", "-0.1"]
-    run("ffmpeg", "-y", *at, "-i", str(OUT / f"{name}.mp4"), "-frames:v", "1", str(poster))
-    run("cwebp", "-quiet", "-q", "80", str(poster), "-o", str(OUT / f"{name}-poster.webp"))
+    at = ["-ss", f"{poster_at:.2f}"] if poster_at is not None else ["-sseof", "-0.3"]
+    run("ffmpeg", "-y", *at, "-i", str(OUT / f"{name}-1x.mp4"), "-frames:v", "1", str(poster))
+    for q in (78, 70, 62, 54):
+        run("cwebp", "-quiet", "-q", str(q), str(poster), "-o", str(OUT / f"{name}-poster.webp"))
+        if (OUT / f"{name}-poster.webp").stat().st_size <= POSTER_MAX:
+            break
+    else:
+        raise SystemExit(f"{name}: poster over {POSTER_MAX} bytes")
     gray = subprocess.run(["ffmpeg", "-v", "error", "-i", str(poster), "-vf", "scale=200:-1,format=gray", "-f", "rawvideo", "-"],
                           check=True, capture_output=True).stdout
-    spread = statistics.pstdev(gray)
-    if spread < 12:
-        raise SystemExit(f"{name}: poster looks blank (luma stddev {spread:.1f})")
+    if statistics.pstdev(gray) < 12:
+        raise SystemExit(f"{name}: poster looks blank")
     shutil.rmtree(tmp)
-    return {"frames": n, "width": width, "webm": sizes[0], "mp4": sizes[1], "poster_luma_sd": round(spread, 1)}
+    return {"frames": i, "shipped_width": shipped, "webm": large[0], "mp4": large[1], "webm_1x": small[0],
+            "mp4_1x": small[1], "poster": (OUT / f"{name}-poster.webp").stat().st_size}
 
 
-async def clip_know(p, report, nothing):
+def fraction(*rects, pad=60) -> dict:
+    box = union(*rects, pad=pad, vw=FULL_W, vh=FULL_H)
+    return {k: round(v, 4) for k, v in
+            {"x": box["x"] / FULL_W, "y": box["y"] / FULL_H, "w": box["w"] / FULL_W, "h": box["h"] / FULL_H}.items()}
+
+
+def mark_rect(text):
+    return f"""(() => {{ const m = [...document.querySelectorAll('.rl-mark')].find(m => m.textContent.trim() === {json.dumps(text)});
+      const r = m.getBoundingClientRect(); return {{x: r.left, y: r.top, w: r.width, h: r.height}}; }})()"""
+
+
+async def clip_know(p, report, focus):
     """1. "Know this?" → "Not really" → "Noted, thanks." → the term inks in, one take (46d fix)."""
-    await rec_view(p)
     await open_reader(p, "newcomer")
-    await bring_to(p, ".rl-ask", 180)
-    crop = await column_tile(p, 180 - 150)
-    async def answer():
-        await p.click_text(".rl-ask button", "Not really", 0.2)
-    frames = await record(p, 0.8, answer, 3.6)  # refresh after 1.2 s, then the ink-in
+    await p.eval("document.querySelector('.rl-ask').scrollIntoView({block: 'center'}); true")
+    await asyncio.sleep(1.2)
+    focus["clip-know"] = fraction(await p.eval(js_rect(".rl-mark--ask")), await p.eval(js_rect(".rl-ask")), pad=140)
+    frames = await record(p, 0.8, lambda: p.click_text(".rl-ask button", "Not really", 0.2), 3.8)
     inked = await p.eval("!!document.querySelector('.rl-ask[data-state=done]') && document.querySelectorAll('.rl-mark:not(.rl-mark--ask)').length > 0")
     if not inked:
-        raise SystemExit("clip-know: the term didn't ink in after Not really (is the 46d fix deployed?)")
-    report["clip-know"] = encode_tiles([(*frames, crop)], "clip-know", pad_color=await paper_hex(p))
+        raise SystemExit("clip-know: the term didn't ink in after Not really")
+    report["clip-know"] = encode_loop([frames], "clip-know")
 
 
-async def clip_note(p, report):
-    """2. A fresh load: the paragraph plain, the highlights ink in; then the margin list filling."""
-    await rec_view(p)
+async def clip_note(p, report, focus):
+    """2. The paragraphs plain, then the highlights ink in while the margin list fills: a reload,
+    and as soon as the text paints (before the notes arrive) the view jumps to the first noted
+    paragraph; the frames before the jump are trimmed, so the loop opens on plain text."""
     await open_reader(p, "newcomer")
-    first = await p.eval("""(() => { const m = document.querySelector('.rl-mark'); const r = m.getBoundingClientRect();
-      return {y: r.top + scrollY}; })()""")
-    if first["y"] > REC_H - 120:
-        raise SystemExit("clip-note: no note in the first view at 680px")
-    crop = await column_tile(p, first["y"] - 120)
-    await p.eval("scrollTo(0, 0); true")
-
+    target = await p.eval("""(() => { const para = document.querySelector('.rl-mark').closest('[data-rl-paragraph]');
+      return Math.max(0, para.getBoundingClientRect().top + scrollY - 220); })()""")
+    await p.eval(f"scrollTo(0, {target}); true")
+    await asyncio.sleep(1.0)
+    para = await p.eval("""(() => { const r = document.querySelector('.rl-mark').closest('[data-rl-paragraph]').getBoundingClientRect();
+      return {x: r.left, y: r.top, w: r.width, h: r.height}; })()""")
+    rail = await p.eval(js_rect(".rail"))
+    focus["clip-note"] = fraction(para, {**rail, "y": max(rail["y"], 0), "h": min(rail["h"], 360)}, pad=40)
     seen = {}
 
     async def reload():
-        # The clip starts once the article's text has painted (no blank page), before the marks.
         await p.send("Page.reload", ignoreCache=False)
         await wait_js(p, "!!document.querySelector('[data-rl-paragraph]')", 20)
-        await asyncio.sleep(0.15)
+        await p.eval(f"scrollTo(0, {target}); true")
+        await asyncio.sleep(0.12)
         seen["t"] = time.time()
         seen["marks_at_start"] = await p.eval("document.querySelectorAll('.rl-mark').length")
 
-    a = trim(await record(p, 0.2, reload, 3.4), seen)
-    await rec_view(p, WIDE_W)
-    await open_reader(p, "newcomer")
-    rail = await p.eval(js_rect(".rail"))
-    gutter_x = rail["x"] - 24
-    rail_crop = {"x": int(gutter_x), "y": int(rail["y"]) - 16, "w": min(TILE_W, WIDE_W - int(gutter_x)), "h": TILE_H, "vw": WIDE_W}
-    rail_crop["y"] = max(0, min(REC_H - TILE_H, rail_crop["y"]))
-    b = trim(await record(p, 0.2, reload, 2.6), seen)
-    report["clip-note-plain-start"] = seen.get("marks_at_start")
-    report["clip-note"] = encode_tiles([(*a, crop), (*b, rail_crop)], "clip-note", poster_at=3.2, pad_color=await paper_hex(p))
+    # A slower network for this take (the text arrives first, the notes after it), as a reader
+    # on a phone connection sees it; cached app files aren't affected.
+    await p.send("Network.enable")
+    await p.send("Network.emulateNetworkConditions", offline=False, latency=700, downloadThroughput=-1, uploadThroughput=-1)
+    try:
+        rec = await record(p, 0.2, reload, 4.2)
+    finally:
+        await p.send("Network.emulateNetworkConditions", offline=False, latency=0, downloadThroughput=-1, uploadThroughput=-1)
+    seen["marks_at_end"] = await p.eval("document.querySelectorAll('.rl-mark').length")
+    report["clip-note-marks"] = {"start": seen["marks_at_start"], "end": seen["marks_at_end"]}
+    if seen["marks_at_start"] >= seen["marks_at_end"]:
+        raise SystemExit(f"clip-note: the notes were already in when the loop starts {report['clip-note-marks']}")
+    report["clip-note"] = encode_loop([trim(rec, seen["t"])], "clip-note")
 
 
-def trim(recording, seen):
-    """Drop frames before seen["t"]; the last earlier frame becomes the first, at seen["t"]."""
-    frames, ended = recording
-    t = seen["t"]
-    before = [f for f in frames if f[0] <= t]
-    after = [f for f in frames if f[0] > t]
-    head = [(t, before[-1][1])] if before else []
-    return head + after, ended
-
-
-async def clip_simpler(p, report):
+async def clip_simpler(p, report, focus):
     """3. Tap a highlight → the card opens with the Background and analogy tag → "Say it simpler"."""
-    await rec_view(p)
     await open_reader(p, "trader")
-    await bring_to(p, '[data-rl-paragraph="p5"] .rl-mark', 120)
+    await center(p, '[data-rl-paragraph="p5"]')
     term = await p.eval(mark_rect("tighter policy"))
-    crop = await column_tile(p, term["y"] - 60)
+    marks = {}
 
     async def act():
         await click_mark(p, "tighter policy")
         await wait_js(p, READY)
-        await asyncio.sleep(1.6)
+        marks["opened"] = time.time()
+        marks["card"] = await p.eval(js_rect(".rl-card:not([hidden])"))
+        await asyncio.sleep(1.8)
         await p.click_text(".rl-card button", "Say it simpler", 0.3)
         await wait_js(p, READY, 60)
 
-    frames = await record(p, 0.6, act, 1.6)
-    report["clip-simpler"] = encode_tiles([(*frames, crop)], "clip-simpler", poster_at=2.0, pad_color=await paper_hex(p))
+    start = time.time()
+    frames = await record(p, 0.6, act, 1.8)
+    focus["clip-simpler"] = fraction(term, marks["card"], pad=40)
+    report["clip-simpler"] = encode_loop([frames], "clip-simpler", poster_at=marks["opened"] - start + 0.9)
 
 
 NODE_RECTS = """(labels => labels.map(l => { const g = [...document.querySelectorAll('.kmap__node')]
@@ -317,9 +319,8 @@ NODE_RECTS = """(labels => labels.map(l => { const g = [...document.querySelecto
   const r = g.getBoundingClientRect(); return {x: r.left, y: r.top, w: r.width, h: r.height}; }).filter(Boolean))"""
 
 
-async def clip_map(p, report, nothing):
-    """4. The knowledge map with three ideas filling in (the "Know this? Yes" correction)."""
-    await rec_view(p)
+async def clip_map(p, report, focus):
+    """4. The profile's knowledge map with three ideas filling in (the "Know this? Yes" correction)."""
     overview = (await p.api(API, "GET", "/v1/me/graph?view=overview&persona=newcomer"))["body"]
     rings = [n for n in overview["nodes"] if n["ready"]][:3]
     labels = [n["label"] for n in rings]
@@ -327,8 +328,7 @@ async def clip_map(p, report, nothing):
     await wait_js(p, "!!document.querySelector('.kmap svg')", 60)
     await center(p, ".kmap")
     rects = await p.eval(f"{NODE_RECTS}({json.dumps(labels)})")
-    box = union(*rects, pad=0, vw=REC_W, vh=REC_H) if rects else await p.eval(js_rect(".kmap"))
-    crop = tile(box["x"] + box["w"] / 2 - TILE_W / 2, box["y"] + box["h"] / 2 - TILE_H / 2)
+    focus["clip-map"] = fraction(*rects, pad=90) if rects else fraction(await p.eval(js_rect(".kmap")), pad=0)
     a = await record(p, 0.2, nothing, 1.6)
     for n in rings:
         r = await p.api(API, "PATCH", f"/v1/me/graph/{n['id']}?persona=newcomer", {"state": "known"})
@@ -337,38 +337,52 @@ async def clip_map(p, report, nothing):
     await wait_js(p, "!!document.querySelector('.kmap svg')", 60)
     await center(p, ".kmap")
     b = await record(p, 0.2, nothing, 2.4)
-    report["clip-map"] = encode_tiles([(*a, crop), (*b, crop)], "clip-map", pad_color=await paper_hex(p))
+    report["clip-map"] = encode_loop([a, b], "clip-map")
 
 
-def mark_rect(text):
-    return f"""(() => {{ const m = [...document.querySelectorAll('.rl-mark')].find(m => m.textContent.trim() === {json.dumps(text)});
-      const r = m.getBoundingClientRect(); return {{x: r.left, y: r.top, w: r.width, h: r.height}}; }})()"""
+async def nothing():
+    return None
+
+
+async def clips(p, report, only=None):
+    await view(p)
+    await light(p)
+    focus = json.loads(FOCUS_FILE.read_text())["clips"] if FOCUS_FILE.exists() else {}
+    steps = (("clip-know", clip_know), ("clip-note", clip_note), ("clip-simpler", clip_simpler), ("clip-map", clip_map))
+    for name, step in steps:  # the landing's order: 1 → 4
+        if only is None or name in only:
+            try:
+                await step(p, report, focus)
+            except SystemExit as e:  # one clip's failure doesn't cost the run the others
+                report.setdefault("failed", {})[name] = str(e)
+                continue
+            FOCUS_FILE.write_text(json.dumps({"clips": focus}, indent=2) + "\n")
 
 
 async def main():
     if "--confirmed" not in sys.argv:
         raise SystemExit("Run `uv run python -m scripts.landing_media_precheck` (in apps/api) first, then pass --confirmed.")
+    want_stills, want_clips = "--stills" in sys.argv, "--clips" in sys.argv
+    if not (want_stills or want_clips):
+        raise SystemExit("pass --stills and/or --clips")
+    only = next((a.split("=", 1)[1].split(",") for a in sys.argv if a.startswith("--only=")), None)
     OUT.mkdir(parents=True, exist_ok=True)
     tmp = Path(tempfile.mkdtemp(prefix="gloss-media-"))
-    cdp.launch()
+    cdp.launch(scale=2)
     p, ws = await cdp.open_page()
     report = {}
     try:
         await p.viewport(1440)
         await cdp.Page.reset_auth(p, WEB)
         await p.goto(WEB + "/", wait=4)
+        # The live front door: the landing's demo CTA after the Landing milestone ships, the
+        # persona picker before it.
         if not await p.click_text("button", "Newcomer", 5):
             raise SystemExit("no Newcomer button on the live front door")
-        only = next((a.split("=", 1)[1].split(",") for a in sys.argv if a.startswith("--only=")), None)
-        if "--clips" in sys.argv:  # decision 46 P5: the four clips, no product shot
-            only = ["clip-note", "clip-simpler", "clip-know", "clip-map"]
-        if only is None or "product" in only:
-            report["product"] = await product_shots(p, tmp)
-        report["clips"] = await clips(p, only)
-        if report["clips"]:
-            names = ("clip-know", "clip-note", "clip-simpler", "clip-map")
-            CROPS_FILE.write_text(json.dumps({"rec_width": REC_W, "body_px": 21,
-                                              "crop_css_w": {n: TILE_W for n in names}}, indent=2) + "\n")
+        if want_stills:
+            await stills(p, tmp, report)
+        if want_clips:
+            await clips(p, report, only)
     finally:
         try:
             await p.send("Emulation.setDeviceMetricsOverride", width=1440, height=900, deviceScaleFactor=1, mobile=False)

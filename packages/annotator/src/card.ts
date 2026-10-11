@@ -296,9 +296,11 @@ export class Card {
     const verified = typeof state === "object" && state.kind === "verified";
     const loading = state === "loading";
     this.pending = loading;
-    if (!loading && this.mode === "inline" && this.inline && this.el.hidden && this.anchor) this.el.hidden = false;
     // Skeleton → text: grow from the old height instead of snapping.
     const from = !this.el.hidden ? this.explain.offsetHeight : 0;
+    // An inline card is revealed only now, after `from`: its first appearance never grows from a
+    // skeleton, so the host's static copy can swap with it without a jump (decision 46e).
+    if (!loading && this.mode === "inline" && this.inline && this.el.hidden && this.anchor) this.el.hidden = false;
     const before = this.background.textContent;
     this.explain.dataset.state = loading ? "loading" : "ready";
     this.explain.setAttribute("aria-busy", String(loading));

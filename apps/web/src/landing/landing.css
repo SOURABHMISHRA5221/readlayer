@@ -173,8 +173,9 @@
   background: var(--paper);
   box-shadow: var(--shadow-float);
 }
-/* Decision 46d: every tile is 16:10 (the recordings are 16:10 at natural zoom), with a soft
-   fade at the top and bottom edges instead of hard cut lines. */
+/* Decision 46e: every loop is the whole 1440×900 window (16:10) inside a laptop frame. While it
+   plays, the video zooms gently toward the area of action (≤ 1.15×) and a soft spotlight dims the
+   edges; both ease out before the loop restarts and stop when paused (Clip.tsx). */
 .lp-clip {
   aspect-ratio: 16 / 10;
 }
@@ -183,8 +184,141 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  -webkit-mask-image: linear-gradient(transparent, #000 16px, #000 calc(100% - 16px), transparent);
-  mask-image: linear-gradient(transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  transform-origin: var(--clip-fx, 50%) var(--clip-fy, 50%);
+  transition: transform 900ms var(--ease);
+}
+.lp-clip--zoomed .lp-clip__media {
+  transform: scale(var(--clip-zoom, 1));
+}
+.lp-clip__spot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 55% at var(--clip-fx, 50%) var(--clip-fy, 50%), transparent 55%, rgb(20 20 18 / 0.18));
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+.lp-clip--zoomed .lp-clip__spot {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-clip__media,
+  .lp-clip__spot {
+    transition: none;
+  }
+}
+.lp-clip__play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 44px;
+  padding: 0 var(--s5);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--paper);
+  font: 600 15px / 1 var(--font-ui);
+  cursor: pointer;
+  box-shadow: var(--shadow-float);
+}
+
+/* Device frames (decision 46e S1): CSS only, one family, one shadow. */
+.lp-device {
+  position: relative;
+}
+.lp-device__screen {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+.lp-device__screen .lp-clip {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.lp-still {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* Before it's near, the still is an empty box the frame's screen sizes (16:10 or the phone's). */
+.lp-still--pending {
+  height: 100%;
+  background: var(--wash);
+}
+.lp-device--laptop .lp-device__screen,
+.lp-device--monitor .lp-device__screen {
+  aspect-ratio: 16 / 10;
+  border: clamp(6px, 0.9vw, 12px) solid #1c1c1c;
+  border-radius: 12px 12px 4px 4px;
+  box-shadow: var(--shadow-float);
+}
+.lp-device--laptop .lp-device__screen::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: -7px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: #3a3a3a;
+}
+.lp-device__base {
+  height: clamp(8px, 1vw, 14px);
+  margin: 0 -7%;
+  border-radius: 2px 2px 12px 12px;
+  background: linear-gradient(#d4d4d1, #a8a8a5);
+}
+.lp-device--monitor .lp-device__screen {
+  border-radius: 8px;
+}
+.lp-device__stand {
+  width: 18%;
+  height: clamp(28px, 4vw, 56px);
+  margin: 0 auto;
+  background: linear-gradient(90deg, #bdbdba, #d6d6d3, #bdbdba);
+  clip-path: polygon(30% 0, 70% 0, 82% 88%, 100% 88%, 100% 100%, 0 100%, 0 88%, 18% 88%);
+}
+.lp-device--phone {
+  width: min(300px, 78%);
+  margin: 0 auto;
+}
+.lp-device--phone .lp-device__screen {
+  aspect-ratio: 390 / 844;
+  border: 9px solid #1c1c1c;
+  border-radius: 34px;
+  box-shadow: var(--shadow-float);
+}
+
+/* See it in action: the monitor behind on the right, the laptop in front on the left. */
+.lp-action__figure {
+  margin: var(--s8) 0 0;
+}
+.lp-action__pair {
+  position: relative;
+  padding-bottom: 4%;
+}
+.lp-action__pair .lp-device--monitor {
+  width: 64%;
+  margin-left: auto;
+}
+.lp-action__pair .lp-device--laptop {
+  position: absolute;
+  z-index: 1;
+  left: 2%;
+  bottom: 0;
+  width: 58%;
+}
+.lp-action__caption {
+  margin-top: var(--s6);
+  font-size: var(--text-ui-sm);
+  color: var(--muted);
+  text-align: center;
 }
 .lp-clip__toggle {
   position: absolute;

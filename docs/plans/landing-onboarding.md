@@ -887,3 +887,24 @@ first (step 1 needs live "Not really" behaviour), then this, then the freeze and
 - Lighthouse (round 1 item 2) before the freeze; screenshots at 1440×900, 1280×800, 390×844, light
   and dark, into `docs/evidence/landing/d46-after/`; merge `main` into `landing` first (PR #25).
 - Then the landing is frozen; §C and §B (onboarding).
+
+### 46e round 1 (plan-reviewer REVISE, 4 items; applied, these override S1–S5)
+1. **The feed capture costs nothing.** The monitor shows the Newcomer demo reader's For you feed
+   (the persona of the "bps" note). `landing_media_precheck` and `landing_media.py --dry-run` check
+   that this feed is served from the seeded `persona_feeds/newcomer` entry (no feed build), with 0
+   searches and 0 generations; the real run refuses otherwise. S3's production-writes line adds
+   "0 searches".
+2. **One frame family everywhere.** The final CTA shows step 4's loop in the same `DeviceFrame`
+   laptop, with the same zoom, pause and poster rules and the same files (no extra download). S5
+   adds the removals: 46d's tile media in `public/landing/` replaced by the framed loops, the
+   `clip_crops.json` / natural-zoom path in `landing_media.py` and its checks in `landing_d46.py`,
+   and any expected names or sizes in the file-size checks.
+3. **Pause stops all motion.** The zoom and spotlight run only while the clip plays: the Pause
+   button and leaving the viewport stop them and reset the transform (class removed); reduced
+   motion never adds them. Vitest: after Pause the tile has no running animation
+   (`getAnimations()` empty / zoom class absent), and none under reduced motion.
+4. **Where the media checks run, and a slip rule.** The first-view bytes and "no landing media
+   before scroll" checks run at 1440×900, 1280×800 and 390×844; at 1920×1080 the section's top may
+   be in view, so there the check is only that no media is eager (all `loading="lazy"` / no video
+   `src` before near). If checkpoint 1 (end of Oct 12 IST) is at risk, ask Sourabh first about
+   dropping the zoom and spotlight (plain framed loops stay), then the monitor (the laptop alone).

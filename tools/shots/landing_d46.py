@@ -5,17 +5,16 @@ Each check returns its numbers and a pass flag; landing.py prints them and exits
 """
 
 import asyncio
-import json
 from pathlib import Path
 
 PERSONAS = (("Software engineer", "Basis points"), ("Cricket fan", "Monetary tightening"), ("Policy student", "Basis points"))
-CROPS = json.loads((Path(__file__).resolve().parent / "clip_crops.json").read_text())
-CARD_TEXT_PX = 14  # the smallest card body size in the clips
-# Measured shortfalls reported to Sourabh rather than forced (decision 46b round 1 items 2 and 3):
-# printed with their numbers, not counted as failures.
-# 390 clip text: ≈ 11px on phones from one natural-zoom recording; asked of Sourabh (46c/46d round 1
-# item 1), listed here until he answers.
-KNOWN = {"390 clip text"}
+MEDIA = Path(__file__).resolve().parents[2] / "apps/web/public/landing"
+LOOPS = ("clip-know", "clip-note", "clip-simpler", "clip-map")
+# Decision 46e budgets: loops ≤ 600 KB (2x and 1x files), posters ≤ 120 KB; stills ≤ 120 KB at 1x
+# and ≤ 250 KB at 2x (S2).
+LOOP_MAX, POSTER_MAX, STILL_MAX = 600_000, 120_000, {"": 120_000, "@2x": 250_000}
+# Shortfalls reported to Sourabh rather than forced (none open: 46e settled the phone clip text).
+KNOWN: set[str] = set()
 
 RECT = """(s => { const e = typeof s === 'string' ? document.querySelector(s) : s; if (!e) return null;
   const r = e.getBoundingClientRect(); return {t: r.top, b: r.bottom, l: r.left, r: r.right}; })"""
@@ -160,30 +159,67 @@ async def swap(p, base, width):
                                     reflow_before_px=(max(heights[:idx]) - min(heights[:idx])) if idx else None)}
 
 
-async def clip_text(p, base, width):
-    """46d: 16:10 tiles, equal heights across a row, text at natural zoom (≈ 18–20px at 1440)."""
+def media_budgets() -> dict:
+    """46e S3/S5: every loop file ≤ 600 KB, posters ≤ 120 KB, stills within their budgets."""
+    out = {}
+    for name in LOOPS:
+        sizes = {f.name: f.stat().st_size for f in MEDIA.glob(f"{name}*") if f.suffix in (".webm", ".mp4")}
+        poster = (MEDIA / f"{name}-poster.webp").stat().st_size
+        out[f"{name} files"] = check(len(sizes) == 4 and max(sizes.values()) <= LOOP_MAX and poster <= POSTER_MAX,
+                                     largest=max(sizes.values(), default=None), poster=poster, files=len(sizes))
+    for still in ("shot-reader", "shot-feed", "shot-phone"):
+        sizes = {f.name: f.stat().st_size for f in MEDIA.glob(f"{still}*")}
+        ok = len(sizes) == 4 and all(v <= STILL_MAX["@2x" if "@2x" in k else ""] for k, v in sizes.items())
+        out[f"{still} files"] = check(ok, sizes=sizes)
+    return out
+
+
+async def clips_and_frames(p, base, width):
+    """46e: framed 16:10 loops with equal heights and aligned text; zoom ≤ 1.15; step 1's copy."""
     await p.viewport(width, 900)
     await p.goto(base + "/", wait=2.5)
     tiles = await p.eval("""[...document.querySelectorAll('.lp-how .lp-clip')].map(c => { const r = c.getBoundingClientRect();
-      return {w: r.width, h: r.height, t: r.top}; })""")
+      return {w: r.width, h: r.height, zoom: parseFloat(c.style.getPropertyValue('--clip-zoom') || '1')}; })""")
     texts = await p.eval("[...document.querySelectorAll('.lp-how__text')].map(t => Math.round(t.getBoundingClientRect().top))")
+    framed = await p.eval("[...document.querySelectorAll('.lp-how .lp-clip')].every(c => !!c.closest('.lp-device--laptop'))")
     out = {}
     ratios = [round(t["w"] / t["h"], 2) for t in tiles]
-    out[f"{width} clip tiles 16:10"] = check(all(abs(r - 1.6) <= 0.02 for r in ratios), ratios=ratios)
+    out[f"{width} loops framed 16:10"] = check(framed and all(abs(r - 1.6) <= 0.02 for r in ratios), ratios=ratios)
     if width >= 768:
         rows_ok = abs(tiles[0]["h"] - tiles[1]["h"]) < 1 and abs(tiles[2]["h"] - tiles[3]["h"]) < 1
-        text_ok = texts[0] == texts[1] and texts[2] == texts[3]
-        out[f"{width} clip rows aligned"] = check(rows_ok and text_ok, text_tops=texts)
-    crop_w = CROPS["crop_css_w"]
-    body_px = CROPS.get("body_px", 21)
-    px = [round(t["w"] / crop_w[n] * body_px, 1) for t, n in zip(tiles, ("clip-know", "clip-note", "clip-simpler", "clip-map"), strict=False)]
-    if width >= 1024:
-        out[f"{width} clip text"] = check(all(17.5 <= v <= 20.5 for v in px[:3]), body_text_px=px)
-    else:
-        out[f"{width} clip text"] = check(all(v >= 16 for v in px[:3]), body_text_px=px)
+        out[f"{width} loop rows aligned"] = check(rows_ok and texts[0] == texts[1] and texts[2] == texts[3], text_tops=texts)
+    out[f"{width} zoom ≤ 1.15"] = check(all(t["zoom"] <= 1.15 for t in tiles), zooms=[t["zoom"] for t in tiles])
     step1 = await p.eval("document.querySelector('.lp-how__step .lp-how__text p').textContent")
     out[f"{width} step 1 says right away"] = check("right away" in step1 and "skip" not in step1)
+    final = await p.eval("!!document.querySelector('.lp-final .lp-device--laptop .lp-clip')")
+    out[f"{width} final CTA framed loop"] = check(final)
     return out
+
+
+async def device_media(p, base, width):
+    """46e S2: each device downloads only its own stills (phone below 1024, the pair at ≥ 1024)."""
+    await p.viewport(width, 900)
+    await p.goto(base + "/", wait=2)
+    await p.eval("(async () => { for (let y = 0; y < document.body.scrollHeight; y += 500) { scrollTo(0, y); await new Promise(r => setTimeout(r, 120)); } return true; })()")
+    await asyncio.sleep(1.5)
+    names = await p.eval("performance.getEntriesByType('resource').map(e => e.name).filter(n => n.includes('/landing/shot-'))")
+    phone = any("shot-phone" in n for n in names)
+    pair = any("shot-feed" in n or "shot-reader" in n for n in names)
+    ok = (pair and not phone) if width >= 1024 else (phone and not pair)
+    return {f"{width} device stills": check(ok, requested=sorted({n.rsplit("/", 1)[1] for n in names}))}
+
+
+async def section_gaps(p, base, width):
+    """46e S4: breathing room between sections (≥ 72px at 390, ≥ 120px at 1440)."""
+    await p.viewport(width, 900)
+    await p.goto(base + "/", wait=2)
+    gaps = await p.eval("""(() => { const secs = [...document.querySelectorAll('.lp-hero, main > section')];
+      const content = s => { const kids = [...s.children].filter(k => k.getBoundingClientRect().height > 0);
+        return {t: Math.min(...kids.map(k => k.getBoundingClientRect().top)), b: Math.max(...kids.map(k => k.getBoundingClientRect().bottom))}; };
+      const out = []; for (let i = 1; i < secs.length; i++) out.push(Math.round(content(secs[i]).t - content(secs[i - 1]).b));
+      return out; })()""")
+    need = 120 if width >= 1440 else 72
+    return {f"{width} section gaps": check(min(gaps) >= need, smallest=min(gaps), need=need, gaps=gaps)}
 
 
 async def run_all(p, base):
@@ -195,8 +231,11 @@ async def run_all(p, base):
         report.update(await no_caps(p, base, theme))
     for w in (1024, 1280, 1440, 390):
         report.update(await overlaps(p, base, w))
+    report.update(media_budgets())
     for w in (1440, 390):
         report.update(await swap(p, base, w))
-        report.update(await clip_text(p, base, w))
-    report.update(await clip_text(p, base, 1280))
+        report.update(await device_media(p, base, w))
+        report.update(await section_gaps(p, base, w))
+    for w in (1440, 1280, 390):
+        report.update(await clips_and_frames(p, base, w))
     return report

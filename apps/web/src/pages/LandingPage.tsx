@@ -7,7 +7,9 @@ import { demoNotes, noteCount, type DemoNote } from "../landing/demoData";
 import { paragraph } from "../landing/demoParagraph.json";
 import evals from "../landing/evals.json";
 import { Hero, HeroCtas } from "../landing/Hero";
-import { Clip } from "../landing/Clip";
+import { Clip, type Focus } from "../landing/Clip";
+import focus from "../landing/clipFocus.json";
+import { DeviceFrame, SeeItInAction } from "../landing/DeviceFrame";
 import { ProblemArt } from "../landing/ProblemArt";
 import { MargoHero } from "../landing/MargoHero";
 import { FORMATS } from "../landing/formats";
@@ -85,6 +87,7 @@ export default function LandingPage({ url }: { url: URL }) {
         demo={<MiniDemo persona={persona} onPersona={setPersona} onTry={demo} />}
         footer={<Footer />}
       >
+        <SeeItInAction />
         <Problem />
         <Solution />
         <HowItWorks />
@@ -99,7 +102,9 @@ export default function LandingPage({ url }: { url: URL }) {
             <HeroCtas onDemo={demo} onGoogle={google} busy={busy} />
           </div>
           <figure className="lp-final__map">
-            <Clip {...MAP_CLIP} />
+            <DeviceFrame kind="laptop">
+              <Clip {...MAP_CLIP} focus={FOCUS[MAP_CLIP.name]} />
+            </DeviceFrame>
             <figcaption>Your map of what you know fills in as you read.</figcaption>
           </figure>
         </section>
@@ -228,25 +233,28 @@ const STEPS: { title: string; body: string; clip: { name: string; label: string;
   {
     title: "Margo learns what you know",
     body: "Every note you open or mark \u201cKnew this\u201d, and every \u201cKnow this?\u201d you answer, updates your map, right away.",
-    clip: { name: "clip-know", label: "answering Know this? turns the term into a note", width: 1320, height: 825 },
+    clip: { name: "clip-know", label: "answering Know this? turns the term into a note", width: 1440, height: 900 },
   },
   {
     title: "Finds what you'd miss",
     body: "Every term and idea in the article is scored against your map. Plain maths, no AI guessing.",
-    clip: { name: "clip-note", label: "tapping a highlighted term opens its note", width: 1320, height: 825 },
+    clip: { name: "clip-note", label: "tapping a highlighted term opens its note", width: 1440, height: 900 },
   },
   {
     title: "Explains it your way",
     body: "The Background uses analogies from your world, and can say it simpler. What the author is saying keeps their hedges and numbers.",
-    clip: { name: "clip-simpler", label: "Say it simpler rewrites the Background one level down", width: 1320, height: 825 },
+    clip: { name: "clip-simpler", label: "Say it simpler rewrites the Background one level down", width: 1440, height: 900 },
   },
   {
     title: "Your map grows",
     body: "What you learn fills in, so the notes thin out as you read more.",
-    clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 1320, height: 825 },
+    clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 1440, height: 900 },
   },
 ];
-/** The map clip again, beside the final call to action (decision 46 P4). */
+/** Where each loop's action happens (fractions of the frame), measured while recording. */
+const FOCUS: Readonly<Record<string, Focus | undefined>> = focus.clips;
+
+/** The map clip again, beside the final call to action (decision 46 P4; same files, 46e). */
 const MAP_CLIP = { ...STEPS[3]!.clip, label: "your knowledge map filling in" };
 
 function HowItWorks() {
@@ -258,7 +266,9 @@ function HowItWorks() {
       <ol className="lp-how__steps">
         {STEPS.map((s, i) => (
           <li key={s.title} className="lp-how__step">
-            <Clip {...s.clip} />
+            <DeviceFrame kind="laptop">
+              <Clip {...s.clip} focus={FOCUS[s.clip.name]} />
+            </DeviceFrame>
             <div className="lp-how__text">
               <span className="lp-how__num" aria-hidden="true">
                 {i + 1}
