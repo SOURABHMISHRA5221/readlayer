@@ -36,15 +36,17 @@ export function ActionBar({ article, persona, density, onDensity, saved, onSave 
         type="button"
         className={`actionbar__helpful${helped ? " is-done" : ""}`}
         aria-pressed={helped}
-        disabled={helped}
+        aria-disabled={helped || undefined}
+        aria-label={helped ? "Marked helpful" : "Helpful"}
         onClick={() => {
+          if (helped) return; // aria-disabled keeps focus here, unlike disabled
           trackEvent("article_helpful", null, article.id, persona);
           setHelped(true);
           setStatus("Thanks, noted");
         }}
       >
         <ThumbUp />
-        <span>{helped ? "Thanks" : "Helpful"}</span>
+        <span className="actionbar__helpful-text">{helped ? "Thanks" : "Helpful"}</span>
       </button>
       <button type="button" className="icon-btn" aria-pressed={saved} aria-label={saved ? "Saved" : "Save"} title={saved ? "Saved" : "Save"} onClick={onSave}>
         <Bookmark filled={saved} />

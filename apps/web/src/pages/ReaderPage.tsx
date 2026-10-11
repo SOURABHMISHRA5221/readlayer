@@ -169,7 +169,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   const [saved, setSaved] = useState(false);
   useEffect(() => {
     let live = true;
-    savedApi.list(persona).then((items) => live && setSaved(items.some((i) => i.id === id)), () => undefined);
+    savedApi.ids(persona).then((ids) => live && setSaved(ids.includes(id)), () => undefined);
     return () => {
       live = false;
     };

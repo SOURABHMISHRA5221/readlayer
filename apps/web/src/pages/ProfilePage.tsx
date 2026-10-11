@@ -134,7 +134,7 @@ function DomainCards({ profile }: { profile: Profile }) {
         <h3 className="dom__name">{domainLabel(d.domain)}</h3>
         <p className="dom__level">{d.rated ? LEVELS[step] : "Not rated yet"}</p>
         <p className="dom__detail">
-          {d.known ?? 0} {(d.known ?? 0) === 1 ? "idea" : "ideas"} known
+          {d.known ?? 0} {(d.known ?? 0) === 1 ? "idea" : "ideas"} you've shown you know
           {up > 0 ? <span className="dom__up"> · +{up} this week</span> : ", no change this week"}
         </p>
         <p className="dom__detail">Interest: {interestWord(d.interest)}</p>

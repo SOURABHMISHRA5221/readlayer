@@ -42,6 +42,12 @@ async def list_saved(
     return [rows[cid] for cid in order if cid in rows]
 
 
+@router.get("/me/saved/ids", response_model=list[str])
+async def saved_ids(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> list[str]:
+    """Just the ids, for the reader's Save button (no library rows built)."""
+    return sorted(await _saved(ctx.uid))
+
+
 @router.put("/me/saved/{content_id}", status_code=204, responses={404: {}, 409: {}})
 async def save(
     content_id: Annotated[str, Path(pattern=CONTENT_ID)],

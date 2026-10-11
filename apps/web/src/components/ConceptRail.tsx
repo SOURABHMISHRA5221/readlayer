@@ -1,5 +1,5 @@
 import type { CardAnnotation } from "@readlayer/annotator";
-import { useState, type RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
 
 import { plural } from "../lib/format";
 import type { PersonaKey } from "../lib/personas";
@@ -22,13 +22,14 @@ const levelOf = (a: CardAnnotation) => ((a as { level?: string }).level === "ref
  * opens; the open card is then set in this column as a sidenote, level with its line, and the
  * list steps aside (Design pass C6). The column keeps the class `rail`: the annotator measures it.
  */
-export function ConceptRail({ items, ...link }: ConceptLinkProps & { body?: RefObject<HTMLElement | null> }) {
+export function ConceptRail({ items, body, ...link }: ConceptLinkProps & { body?: RefObject<HTMLElement | null> }) {
   const reading = link.active !== null;
+  const early = useBeforeArticle(body);
   return (
     <aside className="rail" aria-label="Notes in this article" data-card-open={reading}>
       <div className="rail__toc" inert={reading}>
         <h2 className="rail__head">
-          <Margo size={34} blink={!reading} />
+          <Margo size={34} blink={!reading && early} />
           {plural(items.length, "note")} for you
         </h2>
         <p className="rail__sub">Pitched for what you already know. Tap a highlight or pick one here.</p>
@@ -157,4 +158,28 @@ export function EndBlock({ items, contentId, persona, ...link }: ConceptLinkProp
       <UpNext contentId={contentId} persona={persona} />
     </section>
   );
+}
+
+/** True until the reader scrolls into the article body: Margo may blink then, never while
+ *  they read (BUILD_PLAN Design pass item 8). */
+function useBeforeArticle(body?: RefObject<HTMLElement | null>): boolean {
+  const [early, setEarly] = useState(true);
+  useEffect(() => {
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const top = body?.current?.getBoundingClientRect().top;
+      setEarly(top === undefined || top > window.innerHeight * 0.5);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", schedule, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      cancelAnimationFrame(frame);
+    };
+  }, [body]);
+  return early;
 }

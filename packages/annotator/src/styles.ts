@@ -177,7 +177,7 @@ const CSS = `
 .rl-card__meter span { width: 16px; height: 4px; border-radius: 2px; background: var(--rl-hairline, #ececec); }
 .rl-card__meter span.on { background: var(--rl-accent, #0d6b62); }
 .rl-card__depth { display: flex; flex-wrap: wrap; gap: 6px; }
-.rl-btn--depth { min-height: 36px; font-size: 13px; }
+.rl-btn--depth { min-height: 44px; margin-left: 0; padding: 0 14px; border-color: var(--rl-hairline, #ececec); font-size: 13px; }
 .rl-card__explain[data-state="loading"] .rl-card__says .rl-card__text,
 .rl-card__explain[data-state="ready"] .rl-card__skeleton { display: none; }
 .rl-card__section[hidden] { display: none; }
@@ -258,7 +258,7 @@ const CSS = `
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 32px;
+  min-height: 44px;
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;

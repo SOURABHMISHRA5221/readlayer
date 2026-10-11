@@ -31,6 +31,7 @@ async def top_spans(client: httpx.AsyncClient, api: str, cid: str, persona: str,
 
 
 PER_MINUTE = 28  # demo readers get 30 explain calls a minute
+ANON_CAP = 40  # ANON_EXPLAIN_DAILY_CAP: uncached generations per demo reader per day
 
 
 class Pace:
@@ -59,12 +60,18 @@ async def explain(
     )
     resp.raise_for_status()
     body = resp.json()
-    return body["cached"], body["kind"], round((time.perf_counter() - t) * 1000)
+    return (
+        body["cached"],
+        body["kind"],
+        round((time.perf_counter() - t) * 1000),
+        body.get("capped", False),
+    )
 
 
 async def warm(
     client: httpx.AsyncClient, api: str, articles: list[str], n: int, shifts: tuple[int, ...] = (0,)
-) -> None:
+) -> int:
+    """Two passes over the articles; returns how many cards the daily cap stopped."""
     pace = Pace()
     for pass_no in (1, 2):
         if pass_no == 2:
@@ -82,11 +89,14 @@ async def warm(
                     (cid[:8], persona, s["id"], *r) for (s, _), r in zip(jobs, results, strict=True)
                 ]
         hits = sum(r[3] for r in rows)
-        kinds = {k: sum(r[4] == k for r in rows) for k in ("verified", "definition")}
+        capped = sum(r[6] for r in rows)
+        kinds = {k: sum(r[4] == k and not r[6] for r in rows) for k in ("verified", "definition")}
         slowest = max((r[5] for r in rows), default=0)
         print(
-            f"pass {pass_no}: {len(rows)} cards, {hits} cache hits, {kinds}, slowest {slowest} ms"
+            f"pass {pass_no}: {len(rows)} cards, {hits} cache hits, {kinds}, capped {capped}, "
+            f"slowest {slowest} ms"
         )
+    return capped
 
 
 async def dry_run(
@@ -102,22 +112,34 @@ async def dry_run(
                 print(
                     f"  {cid[:8]} {persona:15s} {s['id']:6s} {s.get('label', '')} shifts {shifts}"
                 )
-    print(f"dry run: {total} explanation requests would be made (nothing generated)")
+    print(
+        f"dry run: {total} explanation requests for {articles[0][:8]} "
+        f"(cap {ANON_CAP} per demo reader, one reader per article; nothing generated)"
+    )
+    if total > ANON_CAP:
+        print(f"WARNING: {total} > {ANON_CAP}: some cards would come back capped")
 
 
 async def run(
     api: str, articles: list[str], n: int, dry: bool = False, shifts: tuple[int, ...] = (0,)
-) -> None:
-    async with httpx.AsyncClient(timeout=60) as client:
-        client.headers["Authorization"] = f"Bearer {await sign_in_anonymously(client)}"
-        try:
-            if dry:
-                await dry_run(client, api, articles, n, shifts)
-            else:
-                await warm(client, api, articles, n, shifts)
-        finally:
-            resp = await client.delete(f"{api}/v1/me")
-            print(f"cleanup: DELETE /v1/me → {resp.status_code}")
+) -> int:
+    """One temporary demo reader per article, so no reader passes the anonymous explain cap
+    (3 personas × n spans × len(shifts) ≤ 27 at the defaults); each is deleted in finally."""
+    capped = 0
+    for cid in articles:
+        async with httpx.AsyncClient(timeout=60) as client:
+            client.headers["Authorization"] = f"Bearer {await sign_in_anonymously(client)}"
+            try:
+                if dry:
+                    await dry_run(client, api, [cid], n, shifts)
+                else:
+                    capped += await warm(client, api, [cid], n, shifts)
+            finally:
+                resp = await client.delete(f"{api}/v1/me")
+                print(f"cleanup: DELETE /v1/me → {resp.status_code}")
+    if capped:
+        print(f"FAILED: {capped} cards were capped; they are not warm")
+    return capped
 
 
 def main() -> None:
@@ -131,7 +153,8 @@ def main() -> None:
     )
     args = parser.parse_args()
     shifts = (0, -1, 1) if args.shifts else (0,)
-    asyncio.run(run(args.api.rstrip("/"), args.articles, args.top, args.dry_run, shifts))
+    capped = asyncio.run(run(args.api.rstrip("/"), args.articles, args.top, args.dry_run, shifts))
+    raise SystemExit(1 if capped else 0)
 
 
 if __name__ == "__main__":

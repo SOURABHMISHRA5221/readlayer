@@ -89,5 +89,18 @@ def test_routes_overview_and_bands():
                             json={"concept_ids": ["c_rate", "c_bond", "nope"]}).json()  # fmt: skip
         assert set(bands) == {"c_rate", "c_bond"}
         assert client.post("/v1/me/bands", json={"concept_ids": ["x"] * 51}).status_code == 422
+        first = client.post(
+            "/v1/me/bands?persona=newcomer", json={"concept_ids": ["c_bond"]}
+        ).json()
+        again = client.post(
+            "/v1/me/bands?persona=newcomer", json={"concept_ids": ["c_bond"]}
+        ).json()
+        assert first == again  # no interaction: nothing moves
+        client.patch("/v1/me/graph/c_bond?persona=newcomer", json={"state": "known"})
+        after = client.post(
+            "/v1/me/bands?persona=newcomer", json={"concept_ids": ["c_bond"]}
+        ).json()
+        order = ["unaware", "heard of", "understands", "can explain"]
+        assert order.index(after["c_bond"]) > order.index(first["c_bond"])  # a correction moves it
     finally:
         set_graph(previous)

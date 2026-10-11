@@ -105,3 +105,23 @@ describe("pre-read card in the extension", () => {
     expect(steps[0]).toContain("Yield curve");
   });
 });
+
+describe("a rejected shifted Background", () => {
+  it("keeps Back to my level", async () => {
+    document.body.innerHTML = HTML;
+    const root = document.getElementById("root")!;
+    const a = createAnnotator(root, {
+      loadExplanation: async () => verified("understands"),
+      loadShifted: async () => ({ id: "", kind: "verified", background: null, author_says: "The author says so.", band: "heard of" }),
+    });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
+    const simpler = card().querySelector<HTMLButtonElement>(".rl-btn--depth")!;
+    simpler.click();
+    await tick();
+    expect(card().querySelector<HTMLElement>(".rl-card__depth")!.hidden).toBe(false);
+    expect(simpler.textContent).toBe("Back to my level");
+    a.destroy();
+  });
+});

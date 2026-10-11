@@ -442,12 +442,13 @@ subject to pause). The next open regenerates.
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
 | DELETE | /v1/me | delete all of the caller's data and their Auth user |
 | GET | /v1/content/{id}/annotations | ranked, budgeted annotations for the caller |
-| POST | /v1/explain | `{content_id, demand_id?, paragraph_id?, shift?: -1\|1}` → `{id, kind: verified\|definition, mode, label, definition, background, author_says, analogy_domain, band, can_simpler, can_deeper, thinks_in, style, cached, prompt_version}` (§7; `shift` = "Say it simpler" / "Go deeper", span notes only, 422 with a paragraph) |
+| POST | /v1/explain | `{content_id, demand_id?, paragraph_id?, shift?: -1\|1}` → `{id, kind: verified\|definition, mode, label, definition, background, author_says, analogy_domain, band, can_simpler, can_deeper, thinks_in, style, cached, capped, prompt_version}` (§7; `shift` = "Say it simpler" / "Go deeper", span notes only, 422 with a paragraph) |
 | POST | /v1/explain/{id}/report | `{event_id, content_id, concept_id?}` → `{evicted, event_applied}`: "This is wrong" (§7) |
 | POST | /v1/events | `{events: [{id, type, at, concept_id?, content_id?, paragraph_id?, words?, ms?}], persona?}` (types include `article_helpful` `{content_id}`: the action bar's Helpful, stored, no evidence) → `{applied, events_applied, events_ignored}`; sync, idempotent by event id (stored at `users/{uid}/events/{id}` with `expire_at` for the 90-day TTL); `applied: false` and no writes while learning is paused |
 | GET | /v1/me/graph | concepts by domain with band, plus stats (concepts learned, annotation trend); `?domain=X[&q=]` → capped subgraph for the knowledge map (§15.2); `?view=overview` → the all-topics map `{domains, nodes[{id, label, domain, band, ready, goal, weight, definition, recent, rose_this_week}], edges}` (§15.1) |
 | POST | /v1/me/bands | `{concept_ids: [≤ 50]}` → `{concept_id: band}`: current bands (edge with forgetting, else the prior), for the end-of-article recap (§19) |
 | GET | /v1/me/saved | the reader's saved articles as library rows, newest first, through the library's visibility filter |
+| GET | /v1/me/saved/ids | just the saved ids (the reader's Save button; no library rows built) |
 | PUT / DELETE | /v1/me/saved/{content_id} | save / unsave a library article the reader can see (corpus or their own pages); ≤ 500; signed-in readers need consent |
 | PATCH | /v1/me/graph/{concept_id} | user correction ("I know this" / "I don't") → strong evidence |
 | GET | /v1/me/profile | reading profile page data: summary, domains, THINKS_IN, weekly band changes, trend (§15.2) |
@@ -960,8 +961,8 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   (`tools/shots/font_metrics.py`). No reader-facing text under 13px; controls ≥ 44px.
 - **Margo** (`components/Margo.tsx`): one ink outline and one teal swipe; moods idle, think,
   happy, oops and a 16px mark (favicon, extension icon `public/margo-mark-128.png`). Appears in
-  the logo, the reader's margin header (idle; an occasional blink, none under reduced motion or
-  while a note is open), the notes-loading notice (think), the recap (happy) and empty and error
+  the logo, the reader's margin header (idle; an occasional blink only before the reader scrolls
+  into the article, never while they read or a note is open, none under reduced motion), the notes-loading notice (think), the recap (happy) and empty and error
   states (oops). Never in article text, never on note cards. Always `aria-hidden`.
 - **Top bar**: logo, search, "Read any link" (focuses the sidebar field, else a dialog), the demo
   persona chip, theme, account.
@@ -976,6 +977,7 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   Margo until a note opens there as a sidenote; **"What this article changed"** at the end: the
   bands that moved since the notes loaded (`POST /v1/me/bands` at load and at the end, after
   flushing events), each with Undo (the opposite correction, so the row then shows the resulting
-  band), the "Not really" answers as next on the path, and up to two Up next items that teach
-  them; then Up next.
+  band), the "Not really" answers as one row each ("Next on your path", never also a band move),
+  and up to two Up next items that teach them, else Up next's top two under a neutral "Read
+  next"; then Up next.
 - **Profile**: the Gloss title, the summary as a serif lede, domain cards, the map (§15.1).

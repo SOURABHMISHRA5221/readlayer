@@ -329,7 +329,8 @@ export class Card {
     }
     const simplerOk = this.shift === -1 || Boolean(e?.can_simpler);
     const deeperOk = this.shift === 1 || Boolean(e?.can_deeper);
-    this.depth.hidden = !(this.shiftEnabled && span && e?.background && (simplerOk || deeperOk));
+    // A rejected shifted Background still offers the way back to the reader's own level.
+    this.depth.hidden = !(this.shiftEnabled && span && (e?.background || this.shift !== 0) && (simplerOk || deeperOk));
     this.simpler.hidden = !simplerOk;
     this.deeper.hidden = !deeperOk;
     this.simpler.textContent = this.shift === -1 ? "Back to my level" : "Say it simpler";

@@ -23,6 +23,17 @@ export interface RowProps {
   error?: string | null;
 }
 
+/** Provider snippets carry markdown and sponsor links ("## Big promises", "Go to https://…"):
+ *  shown as plain text without them. Publisher text, display only; nothing is stored. */
+export function cleanSnippet(text: string): string {
+  return text
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/(^|\s)#{1,6}\s+/g, " ")
+    .replace(/[*_`]{1,3}/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 /** One feed row (Design pass C5): source line, bold title, serif subtitle, quiet actions. */
 export function Row(p: RowProps) {
   const initial = (p.source.replace(/^(www\.|the\s+)/i, "")[0] ?? "?").toUpperCase();
@@ -55,7 +66,7 @@ export function Row(p: RowProps) {
             {p.external && <span className="visually-hidden"> (opens in a new tab)</span>}
           </a>
         </h3>
-        {p.subtitle && <p className="row__sub">{p.subtitle}</p>}
+        {p.subtitle && cleanSnippet(p.subtitle) && <p className="row__sub">{cleanSnippet(p.subtitle)}</p>}
         {p.why && <p className="row__why">{p.why}</p>}
         <div className="row__meta">
           <span className="tnum">{p.busy ? "Opening…" : p.time}</span>

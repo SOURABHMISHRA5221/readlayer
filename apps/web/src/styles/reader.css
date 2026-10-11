@@ -114,8 +114,10 @@
 .actionbar__helpful.is-done { background: var(--accent-wash); border-color: var(--accent-wash); color: var(--accent-ink); cursor: default; }
 .actionbar a.icon-btn { text-decoration: none; }
 @media (max-width: 600px) {
-  .actionbar { top: 64px; }
-  .actionbar .segmented { flex: 1 1 100%; }
+  .actionbar { top: 64px; flex-wrap: nowrap; gap: 0; }
+  .actionbar .segmented__option { padding: 0 8px; }
+  .actionbar__helpful { width: 44px; padding: 0; justify-content: center; border-color: transparent; }
+  .actionbar__helpful-text { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
 .article-figure { margin: 0 0 var(--s8); }
@@ -255,7 +257,7 @@
 .recap__mv i[data-band="heard of"] { background: color-mix(in srgb, var(--accent) 45%, var(--paper)); box-shadow: inset 0 0 0 1.6px var(--accent-line); }
 .recap__mv i[data-band="understands"] { background: var(--accent); }
 .recap__mv i[data-band="can explain"] { background: var(--accent-ink); box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--accent-ink); }
-.recap__mv i[data-band="ready"] { box-shadow: inset 0 0 0 1.5px var(--mark-goal); border-radius: 50%; }
+.recap__mv i[data-band="next"] { box-shadow: inset 0 0 0 1.5px var(--mark-goal); border-radius: 50%; }
 .recap__arrow { position: relative; width: 24px; height: 1.5px; background: var(--muted); }
 .recap__arrow::after { content: ""; position: absolute; right: -1px; top: -3px; border: 4px solid transparent; border-left: 5px solid var(--muted); border-right: 0; }
 .recap__next { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); margin-bottom: var(--s8); }

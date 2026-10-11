@@ -26,7 +26,7 @@ AXE_JS = ("axe.run(document, {resultTypes: ['violations']}).then(r => r.violatio
           ".filter(v => ['serious','critical'].includes(v.impact)).map(v => v.id + ':' + v.nodes.length))")
 SMALL_JS = """[...document.querySelectorAll('button, input, a[href], summary, [role=radio], [role=tab], select, textarea')]
   .filter(e => { const r = e.getBoundingClientRect(); if (!r.width || !r.height) return false;
-    if (e.closest('p, li > a, .rl-card, .skip-link')) return false;
+    if (e.closest('p, li > a, .skip-link')) return false;
     return r.height < 44 || r.width < 44; })
   .map(e => (e.getAttribute('aria-label') || e.textContent.trim().slice(0, 24) || e.tagName) + ' ' +
     Math.round(e.getBoundingClientRect().width) + 'x' + Math.round(e.getBoundingClientRect().height))"""

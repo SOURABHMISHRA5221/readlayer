@@ -8,6 +8,7 @@ import { api, errorKind, type ApiErrorKind, type ContentSummary } from "../lib/a
 import { useIsDemo } from "../lib/auth";
 import { DOMAINS, domainLabel, plural, sourceName } from "../lib/format";
 import { parseDensity, personaParam, readerPersona } from "../lib/personas";
+import { parseTab, TABS, tabParam, type Tab } from "../lib/libraryTabs";
 import { navigate, withParams } from "../lib/router";
 import { savedApi } from "../lib/savedApi";
 
@@ -17,20 +18,9 @@ const SavedTab = lazy(() => import("../components/library/SavedTab"));
 
 const SEARCH_DEBOUNCE_MS = 180;
 const PAGE_SIZE = 24;
-const TABS = [
-  { id: "foryou", label: "For you" },
-  { id: "topics", label: "Topics" },
-  { id: "saved", label: "Saved" },
-] as const;
-type Tab = (typeof TABS)[number]["id"];
 
 type Load = { status: "loading" } | { status: "ready"; items: ContentSummary[] } | { status: "error"; kind: ApiErrorKind };
 
-export function parseTab(url: URL): Tab {
-  if (url.pathname === "/for-you") return "foryou";
-  const t = url.searchParams.get("tab");
-  return t === "topics" || t === "saved" ? t : "foryou";
-}
 
 /** The library as a feed (Design pass C5): For you · Topics · Saved, with a sidebar. */
 export function LibraryPage({ url }: { url: URL }) {
@@ -126,7 +116,7 @@ export function LibraryPage({ url }: { url: URL }) {
       persona: personaParam(persona),
       density: url.searchParams.get("density"),
     });
-  const selectTab = (t: Tab) => go({ tab: t === "foryou" ? null : t });
+  const selectTab = (t: Tab) => go({ tab: tabParam(t) });
   const onTabKey = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
     const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
     if (!step) return;

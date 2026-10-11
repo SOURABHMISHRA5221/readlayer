@@ -34,6 +34,7 @@ def test_save_list_and_unsave_newest_first(env):  # noqa: F811
     other = next(d.content_id for d in DOCS if d.content_id == "main")
     assert c.put(f"/v1/me/saved/{CORPUS}").status_code == 204
     assert c.get("/v1/me/saved").json()[0]["id"] == CORPUS
+    assert c.get("/v1/me/saved/ids").json() == [CORPUS]
     assert c.put(f"/v1/me/saved/{CORPUS}").status_code == 204  # idempotent
     assert len(c.get("/v1/me/saved").json()) == 1
     assert c.delete(f"/v1/me/saved/{CORPUS}").status_code == 204
@@ -58,3 +59,18 @@ def test_signed_in_readers_need_consent_and_saved_is_exported_and_deleted(env): 
     assert CORPUS in asyncio.run(repo.export("g-saver"))["saved"]
     asyncio.run(repo.delete("g-saver"))
     assert asyncio.run(get_doc_store().list("users/g-saver/saved")) == []
+
+
+def test_the_saved_list_is_capped(env, monkeypatch):  # noqa: F811
+    from app.me import saved as saved_api
+
+    _store(env[3])
+    monkeypatch.setattr(saved_api, "MAX_SAVED", 1)
+    c = demo("hoarder")
+    other = url_hash("https://corpus.example/another")
+    main = next(d for d in DOCS if d.content_id == "main")
+    env[3].docs[other] = main.model_copy(update={"content_id": other})
+    read_router.reset_catalog()
+    assert c.put(f"/v1/me/saved/{CORPUS}").status_code == 204
+    assert c.put(f"/v1/me/saved/{other}").status_code == 409
+    assert c.put(f"/v1/me/saved/{CORPUS}").status_code == 204  # re-saving the same one is fine

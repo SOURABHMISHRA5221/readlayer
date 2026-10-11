@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { api, type RecItem } from "../../lib/api";
 import { flushEvents } from "../../lib/events";
 import { personaParam, type PersonaKey } from "../../lib/personas";
-import { BAND_LABEL, bandMoves, teaching, type BandMove } from "../../lib/recap";
+import { BAND_LABEL, bandMoves, movesExcept, nextReads, type BandMove } from "../../lib/recap";
 import { navigate, withParams } from "../../lib/router";
 import { Margo } from "../Margo";
 
@@ -27,7 +27,7 @@ type Row = BandMove & { undone?: string };
 export function Recap({ contentId, persona, before, labels, answers }: Props) {
   const ref = useRef<HTMLElement>(null);
   const [rows, setRows] = useState<Row[] | null>(null);
-  const [recs, setRecs] = useState<RecItem[]>([]);
+  const [recs, setRecs] = useState<{ items: RecItem[]; teaches: boolean }>({ items: [], teaches: false });
   const unknown = [...answers].filter(([, a]) => !a.known);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ export function Recap({ contentId, persona, before, labels, answers }: Props) {
     const ctrl = new AbortController();
     api
       .recommendations(contentId, persona, null, ctrl.signal)
-      .then((r) => setRecs(teaching(r.items, new Set(unknown.map(([id]) => id)))))
+      .then((r) => setRecs(nextReads(r.items, new Set(unknown.map(([id]) => id)))))
       .catch(() => undefined);
     return () => ctrl.abort();
   }, [contentId, persona, unknown.length]);
@@ -69,7 +69,7 @@ export function Recap({ contentId, persona, before, labels, answers }: Props) {
     }
   };
 
-  const moves = rows ?? [];
+  const moves = movesExcept(rows ?? [], new Set(answers.keys()));
   const nothing = rows !== null && !moves.length && !unknown.length;
   return (
     <section className="recap" ref={ref} aria-labelledby="recap-h">
@@ -113,16 +113,16 @@ export function Recap({ contentId, persona, before, labels, answers }: Props) {
                 <small>You said "Not really", so it's next on your path</small>
               </div>
               <span className="recap__mv">
-                <i data-band="ready" aria-hidden="true" />
-                Ready to learn
+                <i data-band="next" aria-hidden="true" />
+                Next on your path
               </span>
             </li>
           ))}
         </ul>
       )}
-      {recs.length > 0 && (
+      {recs.items.length > 0 && (
         <div className="recap__next">
-          {recs.map((r) => {
+          {recs.items.map((r) => {
             const taught = r.triggers.find((t) => unknown.some(([id]) => id === t.id));
             const href = r.content_id
               ? withParams(new URL(`/read/${r.content_id}`, window.location.origin), { persona: personaParam(persona) })
@@ -141,7 +141,10 @@ export function Recap({ contentId, persona, before, labels, answers }: Props) {
                   window.scrollTo(0, 0);
                 }}
               >
-                <p className="recap__k">{r.format === "video" ? "Watch" : r.format === "podcast" ? "Listen" : "Read next"}, teaches {taught?.label}</p>
+                <p className="recap__k">
+                  {r.format === "video" ? "Watch" : r.format === "podcast" ? "Listen" : "Read next"}
+                  {recs.teaches && taught ? `, teaches ${taught.label}` : ""}
+                </p>
                 <p className="recap__t">{r.title}</p>
                 <p className="recap__w">{r.source}</p>
               </a>

@@ -75,6 +75,9 @@ class ExplainResponse(BaseModel):
     thinks_in: ThinksIn | None
     style: ExplanationStyle
     cached: bool
+    capped: bool = (
+        False  # the daily explain cap stopped a generation (definition or shared part only)
+    )
     prompt_version: str
 
 
@@ -194,6 +197,7 @@ async def explain(
         thinks_in=inputs.thinks_in,
         style=inputs.style,
         cached=served.cached,
+        capped=served.reason == "capped",
         prompt_version=service.prompt_version(),
     )
 

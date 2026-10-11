@@ -447,3 +447,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   sideways scroll on phones (top bar), sub-44px density and Up next buttons, the persona chip's
   missing name in compact mode, a heard-of dot under 3:1, domain cards counting the whole graph.
   Both checkpoints met on Oct 11. Next: milestone-reviewer.
+- milestone-reviewer round 1: **FIX** (6): the lockfile and wordmark script uncommitted (CI would
+  fail), the recap listing a "Not really" concept twice, Margo blinking during reading,
+  `warm_demo --shifts` running into the anonymous cap silently, missing planned tests and the
+  recap's neutral fallback, stale STATUS lines. All fixed: one row per concept ("Next on your
+  path"), Up next's top two under "Read next" when nothing teaches the unknown concepts, blink only
+  before the reader scrolls into the article, `capped` on the explain response, one demo reader
+  per article in `warm_demo` with capped cards reported and a non-zero exit, tests for the shift
+  cap and fallback, bands, the saved cap, Margo `aria-hidden` and tab ↔ URL. Also from the review:
+  44px card buttons, no overlap between depth buttons, "Back to my level" after a rejected shift,
+  Helpful keeping focus, a one-row phone action bar, a light `GET /v1/me/saved/ids` for the reader,
+  snippet cleanup (markdown, sponsor links), domain-card copy matching what it counts.
+- After screenshots (32): `docs/evidence/design/after/` (library For you / Topics / Saved,
+  reader, open card, phone sheet, recap, profile, map inspector, sign-in); before (20):
+  `docs/evidence/design/before/`; audits: `docs/evidence/design/after-audit.txt`; flows,
+  contrast and measurements: `docs/evidence/design/acceptance.txt`.
