@@ -13,10 +13,17 @@
   color: var(--ink-soft);
 }
 
-.lp-section {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: var(--s16) var(--gutter);
+/* Full-bleed bands (decision 44: paper / wash alternate, trust is teal); the padding keeps the
+   content in the same 1200px column as the hero. */
+.lp-section,
+.lp-final {
+  --lp-inline: max(var(--gutter), calc((100% - 1200px) / 2 + var(--gutter)));
+  padding: var(--s16) var(--lp-inline);
+}
+.lp-problem,
+.lp-how,
+.lp-final {
+  background: var(--wash);
 }
 .lp-section__title {
   max-width: 18ch;
@@ -221,20 +228,42 @@
   }
 }
 
-/* 4. Trust */
-.lp-trust__head {
+/* 4. Trust: one teal band, the eval results as large figures. */
+.lp-trust {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.lp-trust__figures {
+  display: grid;
+  gap: var(--s6);
+  margin-top: var(--s10);
+  padding: 0;
+  list-style: none;
+}
+.lp-trust__figure {
   display: flex;
-  align-items: center;
-  gap: var(--s3);
+  flex-direction: column;
+  gap: var(--s2);
+  padding-top: var(--s4);
+  border-top: 2px solid currentColor;
+}
+.lp-trust__num {
+  font: 800 72px / 0.95 var(--font-head);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.lp-trust__of {
+  font-size: 0.5em;
+  letter-spacing: -0.02em;
+}
+.lp-trust__label {
+  max-width: 16em;
+  font: 600 16px / 1.35 var(--font-ui);
 }
 .lp-trust__list {
   display: grid;
   gap: var(--s8);
-  margin-top: var(--s10);
-}
-.lp-trust__item {
-  padding-top: var(--s4);
-  border-top: 1px solid var(--hairline);
+  margin-top: var(--s12);
 }
 .lp-trust__item dt {
   font: 700 19px / 1.3 var(--font-head);
@@ -243,17 +272,15 @@
   max-width: 36em;
   margin: var(--s2) 0 0;
   font: 400 17px / 1.6 var(--font-read);
-  color: var(--ink-soft);
-}
-.lp-trust__item strong {
-  font-weight: 600;
-  color: var(--ink);
 }
 .lp-trust__item a {
   font: 600 var(--text-ui) / 1 var(--font-ui);
-  color: var(--accent-ink);
+  color: inherit;
   text-underline-offset: 3px;
   white-space: nowrap;
+}
+.lp-trust :focus-visible {
+  outline-color: var(--on-accent);
 }
 
 /* 5. What you can read */
@@ -287,16 +314,18 @@
   color: var(--accent-ink);
 }
 
-/* Final call to action and footer */
+/* Final call to action: Margo large, handing over the next note. */
 .lp-final {
-  max-width: 1200px;
-  margin: var(--s8) auto 0;
-  padding: var(--s16) var(--gutter);
-  border-top: 2px solid var(--ink);
+  display: grid;
+  gap: var(--s6);
+  align-items: center;
+}
+.lp-final__margo {
+  width: 120px;
+  height: auto;
 }
 .lp-final__title {
   max-width: 14ch;
-  margin-top: var(--s5);
   font: 800 var(--text-headline) / 1.06 var(--font-head);
   letter-spacing: -0.026em;
 }
@@ -334,7 +363,8 @@
 }
 
 @media (min-width: 768px) {
-  .lp-section {
+  .lp-section,
+  .lp-final {
     padding-top: var(--s20);
     padding-bottom: var(--s20);
   }
@@ -359,18 +389,21 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--s12) var(--s10);
   }
-  .lp-trust {
-    display: grid;
-    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
-    gap: var(--s10);
-  }
-  .lp-trust__head {
-    align-self: start;
-    align-items: flex-start;
-    flex-direction: column;
-  }
+  .lp-trust__figures,
   .lp-trust__list {
-    margin-top: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--s8);
+  }
+  .lp-trust__num {
+    font-size: 96px;
+  }
+  .lp-final {
+    grid-template-columns: auto minmax(0, 1fr);
+    column-gap: var(--s10);
+  }
+  .lp-final__margo {
+    grid-row: span 2;
+    width: 180px;
   }
   .lp-formats {
     display: grid;

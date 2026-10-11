@@ -9,6 +9,7 @@ import { paragraph } from "../landing/demoParagraph.json";
 import evals from "../landing/evals.json";
 import { Hero, HeroCtas } from "../landing/Hero";
 import { GrowingMap, JargonArt, LookupArt, SummaryArt } from "../landing/Illustrations";
+import { MargoHero } from "../landing/MargoHero";
 import { MiniDemo } from "../landing/MiniDemo";
 import { REPO_URL } from "../landing/links";
 import { signInError, signInWithGoogle, startDemo } from "../lib/auth";
@@ -88,7 +89,7 @@ export default function LandingPage({ url }: { url: URL }) {
         <Trust />
         <Formats />
         <section className="lp-final" aria-labelledby="lp-final-title">
-          <Margo mood="happy" size={64} className="lp-final__margo" />
+          <MargoHero mood="happy" className="lp-final__margo" />
           <h2 id="lp-final-title" className="lp-final__title">
             Your next article, explained for you.
           </h2>
@@ -237,7 +238,6 @@ function HowItWorks() {
             <span className="lp-how__num" aria-hidden="true">
               {i + 1}
             </span>
-            <Margo mood={s.mood} size={44} className="lp-how__margo" />
             <h3>{s.title}</h3>
             <p>{s.body}</p>
             {i === STEPS.length - 1 && <GrowingMap />}
@@ -248,17 +248,29 @@ function HowItWorks() {
   );
 }
 
-const of = (c: { passed: number; total: number }) => `${c.passed} of ${c.total}`;
+const FIGURES = [
+  { count: evals.adversarial, label: "deliberately broken explanations caught" },
+  { count: evals.good, label: "good explanations accepted" },
+  { count: evals.injection, label: "prompt-injection attempts resisted" },
+] as const;
 
 function Trust() {
   return (
     <section className="lp-section lp-trust" aria-labelledby="lp-trust-title">
-      <div className="lp-trust__head">
-        <Margo mood="mark" size={32} />
-        <h2 id="lp-trust-title" className="lp-section__title">
-          Checked before you see it.
-        </h2>
-      </div>
+      <h2 id="lp-trust-title" className="lp-section__title">
+        Checked before you see it.
+      </h2>
+      <ul className="lp-trust__figures" aria-label="Verifier results from our evaluation">
+        {FIGURES.map((f) => (
+          <li key={f.label} className="lp-trust__figure">
+            <span className="lp-trust__num">
+              {f.count.passed}
+              <span className="lp-trust__of">/{f.count.total}</span>
+            </span>
+            <span className="lp-trust__label">{f.label}</span>
+          </li>
+        ))}
+      </ul>
       <dl className="lp-trust__list">
         <div className="lp-trust__item">
           <dt>Never changes the original</dt>
@@ -269,20 +281,22 @@ function Trust() {
         <div className="lp-trust__item">
           <dt>Every explanation is verified</dt>
           <dd>
-            <p>Each note is checked against its source paragraph before it's shown; if it doesn't pass, you get a plain
-            definition instead. In our evaluation the checker rejected <strong>{of(evals.adversarial)}</strong>{" "}
-            deliberately broken explanations, accepted <strong>{of(evals.good)}</strong> good ones and resisted{" "}
-            <strong>{of(evals.injection)}</strong> prompt-injection attempts.{" "}
-            <a href={`${REPO_URL}#evaluation`} target="_blank" rel="noreferrer">
-              How we test
-            </a></p>
+            <p>
+              Each note is checked against its source paragraph before it's shown; if it doesn't pass, you get a plain
+              definition instead.{" "}
+              <a href={`${REPO_URL}#evaluation`} target="_blank" rel="noreferrer">
+                How we test
+              </a>
+            </p>
           </dd>
         </div>
         <div className="lp-trust__item">
           <dt>Your reading stays yours</dt>
           <dd>
-            <p>The AI never learns who you are or what you've read: it sees only the paragraph it explains, a reading level
-            and your analogy style. Export or delete everything anytime.</p>
+            <p>
+              The AI never learns who you are or what you've read: it sees only the paragraph it explains, a reading
+              level and your analogy style. Export or delete everything anytime.
+            </p>
           </dd>
         </div>
       </dl>

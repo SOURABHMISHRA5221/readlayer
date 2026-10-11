@@ -460,11 +460,24 @@ export class Card {
     Object.assign(this.arrowEl.style, { left: "-7px", top: `${arrowY}px`, bottom: "" });
   }
 
-  /** Fade the body's bottom edge while there is more to scroll. */
+  /**
+   * Fade the body's bottom edge while there is more to scroll. A body that scrolls at all is a
+   * labelled, focusable region, so keyboard readers can scroll it too (axe
+   * scrollable-region-focusable); one that fits is plain again.
+   */
   private markOverflow(): void {
     const b = this.body;
     const more = b.scrollHeight - b.clientHeight - b.scrollTop > 4;
     b.classList.toggle(`${C}__body--more`, more);
+    if (b.scrollHeight > b.clientHeight + 1) {
+      b.tabIndex = 0;
+      b.setAttribute("role", "region");
+      b.setAttribute("aria-label", "Note");
+    } else {
+      b.removeAttribute("tabindex");
+      b.removeAttribute("role");
+      b.removeAttribute("aria-label");
+    }
   }
 
   private maybeMakeRoom(): void {

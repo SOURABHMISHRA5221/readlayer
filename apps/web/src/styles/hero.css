@@ -90,6 +90,18 @@
   margin: 0;
   min-width: 0;
 }
+.lp-demo__head {
+  position: relative;
+  z-index: 1; /* Margo's note overlaps the sheet's top edge */
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+.lp-demo__toggle {
+  min-width: 0;
+  padding-bottom: var(--s4);
+}
 .lp-demo__toggle .segmented {
   flex-wrap: wrap;
 }
@@ -99,10 +111,94 @@
 .lp-demo__toggle .segmented__track {
   flex-wrap: wrap;
 }
+
+/* Below 1024: the label and Margo share a row, the persona pills get the full width below. */
+@media (max-width: 1023px) {
+  .lp-demo__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    row-gap: var(--s3);
+  }
+  .lp-demo__toggle,
+  .lp-demo__toggle .segmented {
+    display: contents;
+  }
+  .lp-demo__toggle .segmented__label {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+    padding-bottom: var(--s3);
+  }
+  .lp-demo__margo {
+    grid-column: 2;
+    grid-row: 1;
+    margin-bottom: 0;
+  }
+  .lp-demo__toggle .segmented__track {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-wrap: nowrap;
+    justify-self: start;
+    max-width: 100%;
+    margin-bottom: var(--s4);
+  }
+  .lp-demo__toggle .segmented__option {
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+}
+
+/* Margo hands over the note: mirrored, so the arm reaches down into the sheet. */
+.lp-demo__margo {
+  flex: none;
+  width: 120px;
+  height: auto;
+  margin-bottom: -30px;
+  transform: scaleX(-1);
+}
+.margo-hero__arm {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.margo-hero__hand {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 2.4;
+}
+.margo-hero__card {
+  fill: var(--surface);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+.margo-hero__hl {
+  fill: var(--accent-wash);
+  stroke: var(--accent-line);
+  stroke-width: 1;
+}
+.margo-hero__line {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.margo-hero__face {
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease);
+}
+.margo-hero__face.is-on {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .margo-hero__face {
+    transition: none;
+  }
+}
 .lp-demo__sheet {
   position: relative;
-  margin-top: var(--s4);
-  padding: var(--s5) var(--s5) var(--s6) 60px;
+  padding: var(--s6) var(--s5);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
   background: var(--surface);
@@ -123,16 +219,8 @@
   text-transform: uppercase;
   color: var(--muted);
 }
-.lp-demo__body {
-  position: relative;
-  margin-top: var(--s3);
-}
-.lp-demo__margo {
-  position: absolute;
-  top: 2px;
-  left: -48px;
-}
 .lp-demo__para {
+  margin-top: var(--s3);
   /* Room for every persona's marks at both widths, so mounting the demo moves nothing. */
   min-height: calc(7 * 1.62em);
   font: 400 var(--text-body) / var(--leading-body) var(--font-read);
@@ -146,10 +234,7 @@
 
 @media (min-width: 600px) {
   .lp-demo__sheet {
-    padding: var(--s8) var(--s10) var(--s8) 84px;
-  }
-  .lp-demo__margo {
-    left: -64px;
+    padding: var(--s8) var(--s10);
   }
   .lp-demo__para {
     min-height: calc(5 * 1.62em);
@@ -169,5 +254,15 @@
   }
   .lp-demo__para {
     min-height: calc(6 * 1.62em);
+  }
+  .lp-demo__margo {
+    width: 160px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .lp-demo__margo {
+    width: 200px;
+    margin-right: -72px; /* into the page margin, beside the sheet's corner */
   }
 }

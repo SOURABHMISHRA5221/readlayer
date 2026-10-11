@@ -1,11 +1,11 @@
 import type { ReactNode, Ref } from "react";
 
-import { Margo } from "../components/Margo";
 import { Segmented } from "../components/Segmented";
 import { Wordmark } from "../components/Wordmark";
 import type { PersonaKey } from "../lib/personas";
 import { paragraph, site } from "./demoParagraph.json";
 import { DEFAULT_DEMO_PERSONA, DEMO_PERSONAS } from "./demoPersonas";
+import { MargoHero, PERSONA_MOOD } from "./MargoHero";
 
 /**
  * The landing hero (plan A2). `HeroStatic` is also copied into index.html, so the first paint is
@@ -26,17 +26,17 @@ interface DemoFrameProps {
 export function DemoFrame({ persona, onPersona, paragraphRef }: DemoFrameProps) {
   return (
     <figure className="lp-demo">
-      <div className="lp-demo__toggle">
-        <Segmented label="Read as" options={DEMO_PERSONAS} value={persona} onChange={onPersona} />
+      <div className="lp-demo__head">
+        <div className="lp-demo__toggle">
+          <Segmented label="Read as" options={DEMO_PERSONAS} value={persona} onChange={onPersona} />
+        </div>
+        <MargoHero className="lp-demo__margo" mood={PERSONA_MOOD[persona]} />
       </div>
       <div className="lp-demo__sheet">
         <p className="lp-demo__source">From {site}</p>
-        <div className="lp-demo__body">
-          <Margo className="lp-demo__margo" size={36} />
-          <p className="lp-demo__para" data-rl-paragraph={paragraph.id} ref={paragraphRef}>
-            {paragraph.text}
-          </p>
-        </div>
+        <p className="lp-demo__para" data-rl-paragraph={paragraph.id} ref={paragraphRef}>
+          {paragraph.text}
+        </p>
       </div>
       <figcaption className="lp-demo__caption">A real paragraph and real notes. Tap a highlighted term.</figcaption>
     </figure>

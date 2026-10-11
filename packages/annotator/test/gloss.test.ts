@@ -49,6 +49,27 @@ describe("Gloss highlight levels and card", () => {
     a.destroy();
   });
 
+  it("a card body that scrolls can be reached and scrolled by keyboard; one that fits can't", async () => {
+    document.body.innerHTML = HTML;
+    const root = document.getElementById("root")!;
+    const a = createAnnotator(root, { loadExplanation: async () => verified("unaware") });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
+    const body = card().querySelector<HTMLElement>(".rl-card__body")!;
+    Object.defineProperty(body, "clientHeight", { configurable: true, value: 200 });
+    Object.defineProperty(body, "scrollHeight", { configurable: true, value: 500 });
+    body.dispatchEvent(new Event("scroll"));
+    expect(body.tabIndex).toBe(0);
+    expect(body.getAttribute("role")).toBe("region");
+    expect(body.getAttribute("aria-label")).toBeTruthy();
+    Object.defineProperty(body, "scrollHeight", { configurable: true, value: 200 });
+    body.dispatchEvent(new Event("scroll"));
+    expect(body.hasAttribute("tabindex")).toBe(false);
+    expect(body.hasAttribute("role")).toBe(false);
+    a.destroy();
+  });
+
   it("shows the pitch from the explanation's band and Builds on before the Background", async () => {
     document.body.innerHTML = HTML;
     const root = document.getElementById("root")!;

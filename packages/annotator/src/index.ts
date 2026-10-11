@@ -36,7 +36,7 @@ export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
-export const ANNOTATOR_VERSION = "0.6.1";
+export const ANNOTATOR_VERSION = "0.6.2";
 
 export interface AnnotatorOptions {
   /** Interaction and reading events (DESIGN §9); the host batches them to /v1/events. */
