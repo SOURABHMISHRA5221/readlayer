@@ -734,6 +734,20 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   "cricket highlights"); moved before it, so model calls happen only when nothing matches.
   API tests 667.
 
+- **milestone-reviewer: FIX** (5 items + follow-ups). Done: (1) privacy: several free-text
+  pieces could share one `link_confirm` prompt (resolve_names batches names): now one
+  resolve_names call and one embed request per piece; a test with two candidate pieces fails on
+  the old code; DESIGN §11.4 says so. (2) STATUS §19 landing rows from my own run of
+  `tools/shots/landing.py` (now asserts 0 network after load, axe 0 at every level, and a
+  keyboard path); one mobile LCP figure: Lighthouse 12.8.2 × 3 on the final local build =
+  2.6 s, perf 95 (the earlier 5.7/5.9 s unexplained; live run decides). (3) after shots committed
+  (`docs/evidence/landing/after/`, JPEG subset; onboarding `after/`); deviations recorded: no
+  "before" of the old welcome steps, no-flash checked by the boot switch. Keyboard run found a real
+  issue: answered buttons were `disabled`, so focus fell to the page top; now `aria-disabled`,
+  focus stays (harness: axe 0, keyboard all true). (4) `test/evalNumbers.test.ts` (evals.json
+  equals the report; malformed tables throw). (5) STATUS §10 rows 46b, 46c, 46e, 47, 42b.
+  Follow-ups done: finish needs screen 1 saved (409), topic chips capped at 6. API 669, web 52.
+
 ### Next steps (resume here, in order)
 1. milestone-reviewer on the whole `landing` branch (landing + onboarding) until SHIP.
 2. PR from `landing` ("Landing and onboarding: …"), green CI, squash-merge.

@@ -11,6 +11,7 @@ import time
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
+from landing import press, tab_to  # noqa: E402
 
 W = "http://localhost:5173"
 SIZES = ((1440, False), (1440, True), (390, False), (390, True))
@@ -82,6 +83,24 @@ async def main():
         topics = await p.eval("[...document.querySelectorAll('.discover-card__topic')].map(e => e.textContent)")
         print(f"[screen2] cards={cards} after {t_cards:.1f}s topics={topics}")
         await check(p, "screen2", ".discover-card:not(.discover-card--ghost)")
+
+        # --- keyboard (acceptance 6): Tab to the first card's buttons, answer with Space and Enter
+        await p.viewport(1440)
+        await theme(p, False)
+        await p.goto(W + "/welcome", wait=1)
+        await p.wait_for(".discover-card:not(.discover-card--ghost)", 40)
+        await asyncio.sleep(1)
+        kb = {"pick_focus": await tab_to(p, ".discover-card__answers .answer")}
+        await press(p, " ")
+        await asyncio.sleep(0.5)
+        kb["space_picks"] = await p.eval("document.querySelector('.discover-card__answers .answer').getAttribute('aria-pressed')")
+        kb["focus_kept_after_answer"] = await p.eval("document.activeElement?.matches('.discover-card__answers .answer')")
+        kb["know_focus"] = await tab_to(p, ".discover-card__know .answer")
+        await press(p, "Enter")
+        await asyncio.sleep(0.5)
+        kb["enter_answers"] = await p.eval("document.querySelector('.discover-card__know .answer[aria-pressed=true]') !== null")
+        kb["start_focus"] = await tab_to(p, ".welcome__actions .btn--primary", 120)
+        print("[keyboard screen2]", kb)
 
         # --- answers: two Not for me on Sports, I'd read on the rest, two Know this?
         await p.viewport(1440)

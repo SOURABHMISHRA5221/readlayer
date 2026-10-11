@@ -175,6 +175,8 @@ interface CardProps {
   onKnow: (conceptId: string, known: boolean) => void;
 }
 
+/** Answered buttons stay focusable (aria-disabled, not disabled): a keyboard reader keeps
+ * their place in the list instead of being thrown back to the top of the page. */
 function Card({ item, answers, onPick, onKnow }: CardProps) {
   const liked = answers.picks[item.id];
   const href = item.kind === "library" && item.content_id ? `/read/${item.content_id}` : item.url;
@@ -193,10 +195,10 @@ function Card({ item, answers, onPick, onKnow }: CardProps) {
       </h2>
       {item.snippet && <p className="discover-card__snippet">{item.snippet}</p>}
       <div className="discover-card__answers" role="group" aria-label={`Would you read “${item.title}”?`}>
-        <button type="button" className="answer" aria-pressed={liked === true} onClick={() => onPick(item, true)} disabled={liked !== undefined}>
+        <button type="button" className="answer" aria-pressed={liked === true} aria-disabled={liked !== undefined} onClick={() => liked === undefined && onPick(item, true)}>
           I'd read this
         </button>
-        <button type="button" className="answer" aria-pressed={liked === false} onClick={() => onPick(item, false)} disabled={liked !== undefined}>
+        <button type="button" className="answer" aria-pressed={liked === false} aria-disabled={liked !== undefined} onClick={() => liked === undefined && onPick(item, false)}>
           Not for me
         </button>
       </div>
@@ -205,10 +207,10 @@ function Card({ item, answers, onPick, onKnow }: CardProps) {
           <span className="discover-card__ask">
             Know <mark className="discover-card__term">{term.label}</mark>?
           </span>
-          <button type="button" className="answer answer--small" aria-pressed={known === true} onClick={() => onKnow(term.concept_id, true)} disabled={known !== undefined}>
+          <button type="button" className="answer answer--small" aria-pressed={known === true} aria-disabled={known !== undefined} onClick={() => known === undefined && onKnow(term.concept_id, true)}>
             Yes
           </button>
-          <button type="button" className="answer answer--small" aria-pressed={known === false} onClick={() => onKnow(term.concept_id, false)} disabled={known !== undefined}>
+          <button type="button" className="answer answer--small" aria-pressed={known === false} aria-disabled={known !== undefined} onClick={() => known === undefined && onKnow(term.concept_id, false)}>
             Not really
           </button>
         </div>

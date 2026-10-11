@@ -51,12 +51,63 @@ async def demo_checks(p):
     return out
 
 
+KEYS = {"Tab": 9, "Enter": 13, "Escape": 27, "ArrowRight": 39, " ": 32}
+
+
+async def press(p, key, shift=False):
+    code = "Space" if key == " " else key
+    # Enter and Space carry text, as a real keyboard's keydown does (Enter clicks a button).
+    text = {"Enter": "\r", " ": " "}.get(key)
+    for kind in ("keyDown" if text else "rawKeyDown", "keyUp"):
+        extra = {"text": text} if text and kind == "keyDown" else {}
+        await p.send("Input.dispatchKeyEvent", type=kind, key=key, code=code, modifiers=8 if shift else 0,
+                     windowsVirtualKeyCode=KEYS[key], nativeVirtualKeyCode=KEYS[key], **extra)
+    await asyncio.sleep(0.15)
+
+
+async def tab_to(p, selector, limit=60):
+    for _ in range(limit):
+        await press(p, "Tab")
+        if await p.eval(f"!!document.activeElement?.matches({json.dumps(selector)})"):
+            return True
+    return False
+
+
+async def keyboard_checks(p):
+    """Acceptance 6: the demo toggle, a highlight and its card by keyboard alone."""
+    await p.viewport(1440)
+    await p.goto(BASE + "/", wait=2)
+    checked = "document.querySelector('.lp-demo [role=radio][aria-checked=true]')?.textContent.trim()"
+    out = {"toggle_focus": await tab_to(p, ".lp-demo [role=radio]")}
+    before = await p.eval(checked)
+    await press(p, "ArrowRight")
+    out["arrow_changes_persona"] = f"{before} → {await p.eval(checked)}"
+    out["mark_focus"] = await tab_to(p, ".lp-demo .rl-mark")
+    mark = await p.eval("document.activeElement.textContent.trim()")
+    await press(p, "Enter")
+    await asyncio.sleep(0.8)
+    # The demo always shows one open note (decision 46); Enter swaps it to the focused mark's.
+    title = await p.eval("document.querySelector('.lp-demo__note-live .rl-card__title')?.textContent ?? ''")
+    out["enter_shows_its_note"] = f"{mark} → {title}"
+    out["mark_expanded"] = await p.eval("document.activeElement?.getAttribute('aria-expanded') === 'true'"
+                                        " && !!document.getElementById(document.activeElement.getAttribute('aria-controls'))")
+    await press(p, "Escape")
+    await asyncio.sleep(0.5)
+    out["focus_stays_on_mark"] = await p.eval("!!document.activeElement?.matches('.lp-demo .rl-mark')")
+    out["pass"] = (out["toggle_focus"] and before != out["arrow_changes_persona"].split(" → ")[1]
+                   and out["mark_focus"] and out["mark_expanded"]
+                   and out["focus_stays_on_mark"])
+    return out
+
+
 async def main():
     cdp.launch()
     p, ws = await cdp.open_page()
     try:
         await cdp.Page.reset_auth(p, BASE)
         report = {"demo": await demo_checks(p)}
+        net = report["demo"]["network_after_load"]
+        assert net["fetch"] == 0 and net["xhr"] == 0 and not net["resources"], f"network after load: {net}"
 
         for w, dark in SIZES:
             await p.viewport(w, dark=dark)
@@ -117,16 +168,24 @@ async def main():
         }
         await p.eval(THEME.format("light"))
         report["d46"] = await landing_d46.run_all(p, BASE)
+        # Last: it switches the persona and closes the open note, which the checks above assume.
+        await cdp.Page.reset_auth(p, BASE)
+        report["keyboard"] = await keyboard_checks(p)
         print(json.dumps(report, indent=2))
         failed = [k for k, v in report["d46"].items() if not v["pass"] and k not in landing_d46.KNOWN]
         known = {k: v for k, v in report["d46"].items() if not v["pass"] and k in landing_d46.KNOWN}
         print("decision 46 known shortfalls (reported to Sourabh):", json.dumps(known))
         print("decision 46 checks:", "all pass" if not failed else f"FAIL {failed}")
-        if failed:
+        axe = {k: v[key] for k, v in report.items() if isinstance(v, dict)
+               for key in ("axe", "axe_card") if v.get(key)}
+        print("axe (every impact level):", "0 everywhere" if not axe else f"FAIL {axe}")
+        print("keyboard:", json.dumps(report["keyboard"]))
+        if failed or axe or not report["keyboard"]["pass"]:
             raise SystemExit(1)
     finally:
         await ws.close()
         cdp.stop()
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())
