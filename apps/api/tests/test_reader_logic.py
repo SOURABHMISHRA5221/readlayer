@@ -307,3 +307,18 @@ def test_search_returns_matches_with_their_prerequisite_chains():
     _check(sub)
     assert [n.id for n in sub.nodes] == ["c_repo", "c_rate"]
     assert sub.edges == [("c_rate", "c_repo")]
+
+
+def test_article_helpful_is_recorded_without_evidence():
+    out = apply_events(
+        [
+            ReaderEvent("h1", "article_helpful", NOW, content_id="doc1"),
+            ReaderEvent("h2", "article_helpful", NOW),  # no page: ignored
+        ],
+        {},
+        {"economics": 0.3},
+        REFS,
+        NOW,
+    )
+    assert out.applied == ("h1",) and out.ignored == ("h2",)
+    assert out.edges == {} and out.theta == {}  # no knows or θ change
