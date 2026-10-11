@@ -696,8 +696,28 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Also fixed: ruff errors in `scripts/landing_media_precheck.py` (committed earlier, CI would
   have failed).
 
+- **Onboarding web built** (c0918ec): `WelcomePage` → `welcome/AboutScreen` (field, topics,
+  free text in React state only, inline consent-v2, matches with "F1 → Sports" selects and
+  removable concept chips), `welcome/DiscoverScreen` (cards, picks, Know this?, readback after 5
+  answers, Edit, Start reading), `lib/onboardingApi.ts`, `lib/readback.ts`; the profile's
+  onboarding block also returns `field` and `interests` (resume and Edit). Welcome chunk 5.1 KB gzip.
+  vitest: readback, helpers, Continue disabled until field + topic + consent, free text only in
+  React state and only in the resolve request after consent, screen 2 resume/picks/know/readback.
+- **Harness run** (`tools/shots/onboarding.py`, emulators; 10 real searches: 9 topic + 1
+  concept; resolve $0): axe 0 at 1440/390 light and dark on both screens. Found and fixed
+  (dc21dd2): "Start reading" bounced back to /welcome (App gate kept a stale "not done"; now
+  cleared when the flow finishes), readback said "more Sports" after two skips (likes minus
+  skips per topic now), off-topic Know this? terms ("Column", "Action point", "OCT": now only the
+  item's own topic, corpus concepts first), Know row wrapping at 390, chips 42px. Rerun: all
+  green, feed topics economics, business, sports after two "Not for me" on Sports; the typed
+  text appears nowhere in the API log.
+- Docs: DESIGN §4, §8, §11.4, §17.1; STATUS §1, §4, §9, new §19; BUILD_PLAN M8 line; privacy
+  page wording (resolved ideas aren't stored, only topics; setup lists cleared at finish).
+
 ### Next steps (resume here, in order)
-1. Onboarding web (decision 41 part B): the 2-screen `WelcomePage` against the API above
-   (built and tested), `src/lib/onboardingApi.ts`, readback helper, vitest, design critique
-   (desktop, mobile, dark), harness run. Landing is frozen (tweak window only).
-2. Then acceptance, milestone-reviewer, PR from `landing`, deploys (Sourabh's yes), live check.
+1. milestone-reviewer on the whole `landing` branch (landing + onboarding) until SHIP.
+2. PR from `landing` ("Landing and onboarding: …"), green CI, squash-merge.
+3. Deploy API then web (Sourabh's yes on each), live check: anonymous landing Lighthouse and
+   no-network demo; Sourabh's own Google onboarding (≤ 18 topic + ≤ 2 concept searches, ≤ 1
+   resolve ≈ $0.002), including the profile showing the Know this? band changes.
+4. STATUS §19 live rows, then READY FOR /clear; then the Wide layout follow-up (decision 45).

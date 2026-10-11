@@ -2,7 +2,7 @@
 
 Last updated: 2026-10-11 (IST): Know-this refresh (decision 46d) merged (#25) and live (API revision
 00020, web deployed; live check: "Not really" inks "hedging" in without a reload, one chip in its done
-state, temporary reader deleted). Landing and onboarding in progress on `landing` (§9). Before that: Design pass (Gloss) merged (#22, #23) and live (API revision
+state, temporary reader deleted). Landing and onboarding built and accepted on the harness on `landing` (landing frozen; onboarding API + 2 screens done; §19); next its reviewer, PR and deploys (§9). Before that: Design pass (Gloss) merged (#22, #23) and live (API revision
 00019, web deployed); live check passed after the CORS fix for Save (§18). Next: M8-local (rebase
 `m8` first). M7.5 merged (#20) and live,
 Sourabh's Google check done.
@@ -37,7 +37,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
 | M7.5 | **merged #20 and live** (§17); Sourabh's Google check done (2026-10-11) | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
 | Design pass | **merged #22 + #23 and live** (§18) | — | Gloss: tokens and type, Margo, library as a feed, reader, profile and SVG map (decisions 39, 40) |
-| Landing and onboarding | planning (decision 41) | — | Landing page with live mini-demo; onboarding in 2 screens with web results |
+| Landing and onboarding | built on `landing`, harness-accepted; review and PR next | — | Landing page with live mini-demo (frozen); onboarding in 2 screens with web results (resolve, discover, pick, know, finish). See §19 |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -190,6 +190,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M7.5: `seed_demo_feed` checks articles until 6 per topic pass (up to ≈ 20 fetch-and-extract checks per persona, not the plan's ≤ 12 in total), gained `--persona`, and its `--dry-run` performs the real searches (writing shared `rec_cache` entries and `ops/search` counters; only the `persona_feeds` write is skipped) | Feed searches return up to 10 articles and many fail the 400-word check (paywalls, 403); a dry run that can't see real results can't show what the snapshot will hold, and the real run the same day reuses the cache | Keep; production writes for the post-merge seeding are listed in §9 |
 | M7.5: the web tests for the feed are logic-level (re-ask policy, waiting line, snapshot note, hiding a dismissed card in `lib/feedView.ts`), not rendered components; the `why` text is asserted in API tests | `apps/web` has no DOM test environment and adding one wasn't worth a new dependency days before the freeze | Keep |
 | M7.5: For you searches only for the reader's topics (taxonomy label + fixed phrase), shared per day; demo personas get a pre-seeded snapshot and never search | Decisions 33 and 38: no reader data in queries, bounded cost, and judges always see a full page | Keep (DESIGN §17) |
+| Onboarding: the topic alias list is checked right after the exact concept lookups, before `resolve_names` (the plan put it after) | "F1" then makes no model call at all, which is what the plan's test asks of the alias path | Keep (DESIGN §4) |
+| Onboarding: the embedding topic fallback recalls 9 of 22 test phrases at the chosen threshold (0.86, precision 9/9) | Similarities to the 14 scope lines are bunched (0.80–0.92; "asdf qwerty" 0.855); the rule picks the lowest threshold with no wrong mapping, and the method wasn't tuned on the cases (decision 26). The alias list carries the common phrases | Keep; revisit with a better topic text in M9 if time |
+| Onboarding: "Know this?" terms come only from concepts of the item's own topic, corpus concepts first (the plan: closest b to θ among all named concepts) | The harness run offered "Column" on a sports story and "Action point" on an economics one (other domains, seed-only concepts) | Keep (DESIGN §4) |
+| Onboarding: `onboarding_answered` is a map (concept → known), finish also clears the picks, discover is refused after finish, library fallback below 6 web items | Screen 2 resumes with the answers; nothing kept that has no use after onboarding | Keep (DESIGN §4, §11.4) |
 | M2.2: variant-precision baseline is 83% on the newly frozen 150-mention sample, not M2's 93% | M2's figure used a different sample and candidate floor; not comparable | Keep |
 ---
 
@@ -418,6 +422,7 @@ BUILD_PLAN.md has the prompts. M6, M7 and M2.2 are merged and live.
 | Done | **M7** merged #16 and live; **M2.2** merged #18 and live (§16) |
 | Now | **M7.5** merged #20 and live; steps (1)–(6) below done 2026-10-10 (§17). Step (7), Sourabh's Google check, done 2026-10-11. Post-merge steps, as run: (1) PR, milestone-reviewer SHIP, merge on green CI; (2) `make check-gcp`, deploy the API, then the web (Sourabh's yes on each); (3) `seed_demo_feed --dry-run`, then the real run: ≤ 18 searches (≤ 24 calls) counted in production's `ops/search`, ≤ 18 shared `rec_cache` feed entries, 3 `persona_feeds/{persona}` docs, ≈ 60 local fetch-and-extract checks, no LLM; check each persona has ≥ 2 readable articles per topic (re-run one persona with `--persona` if not); (4) record Tavily's plan and remaining credits here and in §7; (5) `warm_demo --dry-run`, then the real run (≈ 42 explanation entries, ≈ $0.25; today's production ledger is $6.71 of $8, so run it after 00:00 UTC if the deploy lands late on Oct 10 UTC); (6) `live_check_m7_5.py` (one demo reader pastes one non-business article, deleted after); (7) Sourabh's Google check: For you, one learning goal, open a feed article. Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut |
 | Oct 11–13 | **Design pass** (decisions 39, 40): built and accepted on the harness on Oct 11 (§18), ahead of both checkpoints. Next: milestone-reviewer, PR and green CI, deploy API then web (Sourabh's yes), live check (one demo reader saves an article, presses Helpful and asks "Say it simpler" once, ≈ $0.01, deleted after) |
+| Oct 11–13 | **Landing and onboarding** (decisions 41–47): landing built and frozen; onboarding API and 2 screens built and accepted on the harness on Oct 11 (§19), ahead of both checkpoints (end of Oct 12 IST: landing; end of Oct 13 IST: merged). Next: milestone-reviewer, PR from `landing`, green CI, deploy API then web (Sourabh's yes on each), live check (anonymous landing Lighthouse; Sourabh's own Google onboarding: ≤ 18 topic + ≤ 2 concept searches, ≤ 1 resolve ≈ $0.002) |
 | After Landing ships, before M8 | **Wide layout** follow-up (decision 45): feed/library, profile and reader use the width; own plan, reviewer loop, PR. Pushes M8-local; if M8 or M9 is at risk, ask Sourabh what to cut |
 | Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done; keep M7.5's "visible to the reader who brought it in") |
 | Oct 15 | **M9** hardening and evals, plus four M2.2 follow-ups required before the freeze (Sourabh, 2026-10-10): (1) merge check within one growth batch (same-article duplicates, e.g. Forever chemicals / PFAS); (2) validate grown prerequisites against the domain or drop low-confidence ones (PFOS → PHOSITA); (3) grown-concept precision on a fresh, independent sample of 30, reported with the 87% and 97% samples; (4) README and deck state the frozen-graph misses (64% / 13%) next to the after-growth numbers |
@@ -810,3 +815,20 @@ after three rounds).
 | Say it simpler | "Bourses": own band can explain (verified, cached) → understands (verified, not capped) in 19.9 s |
 | Helpful | 1 `article_helpful` event in the export |
 | Save | **Failed live**: the saved list stayed empty. CORS allowed GET/POST/PATCH/DELETE but not PUT (`PUT /v1/me/saved/{id}`); the harness never saw it because Vite proxies /v1. Fixed by adding PUT and a test that every method a /v1 route uses is allowed (it fails without the fix); #23, API revision 00019. Re-checked live: the PUT preflight allows PUT, and a demo reader's saved article appears in the Saved tab (reader deleted, 204) |
+
+## 19. Landing and onboarding acceptance (2026-10-11, local build and emulator harness)
+
+Plan: `docs/plans/landing-onboarding.md` (plan-reviewer APPROVE; amendments 44–47 each approved).
+Landing checks (decisions 44–47) are recorded in `docs/AUTOPILOT_LOG.md` (axe 0 at 1920/1440/
+1280/390 light and dark, desktop Lighthouse perf 99–100 / a11y 100, mobile LCP miss accepted by
+Sourabh, the mount restructure on the M9 list). Onboarding evidence: `tools/shots/onboarding.py`,
+screenshots in `docs/evidence/onboarding/after/`.
+
+| # | Check | Result |
+|---|---|---|
+| 4 | New Google (emulator) reader, 2 screens to the feed | Pass: scripted run 30 s from screen 1 to For you (script waits included; screen 2's 9 cards after 3.7–6.8 s). Two "Not for me" on Sports (then one "I'd read this") → Sports 0.85, feed topics economics, business, sports (behind). Know this? answers moved θ in economics only (−0.135) and wrote the two edges; the profile page's band display for them is checked at the live run (not looked at on the harness) |
+| 5 | Free text "F1, startups, mergers and acquisitions" | Pass: F1 → Sports and startups → Business by alias, M&A exact (0 model calls, $0); searches in the harness log: 9 topic keys + `feed:c:c_m_a` only; the text appears nowhere in the API log; pytest proves the same for search requests, every log record at DEBUG and every stored document (mutation-checked) |
+| 6 | axe, sizes, scroll | Pass: axe 0 (every impact level) on screens 1 and 2 at 1440/390, light and dark; no horizontal scroll; targets ≥ 44px after fixes (consent checkbox 24px inside a full-sentence label) |
+| — | Found and fixed on the harness | "Start reading" bounced back to /welcome (stale onboarding status in the app gate); readback said "more Sports" after two skips (now likes minus skips per topic); off-topic Know this? terms; Know row wrapping at 390; chips 42px |
+| — | Tests | API 663 (22 new onboarding-flow tests incl. privacy), web 50, annotator 54; typecheck and ruff clean |
+| 7 | Docs | DESIGN §4 (onboarding in 2 screens), §8 (5 routes), §11.4 (consent v2, free-text rule in the tests' words, new data), §17.1 (search bounds); STATUS §1, §4, §9, §19 |

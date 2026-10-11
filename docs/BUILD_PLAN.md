@@ -476,7 +476,9 @@ published to the Chrome Web Store (a post-hackathon item).
 > Auth through the web app's "Connect extension" page using `externally_connectable`, for both
 > anonymous (demo) and Google readers; tokens in memory or `storage.session` only. A popup shows
 > sign-in state, the persona (demo readers), density and a link to the profile page. Add
-> "Install the extension locally" steps to README.md.
+> "Install the extension locally" steps to README.md. A Google reader who hasn't finished
+> onboarding (step `consent`, `onboarding` or `discover`) is sent to the web app's 2-screen
+> onboarding (decision 41) before the extension annotates anything.
 
 **Acceptance**
 - Works on 3 news sites without site-specific code, for a demo reader and a Google reader.
