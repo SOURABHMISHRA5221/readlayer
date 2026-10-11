@@ -213,6 +213,14 @@
 
 .prefs { display: grid; gap: var(--s4); }
 .prefs .segmented__option { min-height: 44px; }
+/* Decision 50: the country choice has four long options; on a phone the label sits above and
+   the options wrap inside the track instead of pushing the page sideways. */
+.prefs .segmented { flex-wrap: wrap; }
+.prefs .segmented__track { flex-wrap: wrap; max-width: 100%; }
+@media (max-width: 480px) {
+  .prefs .segmented { flex-direction: column; align-items: flex-start; }
+  .prefs .segmented__track { border-radius: 22px; }
+}
 
 .editbox__form textarea {
   width: 100%;
