@@ -37,7 +37,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
 | M7.5 | **merged #20 and live** (§17); Sourabh's Google check done (2026-10-11) | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
 | Design pass | **merged #22 + #23 and live** (§18) | — | Gloss: tokens and type, Margo, library as a feed, reader, profile and SVG map (decisions 39, 40) |
-| Landing and onboarding | built on `landing`, harness-accepted; review and PR next | — | Landing page with live mini-demo (frozen); onboarding in 2 screens with web results (resolve, discover, pick, know, finish). See §19 |
+| Landing and onboarding | merged (squash), live | #26 | Landing page with live mini-demo (frozen); onboarding in 2 screens with web results (resolve, discover, pick, know, finish). See §19 |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -202,7 +202,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 
 | Severity | Issue |
 |---|---|
-| Medium | **Landing: mobile Lighthouse LCP over the 2.5 s gate, accepted by Sourabh 2026-10-11 for now.** One figure from now on: **2.6 s** (3 runs on 2026-10-11 against the final local build, perf 95). Earlier runs during the font work read 5.7 s and 5.9 s; the gap isn't explained (same hero code; different run conditions likely) and the live run after deploy is the number to trust. Desktop: perf 100, LCP 0.5 s. Cause: when the landing chunk takes over from the hydrated static hero, React re-mounts the hero (HeroStatic → Suspense → LandingPage), and the new demo paragraph, slightly larger once the annotator's highlights are drawn, becomes the LCP element at ≈ 600 ms observed (first paint of the same text: ≈ 40 ms). **M9 / tweak window: landing mount restructure: the demo attaches to the static hero instead of rebuilding it** |
+| Low | **Landing: mobile Lighthouse LCP. Live (2026-10-11, after #26): 1.2 / 2.0 / 1.8 s, median 1.8 s, under the 2.5 s gate (perf 99–100).** Local preview builds read 2.6 s (3 runs, perf 95); Earlier runs during the font work read 5.7 s and 5.9 s; the gap isn't explained (same hero code; different run conditions likely) and the live run after deploy is the number to trust. Desktop: perf 100, LCP 0.5 s. Cause: when the landing chunk takes over from the hydrated static hero, React re-mounts the hero (HeroStatic → Suspense → LandingPage), and the new demo paragraph, slightly larger once the annotator's highlights are drawn, becomes the LCP element at ≈ 600 ms observed (first paint of the same text: ≈ 40 ms). **M9 / tweak window: landing mount restructure: the demo attaches to the static hero instead of rebuilding it** |
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
@@ -842,3 +842,16 @@ screenshots in `docs/evidence/onboarding/after/`.
 | — | Found and fixed on the harness | "Start reading" bounced back to /welcome (stale onboarding status in the app gate); readback said "more Sports" after two skips (now likes minus skips per topic); off-topic Know this? terms; Know row wrapping at 390; chips 42px |
 | — | Tests | API 663 (22 new onboarding-flow tests incl. privacy), web 50, annotator 54; typecheck and ruff clean |
 | 7 | Docs | DESIGN §4 (onboarding in 2 screens), §8 (5 routes), §11.4 (consent v2, free-text rule in the tests' words, new data), §17.1 (search bounds); STATUS §1, §4, §9, §19 |
+
+**Live (2026-10-11, after merge #26; API revision 00021, web deployed):** anonymous, signed out,
+no writes (`tools/shots/landing.py` against the live site).
+
+| Check | Result |
+|---|---|
+| Landing demo | Same marks per persona as local; 0 fetch, 0 XHR, 0 resource requests after load |
+| axe, keyboard | 0 at every impact level on "/" (page and open card) and /privacy at 1920/1440/1280/390, light and dark; keyboard path passes; decision 46 checks all pass |
+| First view at 390×844 | 261,382 bytes, no landing media before scroll |
+| No flash | `data-boot`: landing for "/" with no hint; shell with the signed-in hint, /privacy, /read/abc |
+| Lighthouse mobile (12.8.2, live, 3 runs) | perf 100 / 99 / 99, a11y 100, CLS 0, **LCP 1.2 / 2.0 / 1.8 s (median 1.8 s, gate 2.5 s: pass)** |
+| New routes | `POST /v1/onboarding/resolve` without a token → 401 (route live, guarded) |
+| Sourabh's Google onboarding | Pending: both screens, ≤ 18 topic + ≤ 2 concept searches, ≤ 1 resolve; the profile showing the Know this? band changes |

@@ -748,10 +748,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   equals the report; malformed tables throw). (5) STATUS §10 rows 46b, 46c, 46e, 47, 42b.
   Follow-ups done: finish needs screen 1 saved (409), topic chips capped at 6. API 669, web 52.
 
+- milestone-reviewer **SHIP** (round 2). Edit refills ≤ 6 topics (c7892d8). PR #26, CI green,
+  squash-merged (8a724e5). API deployed (revision 00021; the first deploy kept running after it
+  was backgrounded, the second attempt was refused by deploy-guard, no double deploy) and web
+  deployed, each on Sourabh's yes. Live anonymous check: all landing checks pass, 0 network after
+  load, axe 0, keyboard pass; Lighthouse mobile live 1.2 / 2.0 / 1.8 s (median 1.8 s: passes the
+  2.5 s gate, unlike the local preview's 2.6 s). Pending: Sourabh's Google onboarding.
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer on the whole `landing` branch (landing + onboarding) until SHIP.
-2. PR from `landing` ("Landing and onboarding: …"), green CI, squash-merge.
-3. Deploy API then web (Sourabh's yes on each), live check: anonymous landing Lighthouse and
-   no-network demo; Sourabh's own Google onboarding (≤ 18 topic + ≤ 2 concept searches, ≤ 1
-   resolve ≈ $0.002), including the profile showing the Know this? band changes.
-4. STATUS §19 live rows, then READY FOR /clear; then the Wide layout follow-up (decision 45).
+1. Sourabh's Google onboarding on the live site (both screens; the profile shows the Know this?
+   band changes); record it in STATUS §19 live, push this docs branch (his yes), PR, merge.
+2. READY FOR /clear; then the Wide layout follow-up (decision 45).
