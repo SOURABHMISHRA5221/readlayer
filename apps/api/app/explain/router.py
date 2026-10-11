@@ -7,6 +7,7 @@ the web client prefetches its top spans through this endpoint after the annotati
 
 import logging
 from collections.abc import Awaitable, Callable
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Annotated, Literal, cast
 
@@ -22,7 +23,7 @@ from app.explain.inputs import ExplainInputs, paragraph_inputs, span_inputs
 from app.explain.models import Mode
 from app.graph.loader import get_graph
 from app.reader.events import ConceptRef, ReaderEvent
-from app.reader.model import Band
+from app.reader.model import BANDS, Band
 from app.reader.personas import PERSONA_THINKS_IN
 from app.reader.state import THINKS_IN, ExplanationStyle, PersonaKey, ThinksIn
 from app.store.content_repo import get_content_store
@@ -45,11 +46,16 @@ class ExplainRequest(BaseModel):
     content_id: str = Field(min_length=1, max_length=120, pattern=ID_PATTERN)
     demand_id: str | None = Field(default=None, min_length=1, max_length=32, pattern=ID_PATTERN)
     paragraph_id: str | None = Field(default=None, min_length=1, max_length=32, pattern=ID_PATTERN)
+    # "Say it simpler" (-1) / "Go deeper" (+1): the Background one band from the reader's own,
+    # through the same verified path and cache (keyed by band). Span mode only. Design pass A3.
+    shift: Literal[-1, 0, 1] = 0
 
     @model_validator(mode="after")
     def _one_target(self) -> "ExplainRequest":
         if (self.demand_id is None) == (self.paragraph_id is None):
             raise ValueError("give exactly one of demand_id or paragraph_id")
+        if self.shift and self.paragraph_id is not None:
+            raise ValueError("shift applies to span notes only")
         return self
 
 
@@ -63,7 +69,9 @@ class ExplainResponse(BaseModel):
     background: str | None
     author_says: str | None
     analogy_domain: ThinksIn | None
-    band: Band
+    band: Band  # the band this Background was written for (the reader's own, or shifted)
+    can_simpler: bool  # a band below the reader's own exists (span notes only)
+    can_deeper: bool
     thinks_in: ThinksIn | None
     style: ExplanationStyle
     cached: bool
@@ -92,6 +100,11 @@ def frame_for(ctx: ReaderContext) -> ThinksIn | None:
         return cast(ThinksIn, session[0]) if session else PERSONA_THINKS_IN[ctx.persona]
     frames = [f for f in ctx.user.thinks_in if f in THINKS_IN]
     return cast(ThinksIn, frames[0]) if frames else None
+
+
+def shifted(band: Band, shift: int) -> Band:
+    """One band lower or higher, clamped to the four bands."""
+    return BANDS[max(0, min(len(BANDS) - 1, BANDS.index(band) + shift))]
 
 
 async def _inputs(body: ExplainRequest, ctx: ReaderContext, now: datetime) -> ExplainInputs:
@@ -143,7 +156,9 @@ async def explain(
     ctx: Annotated[ReaderContext, Depends(reader_context)],
 ) -> ExplainResponse:
     timer = service.Timer()
-    inputs = await _inputs(body, ctx, datetime.now(UTC))
+    base = await _inputs(body, ctx, datetime.now(UTC))
+    own = BANDS.index(base.band)  # the reader's own band; a shift moves only the Background's
+    inputs = replace(base, band=shifted(base.band, body.shift)) if body.shift else base
     repo = ExplainRepo(get_doc_store())
     reserve, refund = _quota(ctx, settings)
     served = await service.serve(inputs, repo, reserve=reserve, refund=refund)
@@ -174,6 +189,8 @@ async def explain(
         author_says=e.author_says if e else None,
         analogy_domain=e.analogy_domain if e else None,
         band=inputs.band,
+        can_simpler=inputs.mode == "span" and own > 0,
+        can_deeper=inputs.mode == "span" and own < len(BANDS) - 1,
         thinks_in=inputs.thinks_in,
         style=inputs.style,
         cached=served.cached,
