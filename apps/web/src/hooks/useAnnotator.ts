@@ -87,14 +87,18 @@ export function useAnnotator(
     const annotator = createAnnotator(el, {
       onEvent,
       // "Know this?": the reader's own word goes straight to their graph (DESIGN §6.5).
-      onAnswer: (prompt, known) =>
-        answerAndRefresh({
+      onAnswer: (prompt, known) => {
+        const persona = personaRef.current;
+        return answerAndRefresh({
           save: async () => {
             await api.correct(prompt.concept_id, known, personaRef.current);
             setAnswers((m) => new Map(m).set(prompt.concept_id, { label: prompt.label, known }));
           },
           refresh: () => refreshRef.current?.() ?? Promise.resolve(),
-        }),
+          // Same article (this annotator still mounted) and same persona as when answered.
+          isCurrent: () => annotatorRef.current === annotator && personaRef.current === persona,
+        });
+      },
       loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
       loadShifted: (a, shift) => loadShifted(articleKey, personaRef.current, a, shift),
       sidenote: () => railColumn(el),

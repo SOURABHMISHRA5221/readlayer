@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bandMoves, movesExcept, nextReads, teaching } from "../src/lib/recap";
+import { bandMoves, mergeRecapView, movesExcept, nextReads, teaching } from "../src/lib/recap";
 
 describe("recap", () => {
   it("is empty when nothing changed during the page view", () => {
@@ -41,5 +41,27 @@ describe("recap", () => {
     const items = [{ id: 1, triggers: [{ id: "x" }] }, { id: 2, triggers: [{ id: "y" }] }, { id: 3, triggers: [] }];
     expect(nextReads(items, new Set(["tp"]))).toEqual({ items: items.slice(0, 2), teaches: false });
     expect(nextReads(items, new Set(["y"]))).toEqual({ items: [items[1]], teaches: true });
+  });
+});
+
+describe("recap labels across a Know this? refresh (decision 46d)", () => {
+  const prompt = { kind: "prompt", concept_id: "c_hedging", label: "Hedging" };
+  const span = (id: string, label: string) => ({ concept_id: id, label });
+
+  it("keep the answered prompt's concept and only add within one view", () => {
+    const first = mergeRecapView({ key: "", labels: {} }, "a|newcomer|balanced", [span("c_bps", "Basis points")], [prompt]);
+    expect(first.labels).toEqual({ c_bps: "Basis points", c_hedging: "Hedging" });
+    // The refetch after "Yes": no prompt, and the term isn't a span.
+    const refreshed = mergeRecapView(first, "a|newcomer|balanced", [span("c_bps", "Basis points")], []);
+    expect(refreshed).toBe(first); // unchanged, so the "before" snapshot isn't re-taken
+    // After "Not really" on a later answer the refetch adds a span: it joins, nothing is lost.
+    const grown = mergeRecapView(first, "a|newcomer|balanced", [span("c_fwd", "Forwards")], []);
+    expect(grown.labels).toEqual({ c_bps: "Basis points", c_hedging: "Hedging", c_fwd: "Forwards" });
+  });
+
+  it("start fresh for a new view (persona, density or article)", () => {
+    const first = mergeRecapView({ key: "", labels: {} }, "a|newcomer|balanced", [span("c_bps", "Basis points")], [prompt]);
+    const other = mergeRecapView(first, "a|trader|balanced", [span("c_tight", "Monetary tightening")], []);
+    expect(other).toEqual({ key: "a|trader|balanced", labels: { c_tight: "Monetary tightening" } });
   });
 });

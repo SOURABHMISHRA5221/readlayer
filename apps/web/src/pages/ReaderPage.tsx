@@ -14,6 +14,7 @@ import { sendRecEvent, UpNext } from "../components/UpNext";
 import { useAnnotator } from "../hooks/useAnnotator";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { withoutPrompts } from "../lib/answers";
+import { mergeRecapView, type RecapView } from "../lib/recap";
 import {
   api,
   ApiError,
@@ -36,6 +37,8 @@ const RAIL_QUERY = "(min-width: 1200px)";
 const ANALYSE_WINDOW_MS = 180_000;
 const ANALYSE_RETRY_MS = 3000;
 const ANALYSE_FAILED = "Notes are unavailable for this article; it's complete without them.";
+
+const NO_LABELS: Readonly<Record<string, string>> = {};
 
 export function ReaderPage({ id, url }: { id: string; url: URL }) {
   const persona = readerPersona(url, useIsDemo());
@@ -157,24 +160,32 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   );
   const handle = useAnnotator(articleRef, article?.id ?? null, annotations, notesData?.extras ?? null, persona, refreshNotes);
 
-  // Recap snapshot (Design pass A4): the bands of this page's noted concepts when the notes load.
+  // Recap snapshot (Design pass A4): the bands of this page's noted concepts when the notes load,
+  // taken once per view; a refetch after a "Know this?" answer only adds labels (decision 46d).
+  const viewKey = `${id}|${persona ?? ""}|${density}`;
+  const [view, setView] = useState<RecapView>({ key: "", labels: {} });
+  useEffect(() => {
+    if (!notesData) return;
+    setView((prev) => mergeRecapView(prev, viewKey, notesData.annotations, notesData.extras));
+  }, [notesData, viewKey]);
+  const labels = view.key === viewKey ? view.labels : NO_LABELS;
   const [snapshot, setSnapshot] = useState<Record<string, string> | null>(null);
-  const labels = useMemo(() => {
-    const out: Record<string, string> = {};
-    for (const a of annotations ?? []) if (a.concept_id) out[a.concept_id] = a.label;
-    for (const x of notesData?.extras ?? []) if (x.kind === "prompt") out[x.concept_id] = x.label;
-    return out;
-  }, [annotations, notesData]);
+  const snapshotFor = useRef<string | null>(null);
   useEffect(() => {
     setSnapshot(null);
+    snapshotFor.current = null;
+  }, [viewKey]);
+  useEffect(() => {
     const ids = Object.keys(labels);
-    if (!ids.length) return;
-    let live = true;
-    api.bands(ids, persona).then((b) => live && setSnapshot(b), () => undefined);
-    return () => {
-      live = false;
-    };
-  }, [labels, persona]);
+    if (!ids.length || snapshotFor.current === viewKey) return;
+    snapshotFor.current = viewKey;
+    api.bands(ids, persona).then(
+      (b) => snapshotFor.current === viewKey && setSnapshot(b),
+      () => {
+        if (snapshotFor.current === viewKey) snapshotFor.current = null; // try again on the next notes
+      },
+    );
+  }, [labels, viewKey, persona]);
 
   const [saved, setSaved] = useState(false);
   useEffect(() => {
