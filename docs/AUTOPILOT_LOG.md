@@ -486,4 +486,30 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Open question to Sourabh: none of "F1", "startups", "Indian politics", "Formula One" resolve on the
   live graph (checked live, $0.002); proposed taxonomy-topic fallback. The resolve response reserves
   `topics: []`; work proceeds on everything else.
+- Sourabh answered (decision 42): topic fallback approved (alias list, then phrase-only embedding
+  above a threshold from labelled phrases, shown back as "F1 → Sports" and changeable, consent line
+  updated). Also approved warming the 5 landing-demo notes: `build_landing_demo.py --paragraph
+  23324188:p5 --warm` → 5 cached, verified cards in `apps/web/src/landing/demo.json` (production
+  spend $0.0778 → $0.1081; both temporary readers deleted). Commit 8140d44.
+- Decision 43 (Sourabh): stop with "READY FOR /clear" at milestone ends and at committed
+  mid-milestone checkpoints. Added to CLAUDE.md and STATUS §10.
+- Build step 1 done: annotator `actions: "demo"` + `demoAction` (one call to action replaces Knew
+  this / Helpful / This is wrong; records nothing), `ANNOTATOR_VERSION` 0.6.0, 2 vitests (43 pass);
+  web `readlayer:signed-in` hint written in `auth.ts` on every auth change (`SIGNED_IN_HINT`).
+  Typecheck and web tests green.
+
+### Next steps (resume here, in order)
+1. `apps/web/public/theme-init.js`: on "/" with no `readlayer:signed-in` hint, mark the document
+   for the static hero; otherwise a neutral loading shell (plan §A, "static hero").
+2. `index.html`: static hero markup inside `#root` (headline, subline, demo paragraph in a fixed
+   box, CTAs); fonts non-blocking (preload + media swap). `HeroStatic` component in the main
+   bundle mirroring it; hero CSS in the main stylesheet.
+3. `src/landing/`: `LandingPage` (A1–A8, lazy chunk), `MiniDemo` (createAnnotator on demo.json,
+   `actions: "demo"`, toggle Software engineer / Cricket fan / Policy student, no network),
+   `KnowledgeMapAnim` (reduced-motion safe); `document.fonts.load` for the card faces on mount.
+4. `scripts/eval-numbers.mjs` → `src/landing/evals.json` + vitest; `PrivacyPage` (public, lazy);
+   routing in `App.tsx` (signed out "/" → landing, deep-link return via sessionStorage, signed in
+   "/" → feed); delete `SignInPage` and the `.signin` CSS in `account.css`.
+5. Checkpoint end of Oct 12: landing done (budgets, axe, Lighthouse, screenshots). Then the
+   onboarding API (plan §C incl. decision 42), then the 2-screen WelcomePage (§B).
 

@@ -53,6 +53,8 @@ export interface CardHandlers {
   onDismiss: () => void;
   /** "Say it simpler" (-1), "Go deeper" (+1) or back to the reader's own level (0). */
   onShift?: (shift: -1 | 0 | 1) => void;
+  /** Demo cards (a landing page): one call to action replaces Knew this / Helpful / This is wrong. */
+  demo?: { label: string; onClick: () => void };
 }
 
 const BANDS = ["unaware", "heard of", "understands", "can explain"] as const;
@@ -206,6 +208,17 @@ export class Card {
     }
     const actions = el(doc, "div", `${C}__actions`);
     actions.append(knew, this.report, helpful);
+    if (handlers.demo) {
+      // A demo card records nothing: its only action leads to the real thing.
+      const cta = el(doc, "button", "rl-btn rl-btn--demo");
+      cta.type = "button";
+      cta.textContent = handlers.demo.label;
+      cta.addEventListener("click", handlers.demo.onClick);
+      for (const b of this.buttons) b.hidden = true;
+      this.buttons.length = 0;
+      this.buttons.push(cta);
+      actions.replaceChildren(cta);
+    }
     const label = el(doc, "p", `${C}__note`);
     label.textContent = CARD_LABEL;
     footer.append(actions, label);

@@ -115,3 +115,7 @@ apps/api/scripts/    corpus ingestion, concept-graph build, demo persona seeding
 - A milestone is done only when its acceptance checks pass. Run them; don't assume.
 - Commit at the end of each milestone with message `M<n>: <summary>`.
 - If a requirement here conflicts with a request, ask instead of guessing.
+- Checkpoints for /clear (decision 43): at the end of each milestone (merged, deployed, STATUS and
+  AUTOPILOT_LOG updated, all work committed), and at any natural mid-milestone checkpoint where
+  everything is committed and the log says exactly what's next, stop and say "READY FOR /clear"
+  with a one-line note of where to resume.

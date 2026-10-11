@@ -59,9 +59,26 @@ function toSession(user: User | null): Session {
   return { status: "signed_in", uid: user.uid, isDemo: user.isAnonymous, name: user.displayName };
 }
 
+/**
+ * "A session exists" hint for public/theme-init.js, which runs before any JS bundle: with it,
+ * "/" paints a neutral loading shell instead of the static landing hero. Cleared on sign-out,
+ * End demo and delete (all end in a null user). Holds no identity.
+ */
+export const SIGNED_IN_HINT = "readlayer:signed-in";
+
+function writeHint(signedIn: boolean): void {
+  try {
+    if (signedIn) localStorage.setItem(SIGNED_IN_HINT, "1");
+    else localStorage.removeItem(SIGNED_IN_HINT);
+  } catch {
+    // Storage blocked (private mode): the landing hero shows briefly, then the app takes over.
+  }
+}
+
 auth &&
   onAuthStateChanged(auth, (user) => {
     session = toSession(user);
+    writeHint(user !== null);
     listeners.forEach((l) => l());
   });
 

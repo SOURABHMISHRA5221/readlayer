@@ -125,3 +125,38 @@ describe("a rejected shifted Background", () => {
     a.destroy();
   });
 });
+
+describe("demo card actions (landing page)", () => {
+  it("replaces Knew this / Helpful / This is wrong with one call to action and records nothing", async () => {
+    document.body.innerHTML = HTML;
+    const root = document.getElementById("root")!;
+    const events: string[] = [];
+    let ctas = 0;
+    const a = createAnnotator(root, {
+      actions: "demo",
+      demoAction: { label: "Try it on any article", onClick: () => ctas++ },
+      loadExplanation: async () => verified("heard of"),
+      onEvent: (e) => events.push(e.type),
+    });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
+    const buttons = Array.from(card().querySelectorAll<HTMLButtonElement>(".rl-card__actions button"));
+    expect(buttons.map((b) => b.textContent)).toEqual(["Try it on any article"]);
+    buttons[0]!.click();
+    expect(ctas).toBe(1);
+    expect(events.filter((t) => t !== "explain_opened")).toEqual([]);
+    a.destroy();
+  });
+
+  it("keeps the full actions by default", async () => {
+    document.body.innerHTML = HTML;
+    const root = document.getElementById("root")!;
+    const a = createAnnotator(root, { loadExplanation: async () => verified("heard of") });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
+    expect(card().querySelectorAll(".rl-card__actions button").length).toBe(3);
+    a.destroy();
+  });
+});

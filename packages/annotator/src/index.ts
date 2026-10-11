@@ -36,7 +36,7 @@ export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
-export const ANNOTATOR_VERSION = "0.5.0";
+export const ANNOTATOR_VERSION = "0.6.0";
 
 export interface AnnotatorOptions {
   /** Interaction and reading events (DESIGN §9); the host batches them to /v1/events. */
@@ -62,6 +62,13 @@ export interface AnnotatorOptions {
    * Optional: without it the card has no depth buttons (the extension's default).
    */
   loadShifted?: (annotation: CardAnnotation, shift: -1 | 1) => Promise<Explanation>;
+  /**
+   * Card actions. "full" (the default: reader and extension) shows Knew this / Helpful / This is
+   * wrong; "demo" shows one call to action instead and records nothing (the landing page).
+   */
+  actions?: "full" | "demo";
+  /** The demo card's call to action (with `actions: "demo"`). */
+  demoAction?: { label: string; onClick: () => void };
   /**
    * The page's margin column, when there is one (e.g. ≥1200px): the card is then set there as
    * a sidenote, level with its line, instead of floating over the text. Null = popover.
@@ -194,6 +201,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       if (!target) return;
       loadInto(target.annotation, shift);
     },
+    demo: options.actions === "demo" ? options.demoAction ?? { label: "Try it on any article", onClick: () => undefined } : undefined,
   });
   card.enableShift(Boolean(options.loadShifted));
 
