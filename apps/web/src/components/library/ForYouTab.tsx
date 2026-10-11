@@ -114,10 +114,10 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
               external={item.format !== "article"}
               onOpen={item.format === "article" ? () => openHere(item) : undefined}
               subtitle={item.snippet}
-              why={item.why}
+              why={item.goal ? <>Picked for your goal <b>{item.goal}</b></> : null}
               time={time(item)}
               newCount={item.new_concepts.length}
-              goal={item.goal}
+              goal={null}
               saved={null}
               onLess={() => less(item)}
               busy={opening === item.id}
@@ -125,7 +125,7 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
               thumbnail={
                 item.thumbnail ? (
                   <img src={item.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" width={120} height={120}
-                    onError={(e) => { e.currentTarget.hidden = true; }} />
+                    onError={(e) => { const box = e.currentTarget.parentElement; if (box) box.hidden = true; }} />
                 ) : null
               }
             />
