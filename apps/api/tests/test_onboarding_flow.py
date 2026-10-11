@@ -99,13 +99,14 @@ class Provider:
         self.queries: list[str] = []
         self.empty = empty
 
-    async def search(self, query, fmt, news=False):
+    async def search(self, query, fmt, news=False, include_domains=()):
         self.queries.append(query)
         if self.empty:
             return []
         slug = query.replace(" ", "-") + "-today"
-        return [WebResult(url=f"https://x.test/{fmt}/{slug}", title=f"{query} today",
-                          snippet="Inflation and bonds explained", source="x.test",
+        host = include_domains[0] if include_domains else "x.test"  # the fallback: a wire
+        return [WebResult(url=f"https://{host}/{fmt}/{slug}", title=f"{query} today",
+                          snippet="Inflation and bonds explained", source=host,
                           format=fmt)]  # fmt: skip
 
 

@@ -14,7 +14,7 @@ import asyncio
 import html
 import logging
 import re
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Protocol
@@ -134,7 +134,10 @@ class SearchProvider(Protocol):
     name: str
     formats: frozenset[Format]
 
-    async def search(self, query: str, fmt: Format, news: bool = False) -> list[WebResult]: ...
+    async def search(
+        self, query: str, fmt: Format, news: bool = False,
+        include_domains: Sequence[str] = (),
+    ) -> list[WebResult]: ...  # fmt: skip
 
 
 class TavilyProvider:
@@ -155,7 +158,10 @@ class TavilyProvider:
         self._timeout = timeout_s
         self._transport = transport
 
-    async def search(self, query: str, fmt: Format, news: bool = False) -> list[WebResult]:
+    async def search(
+        self, query: str, fmt: Format, news: bool = False,
+        include_domains: Sequence[str] = (),
+    ) -> list[WebResult]:  # fmt: skip
         body: dict[str, object] = {
             "query": query,
             "search_depth": "basic",
@@ -172,6 +178,9 @@ class TavilyProvider:
         feed_article = news and fmt == "article"
         if fmt == "podcast":
             body["include_domains"] = list(PODCAST_DOMAINS)
+        elif feed_article and include_domains:
+            # The feed's fallback (decision 50): top outlets and wires only, one constant list.
+            body["include_domains"] = list(include_domains)
         elif not feed_article:
             body["exclude_domains"] = sorted({*NOT_ARTICLE_DOMAINS, *self._blocklist})[:150]
         # Feed articles: with `exclude_domains` the news topic returned section pages only
@@ -220,7 +229,10 @@ class YouTubeProvider:
         self._timeout = timeout_s
         self._transport = transport
 
-    async def search(self, query: str, fmt: Format, news: bool = False) -> list[WebResult]:
+    async def search(
+        self, query: str, fmt: Format, news: bool = False,
+        include_domains: Sequence[str] = (),
+    ) -> list[WebResult]:  # fmt: skip
         async with httpx.AsyncClient(timeout=self._timeout, transport=self._transport) as client:
             found = await client.get(
                 YOUTUBE_SEARCH_URL,
@@ -566,12 +578,13 @@ class WebSearch:
 
     async def fetch_feed(
         self, key: str, fmt: Format, query: str, keep: Callable[[WebResult], bool],
-        sub_cap: tuple[str, int] | None = None,
+        sub_cap: tuple[str, int] | None = None, include_domains: Sequence[str] = (),
     ) -> list[WebResult] | None:  # fmt: skip
         """One For you search (M7.5 §A): the feed's own cap, an optional shared sub-cap
         (counter, limit) and the global caps are checked and reserved together; results pass
         the blocklist and `keep` (topic relevance, dates) and are cached under `key`. None when
-        a cap is spent or the provider failed."""
+        a cap is spent or the provider failed. `include_domains` restricts article searches
+        (decision 50's fallback)."""
         provider = self._providers.get(fmt)
         if provider is None:
             return []
@@ -593,7 +606,12 @@ class WebSearch:
         except SearchCapReached:
             return None
         try:
-            results = await provider.search(query, fmt, news=True)
+            if include_domains:
+                results = await provider.search(
+                    query, fmt, news=True, include_domains=include_domains
+                )
+            else:
+                results = await provider.search(query, fmt, news=True)
         except (httpx.HTTPError, ValueError) as exc:
             error = type(exc).__name__
             extra = {"provider": provider.name, "format": fmt, "error": error}

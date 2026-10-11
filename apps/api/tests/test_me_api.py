@@ -71,7 +71,8 @@ def event(eid, kind="knew_this", concept="c_bond", **kw):
 
 def _v1_routes():
     for path, ops in app.openapi()["paths"].items():
-        if path.startswith("/v1"):
+        # The scheduler's internal route has its own Google OIDC check (test_outlets.py).
+        if path.startswith("/v1") and not path.startswith("/v1/internal/"):
             for method in sorted(ops):
                 yield (
                     method.upper(),
@@ -239,7 +240,8 @@ def test_profile_is_deterministic_and_never_calls_an_llm(env, monkeypatch):
     b = client.get("/v1/me/profile").json()
     assert a == b
     assert "You think in software." in a["summary"]["text"]
-    assert a["settings"] == {"density": "balanced", "explanation_style": "normal"}
+    assert a["settings"] == {"density": "balanced", "explanation_style": "normal",
+                             "country": None}  # fmt: skip
     assert a["persona"] is None
     assert all("known" in d for d in a["domains"])  # Design pass: per-domain known count
     client.patch("/v1/me/graph/c_curve", json={"state": "known"})
@@ -255,7 +257,8 @@ def test_settings_validation(env):
               "explanation_style": "short"},
     )  # fmt: skip
     assert ok.json() == {"thinks_in": ["cricket", "software"], "density": "guided",
-                         "explanation_style": "short", "learning_paused": False}  # fmt: skip
+                         "explanation_style": "short", "learning_paused": False,
+                         "country": None}  # fmt: skip
     too_many = {"thinks_in": ["software", "cricket", "music", "law"]}
     assert client.patch("/v1/me/settings", json=too_many).status_code == 422
     assert client.patch("/v1/me/settings", json={"thinks_in": ["astrology"]}).status_code == 422

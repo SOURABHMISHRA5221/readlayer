@@ -67,6 +67,10 @@ class Settings(BaseSettings):
     search_daily_cap: int = 300  # outgoing search calls per UTC day, all providers
     # For you feed (M7.5): its own share of those calls, so it can never starve Up next.
     feed_search_daily_cap: int = 60
+    # Outlet collection job (decision 50): POST /v1/internal/feeds/collect accepts only a Google
+    # ID token for this service account with this audience. Either one empty → always 403.
+    feed_job_sa_email: str = ""
+    feed_job_audience: str = ""
     # Learning goals resolved per reader per UTC day (≤ 1 embed + 1 link_confirm each; M7.5).
     goal_resolve_daily_cap: int = 10
     # Onboarding (decisions 41, 42): free-text resolves and discover calls that start new

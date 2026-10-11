@@ -24,6 +24,7 @@ from app.me.profile_edit import router as profile_edit_router
 from app.me.router import router as me_router
 from app.me.saved import router as saved_router
 from app.recs.feed_router import router as feed_router
+from app.recs.internal_router import router as internal_router
 from app.recs.router import router as recs_router
 
 settings = get_settings()
@@ -122,6 +123,8 @@ v1.include_router(onboarding_router)
 v1.include_router(onboarding_flow_router)
 v1.include_router(profile_edit_router)
 app.include_router(v1)
+# Cloud Scheduler's outlet collection (decision 50): its own Google OIDC check, no Firebase token.
+app.include_router(internal_router, prefix="/v1")
 
 # Added last so it wraps everything: preflights and error responses carry CORS headers too.
 # Only the web app's origins (Hosting in prod); no cookies, so no credentials.

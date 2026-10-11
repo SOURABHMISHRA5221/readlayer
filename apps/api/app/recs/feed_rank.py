@@ -12,7 +12,7 @@ score = interest(topic) × format_affinity(format) × readiness × goal_boost ×
 """
 
 import re
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
@@ -243,29 +243,73 @@ def rank(
     return out
 
 
-def select(ranked: Sequence[RankedItem], topics: Sequence[str]) -> list[RankedItem]:
-    """Per topic: up to 3 articles, 2 videos, 1 podcast (best first, one per URL); then the
-    topics' picks interleaved by score, at most 24."""
+SideOf = Callable[[FeedCandidate], str | None]  # "local" | "global" | None (not offered)
+
+
+def article_split(
+    pools: Sequence[tuple[int, int]], quota: int, share: float
+) -> list[tuple[int, int]]:
+    """Decision 50's mix. Per topic (local available, global available) → (local, global)
+    article picks: each topic fills min(quota, supply) slots; over all slots the local count is
+    round(share × slots) when supply allows, a short side backfilled from the other. Locals are
+    handed out round-robin in topic order. Pure."""
+    slots = [min(quota, loc + glo) for loc, glo in pools]
+    lo = [max(0, s - glo) for s, (_, glo) in zip(slots, pools, strict=True)]
+    hi = [min(loc, s) for s, (loc, _) in zip(slots, pools, strict=True)]
+    target = min(max(int(share * sum(slots) + 0.5), sum(lo)), sum(hi))
+    local, extra = list(lo), target - sum(lo)
+    while extra > 0:
+        for i in range(len(pools)):
+            if extra > 0 and local[i] < hi[i]:
+                local[i] += 1
+                extra -= 1
+    return [(n, s - n) for n, s in zip(local, slots, strict=True)]
+
+
+def _best(pool: Iterable[RankedItem]) -> list[RankedItem]:
+    return sorted(pool, key=lambda r: (-r.score, r.candidate.result.url))
+
+
+def select(
+    ranked: Sequence[RankedItem], topics: Sequence[str], side: SideOf | None = None,
+    share: float = 0.6,
+) -> list[RankedItem]:  # fmt: skip
+    """Per topic: up to 3 articles, 2 videos, 1 podcast (best first, one per URL; a URL filed
+    under two topics belongs to the earlier one); then the topics' picks interleaved by score,
+    at most 24. With `side`, articles are mixed local/global per `article_split` (articles not
+    offered to this reader are dropped); videos and podcasts are outside the mix."""
     seen: set[str] = set()
-    per_topic: list[list[RankedItem]] = []
+    pools: list[dict[str, list[RankedItem]]] = []
     for topic in topics:
-        picked: list[RankedItem] = []
-        for fmt, quota in QUOTAS.items():
-            pool = sorted(
-                (
-                    r
-                    for r in ranked
-                    if r.candidate.topic == topic and r.candidate.result.format == fmt
-                ),
-                key=lambda r: (-r.score, r.candidate.result.url),
-            )
-            for r in pool:
-                if len([p for p in picked if p.candidate.result.format == fmt]) >= quota:
-                    break
-                if r.candidate.result.url not in seen:
-                    seen.add(r.candidate.result.url)
-                    picked.append(r)
-        per_topic.append(sorted(picked, key=lambda r: -r.score))
+        by_kind: dict[str, list[RankedItem]] = {}
+        for r in _best(r for r in ranked if r.candidate.topic == topic):
+            url, fmt = r.candidate.result.url, r.candidate.result.format
+            if url in seen:
+                continue
+            kind: str = fmt
+            if fmt == "article" and side is not None:
+                where = side(r.candidate)
+                if where is None:
+                    continue
+                kind = f"article:{where}"
+            seen.add(url)
+            by_kind.setdefault(kind, []).append(r)
+        pools.append(by_kind)
+    split = article_split(
+        [(len(p.get("article:local", [])), len(p.get("article:global", []))) for p in pools],
+        QUOTAS["article"],
+        share,
+    )
+    per_topic: list[list[RankedItem]] = []
+    for p, (n_local, n_global) in zip(pools, split, strict=True):
+        picked = (
+            p.get("article", [])[: QUOTAS["article"]]
+            + p.get("article:local", [])[:n_local]
+            + p.get("article:global", [])[:n_global]
+        )
+        for fmt in ("video", "podcast"):
+            picked += p.get(fmt, [])[: QUOTAS[fmt]]
+        per_topic.append(_best(picked))
     out: list[RankedItem] = []
     for rank_i in range(max((len(p) for p in per_topic), default=0)):
         layer = [p[rank_i] for p in per_topic if rank_i < len(p)]
