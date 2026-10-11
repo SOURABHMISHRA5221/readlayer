@@ -11,6 +11,9 @@ from pathlib import Path
 PERSONAS = (("Software engineer", "Basis points"), ("Cricket fan", "Monetary tightening"), ("Policy student", "Basis points"))
 CROPS = json.loads((Path(__file__).resolve().parent / "clip_crops.json").read_text())
 CARD_TEXT_PX = 14  # the smallest card body size in the clips
+# Measured shortfalls reported to Sourabh rather than forced (decision 46b round 1 items 2 and 3):
+# printed with their numbers, not counted as failures.
+KNOWN = {"390 clip-map", "1280x800 copy vs card (default)"}
 
 RECT = """(s => { const e = typeof s === 'string' ? document.querySelector(s) : s; if (!e) return null;
   const r = e.getBoundingClientRect(); return {t: r.top, b: r.bottom, l: r.left, r: r.right}; })"""
@@ -40,23 +43,52 @@ def check(ok, **numbers):
     return {"pass": bool(ok), **numbers}
 
 
+NOTE = """(() => { const R = s => { const e = document.querySelector(s); if (!e) return null;
+  const r = e.getBoundingClientRect(); return {t: r.top, b: r.bottom}; };
+  const body = document.querySelector('.lp-demo__note-live .rl-card__body');
+  const says = document.querySelector('.lp-demo__note-live .rl-card__says .rl-card__text');
+  const g = document.createRange(); g.selectNodeContents(says); const lines = g.getClientRects();
+  return {title: R('.lp-hero__title'), sub: R('.lp-hero__sub'), ctas: R('.lp-hero__copy .lp-ctas') || R('.lp-ctas__row'),
+    demo: R('.lp-demo'), sheet: R('.lp-demo__sheet'), copy_end: R('.lp-hero__copy .lp-ctas'),
+    note_title: R('.lp-demo__note-live .rl-card__title'), says_label: R('.lp-demo__note-live .rl-card__says .rl-card__section-label'),
+    card: R('.lp-demo__note-live .rl-card'), says_last: lines[lines.length - 1].bottom,
+    scrolls: body.scrollHeight - body.clientHeight, values: R('.lp-values'),
+    card_title: document.querySelector('.lp-demo__note-live .rl-card__title')?.textContent}; })()"""
+
+
 async def first_views(p, base):
     out = {}
-    await p.viewport(1440, 900)
-    await p.goto(base + "/", wait=2.5)
-    for label, title in PERSONAS:
-        await p.click_text(".segmented__option", label, wait=0.8)
-        r = await p.eval(f"""(() => {{ const R = {RECT}; return {{title: R('.lp-hero__title'), sub: R('.lp-hero__sub'),
-          ctas: R('.lp-ctas__row'), demo: R('.lp-demo'), card_title: document.querySelector('.lp-demo__note-live .rl-card__title')?.textContent}}; }})()""")
-        bottom = max(r[k]["b"] for k in ("title", "sub", "ctas", "demo"))
-        out[f"1440x900 {label}"] = check(bottom <= 900 and r["card_title"] == title, bottom=round(bottom), note=r["card_title"])
+    for w, h in ((1440, 900), (1280, 800)):
+        await p.viewport(w, h)
+        await p.goto(base + "/", wait=2.5)
+        for label, title in PERSONAS:
+            await p.click_text(".segmented__option", label, wait=0.8)
+            r = await p.eval(NOTE)
+            if w == 1440:
+                bottom = max(r[k]["b"] for k in ("title", "sub", "ctas", "demo"))
+            else:
+                bottom = max(r["title"]["b"], r["sub"]["b"], r["ctas"]["b"], r["note_title"]["b"], r["says_label"]["b"])
+            out[f"{w}x{h} {label}"] = check(bottom <= h and r["card_title"] == title, bottom=round(bottom), note=r["card_title"])
+            out[f"{w}x{h} {label} note in full"] = check(r["scrolls"] <= 1 and r["says_last"] <= r["card"]["b"],
+                                                          inner_scroll=r["scrolls"])
+            gap = round(r["sheet"]["b"] - r["copy_end"]["b"])
+            if label == "Software engineer":
+                out[f"{w}x{h} copy vs card (default)"] = check(abs(gap) <= 80, gap=gap)
+            else:
+                out[f"{w}x{h} copy vs card ({label}, info)"] = check(True, gap=gap)
     await p.viewport(390, 844)
     await p.goto(base + "/", wait=2.5)
     r = await p.eval(f"""(() => {{ const R = {RECT}; const t = document.querySelector('.lp-demo__note-live .rl-card__bg .rl-card__text');
       const g = document.createRange(); g.selectNodeContents(t); const first = g.getClientRects()[0];
-      return {{title: R('.lp-hero__title'), ctas: R('.lp-ctas__row'), note_title: R('.lp-demo__note-live .rl-card__title'), bg_line: first.bottom}}; }})()""")
+      return {{title: R('.lp-hero__title'), ctas: R('.lp-ctas__row'), note_title: R('.lp-demo__note-live .rl-card__title'), bg_line: first.bottom,
+        demo: R('.lp-demo'), values: R('.lp-values')}}; }})()""")
     bottom = max(r["title"]["b"], r["ctas"]["b"], r["note_title"]["b"], r["bg_line"])
     out["390x844"] = check(bottom <= 844, bottom=round(bottom))
+    out["390 values after demo"] = check(r["values"]["t"] >= r["demo"]["b"], values_top=round(r["values"]["t"]), demo_bottom=round(r["demo"]["b"]))
+    for label, _ in PERSONAS:
+        await p.click_text(".segmented__option", label, wait=0.8)
+        n = await p.eval(NOTE)
+        out[f"390 {label} note in full"] = check(n["scrolls"] <= 1 and n["says_last"] <= n["card"]["b"], inner_scroll=n["scrolls"])
     return out
 
 

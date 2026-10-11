@@ -106,6 +106,51 @@
   text-wrap: pretty;
 }
 
+/* The what and why (decision 46b): three lines, each led by a small Margo face. */
+.lp-values {
+  display: grid;
+  gap: var(--s5);
+  margin: var(--s8) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-values__item {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--s3);
+  align-items: start;
+}
+.lp-values__face {
+  margin-top: -1px;
+}
+.lp-values__item p {
+  max-width: 34em;
+  font: 400 16px / 1.5 var(--font-ui);
+  color: var(--ink-soft);
+}
+.lp-values__item strong {
+  display: block;
+  margin-bottom: 2px;
+  font: 650 17px / 1.35 var(--font-ui);
+  color: var(--ink);
+}
+.lp-proof {
+  margin-top: var(--s6);
+  font-size: var(--text-ui-sm);
+}
+.lp-proof a {
+  color: var(--accent-ink);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-underline-offset: 3px;
+}
+.lp-proof a:hover {
+  text-decoration-color: currentColor;
+}
+.lp-proof--narrow {
+  display: none;
+}
+
 .lp-ctas {
   margin-top: var(--s6);
 }
@@ -136,7 +181,6 @@
 
 /* The live demo: a sheet of paper with the open note under the paragraph. */
 .lp-demo {
-  --lp-note-h: 280px;
   --lp-margo-w: 76px;
   position: relative;
   z-index: 0; /* a stacking context, so the under-sheet sits above the page background */
@@ -191,13 +235,8 @@
   border-radius: var(--radius);
   background: var(--wash);
 }
-.lp-demo__source {
-  font: 500 var(--text-ui-sm) / 1.4 var(--font-ui);
-  color: var(--muted);
-}
 .lp-demo__para {
-  margin-top: var(--s2);
-  font: 400 var(--text-body) / var(--leading-body) var(--font-read);
+  font: 400 19px / var(--leading-body) var(--font-read);
   color: var(--ink);
 }
 .lp-demo__caption {
@@ -206,15 +245,12 @@
   color: var(--muted);
 }
 
-/* The open note: one fixed height, filled by the static copy first, then the live card. Room
-   above it for Margo, who stands on the note's top edge handing it over. */
+/* The open note at its natural height (decision 46b: "What the author is saying" in full):
+   the static copy first, then the live card in the same frame. Room above it for Margo, who
+   stands on the note's top edge handing it over. */
 .lp-demo__note {
   position: relative;
-  height: var(--lp-note-h);
   margin-top: calc(var(--lp-margo-w) * 0.42);
-}
-.lp-demo__note-live {
-  height: 100%;
 }
 
 /* Margo hands over the note: mirrored, so the held card reaches down onto the note. */
@@ -270,8 +306,6 @@
 
 /* The first paint's note: the annotator card's metrics (styles.ts), sentence-case labels. */
 .lp-note-static {
-  position: absolute;
-  inset: 0;
   display: flex;
   flex-direction: column;
   padding: 16px 18px 12px;
@@ -287,8 +321,6 @@
 }
 .lp-note-static__body {
   flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
 }
 .lp-note-static__domain {
   padding-right: calc(var(--lp-margo-w) - var(--s4));
@@ -387,12 +419,34 @@
 
 /* Phones (decision 46 round 1, item 2): the open note must start in the first view, so the fine
    print moves below the demo (a) and the two calls to action share a row (b). */
-@media (max-width: 599px) {
+/* Below 1024 the hero is one column: the value lines (no controls) follow the demo by grid
+   order; the proof link has its own copy after the demo in the DOM, so focus order matches. */
+@media (max-width: 1023px) {
   .lp-hero {
     gap: 0;
+  }
+  .lp-hero__copy {
+    display: contents;
+  }
+  .lp-hero .lp-demo {
+    margin-top: var(--s8);
+  }
+  .lp-hero .lp-values {
+    order: 2;
+    margin-top: var(--s8);
+  }
+  .lp-proof--wide {
+    display: none;
+  }
+  .lp-proof--narrow {
+    display: block;
+    order: 3;
+  }
+}
+@media (max-width: 599px) {
+  .lp-hero {
     padding-top: 0;
   }
-  .lp-hero__copy,
   .lp-hero .lp-ctas {
     display: contents;
   }
@@ -423,23 +477,32 @@
 
 @media (min-width: 600px) {
   .lp-demo__sheet {
-    padding: var(--s6) var(--s8) var(--s6);
+    padding: var(--s5) var(--s8);
   }
 }
 
 @media (min-width: 1024px) {
+  .lp-hero__copy .lp-ctas {
+    margin-top: var(--s12);
+  }
+  .lp-hero__sub {
+    margin-top: var(--s5);
+  }
+  .lp-values {
+    gap: 28px;
+    margin-top: var(--s12);
+  }
   .lp-hero {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: center;
+    align-items: start;
     gap: clamp(40px, 5vw, 80px);
-    padding-top: clamp(8px, 1.5vw, 24px);
+    padding-top: var(--s2);
     padding-bottom: var(--s10);
   }
   .lp-hero__mark {
     white-space: nowrap;
   }
   .lp-demo {
-    --lp-note-h: 390px;
-    --lp-margo-w: 104px;
+    --lp-margo-w: 88px;
   }
 }

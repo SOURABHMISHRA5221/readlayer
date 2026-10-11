@@ -281,7 +281,7 @@ const FIGURES = [
 
 function Trust() {
   return (
-    <section className="lp-section lp-trust" aria-labelledby="lp-trust-title">
+    <section id="how-we-test" className="lp-section lp-trust" aria-labelledby="lp-trust-title">
       <h2 id="lp-trust-title" className="lp-section__title">
         Checked before you see it.
       </h2>

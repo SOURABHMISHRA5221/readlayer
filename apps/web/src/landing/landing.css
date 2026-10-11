@@ -500,10 +500,9 @@
   }
 }
 
-/* Decision 46: the hero's open note, the annotator's inline card filling the fixed slot, with
+/* Decision 46: the hero's open note, the annotator's inline card at its natural height, with
    sentence-case labels. Selectors outrank the annotator's runtime style tag (styles.ts). */
 .lp .lp-demo__note-live > .rl-card {
-  height: 100%;
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
 }
 .lp .lp-demo__note .rl-card .rl-card__domain,

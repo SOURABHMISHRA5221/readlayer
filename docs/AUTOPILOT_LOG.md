@@ -585,3 +585,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   full, check 1440×900 / 1280×800 / 390×844, then freeze the landing and go to onboarding.
   Amendment Q1–Q4 drafted (real numbers: 24/25 good, not Sourabh's example 25/25); plan-reviewer
   running.
+- 46b plan-reviewer: round 1 REVISE (3: value lines after the demo below 1024, what must pass at
+  1280×800, clip-map crop guarded by a frame diff), round 2 **APPROVE** (nit: a second proof line
+  after the demo below 1024 for focus order, applied). Built: annotator 0.7.1 (overflow re-check on
+  inline reveal, vitest; 53 pass), top-aligned copy column with Sourabh's three value lines (Margo
+  faces) and the proof line from evals.json ("15/15 … · 24/25 …", the data, not the example's
+  25/25) linking to `#how-we-test`, note at natural height ("What the author is saying" in full,
+  no inner scroll, all personas, 1440/1280/390), source line into the caption, 19px demo
+  paragraph. 1440×900: whole demo in view (bottom 864 for the cricket fan); copy vs card 75px.
+  1280×800: copy vs card 137px (reported). clip-map re-crop not possible: the frame diff shows the
+  map re-lays out across the full width, so the crop stays 480 (390: 10.4px, reported).
+  New failures from the natural-height note: Margo touching the paragraph at 1440, swap spread.
+- **Decisions 46c/46d** (Sourabh): hero without the phone, source line in the card header, "Read
+  with Gloss:" chips, ±40px column/card alignment with the whole hero in view at 1440×900 and
+  1280×800; clips as equal 16:10 tiles at natural zoom (whole lines, never upscaled), each showing
+  its step, mid-clip posters; then freeze and go to onboarding. Amendment R1–R3 drafted;
+  plan-reviewer running.

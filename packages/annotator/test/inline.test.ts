@@ -134,6 +134,24 @@ describe("inline card host", () => {
     a.destroy();
   });
 
+  it("a revealed inline card whose body scrolls makes the body a focusable region", async () => {
+    const proto = HTMLElement.prototype;
+    const sh = Object.getOwnPropertyDescriptor(proto, "scrollHeight");
+    Object.defineProperty(proto, "scrollHeight", { configurable: true, get() { return this.classList?.contains("rl-card__body") ? 600 : 0; } });
+    try {
+      const { a } = await setup({ loadExplanation: undefined });
+      a.open("repo");
+      const body = card().querySelector<HTMLElement>(".rl-card__body")!;
+      expect(card().hidden).toBe(false);
+      expect(body.tabIndex).toBe(0);
+      expect(body.getAttribute("role")).toBe("region");
+      a.destroy();
+    } finally {
+      if (sh) Object.defineProperty(proto, "scrollHeight", sh);
+      else delete (proto as { scrollHeight?: number }).scrollHeight;
+    }
+  });
+
   it("has no serious axe violations while open", async () => {
     const { a } = await setup();
     a.open("repo");

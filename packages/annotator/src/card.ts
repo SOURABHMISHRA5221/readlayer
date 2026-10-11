@@ -393,6 +393,7 @@ export class Card {
       // In flow in the host: no position, no scrim; shown once the explanation is in.
       Object.assign(this.el.style, { top: "", left: "" });
       this.el.hidden = this.pending;
+      if (!this.el.hidden) this.markOverflow(); // a scrolling inline body must be reachable
       return;
     }
     this.el.hidden = false;

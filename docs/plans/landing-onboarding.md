@@ -664,3 +664,93 @@ and §B (onboarding).
 `tools/shots/landing.py` at 1440×900, 1280×800 and 390×844 (plus the existing widths): all
 decision 46 checks, the copy/demo bottom check, axe 0, no horizontal scroll. After screenshots to
 `docs/evidence/landing/d46-after/`. Lighthouse after the freeze (log's next step).
+
+### Decision 46b round 1 (plan-reviewer REVISE, 3 items; applied, these override Q1–Q4)
+1. **Below 1024 the value lines and proof line render after the demo** (same markup in `Hero`,
+   moved by grid order on the phone layout that already uses `display: contents`, so `HeroStatic`
+   and index.html are unchanged). The 390×844 first-view check stays as it is; a new check asserts
+   the value list's top is below the demo figure's bottom at 390.
+2. **What must pass where:**
+   - 1440×900: whole demo in view for all three personas; |copy bottom − demo bottom| ≤ 80.
+   - 1280×800: headline, subline, CTAs, the open note's title and the "What the author is saying"
+     label in view (all three personas); the copy/demo bottom check for the default persona only.
+   - 390×844: unchanged (headline, CTAs, note title, one Background line).
+   - Every width: no inner scroll and the author text's last line inside the card.
+3. **clip-map re-crop keeps what changes.** Before cropping, diff the first and last frames of the
+   current encode; every changed pixel (luma difference > 24) must fall inside the 400 CSS px box,
+   placed off-centre around the changed region if needed (width unchanged). If the changed region
+   is wider than 400 CSS px, the crop stays at 480 and the 390 shortfall goes to Sourabh. The new
+   legibility figure goes in `docs/evidence/landing/d46-after/clips.txt`.
+- Round 2: **APPROVE**. Nit applied: the proof line's link is the only focusable part of the moved
+  block, so below 1024 a second proof line is rendered after the demo in the DOM and the copy-column
+  one is `display: none` (not focusable); the value lines (no controls) move by grid order. The
+  phone layout's `display: contents` now applies below 1024 (phone-only tweaks stay below 600).
+
+## Amendment: decisions 46c and 46d, last landing changes before the freeze (Sourabh, 2026-10-11)
+
+### R1. Hero (46c)
+- **Phone out of the hero** (`HeroPhone`, its CSS and the hero's reserved bottom padding removed;
+  `shot-phone.*` files stay unused for now). Sourabh's optional phone frame in "Gloss reads with
+  you" is not added (scope; the shot repeats the same note). The landing then shows no product
+  shot besides the live demo and the clips.
+- **Source line in the card's header**, one line above the paragraph: "From The Economic Times ·
+  real paragraph, real notes; the words are unchanged" (sentence case, muted UI text, wraps only
+  below 600px). The figcaption under the card goes ("Tap a highlighted term" is dropped; the note
+  is already open and the marks are visibly tappable).
+- **"Read with Gloss:" row** under the CTAs (≥ 1024 only; mobile unchanged): small chips
+  Articles · Any link you paste · YouTube · Podcasts. "With notes" chips carry the reader's teal
+  highlight underline and a teal dot; "in your feed" chips are plain; a short legend follows
+  ("● with notes · others in your feed"). The chips' accessible names carry the same words
+  ("Articles, with notes"). In `Hero` (static paint too). Data shared with the Formats section
+  (one `FORMATS` list in `landing/formats.ts`).
+- **Height and alignment:** at 1440×900 and 1280×800 the whole hero (default persona: copy column,
+  toggle, card) fits in the first view, and |copy column bottom − card bottom| ≤ 40. To get there:
+  bar 56px, hero top padding 0, sheet padding 16px, Margo 72px, and the note footer's demo button
+  and "Explanation — not the author's words" on one row on the landing (≥ 600px). If 1280×800 still
+  doesn't fit, the order is: the note's level line hidden at heights ≤ 820px, then the copy
+  column's spacing; beyond that, ask Sourabh. Other personas may run past the fold after a switch
+  (user action); their note must still show in full (no inner scroll).
+- **Fixes from the last run:** Margo touched the paragraph's last line at 1440 → the note's top
+  margin becomes Margo's full overhang (0.62 × width) so Margo never reaches the paragraph
+  (bounding-box check stays). Swap spread 69/173px → `DemoNoteStatic` is made to match the live
+  card exactly (same footer row, same label sizes, pitch hidden on phones in both); the swap check
+  compares the slot height on the last static frame with the first live frame (≤ 4px) and reports
+  font-swap reflow separately (CLS is guarded by Lighthouse < 0.1).
+
+### R2. How it works clips (46d)
+- **One tile shape:** every tile 16:10 (`aspect-ratio: 16 / 10`, video `object-fit: cover`
+  only as a guard: the recordings are 16:10), a true 2×2 grid ≥ 768px with number/title/text rows
+  aligned across each row (subgrid); one column below. The staggered layout from P5 goes.
+- **Natural zoom, whole lines, never upscaled:** recorded at deviceScaleFactor 2 in a 680px-wide
+  viewport (body text 21px, column ≈ 600px, cards float under their term), cropped to 660×412 CSS
+  px (16:10) around the full text column, so lines are whole; at the 1440 tile width (≈ 612px)
+  body text shows at ≈ 19.5px. Encoded at the crop's native 1320×824; if a clip can't meet 400 KB
+  even at the highest CRF tried, it is downscaled (1188, then 1056 wide), never upscaled. A soft
+  16px fade at the tile's top and bottom edges (CSS mask) instead of hard cut lines. On phones the
+  tile is ≈ 358px wide, so text shows at ≈ 11px: accepted consequence of one natural-zoom
+  recording (the earlier 12px phone target no longer applies; told to Sourabh).
+- **Each clip shows its step** (live site, one temporary demo reader, deleted with DELETE /v1/me;
+  no generations: the precheck must report 0):
+  1. "Know this?" → "Not really" → the chip collapses to "Noted, thanks." → (cut: the app shows the
+     new highlight on the next load, which is what it does today) the term as a highlight.
+  2. A fresh load of the article: the paragraph plain, then the highlights ink in one by one
+     (the annotator's stagger); then a second take at 1280px of the margin's "N notes for you" list
+     filling (the list only exists ≥ 1200px), cropped to the rail with blank gutter as padding
+     (no cut words).
+  3. Tap a highlight → the card opens with the Background and its analogy tag → "Say it simpler"
+     rewrites it (the cricket fan's "tighter policy": cached one band down).
+  4. The knowledge map with 2–3 nodes filling in (before/after the "Knew this" corrections).
+- **Posters** are chosen per clip at the frame that shows the action (1: "Noted" with the term;
+  2: highlights in; 3: card open with Background; 4: the filled map), checked non-blank; ≤ 400 KB
+  per file; reduced motion shows the poster only (unchanged).
+- **Production writes:** ≤ 3 runs, each 1 anonymous demo reader and its docs (deleted), 1 "Know
+  this?" answer, ≤ 3 "Knew this", explain hit counters +N; 0 generations.
+
+### R3. Checks and freeze (46c/46d C)
+- `tools/shots/landing.py` + `landing_d46.py` updated: the 46c fit and ±40 alignment at 1440×900 and
+  1280×800 (default persona), notes in full for all personas, values after the demo at 390, no
+  caps, Margo overlap, swap, clip tiles 16:10 with equal heights per row, clip text ≈ 18–20px at
+  1440 (from the crop width), posters non-blank; axe 0; first view < 1.5 MB.
+- Before/after screenshots at 1440×900, 1280×800 and 390×844, light and dark, into
+  `docs/evidence/landing/d46-after/` and the log. Commit; the landing is frozen until the tweak
+  window; then §C and §B (onboarding).

@@ -1,10 +1,12 @@
 import type { MouseEvent, ReactNode, Ref } from "react";
 
+import { Margo, type MargoMood } from "../components/Margo";
 import { Segmented } from "../components/Segmented";
 import { Wordmark } from "../components/Wordmark";
 import type { PersonaKey } from "../lib/personas";
 import { navigate } from "../lib/router";
 import note from "./demoNoteStatic.json";
+import evals from "./evals.json";
 import { paragraph, site } from "./demoParagraph.json";
 import { DEFAULT_DEMO_PERSONA, DEMO_PERSONAS } from "./demoPersonas";
 import { MargoHero, PERSONA_MOOD } from "./MargoHero";
@@ -43,7 +45,6 @@ export function DemoFrame({ persona, onPersona, paragraphRef, noteRef, staticNot
         <Segmented label="Read as:" options={DEMO_PERSONAS} value={persona} onChange={onPersona} />
       </div>
       <div className="lp-demo__sheet">
-        <p className="lp-demo__source">From {site}</p>
         <p className="lp-demo__para" data-rl-paragraph={paragraph.id} ref={paragraphRef}>
           {paragraph.text}
         </p>
@@ -55,7 +56,7 @@ export function DemoFrame({ persona, onPersona, paragraphRef, noteRef, staticNot
       </div>
       {phone}
       <figcaption className="lp-demo__caption">
-        A real paragraph and real notes; the article's words are unchanged. Tap a highlighted term.
+        From {site}: a real paragraph and real notes; the words are unchanged. Tap a highlighted term.
       </figcaption>
     </figure>
   );
@@ -99,6 +100,40 @@ function DemoNoteStatic({ ref }: { ref?: Ref<HTMLDivElement> }) {
         <span className="lp-note-static__card-label">Explanation — not the author's words</span>
       </div>
     </div>
+  );
+}
+
+/** The what and why beside the demo (decision 46b): Sourabh's three lines, each with a Margo face. */
+const VALUES: { mood: MargoMood; lead: string; rest: string }[] = [
+  { mood: "think", lead: "Notes only on what you'd miss.", rest: "Gloss knows what you already know, and skips it." },
+  { mood: "happy", lead: "Explained in your world.", rest: "Software, cricket, law: analogies from what you understand." },
+  { mood: "idle", lead: "Never changes the original.", rest: "Every note is checked against the article before you see it." },
+];
+
+function Values() {
+  return (
+    <ul className="lp-values">
+      {VALUES.map((v) => (
+        <li key={v.lead} className="lp-values__item">
+          <Margo mood={v.mood} size={24} className="lp-values__face" />
+          <p>
+            <strong>{v.lead}</strong> {v.rest}
+          </p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The verifier's results from evals.json, never rounded; links to the trust band. */
+function Proof({ where }: { where: "wide" | "narrow" }) {
+  const { adversarial: bad, good } = evals;
+  return (
+    <p className={`lp-proof lp-proof--${where}`}>
+      <a href="#how-we-test">
+        {bad.passed}/{bad.total} misleading notes caught · {good.passed}/{good.total} faithful notes passed in our tests
+      </a>
+    </p>
   );
 }
 
@@ -160,9 +195,12 @@ export function Hero({ themeToggle, demo, ctas, notice, children, footer, action
             <p className="lp-hero__sub">
               Gloss explains the parts you'd miss, in words you already know, without changing a word of the original.
             </p>
+            <Values />
+            <Proof where="wide" />
             {ctas ?? <HeroCtas />}
           </div>
           {demo ?? <DemoFrame persona={DEFAULT_DEMO_PERSONA} onPersona={noop} />}
+          <Proof where="narrow" />
         </section>
         {children}
       </main>
