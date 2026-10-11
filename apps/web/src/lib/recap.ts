@@ -84,3 +84,9 @@ export function mergeRecapView(
   for (const x of extras) if (x.kind === "prompt") add(x.concept_id, x.label);
   return changed ? { key, labels } : prev;
 }
+
+/** A notes response counts for the recap only in the view that requested it: after a persona or
+ * density switch the previous view's notes stay on screen until the new ones arrive (46d). */
+export function notesForView<T>(data: T | null, dataView: string | null, view: string): T | null {
+  return data && dataView === view ? data : null;
+}
