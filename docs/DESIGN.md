@@ -282,7 +282,7 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   stored, logged or sent to search; 5 resolves per reader per day.
 - **Screen 2 "Here's what's out there for you":** `POST /v1/onboarding/discover` with the
   chosen topics (≤ 6) and resolved concepts (≤ 2): shared day-keyed searches (§17.1; concept
-  keys `feed:c:<id>:<day>`, articles only, "<concept label> news this week", results must name
+  keys `feedx:c:<id>:<day>` (decision 50: restricted to top outlets), articles only, "<concept label> news this week", results must name
   the label or an alias). Up to 9 cards, every topic/concept with results gets one before any
   gets a second, articles first, then fresher. Fewer than 6 and nothing pending → newest corpus
   articles in those domains. Each card: "I'd read this" / "Not for me" (`pick`: a rec signal
@@ -521,7 +521,8 @@ subject to pause). The next open regenerates.
 | POST | /v1/onboarding/know | `{concept_id, known}`: an offered term only (404), once (409), ≤ 9, 409 after finish |
 | POST | /v1/onboarding/finish | onboarding done; the offered/answered/pick lists are cleared |
 | GET | /v1/me/profile/edits | the last 10 applied/undone edits (expired pending ones are deleted) |
-| GET | /v1/feed?persona= | For you (§17): `{topics, items[{id, topic, topic_label, format, title, url, source, snippet, thumbnail, duration_or_read_time, published_at, new_concepts, goal, why, score}], pending, snapshot, prepared_at}`; demo readers get their persona's pre-seeded snapshot (`snapshot: true`) and trigger no search |
+| GET | /v1/feed?persona= | For you (§17): `{topics, items[{id, topic, topic_label, format, title, url, source, snippet, thumbnail, duration_or_read_time, published_at, new_concepts, goal, why, score}], pending, snapshot, prepared_at, country}`; demo readers get their persona's pre-seeded snapshot (`snapshot: true`) and trigger no search |
+| POST | /v1/internal/feeds/collect | Outlet collection (§17.1a). Outside the Firebase router: only a Google ID token with `iss` accounts.google.com, `aud` = `FEED_JOB_AUDIENCE`, `email_verified`, `email` = `FEED_JOB_SA_EMAIL`; either setting empty → 403 |
 | GET | /v1/me/goals | the caller's reading goals with progress (§18); signed-in readers only (403 for demo readers) |
 | POST | /v1/me/goals | `{type: habit, metric: articles\|minutes, per_week}` or `{type: learning, text}` (≤ 120 chars, resolved, never stored) → the goal with progress; needs consent; ≤ 5 goals (409), 422 `goal_not_found`, 429 past `GOAL_RESOLVE_DAILY_CAP` |
 | DELETE | /v1/me/goals/{id} | 204 |
@@ -658,7 +659,9 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 - Data held: Firebase uid, display name, onboarding answers, settings, KNOWS edges, domain
   abilities, weekly reading stats, applied profile edits (ops and deltas, never the raw text),
   reading goals (`goals`: type, numbers, resolved target ids and labels, never the goal text),
-  pages the reader brought in (`ingested`: content id and time),
+  pages the reader brought in (`ingested`: content id and time), the country they chose
+  (`country`, decision 50: only picks which outlets are local in For you; never sent to a model
+  or a search; demo readers can't set it),
   events (raw events expire after 90 days via Firestore TTL; aggregates stay).
 - No email stored in our collections (Firebase Auth keeps it).
 - `GET /v1/me/export` → JSON of everything above. `DELETE /v1/me` → deletes all user documents
@@ -988,6 +991,39 @@ is ready to learn. No LLM anywhere on this path.
   entry, yesterday's entry for the same topic and format is served if there is one; after a
   cap hit or failure that instance waits 10 minutes before trying again.
 
+### 17.1a Articles from top outlets (decision 50)
+Search results were too often small local papers or tag pages, so **articles now come from top
+outlets' own section feeds**; the search above is only a restricted fallback.
+- **Registry** (`app/recs/outlets.py`): global = BBC, The Guardian, NPR; India = The Hindu, Mint.
+  Each maps the 14 topics to section feeds (closest section where it has none). Every outlet was
+  measured readable through our own fetch + extract (≥ 2 of its 3 newest articles ≥ 400 words,
+  rule fixed beforehand; `scripts/check_outlets.py`, `docs/evidence/d50/outlets.txt`); The
+  Indian Express and The Economic Times failed it and are out.
+- **Collection job** (`app/recs/outlet_job.py`): Cloud Scheduler calls
+  `POST /v1/internal/feeds/collect` at 06:00 and 18:00 IST. Every feed is fetched once through
+  `safe_fetch` (feed content types, 3 MiB cap, robots.txt) and parsed from those bytes
+  (`feedparser` never gets a URL). Kept: the outlet's own article hosts, https, no live/video/
+  audio/hub path, dated within 3 days, mostly Latin title; URLs canonicalised (tracking query and
+  fragment dropped). One doc per topic, `rec_cache/outlets:<topic>` = `{outlet: {items ≤ 20
+  newest, fetched_at}}`, merged per outlet: an outlet that failed keeps its list, and the 3-day
+  filter is re-applied to every list each run. 14 writes a run; no reader data, no LLM, no search
+  API. A newest run older than 36 h is logged by the feed.
+- **Country and the mix.** A reader's `country` (IN, GB, US, other; §11.4) decides sides: their
+  own country's outlets are *local*, the other global outlets *global*; another country's
+  national press isn't offered. No country (or "other") → global outlets only. Over all article
+  picks the local share is round(0.6 × slots) when supply allows; a short side is backfilled
+  from the other (`feed_rank.article_split`). Videos and podcasts are outside the mix. Demo
+  personas read as India (`PERSONA_COUNTRY`, decision 51).
+- **Fallback.** A topic with fewer than 3 offered outlet articles, and every onboarding concept
+  search, makes one article search with Tavily `include_domains` = every registry article host
+  plus reuters.com and apnews.com, one constant list for everyone (never `exclude_domains`), under
+  new keys `feedx:<topic>:<day>` / `feedx:c:<concept>:<day>`, so the old unrestricted `feed:`
+  article entries are never served again. Results from outlets the reader isn't offered are
+  dropped after the search; requests never differ by country (test).
+- **Refresh.** For you refetches on `rl:feed-stale` (Redo setup finished, a profile edit applied
+  or undone, a learning goal saved or removed, a country change) and on its Refresh button;
+  outlet articles cost no search.
+
 ### 17.2 Ranking (`app/recs/feed_rank.py`, pure)
 ```
 score = interest(topic) × format_affinity(format) × readiness × goal_boost × freshness
@@ -998,15 +1034,17 @@ score = interest(topic) × format_affinity(format) × readiness × goal_boost ×
   snippet) that are new to this reader (p_know < 0.5): 1–4 new → 1.0, none → 0.6, more than 4 →
   0.8^(k−4).
 - goal_boost: 1.3 when the item names a learning-goal target (§18).
-- Selection: per topic up to 3 articles, 2 videos, 1 podcast (one per URL), then the topics'
-  picks interleaved by score, at most 24. Each item carries a `why` line ("Health · 2 ideas new
+- Selection: per topic up to 3 articles (mixed local/global, §17.1a), 2 videos, 1 podcast (one
+  per URL; a URL under two topics belongs to the earlier), then the topics' picks interleaved by
+  score, at most 24. Each item carries a `why` line ("Health · 2 ideas new
   to you · helps your goal: Insulin resistance").
 - Feed impressions use the Up next signal store with relation `feed`; feed dismissals never
   touch relation dismissals.
 
 ### 17.3 Demo snapshots (decision 38)
-Demo readers never trigger a search. `scripts/seed_demo_feed.py` runs the same searches once and
-stores `persona_feeds/{persona}` (public search results only), dropping any article that fails a
+Demo readers never trigger a search. `scripts/seed_demo_feed.py` reads the collected outlet
+entries as an Indian reader (local, global, local pattern), runs the video and podcast searches
+once and stores `persona_feeds/{persona}` (public items only), dropping any article that fails a
 local fetch-and-extract check (≥ 400 words). Serving applies no date filter, and the page says
 the picks were prepared in advance, may be dated, and that signing in with Google gives a live
 feed.

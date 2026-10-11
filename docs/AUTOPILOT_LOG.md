@@ -811,3 +811,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 3. Review, PR, deploy order API → scheduler setup (his yes) → manual run → seed dry run → seed →
    web; live check on his account (country set, Refresh).
 4. Then M8-local from `m8-resume`, then Wide layout.
+
+### Decision 50 build (2026-10-11, branch d50)
+- API (5ccbe6f): registry, `outlet_feed` (parsing moved from collect_corpus), `outlet_job` +
+  `POST /v1/internal/feeds/collect` (Google OIDC claims, fails closed), `OutletStore`
+  (`rec_cache/outlets:<topic>`), feed outlet-first with `feedx:` restricted fallback, 60/40
+  `article_split`, `country` (onboarding, settings; demo 403), `PERSONA_COUNTRY = "IN"`.
+- Scripts (d971ed5): `check_outlets` dropped Indian Express and Economic Times by the pre-set
+  rule (evidence kept); `collect_outlets --dry-run`; seed_demo_feed from outlets; Makefile
+  `setup-feed-job` / `run-feed-job` (one job, two times); deploy.env.yaml FEED_JOB_* vars.
+- Web (74597a7): country on screen 1 (locale prefill) and Preferences, Refresh, `rl:feed-stale`,
+  country hint, /privacy.
+- Harness (28ddf91): STATUS §21. 9/9 registry articles, 5/4 mix, Refresh 0 searches, Redo
+  in place, axe 0; Preferences overflow at 390 fixed. 5 of 6 sample articles ≥ 400 words.
+- Tests: API 717, web 63. No LLM spend.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on d50 → fix until SHIP → PR → green CI → merge.
+2. Deploy API (his yes) → `make setup-feed-job` (his yes) → `make run-feed-job` → seed dry run
+   → seed → web deploy (his yes) → live check (his account: country, Refresh).
+3. Then M8-local from `m8-resume`, then Wide layout.
