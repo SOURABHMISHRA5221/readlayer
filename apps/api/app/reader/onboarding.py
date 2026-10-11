@@ -6,6 +6,7 @@ asks 8 quick "do you know this?" taps on common concepts whose difficulty is clo
 reader's current θ, and each answer is evidence (±) on the concept plus an Elo step on θ.
 """
 
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -164,6 +165,15 @@ def term_order(concepts: Iterable[Concept], topic: str, theta: Mapping[str, floa
     ranked = sorted((c for c in concepts if c.domain == topic),
                     key=lambda c: (c.doc_freq == 0, abs(c.base_difficulty - th), c.id))  # fmt: skip
     return [c.id for c in ranked]
+
+
+def as_written(concept: Concept, text: str) -> bool:
+    """An acronym label ("OCT", "GST") counts only where the text writes it in capitals: the
+    graph's case-insensitive lookup also finds "Oct." in a date (harness, decision 48)."""
+    label = concept.label
+    if not (label.isupper() and len(label) <= 6):
+        return True
+    return re.search(rf"(?<![A-Za-z]){re.escape(label)}(?![A-Za-z])", text) is not None
 
 
 def offer(

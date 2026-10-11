@@ -310,7 +310,19 @@ async def _serve(
     items, so picks are rec signals. Items past MAX_OFFERED_ITEMS aren't shown."""
     theta = {d: s.theta for d, s in (await _repo().get_domains(uid)).items()}
     new = [
-        (_id(c, library), c.topic, onboarding.term_order(c.concepts, c.topic, theta))
+        (
+            _id(c, library),
+            c.topic,
+            onboarding.term_order(
+                [
+                    x
+                    for x in c.concepts
+                    if onboarding.as_written(x, f"{c.result.title} {c.result.snippet}")
+                ],
+                c.topic,
+                theta,
+            ),
+        )
         for c in picked
     ]
     user = await _repo().offer_onboarding(

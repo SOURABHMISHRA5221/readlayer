@@ -357,3 +357,12 @@ def test_repo_pick_and_know_are_open_during_redo(docs):
         return model.init_edge(0.5, datetime.now(UTC))
 
     assert asyncio.run(run()) == ("ok", "ok")
+
+
+def test_an_acronym_term_needs_capitals_in_the_text():
+    from app.reader import onboarding
+
+    oct_ = concept("c_oct", "OCT", "politics", 3)
+    assert not onboarding.as_written(oct_, "The week in politics (Oct. 7, 2026)")
+    assert onboarding.as_written(oct_, "OCT rules changed")
+    assert onboarding.as_written(concept("c_party", "Party", "politics", 3), "party")
