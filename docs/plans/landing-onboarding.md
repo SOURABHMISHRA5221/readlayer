@@ -302,3 +302,109 @@ Web: `index.html`, `public/theme-init.js`, `src/App.tsx`, `src/lib/auth.ts` (hin
 (`_onboarding_step`, consent v2), `app/reader/onboarding.py`, `app/recs/feed.py` (generalised
 gather, concept keys), `app/recs/web_search.py` (sub-cap), `app/store/reader_repo.py`,
 `app/reader/state.py` (`UserProfile` fields), `scripts/build_landing_demo.py`.
+
+## Amendment: decision 44, landing visuals (Sourabh, 2026-10-11)
+
+Sourabh reviewed the built landing (commit 765726d, screenshots in the log). **Keep** structure,
+copy, headline, the Read-as demo and "Same article. Different help." **Fix the lack of visuals.**
+Also: light is the default theme (done in this branch: dark only via the toggle, the OS setting is
+no longer followed), and the GitHub links stay (repo goes public at submission after a gitleaks
+scan, added to M9). Built as part 0 of the landing (before §C/§B), same checkpoint 1 (end of Oct 12).
+
+### V1. Margo as a character (hero and final CTA)
+- New `MargoHero` SVG (same body, outline, fold, swipe and moods as `Margo`, plus one arm and a
+  small note card in the hand, held out toward the demo sheet as if handing over the note).
+  Inline SVG, aria-hidden, in `HeroStatic` too (so in index.html: no shift, no request, not the
+  LCP image). ~200px at ≥1024 (beside the sheet, overlapping its lower corner, arm reaching to
+  the paragraph), ~120px below 1024 (beside the "Read as" row, arm pointing down at the sheet).
+- Mood follows the toggle: Software engineer → think (2 new ideas), Cricket fan → idle (1 new,
+  1 refresher), Policy student → happy (1 note); a fixed map in `demoPersonas.ts` (vitest). The
+  static first paint shows the default persona's mood. Mood changes are a cross-fade of eyes and
+  mouth (opacity only); none under reduced motion.
+- Final CTA: the same `MargoHero` (happy), ~180px desktop / 120px mobile.
+- The small sheet-margin Margo, the step glyph Margos and the trust mark are removed; the only
+  small Margo left is the wordmark.
+
+### V2. Product shot (below the hero)
+- A laptop frame and a phone frame drawn in CSS/inline SVG (no stock art) holding real
+  screenshots of the reader: desktop 1440×900 with the "bps" note open as a sidenote; phone
+  390×844 with the bottom-sheet card. Demo persona Newcomer on the demo markets article
+  (`2332418841…`), cropped to the paragraph and its note (a short snippet), caption
+  "Gloss on an Economic Times article. The article's words are unchanged; the note is ours."
+- Captured by `tools/shots/landing_media.py` from the **live** site as an anonymous demo reader
+  (deleted after with `DELETE /v1/me`), at deviceScaleFactor 2; encoded to AVIF (ffmpeg) and WebP
+  (cwebp) at 1x and 2x in `apps/web/public/landing/` (static files, not bundled), `<picture>` with
+  explicit width/height, `loading="lazy"`, `decoding="async"`, alt text describing what is shown.
+- Mobile: the phone frame only, below the fold.
+
+### V3. Problem illustrations (Gemini image model on Vertex)
+- Model Garden check (2026-10-11): no Imagen listed; Gemini image models
+  `gemini-3.1-flash-image` (GA, $0.0672/image on Vertex per LiteLLM's cost map),
+  `gemini-3-pro-image` ($0.134), `gemini-3.1-flash-lite-image` ($0.0336). Use
+  **`gemini-3.1-flash-image`** via a new `MODEL_IMAGE` env var (never hard-coded).
+- `app/llm.py` gains `generate_image(task, prompt_vars, reference_png)`: LiteLLM completion with
+  image output and the Margo PNG as reference input; if LiteLLM can't return images for this
+  model, `google-genai` is added and called **inside llm.py only**. Same budget check, retries,
+  cost logging and spend ledger as other calls; prompt in `app/prompts/landing_art.md` (version
+  header). No article text, no reader data in the prompt.
+- `apps/api/scripts/landing_art.py --dry-run` prints scenes, variants and the cost estimate; the
+  real run makes **≤ 3 variants × 3 scenes (+ ≤ 3 re-rolls) = ≤ 12 images, hard stop at $1.00**
+  (≈ $0.60 expected; more than "a few cents", so it is reported to Sourabh). Outputs go to the
+  scratchpad; the chosen three are post-processed (white → transparent, two-tone kept) and
+  encoded to WebP (cwebp) at 1x/2x (~320px and 640px wide) in `apps/web/public/landing/`.
+- Scenes: (a) Margo-style reader frowning at a paragraph of jargon; (b) a laptop with a dozen tabs
+  bursting out; (c) a shredder turning an article into a three-line summary. Flat, ink + teal only,
+  no text in the image.
+- Dark theme: transparent background and `filter: invert(1) hue-rotate(180deg)` (ink → light,
+  teal stays teal); checked in the dark screenshots.
+- `<img>` with alt text (meaningful, they illustrate the three problems), lazy, explicit size.
+- Footer credit: "Illustrations made with Google's image model." DESIGN §20 and STATUS §7 record
+  model, prompts (by file and version) and the actual cost.
+
+### V4. How it works: 2×2 grid of looping clips
+- Four 3–5 s silent clips recorded from the **live** reader by `tools/shots/landing_media.py`
+  (CDP screencast on a second connection, frames → ffmpeg), same temporary demo reader:
+  1. tap a highlight → the note slides in;
+  2. "Say it simpler" → the simpler Background replaces it;
+  3. "Know this?" → "Not really" → the term becomes a highlighted note (what the app does today;
+     the step text says so, not "added to path");
+  4. the knowledge map gains nodes (profile map before and after marking terms "Knew this").
+- Each: WebM (VP9) + MP4 (H.264), ≤ 400 KB, ~640px wide, WebP poster; `muted autoplay loop
+  playsinline preload="none"`, `src` set only when the clip scrolls near view
+  (IntersectionObserver); under `prefers-reduced-motion` only the poster `<img>` is rendered
+  (vitest on the component's choice). Video is decorative next to the step text: `aria-hidden`
+  on the video, the poster image has an empty alt.
+- Layout: 2×2 grid ≥768px (one column below), large clip on top, number + title + text under it.
+- `GrowingMap` is removed (the clip shows the real map); the page's one orchestrated animation is
+  now the clips, which are recordings, not UI motion.
+
+### V5. Rhythm
+- Full-bleed section bands alternate paper / wash (hero paper, problem wash, solution paper with
+  its wash comparison panel switched to surface, how-it-works wash, trust teal, formats paper,
+  final CTA wash).
+- Trust is one full-width teal band (`--accent` background, `--on-accent` text, both themes
+  contrast-checked by axe): title, three statements, and the eval results as large figures from
+  evals.json ("15/15 broken explanations caught", "24/25 good ones accepted", "10/10 injection
+  attempts resisted"), never rounded, with the "How we test" link.
+
+### V6. Budgets and checks
+- LCP < 2.5 s mobile (hero text and inline SVG only; nothing above the fold is an image);
+  first view (hero, 390×844) transfers < 1.5 MB, reported from resource timing; everything below
+  the fold lazy (images `loading="lazy"`, videos without `src` until near view).
+- Landing chunk stays < 60 KB gzip (media are static files, not in the chunk); main < 150 KB.
+- axe 0 at every impact (1440/390, light/dark), alt text on meaningful images, decorative
+  aria-hidden; `tools/shots/landing.py` extended: first-view bytes, lazy media not requested
+  before scroll, clip sizes ≤ 400 KB (also a vitest over `public/landing/` file sizes).
+
+### V7. Production writes and spend (this amendment)
+- `landing_art.py`: ≤ 12 image calls, ≤ $1.00, counted in the daily LLM ledger; nothing stored
+  in Firestore beyond the ledger.
+- `landing_media.py` on the live site: 1 anonymous Auth user and its docs (deleted with
+  `DELETE /v1/me`), explain hit counters (+N, not reversible), at most 2 "Say it simpler"
+  generations if not cached (≈ $0.01), 1 "Know this?" answer and ≤ 3 "Knew this" in the demo
+  graph (deleted with the reader).
+
+### V8. Docs
+- STATUS §10 decision 44; BUILD_PLAN landing section (visuals) and M9 (repo public at submission
+  after a gitleaks scan); DESIGN §19 (light default) and §20 (landing visuals, image model,
+  prompts, cost); README third-party credit unchanged except the illustration line.

@@ -16,6 +16,8 @@ import cdp  # noqa: E402
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:4173"
 SIZES = ((1440, False), (1440, True), (390, False), (390, True))
+# Dark is only ever the reader's toggle (decision 44), so shots set it the way the toggle does.
+THEME = "localStorage.setItem('readlayer:theme', '{}'); true"
 AXE_ALL = "axe.run(document, {resultTypes: ['violations']}).then(r => r.violations.map(v => v.impact + ' ' + v.id + ':' + v.nodes.length))"
 # Counts every request the page makes from here on: resource timing plus fetch/XHR calls.
 NET_START = """(() => { window.__rlNet = {fetch: 0, xhr: 0, base: performance.getEntriesByType('resource').length};
@@ -57,6 +59,7 @@ async def main():
 
         for w, dark in SIZES:
             await p.viewport(w, dark=dark)
+            await p.eval(THEME.format("dark" if dark else "light"))
             await p.goto(BASE + "/", wait=2.5)
             name = f"landing-{w}-{'dark' if dark else 'light'}"
             await p.eval(cdp.AXE.read_text() + ";'axe'")
@@ -74,6 +77,7 @@ async def main():
 
         for w, dark in SIZES:
             await p.viewport(w, dark=dark)
+            await p.eval(THEME.format("dark" if dark else "light"))
             await p.goto(BASE + "/privacy", wait=2)
             name = f"privacy-{w}-{'dark' if dark else 'light'}"
             await p.eval(cdp.AXE.read_text() + ";'axe'")

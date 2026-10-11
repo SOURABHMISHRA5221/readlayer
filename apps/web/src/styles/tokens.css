@@ -1,8 +1,8 @@
 /*
  * Gloss design tokens (Design pass, docs/design/mockup.html). White paper and near-black ink,
  * one teal accent that only ever means "a note for you". Schibsted Grotesk for UI and
- * headlines, Source Serif 4 for reading. Light by default; dark via the OS or the manual toggle
- * (data-theme on <html>, set before first paint in index.html).
+ * headlines, Source Serif 4 for reading. Light by default (decision 44: the OS setting is
+ * not followed); dark only via the manual toggle (data-theme on <html>, set before first paint).
  */
 :root {
   color-scheme: light;
@@ -117,32 +117,6 @@
 @media (min-width: 1280px) {
   :root {
     --gutter: var(--s12);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --paper: #121212;
-    --surface: #1b1b1b;
-    --wash: #1b1b1b;
-    --ink: #ececec;
-    --ink-soft: #d4d4d4;
-    --muted: #a9a9a9;
-    --hairline: #262626;
-    --accent: #4fbfae;
-    --accent-ink: #7ad3c5;
-    --accent-wash: #163632;
-    --accent-line: #3f9c8f;
-    --mark-goal: #d6a02c;
-    --on-accent: #121212;
-    --skeleton: #222222;
-    --scrim: rgb(0 0 0 / 0.62);
-    --danger: #e08a7e;
-    --persona-newcomer: #d4a373;
-    --persona-trader: #4fbfae;
-    --persona-policy: #b3a1d6;
-    --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 44px -12px rgb(0 0 0 / 0.7);
   }
 }
 

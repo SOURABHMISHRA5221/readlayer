@@ -421,6 +421,20 @@ recognise". The mapping is shown back ("F1 → Sports") and can be changed. The 
 you type is matched to topics by our model and isn't stored. DESIGN §11 records the exception; a test
 proves no raw free text reaches search or Firestore.
 
+**Decision 44 (Sourabh, 2026-10-11): landing visuals.** Keep structure, copy, headline, the
+Read-as demo and "Same article. Different help." Add: a large Margo character in the hero (~200px
+desktop, ~120px mobile) handing over the note, mood changing with the Read-as toggle, and again in
+the final CTA (small icon uses kept to a minimum); a laptop + phone product shot of the real reader
+below the hero (real screenshots, short snippet, source credited, AVIF/WebP 1x/2x, explicit sizes);
+three large problem illustrations generated with Google's image model on Vertex (Margo SVG as the
+character reference, flat ink + teal, works on light and dark; model, prompts and cost recorded;
+footer credit "Illustrations made with Google's image model"); How it works as a 2×2 grid of
+3–5 s silent looping clips recorded from the real app (WebM + MP4 ≤ 400 KB, poster, lazy; poster
+only under reduced motion); one full-width teal trust band with the eval results as large figures
+from evals.json; alternating paper/wash section backgrounds. Budgets unchanged: LCP < 2.5 s mobile,
+first view under ~1.5 MB, below-the-fold media lazy, axe 0, alt text on images. **Light is the
+default theme** (dark only via the toggle).
+
 **D. Acceptance.** A new mobile visitor understands problem and solution without scrolling past
 section 3 (screenshots in the log); the landing toggle changes highlights, analogy and depth for
 all 3 personas with no network calls after load; a new Google reader reaches the feed in 2 screens
@@ -558,6 +572,8 @@ Oct 17 submit.
    re-sample after tuning (the first sample was 87%); report both, plus the fresh one.
 4. **README and deck state the frozen-graph misses** (business 64% vs the 75% target,
    non-business 13%) alongside the after-growth numbers (89% / 66%).
+5. **Repo public at submission** (decision 44): run a gitleaks scan over the full history, fix
+   anything it finds, then make the GitHub repo public (the landing links to it).
 
 **Prompt**
 > Build the quality evals per docs/DESIGN.md §12.1 and §12.4: load `evals/gold/*.json` (spans a
