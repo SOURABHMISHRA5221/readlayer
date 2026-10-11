@@ -1,0 +1,38 @@
+# Decision 50 fallback measurement, 2026-10-11T18:04+00:00
+# kept/returned after the live keep filters; 'restricted' = include_domains
+
+topic   economics    plain    6/7  restricted error ReadTimeout  []
+topic   finance      plain    5/7  restricted error ReadTimeout  []
+topic   business     plain   9/10  restricted    3/9  ['reuters.com']
+topic   policy       plain    4/8  restricted error ReadTimeout  []
+topic   politics     plain   7/10  restricted error ReadTimeout  []
+topic   law          plain    8/9  restricted   7/10  ['reuters.com']
+topic   technology   plain    8/8  restricted   5/10  ['npr.org', 'reuters.com', 'theguardian.com']
+topic   science      plain    8/9  restricted error ReadTimeout  []
+topic   health       plain    8/9  restricted   3/10  ['npr.org', 'thehindu.com']
+topic   environment  plain   9/10  restricted   4/10  ['reuters.com', 'theguardian.com']
+topic   sports       plain  10/10  restricted   6/10  ['apnews.com', 'bbc.co.uk', 'reuters.com', 'theguardian.com']
+topic   culture      plain    9/9  restricted error ReadTimeout  []
+topic   education    plain   8/10  restricted    5/9  ['npr.org', 'reuters.com', 'theguardian.com']
+topic   society      plain   2/10  restricted   2/10  ['theguardian.com']
+
+concept Repo rate                plain  10/10  restricted    8/9  ['livemint.com', 'reuters.com', 'thehindu.com']
+concept Offside: not in the graph
+concept Large language models    plain    6/9  restricted error ReadTimeout  []
+concept Inflation                plain    7/8  restricted  10/10  ['apnews.com', 'livemint.com', 'reuters.com']
+
+topics with ≥ 2 restricted articles: 8/14 → keep
+
+# Retry of the 7 restricted searches that hit the 10 s timeout above (same queries, 30 s limit,
+# run right after; 7 more credits). All answered in about 1 s, so the timeouts were a transient
+# provider slowdown, not the restriction:
+economics                  1.2s  7/10  ['apnews.com', 'reuters.com']
+finance                    1.1s  8/10  ['reuters.com']
+policy                     1.1s  1/10  ['apnews.com']
+politics                   1.0s  3/10  ['npr.org', 'reuters.com']
+science                    1.4s  3/10  ['apnews.com', 'reuters.com', 'thehindu.com']
+culture                    1.0s  6/10  ['apnews.com', 'bbc.com', 'npr.org']
+Large language models      1.0s  2/10  ['apnews.com', 'bbc.com']
+
+# Combined: 13/14 topics ≥ 2 restricted articles (policy 1); concepts 3/3 ≥ 2 ("Offside" isn't
+# a graph label). Plan rule → keep the fallback. 43 Tavily credits in all, no LLM.

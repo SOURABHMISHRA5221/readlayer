@@ -142,7 +142,7 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
         />
         <ChipGroup
           legend="Where do you read from?"
-          hint="Most of your news comes from there."
+          hint={about.country === "other" ? "You'll get world news from global outlets." : "Most of your news comes from there."}
           options={COUNTRIES.map((c) => ({ key: c, label: COUNTRY_LABEL[c] }))}
           selected={about.country ? [about.country] : []}
           onToggle={(c) => onChange({ ...about, country: c })}

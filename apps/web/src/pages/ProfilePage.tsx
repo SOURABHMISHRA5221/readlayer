@@ -50,6 +50,15 @@ export default function ProfilePage({ url }: { url: URL }) {
     return () => ctrl.abort();
   }, [persona, version]);
 
+  // A link to a section (e.g. For you's "Add your country" → #prefs-title) scrolls to it once
+  // the profile has rendered; the browser's own jump runs before the async load.
+  const scrolled = useRef(false);
+  useEffect(() => {
+    if (!profile || scrolled.current || !window.location.hash) return;
+    scrolled.current = true;
+    document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView({ block: "start" });
+  }, [profile]);
+
   const name = persona ? personaOf(persona).label : null;
 
   return (

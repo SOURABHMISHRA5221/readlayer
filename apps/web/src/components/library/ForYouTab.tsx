@@ -109,7 +109,15 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
           <p className="feedtab__note" role="status">
             {refreshing ? "Refreshing your picks…" : wantsCountry(feed) ? (
               <>
-                Add your country for news from where you live. <a href="/profile#prefs-title">Preferences</a>
+                Add your country for news from where you live. <a
+                  href="/profile#prefs-title"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/profile#prefs-title");
+                  }}
+                >
+                  Preferences
+                </a>
               </>
             ) : null}
           </p>

@@ -457,3 +457,34 @@ def test_demo_snapshots_take_local_global_local_and_yield_when_a_side_runs_out()
     hosts = [urlsplit(r.url).hostname for r in mixed(pool)]
     assert hosts == ["www.thehindu.com", "www.bbc.co.uk", "www.thehindu.com",
                      "www.thehindu.com", "www.thehindu.com"]  # fmt: skip
+
+
+def test_six_topics_keep_the_mix_through_the_24_item_cut():
+    import random
+
+    from app.recs.outlets import side_of as host_side
+
+    rng = random.Random(7)
+    topics = ["economics", "politics", "sports", "business", "technology", "health"]
+    for trial in range(10):
+        ranked = []
+        for t in topics:
+            for i in range(5):
+                for host, scale in (("www.thehindu.com", 0.3 if trial % 2 else 1.0),
+                                    ("www.bbc.co.uk", 1.0)):  # fmt: skip
+                    r = WebResult(url=f"https://{host}/{t}/{trial}/story-{i}", title="t",
+                                  source=host, format="article")  # fmt: skip
+                    ranked.append(fr.RankedItem(fr.FeedCandidate(r, t), rng.random() * scale,
+                                                (), None, ""))  # fmt: skip
+            for fmt, n in (("video", 2), ("podcast", 1)):
+                for i in range(n):
+                    r = WebResult(url=f"https://www.youtube.com/{t}/{fmt}/{trial}/{i}", title="v",
+                                  source="yt", format=fmt)  # fmt: skip
+                    ranked.append(fr.RankedItem(fr.FeedCandidate(r, t), rng.random() * 2, (),
+                                                None, ""))  # fmt: skip
+        side = feed_mod.side_for("IN")
+        out = fr.select(ranked, topics, side, 0.6)
+        sides = [side(r.candidate) for r in out if r.candidate.result.format == "article"]
+        assert len(out) <= fr.MAX_ITEMS and sides
+        assert abs(sides.count("local") - 0.6 * len(sides)) <= 1, (trial, sides)
+        assert host_side("www.thehindu.com", "IN") == "local"
