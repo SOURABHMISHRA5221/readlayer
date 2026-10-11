@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { Margo, type MargoMood } from "../components/Margo";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { Wordmark } from "../components/Wordmark";
 import { DEFAULT_DEMO_PERSONA } from "../landing/demoPersonas";
@@ -8,7 +7,9 @@ import { demoNotes, noteCount, type DemoNote } from "../landing/demoData";
 import { paragraph } from "../landing/demoParagraph.json";
 import evals from "../landing/evals.json";
 import { Hero, HeroCtas } from "../landing/Hero";
-import { GrowingMap, JargonArt, LookupArt, SummaryArt } from "../landing/Illustrations";
+import { Clip } from "../landing/Clip";
+import { JargonArt, LookupArt, SummaryArt } from "../landing/Illustrations";
+import { ProductShot } from "../landing/ProductShot";
 import { MargoHero } from "../landing/MargoHero";
 import { MiniDemo } from "../landing/MiniDemo";
 import { REPO_URL } from "../landing/links";
@@ -83,6 +84,7 @@ export default function LandingPage({ url }: { url: URL }) {
         demo={<MiniDemo persona={persona} onPersona={setPersona} onTry={demo} />}
         footer={<Footer />}
       >
+        <ProductShot />
         <Problem />
         <Solution />
         <HowItWorks />
@@ -203,26 +205,27 @@ function Solution() {
   );
 }
 
-const STEPS: { mood: MargoMood; title: string; body: string }[] = [
+/** The four steps, each shown by a clip recorded from the live app (decision 44 V4). */
+const STEPS: { title: string; body: string; clip: { name: string; label: string; width: number; height: number } }[] = [
   {
-    mood: "idle",
     title: "Margo learns what you know",
-    body: "A two-minute start, then every note you open, skip or mark “Knew this” updates your map.",
+    body: "A two-minute start, then every note you open, skip or mark \u201cKnew this\u201d, and every \u201cKnow this?\u201d you answer, updates your map.",
+    clip: { name: "clip-know", label: "answering Know this? turns the term into a note", width: 720, height: 204 },
   },
   {
-    mood: "think",
     title: "Finds what you'd miss",
     body: "Every term and idea in the article is scored against your map. Plain maths, no AI guessing.",
+    clip: { name: "clip-note", label: "tapping a highlighted term opens its note", width: 720, height: 482 },
   },
   {
-    mood: "idle",
     title: "Explains it your way",
-    body: "The Background uses analogies from your world. What the author is saying keeps their hedges and numbers.",
+    body: "The Background uses analogies from your world, and can say it simpler. What the author is saying keeps their hedges and numbers.",
+    clip: { name: "clip-simpler", label: "Say it simpler rewrites the Background one level down", width: 720, height: 414 },
   },
   {
-    mood: "happy",
     title: "Your map grows",
     body: "What you learn fills in, so the notes thin out as you read more.",
+    clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 720, height: 520 },
   },
 ];
 
@@ -235,12 +238,14 @@ function HowItWorks() {
       <ol className="lp-how__steps">
         {STEPS.map((s, i) => (
           <li key={s.title} className="lp-how__step">
-            <span className="lp-how__num" aria-hidden="true">
-              {i + 1}
-            </span>
-            <h3>{s.title}</h3>
-            <p>{s.body}</p>
-            {i === STEPS.length - 1 && <GrowingMap />}
+            <Clip {...s.clip} />
+            <div className="lp-how__text">
+              <span className="lp-how__num" aria-hidden="true">
+                {i + 1}
+              </span>
+              <h3>{s.title}</h3>
+              <p>{s.body}</p>
+            </div>
           </li>
         ))}
       </ol>

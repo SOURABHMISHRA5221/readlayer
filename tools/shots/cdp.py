@@ -136,3 +136,43 @@ async def open_page():
     await p.send("Page.enable")
     await p.send("Runtime.enable")
     return p, ws
+
+
+class Recorder:
+    """CDP screencast on a second connection to the same page, so frames keep arriving while the
+    first connection drives the page. Frames are JPEGs with their capture timestamps."""
+
+    def __init__(self):
+        self.frames: list[tuple[float, bytes]] = []
+        self.ws = None
+        self.task = None
+        self.n = 0
+
+    async def start(self, quality=88):
+        targets = json.loads(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json").read())
+        page = next(t for t in targets if t["type"] == "page")
+        self.ws = await websockets.connect(page["webSocketDebuggerUrl"], max_size=50_000_000)
+        self.frames = []
+        await self._send("Page.startScreencast", format="jpeg", quality=quality, everyNthFrame=1)
+        self.task = asyncio.create_task(self._loop())
+
+    async def _send(self, method, **params):
+        self.n += 1
+        await self.ws.send(json.dumps({"id": self.n, "method": method, "params": params}))
+
+    async def _loop(self):
+        async for raw in self.ws:
+            msg = json.loads(raw)
+            if msg.get("method") == "Page.screencastFrame":
+                p = msg["params"]
+                # Arrival time, on the same clock as `ended` (the frame metadata's clock drifts).
+                self.frames.append((time.time(), base64.b64decode(p["data"])))
+                await self._send("Page.screencastFrameAck", sessionId=p["sessionId"])
+
+    async def stop(self):
+        self.ended = time.time()
+        await self._send("Page.stopScreencast")
+        await asyncio.sleep(0.2)
+        self.task.cancel()
+        await self.ws.close()
+        return self.frames

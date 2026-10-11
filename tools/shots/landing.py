@@ -84,6 +84,19 @@ async def main():
             report[name] = {"shot": await p.shot(name, full=True), "axe": await p.eval(AXE_ALL),
                             "hscroll": await p.eval("document.documentElement.scrollWidth - document.documentElement.clientWidth")}
 
+        # Budgets (decision 44 V6): first view at 390×844 under ~1.5 MB, and no landing media
+        # (shots, clips, posters, illustrations) requested before the reader scrolls.
+        await p.viewport(390, 844)
+        await p.eval(THEME.format("light"))
+        await p.send("Network.enable")
+        await p.send("Network.setCacheDisabled", cacheDisabled=True)
+        await p.goto(BASE + "/", wait=4)
+        report["first_view"] = await p.eval("""(() => { const r = performance.getEntriesByType('resource');
+          const nav = performance.getEntriesByType('navigation')[0];
+          return {bytes: r.reduce((n, e) => n + (e.transferSize || e.encodedBodySize || 0), 0) + (nav ? nav.transferSize : 0),
+                  media_before_scroll: r.map(e => e.name).filter(n => n.includes('/landing/'))}; })()""")
+        await p.send("Network.setCacheDisabled", cacheDisabled=False)
+
         # First paint: what theme-init.js chose, per path and hint.
         await p.viewport(1440)
         boot = {}

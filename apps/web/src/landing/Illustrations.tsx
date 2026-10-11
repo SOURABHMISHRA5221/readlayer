@@ -1,5 +1,3 @@
-import { useEffect, useRef, useState } from "react";
-
 /**
  * The landing's small line drawings (plan A3): ink strokes, the note highlight in the accent,
  * always decorative. Colours come from classes in landing.css, so both themes work.
@@ -41,52 +39,6 @@ export function SummaryArt() {
       <path className="lp-art__ink" d="M46 30h10m-4-4l4 4-4 4" />
       <path className="lp-art__ink" d="M64 24h26M64 34h18" />
       <path className="lp-art__hl-stroke" d="M86 12l1.5 3.5L91 17l-3.5 1.5L86 22l-1.5-3.5L81 17l3.5-1.5z" />
-    </svg>
-  );
-}
-
-/**
- * Step 4's small knowledge map: three nodes fill in once it scrolls into view, the page's one
- * orchestrated animation. Under reduced motion it is drawn filled, without moving.
- */
-export function GrowingMap() {
-  const ref = useRef<SVGSVGElement>(null);
-  const [grown, setGrown] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (typeof IntersectionObserver === "undefined" || matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setGrown(true);
-      return;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setGrown(true);
-          io.disconnect();
-        }
-      },
-      { threshold: 0.6 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return (
-    <svg
-      ref={ref}
-      className={`lp-map${grown ? " lp-map--grown" : ""}`}
-      width="200"
-      height="120"
-      viewBox="0 0 200 120"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path className="lp-map__edge" d="M30 60L80 28M30 60L82 92M80 28L140 40M82 92L140 40M140 40L176 84M82 92L176 84" />
-      <circle className="lp-map__node lp-map__node--known" cx="30" cy="60" r="9" />
-      <circle className="lp-map__node lp-map__node--known" cx="80" cy="28" r="9" />
-      <circle className="lp-map__node lp-map__node--grow" style={{ transitionDelay: "0ms" }} cx="82" cy="92" r="9" />
-      <circle className="lp-map__node lp-map__node--grow" style={{ transitionDelay: "260ms" }} cx="140" cy="40" r="9" />
-      <circle className="lp-map__node lp-map__node--grow" style={{ transitionDelay: "520ms" }} cx="176" cy="84" r="9" />
     </svg>
   );
 }

@@ -164,67 +164,134 @@
   font: 700 19px / 1.3 var(--font-head);
 }
 
-/* 3. How it works */
+/* 3. How it works: a 2×2 grid of clips from the real app, the text under each. */
 .lp-how__steps {
   display: grid;
-  gap: var(--s10);
+  gap: clamp(32px, 4vw, 56px);
   margin-top: var(--s10);
   padding: 0;
   list-style: none;
 }
 .lp-how__step {
+  min-width: 0;
+}
+.lp-clip {
   position: relative;
-  padding-left: var(--s16);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow-float);
+}
+/* Every clip gets the same frame, so the grid's rows line up; the recording fits inside it. */
+.lp-clip {
+  aspect-ratio: 3 / 2;
+}
+.lp-clip__media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.lp-clip__toggle {
+  position: absolute;
+  right: var(--s3);
+  bottom: var(--s3);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+}
+.lp-clip__toggle:hover {
+  background: var(--surface);
+}
+.lp-how__text {
+  position: relative;
+  margin-top: var(--s5);
+  padding-left: var(--s12);
 }
 .lp-how__num {
   position: absolute;
-  top: -6px;
+  top: -4px;
   left: 0;
-  font: 800 44px / 1 var(--font-head);
+  font: 800 36px / 1 var(--font-head);
   letter-spacing: -0.04em;
-  color: color-mix(in srgb, var(--muted) 40%, transparent);
-}
-.lp-how__margo {
-  margin-bottom: var(--s3);
+  color: color-mix(in srgb, var(--muted) 55%, transparent);
 }
 .lp-how__step h3 {
-  font: 700 19px / 1.25 var(--font-head);
+  font: 700 21px / 1.25 var(--font-head);
 }
 .lp-how__step p {
-  max-width: 28em;
+  max-width: 34em;
   margin-top: var(--s2);
   font: 400 17px / 1.55 var(--font-read);
   color: var(--ink-soft);
 }
 
-.lp-map {
-  margin-top: var(--s5);
-  max-width: 100%;
+/* The product shot: the reader on a laptop and a phone, frames drawn in CSS. */
+.lp-shot {
+  padding: 0 var(--lp-gutter) var(--lp-space);
+}
+.lp-shot__figure {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+.lp-shot__devices {
+  position: relative;
+}
+.lp-shot__laptop {
+  display: none;
+}
+.lp-shot__screen {
+  padding: 14px 14px 18px;
+  border-radius: 18px 18px 4px 4px;
+  background: #1c1c1c;
+}
+.lp-shot__base {
+  height: 16px;
+  margin: 0 -6%;
+  border-radius: 2px 2px 14px 14px;
+  background: linear-gradient(#cfcfcc, #a9a9a6);
+}
+.lp-shot__phone {
+  width: min(260px, 70%);
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 34px;
+  background: #1c1c1c;
+  box-shadow: var(--shadow-float);
+}
+.lp-shot__phone .lp-shot__img {
+  border-radius: 26px;
+}
+.lp-shot__img {
+  display: block;
+  width: 100%;
   height: auto;
+  border-radius: 4px;
 }
-.lp-map__edge {
-  fill: none;
-  stroke: color-mix(in srgb, var(--muted) 50%, transparent);
-  stroke-width: 1.5;
+.lp-shot__caption {
+  margin-top: var(--s6);
+  font-size: var(--text-ui-sm);
+  color: var(--muted);
+  text-align: center;
 }
-.lp-map__node {
-  stroke-width: 2;
-}
-.lp-map__node--known {
-  fill: var(--accent);
-  stroke: var(--accent);
-}
-.lp-map__node--grow {
-  fill: var(--paper);
-  stroke: var(--accent-line);
-  transition: fill 600ms var(--ease);
-}
-.lp-map--grown .lp-map__node--grow {
-  fill: var(--accent);
-}
-@media (prefers-reduced-motion: reduce) {
-  .lp-map__node--grow {
-    transition: none;
+@media (min-width: 768px) {
+  .lp-shot__laptop {
+    display: block;
+    width: 82%;
+  }
+  .lp-shot__phone {
+    position: absolute;
+    right: 0;
+    bottom: -24px;
+    width: 23%;
+    margin: 0;
   }
 }
 
@@ -382,7 +449,6 @@
   }
   .lp-how__steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--s12) var(--s10);
   }
   .lp-trust__figures,
   .lp-trust__list {
@@ -407,23 +473,5 @@
   }
   .lp-formats__list {
     margin-top: 0;
-  }
-}
-
-@media (min-width: 1024px) {
-  .lp-how__steps {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .lp-how__step {
-    padding-left: 0;
-    padding-top: var(--s12);
-  }
-  .lp-how__num {
-    top: 0;
-  }
-  .lp-how__margo {
-    position: absolute;
-    top: 0;
-    right: 0;
   }
 }

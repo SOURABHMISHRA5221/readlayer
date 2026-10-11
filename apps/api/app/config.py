@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Embeddings have no fallback: vectors from another model aren't comparable.
     model_embed: str = ""
     embed_dim: int = 256
+    # Landing illustrations (decision 44): a Gemini image model; no fallback. The price per image
+    # is charged whenever LiteLLM can't price the response, so the budget guard never sees 0.
+    model_image: str = ""
+    model_image_price_usd: float = 0.0672
 
     # Concept graph (DESIGN §2): gs:// URI or local path. Empty = no graph (dev and tests).
     concepts_uri: str = ""
