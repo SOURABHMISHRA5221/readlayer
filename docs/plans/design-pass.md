@@ -55,11 +55,12 @@ light and dark; JPEG, desktop downscaled to 960px wide).
 2. **Pre-read path.** `preread_path` today keeps only prerequisites with p < `PREREAD_KNOWN`
    (0.7) and already ends at the article's key concept (`steps[-1]`, `PrereadOut.concept_id`).
    Change: prepend the prerequisite where the walk stopped (the first one with p ≥
-   `PREREAD_KNOWN`), as a ticked step; `PrereadStepOut` gains `known: bool` = p ≥
+   `PREREAD_KNOWN`; ties: highest p, then concept id), as a ticked step; `PrereadStepOut` gains `known: bool` = p ≥
    `PREREAD_KNOWN`. No extra last step (it would duplicate the key concept). Still ≤
    `PREREAD_MAX_STEPS` unknown steps plus one ticked step. Tests; DESIGN §6.4 updated.
-   The new path UI is rendered by the **web app** (React); the annotator's `renderPreread`
-   stays as it is for the extension (it ignores `known`).
+   The new path UI is rendered by the **web app** (React). The annotator's `renderPreread`
+   (used by the extension) skips steps with `known: true` (B7), so it never asks a reader to
+   meet a concept they already know.
 **One "known":** for the map and the ready rule, a concept is known when the reader's current
 p_know (edge with forgetting, else the prior) is ≥ `KNOWN_P` = 0.5 (`reader/goals.py`'s
 `is_known`, DESIGN §18), so a prior-only concept can count as known; "known" on the pre-read
@@ -87,18 +88,27 @@ path keeps the walk's own `PREREAD_KNOWN` = 0.7.
    batch (`lib/events.ts`), and diffs the two. Both use `concept_band`, so zero interactions
    give an empty recap (test). Test: bands move after a correction.
 5. **Map overview.** `GET /v1/me/graph?view=overview` → for each domain the reader has an edge
-   in or interest ≥ 0.5 in (most interest first, ≤ 6 domains): up to 12 known concepts (band ≥
-   heard of, by band then `doc_freq`) and up to 4 **ready to learn** concepts (not known, every
-   prerequisite known, by `doc_freq`), plus prerequisite edges among them and up to 6 cross-domain
-   edges. Node: `{id, label, domain, band, ready, goal, weight, definition, recent,
-   rose_this_week}`: `weight` is `doc_freq` normalised per domain; `recent` is ≤ 3 evidence
-   entries `{type, at}` from the edge; `rose_this_week` from `band_changed_at` / `band_prev`
-   (DESIGN §15.2). ≤ 100 nodes. Known and ready use `KNOWN_P` above. **Never empty:** a reader with no edges gets the ready /
-   most frequent concepts of their top-interest domains (the four business domains if none) as
-   rings. Learning-goal targets are flagged (`goal: true`). Pure over the graph and state.
-   Clicking a domain still loads the existing `?domain=` subgraph (≤ 60 nodes, with search) and
-   the `?goal=` goal view stays (the video line uses it); both render in the new SVG layout.
-   Tests: new reader non-empty, caps, ready rule, goal flag, `rose_this_week`.
+   in or interest ≥ 0.5 in (most interest first, ≤ 6 domains): up to 12 **solid** concepts and up
+   to 4 **ready to learn** rings, plus prerequisite edges among them and up to 6 cross-domain
+   edges. ≤ 100 nodes.
+   - Every node's `band` is the reader's current band (edge with forgetting, else the prior,
+     the same `concept_band` as A1). **Solid** = band ≥ heard of (by band, then `doc_freq`), so a
+     reader with no edges but a high prior in a domain gets solid nodes there: the map shows what
+     Gloss thinks they know, as the page title says.
+   - **Ready to learn** = not known and every prerequisite known, where known = p ≥ `KNOWN_P`
+     (above); by `doc_freq`.
+   - Node: `{id, label, domain, band, ready, goal, weight, definition, recent,
+     rose_this_week}`: `weight` is `doc_freq` normalised per domain; `recent` is ≤ 3 evidence
+     entries `{type, at}` from the edge (empty for prior-only nodes); `rose_this_week` from
+     `band_changed_at` / `band_prev` (DESIGN §15.2).
+   - **Never empty:** when no domain qualifies (no edges, no interest ≥ 0.5), the reader's
+     top-interest domains (the four business domains if none) are used with the same rules, so
+     the map shows their prior-based solid nodes and rings.
+   - Learning-goal targets are flagged (`goal: true`). Pure over the graph and state.
+   - Clicking a domain still loads the existing `?domain=` subgraph (≤ 60 nodes, with search)
+     and the `?goal=` goal view stays (the video line uses it); both render in the new SVG layout.
+   - Tests: new reader non-empty; a no-edges reader with a high θ gets solid nodes; caps; ready
+     rule; goal flag; `rose_this_week`.
 6. **Saved.** `users/{uid}/saved/{content_id}` `{at}`, in `USER_SUBCOLLECTIONS` (export and
    delete, test). `PUT` and `DELETE /v1/me/saved/{content_id}` (corpus or own-ingested ids only,
    ≤ 500), `GET /v1/me/saved` → library summaries newest first, through the same per-request
@@ -141,6 +151,7 @@ content changes.
    id (`annotator.open(id)` scrolls the mark into view and opens its card).
 5. Paragraph markers only where the API returned a paragraph note (desktop and mobile).
 6. Motion: card slide and connector only without `prefers-reduced-motion`.
+7. **Pre-read card:** `renderPreread` skips `known: true` steps (A2); vitest case.
 Tests (vitest + jsdom): level classes and the "new" default, margin host placement callback,
 bottom sheet focus, Escape and labelling, floating mode unchanged without options (including a
 narrow window), `open(id)`, axe on the card in both modes; `pnpm --filter extension build`.
