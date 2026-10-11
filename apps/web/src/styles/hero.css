@@ -20,7 +20,7 @@
   align-items: center;
   justify-content: space-between;
   max-width: calc(var(--lp-max) + 2 * var(--lp-gutter));
-  height: 64px;
+  height: 56px;
   margin: 0 auto;
   padding: 0 var(--lp-gutter);
 }
@@ -239,9 +239,59 @@
   font: 400 19px / var(--leading-body) var(--font-read);
   color: var(--ink);
 }
-.lp-demo__caption {
-  margin-top: var(--s4);
-  font-size: var(--text-ui-sm);
+/* The source, in the card's header (decision 46c): one line, never under the card. */
+.lp-demo__source {
+  margin-bottom: var(--s2);
+  font: 400 var(--text-ui-sm) / 1.4 var(--font-ui);
+  color: var(--muted);
+}
+
+/* "Read with Gloss:" chips under the CTAs (≥ 1024 only; decision 46c). */
+.lp-readwith {
+  display: none;
+}
+.lp-readwith__label {
+  font: 500 var(--text-ui-sm) / 1.4 var(--font-ui);
+  color: var(--ink-soft);
+}
+.lp-readwith__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font: 500 13px / 1.4 var(--font-ui);
+  color: var(--ink-soft);
+}
+/* "With notes": the reader's own new-idea underline and a teal dot. */
+.lp-chip--notes {
+  border-color: var(--accent-line);
+  background: var(--accent-wash);
+  color: var(--ink);
+}
+.lp-chip--notes::before,
+.lp-chip__dot {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.lp-readwith__legend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 12.5px / 1.4 var(--font-ui);
   color: var(--muted);
 }
 
@@ -250,7 +300,8 @@
    stands on the note's top edge handing it over. */
 .lp-demo__note {
   position: relative;
-  margin-top: calc(var(--lp-margo-w) * 0.42);
+  /* Margo's whole overhang: Margo never reaches the paragraph above. */
+  margin-top: calc(var(--lp-margo-w) * 0.62);
 }
 
 /* Margo hands over the note: mirrored, so the held card reaches down onto the note. */
@@ -400,6 +451,18 @@
   padding-top: 10px;
   border-top: 1px solid var(--hairline);
 }
+@media (min-width: 600px) {
+  /* The demo button and the "not the author's words" label share a row (decision 46c). */
+  .lp-note-static__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s3);
+  }
+  .lp-note-static__card-label {
+    margin-top: 0;
+  }
+}
 .lp-note-static__btn {
   display: inline-flex;
   align-items: center;
@@ -477,7 +540,7 @@
 
 @media (min-width: 600px) {
   .lp-demo__sheet {
-    padding: var(--s5) var(--s8);
+    padding: var(--s4) var(--s6);
   }
 }
 
@@ -496,13 +559,31 @@
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
     gap: clamp(40px, 5vw, 80px);
-    padding-top: var(--s2);
+    padding-top: 0;
     padding-bottom: var(--s10);
   }
   .lp-hero__mark {
     white-space: nowrap;
   }
   .lp-demo {
-    --lp-margo-w: 88px;
+    --lp-margo-w: 72px;
+  }
+  .lp-readwith {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--s2) var(--s3);
+    margin-top: var(--s6);
+  }
+}
+
+/* Short desktop screens (e.g. 1280×800; decision 46c fallback 1): the note's level line gives way
+   so the whole hero fits, and the copy column keeps level with the card. */
+@media (min-width: 1024px) and (max-height: 820px) {
+  .lp-note-static__pitch {
+    display: none;
+  }
+  .lp-readwith {
+    margin-top: var(--s8);
   }
 }

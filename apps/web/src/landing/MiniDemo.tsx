@@ -1,5 +1,5 @@
 import { createAnnotator, type Annotator } from "@readlayer/annotator";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 
 import type { PersonaKey } from "../lib/personas";
 import { demoAnnotations, demoExplanation } from "./demoData";
@@ -11,7 +11,6 @@ interface MiniDemoProps {
   onPersona: (key: PersonaKey) => void;
   /** The card's one action: start the demo as this persona. */
   onTry: () => void;
-  phone?: ReactNode;
 }
 
 /**
@@ -20,7 +19,7 @@ interface MiniDemoProps {
  * after load: no onEvent, no depth buttons, and explanations come from the JSON. The toggle calls
  * update(), so only the notes that differ change, then opens that persona's featured note.
  */
-export function MiniDemo({ persona, onPersona, onTry, phone }: MiniDemoProps) {
+export function MiniDemo({ persona, onPersona, onTry }: MiniDemoProps) {
   const paragraph = useRef<HTMLParagraphElement>(null);
   const noteHost = useRef<HTMLDivElement>(null);
   const staticNote = useRef<HTMLDivElement>(null);
@@ -74,7 +73,6 @@ export function MiniDemo({ persona, onPersona, onTry, phone }: MiniDemoProps) {
       paragraphRef={paragraph}
       noteRef={noteHost}
       staticNoteRef={staticNote}
-      phone={phone}
     />
   );
 }

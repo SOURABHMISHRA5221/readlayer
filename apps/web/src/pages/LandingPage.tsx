@@ -9,8 +9,8 @@ import evals from "../landing/evals.json";
 import { Hero, HeroCtas } from "../landing/Hero";
 import { Clip } from "../landing/Clip";
 import { ProblemArt } from "../landing/ProblemArt";
-import { HeroPhone } from "../landing/HeroPhone";
 import { MargoHero } from "../landing/MargoHero";
+import { FORMATS } from "../landing/formats";
 import { MiniDemo } from "../landing/MiniDemo";
 import { REPO_URL } from "../landing/links";
 import { signInError, signInWithGoogle, startDemo } from "../lib/auth";
@@ -82,7 +82,7 @@ export default function LandingPage({ url }: { url: URL }) {
           ) : null
         }
         ctas={ctas}
-        demo={<MiniDemo persona={persona} onPersona={setPersona} onTry={demo} phone={<HeroPhone />} />}
+        demo={<MiniDemo persona={persona} onPersona={setPersona} onTry={demo} />}
         footer={<Footer />}
       >
         <Problem />
@@ -227,23 +227,23 @@ function Solution() {
 const STEPS: { title: string; body: string; clip: { name: string; label: string; width: number; height: number } }[] = [
   {
     title: "Margo learns what you know",
-    body: "A two-minute start, then every note you open, skip or mark \u201cKnew this\u201d, and every \u201cKnow this?\u201d you answer, updates your map.",
-    clip: { name: "clip-know", label: "answering Know this? turns the term into a note", width: 720, height: 396 },
+    body: "Every note you open or mark \u201cKnew this\u201d, and every \u201cKnow this?\u201d you answer, updates your map, right away.",
+    clip: { name: "clip-know", label: "answering Know this? turns the term into a note", width: 1320, height: 825 },
   },
   {
     title: "Finds what you'd miss",
     body: "Every term and idea in the article is scored against your map. Plain maths, no AI guessing.",
-    clip: { name: "clip-note", label: "tapping a highlighted term opens its note", width: 720, height: 782 },
+    clip: { name: "clip-note", label: "tapping a highlighted term opens its note", width: 1320, height: 825 },
   },
   {
     title: "Explains it your way",
     body: "The Background uses analogies from your world, and can say it simpler. What the author is saying keeps their hedges and numbers.",
-    clip: { name: "clip-simpler", label: "Say it simpler rewrites the Background one level down", width: 720, height: 748 },
+    clip: { name: "clip-simpler", label: "Say it simpler rewrites the Background one level down", width: 1320, height: 825 },
   },
   {
     title: "Your map grows",
     body: "What you learn fills in, so the notes thin out as you read more.",
-    clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 720, height: 384 },
+    clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 1320, height: 825 },
   },
 ];
 /** The map clip again, beside the final call to action (decision 46 P4). */
@@ -328,13 +328,6 @@ function Trust() {
     </section>
   );
 }
-
-const FORMATS: { what: string; how: "With notes" | "In your feed" }[] = [
-  { what: "Articles", how: "With notes" },
-  { what: "Any link you paste", how: "With notes" },
-  { what: "YouTube videos", how: "In your feed" },
-  { what: "Podcasts", how: "In your feed" },
-];
 
 function Formats() {
   return (

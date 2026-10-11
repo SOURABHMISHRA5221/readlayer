@@ -9,6 +9,7 @@ import note from "./demoNoteStatic.json";
 import evals from "./evals.json";
 import { paragraph, site } from "./demoParagraph.json";
 import { DEFAULT_DEMO_PERSONA, DEMO_PERSONAS } from "./demoPersonas";
+import { FORMATS } from "./formats";
 import { MargoHero, PERSONA_MOOD } from "./MargoHero";
 
 /**
@@ -29,8 +30,6 @@ interface DemoFrameProps {
   noteRef?: Ref<HTMLDivElement>;
   /** The first paint's copy of the note, hidden once the live one is in (live demo only). */
   staticNoteRef?: Ref<HTMLDivElement>;
-  /** The phone shot that overlaps the card's corner (desktop, live only). */
-  phone?: ReactNode;
 }
 
 /**
@@ -38,13 +37,14 @@ interface DemoFrameProps {
  * open under the paragraph and Margo handing it over. The note slot has one fixed height that
  * the static copy and the live card both fill, so the swap moves nothing.
  */
-export function DemoFrame({ persona, onPersona, paragraphRef, noteRef, staticNoteRef, phone }: DemoFrameProps) {
+export function DemoFrame({ persona, onPersona, paragraphRef, noteRef, staticNoteRef }: DemoFrameProps) {
   return (
     <figure className="lp-demo">
       <div className="lp-demo__toggle">
         <Segmented label="Read as:" options={DEMO_PERSONAS} value={persona} onChange={onPersona} />
       </div>
       <div className="lp-demo__sheet">
+        <p className="lp-demo__source">From {site} · real paragraph, real notes; the words are unchanged</p>
         <p className="lp-demo__para" data-rl-paragraph={paragraph.id} ref={paragraphRef}>
           {paragraph.text}
         </p>
@@ -54,10 +54,6 @@ export function DemoFrame({ persona, onPersona, paragraphRef, noteRef, staticNot
           <div className="lp-demo__note-live" ref={noteRef} />
         </div>
       </div>
-      {phone}
-      <figcaption className="lp-demo__caption">
-        From {site}: a real paragraph and real notes; the words are unchanged. Tap a highlighted term.
-      </figcaption>
     </figure>
   );
 }
@@ -137,6 +133,26 @@ function Proof({ where }: { where: "wide" | "narrow" }) {
   );
 }
 
+/** "Read with Gloss:" (decision 46c): the formats as chips, honest about which get notes. */
+function ReadWith() {
+  return (
+    <div className="lp-readwith">
+      <span className="lp-readwith__label">Read with Gloss:</span>
+      <ul className="lp-readwith__chips">
+        {FORMATS.map((f) => (
+          <li key={f.what} className={`lp-chip${f.how === "With notes" ? " lp-chip--notes" : ""}`}>
+            {f.short}
+            <span className="visually-hidden">, {f.how.toLowerCase()}</span>
+          </li>
+        ))}
+      </ul>
+      <span className="lp-readwith__legend" aria-hidden="true">
+        <span className="lp-chip__dot" /> with notes · others in your feed
+      </span>
+    </div>
+  );
+}
+
 /** The calls to action, shared by the bar, the hero and the final section (inert in the static paint). */
 interface Actions {
   onDemo?: () => void;
@@ -198,6 +214,7 @@ export function Hero({ themeToggle, demo, ctas, notice, children, footer, action
             <Values />
             <Proof where="wide" />
             {ctas ?? <HeroCtas />}
+            <ReadWith />
           </div>
           {demo ?? <DemoFrame persona={DEFAULT_DEMO_PERSONA} onPersona={noop} />}
           <Proof where="narrow" />

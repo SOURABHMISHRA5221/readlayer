@@ -173,12 +173,18 @@
   background: var(--paper);
   box-shadow: var(--shadow-float);
 }
-/* Decision 46 P5: each clip keeps its own crop (tight on the term and card), at full column
-   width so card text stays readable; no letterboxing in a shared frame. */
+/* Decision 46d: every tile is 16:10 (the recordings are 16:10 at natural zoom), with a soft
+   fade at the top and bottom edges instead of hard cut lines. */
+.lp-clip {
+  aspect-ratio: 16 / 10;
+}
 .lp-clip__media {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  -webkit-mask-image: linear-gradient(transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  mask-image: linear-gradient(transparent, #000 16px, #000 calc(100% - 16px), transparent);
 }
 .lp-clip__toggle {
   position: absolute;
@@ -221,34 +227,6 @@
 }
 
 /* The product shot: the reader on a laptop and a phone, frames drawn in CSS. */
-/* The phone at the hero card's corner (decision 46 P3): it peeks up over the card's empty
-   footer corner and hangs below the sheet, never over text; the caption stops short of it. */
-.lp-phone {
-  position: absolute;
-  z-index: 3;
-  right: -20px;
-  top: calc(100% - 128px);
-  width: 150px;
-  padding: 7px;
-  border-radius: 26px;
-  background: #1c1c1c;
-  box-shadow: var(--shadow-float);
-}
-.lp-phone__img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 20px;
-}
-@media (min-width: 1024px) {
-  .lp-hero:has(.lp-phone) {
-    padding-bottom: 236px;
-  }
-  .lp-demo:has(.lp-phone) .lp-demo__caption {
-    max-width: calc(100% - 170px);
-  }
-}
-
 /* 4. Trust: one teal band, the eval results as large figures. */
 .lp-trust {
   background: var(--accent);
@@ -431,23 +409,19 @@
   .lp-side__col + .lp-side__col {
     margin-top: var(--s10);
   }
-  /* Short and tall clips staggered so the columns balance: 1 (short) over 3 (tall) on the
-     left, 2 (tall) over 4 (short) on the right; reading order stays 1 → 4. */
+  /* A true 2×2 grid (decision 46d): each step spans two rows (tile, text) through a subgrid,
+     so the tiles and the number/title/text blocks line up across a row. */
   .lp-how__steps {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
+    grid-auto-rows: auto auto;
+    row-gap: 0;
   }
-  .lp-how__step:nth-child(1) {
-    grid-area: 1 / 1;
-  }
-  .lp-how__step:nth-child(2) {
-    grid-area: 1 / 2 / span 2;
-  }
-  .lp-how__step:nth-child(3) {
-    grid-area: 2 / 1 / span 2;
-  }
-  .lp-how__step:nth-child(4) {
-    grid-area: 3 / 2;
+  .lp-how__step {
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    padding-bottom: clamp(32px, 4vw, 56px);
   }
   .lp-trust__figures,
   .lp-trust__list {
@@ -525,6 +499,22 @@
   text-transform: none;
 }
 @media (max-width: 599px) {
+  .lp .lp-demo__note .rl-card .rl-card__pitch {
+    display: none;
+  }
+}
+@media (min-width: 600px) {
+  .lp .lp-demo__note .rl-card .rl-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s3);
+  }
+  .lp .lp-demo__note .rl-card .rl-card__note {
+    margin-top: 0 !important;
+  }
+}
+@media (min-width: 1024px) and (max-height: 820px) {
   .lp .lp-demo__note .rl-card .rl-card__pitch {
     display: none;
   }

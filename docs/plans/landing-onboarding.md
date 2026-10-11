@@ -809,3 +809,13 @@ decision 46 checks, the copy/demo bottom check, axe 0, no horizontal scroll. Aft
 - 11px phone clip text: Sourabh's words so far are "Everything else in your 46c/46d plan is
   approved, including leaving out the second phone frame." That isn't an explicit answer, so it is
   asked again; until he says yes, "390 clip text ≥ 16px" stays failing in R3.
+- Round 2 REVISE (1 item, applied): **the fix ships before clip 1 is recorded.** Order in R3:
+  (a) a branch `knowthis-refresh` off `main` carrying the fix (API route + test, scorer test,
+  annotator at 0.7.2 — its inline mode and demo-button fix come along; the reader never sets
+  `inline` — and web `ReaderPage`, `useAnnotator`, `answers.ts`, `api.ts`, the vitest), PR,
+  milestone-reviewer SHIP, green CI, merge; (b) deploy API then web from up-to-date `main`, each
+  with Sourabh's yes; (c) live check: one temporary demo reader answers "Not really" and the term
+  inks in without a reload (reader deleted; counts within R2's ≤ 3 runs); (d) only then
+  `landing_media.py --clips`, and the clips commit is the freeze commit. What the API deploy
+  changes for live readers: one extra annotations request per "Know this?" answer (at most three a
+  day, DESIGN §6.5); `refresh=1` called arbitrarily only skips the view record and the prompt.
