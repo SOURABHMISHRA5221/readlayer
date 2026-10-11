@@ -462,3 +462,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   reader, open card, phone sheet, recap, profile, map inspector, sign-in); before (20):
   `docs/evidence/design/before/`; audits: `docs/evidence/design/after-audit.txt`; flows,
   contrast and measurements: `docs/evidence/design/acceptance.txt`.
+- milestone-reviewer round 3: **SHIP**. PR #22, CI green, squash-merged. API deployed (revision
+  00018, Sourabh's yes); web deployed (Sourabh: "deploy on web without permission"). Stopped the
+  local harness and a stray wait loop (Sourabh asked to close unneeded background tasks).
+- Live check: names, axe, highlight levels, Say it simpler and Helpful pass; Save failed because
+  CORS didn't allow PUT (local dev proxies /v1, so no harness run could catch it). Fix on branch
+  `design-cors`: PUT allowed, plus a test that checks every method in the OpenAPI schema against
+  the CORS list (first version passed vacuously because FastAPI wraps included routers; rewritten
+  and shown to fail without the fix).
+
