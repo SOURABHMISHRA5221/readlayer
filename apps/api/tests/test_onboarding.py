@@ -159,6 +159,7 @@ def test_onboarding_is_for_signed_in_readers_who_consented(env):
     assert g.post("/v1/me/consent", json={"version": "v0"}).status_code == 422
     assert g.get("/v1/me/profile").json()["onboarding"] == {
         "consented": False, "done": False, "step": "consent", "field": None, "interests": [],
+        "redo": None, "consent_version": None,
     }  # fmt: skip
 
 
@@ -202,7 +203,7 @@ def test_calibration_eight_answers_then_done(env, docs):
     assert g.get("/v1/calibration/next").json()["done"] is True
     assert g.get("/v1/me/profile").json()["onboarding"] == {
         "consented": True, "done": True, "step": "done", "field": "software",
-        "interests": ["finance", "economics"],
+        "interests": ["finance", "economics"], "redo": None, "consent_version": "consent-v1",
     }  # fmt: skip
 
 

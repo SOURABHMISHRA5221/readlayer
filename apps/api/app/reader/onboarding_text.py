@@ -296,3 +296,18 @@ def word_topic(graph: ConceptGraph, phrase: str) -> WordMatch | None:
                 if best is None or key > best[0]:
                     best = (key, match)
     return best[1] if best is not None else None
+
+
+def _singular(word: str) -> str:
+    return word[:-1] if len(word) > 3 and word.endswith("s") and not word.endswith("ss") else word
+
+
+def tokens(text: str) -> set[str]:
+    """Whole casefolded tokens (the same tokeniser as `word_chunks`), plurals folded to the
+    singular: "Party" → {"party"}; "art" never matches inside it."""
+    return {_singular(re.sub(r"['’]s$", "", w)) for w in _TOKEN.findall(text.casefold())}
+
+
+def kept_words(phrase: str) -> set[str]:
+    """The phrase's single kept words (no stop, generic or country words), singular."""
+    return {_singular(c) for c, n in word_chunks(phrase) if n == 1}

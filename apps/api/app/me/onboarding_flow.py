@@ -35,6 +35,7 @@ from app.graph.resolve import resolve_names
 from app.graph.taxonomy import BY_ID
 from app.ingest.models import ContentDoc, is_corpus
 from app.me.onboarding import consented_user
+from app.me.topic_match import Embedder, embedding_topic
 from app.privacy.redact import redact
 from app.reader import onboarding
 from app.reader import onboarding_text as ot
@@ -92,41 +93,6 @@ class ResolveOut(BaseModel):
     unrecognised: list[str]
 
 
-_topic_vectors: tuple[str, list[list[float]]] | None = None
-
-
-async def topic_vectors(settings: Settings) -> list[list[float]]:
-    """The 14 topics' label + scope embeddings, once per process (and embedding model)."""
-    global _topic_vectors
-    key = f"{settings.model_embed}|{settings.embed_dim}"
-    if _topic_vectors is None or _topic_vectors[0] != key:
-        result = await llm.embed(ot.topic_texts(), task_type="SEMANTIC_SIMILARITY")
-        _topic_vectors = (key, result.vectors)
-    return _topic_vectors[1]
-
-
-def reset_topic_vectors() -> None:
-    global _topic_vectors
-    _topic_vectors = None
-
-
-class _Embedder:
-    """Embeds each phrase at most once per request (resolve_names and the topic fallback share
-    the vectors) and adds up the cost."""
-
-    def __init__(self) -> None:
-        self.vectors: dict[str, list[float]] = {}
-        self.cost = 0.0
-
-    async def __call__(self, texts: list[str]) -> list[list[float]]:
-        new = list(dict.fromkeys(t for t in texts if t not in self.vectors))
-        if new:
-            result = await llm.embed(new, task_type="SEMANTIC_SIMILARITY")
-            self.cost += result.cost_usd
-            self.vectors.update(zip(new, result.vectors, strict=True))
-        return [self.vectors[t] for t in texts]
-
-
 @router.post("/onboarding/resolve", response_model=ResolveOut, responses={429: {}})
 async def resolve(
     body: ResolveIn,
@@ -157,7 +123,7 @@ async def resolve(
     topics += worded
     matched = {(t.phrase_index, t.phrase) for t in worded}
     pending = [m for m in misses if m not in matched]
-    embedder = _Embedder()
+    embedder = Embedder()
     ledger: list[llm.CallMeta] = []
     ids: dict[str, str] = {}
     for _, phrase in pending:
@@ -199,23 +165,16 @@ def _word_topics(graph: ConceptGraph, misses: Sequence[tuple[int, str]]) -> list
 
 
 async def _topic_fallback(
-    misses: Sequence[tuple[int, str]], embedder: _Embedder, settings: Settings
+    misses: Sequence[tuple[int, str]], embedder: Embedder, settings: Settings
 ) -> list[TopicOut]:
     """Decision 42: only the redacted phrase is embedded and compared with the topics' scope
     lines; at or above the threshold it maps to the nearest topic. An embedding outage leaves
     the phrases unrecognised."""
-    if not misses:
-        return []
-    try:
-        scopes = await topic_vectors(settings)
-        vectors = [(await embedder([p]))[0] for _, p in misses]  # one piece per call
-    except llm.LLMError:
-        return []
     out = []
-    for (i, phrase), vec in zip(misses, vectors, strict=True):
-        near = ot.nearest_topic(vec, scopes, settings.onboarding_topic_threshold)
-        if near is not None:
-            out.append(TopicOut(phrase_index=i, phrase=phrase, topic=near[0], via="embedding"))
+    for i, phrase in misses:
+        match = await embedding_topic(phrase, embedder, settings)
+        if match is not None:
+            out.append(TopicOut(phrase_index=i, phrase=phrase, topic=match.topic, via="embedding"))
     return out
 
 
@@ -260,7 +219,7 @@ class DiscoverOut(BaseModel):
 
 
 def _not_done(user: UserProfile) -> None:
-    if user.onboarding_done:
+    if not user.onboarding_open:
         raise HTTPException(status_code=409, detail="onboarding_done")
 
 
@@ -351,7 +310,19 @@ async def _serve(
     items, so picks are rec signals. Items past MAX_OFFERED_ITEMS aren't shown."""
     theta = {d: s.theta for d, s in (await _repo().get_domains(uid)).items()}
     new = [
-        (_id(c, library), c.topic, onboarding.term_order(c.concepts, c.topic, theta))
+        (
+            _id(c, library),
+            c.topic,
+            onboarding.term_order(
+                [
+                    x
+                    for x in c.concepts
+                    if onboarding.as_written(x, f"{c.result.title} {c.result.snippet}")
+                ],
+                c.topic,
+                theta,
+            ),
+        )
         for c in picked
     ]
     user = await _repo().offer_onboarding(

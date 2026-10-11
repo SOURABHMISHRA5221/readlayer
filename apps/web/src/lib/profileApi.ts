@@ -31,6 +31,8 @@ export interface Onboarding {
   step: "consent" | "onboarding" | "discover" | "calibration" | "done";
   field?: Field | null;
   interests?: Domain[];
+  redo?: "about" | "discover" | null; // Redo setup in progress (decision 48)
+  consent_version?: string | null;
 }
 
 export interface Profile {
@@ -101,7 +103,9 @@ export interface EditPreview {
     known: { concept_id: string; label: string }[];
     unknown: { concept_id: string; label: string }[];
     settings: { setting: string; before: unknown; after: unknown }[];
+    interests?: { domain: Domain; direction: "more" | "less" }[]; // decision 48
     unresolved: string[];
+    note?: string | null;
   };
 }
 
@@ -113,6 +117,7 @@ export interface EditSummary {
   concepts: number;
   domains: string[];
   settings: string[];
+  interests?: { domain: Domain; direction: "more" | "less" }[]; // decision 48
 }
 
 const q = (persona: PersonaKey | null, first = true) => (persona ? `${first ? "?" : "&"}persona=${persona}` : "");
@@ -123,9 +128,19 @@ export interface GoalTarget {
   label: string;
   known: boolean;
 }
+/** A previewed learning goal (decision 48): a concept and its chain, or a topic and its ideas. */
+export interface GoalPreview {
+  type: "learning";
+  kind: "concept" | "topic";
+  label: string;
+  concept_id: string | null;
+  topic: Domain | null;
+  targets: { concept_id: string; label: string }[];
+}
 export interface Goal {
   id: string;
   type: "habit" | "learning";
+  kind?: "concept" | "topic" | null;
   label: string;
   metric: "articles" | "minutes" | null;
   per_week: number | null;
@@ -143,6 +158,19 @@ export const profileApi = {
   addHabit: (metric: "articles" | "minutes", per_week: number) =>
     api.raw.send<Goal>("POST", "/v1/me/goals", { type: "habit", metric, per_week }),
   addLearning: (text: string) => api.raw.send<Goal>("POST", "/v1/me/goals", { type: "learning", text }),
+  /** The text goes in this request only; saving sends the previewed ids, never the text. */
+  previewLearning: (text: string) =>
+    api.raw.send<GoalPreview>("POST", "/v1/me/goals/preview", { type: "learning", text }),
+  saveLearning: (p: GoalPreview) =>
+    api.raw.send<Goal>("POST", "/v1/me/goals", {
+      type: "learning_resolved",
+      kind: p.kind,
+      concept_id: p.concept_id,
+      topic: p.topic,
+      target_ids: p.targets.map((t) => t.concept_id),
+    }),
+  redo: () => api.raw.send<{ redo: string }>("POST", "/v1/onboarding/redo", {}),
+  cancelRedo: () => api.raw.send<{ redo: null }>("POST", "/v1/onboarding/redo/cancel", {}),
   deleteGoal: (id: string) => api.raw.send<null>("DELETE", `/v1/me/goals/${id}`, undefined),
   overview: (persona: PersonaKey | null, signal?: AbortSignal) =>
     api.raw.get<Overview>(`/v1/me/graph?view=overview${q(persona, false)}`, signal),

@@ -29,7 +29,7 @@ from app.reader.onboarding_text import alias_topic, nearest_topic, topic_texts, 
 
 ROOT = Path(__file__).parent
 CASES = ROOT / "cases" / "onboarding_topics.yaml"
-RESULTS = ROOT / "results"
+RESULTS = ROOT / "results" / "onboarding_topics"  # not results/*.json: report.py reads those
 TARGET_PRECISION = 0.95
 THRESHOLDS = [round(0.40 + 0.01 * i, 2) for i in range(51)]  # 0.40 … 0.90
 
@@ -99,7 +99,7 @@ def pipeline(rows: list[dict[str, Any]], threshold: float) -> dict[str, Any]:
 
 if __name__ == "__main__":
     out = asyncio.run(main())
-    RESULTS.mkdir(exist_ok=True)
+    RESULTS.mkdir(parents=True, exist_ok=True)
     path = RESULTS / f"onboarding_topics_{datetime.now(UTC):%Y%m%dT%H%M%S}.json"
     path.write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
     for r in sorted(out["rows"], key=lambda r: -r["similarity"]):

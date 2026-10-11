@@ -299,3 +299,17 @@
   font: 400 var(--text-ui) / 1.4 var(--font-ui); color: var(--ink); }
 .clist__goal { font: 600 12px / 1 var(--font-ui); color: var(--accent); border: 1px solid var(--accent);
   border-radius: var(--radius-pill); padding: 3px 8px; }
+
+/* Decision 48: a previewed learning goal, and Redo setup. */
+.goals__draft {
+  display: grid;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-left: 2px solid var(--accent);
+  background: color-mix(in srgb, var(--accent-wash) 45%, var(--surface));
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+.goals__draft-line { margin: 0; font: 600 15px / 1.4 var(--font-ui); color: var(--ink); }
+.data__redo { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3); align-items: center; margin-top: var(--s3); }
+.data__redo .btn { min-height: 44px; }
+.data__redo .profile__note { margin: 0; }

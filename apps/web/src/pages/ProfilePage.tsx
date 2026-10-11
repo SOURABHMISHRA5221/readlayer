@@ -91,7 +91,7 @@ export default function ProfilePage({ url }: { url: URL }) {
             <Frames profile={profile} demoName={name} onChanged={refresh} />
             <Preferences profile={profile} onChanged={refresh} disabled={!!persona} />
             <EditBox persona={persona} personaName={name} onChanged={refresh} />
-            <DataControls demo={isDemo} paused={profile.summary.learning_paused} onChanged={refresh} />
+            <DataControls demo={isDemo} canRedo={!isDemo && profile.onboarding.done} paused={profile.summary.learning_paused} onChanged={refresh} />
           </>
         )}
       </main>
@@ -313,7 +313,14 @@ function Preferences({ profile, onChanged, disabled }: { profile: Profile; onCha
   );
 }
 
-function DataControls({ demo, paused, onChanged }: { demo: boolean; paused: boolean; onChanged: () => void }) {
+interface DataControlsProps {
+  demo: boolean;
+  canRedo: boolean; // Redo setup is for readers who finished the first one (decision 48)
+  paused: boolean;
+  onChanged: () => void;
+}
+
+function DataControls({ demo, canRedo, paused, onChanged }: DataControlsProps) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -373,6 +380,29 @@ function DataControls({ demo, paused, onChanged }: { demo: boolean; paused: bool
           />
           <span>Pause learning (reading won't change your profile)</span>
         </label>
+      )}
+      {canRedo && (
+        <div className="data__redo">
+          <button
+            type="button"
+            className="btn"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setMessage(null);
+              try {
+                await profileApi.redo();
+                navigate("/welcome");
+              } catch {
+                setMessage("Setup didn't start. Try again.");
+                setBusy(false);
+              }
+            }}
+          >
+            Redo setup
+          </button>
+          <p className="profile__note">Pick your field and topics again and see what's out there now. Nothing is deleted.</p>
+        </div>
       )}
       <div className="data__row">
         {!demo && (

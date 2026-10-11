@@ -294,3 +294,5 @@
   .welcome__actions .btn { flex: 1; }
   .discover-card { padding: var(--s4); }
 }
+.welcome__bar-end { display: flex; align-items: center; gap: var(--s3); }
+.welcome__bar-end .btn { min-height: 44px; }

@@ -297,6 +297,19 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   `POST /v1/onboarding/finish` (done; offered, answered and picks cleared) → For you. A reload
   resumes on screen 2 (step `discover`).
 
+### Redo setup (decision 48)
+A finished Google reader can rerun the 2 screens from the profile ("Redo setup"):
+`POST /v1/onboarding/redo` sets `onboarding_redo` ("about", then "discover") and clears the
+offered/answered/pick lists; `onboarding_done` stays true, so the app never gates the reader.
+`POST /v1/onboarding` during a redo keeps calibration progress and θ, merges the earlier comfort
+answers and liked articles, keeps the reader's frames and adds the field's; interests are
+rewritten from the new choices plus picks. Screen 2's routes (and the repo transactions) are open
+while `onboarding_done` is false **or** a redo is in progress. `finish` and
+`POST /v1/onboarding/redo/cancel` end it. The consent checkbox shows again when the stored
+consent version isn't the current one (`consent-v2`). A finished reader opening /welcome outside
+a redo is sent home. "Know this?" acronym terms ("OCT") count only where the item's text writes
+them in capitals.
+
 ### Domain ability (Elo-style)
 On every graded outcome (calibration, knew_this, explain_opened):
 ```
@@ -653,7 +666,8 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 - Firestore security rules: clients never read/write Firestore directly; only the API service
   account does. Rules deny all client access.
 - Onboarding (decision 41) keeps, until finish, the served items with their terms
-  (`onboarding_offered`), Know this? answers and picks on `users/{uid}`, and daily counters
+  (`onboarding_offered`), Know this? answers, picks and (decision 48) `onboarding_redo` on
+  `users/{uid}`, and daily counters
   `onboarding_resolve_counts`, `onboarding_discover_counts`; all covered by export and delete.
 - **Free-text exception (decision 42), in the tests' words:** the onboarding free text never
   reaches search, any log record or any stored document; a model sees only individual redacted
@@ -810,6 +824,12 @@ to update your settings. It is not stored."
   | set_explanation_style | length: short / normal / detailed |
   | set_density | minimal / balanced / guided |
   | pause_learning | paused: bool |
+  | set_interest (decision 48) | topic: the reader's own words for a subject, direction: more / less |
+  The model fills `set_interest` as two flat ops, `read_more` / `read_less` with a `topic`
+  (prompt `profile-edit-v7`): with a separate `direction` field it left the direction empty
+  (evals: v6 9/10; defaulting an empty direction to "more" once turned "less cricket" into more,
+  so that default was dropped; v7 10/10 twice, attacks 5/5). At most 3 distinct topics per edit,
+  checked before any embedding (422 `too_many_topics`); an id-shaped topic rejects the edit.
   Any output that fails validation is rejected as a whole ("Couldn't understand that, try
   rephrasing"); nothing is partially applied.
 - **Resolve.** Concept names go through the existing graph linker (§2: exact alias, then
@@ -827,6 +847,17 @@ to update your settings. It is not stored."
     θ ← θ + 0.5·(target − θ); then weight **2.0** evidence on the domain's core concepts (its 10
     highest-`doc_freq` concepts): + where b ≤ target, − where b > target.
   - style, density, THINKS_IN, pause: set directly on `users/{uid}`.
+  - set_interest (decision 48): each topic phrase goes alone through the shared topic matcher
+    (`app/me/topic_match.py`: whole-phrase alias → words and 2-word chunks → nearest topic by
+    embedding); unmatched phrases are listed as "Couldn't find". `more` sets the domain's
+    interest to max(current, 1.0), `less` to min(current, 0.3); the edit records `{domain:
+    [previous, applied]}` and Undo restores the previous value only where the interest still
+    equals what the edit applied (a later pick, Redo setup or edit wins). Preview line: "More
+    Politics in your feed". A request that changes nothing ("less" on a topic already out of
+    the feed) is dropped from the edit and the preview. Demo sessions drop it with the note
+    "Feed topics are fixed in the demo". The phrase is never stored. Known limit: the guard
+    compares values, so if a later change lands on exactly the value the edit applied (e.g. a
+    Redo setup that also leaves a topic at 0.3), Undo restores the earlier value.
   - The applied edit is stored as a `profile_edit` event and as
     `users/{uid}/profile_edits/{edit_id}` with the ops and the exact deltas applied (Δα/Δβ per
     concept, Δθ per domain, previous setting values).
@@ -1002,6 +1033,17 @@ Signed-in readers only, after consent, at most 5, stored at `users/{uid}/goals/{
   its prerequisite chain, most basic first, at most 8. **Only the target ids and labels are
   stored; the text is never stored or logged** (logs: `uid_hash`, outcome, cost). Unresolvable
   → 422, nothing stored. `GOAL_RESOLVE_DAILY_CAP` 10 per reader per day.
+- **Topic goals (decision 48).** Order for X, one phrase, embedded at most once: exact concept →
+  whole-phrase topic alias (no model call) → `resolve_names` → words and 2-word chunks →
+  nearest topic by embedding. A topic match is a goal on the topic (label "Politics", `kind:
+  topic`) whose targets are up to 10 concepts of that domain sharing a whole word with X (the
+  topic's own label word doesn't count; plurals folded), most read first, then the domain's most
+  read concepts (doc_freq 0 only if short). **Preview, then save:** POST /v1/me/goals/preview
+  resolves (charged to the cap) and writes nothing; POST /v1/me/goals `{type:
+  learning_resolved, kind, concept_id | topic, target_ids}` saves the previewed ids after
+  re-checking them against the graph (no model call, no cap). The preview line shows the
+  reader's words from the page only ("Goal: understand Politics (Indian politics) · 10 ideas");
+  the stored goal never has them.
 - **Known** = band "understands" or "can explain", i.e. current p_know ≥ 0.5 from `knows` with
   forgetting, else the IRT prior. Learning progress = known targets / targets. Pure math in
   `app/reader/goals.py`, no LLM.

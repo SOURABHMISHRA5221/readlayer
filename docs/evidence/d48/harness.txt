@@ -1,0 +1,26 @@
+[setup] 200 200 200
+[goal preview] Goal: understand Politics (Indian politics) · 10 ideas
+[redo button shown] True
+[profile-goal-draft 1440-light] axe=[] hscroll=0 small=["INPUT 20x20"] docs/evidence/d48/profile-goal-draft-1440-light.png
+[profile-goal-draft 1440-dark] axe=[] hscroll=0 small=["INPUT 20x20"] docs/evidence/d48/profile-goal-draft-1440-dark.png
+[profile-goal-draft 390-light] axe=[] hscroll=0 small=["INPUT 19x20"] docs/evidence/d48/profile-goal-draft-390-light.png
+[profile-goal-draft 390-dark] axe=[] hscroll=0 small=["INPUT 19x20"] docs/evidence/d48/profile-goal-draft-390-dark.png
+[goal saved] [('Politics', 'topic', 10)]
+[edit preview] Here's what would change | More Politics in your feed | Discard | Apply
+[edit apply] politics interest 0.3 → 1; feed topics ['economics', 'politics']
+[profile-after-edit 1440-light] axe=[] hscroll=0 small=["INPUT 20x20"] docs/evidence/d48/profile-after-edit-1440-light.png
+[edit history] Oct 11, 2026, 10:32 PM · More Politics in your feed
+[edit undo] politics interest 0.3
+[redo] path /welcome | consent shown True | cancel shown True
+[redo-screen1 1440-light] axe=[] hscroll=0 small=["INPUT 24x24"] docs/evidence/d48/redo-screen1-1440-light.png
+[redo-screen1 1440-dark] axe=[] hscroll=0 small=["INPUT 24x24"] docs/evidence/d48/redo-screen1-1440-dark.png
+[redo-screen1 390-light] axe=[] hscroll=0 small=["INPUT 24x24"] docs/evidence/d48/redo-screen1-390-light.png
+[redo-screen1 390-dark] axe=[] hscroll=0 small=["INPUT 24x24"] docs/evidence/d48/redo-screen1-390-dark.png
+[redo-screen2 1440-light] axe=[] hscroll=0 small=["Politics 67x24", "Will bonds blow up? 180x24"] docs/evidence/d48/redo-screen2-1440-light.png
+[redo-screen2 1440-dark] axe=[] hscroll=0 small=["Politics 67x24", "Will bonds blow up? 180x24"] docs/evidence/d48/redo-screen2-1440-dark.png
+[redo-screen2 390-light] axe=[] hscroll=0 small=["Politics 67x24", "Will bonds blow up? 180x24"] docs/evidence/d48/redo-screen2-390-light.png
+[redo-screen2 390-dark] axe=[] hscroll=0 small=["Politics 67x24", "Will bonds blow up? 180x24"] docs/evidence/d48/redo-screen2-390-dark.png
+[redo done] path / | onboarding {'consented': True, 'done': True, 'step': 'done', 'field': 'software', 'interests': ['economics', 'politics', 'sports'], 'redo': None, 'consent_version': 'consent-v2'} | thinks_in ['cricket', 'software'] | feed topics ['economics', 'politics', 'sports']
+[comfort kept] {'economics': 'comfortable'} | typed text stored anywhere: False
+[delete] 204
+exit=0

@@ -1,7 +1,7 @@
 import { useEffect, useId, useState, type FormEvent } from "react";
 
 import { ApiError } from "../../lib/api";
-import { profileApi, type Goal } from "../../lib/profileApi";
+import { profileApi, type Goal, type GoalPreview } from "../../lib/profileApi";
 
 interface Props {
   demo: boolean;
@@ -57,7 +57,9 @@ export function Goals({ demo, refreshKey, onGoals, onShowOnMap }: Props) {
               {goals.map((g) => (
                 <li key={g.id} className="goals__item">
                   <div className="goals__head">
-                    <span className="goals__label">{g.type === "learning" ? `Understand ${g.label}` : g.label}</span>
+                    <span className="goals__label">
+                      {g.type === "learning" ? `Understand ${g.label}` : g.label}
+                    </span>
                     <span className="goals__value">{progressText(g)}</span>
                   </div>
                   <progress className="goals__bar" max={1} value={g.fraction} aria-label={`${g.label}: ${progressText(g)}`} />
@@ -98,6 +100,7 @@ function AddGoal({ onAdded }: { onAdded: () => void }) {
   const [idea, setIdea] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
+  const [draft, setDraft] = useState<GoalPreview | null>(null);
 
   const addHabit = async (e: FormEvent) => {
     e.preventDefault();
@@ -119,9 +122,22 @@ function AddGoal({ onAdded }: { onAdded: () => void }) {
     setBusy(true);
     setNote("Looking up that idea and what it builds on…"); // resolving can take 10–20 s
     try {
-      await profileApi.addLearning(`understand ${idea.trim()}`);
-      setIdea("");
+      setDraft(await profileApi.previewLearning(`understand ${idea.trim()}`));
       setNote("");
+    } catch (err) {
+      setNote(message(err, "That goal couldn't be added."));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const save = async () => {
+    if (!draft) return;
+    setBusy(true);
+    try {
+      await profileApi.saveLearning(draft);
+      setDraft(null);
+      setIdea("");
       onAdded();
     } catch (err) {
       setNote(message(err, "That goal couldn't be added."));
@@ -148,10 +164,35 @@ function AddGoal({ onAdded }: { onAdded: () => void }) {
       <form className="goals__form" onSubmit={addLearning}>
         <label htmlFor={`${id}-i`} className="goals__form-title">Understand an idea</label>
         <input id={`${id}-i`} className="goals__text" type="text" maxLength={100} value={idea}
-          placeholder="e.g. insulin resistance" onChange={(e) => setIdea(e.target.value)} />
+          placeholder="e.g. insulin resistance" onChange={(e) => {
+            setIdea(e.target.value);
+            setDraft(null); // a preview belongs to the text it was made from
+          }} />
         <button className="btn" type="submit" disabled={busy || !idea.trim()}>{busy ? "Adding…" : "Add"}</button>
       </form>
+      {draft && (
+        <div className="goals__draft" role="status">
+          <p className="goals__draft-line">{draftLine(draft, idea)}</p>
+          <div className="goals__actions">
+            <button type="button" className="btn btn--primary btn--sm" onClick={() => void save()} disabled={busy}>
+              Save goal
+            </button>
+            <button type="button" className="btn btn--sm" onClick={() => setDraft(null)} disabled={busy}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
       <p className="profile__note" aria-live="polite">{note}</p>
     </div>
   );
+}
+
+/** "Goal: understand Politics (Indian politics) · 10 ideas": the typed words come from React
+ * state for this line only; the saved goal keeps the topic, never the text (decision 48). */
+export function draftLine(d: GoalPreview, typed: string): string {
+  const n = d.targets.length;
+  const words = typed.trim();
+  const own = d.kind === "topic" && words && words.toLowerCase() !== d.label.toLowerCase() ? ` (${words})` : "";
+  return `Goal: understand ${d.label}${own} · ${n} idea${n === 1 ? "" : "s"}`;
 }

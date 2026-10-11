@@ -5,15 +5,28 @@ import { Wordmark } from "../../components/Wordmark";
 import { api } from "../../lib/api";
 import { signOutUser } from "../../lib/auth";
 
-export function Shell({ screen, children }: { screen: 1 | 2; children: ReactNode }) {
+interface ShellProps {
+  screen: 1 | 2;
+  children: ReactNode;
+  onCancel?: () => void; // Redo setup: leave without finishing (decision 48)
+}
+
+export function Shell({ screen, children, onCancel }: ShellProps) {
   return (
     <div className="welcome">
       <header className="welcome__bar">
         <Wordmark />
-        <p className="welcome__step">
-          <span className="visually-hidden">Step </span>
-          {screen} of 2
-        </p>
+        <div className="welcome__bar-end">
+          <p className="welcome__step">
+            <span className="visually-hidden">Step </span>
+            {screen} of 2
+          </p>
+          {onCancel && (
+            <button type="button" className="btn btn--quiet" onClick={onCancel}>
+              Cancel setup
+            </button>
+          )}
+        </div>
       </header>
       <main className="welcome__main">{children}</main>
     </div>

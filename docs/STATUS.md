@@ -1,11 +1,11 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-11 (IST): Know-this refresh (decision 46d) merged (#25) and live (API revision
-00020, web deployed; live check: "Not really" inks "hedging" in without a reload, one chip in its done
-state, temporary reader deleted). Landing and onboarding built and accepted on the harness on `landing` (landing frozen; onboarding API + 2 screens done; §19); next its reviewer, PR and deploys (§9). Before that: Design pass (Gloss) merged (#22, #23) and live (API revision
-00019, web deployed); live check passed after the CORS fix for Save (§18). Next: M8-local (rebase
-`m8` first). M7.5 merged (#20) and live,
-Sourabh's Google check done.
+Last updated: 2026-10-11 (IST): **Landing and onboarding merged (#26) and live** (API revision
+00021, web deployed; live landing checks pass, mobile Lighthouse LCP median 1.8 s; §19). **Decision
+48** (topic goals, `set_interest`, Redo setup) built and harness-accepted on `d48` (§20); next its
+review fixes, PR and deploys, then Sourabh's Redo setup check on his account (§9). Before that:
+Know-this refresh (#25), Design pass (#22, #23), M7.5 (#20), all live. Next after d48: Wide layout
+(decision 45), then M8-local (rebase `m8` first).
 M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
@@ -37,7 +37,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
 | M7.5 | **merged #20 and live** (§17); Sourabh's Google check done (2026-10-11) | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
 | Design pass | **merged #22 + #23 and live** (§18) | — | Gloss: tokens and type, Margo, library as a feed, reader, profile and SVG map (decisions 39, 40) |
-| Landing and onboarding | built on `landing`, harness-accepted; review and PR next | — | Landing page with live mini-demo (frozen); onboarding in 2 screens with web results (resolve, discover, pick, know, finish). See §19 |
+| Landing and onboarding | merged (squash), live | #26 | Landing page with live mini-demo (frozen); onboarding in 2 screens with web results (resolve, discover, pick, know, finish). See §19 |
+| Topics in the older boxes, Redo setup (decision 48) | built on `d48`, harness-accepted; review, PR and deploys next | — | Topic goals (preview, then save), Describe yourself `set_interest` (prompt v7), Redo setup for finished readers. Plan `docs/plans/d48.md`; §20 |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -195,6 +196,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Onboarding: the embedding topic fallback recalls 9 of 22 test phrases at the chosen threshold (0.86, precision 9/9). With the alias list extended to 109 phrases over all 14 topics (Sourabh, 2026-10-11) the whole order recognises **10/22 with 0 wrong**; 8/20 excluding "smartphones" and "mutual funds", which Sourabh named and which are also test phrases | Similarities to the 14 scope lines are bunched (0.80–0.92; "asdf qwerty" 0.855); the rule picks the lowest threshold with no wrong mapping, and the method wasn't tuned on the cases (decision 26). Aliases are exact matches, so they catch the short common phrases readers type ("IPL", "LLMs") but not longer variants like the test set's "electric cars" or "inflation in India"; their benefit isn't measured by this set | Keep; revisit with a better topic text in M9 if time |
 | Onboarding: "Know this?" terms come only from concepts of the item's own topic, corpus concepts first (the plan: closest b to θ among all named concepts) | The harness run offered "Column" on a sports story and "Action point" on an economics one (other domains, seed-only concepts) | Keep (DESIGN §4) |
 | Onboarding: `onboarding_answered` is a map (concept → known), finish also clears the picks, discover is refused after finish, library fallback below 6 web items | Screen 2 resumes with the answers; nothing kept that has no use after onboarding | Keep (DESIGN §4, §11.4) |
+| d48: Describe yourself's `set_interest` is two model-facing ops, `read_more` / `read_less` (prompt v7), not one op with a `direction` field (plan) | v6 left `direction` empty (9/10); defaulting empty to "more" turned "less cricket" into more on a repeat run; v7 10/10 twice, attacks 5/5 | Keep (DESIGN §15.3) |
+| d48: the profile_edit eval ran 7 times, not the plan's 2 (v5 before, v6 after) | v6 failed P11 (empty direction); a v7 draft and an "empty = more" default were tried and dropped (the default turned "less cricket" into more on a repeat); the shipped v7 ran twice. Every run is kept and listed in evals/changelog.md; ≈ $0.063 | Recorded |
+| d48: a learning goal's exact concept match now short-circuits before `resolve_names` | Same result, no model path; the whole-phrase topic alias must come before any model call anyway | Keep (DESIGN §18) |
+| d48: "Know this?" acronym terms ("OCT") count only where the text writes them in capitals (found on the harness: "Know OCT?" from a date) | Not in the plan; a deterministic filter on a visible quality problem | Keep (DESIGN §4) |
 | M2.2: variant-precision baseline is 83% on the newly frozen 150-mention sample, not M2's 93% | M2's figure used a different sample and candidate floor; not comparable | Keep |
 ---
 
@@ -202,7 +207,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 
 | Severity | Issue |
 |---|---|
-| Medium | **Landing: mobile Lighthouse LCP over the 2.5 s gate, accepted by Sourabh 2026-10-11 for now.** One figure from now on: **2.6 s** (3 runs on 2026-10-11 against the final local build, perf 95). Earlier runs during the font work read 5.7 s and 5.9 s; the gap isn't explained (same hero code; different run conditions likely) and the live run after deploy is the number to trust. Desktop: perf 100, LCP 0.5 s. Cause: when the landing chunk takes over from the hydrated static hero, React re-mounts the hero (HeroStatic → Suspense → LandingPage), and the new demo paragraph, slightly larger once the annotator's highlights are drawn, becomes the LCP element at ≈ 600 ms observed (first paint of the same text: ≈ 40 ms). **M9 / tweak window: landing mount restructure: the demo attaches to the static hero instead of rebuilding it** |
+| Low | **Landing: mobile Lighthouse LCP. Live (2026-10-11, after #26): 1.2 / 2.0 / 1.8 s, median 1.8 s, under the 2.5 s gate (perf 99–100).** Local preview builds read 2.6 s (3 runs, perf 95); Earlier runs during the font work read 5.7 s and 5.9 s; the gap isn't explained (same hero code; different run conditions likely) and the live run after deploy is the number to trust. Desktop: perf 100, LCP 0.5 s. Cause: when the landing chunk takes over from the hydrated static hero, React re-mounts the hero (HeroStatic → Suspense → LandingPage), and the new demo paragraph, slightly larger once the annotator's highlights are drawn, becomes the LCP element at ≈ 600 ms observed (first paint of the same text: ≈ 40 ms). **M9 / tweak window: landing mount restructure: the demo attaches to the static hero instead of rebuilding it** |
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
@@ -323,6 +328,12 @@ shares; past the cap the feed serves today's or yesterday's entries. Realistic j
 touches 4–8 topics: ≈ 10–20 Tavily credits and 4–8 YouTube searches a day. Demo snapshots are
 seeded once per run (≤ 18 searches, plus ≈ 60 local fetch-and-extract checks, no LLM).
 
+**2026-10-11 UTC (decision 48, local):** profile_edit eval runs: 7 runs × 15 cases ≈ $0.063 (the
+plan budgeted 2 runs, < $0.05: v6 failed, a v7 draft failed, an "empty = more" default was tried
+and dropped, then v7 twice; evals/changelog.md); onboarding topic eval 4 embed calls < $0.001;
+harness runs: a handful of profile_edit and link_confirm calls (< $0.02), feed searches on the
+emulator only. All counted in the production spend counter.
+
 **2026-10-11 UTC (Design pass, local):** harness LLM ≈ $0.23 (explanations while testing, the verified "Say it simpler" checks, one Read any link ingest), 12 harness search calls (Up next on the reader page); refresher-share measurement and font metrics need no LLM. Production ledger for the UTC day: $0.06 (the before screenshots' demo reader and other traffic).
 
 **2026-10-10 UTC (M7.5, local):** safety evals $0.53 (before) + $0.54 (after); harness LLM
@@ -424,6 +435,7 @@ BUILD_PLAN.md has the prompts. M6, M7 and M2.2 are merged and live.
 | Now | **M7.5** merged #20 and live; steps (1)–(6) below done 2026-10-10 (§17). Step (7), Sourabh's Google check, done 2026-10-11. Post-merge steps, as run: (1) PR, milestone-reviewer SHIP, merge on green CI; (2) `make check-gcp`, deploy the API, then the web (Sourabh's yes on each); (3) `seed_demo_feed --dry-run`, then the real run: ≤ 18 searches (≤ 24 calls) counted in production's `ops/search`, ≤ 18 shared `rec_cache` feed entries, 3 `persona_feeds/{persona}` docs, ≈ 60 local fetch-and-extract checks, no LLM; check each persona has ≥ 2 readable articles per topic (re-run one persona with `--persona` if not); (4) record Tavily's plan and remaining credits here and in §7; (5) `warm_demo --dry-run`, then the real run (≈ 42 explanation entries, ≈ $0.25; today's production ledger is $6.71 of $8, so run it after 00:00 UTC if the deploy lands late on Oct 10 UTC); (6) `live_check_m7_5.py` (one demo reader pastes one non-business article, deleted after); (7) Sourabh's Google check: For you, one learning goal, open a feed article. Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut |
 | Oct 11–13 | **Design pass** (decisions 39, 40): built and accepted on the harness on Oct 11 (§18), ahead of both checkpoints. Next: milestone-reviewer, PR and green CI, deploy API then web (Sourabh's yes), live check (one demo reader saves an article, presses Helpful and asks "Say it simpler" once, ≈ $0.01, deleted after) |
 | Oct 11–13 | **Landing and onboarding** (decisions 41–47): landing built and frozen; onboarding API and 2 screens built and accepted on the harness on Oct 11 (§19), ahead of both checkpoints (end of Oct 12 IST: landing; end of Oct 13 IST: merged). Next: milestone-reviewer, PR from `landing`, green CI, deploy API then web (Sourabh's yes on each), live check (anonymous landing Lighthouse; Sourabh's own Google onboarding: ≤ 18 topic + ≤ 2 concept searches, ≤ 1 resolve ≈ $0.002) |
+| Oct 12–13 | **Decision 48**: topic goals, `set_interest`, Redo setup (plan APPROVE after one REVISE round). Built and harness-accepted Oct 11. Next: milestone-reviewer, PR, deploy API then web (Sourabh's yes), Sourabh's live check with Redo setup on his account. **Checkpoint end of Oct 13 IST:** not merged → ask Sourabh what to cut (decision 27) rather than slipping M8-local (Oct 14) |
 | After Landing ships, before M8 | **Wide layout** follow-up (decision 45): feed/library, profile and reader use the width; own plan, reviewer loop, PR. Pushes M8-local; if M8 or M9 is at risk, ask Sourabh what to cut |
 | Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done; keep M7.5's "visible to the reader who brought it in") |
 | Oct 15 | **M9** hardening and evals, plus four M2.2 follow-ups required before the freeze (Sourabh, 2026-10-10): (1) merge check within one growth batch (same-article duplicates, e.g. Forever chemicals / PFAS); (2) validate grown prerequisites against the domain or drop low-confidence ones (PFOS → PHOSITA); (3) grown-concept precision on a fresh, independent sample of 30, reported with the 87% and 97% samples; (4) README and deck state the frozen-graph misses (64% / 13%) next to the after-growth numbers |
@@ -505,6 +517,7 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 46e | Device frames with full-UI captures (Sourabh, 2026-10-11) | A "See it in action" section after the hero (monitor with the feed, laptop with the reader; a phone on mobile); How it works and the final CTA as framed full-window loops (2880×1800, ≤ 600 KB) with a gentle zoom toward the action (≤ 1.15×, pause stops it), posters ≤ 120 KB, "Tap to play" when autoplay is blocked; section padding ~72–128px. Replaces 46d's clip crops. Plan amendment S1–S5 |
 | 47 | Self-hosted trimmed fonts (Sourabh, 2026-10-11) | Fontsource variable Schibsted Grotesk and Source Serif 4, Latin only, trimmed to the weights used (fontTools), a one-glyph ₹ file per face, hero headline and body preloaded, `font-display: swap`, metric-matched fallbacks, Google Fonts links dropped, `/fonts/**` cached immutable. Mobile LCP still missed the 2.5 s gate (not the fonts: the landing chunk re-mounts the hero); Sourabh accepted the miss, the mount restructure is on the M9 list; landing frozen. Plan amendment F1–F3 |
 | 42b | Onboarding topic matching, more deterministic (Sourabh, 2026-10-11, before the PR) | The topic alias list extended to ~60 common phrases over all 14 topics (109 entries with variants), then word-level matching: words and 2-word chunks (no stop, generic or country words) against the aliases and concept labels, strongest match's topic, before any model call; embedding only when nothing matches. Same 22-phrase set, gate zero wrong and the 5 nonsense phrases unrecognised: 18/22 (§4 has the caveat) |
+| 48 | Topics in the older boxes, and Redo setup (Sourabh, 2026-10-11, after the live check of #26) | "Indian politics" failed as a learning goal and in Describe yourself. (1) Both reuse the topic matcher: a topic-level goal targets the topic plus up to ~10 matching concepts, previewed ("Goal: understand Politics (Indian politics) · 10 ideas") before saving; Describe yourself gains a whitelisted `set_interest(topic, more/less)`, previewed ("More Politics in your feed") with Apply and Undo; same privacy rules. (2) "Redo setup" on the profile reruns the 2 screens for an existing Google reader without deleting anything; consent only if its version changed. Tests, deploy (his yes), his live check with Redo setup. Plan `docs/plans/d48.md` |
 
 No decisions are open.
 
@@ -842,3 +855,32 @@ screenshots in `docs/evidence/onboarding/after/`.
 | — | Found and fixed on the harness | "Start reading" bounced back to /welcome (stale onboarding status in the app gate); readback said "more Sports" after two skips (now likes minus skips per topic); off-topic Know this? terms; Know row wrapping at 390; chips 42px |
 | — | Tests | API 663 (22 new onboarding-flow tests incl. privacy), web 50, annotator 54; typecheck and ruff clean |
 | 7 | Docs | DESIGN §4 (onboarding in 2 screens), §8 (5 routes), §11.4 (consent v2, free-text rule in the tests' words, new data), §17.1 (search bounds); STATUS §1, §4, §9, §19 |
+
+**Live (2026-10-11, after merge #26; API revision 00021, web deployed):** anonymous, signed out,
+no writes (`tools/shots/landing.py` against the live site).
+
+| Check | Result |
+|---|---|
+| Landing demo | Same marks per persona as local; 0 fetch, 0 XHR, 0 resource requests after load |
+| axe, keyboard | 0 at every impact level on "/" (page and open card) and /privacy at 1920/1440/1280/390, light and dark; keyboard path passes; decision 46 checks all pass |
+| First view at 390×844 | 261,382 bytes, no landing media before scroll |
+| No flash | `data-boot`: landing for "/" with no hint; shell with the signed-in hint, /privacy, /read/abc |
+| Lighthouse mobile (12.8.2, live, 3 runs) | perf 100 / 99 / 99, a11y 100, CLS 0, **LCP 1.2 / 2.0 / 1.8 s (median 1.8 s, gate 2.5 s: pass)** |
+| New routes | `POST /v1/onboarding/resolve` without a token → 401 (route live, guarded) |
+| Sourabh's Google onboarding | Pending: both screens, ≤ 18 topic + ≤ 2 concept searches, ≤ 1 resolve; the profile showing the Know this? band changes |
+
+## 20. Decision 48 acceptance (2026-10-11, emulator harness)
+
+Plan `docs/plans/d48.md` (plan-reviewer REVISE 15 → APPROVE). Evidence: `tools/shots/d48.py`,
+screenshots in `docs/evidence/d48/`.
+
+| Check | Result |
+|---|---|
+| Topic goal | "Indian politics" previews "Goal: understand Politics (Indian politics) · 10 ideas"; saved as `Politics`, kind topic, 10 ideas; no model call (whole-phrase alias); the phrase in no stored document or log (pytest) |
+| Describe yourself | Sourabh's own sentence "See I want to learn about Indian Politics" previews "More Politics in your feed"; Apply: politics interest 0.3 → 1.0, feed topics economics, politics; Undo → 0.3. Guarded undo, topic cap, demo note, old edits loading: pytest (the undo guard and the comfort merge were mutation-checked) |
+| Redo setup | An M7-era reader (consent v1, comfort answers, finished): Redo setup → /welcome with the consent checkbox and Cancel setup; both screens; Start reading → feed (economics, politics, sports); done stayed true, comfort kept, frames cricket + software, consent now v2; the typed text in no export field |
+| axe | 0 on the profile (goal preview line and Redo setup button showing) at 1440/390, light and dark, and after the edit; on both redo screens at 1440/390, light and dark; no horizontal scroll. Small targets: the existing Pause learning checkbox (20px, its whole sentence is the label) and two card title links (24px text links). Run log: `docs/evidence/d48/harness.txt` |
+| Review fixes | An interest-only edit's history line was blank (now "More Politics in your feed"); a "less" that changes nothing is dropped; the goal preview clears when the text changes; Redo setup only for finished readers; the saved goal reads "Understand Politics" (no "(topic)") |
+| Evals | profile_edit, cases P11–P14 and X05 committed before any run; every run (evals/changelog.md): v5 7/10 (before), v6 9/10, a v7 draft 8/10 (never shipped; file renamed `…v7-draft-direction-required`), v6 + "empty = more" 10/10 then 9/10 (turned "less cricket" into more: dropped), shipped v7 10/10 and 10/10; attacks 5/5 throughout |
+| Tests | API 687, web 58 |
+| Live | Pending: deploy, then Sourabh's Redo setup on his account |

@@ -2,7 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import { profileApi } from "../lib/profileApi";
 import { navigate } from "../lib/router";
-import { AboutScreen, chosenDomains, EMPTY_ABOUT, frameFor, MAX_TOPICS, type About } from "./welcome/AboutScreen";
+import {
+  AboutScreen,
+  chosenDomains,
+  CONSENT_VERSION,
+  EMPTY_ABOUT,
+  frameFor,
+  MAX_TOPICS,
+  type About,
+} from "./welcome/AboutScreen";
 import { DiscoverScreen } from "./welcome/DiscoverScreen";
 import { Shell } from "./welcome/parts";
 import "../styles/welcome.css";
@@ -18,6 +26,7 @@ export { CONSENT_VERSION } from "./welcome/AboutScreen";
 export default function WelcomePage() {
   const [screen, setScreen] = useState<"loading" | "about" | "discover">("loading");
   const [consented, setConsented] = useState(false);
+  const [redo, setRedo] = useState(false);
   const [about, setAbout] = useState<About>(EMPTY_ABOUT);
   const heading = useRef<HTMLHeadingElement>(null);
 
@@ -27,9 +36,17 @@ export default function WelcomePage() {
       .profile(null)
       .then((p) => {
         const o = p.onboarding;
-        setConsented(o.consented);
+        if (o.done && !o.redo) {
+          // Finished readers come back here only through Redo setup (decision 48): saving screen
+          // 1 outside a redo would mark them not onboarded and gate the app.
+          navigate("/", { replace: true });
+          return;
+        }
+        setRedo(!!o.redo);
+        // A reader who agreed to an older consent text sees the current one once.
+        setConsented(o.consented && o.consent_version === CONSENT_VERSION);
         setAbout((cur) => ({ ...cur, field: o.field ?? cur.field, topics: o.interests?.length ? o.interests.slice(0, MAX_TOPICS) : cur.topics }));
-        setScreen(o.step === "discover" ? "discover" : "about");
+        setScreen(o.step === "discover" || o.redo === "discover" ? "discover" : "about");
       })
       .catch(() => setScreen("about"));
   }, []);
@@ -52,9 +69,16 @@ export default function WelcomePage() {
     navigate("/", { replace: true });
   };
 
+  const cancel = redo
+    ? async () => {
+        await profileApi.cancelRedo().catch(() => undefined);
+        navigate("/profile");
+      }
+    : undefined;
+
   if (screen === "loading") return <Shell screen={1}>{null}</Shell>;
   return (
-    <Shell screen={screen === "about" ? 1 : 2}>
+    <Shell screen={screen === "about" ? 1 : 2} onCancel={cancel}>
       {screen === "about" ? (
         <AboutScreen
           heading={heading}

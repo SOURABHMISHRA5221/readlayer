@@ -23,10 +23,14 @@ from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.context import ReaderContext, reader_context
 from app.graph.loader import get_graph
+from app.graph.models import Concept, Domain
 from app.graph.resolve import resolve_names
+from app.graph.taxonomy import BY_ID
 from app.me.router import require_consent
+from app.me.topic_match import Embedder, match_topic
 from app.privacy.redact import redact
 from app.reader import goals as g
+from app.reader import onboarding_text as ot
 from app.reader.profile import iso_week
 from app.store.docstore import get_doc_store
 from app.store.reader_repo import ReaderRepo, sub_path, user_path
@@ -50,6 +54,20 @@ class LearningIn(BaseModel):
     text: str = Field(min_length=2, max_length=120)
 
 
+class ResolvedIn(BaseModel):
+    """A goal the reader saw in preview (decision 48): ids only, re-validated against the graph;
+    no model call and no cap charge."""
+
+    model_config = ConfigDict(extra="forbid")
+    type: Literal["learning_resolved"]
+    kind: Literal["concept", "topic"]
+    concept_id: str | None = Field(default=None, max_length=120, pattern=r"^[a-z0-9_]+$")
+    topic: Domain | None = None
+    target_ids: list[Annotated[str, Field(max_length=120, pattern=r"^[a-z0-9_]+$")]] = Field(
+        min_length=1, max_length=g.TOPIC_TARGETS
+    )
+
+
 class TargetOut(BaseModel):
     concept_id: str
     label: str
@@ -59,6 +77,7 @@ class TargetOut(BaseModel):
 class GoalOut(BaseModel):
     id: str
     type: Literal["habit", "learning"]
+    kind: Literal["concept", "topic"] | None = None
     label: str
     metric: g.Metric | None = None
     per_week: int | None = None
@@ -113,8 +132,9 @@ async def _out(goal_id: str, doc: dict[str, Any], ctx: ReaderContext, weekly: di
                   known=bool((c := graph.get(t["concept_id"])) and g.is_known(c, ctx.state, now)))
         for t in doc.get("targets", [])
     ]  # fmt: skip
-    return GoalOut(id=goal_id, type="learning", label=doc["label"], targets=targets, done=p.done,
-                   total=p.total, fraction=round(p.fraction, 3))  # fmt: skip
+    return GoalOut(id=goal_id, type="learning", kind=doc.get("kind", "concept"),
+                   label=doc["label"], targets=targets, done=p.done, total=p.total,
+                   fraction=round(p.fraction, 3))  # fmt: skip
 
 
 @router.get("/me/goals", response_model=list[GoalOut])
@@ -124,9 +144,22 @@ async def list_goals(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> 
     return [await _out(gid, doc, ctx, weekly) for gid, doc in sorted(await _goals(ctx.uid))]
 
 
+@router.post("/me/goals/preview", response_model=None, responses={422: {}, 429: {}})
+async def preview_goal(
+    body: LearningIn,
+    ctx: Annotated[ReaderContext, Depends(reader_context)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> dict[str, Any] | JSONResponse:
+    """What "understand X" resolves to (a concept, or a topic and its ideas). Nothing written;
+    the resolve is charged here, and saving the previewed ids costs nothing."""
+    _signed_in(ctx.caller)
+    await require_consent(ctx.caller)
+    return await _resolve(ctx.caller, body.text, settings)
+
+
 @router.post("/me/goals", response_model=GoalOut, responses={422: {}, 429: {}})
 async def create_goal(
-    body: HabitIn | LearningIn,
+    body: HabitIn | LearningIn | ResolvedIn,
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> GoalOut | JSONResponse:
@@ -139,6 +172,11 @@ async def create_goal(
         if not _habit_bounds(body.metric, body.per_week):
             return _error(422, "bad_habit", "Pick 1–50 articles or 10–600 minutes a week.")
         doc: dict[str, Any] = {"type": "habit", "metric": body.metric, "per_week": body.per_week}
+    elif isinstance(body, ResolvedIn):
+        checked = _checked(body)
+        if isinstance(checked, JSONResponse):
+            return checked
+        doc = checked
     else:
         resolved = await _resolve(ctx.caller, body.text, settings)
         if isinstance(resolved, JSONResponse):
@@ -154,25 +192,68 @@ async def create_goal(
 
 
 async def _resolve(caller: Caller, text: str, settings: Settings) -> dict[str, Any] | JSONResponse:
+    """Decision 48 order, one phrase, embedded at most once: exact concept → whole-phrase topic
+    alias (no model call) → `resolve_names` (embedding candidates + link_confirm) → words and
+    2-word chunks → nearest topic by embedding. The text is never stored or logged."""
     ok = await _repo().reserve_daily(
         "goal_resolve_counts", caller.uid, today_utc(), settings.goal_resolve_daily_cap, None, 0
     )
     if not ok:
         return _error(429, "goal_cap_reached", "That's enough new goals for today. Try tomorrow.")
-    phrase = g.strip_prefix(redact(text))  # the text itself is never stored or logged
+    phrase = g.strip_prefix(redact(text))
     graph = get_graph()
     ledger: list[llm.CallMeta] = []
-    ids, _ = await resolve_names(graph, [phrase], settings.link_threshold, ledger=ledger)
-    cost = round(sum(m.cost_usd for m in ledger), 6)
-    cid = ids.get(phrase.casefold())
-    concept = graph.get(cid) if cid else None
-    log.info("goal resolve", extra={"outcome": "resolved" if concept else "not_found",
-                                    "cost_usd": cost})  # fmt: skip
-    if concept is None:
-        return _error(422, "goal_not_found", "We couldn't find that idea yet. Try another name.")
-    targets = [{"concept_id": c.id, "label": c.label} for c in g.targets(graph, concept.id)]
-    return {"type": "learning", "label": concept.label, "concept_id": concept.id,
-            "targets": targets}  # fmt: skip
+    embedder = Embedder()
+    concept = graph.lookup(phrase)
+    topic = None if concept is not None else ot.alias_topic(phrase)
+    if concept is None and topic is None:
+        ids, _ = await resolve_names(graph, [phrase], settings.link_threshold, embed=embedder,
+                                     ledger=ledger)  # fmt: skip
+        cid = ids.get(phrase.casefold())
+        concept = graph.get(cid) if cid else None
+    if concept is None and topic is None:
+        match = await match_topic(graph, phrase, embedder, settings)
+        topic = match.topic if match else None
+    cost = round(embedder.cost + sum(m.cost_usd for m in ledger), 6)
+    outcome = "concept" if concept else "topic" if topic else "not_found"
+    log.info("goal resolve", extra={"outcome": outcome, "cost_usd": cost})
+    if concept is not None:
+        found = g.targets(graph, concept.id)
+        return _draft("concept", concept.label, found, concept_id=concept.id)
+    if topic is not None:
+        found = g.topic_targets(graph, topic, phrase)
+        if found:
+            return _draft("topic", BY_ID[topic].label, found, topic=topic)
+    return _error(422, "goal_not_found", "We couldn't find that idea yet. Try another name.")
+
+
+def _draft(kind: str, label: str, found: list[Concept], *, concept_id: str | None = None,
+           topic: str | None = None) -> dict[str, Any]:  # fmt: skip
+    """A goal ready to store and to preview: ids and graph labels only."""
+    return {"type": "learning", "kind": kind, "label": label, "concept_id": concept_id,
+            "topic": topic,
+            "targets": [{"concept_id": c.id, "label": c.label} for c in found]}  # fmt: skip
+
+
+def _checked(body: ResolvedIn) -> dict[str, Any] | JSONResponse:
+    """A previewed goal, re-derived from the graph: a concept goal's targets must be exactly its
+    chain; a topic goal's ids must all exist and sit in that topic."""
+    graph = get_graph()
+    bad = _error(422, "goal_not_valid", "That goal no longer matches. Preview it again.")
+    if body.kind == "concept":
+        concept = graph.get(body.concept_id or "")
+        if concept is None:
+            return bad
+        found = g.targets(graph, concept.id)
+        if [c.id for c in found] != body.target_ids:
+            return bad
+        return _draft("concept", concept.label, found, concept_id=concept.id)
+    if body.topic is None:
+        return bad
+    found = [c for cid in dict.fromkeys(body.target_ids) if (c := graph.get(cid)) is not None]
+    if len(found) != len(set(body.target_ids)) or any(c.domain != body.topic for c in found):
+        return bad
+    return _draft("topic", BY_ID[body.topic].label, found, topic=body.topic)
 
 
 @router.delete("/me/goals/{goal_id}", status_code=204)

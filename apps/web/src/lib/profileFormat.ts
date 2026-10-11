@@ -1,4 +1,5 @@
 import type { Band, EditPreview } from "./profileApi";
+import { domainLabel } from "./format";
 
 /** Plain-language helpers for the profile page (pure; unit-tested). */
 
@@ -79,5 +80,11 @@ export function previewLines(p: EditPreview["preview"]): string[] {
   if (p.known.length) lines.push(`${p.known.length} concept${p.known.length > 1 ? "s" : ""} marked as known`);
   if (p.unknown.length) lines.push(`${p.unknown.length} concept${p.unknown.length > 1 ? "s" : ""} marked as new to you`);
   for (const s of p.settings) lines.push(`${SETTING_LABEL[s.setting] ?? s.setting}: ${show(s.before)} → ${show(s.after)}`);
+  for (const i of p.interests ?? []) lines.push(interestLine(i));
   return lines;
+}
+
+/** "More Politics in your feed" (decision 48): previews and the edit history. */
+export function interestLine(i: { domain: string; direction: "more" | "less" }): string {
+  return `${i.direction === "more" ? "More" : "Less"} ${domainLabel(i.domain) ?? i.domain} in your feed`;
 }
