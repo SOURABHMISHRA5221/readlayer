@@ -443,3 +443,17 @@ def test_discover_uses_outlet_entries_for_topics(env):
     items = c.post("/v1/onboarding/discover", json={"topics": ["economics"]}).json()["items"]
     assert any(side_of(urlsplit(i["url"]).hostname or "", "IN") == "local" for i in items)
     assert "Economics news this week" not in provider.queries  # no article search needed
+
+
+def test_demo_snapshots_take_local_global_local_and_yield_when_a_side_runs_out():
+    from scripts.seed_demo_feed import mixed
+
+    def cand(host, i):
+        r = WebResult(url=f"https://www.{host}/news/2026/story-{i}", title=f"s{i}", source=host,
+                      format="article", published_at=f"2026-10-11T0{i}:00:00+00:00")  # fmt: skip
+        return fr.FeedCandidate(r, "economics")
+
+    pool = [cand("thehindu.com", i) for i in range(1, 5)] + [cand("bbc.co.uk", 5)]
+    hosts = [urlsplit(r.url).hostname for r in mixed(pool)]
+    assert hosts == ["www.thehindu.com", "www.bbc.co.uk", "www.thehindu.com",
+                     "www.thehindu.com", "www.thehindu.com"]  # fmt: skip

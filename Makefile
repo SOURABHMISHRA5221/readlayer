@@ -14,10 +14,14 @@ API := cd apps/api &&
 WEB_APP  := readlayer-web
 HOSTING  := https://$(PROJECT).web.app,https://$(PROJECT).firebaseapp.com
 JAVA21   := $(HOME)/.sdkman/candidates/java/21.0.12-amzn
+# Decision 50: Cloud Scheduler calls the outlet collection with an OIDC token for this account.
+FEED_SA  := feed-job@$(PROJECT).iam.gserviceaccount.com
+FEED_URL := https://readlayer-api-d2sfihz3za-el.a.run.app/v1/internal/feeds/collect
+FEED_JOB := readlayer-feed-collect
 SECRETS  := UID_HASH_SALT=uid-hash-salt:latest,TAVILY_API_KEY=tavily-api-key:latest,YOUTUBE_API_KEY=youtube-api-key:latest
 
 .PHONY: dev dev-api dev-web dev-emulator test test-emulator smoke check-gcp setup-gcp web-config deploy-api \
-	deploy-web deploy-rules deploy-guard
+	deploy-web deploy-rules deploy-guard setup-feed-job run-feed-job
 
 # Local only: API (:8000, real Firebase sign-in, reads Firestore + graph with this project's ADC)
 # and web (:5173, proxies /v1). Ctrl-C stops both. Needs apps/web/.env.local (make web-config).
@@ -64,6 +68,21 @@ setup-gcp: check-gcp
 		--replication-policy=user-managed --locations=$(REGION)
 	gcloud secrets add-iam-policy-binding uid-hash-salt --member=serviceAccount:$(SA) \
 		--role=roles/secretmanager.secretAccessor
+
+# One-time (decision 50, needs Sourabh's yes): the outlet collection's caller identity (no roles:
+# the API checks the token itself) and one job at 06:00 and 18:00 IST. The API must already run
+# with FEED_JOB_SA_EMAIL / FEED_JOB_AUDIENCE (deploy.env.yaml) = FEED_SA / FEED_URL.
+setup-feed-job: check-gcp
+	gcloud services enable cloudscheduler.googleapis.com
+	gcloud iam service-accounts create feed-job --display-name="ReadLayer outlet collection (Scheduler)"
+	gcloud scheduler jobs create http $(FEED_JOB) --location=$(REGION) \
+		--schedule="0 6,18 * * *" --time-zone="Asia/Kolkata" --uri=$(FEED_URL) --http-method=POST \
+		--oidc-service-account-email=$(FEED_SA) --oidc-token-audience=$(FEED_URL) \
+		--attempt-deadline=300s --max-retry-attempts=1
+
+# A manual run of the same job (same token, same endpoint).
+run-feed-job: check-gcp
+	gcloud scheduler jobs run $(FEED_JOB) --location=$(REGION)
 
 # Firebase web config (public by design, kept out of git) for local dev and the Hosting build,
 # and the API origin for the Hosting build. Writes apps/web/.env.local and .env.production.local.

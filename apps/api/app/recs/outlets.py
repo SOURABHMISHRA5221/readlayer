@@ -5,6 +5,11 @@ reader. A reader's country decides which outlets count as "local" (their country
 which as "global"; the feed mixes 60% local / 40% global. Every feed here was checked through
 our own `safe_fetch` (2026-10-11) and every outlet measured readable (`scripts/check_outlets.py`,
 `docs/evidence/d50/outlets.txt`). Topics an outlet has no section for map to its closest one.
+
+Dropped by that check (2026-10-11, rule fixed beforehand: ≥ 2 of the 3 newest articles reach
+400 words): The Indian Express (554 / 394 / 274 words) and The Economic Times (401 / 360 / 170).
+Their feeds answered (indianexpress.com/section/<s>/feed/, economictimes.indiatimes.com
+rssfeeds); re-adding one needs a passing check.
 """
 
 from collections.abc import Mapping, Sequence
@@ -46,16 +51,8 @@ def _hindu(*paths: str) -> tuple[str, ...]:
     return tuple(f"https://www.thehindu.com/{p}/feeder/default.rss" for p in paths)
 
 
-def _express(*paths: str) -> tuple[str, ...]:
-    return tuple(f"https://indianexpress.com/section/{p}/feed/" for p in paths)
-
-
 def _mint(*paths: str) -> tuple[str, ...]:
     return tuple(f"https://www.livemint.com/rss/{p}" for p in paths)
-
-
-def _et(*paths: str) -> tuple[str, ...]:
-    return tuple(f"https://economictimes.indiatimes.com/{p}" for p in paths)
 
 
 REGISTRY: tuple[Outlet, ...] = (
@@ -119,31 +116,12 @@ REGISTRY: tuple[Outlet, ...] = (
         "education": _hindu("education"),
         "society": _hindu("society"),
     }),
-    Outlet("express", "The Indian Express", "IN", "IN", ("indianexpress.com",),
-           ("indianexpress.com",), {
-        "economics": _express("business/economy"),
-        "business": _express("business"),
-        "politics": _express("india"),
-        "technology": _express("technology"),
-        "health": _express("lifestyle/health"),
-        "sports": _express("sports"),
-        "culture": _express("entertainment"),
-        "education": _express("education"),
-    }),
     Outlet("mint", "Mint", "IN", "IN", ("livemint.com",), ("livemint.com",), {
         "economics": _mint("economy"),
         "finance": _mint("markets", "money"),
         "business": _mint("companies"),
         "politics": _mint("politics"),
         "technology": _mint("technology"),
-    }),
-    Outlet("et", "The Economic Times", "IN", "IN", ("economictimes.indiatimes.com",),
-           ("economictimes.indiatimes.com",), {
-        "economics": _et("news/economy/rssfeeds/1373380680.cms"),
-        "finance": _et("markets/rssfeeds/1977021501.cms"),
-        "policy": _et("news/economy/policy/rssfeeds/1106944246.cms"),
-        "politics": _et("news/politics-and-nation/rssfeeds/1052732854.cms"),
-        "technology": _et("tech/rssfeeds/13357270.cms"),
     }),
 )  # fmt: skip
 BY_OUTLET: dict[str, Outlet] = {o.id: o for o in REGISTRY}

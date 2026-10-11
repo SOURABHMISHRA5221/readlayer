@@ -1,18 +1,18 @@
-"""Seed the demo personas' For you snapshots (M7.5 §A.8, decision 38).
+"""Seed the demo personas' For you snapshots (M7.5 §A.8, decisions 38, 50, 51).
 
     cd apps/api && uv run python -m scripts.seed_demo_feed --dry-run   # print, write no snapshot
     cd apps/api && uv run python -m scripts.seed_demo_feed            # write persona_feeds/*
     (--persona newcomer limits it to one persona, e.g. on the emulator harness)
 
-For each persona's two topics, the same searches as the live feed (taxonomy label + fixed
-phrase, day-keyed shared cache, the feed cap and the global caps): ≤ 6 topics × 3 formats =
-≤ 18 searches (≤ 24 calls), counted in `ops/search`. The dry run performs those searches too
-(they're cached, so the real run the same day pays nothing more) and writes no snapshot.
-Articles are then checked locally, in order, until 6 per topic pass (safe_fetch + extraction,
-≥ 400 words; no LLM, no Firestore write); a failing one is dropped, so a judge never hits a
-dead link. The 14-day date
-filter applies here, never when a snapshot is served. Production write: 3 `persona_feeds/{p}`
-docs (public search results only, no user data). No LLM.
+Articles come from the collected outlet entries (`rec_cache/outlets:<topic>`, written by the
+collection job; run it first), offered as PERSONA_COUNTRY ("IN", decision 51) sees them: per
+topic, local and global lists newest first, taken in a local, global, local pattern (60/40).
+A topic short of outlet articles uses the same restricted fallback search as the live feed.
+Videos and podcasts: the live feed's searches (taxonomy label + fixed phrase, day-keyed shared
+cache, the feed cap and the global caps), ≤ 6 topics × 2 formats. Every article is checked
+locally until 6 per topic pass (safe_fetch + extraction, ≥ 400 words; no LLM, no Firestore
+write); a failing one is dropped, so a judge never hits a dead link. Production write: 3
+`persona_feeds/{p}` docs (public outlet items and search results only, no user data). No LLM.
 """
 
 import argparse
@@ -26,21 +26,29 @@ from app.graph.loader import load_graph, set_graph
 from app.ingest.extract import extract
 from app.ingest.safe_fetch import FetchError, SafeFetcher
 from app.log import configure_logging
+from app.recs import feed_rank as fr
 from app.recs.feed import (
+    PERSONA_COUNTRY,
     PERSONA_TOPICS,
     FeedSearch,
     Snapshot,
     SnapshotRepo,
     feed_key,
     feed_query,
+    offered,
+    outlet_candidates,
+    side_for,
+    thin_topics,
 )
-from app.recs.models import WebResult
+from app.recs.models import Format, WebResult
 from app.recs.web_search import get_web_search
 from app.store.docstore import get_doc_store
+from app.store.outlet_repo import OutletStore
 from app.store.spend_repo import today_utc
 
 MIN_WORDS = 400
 ARTICLES_PER_TOPIC = 6  # checked articles kept per topic (ranking shows 3)
+PATTERN = ("local", "global", "local")  # repeated: 60/40 over the kept articles
 
 
 async def article_ok(fetcher: SafeFetcher, url: str) -> bool:
@@ -53,28 +61,49 @@ async def article_ok(fetcher: SafeFetcher, url: str) -> bool:
     return sum(len(p.split()) for p in extracted.paragraphs) >= MIN_WORDS
 
 
+def mixed(candidates: list[fr.FeedCandidate]) -> list[WebResult]:
+    """Newest first per side, taken in PATTERN order; a side that runs out yields to the other."""
+    side = side_for(PERSONA_COUNTRY)
+    newest = sorted(candidates, key=lambda c: c.result.published_at or "", reverse=True)
+    queues = {s: [c.result for c in newest if side(c) == s] for s in ("local", "global")}
+    out: list[WebResult] = []
+    i = 0
+    while queues["local"] or queues["global"]:
+        want = PATTERN[i % len(PATTERN)]
+        take = want if queues[want] else ("global" if want == "local" else "local")
+        out.append(queues[take].pop(0))
+        i += 1
+    return list({r.url: r for r in out}.values())
+
+
 async def build(persona: str, graph: ConceptGraph, search: FeedSearch, fetcher: SafeFetcher):
     topics = PERSONA_TOPICS[persona]
     now = datetime.now(UTC)
-    await search.gather(list(topics), graph, now, wait_s=60.0)
+    lists = await OutletStore(get_doc_store()).read(list(topics))
+    by_topic = outlet_candidates(lists, PERSONA_COUNTRY, graph, now)
+    thin = thin_topics(by_topic, list(topics))
+    gathered = await search.gather(list(topics), graph, now, wait_s=60.0, article_topics=thin)
     web = get_web_search()
     items: list[tuple[str, WebResult]] = []
     dropped = 0
     for topic in topics:
-        for fmt in ("article", "video", "podcast"):
+        fallback = [c for c in offered(gathered.by_stem.get(f"feedx:{topic}", []),
+                                       PERSONA_COUNTRY)]  # fmt: skip
+        kept = 0
+        for r in mixed([*by_topic.get(topic, []), *fallback]):
+            if kept >= ARTICLES_PER_TOPIC:
+                break
+            if not await article_ok(fetcher, r.url):
+                dropped += 1
+                continue
+            kept += 1
+            items.append((topic, r))
+        fmts: tuple[Format, ...] = ("video", "podcast")
+        for fmt in fmts:
             entry = await web.cached_entry(
                 feed_key(topic, today_utc()), fmt, feed_query(topic, fmt)
             )
-            kept = 0
-            for r in entry.results if entry else []:
-                if fmt == "article":
-                    if kept >= ARTICLES_PER_TOPIC:
-                        break
-                    if not await article_ok(fetcher, r.url):
-                        dropped += 1
-                        continue
-                    kept += 1
-                items.append((topic, r))
+            items += [(topic, r) for r in (entry.results if entry else [])]
     return Snapshot(persona, now.isoformat(timespec="seconds"), topics, tuple(items)), dropped
 
 
