@@ -908,3 +908,46 @@ first (step 1 needs live "Not really" behaviour), then this, then the freeze and
    be in view, so there the check is only that no media is eager (all `loading="lazy"` / no video
    `src` before near). If checkpoint 1 (end of Oct 12 IST) is at risk, ask Sourabh first about
    dropping the zoom and spotlight (plain framed loops stay), then the monitor (the laptop alone).
+
+## Amendment: decision 47, self-hosted trimmed fonts (Sourabh, 2026-10-11)
+
+Sourabh: "Self-host trimmed fonts: Fontsource variable packages for Schibsted Grotesk and Source
+Serif 4, Latin subset only, only the weights/axes we use, preload the hero headline and body files,
+keep font-display: swap and the metric-matched fallbacks, drop the Google Fonts links. Re-run
+mobile Lighthouse. If LCP is still over 2.5 s after that, use 'optional' only for the non-hero
+faces, never for the hero headline. Then freeze the landing page and continue to the 2-screen
+onboarding." (Mobile Lighthouse before: perf 81, LCP 4.9 s simulated, 212 ms observed.)
+
+### F1. Files
+- Source: `@fontsource-variable/schibsted-grotesk@5.3.0` and `@fontsource-variable/source-serif-4@5.3.1`
+  (SIL OFL 1.1), Latin subset files only: Schibsted `latin-wght-normal` (46.8 KB) and Source Serif 4
+  `latin-wght-normal` / `latin-wght-italic` (50.9 / 51.6 KB; the `wght` build, without the opsz axis
+  that made Google's files 122–130 KB).
+- Trimmed to the weights the app uses with fontTools' instancer (`tools/fonts/trim_fonts.py`, run
+  with `uv run --with fonttools --with brotli`, pinned versions): Schibsted wght 400–800; Source Serif
+  roman wght 400–600, italic 400–500 (the ranges the Google URL asked for). Output WOFF2 in
+  `apps/web/public/fonts/` (stable URLs for preloading) with the OFL text; the script records input
+  package versions and output sizes. The packages are dev dependencies (the source of the files),
+  not imported at runtime.
+- Optical sizing: the `wght` build has no opsz axis, so serif text renders at the font's default
+  optical size instead of auto-matching the size. A small visual change at large serif sizes
+  (30px pull quote); body sizes are effectively unchanged. Screenshots before/after in the log.
+
+### F2. CSS and HTML
+- `fonts.css` declares `@font-face` for "Schibsted Grotesk" and "Source Serif 4" (same family names,
+  so no other CSS changes), `font-display: swap`, `font-weight` ranges as trimmed, Latin
+  `unicode-range` from Fontsource. Metric-matched fallbacks stay; `tools/shots/font_metrics.py` is
+  re-run against the self-hosted files and the overrides updated if they moved.
+- `index.html`: the Google Fonts preconnects, preload and stylesheet links are removed; two
+  preloads (`as=font type=font/woff2 crossorigin`): the Schibsted file (hero headline) and the
+  Source Serif roman file (hero body, the LCP paragraph). The italic is not preloaded.
+- CSP/privacy: no third-party font requests remain (README/DESIGN note: Google Fonts no longer
+  contacted).
+
+### F3. Then
+- Lighthouse mobile and desktop (12.8.2, local preview). If mobile LCP is still > 2.5 s:
+  `font-display: optional` for the non-hero faces only (the italic serif), never for the Schibsted
+  headline face; re-run. Numbers in `docs/evidence/landing/d46-after/lighthouse.txt`.
+- Full landing checks (all decision 46 checks, axe, first view), app smoke (reader, feed, profile
+  screenshots: fonts load, no fallback stuck), web tests. After screenshots at 1440×900, 1280×800,
+  390×844 light/dark. Commit = landing freeze; then §C and §B.
