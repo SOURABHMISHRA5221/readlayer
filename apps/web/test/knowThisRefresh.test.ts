@@ -2,7 +2,10 @@
 import { createAnnotator, type CardAnnotation, type PromptAnnotation } from "@readlayer/annotator";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("../src/lib/auth", () => ({ idToken: async () => "token" }));
+
 import { answerAndRefresh, REFRESH_AFTER_ANSWER_MS, withoutPrompts } from "../src/lib/answers";
+import { api } from "../src/lib/api";
 
 // Decision 46d: a saved "Know this?" answer refetches the notes, so marks change in place.
 
@@ -47,6 +50,24 @@ describe("Know this? answers", () => {
     await expect(answerAndRefresh({ save: async () => Promise.reject(new Error("503")), refresh })).rejects.toThrow("503");
     await vi.advanceTimersByTimeAsync(REFRESH_AFTER_ANSWER_MS * 2);
     expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("skips the refresh once the reader has moved to another article or persona", async () => {
+    vi.useFakeTimers();
+    const refresh = vi.fn(async () => undefined);
+    let current = true;
+    await answerAndRefresh({ save: async () => undefined, refresh, isCurrent: () => current });
+    current = false; // e.g. switched persona within the wait
+    await vi.advanceTimersByTimeAsync(REFRESH_AFTER_ANSWER_MS);
+    expect(refresh).not.toHaveBeenCalled();
+  });
+
+  it("asks the API for a refresh, not a new page view", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ content_id: "a", persona: null, density: "balanced", count: 0, annotations: [] }), { status: 200 })));
+    await api.annotations("a", null, "balanced", false, undefined, true);
+    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0] as [string];
+    expect(url).toContain("refresh=1");
+    vi.unstubAllGlobals();
   });
 
   it("a failed refresh keeps the current marks and doesn't throw", async () => {

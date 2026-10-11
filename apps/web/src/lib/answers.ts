@@ -11,12 +11,20 @@ interface AnswerSteps {
   save: () => Promise<void>;
   /** Refetch the article's annotations and hand them to the annotator. */
   refresh: () => Promise<void>;
+  /** Checked when the wait ends: false once the reader has left this article or persona. */
+  isCurrent?: () => boolean;
   waitMs?: number;
 }
 
-export async function answerAndRefresh({ save, refresh, waitMs = REFRESH_AFTER_ANSWER_MS }: AnswerSteps): Promise<void> {
+export async function answerAndRefresh({
+  save,
+  refresh,
+  isCurrent = () => true,
+  waitMs = REFRESH_AFTER_ANSWER_MS,
+}: AnswerSteps): Promise<void> {
   await save();
   setTimeout(() => {
+    if (!isCurrent()) return; // another view now; its own load is already right
     // The answer is already saved; a failed refresh keeps the current marks until the next load.
     refresh().catch((e: unknown) => console.warn("[readlayer] notes refresh after an answer failed", e));
   }, waitMs);
