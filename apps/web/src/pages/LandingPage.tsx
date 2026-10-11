@@ -8,7 +8,7 @@ import { paragraph } from "../landing/demoParagraph.json";
 import evals from "../landing/evals.json";
 import { Hero, HeroCtas } from "../landing/Hero";
 import { Clip } from "../landing/Clip";
-import { JargonArt, LookupArt, SummaryArt } from "../landing/Illustrations";
+import { ProblemArt } from "../landing/ProblemArt";
 import { ProductShot } from "../landing/ProductShot";
 import { MargoHero } from "../landing/MargoHero";
 import { MiniDemo } from "../landing/MiniDemo";
@@ -110,7 +110,10 @@ function Problem() {
       </h2>
       <ol className="lp-problem__list">
         <li className="lp-problem__item">
-          <JargonArt />
+          <ProblemArt
+            name="jargon"
+            alt="Margo, a page with a worried face, holds an article with three words highlighted in teal and a question mark above."
+          />
           <h3>Jargon and references</h3>
           <p>
             Articles assume you know terms like <i>repo rate</i>, <i>PFAS</i> or <i>Powerplay</i>. Most readers skip them
@@ -118,12 +121,18 @@ function Problem() {
           </p>
         </li>
         <li className="lp-problem__item">
-          <LookupArt />
+          <ProblemArt
+            name="tabs"
+            alt="A dozen browser tabs burst out of a laptop screen while Margo looks on, alarmed."
+          />
           <h3>Looking things up breaks the flow</h3>
           <p>A new tab, a generic definition written for nobody, and your place in the article is gone.</p>
         </li>
         <li className="lp-problem__item">
-          <SummaryArt />
+          <ProblemArt
+            name="shredder"
+            alt="A full article page goes into a shredder and only a three-line strip comes out; Margo watches, worried."
+          />
           <h3>Summaries replace the author</h3>
           <p>
             AI summaries rewrite the article. You lose the author's words, hedges and numbers, and can't tell what was
@@ -339,6 +348,7 @@ function Footer() {
     <footer className="lp-footer">
       <Wordmark />
       <p className="lp-footer__built">Built on Gemini and Google Cloud</p>
+      <p className="lp-footer__built">Illustrations made with Google's image model.</p>
       <nav className="lp-footer__links" aria-label="About Gloss">
         <a href={REPO_URL} target="_blank" rel="noreferrer">
           GitHub

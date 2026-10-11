@@ -524,16 +524,24 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   `scripts/landing_art.py` with its own cap; 11 offline tests. Dry run: MODEL_IMAGE
   `vertex_ai/gemini-3.1-flash-image`, 6 calls, ≈ $0.40, hard stop 8 images / $0.60; production
   spend today $0.11 of $8.
-- **Waiting on Sourabh:** yes or no on the illustration spend (≈ $0.40, cap $0.60), which is more
-  than his "a few cents".
+- Sourabh (2026-10-11, after the /clear): **yes** to the illustrations: Gemini 3.1 Flash Image,
+  six images, hard stop at $0.60; pick the best three; log model, prompts and cost.
+
+- V3 done: `landing_art --confirmed` made 4 images, then Vertex 429 crashed the script (the
+  uncaught `LLMUnavailable`); fixed: a quota/outage error now stops the run cleanly, and
+  `--scene <name>` finishes one scene (test added). `--scene shredder` made 1 more, then 429 again
+  (clean stop). Total **5 images, $0.339**, ledger $0.1113 → $0.4506 (429s unbilled). Sixth not
+  retried: each scene had a usable pick. Picks: jargon v1, tabs v2, shredder v1 (jargon v2 drew
+  Margo as a human, off-model). White → transparent, 5:4, WebP 460/920 px
+  (`apps/web/public/landing/problem-*.webp`), `ProblemArt` `<img>` with alt text replaces the SVG
+  line glyphs (`Illustrations.tsx` deleted), dark = invert + hue-rotate, footer credit. Checks on
+  the local preview: axe 0 and no horizontal scroll at 1920/1440/1280/390, light and dark; teal
+  6.3:1 (light) and 8.0:1 (dark) on the wash; first view at 390 = 211 KB. Model, prompt, cost in
+  DESIGN §20.1 and STATUS §7; crops and candidates in `docs/evidence/landing/illustrations/`.
 
 ### Next steps (resume here, in order)
-1. If Sourabh says yes: record it here, run `landing_art --confirmed` (MODEL_IMAGE set, output in
-   the scratchpad), pick one per scene, white → transparent, cwebp at 460/920 px into
-   `apps/web/public/landing/`, `<img>` with alt text in the Problem section, dark treatment
-   contrast-checked, footer credit, DESIGN §20 and STATUS §7 (model, prompt version, cost). If no:
-   keep the line glyphs and record it.
-2. Then: Lighthouse on the local preview, persona chip labels ("Newcomer (software engineer)" …),
-   before/after screenshots into `docs/evidence/landing/`.
-3. Checkpoint 1 (end of Oct 12 IST), then the onboarding API (§C incl. decision 42) and the
+1. Lighthouse on the local preview (`pnpm --filter web build && pnpm --filter web preview`),
+   persona chip labels ("Newcomer (software engineer)" …), before/after screenshots into
+   `docs/evidence/landing/`.
+2. Checkpoint 1 (end of Oct 12 IST), then the onboarding API (§C incl. decision 42) and the
    2-screen WelcomePage (§B).

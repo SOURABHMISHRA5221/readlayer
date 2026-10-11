@@ -353,6 +353,10 @@ local explanations while testing ≈ $0.03, one "Open here" ingest $0.0024. Unde
 on timeouts). M5 safety evals ≈ $2.53 (five full runs incl. the Pro judge at $1.12); local dev,
 screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all day.
 
+**Landing illustrations (2026-10-11, decision 44 V3):** `gemini-3.1-flash-image`, prompt
+`landing-art-v1`, 5 images, **$0.34** (Sourabh approved up to 6 images / $0.60); two 429s,
+unbilled. Details in DESIGN §20.1.
+
 ## 8. Guardrails in force
 
 - **LLM budget:** `llm.py` refuses non-cached calls past `LLM_DAILY_BUDGET_USD` = 8. It is raised

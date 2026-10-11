@@ -981,3 +981,26 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   and up to two Up next items that teach them, else Up next's top two under a neutral "Read
   next"; then Up next.
 - **Profile**: the Gloss title, the summary as a serif lede, domain cards, the map (§15.1).
+
+## 20. Landing (Landing and onboarding, decisions 41, 44, 45)
+
+### 20.1 Problem illustrations (decision 44 V3)
+- **Model:** `gemini-3.1-flash-image` on Vertex (`MODEL_IMAGE=vertex_ai/gemini-3.1-flash-image`,
+  location global), through `llm.generate_image`, task `landing_art`, one attempt per call.
+- **Prompt:** `app/prompts/landing_art.md`, version `landing-art-v1`, with the Margo favicon
+  rasterised to 512px as the character reference. Scenes (in `scripts/landing_art.py`): *jargon*
+  (Margo frowning at dense text, three words underlined in teal, a question mark), *tabs* (a
+  dozen tabs bursting out of a laptop, Margo overwhelmed), *shredder* (a full page in, a
+  three-line strip out, Margo worried). No article text and no reader data in any prompt.
+- **Run (2026-10-11):** 5 images generated, $0.339 (5 × $0.0679), within Sourabh's six-image,
+  $0.60 approval. Vertex returned 429 on two calls (not billed: the ledger rose by exactly the
+  images made); the sixth was not retried because every scene already had a usable pick.
+- **Picks:** jargon v1 (v2 drew Margo as a human girl, off-model), tabs v2 (Margo present, clearer
+  tabs, more teal), shredder v1. Candidates: `docs/evidence/landing/illustrations/`.
+- **Processing:** white un-premultiplied to transparency (anti-aliasing kept), trimmed and padded
+  to 5:4, WebP (cwebp q82) at 460 × 368 and 920 × 736 in `apps/web/public/landing/problem-*.webp`
+  (21–45 KB at 1x). `<img>` with alt text, lazy, explicit size (`landing/ProblemArt.tsx`).
+- **Dark theme:** `filter: invert(1) hue-rotate(180deg)`. Teal strokes measured on the band:
+  6.3:1 on the light wash, 8.0:1 on the dark wash (≥ 3:1 for graphics).
+- Footer credit: "Illustrations made with Google's image model."
+

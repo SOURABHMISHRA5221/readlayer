@@ -39,33 +39,6 @@
   text-wrap: pretty;
 }
 
-/* Shared line-art colours (Illustrations.tsx). */
-.lp-art {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.lp-art__line {
-  stroke: color-mix(in srgb, var(--muted) 45%, transparent);
-  stroke-width: 3;
-}
-.lp-art__ink {
-  stroke: var(--ink);
-  stroke-width: 2.5;
-}
-.lp-art__hl {
-  fill: var(--accent-wash);
-  stroke: none;
-}
-.lp-art__hl-stroke {
-  fill: var(--accent-wash);
-  stroke: var(--accent-line);
-  stroke-width: 1.5;
-}
-.lp-art__dot {
-  fill: var(--ink);
-}
-
 /* 1. The problem */
 .lp-problem__list {
   display: grid;
@@ -77,6 +50,16 @@
 .lp-problem__item {
   padding-top: var(--s5);
   border-top: 2px solid var(--ink);
+}
+.lp-problem__art {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin-bottom: var(--s2);
+}
+:root[data-theme="dark"] .lp-problem__art {
+  filter: invert(1) hue-rotate(180deg);
 }
 .lp-problem__item h3 {
   margin-top: var(--s4);

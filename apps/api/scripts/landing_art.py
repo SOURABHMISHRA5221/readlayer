@@ -3,6 +3,7 @@
     cd apps/api && uv run python -m scripts.landing_art --dry-run --out <dir>
     cd apps/api && uv run python -m scripts.landing_art --confirmed --out <dir>  # after his yes
     cd apps/api && uv run python -m scripts.landing_art --confirmed --out <dir> --reroll tabs
+    cd apps/api && uv run python -m scripts.landing_art --confirmed --out <dir> --scene shredder
 
 Every call goes through app.llm.generate_image (task `landing_art`, MODEL_IMAGE), so it is
 budget-guarded and counted in production's ledger (ops/spend/days/{date}). The script counts
@@ -62,10 +63,12 @@ class Budget:
         self.spent += max(cost, self.price)  # never trust a lower reported price
 
 
-def plan(reroll: str | None) -> list[tuple[str, int]]:
+def plan(reroll: str | None, scene: str | None = None) -> list[tuple[str, int]]:
+    """Both variants of every scene; or of one scene (finishing a stopped run); or one re-roll."""
     if reroll:
         return [(reroll, VARIANTS + 1)]
-    return [(scene, v) for scene in SCENES for v in range(1, VARIANTS + 1)]
+    scenes = [scene] if scene else list(SCENES)
+    return [(s, v) for s in scenes for v in range(1, VARIANTS + 1)]
 
 
 def rasterise_margo(out: Path) -> bytes:
@@ -91,13 +94,15 @@ async def main() -> int:
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--confirmed", action="store_true", help="Sourabh said yes (AUTOPILOT_LOG)")
-    ap.add_argument("--reroll", choices=sorted(SCENES))
+    group = ap.add_mutually_exclusive_group()
+    group.add_argument("--reroll", choices=sorted(SCENES))
+    group.add_argument("--scene", choices=sorted(SCENES), help="only this scene's variants")
     args = ap.parse_args()
     settings = get_settings()
     if not settings.model_image:
         print("MODEL_IMAGE is not set")
         return 1
-    calls = plan(args.reroll)
+    calls = plan(args.reroll, args.scene)
     spent_today = await llm.get_spend_store().get_today()
     estimate = len(calls) * settings.model_image_price_usd
     print(
@@ -132,6 +137,9 @@ async def main() -> int:
             budget.charge(budget.price)
             print(f"  {scene} v{variant}: no usable image ({exc})")
             continue
+        except llm.LLMUnavailable as exc:  # quota or outage: unbilled; the next call fails too
+            print(f"  {scene} v{variant}: stopped, model unavailable ({exc})")
+            break
         budget.charge(result.cost_usd)
         ext = "png" if result.mime == "image/png" else "jpg"
         path = args.out / f"{scene}-v{variant}.{ext}"
