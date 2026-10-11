@@ -36,7 +36,7 @@ export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
-export const ANNOTATOR_VERSION = "0.5.0";
+export const ANNOTATOR_VERSION = "0.7.2";
 
 export interface AnnotatorOptions {
   /** Interaction and reading events (DESIGN §9); the host batches them to /v1/events. */
@@ -63,10 +63,25 @@ export interface AnnotatorOptions {
    */
   loadShifted?: (annotation: CardAnnotation, shift: -1 | 1) => Promise<Explanation>;
   /**
+   * Card actions. "full" (the default: reader and extension) shows Knew this / Helpful / This is
+   * wrong; "demo" shows one call to action instead and records nothing (the landing page).
+   */
+  actions?: "full" | "demo";
+  /** The demo card's call to action (with `actions: "demo"`). */
+  demoAction?: { label: string; onClick: () => void };
+  /**
    * The page's margin column, when there is one (e.g. ≥1200px): the card is then set there as
    * a sidenote, level with its line, instead of floating over the text. Null = popover.
    */
   sidenote?: () => SidenoteBox | null;
+  /**
+   * An inline host (a landing demo): the card lives in this element, in flow, at every width.
+   * One note stays open: no hover peeks, no closing on outside click, scroll or Escape, no focus
+   * trap, and open() doesn't scroll. The card appears once its explanation has settled.
+   */
+  inline?: HTMLElement;
+  /** The open card's explanation settled (shown, verified or not). */
+  onCardReady?: (id: string) => void;
   /** Attribute naming a paragraph element, used to scope anchor search. */
   paragraphAttribute?: string;
   hoverDelayMs?: number;
@@ -155,6 +170,8 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   const prompts = new Map<string, Prompt>();
   // Prompts answered by this reader (a re-render after an update keeps them answered).
   const answered = new Set<string>();
+  // Their chips, kept in their "Noted" state after the prompt left the list (cleared for a new reader).
+  const released: HTMLElement[] = [];
   const pressed = new Map<string, Set<AnnotatorEventType>>();
   let active: Active | null = null;
   let linked: string | null = null;
@@ -170,6 +187,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   // Sidenotes sit away from their mark, so a hover-opened one waits longer before closing.
   const SIDENOTE_CLOSE_MS = 700;
 
+  const inline = options.inline ?? null;
   const card = new Card(doc, {
     onAction: (type) => {
       const target = active && lookup(active.id);
@@ -194,7 +212,8 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       if (!target) return;
       loadInto(target.annotation, shift);
     },
-  });
+    demo: options.actions === "demo" ? options.demoAction ?? { label: "Try it on any article", onClick: () => undefined } : undefined,
+  }, inline);
   card.enableShift(Boolean(options.loadShifted));
 
   /** What a card shows and what it hangs from: a span's first segment or a paragraph marker. */
@@ -232,13 +251,15 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   }
 
   function placement(): { mode: CardMode; box: SidenoteBox | null } {
+    if (inline) return { mode: "inline", box: null };
     const narrow = view?.matchMedia?.(SHEET_QUERY).matches ?? false;
     if (narrow || lastPointer === "touch") return { mode: "sheet", box: null };
     const box = options.sidenote?.() ?? null;
     return box ? { mode: "sidenote", box } : { mode: "float", box: null };
   }
 
-  function openCard(id: string, pinned: boolean, focus = false): void {
+  /** `quiet`: the host opened it (inline), so its status line doesn't announce. */
+  function openCard(id: string, pinned: boolean, focus = false, quiet = false): void {
     clearTimeout(openTimer);
     clearTimeout(closeTimer);
     const target = lookup(id);
@@ -254,6 +275,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       ? { id, pinned, acted: false }
       : { ...active, pinned: pinned || active.pinned };
     if (changed || !card.isOpen) {
+      card.setQuiet(quiet);
       card.fill(annotation, pressed.get(id) ?? new Set());
       if (!pressed.get(id)?.has("report_wrong")) loadInto(annotation);
       const { mode, box } = placement();
@@ -283,6 +305,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       if (token !== loadToken || active?.id !== annotation.id) return;
       if (result?.kind === "verified") shown.set(annotation.id, result);
       card.setExplanation(result ?? { id: "", kind: "definition", background: null, author_says: null });
+      options.onCardReady?.(annotation.id);
     };
     card.setShift(shift);
     card.setExplanation("loading");
@@ -316,7 +339,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     const id = markId(e.target as Element);
     if (!id || !entries.has(id)) return;
     setHovered(id);
-    if (pointerType(e) === "touch") return;
+    if (inline || pointerType(e) === "touch") return;
     clearTimeout(closeTimer);
     if (active?.id === id) return;
     clearTimeout(openTimer);
@@ -328,7 +351,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     const to = (e as PointerEvent).relatedTarget as Node | null;
     if (!from || (to instanceof Element && markId(to) === from)) return;
     setHovered(null);
-    if (pointerType(e) === "touch" || card.contains(to)) return;
+    if (inline || pointerType(e) === "touch" || card.contains(to)) return;
     clearTimeout(openTimer);
     if (active && !active.pinned) scheduleClose();
   };
@@ -354,8 +377,9 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     const id = markId(target);
     if (!id || !entries.has(id)) return;
     e.preventDefault();
-    if (active?.id === id && active.pinned) close(false, true);
-    else openCard(id, true);
+    if (active?.id === id && active.pinned) {
+      if (!inline) close(false, true);
+    } else openCard(id, true);
   };
 
   const onKeyDown = (e: KeyboardEvent) => {
@@ -377,10 +401,11 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     if (!active) return;
     if (e.key === "Escape") {
       e.preventDefault();
-      close(true, true);
+      if (inline) primary(active.id)?.focus({ preventScroll: true });
+      else close(true, true);
       return;
     }
-    if (e.key !== "Tab") return;
+    if (e.key !== "Tab" || inline) return;
     const items = card.focusables();
     const first = items[0];
     const last = items[items.length - 1];
@@ -397,19 +422,19 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
 
   const onCardPointerEnter = () => clearTimeout(closeTimer);
   const onCardPointerLeave = (e: Event) => {
-    if (pointerType(e) !== "touch" && active && !active.pinned) scheduleClose();
+    if (!inline && pointerType(e) !== "touch" && active && !active.pinned) scheduleClose();
   };
 
   const onDocPointerDown = (e: Event) => {
     const t = e.target as Node;
-    if (!active || card.contains(t)) return;
+    if (inline || !active || card.contains(t)) return;
     // Marks and markers toggle their own card on click.
     if (t instanceof Element && (markId(t) || t.closest(`.${PMARK_CLASS}`))) return;
     close(false, true);
   };
 
   const onDocKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Escape" && active && !card.contains(e.target as Node)) close(false, true);
+    if (!inline && e.key === "Escape" && active && !card.contains(e.target as Node)) close(false, true);
   };
 
   root.addEventListener("pointerover", onPointerOver);
@@ -433,6 +458,15 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     });
     return map;
   };
+
+  /** The highlight style for the reader's level; a missing level (older APIs) means new. */
+  function setLevel(segments: HTMLElement[], a: CardAnnotation): void {
+    const level = a.level === "refresher" ? "refresher" : "new";
+    for (const m of segments) {
+      m.classList.toggle(`${MARK_CLASS}--new`, level === "new");
+      m.classList.toggle(`${MARK_CLASS}--refresher`, level === "refresher");
+    }
+  }
 
   function removeEntries(ids: string[]): void {
     for (const id of ids) {
@@ -468,6 +502,11 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     if (linked && leaving.includes(linked)) highlight(null);
     // Prompts step aside while spans move (a prompt's term is never a span's), then return.
     removePrompts(readerChanged ? [...prompts.keys()] : []);
+    if (readerChanged) released.splice(0).forEach((el) => el.remove());
+    // An answered prompt that's no longer listed frees its term (the refetched notes may make it
+    // a span, decision 46d) but keeps its "Noted, thanks." chip until the page goes.
+    const listed = new Set(annotations.filter((a) => a.kind === "prompt").map((a) => a.id));
+    releaseAnswered([...prompts.keys()].filter((id) => answered.has(id) && !listed.has(id)));
 
     if (leaving.length) {
       for (const id of leaving) {
@@ -488,7 +527,10 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     // persona); only the notes that differ animate.
     for (const [id, entry] of entries) {
       const a = next.get(id);
-      if (a) entry.annotation = a;
+      if (a) {
+        entry.annotation = a;
+        setLevel(entry.segments, a); // the same term can be new to one reader, a refresher to another
+      }
       entry.segments.forEach((m) => m.classList.remove(ENTER_CLASS));
     }
     // An open card shows the new data, and its explanation for the new reader (hosts cache,
@@ -507,10 +549,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       const segments = range ? wrapRange(root, range, a.id) : [];
       const first = segments[0];
       if (!range || !first) continue;
-      if (a.kind === "span") {
-        const level = a.level === "refresher" ? "refresher" : "new"; // older APIs: new
-        segments.forEach((m) => m.classList.add(`${MARK_CLASS}--${level}`));
-      }
+      setLevel(segments, a);
       first.tabIndex = 0;
       first.setAttribute("role", "button");
       first.setAttribute("aria-haspopup", "dialog");
@@ -579,6 +618,16 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     }
   }
 
+  function releaseAnswered(ids: string[]): void {
+    for (const id of ids) {
+      const p = prompts.get(id);
+      if (!p) continue;
+      unwrap(root, p.segments);
+      prompts.delete(id);
+      released.push(p.ask.el);
+    }
+  }
+
   /** "Know this?" chips after their terms. Answered ones stay answered for this reader. */
   function syncPrompts(items: PromptAnnotation[]): void {
     const wanted = new Set(items.map((p) => p.id));
@@ -614,9 +663,9 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   function open(id: string, { focus = false } = {}): void {
     const mark = primary(id);
     if (!mark) return;
-    mark.scrollIntoView?.({ block: "center", behavior: reducedMotion ? "auto" : "smooth" });
+    if (!inline) mark.scrollIntoView?.({ block: "center", behavior: reducedMotion ? "auto" : "smooth" });
     if (focus) lastPointer = "keyboard";
-    openCard(id, true, focus);
+    openCard(id, true, focus, Boolean(inline) && !focus);
   }
 
   return {

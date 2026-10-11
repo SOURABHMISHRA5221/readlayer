@@ -250,9 +250,12 @@ export const api = {
       `/v1/me/graph/${encodeURIComponent(conceptId)}${personaQuery(persona)}`,
       { state: known ? "known" : "unknown" },
     ),
-  annotations: (id: string, persona: PersonaKey | null, density: Density, debug: boolean, signal?: AbortSignal) =>
+  /** `refresh`: refetched after a "Know this?" answer (46d): no new prompt, not a new page view. */
+  annotations: (
+    id: string, persona: PersonaKey | null, density: Density, debug: boolean, signal?: AbortSignal, refresh = false,
+  ) =>
     get<RawAnnotations>(
-      `/v1/content/${encodeURIComponent(id)}/annotations?density=${density}${personaParam(persona)}${debug ? "&debug=1" : ""}`,
+      `/v1/content/${encodeURIComponent(id)}/annotations?density=${density}${personaParam(persona)}${debug ? "&debug=1" : ""}${refresh ? "&refresh=1" : ""}`,
       signal,
     ).then(splitAnnotations),
   explain: (contentId: string, target: ExplainTarget, persona: PersonaKey | null) =>

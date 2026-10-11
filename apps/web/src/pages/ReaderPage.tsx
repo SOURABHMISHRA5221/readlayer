@@ -1,5 +1,5 @@
 import type { CardAnnotation } from "@readlayer/annotator";
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArticleImage } from "../components/ArticleImage";
 import { ConceptDrawer, ConceptRail } from "../components/ConceptRail";
@@ -13,6 +13,7 @@ import { TopBar } from "../components/TopBar";
 import { sendRecEvent, UpNext } from "../components/UpNext";
 import { useAnnotator } from "../hooks/useAnnotator";
 import { useMediaQuery } from "../hooks/useMediaQuery";
+import { withoutPrompts } from "../lib/answers";
 import {
   api,
   ApiError,
@@ -145,7 +146,16 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   const article = content.status === "ready" ? content.data : null;
   const notesData = article && notes.status === "ready" && notes.data.content_id === id ? notes.data : null;
   const annotations = notesData?.annotations ?? null;
-  const handle = useAnnotator(articleRef, article?.id ?? null, annotations, notesData?.extras ?? null, persona);
+  // After a saved "Know this?" answer: the same request, quietly, so marks change in place (46d).
+  // An open card stays open when its note is still in the new list (the annotator keeps it).
+  const refreshNotes = useCallback(
+    () =>
+      api
+        .annotations(id, persona, density, debug, undefined, true)
+        .then((data) => setNotes({ status: "ready", data: { ...data, extras: withoutPrompts(data.extras) } })),
+    [id, persona, density, debug],
+  );
+  const handle = useAnnotator(articleRef, article?.id ?? null, annotations, notesData?.extras ?? null, persona, refreshNotes);
 
   // Recap snapshot (Design pass A4): the bands of this page's noted concepts when the notes load.
   const [snapshot, setSnapshot] = useState<Record<string, string> | null>(null);

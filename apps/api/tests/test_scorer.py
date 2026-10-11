@@ -8,6 +8,7 @@ import pytest
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept, ConceptGraphFile
 from app.ingest.models import Anchor, ContentDoc, Demand, StoredParagraph
+from app.reader import events as reader_events
 from app.reader import model
 from app.reader.model import Edge, Evidence
 from app.reader.personas import PERSONAS, build_template
@@ -371,6 +372,27 @@ def test_prompt_picks_an_unannotated_uncertain_salient_concept():
     got = annotate(doc(demands, paras(2, 200)))
     assert span_ids(got) == ["a"]
     assert got.prompt is not None and got.prompt.concept_id == "c_bond"
+
+
+@pytest.mark.parametrize("known", [False, True])
+def test_a_know_this_answer_turns_the_prompt_into_a_span_or_nothing(known):
+    """Decision 46d: after "Not really" the refetched notes carry the term as a span; after "Yes"
+    it is neither a span nor the prompt (the same correction PATCH /v1/me/graph applies)."""
+    demands = [
+        demand("a", "c_ebitda", pid="p0", salience=1.0),
+        demand("b", "c_bond", pid="p1", start=100, salience=0.8),
+        demand("c", "c_inflation", pid="p1", start=120, salience=0.9),
+    ]
+    article = doc(demands, paras(2, 200))
+    before = annotate(article)
+    assert before.prompt is not None and before.prompt.concept_id == "c_bond"
+    assert "b" not in span_ids(before)
+    bond = GRAPH.get("c_bond")
+    ref = reader_events.ConceptRef(domain=bond.domain, difficulty=bond.base_difficulty)
+    answered = state(edges={"c_bond": reader_events.correction(None, ref, {}, known, NOW)})
+    after = annotate(article, answered)
+    assert ("b" in span_ids(after)) is (not known)
+    assert after.prompt is None or after.prompt.concept_id != "c_bond"
 
 
 @pytest.mark.parametrize(
