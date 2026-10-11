@@ -13,7 +13,9 @@ CROPS = json.loads((Path(__file__).resolve().parent / "clip_crops.json").read_te
 CARD_TEXT_PX = 14  # the smallest card body size in the clips
 # Measured shortfalls reported to Sourabh rather than forced (decision 46b round 1 items 2 and 3):
 # printed with their numbers, not counted as failures.
-KNOWN = {"390 clip-map", "1280x800 copy vs card (default)"}
+# 390 clip text: ≈ 11px on phones from one natural-zoom recording; asked of Sourabh (46c/46d round 1
+# item 1), listed here until he answers.
+KNOWN = {"390 clip text"}
 
 RECT = """(s => { const e = typeof s === 'string' ? document.querySelector(s) : s; if (!e) return null;
   const r = e.getBoundingClientRect(); return {t: r.top, b: r.bottom, l: r.left, r: r.right}; })"""
@@ -49,7 +51,7 @@ NOTE = """(() => { const R = s => { const e = document.querySelector(s); if (!e)
   const says = document.querySelector('.lp-demo__note-live .rl-card__says .rl-card__text');
   const g = document.createRange(); g.selectNodeContents(says); const lines = g.getClientRects();
   return {title: R('.lp-hero__title'), sub: R('.lp-hero__sub'), ctas: R('.lp-hero__copy .lp-ctas') || R('.lp-ctas__row'),
-    demo: R('.lp-demo'), sheet: R('.lp-demo__sheet'), copy_end: R('.lp-hero__copy .lp-ctas'),
+    demo: R('.lp-demo'), sheet: R('.lp-demo__sheet'), copy_end: R('.lp-hero__copy .lp-readwith') || R('.lp-hero__copy .lp-ctas'),
     note_title: R('.lp-demo__note-live .rl-card__title'), says_label: R('.lp-demo__note-live .rl-card__says .rl-card__section-label'),
     card: R('.lp-demo__note-live .rl-card'), says_last: lines[lines.length - 1].bottom,
     scrolls: body.scrollHeight - body.clientHeight, values: R('.lp-values'),
@@ -64,16 +66,18 @@ async def first_views(p, base):
         for label, title in PERSONAS:
             await p.click_text(".segmented__option", label, wait=0.8)
             r = await p.eval(NOTE)
-            if w == 1440:
-                bottom = max(r[k]["b"] for k in ("title", "sub", "ctas", "demo"))
+            # 46c: the whole hero in view for the first view's persona; after a switch, the note's
+            # title and the author label (a taller note may run past the fold: user action).
+            if label == "Software engineer":
+                bottom = max(r[k]["b"] for k in ("title", "sub", "ctas", "demo", "copy_end"))
             else:
-                bottom = max(r["title"]["b"], r["sub"]["b"], r["ctas"]["b"], r["note_title"]["b"], r["says_label"]["b"])
+                bottom = max(r["note_title"]["b"], r["says_label"]["b"])
             out[f"{w}x{h} {label}"] = check(bottom <= h and r["card_title"] == title, bottom=round(bottom), note=r["card_title"])
             out[f"{w}x{h} {label} note in full"] = check(r["scrolls"] <= 1 and r["says_last"] <= r["card"]["b"],
                                                           inner_scroll=r["scrolls"])
             gap = round(r["sheet"]["b"] - r["copy_end"]["b"])
             if label == "Software engineer":
-                out[f"{w}x{h} copy vs card (default)"] = check(abs(gap) <= 80, gap=gap)
+                out[f"{w}x{h} copy vs card (default)"] = check(abs(gap) <= 40, gap=gap)
             else:
                 out[f"{w}x{h} copy vs card ({label}, info)"] = check(True, gap=gap)
     await p.viewport(390, 844)
@@ -122,6 +126,7 @@ async def overlaps(p, base, width):
     text = await p.eval(f"({TEXT_RECTS})('.lp-demo__para, .lp-demo__note-live .rl-card')")
     out = {f"{width} margo": check(not any(hit(margo, t) for t in text), margo=margo)}
     phone = await p.eval(f"({RECT})('.lp-phone')")
+    out[f"{width} no phone"] = check(phone is None)
     if phone:
         await p.eval("(() => { const b = document.querySelector('.lp-demo__note-live .rl-card__body'); b.scrollTop = b.scrollHeight; return true; })()")
         await asyncio.sleep(0.3)
@@ -144,23 +149,40 @@ async def swap(p, base, width):
     finally:
         await p.send("Page.removeScriptToEvaluateOnNewDocument", identifier=ident)
         await p.send("Network.setCacheDisabled", cacheDisabled=False)
+    # 46c: the swap itself must not move anything (last static frame vs first live frame);
+    # reflow from the font swap before it is reported here and gated by Lighthouse CLS.
+    idx = next((i for i, (_, st) in enumerate(samples) if not st and i > 0 and samples[i - 1][1]), None)
+    static_frames = sum(1 for _, st in samples if st)
     heights = [h for h, _ in samples]
-    static_frames = sum(1 for _, s in samples if s)
-    spread = (max(heights) - min(heights)) if heights else None
-    return {f"{width} swap": check(heights and spread <= 4 and samples[-1][1] is False, frames=len(samples),
-                                    static_frames=static_frames, spread_px=spread)}
+    jump = abs(samples[idx][0] - samples[idx - 1][0]) if idx else None
+    return {f"{width} swap": check(idx is not None and jump <= 4 and samples[-1][1] is False, frames=len(samples),
+                                    static_frames=static_frames, swap_jump_px=jump,
+                                    reflow_before_px=(max(heights[:idx]) - min(heights[:idx])) if idx else None)}
 
 
 async def clip_text(p, base, width):
+    """46d: 16:10 tiles, equal heights across a row, text at natural zoom (≈ 18–20px at 1440)."""
     await p.viewport(width, 900)
     await p.goto(base + "/", wait=2.5)
-    shown = await p.eval("[...document.querySelectorAll('.lp-how .lp-clip')].map(c => c.getBoundingClientRect().width)")
-    names = ("clip-know", "clip-note", "clip-simpler", "clip-map")
-    need = 14 if width >= 1024 else 12
+    tiles = await p.eval("""[...document.querySelectorAll('.lp-how .lp-clip')].map(c => { const r = c.getBoundingClientRect();
+      return {w: r.width, h: r.height, t: r.top}; })""")
+    texts = await p.eval("[...document.querySelectorAll('.lp-how__text')].map(t => Math.round(t.getBoundingClientRect().top))")
     out = {}
-    for name, w in zip(names, shown, strict=False):
-        px = w / CROPS["crop_css_w"][name] * CARD_TEXT_PX
-        out[f"{width} {name}"] = check(px >= need, displayed_w=round(w), text_px=round(px, 1), need=need)
+    ratios = [round(t["w"] / t["h"], 2) for t in tiles]
+    out[f"{width} clip tiles 16:10"] = check(all(abs(r - 1.6) <= 0.02 for r in ratios), ratios=ratios)
+    if width >= 768:
+        rows_ok = abs(tiles[0]["h"] - tiles[1]["h"]) < 1 and abs(tiles[2]["h"] - tiles[3]["h"]) < 1
+        text_ok = texts[0] == texts[1] and texts[2] == texts[3]
+        out[f"{width} clip rows aligned"] = check(rows_ok and text_ok, text_tops=texts)
+    crop_w = CROPS["crop_css_w"]
+    body_px = CROPS.get("body_px", 21)
+    px = [round(t["w"] / crop_w[n] * body_px, 1) for t, n in zip(tiles, ("clip-know", "clip-note", "clip-simpler", "clip-map"), strict=False)]
+    if width >= 1024:
+        out[f"{width} clip text"] = check(all(17.5 <= v <= 20.5 for v in px[:3]), body_text_px=px)
+    else:
+        out[f"{width} clip text"] = check(all(v >= 16 for v in px[:3]), body_text_px=px)
+    step1 = await p.eval("document.querySelector('.lp-how__step .lp-how__text p').textContent")
+    out[f"{width} step 1 says right away"] = check("right away" in step1 and "skip" not in step1)
     return out
 
 
@@ -176,4 +198,5 @@ async def run_all(p, base):
     for w in (1440, 390):
         report.update(await swap(p, base, w))
         report.update(await clip_text(p, base, w))
+    report.update(await clip_text(p, base, 1280))
     return report
