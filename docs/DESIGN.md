@@ -256,6 +256,47 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   and an Elo step with K = 0.3 and outcome explain 1, **heard 0.5**, none 0. Only the current item
   can be answered; "Skip" ends calibration with what was answered.
 
+### Onboarding in 2 screens (decision 41; replaces the M7 web steps, the M7 API stays)
+- **Screen 1 "Tell Margo about you":** field chips (suggests one analogy frame), topic chips,
+  optional free text "Anything else you follow?" (≤ 120 chars, React state only) and an inline
+  consent checkbox (`consent-v2`; v1 stays valid). Order on Continue: consent → (text) `POST
+  /v1/onboarding/resolve`, the screen stays to show matches ("F1 → Sports" with a select to change
+  or drop it, removable concept chips, "Didn't recognise: …") → `POST /v1/onboarding` with
+  interests = chosen topics ∪ mapped topics ∪ resolved concepts' domains. θ stays neutral (no
+  comfort step); interest 1.0 chosen, 0.3 otherwise, plus screen-2 picks (below).
+- **Free text** (decision 42, §11.3): redacted, split on commas into ≤ 5 pieces of ≤ 40 chars;
+  per piece: exact concept label/alias whole, then its " and "/"&" parts; then the topic alias
+  list `ONBOARDING_TOPIC_ALIASES` (109 casefolded phrases covering all 14 topics: F1, IPL,
+  Champions League, LLMs, EVs, crypto, mutual funds, UPSC, ISRO, …; no model call); then
+  **word-level matching** (no model call): lowercased words and 2-word chunks of adjacent words,
+  without stop-words, generic words ("news", "latest", "update", …) and bare country names,
+  looked up in the alias list and concept labels/aliases (a one-word chunk counts as a concept
+  only if the concept was met in the corpus, doc_freq > 0); the strongest match's topic wins
+  (2-word chunks, then alias over concept, then doc_freq, then the earlier chunk). Only phrases
+  with no word match go on to `resolve_names`
+  (embedding candidates + `link_confirm`, individual pieces only); then the nearest topic scope
+  line by embedding at cosine ≥ `ONBOARDING_TOPIC_THRESHOLD` = 0.86 (set on
+  `evals/cases/onboarding_topics.yaml`, 27 phrases committed first: precision 9/9, recall 9/22,
+  0/5 "none" phrases mapped; the whole topic order, aliases → words → embedding: **18/22, 0
+  wrong, 0/5 "none" mapped**; 10 of the 14 phrases whose match doesn't depend on the alias list). Each phrase is embedded once per request. Nothing of the text is
+  stored, logged or sent to search; 5 resolves per reader per day.
+- **Screen 2 "Here's what's out there for you":** `POST /v1/onboarding/discover` with the
+  chosen topics (≤ 6) and resolved concepts (≤ 2): shared day-keyed searches (§17.1; concept
+  keys `feed:c:<id>:<day>`, articles only, "<concept label> news this week", results must name
+  the label or an alias). Up to 9 cards, every topic/concept with results gets one before any
+  gets a second, articles first, then fresher. Fewer than 6 and nothing pending → newest corpus
+  articles in those domains. Each card: "I'd read this" / "Not for me" (`pick`: a rec signal
+  `rec_clicked`/`rec_dismissed` and ±0.15 interest in the served item's domain, clamped, stored
+  as a delta so Edit → Continue re-applies it) and at most one "Know this?" term (`know`: the
+  calibration evidence, Yes = explain +3.0, Not really = none −3.0, and the onboarding Elo
+  step). The term is fixed the first time the item is served: among the graph concepts its title
+  and snippet name, **only of the item's own topic**, corpus concepts (doc_freq > 0) first, then
+  b closest to θ; never a resolved concept or one already offered; ≤ 12 terms, ≤ 27 items, ≤ 9
+  picks, ≤ 9 answers, each once. After 5 answers Margo reads back one deterministic sentence
+  (likes minus skips per topic, known and new terms, the frame). "Start reading" →
+  `POST /v1/onboarding/finish` (done; offered, answered and picks cleared) → For you. A reload
+  resumes on screen 2 (step `discover`).
+
 ### Domain ability (Elo-style)
 On every graded outcome (calibration, knew_this, explain_opened):
 ```
@@ -461,6 +502,11 @@ subject to pause). The next open regenerates.
 | GET | /v1/calibration/next | next item: concept with b closest to current θ, not yet asked; `{done}` after 8 |
 | POST | /v1/calibration/answer | `{concept_id, answer: explain|heard|none}`: only the current item (409 otherwise) |
 | POST | /v1/calibration/skip | ends calibration (onboarding done) |
+| POST | /v1/onboarding/resolve | `{text ≤ 120}` → `{concepts, topics: [{phrase_index, phrase, topic, via}], unrecognised}` (§4); 429 past 5/day |
+| POST | /v1/onboarding/discover | `{topics ≤ 6, concepts ≤ 2}` → `{items, pending}`; unknown concept 422; 409 after finish |
+| POST | /v1/onboarding/pick | `{item_id, liked}`: a served item only (404), once (409), ≤ 9 |
+| POST | /v1/onboarding/know | `{concept_id, known}`: an offered term only (404), once (409), ≤ 9, 409 after finish |
+| POST | /v1/onboarding/finish | onboarding done; the offered/answered/pick lists are cleared |
 | GET | /v1/me/profile/edits | the last 10 applied/undone edits (expired pending ones are deleted) |
 | GET | /v1/feed?persona= | For you (§17): `{topics, items[{id, topic, topic_label, format, title, url, source, snippet, thumbnail, duration_or_read_time, published_at, new_concepts, goal, why, score}], pending, snapshot, prepared_at}`; demo readers get their persona's pre-seeded snapshot (`snapshot: true`) and trigger no search |
 | GET | /v1/me/goals | the caller's reading goals with progress (§18); signed-in readers only (403 for demo readers) |
@@ -606,7 +652,16 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   and the Auth user.
 - Firestore security rules: clients never read/write Firestore directly; only the API service
   account does. Rules deny all client access.
-- Consent screen at onboarding states what is collected and why, in plain language. The API
+- Onboarding (decision 41) keeps, until finish, the served items with their terms
+  (`onboarding_offered`), Know this? answers and picks on `users/{uid}`, and daily counters
+  `onboarding_resolve_counts`, `onboarding_discover_counts`; all covered by export and delete.
+- **Free-text exception (decision 42), in the tests' words:** the onboarding free text never
+  reaches search, any log record or any stored document; a model sees only individual redacted
+  pieces with no exact or word match (embedding, `link_confirm`), never the full text: **each
+  piece goes in its own embedding request and its own `link_confirm` call** (≤ 5 per resolve).
+- Consent (`consent-v2` inline on onboarding screen 1; `consent-v1` stays valid) states what is
+  collected and why, in plain language, and that typed text is matched to topics by our model
+  and isn't stored. The API
   enforces it (M7): for a signed-in reader without consent, POST /v1/events applies nothing,
   page views and rec signals write nothing, corrections, settings and profile edits are 403;
   export and delete are always open. Design with
@@ -893,7 +948,11 @@ is ready to learn. No LLM anywhere on this path.
   and joins the same in-flight task, so a re-ask never searches twice. Provider results vary
   from run to run, so a day entry that came back empty may be searched again after an hour.
   Bound: each API instance makes at most 2 searches per (topic, format, day), so at most 6 with
-  ≤ 3 instances, all inside `FEED_SEARCH_DAILY_CAP`.
+  ≤ 3 instances, all inside `FEED_SEARCH_DAILY_CAP`. Onboarding (§4) uses the same searches:
+  ≤ 18 topic searches and ≤ 2 concept searches per onboarding; concept searches also count
+  against a shared `ONBOARDING_CONCEPT_SEARCH_DAILY_CAP` of 20 (ops/search `onboarding_concept`),
+  and a reader's discover calls that start new searches against 3 a day (re-asks that join
+  in-flight or cached searches are free).
 - **When a search can't run** (a cap, a provider failure, or that bound) and today has no
   entry, yesterday's entry for the same topic and format is served if there is one; after a
   cap hit or failure that instance waits 10 minutes before trying again.
@@ -981,3 +1040,26 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   and up to two Up next items that teach them, else Up next's top two under a neutral "Read
   next"; then Up next.
 - **Profile**: the Gloss title, the summary as a serif lede, domain cards, the map (§15.1).
+
+## 20. Landing (Landing and onboarding, decisions 41, 44, 45)
+
+### 20.1 Problem illustrations (decision 44 V3)
+- **Model:** `gemini-3.1-flash-image` on Vertex (`MODEL_IMAGE=vertex_ai/gemini-3.1-flash-image`,
+  location global), through `llm.generate_image`, task `landing_art`, one attempt per call.
+- **Prompt:** `app/prompts/landing_art.md`, version `landing-art-v1`, with the Margo favicon
+  rasterised to 512px as the character reference. Scenes (in `scripts/landing_art.py`): *jargon*
+  (Margo frowning at dense text, three words underlined in teal, a question mark), *tabs* (a
+  dozen tabs bursting out of a laptop, Margo overwhelmed), *shredder* (a full page in, a
+  three-line strip out, Margo worried). No article text and no reader data in any prompt.
+- **Run (2026-10-11):** 5 images generated, $0.339 (5 × $0.0679), within Sourabh's six-image,
+  $0.60 approval. Vertex returned 429 on two calls (not billed: the ledger rose by exactly the
+  images made); the sixth was not retried because every scene already had a usable pick.
+- **Picks:** jargon v1 (v2 drew Margo as a human girl, off-model), tabs v2 (Margo present, clearer
+  tabs, more teal), shredder v1. Candidates: `docs/evidence/landing/illustrations/`.
+- **Processing:** white un-premultiplied to transparency (anti-aliasing kept), trimmed and padded
+  to 5:4, WebP (cwebp q82) at 460 × 368 and 920 × 736 in `apps/web/public/landing/problem-*.webp`
+  (21–45 KB at 1x). `<img>` with alt text, lazy, explicit size (`landing/ProblemArt.tsx`).
+- **Dark theme:** `filter: invert(1) hue-rotate(180deg)`. Teal strokes measured on the band:
+  6.3:1 on the light wash, 8.0:1 on the dark wash (≥ 3:1 for graphics).
+- Footer credit: "Illustrations made with Google's image model."
+

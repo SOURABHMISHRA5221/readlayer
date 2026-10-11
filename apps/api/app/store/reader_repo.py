@@ -15,6 +15,8 @@ users/{uid}/growth_counts/{d}  concept-growth slots reserved that UTC day (M2.2)
 users/{uid}/ingested/{cid}     pages this reader brought in (M7.5): their library shows them
 users/{uid}/goals/{id}         reading goals (M7.5): habit targets, or learning target concepts
 users/{uid}/goal_resolve_counts/{d}  learning goals resolved that UTC day (M7.5 cap)
+users/{uid}/onboarding_resolve_counts/{d}   onboarding free-text resolves that UTC day
+users/{uid}/onboarding_discover_counts/{d}  onboarding discover calls that started searches
 users/{uid}/demo_graphs/{p}    a demo reader's graph for persona p: θ, threshold_offset, knows
                                map, engaged contents. Copied from persona_templates/{p} on the
                                first event or correction; until then the template is read as-is.
@@ -24,7 +26,7 @@ Export and delete both walk USER_SUBCOLLECTIONS; a test fails if anything is wri
 """
 
 import asyncio
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Literal
@@ -55,6 +57,8 @@ USER_SUBCOLLECTIONS = (
     "saved",
     "goals",
     "goal_resolve_counts",
+    "onboarding_resolve_counts",
+    "onboarding_discover_counts",
 )
 EVENT_TTL = timedelta(days=90)
 MAX_WEEKLY_CONTENT_IDS = 500
@@ -65,6 +69,7 @@ MAX_DEMO_DOC_BYTES = 800_000
 FIRESTORE_DOC_LIMIT = 1_048_576
 
 Density = Literal["minimal", "balanced", "guided"]
+OnboardingOutcome = Literal["ok", "done", "unknown", "repeat", "limit"]
 
 
 class UserProfile(BaseModel):
@@ -85,6 +90,12 @@ class UserProfile(BaseModel):
     field: str | None = None
     onboarding: dict[str, Any] = Field(default_factory=dict)  # interests, comfort, liked ids
     calibration: dict[str, Any] = Field(default_factory=lambda: {"asked": [], "answers": 0})
+    # 2-screen onboarding (decision 41), cleared when it finishes: served item id → {topic,
+    # concept (its "Know this?" term or None)}, Know this? answers (concept id → known) and
+    # picks (item id → {topic, liked}), kept across Edit so Continue re-applies the picks.
+    onboarding_offered: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    onboarding_answered: dict[str, bool] = Field(default_factory=dict)
+    onboarding_picks: dict[str, dict[str, Any]] = Field(default_factory=dict)
     # Scoring state (DESIGN §5–6). Demo readers keep offset and engaged per persona instead.
     engaged: dict[str, datetime] = Field(default_factory=dict)  # content_id → last engaged
     prompts: dict[str, list[str]] = Field(default_factory=dict)  # UTC day → prompted contents
@@ -621,7 +632,88 @@ class ReaderRepo:
         return await self._store.run(body)
 
     async def finish_onboarding(self, uid: str) -> UserProfile:
-        return await self.update_settings(uid, {"onboarding_done": True})
+        return await self.update_settings(
+            uid,
+            {"onboarding_done": True, "onboarding_offered": {}, "onboarding_answered": {},
+             "onboarding_picks": {}},
+        )  # fmt: skip
+
+    async def offer_onboarding(
+        self, uid: str, assign: Callable[[dict[str, dict[str, Any]]], dict[str, dict[str, Any]]]
+    ) -> UserProfile:
+        """Remember served onboarding items (`assign(offered) -> offered`) in one transaction,
+        so two concurrent discover calls can't give one item two terms."""
+
+        async def body(t: Txn) -> UserProfile:
+            user = UserProfile.model_validate(await t.get(user_path(uid)) or {})
+            offered = assign(dict(user.onboarding_offered))
+            if offered == user.onboarding_offered:
+                return user
+            updated = user.model_copy(update={"onboarding_offered": offered})
+            t.set(user_path(uid), updated.model_dump())
+            return updated
+
+        return await self._store.run(body)
+
+    async def onboarding_pick(
+        self, uid: str, item_id: str, liked: bool, max_picks: int, apply: Callable[[float], float]
+    ) -> OnboardingOutcome:
+        """One pick per served item: the pick and the domain's new interest (`apply(current)`)
+        in one transaction."""
+
+        async def body(t: Txn) -> OnboardingOutcome:
+            user = UserProfile.model_validate(await t.get(user_path(uid)) or {})
+            served = user.onboarding_offered.get(item_id)
+            if user.onboarding_done:
+                return "done"
+            if served is None:
+                return "unknown"
+            if item_id in user.onboarding_picks:
+                return "repeat"
+            if len(user.onboarding_picks) >= max_picks:
+                return "limit"
+            topic = served["topic"]
+            dom = await t.get(sub_path(uid, "domains", topic)) or {}
+            t.set(sub_path(uid, "domains", topic),
+                  dom | {"interest": apply(float(dom.get("interest", 0.0)))})  # fmt: skip
+            picks = user.onboarding_picks | {item_id: {"topic": topic, "liked": liked}}
+            t.set(user_path(uid), user.model_copy(update={"onboarding_picks": picks}).model_dump())
+            return "ok"
+
+        return await self._store.run(body)
+
+    async def onboarding_know(
+        self, uid: str, concept_id: str, known: bool, ref: ConceptRef, apply: Any, max_answers: int
+    ) -> OnboardingOutcome:
+        """A "Know this?" answer on an offered term, once each: the edge, θ and the answer in
+        one transaction (`apply(edge | None, θ) -> (Edge, θ)`)."""
+
+        async def body(t: Txn) -> OnboardingOutcome:
+            reads = await t.get_all([user_path(uid), sub_path(uid, "knows", concept_id),
+                                     sub_path(uid, "domains", ref.domain)])  # fmt: skip
+            user = UserProfile.model_validate(reads[user_path(uid)] or {})
+            offered = {v.get("concept") for v in user.onboarding_offered.values()}
+            if user.onboarding_done:
+                return "done"
+            if concept_id not in offered:
+                return "unknown"
+            if concept_id in user.onboarding_answered:
+                return "repeat"
+            if len(user.onboarding_answered) >= max_answers:
+                return "limit"
+            current = reads[sub_path(uid, "knows", concept_id)]
+            dom = reads[sub_path(uid, "domains", ref.domain)] or {}
+            edge, theta = apply(
+                edge_from_doc(current) if current else None, float(dom.get("theta", 0.0))
+            )
+            t.set(sub_path(uid, "knows", concept_id), edge_to_doc(edge, ref.domain))
+            t.set(sub_path(uid, "domains", ref.domain), dom | {"theta": theta})
+            answered = user.onboarding_answered | {concept_id: known}
+            updated = user.model_copy(update={"onboarding_answered": answered, "rev": user.rev + 1})
+            t.set(user_path(uid), updated.model_dump())
+            return "ok"
+
+        return await self._store.run(body)
 
     # ------------------------------------------------------------ ingest cap
 

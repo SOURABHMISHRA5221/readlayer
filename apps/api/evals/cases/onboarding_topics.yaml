@@ -1,0 +1,35 @@
+# Onboarding topic fallback cases (decision 42). Written and committed before the first model
+# run and before choosing ONBOARDING_TOPIC_THRESHOLD; never edited or dropped to make a number
+# pass (decision 26). Each phrase is something a reader might type under "Anything else you
+# follow?" that matches no concept and no entry of ONBOARDING_TOPIC_ALIASES, so it reaches the
+# embedding path. `expect`: the taxonomy topic it should map to, or none (should stay
+# "didn't recognise"). Precision = correct / (correct + wrong), where a none phrase mapped to any
+# topic counts as wrong.
+
+- {id: T01, phrase: badminton tournaments, expect: sports}
+- {id: T02, phrase: marathon running, expect: sports}
+- {id: T03, phrase: electric cars, expect: technology}
+- {id: T04, phrase: smartphones, expect: technology}
+- {id: T05, phrase: machine learning research, expect: technology}
+- {id: T06, phrase: mutual funds, expect: finance}
+- {id: T07, phrase: home loans, expect: finance}
+- {id: T08, phrase: quarterly earnings of companies, expect: business}
+- {id: T09, phrase: airline mergers, expect: business}
+- {id: T10, phrase: inflation in India, expect: economics}
+- {id: T11, phrase: unemployment, expect: economics}
+- {id: T12, phrase: state elections, expect: politics}
+- {id: T13, phrase: China's foreign relations, expect: politics}
+- {id: T14, phrase: GST rules, expect: policy}
+- {id: T15, phrase: court cases, expect: law}
+- {id: T16, phrase: black holes, expect: science}
+- {id: T17, phrase: vaccines, expect: health}
+- {id: T18, phrase: diabetes, expect: health}
+- {id: T19, phrase: air pollution in Delhi, expect: environment}
+- {id: T20, phrase: Indian classical music, expect: culture}
+- {id: T21, phrase: board exams, expect: education}
+- {id: T22, phrase: caste and religion, expect: society}
+- {id: N01, phrase: my cat, expect: none}
+- {id: N02, phrase: weekend plans, expect: none}
+- {id: N03, phrase: knitting, expect: none}
+- {id: N04, phrase: asdf qwerty, expect: none}
+- {id: N05, phrase: my favourite colour, expect: none}

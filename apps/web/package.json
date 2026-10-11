@@ -5,10 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
+    "build": "node scripts/eval-numbers.mjs && tsc -p tsconfig.json && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval-numbers": "node scripts/eval-numbers.mjs"
   },
   "dependencies": {
     "@readlayer/annotator": "workspace:*",
@@ -20,6 +21,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "jsdom": "30.1.1",
     "typescript": "^5.9.0",
     "vite": "^7.0.0",
     "vitest": "4.1.11"

@@ -1,0 +1,40 @@
+/* /privacy: one reading column in the reading face (plan A1). The bar reuses hero.css. */
+.pv {
+  min-height: 100vh;
+  background: var(--paper);
+}
+.pv__main {
+  max-width: calc(var(--measure) + 2 * var(--gutter));
+  margin: 0 auto;
+  padding: var(--s8) var(--gutter) var(--s20);
+}
+.pv__title {
+  font: 800 var(--text-headline) / 1.06 var(--font-head);
+  letter-spacing: -0.026em;
+  text-wrap: balance;
+}
+.pv__lede {
+  margin-top: var(--s4);
+  font: 400 20px / 1.55 var(--font-read);
+  color: var(--ink-soft);
+}
+.pv__group {
+  margin-top: var(--s12);
+  padding-top: var(--s4);
+  border-top: 2px solid var(--ink);
+}
+.pv__group h2 {
+  font: 700 19px / 1.3 var(--font-head);
+}
+.pv__group ul {
+  margin-top: var(--s3);
+  padding-left: 1.1em;
+}
+.pv__group li {
+  margin-top: var(--s2);
+  font: 400 17px / 1.6 var(--font-read);
+  color: var(--ink-soft);
+}
+.pv__group li::marker {
+  color: var(--muted);
+}

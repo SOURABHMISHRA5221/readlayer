@@ -1,0 +1,9 @@
+{
+  "id": "d6",
+  "domain": "finance",
+  "label": "Basis points",
+  "band": "unaware",
+  "background": "A basis point, shortened to bps, is a financial unit equal to one-hundredth of a percentage point (0.01%). It is used to clearly describe tiny changes in interest rates without confusing percentage math. Much like using precise integer units in software to avoid floating-point rounding errors, basis points provide a clear, unambiguous scale.",
+  "author_says": "According to Bank of America (BofA), a 25 bps hike in October, rather than December as previously forecast, is possible due to higher energy prices, food inflation, and wider price pressures that strengthen the case for tighter policy.",
+  "analogy_domain": "software"
+}

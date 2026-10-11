@@ -109,11 +109,14 @@ class Page:
         await self.eval("localStorage.clear(); sessionStorage.clear(); indexedDB.deleteDatabase('firebaseLocalStorageDb'); 'ok'")
 
 
-def launch():
+def launch(scale: int = 1):
+    """`scale` 2 launches Chrome at device scale 2, so screencast frames (which ignore emulated
+    DPR) come in device pixels: 2880×1800 for a 1440×900 window (decision 46e loops)."""
     OUT.mkdir(parents=True, exist_ok=True)
+    extra = [f"--force-device-scale-factor={scale}"] if scale != 1 else []
     subprocess.Popen([CHROME, "--headless=new", f"--remote-debugging-port={PORT}",
                       f"--user-data-dir={PROFILE}", "--no-first-run",
-                      "--window-size=1440,900", "about:blank"],
+                      "--window-size=1440,900", *extra, "about:blank"],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     for _ in range(50):
         try:
@@ -136,3 +139,50 @@ async def open_page():
     await p.send("Page.enable")
     await p.send("Runtime.enable")
     return p, ws
+
+
+class Recorder:
+    """CDP screencast on a second connection to the same page, so frames keep arriving while the
+    first connection drives the page. Frames are JPEGs with their capture timestamps."""
+
+    def __init__(self):
+        self.frames: list[tuple[float, bytes]] = []
+        self.ws = None
+        self.task = None
+        self.n = 0
+
+    async def start(self, quality=88, metrics=None):
+        """`metrics`: the device metrics to record at (e.g. {width, height, deviceScaleFactor,
+        mobile}); emulation is per connection, so the screencast session needs its own copy to
+        get device-pixel frames (decision 46e)."""
+        targets = json.loads(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json").read())
+        page = next(t for t in targets if t["type"] == "page")
+        self.ws = await websockets.connect(page["webSocketDebuggerUrl"], max_size=50_000_000)
+        self.frames = []
+        if metrics:
+            await self._send("Emulation.setDeviceMetricsOverride", **metrics)
+        # maxWidth/maxHeight: frames at device pixels (DPR 2 → 2880×1800), not CSS size (decision 46e).
+        await self._send("Page.startScreencast", format="jpeg", quality=quality, everyNthFrame=1, maxWidth=3840, maxHeight=2400)
+        self.task = asyncio.create_task(self._loop())
+
+    async def _send(self, method, **params):
+        self.n += 1
+        await self.ws.send(json.dumps({"id": self.n, "method": method, "params": params}))
+
+    async def _loop(self):
+        async for raw in self.ws:
+            msg = json.loads(raw)
+            if msg.get("method") == "Page.screencastFrame":
+                p = msg["params"]
+                # Arrival time, on the same clock as `ended` (the frame metadata's clock drifts).
+                self.frames.append((time.time(), base64.b64decode(p["data"])))
+                await self._send("Page.screencastFrameAck", sessionId=p["sessionId"])
+
+    async def stop(self):
+        self.ended = time.time()
+        await self._send("Page.stopScreencast")
+        await asyncio.sleep(0.2)
+        self.task.cancel()
+        await self.ws.close()
+        return self.frames
+

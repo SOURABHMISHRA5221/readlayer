@@ -1,0 +1,655 @@
+/*
+ * Landing sections below the hero (plan A3), loaded with the landing chunk. Editorial rhythm:
+ * a wide measure for headlines, the reading face for prose, hairlines instead of boxes, and one
+ * wash band (the side-by-side) for depth. The accent appears only where it means "a note".
+ */
+.lp-notice {
+  display: inline-block;
+  margin-bottom: var(--s5);
+  padding: var(--s2) var(--s3);
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+  font-size: var(--text-ui);
+  color: var(--ink-soft);
+}
+
+/* Full-bleed bands (decision 44: paper / wash alternate, trust is teal); the padding keeps the
+   content in the same 1280px column as the hero (decision 45). */
+.lp-section,
+.lp-final {
+  --lp-inline: max(var(--lp-gutter), calc((100% - var(--lp-max)) / 2));
+  padding: var(--lp-space) var(--lp-inline);
+}
+.lp-problem,
+.lp-how,
+.lp-final {
+  background: var(--wash);
+}
+.lp-section__title {
+  max-width: 18ch;
+  font: 800 clamp(32px, 1.2rem + 2.4vw, 56px) / 1.06 var(--font-head);
+  letter-spacing: -0.026em;
+  text-wrap: balance;
+}
+.lp-section__lede {
+  max-width: 34em;
+  margin-top: var(--s4);
+  font: 400 20px / 1.55 var(--font-read);
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* 1. The problem */
+.lp-problem__list {
+  display: grid;
+  gap: var(--s10);
+  margin-top: var(--s8);
+  padding: 0;
+  list-style: none;
+}
+.lp-problem__item {
+  padding-top: var(--s5);
+  border-top: 2px solid var(--ink);
+}
+.lp-problem__art {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  margin-bottom: var(--s2);
+}
+:root[data-theme="dark"] .lp-problem__art {
+  filter: invert(1) hue-rotate(180deg);
+}
+.lp-problem__item h3 {
+  margin-top: var(--s4);
+  font: 700 19px / 1.25 var(--font-head);
+  letter-spacing: -0.01em;
+}
+.lp-problem__item p {
+  margin-top: var(--s2);
+  font: 400 17px / 1.55 var(--font-read);
+  color: var(--ink-soft);
+}
+.lp-problem__intro {
+  max-width: 24em;
+  margin-top: var(--s3);
+  font: 400 20px / 1.45 var(--font-read);
+  color: var(--ink-soft);
+}
+/* The italic line as a pull quote right under the three cards (decision 46 P4). */
+.lp-problem__close {
+  max-width: 26em;
+  margin-top: var(--s8);
+  padding-left: var(--s5);
+  border-left: 3px solid var(--accent);
+  font: italic 400 clamp(22px, 1rem + 1vw, 30px) / 1.3 var(--font-read);
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+/* 2. The solution: the side-by-side sits on a wash band. */
+.lp-side {
+  position: relative;
+  margin: var(--s10) calc(-1 * var(--lp-gutter)) 0;
+  padding: var(--s8) var(--lp-gutter);
+  background: var(--wash);
+}
+.lp-side__cols {
+  display: grid;
+  gap: var(--s8);
+}
+.lp-side__col {
+  padding: var(--s6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.lp-side__who {
+  font: 700 15px / 1.3 var(--font-ui);
+}
+.lp-side__count {
+  margin-top: var(--s1);
+  font: 600 var(--text-ui-sm) / 1.4 var(--font-ui);
+  color: var(--accent-ink);
+}
+.lp-side__para {
+  margin-top: var(--s4);
+  font: 400 18px / 1.6 var(--font-read);
+}
+/* Static copies of the annotator's highlight levels (packages/annotator styles.ts). */
+.lp-hl--new {
+  background-image: linear-gradient(transparent 62%, var(--accent-wash) 62%);
+  box-shadow: inset 0 -2px 0 var(--accent-line);
+}
+.lp-hl--new::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: super;
+}
+.lp-hl--refresher {
+  box-shadow: inset 0 -1.5px 0 var(--accent-line);
+}
+.lp-side__quote {
+  margin: var(--s5) 0 0;
+  padding-left: var(--s4);
+  border-left: 2px solid var(--accent-line);
+}
+.lp-side__quote p {
+  font: italic 400 16.5px / 1.55 var(--font-read);
+  color: var(--ink-soft);
+}
+.lp-side__quote footer {
+  margin-top: var(--s2);
+  font-size: var(--text-ui-sm);
+  color: var(--muted);
+}
+.lp-side__caption {
+  margin-top: var(--s6);
+  font: 700 19px / 1.3 var(--font-head);
+}
+
+/* 3. How it works: a 2×2 grid of clips from the real app, the text under each. */
+.lp-how__steps {
+  display: grid;
+  gap: clamp(32px, 4vw, 56px);
+  margin-top: var(--s10);
+  padding: 0;
+  list-style: none;
+}
+.lp-how__step {
+  min-width: 0;
+}
+.lp-clip {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--paper);
+  box-shadow: var(--shadow-float);
+}
+/* Decision 46e: every loop is the whole 1440×900 window (16:10) inside a laptop frame. While it
+   plays, the video zooms gently toward the area of action (≤ 1.15×) and a soft spotlight dims the
+   edges; both ease out before the loop restarts and stop when paused (Clip.tsx). */
+.lp-clip {
+  aspect-ratio: 16 / 10;
+}
+.lp-clip__media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: var(--clip-fx, 50%) var(--clip-fy, 50%);
+  transition: transform 900ms var(--ease);
+}
+.lp-clip--zoomed .lp-clip__media {
+  transform: scale(var(--clip-zoom, 1));
+}
+.lp-clip__spot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 60% 55% at var(--clip-fx, 50%) var(--clip-fy, 50%), transparent 55%, rgb(20 20 18 / 0.18));
+  opacity: 0;
+  transition: opacity 900ms var(--ease);
+}
+.lp-clip--zoomed .lp-clip__spot {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-clip__media,
+  .lp-clip__spot {
+    transition: none;
+  }
+}
+.lp-clip__play {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  min-height: 44px;
+  padding: 0 var(--s5);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--paper);
+  font: 600 15px / 1 var(--font-ui);
+  cursor: pointer;
+  box-shadow: var(--shadow-float);
+}
+
+/* Device frames (decision 46e S1): CSS only, one family, one shadow. */
+.lp-device {
+  position: relative;
+}
+.lp-device__screen {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+}
+.lp-device__screen .lp-clip {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.lp-still {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+/* Before it's near, the still is an empty box the frame's screen sizes (16:10 or the phone's). */
+.lp-still--pending {
+  height: 100%;
+  background: var(--wash);
+}
+.lp-device--laptop .lp-device__screen,
+.lp-device--monitor .lp-device__screen {
+  aspect-ratio: 16 / 10;
+  border: clamp(6px, 0.9vw, 12px) solid #1c1c1c;
+  border-radius: 12px 12px 4px 4px;
+  box-shadow: var(--shadow-float);
+}
+.lp-device--laptop .lp-device__screen::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: -7px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: #3a3a3a;
+}
+.lp-device__base {
+  height: clamp(8px, 1vw, 14px);
+  margin: 0 -7%;
+  border-radius: 2px 2px 12px 12px;
+  background: linear-gradient(#d4d4d1, #a8a8a5);
+}
+.lp-device--monitor .lp-device__screen {
+  border-radius: 8px;
+}
+.lp-device__stand {
+  width: 18%;
+  height: clamp(28px, 4vw, 56px);
+  margin: 0 auto;
+  background: linear-gradient(90deg, #bdbdba, #d6d6d3, #bdbdba);
+  clip-path: polygon(30% 0, 70% 0, 82% 88%, 100% 88%, 100% 100%, 0 100%, 0 88%, 18% 88%);
+}
+.lp-device--phone {
+  width: min(300px, 78%);
+  margin: 0 auto;
+}
+.lp-device--phone .lp-device__screen {
+  aspect-ratio: 390 / 844;
+  border: 9px solid #1c1c1c;
+  border-radius: 34px;
+  box-shadow: var(--shadow-float);
+}
+
+/* See it in action: the monitor behind on the right, the laptop in front on the left. */
+.lp-action__figure {
+  margin: var(--s8) 0 0;
+}
+.lp-action__pair {
+  position: relative;
+  padding-bottom: 4%;
+}
+.lp-action__pair .lp-device--monitor {
+  width: 64%;
+  margin-left: auto;
+}
+.lp-action__pair .lp-device--laptop {
+  position: absolute;
+  z-index: 1;
+  left: 2%;
+  bottom: 0;
+  width: 58%;
+}
+.lp-action__caption {
+  margin-top: var(--s6);
+  font-size: var(--text-ui-sm);
+  color: var(--muted);
+  text-align: center;
+}
+.lp-clip__toggle {
+  position: absolute;
+  right: var(--s3);
+  bottom: var(--s3);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+}
+.lp-clip__toggle:hover {
+  background: var(--surface);
+}
+.lp-how__text {
+  position: relative;
+  margin-top: var(--s5);
+  padding-left: var(--s12);
+}
+.lp-how__num {
+  position: absolute;
+  top: -4px;
+  left: 0;
+  font: 800 36px / 1 var(--font-head);
+  letter-spacing: -0.04em;
+  color: color-mix(in srgb, var(--muted) 55%, transparent);
+}
+.lp-how__step h3 {
+  font: 700 21px / 1.25 var(--font-head);
+}
+.lp-how__step p {
+  max-width: 34em;
+  margin-top: var(--s2);
+  font: 400 17px / 1.55 var(--font-read);
+  color: var(--ink-soft);
+}
+
+/* The product shot: the reader on a laptop and a phone, frames drawn in CSS. */
+/* 4. Trust: one teal band, the eval results as large figures. */
+.lp-trust {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.lp-trust__figures {
+  display: grid;
+  gap: var(--s6);
+  margin-top: var(--s10);
+  padding: 0;
+  list-style: none;
+}
+.lp-trust__figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+  padding-top: var(--s4);
+  border-top: 2px solid currentColor;
+}
+.lp-trust__num {
+  font: 800 72px / 0.95 var(--font-head);
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+.lp-trust__of {
+  font-size: 0.5em;
+  letter-spacing: -0.02em;
+}
+.lp-trust__label {
+  max-width: 16em;
+  font: 600 16px / 1.35 var(--font-ui);
+}
+.lp-trust__list {
+  display: grid;
+  gap: var(--s8);
+  margin-top: var(--s12);
+}
+.lp-trust__item dt {
+  font: 700 19px / 1.3 var(--font-head);
+}
+.lp-trust__item dd {
+  max-width: 36em;
+  margin: var(--s2) 0 0;
+  font: 400 17px / 1.6 var(--font-read);
+}
+.lp-trust__item a {
+  font: 600 var(--text-ui) / 1 var(--font-ui);
+  color: inherit;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.lp-trust :focus-visible {
+  outline-color: var(--on-accent);
+}
+
+/* 5. What you can read: centred, one row of four (2×2 on phones). */
+.lp-formats {
+  text-align: center;
+}
+.lp-formats .lp-section__title {
+  margin: 0 auto;
+}
+.lp-formats__list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s4);
+  max-width: 960px;
+  margin: var(--s8) auto 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-formats__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s6) var(--s3);
+  border-top: 2px solid var(--ink);
+}
+.lp-formats__what {
+  font: 400 21px / 1.3 var(--font-read);
+}
+.lp-formats__how {
+  flex: none;
+  padding: var(--s1) var(--s3);
+  border-radius: var(--radius-pill);
+  background: var(--wash);
+  font: 600 var(--text-ui-sm) / 1.4 var(--font-ui);
+  color: var(--muted);
+}
+.lp-formats__how--notes {
+  background: var(--accent-wash);
+  color: var(--accent-ink);
+}
+
+/* Final call to action: Margo large, handing over the next note; the map clip beside it
+   (decision 46 P4), stacked and centred on smaller screens. */
+.lp-final {
+  display: grid;
+  gap: var(--s10);
+  align-items: center;
+  text-align: center;
+}
+.lp-final__copy {
+  display: grid;
+  justify-items: center;
+  gap: var(--s6);
+}
+.lp-final .lp-ctas {
+  margin-top: 0;
+}
+.lp-final .lp-ctas__row {
+  justify-content: center;
+}
+.lp-final__map {
+  margin: 0;
+}
+.lp-final__map figcaption {
+  margin-top: var(--s3);
+  font-size: var(--text-ui-sm);
+  color: var(--muted);
+}
+.lp-final__margo {
+  width: 120px;
+  height: auto;
+}
+.lp-final__title {
+  max-width: 14ch;
+  font: 800 clamp(32px, 1.2rem + 2.4vw, 56px) / 1.06 var(--font-head);
+  letter-spacing: -0.026em;
+}
+
+.lp-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s4) var(--s8);
+  max-width: calc(var(--lp-max) + 2 * var(--lp-gutter));
+  margin: 0 auto;
+  padding: var(--s8) var(--lp-gutter) var(--s12);
+  border-top: 1px solid var(--hairline);
+}
+.lp-footer__built {
+  font-size: var(--text-ui-sm);
+  color: var(--muted);
+}
+.lp-footer__links {
+  display: flex;
+  gap: var(--s2);
+  margin-left: auto;
+}
+.lp-footer__links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--s3);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-ui);
+  text-decoration: none;
+}
+.lp-footer__links a:hover {
+  background: var(--wash);
+}
+
+@media (min-width: 768px) {
+  .lp-problem__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--s8);
+  }
+  .lp-side {
+    margin-left: 0;
+    margin-right: 0;
+    padding: var(--s10);
+    border-radius: calc(var(--radius) * 1.6);
+  }
+  .lp-side__cols {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* The expert's column sits lower: the two readers aren't the same height of help. */
+  .lp-side__col + .lp-side__col {
+    margin-top: var(--s10);
+  }
+  /* A true 2×2 grid (decision 46d): each step spans two rows (tile, text) through a subgrid,
+     so the tiles and the number/title/text blocks line up across a row. */
+  .lp-how__steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: auto auto;
+    row-gap: 0;
+  }
+  .lp-how__step {
+    display: grid;
+    grid-row: span 2;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    padding-bottom: clamp(32px, 4vw, 56px);
+  }
+  .lp-trust__figures,
+  .lp-trust__list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--s8);
+  }
+  .lp-trust__num {
+    font-size: 96px;
+  }
+  .lp-final__margo {
+    width: 160px;
+  }
+  .lp-formats__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--s6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .lp-problem__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s10);
+  }
+  .lp-problem__intro {
+    margin-top: 0;
+    text-align: right;
+  }
+  .lp-final {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(40px, 5vw, 80px);
+    text-align: left;
+  }
+  .lp-final__copy {
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-items: start;
+    column-gap: var(--s8);
+  }
+  .lp-final__margo {
+    grid-row: span 2;
+    width: 160px;
+  }
+  .lp-final__title {
+    max-width: 11em;
+    font-size: clamp(32px, 1rem + 2vw, 48px);
+  }
+  .lp-final .lp-ctas__row {
+    justify-content: flex-start;
+  }
+}
+
+/* Decision 46: the hero's open note, the annotator's inline card at its natural height, with
+   sentence-case labels. Selectors outrank the annotator's runtime style tag (styles.ts). */
+.lp .lp-demo__note-live > .rl-card {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+.lp .lp-demo__note .rl-card .rl-card__domain,
+.lp .lp-demo__note .rl-card .rl-card__title {
+  padding-right: calc(var(--lp-margo-w) - var(--s4));
+}
+.lp .lp-demo__note .rl-card .rl-card__domain {
+  font: 600 13px / 1 var(--font-ui);
+  font-variant: normal;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.lp .lp-demo__note .rl-card .rl-card__domain::first-letter {
+  text-transform: uppercase;
+}
+.lp .lp-demo__note .rl-card .rl-card__section-label {
+  font: 600 12.5px / 1.2 var(--font-ui);
+  font-variant: normal;
+  letter-spacing: normal;
+  text-transform: none;
+}
+@media (max-width: 599px) {
+  .lp .lp-demo__note .rl-card .rl-card__pitch {
+    display: none;
+  }
+}
+@media (min-width: 600px) {
+  .lp .lp-demo__note .rl-card .rl-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s3);
+  }
+  .lp .lp-demo__note .rl-card .rl-card__note {
+    margin-top: 0 !important;
+  }
+}
+@media (min-width: 1024px) and (max-height: 820px) {
+  .lp .lp-demo__note .rl-card .rl-card__pitch {
+    display: none;
+  }
+}

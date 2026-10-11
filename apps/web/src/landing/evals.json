@@ -1,0 +1,15 @@
+{
+  "judge": "vertex_ai/gemini-3.8-flash",
+  "adversarial": {
+    "passed": 15,
+    "total": 15
+  },
+  "good": {
+    "passed": 24,
+    "total": 25
+  },
+  "injection": {
+    "passed": 10,
+    "total": 10
+  }
+}

@@ -10,16 +10,17 @@ finish in time is `pending` and joins the in-flight task on the next ask. No LLM
 
 import asyncio
 import hashlib
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
+from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from app.graph.graph import ConceptGraph
+from app.graph.models import Concept
 from app.graph.taxonomy import BUSINESS_DOMAINS, BY_ID, DOMAIN_IDS
 from app.recs import feed_rank as fr
 from app.recs.models import FORMATS, Format, WebResult
-from app.recs.web_search import WebSearch
+from app.recs.web_search import WebSearch, mentions
 from app.store.docstore import DocStore
 from app.store.spend_repo import today_utc
 
@@ -81,25 +82,93 @@ def keep_for(topic: str, graph: ConceptGraph, now: datetime):
     return keep
 
 
+def concept_key(concept_id: str, day: str) -> str:
+    return f"feed:c:{concept_id}:{day}"
+
+
+def concept_query(concept: Concept) -> str:
+    """Onboarding (decision 41): a resolved concept's graph label and the article phrase."""
+    return f"{concept.label} {FEED_PHRASE['article']}"
+
+
+def keep_for_concept(concept: Concept, now: datetime):
+    """Concept results must name the concept (label or an alias), not just its domain."""
+    names = [concept.label, *concept.aliases]
+
+    def keep(r: WebResult) -> bool:
+        text = f"{r.title} {r.snippet}"
+        return (
+            fr.is_feed_page(r)
+            and fr.recent_enough(r, now)
+            and any(mentions(n, text) for n in names)
+        )
+
+    return keep
+
+
+@dataclass(frozen=True)
+class SearchSpec:
+    """One shared day-keyed search: the cache key's stem (`feed:<topic>` or
+    `feed:c:<concept>`; the UTC day is appended), the domain its results are filed under, the
+    whole outgoing query, the keep filter and an optional shared sub-cap (counter, limit)."""
+
+    stem: str
+    topic: str
+    fmt: Format
+    query: str
+    keep: Callable[[WebResult], bool]
+    sub_cap: tuple[str, int] | None = None
+
+    def key(self, day: str) -> str:
+        return f"{self.stem}:{day}"
+
+
+def topic_specs(
+    topics: Sequence[str], formats: Iterable[Format], graph: ConceptGraph, now: datetime
+) -> list[SearchSpec]:
+    return [
+        SearchSpec(f"feed:{t}", t, fmt, feed_query(t, fmt), keep_for(t, graph, now))
+        for t in topics
+        for fmt in FORMATS
+        if fmt in formats
+    ]
+
+
+def concept_spec(concept: Concept, now: datetime, sub_cap: tuple[str, int]) -> SearchSpec:
+    """Articles only (decision 41): one search per concept per day, shared by everyone."""
+    return SearchSpec(f"feed:c:{concept.id}", concept.domain, "article", concept_query(concept),
+                      keep_for_concept(concept, now), sub_cap)  # fmt: skip
+
+
 @dataclass
 class Gathered:
     candidates: list[fr.FeedCandidate]
     pending: bool
+    by_stem: dict[str, list[fr.FeedCandidate]] = field(default_factory=dict)
+
+
+# Asked once, before the first search a gather would start; False = start none (serve cached
+# entries and yesterday's instead). Onboarding counts a reader's discover calls with it.
+MayStart = Callable[[], Awaitable[bool]]
 
 
 class FeedSearch:
     """Shared, day-keyed searches for the For you feed, with in-flight de-duplication.
 
-    Per (topic, format, UTC day) and instance, at most MAX_SEARCHES searches: the first, and one
+    Per (key, format, UTC day) and instance, at most MAX_SEARCHES searches: the first, and one
     more an hour later if it came back empty (or after a failure, FAILURE_BACKOFF later). When a
     search can't run (a cap, a failure, the limit) and today has no entry, yesterday's entry is
-    served if there is one."""
+    served if there is one. Topic keys and onboarding's concept keys share all of this."""
 
     def __init__(self, web: WebSearch) -> None:
         self._web = web
         self._inflight: dict[tuple[str, Format], asyncio.Task[list[WebResult] | None]] = {}
         self._searches: dict[tuple[str, Format], int] = {}
         self._failed_at: dict[tuple[str, Format], datetime] = {}
+
+    @property
+    def formats(self) -> frozenset[Format]:
+        return self._web.formats
 
     def _prune(self, day: str) -> None:
         for store in (self._inflight, self._searches, self._failed_at):
@@ -116,60 +185,70 @@ class FeedSearch:
         self, topics: Sequence[str], graph: ConceptGraph, now: datetime,
         wait_s: float = FETCH_WAIT_S,
     ) -> Gathered:  # fmt: skip
+        return await self.gather_specs(
+            topic_specs(topics, self._web.formats, graph, now), graph, now, wait_s
+        )
+
+    async def gather_specs(
+        self, specs: Sequence[SearchSpec], graph: ConceptGraph, now: datetime,
+        wait_s: float = FETCH_WAIT_S, may_start: MayStart | None = None,
+    ) -> Gathered:  # fmt: skip
         day = today_utc()
         self._prune(day)
-        found: dict[tuple[str, Format], list[WebResult]] = {}
-        tasks: dict[tuple[str, Format], asyncio.Task[list[WebResult] | None]] = {}
-        for topic in topics:
-            key = feed_key(topic, day)
-            for fmt in FORMATS:
-                if fmt not in self._web.formats:
+        found: dict[SearchSpec, list[WebResult]] = {}
+        tasks: dict[SearchSpec, asyncio.Task[list[WebResult] | None]] = {}
+        allowed: bool | None = None if may_start is not None else True
+        for spec in specs:
+            if spec.fmt not in self._web.formats:
+                continue
+            key = spec.key(day)
+            k = (key, spec.fmt)
+            entry = await self._web.cached_entry(key, spec.fmt, spec.query)
+            fresh = entry is not None and (entry.results or now - entry.fetched_at < EMPTY_RETRY)
+            task = self._inflight.get(k)
+            if entry is not None and (fresh or not self._may_search(k, now)):
+                found[spec] = entry.results
+                continue
+            if task is None or task.done():
+                if allowed is None:
+                    allowed = await may_start()  # type: ignore[misc]
+                if not allowed or not self._may_search(k, now):
+                    found[spec] = entry.results if entry else await self._yesterday(spec)
                     continue
-                k, query = (key, fmt), feed_query(topic, fmt)
-                entry = await self._web.cached_entry(key, fmt, query)
-                fresh = entry is not None and (
-                    entry.results or now - entry.fetched_at < EMPTY_RETRY
+                self._searches[k] = self._searches.get(k, 0) + 1
+                task = asyncio.create_task(
+                    self._web.fetch_feed(key, spec.fmt, spec.query, spec.keep, spec.sub_cap)
                 )
-                task = self._inflight.get(k)
-                if entry is not None and (fresh or not self._may_search(k, now)):
-                    found[(topic, fmt)] = entry.results
-                    continue
-                if task is None or task.done():
-                    if not self._may_search(k, now):
-                        found[(topic, fmt)] = await self._yesterday(topic, fmt)
-                        continue
-                    self._searches[k] = self._searches.get(k, 0) + 1
-                    task = asyncio.create_task(
-                        self._web.fetch_feed(key, fmt, query, keep_for(topic, graph, now))
-                    )
-                    self._inflight[k] = task
-                tasks[(topic, fmt)] = task
+                self._inflight[k] = task
+            tasks[spec] = task
         if tasks:
             await asyncio.wait(tasks.values(), timeout=wait_s)
         pending = False
-        for (topic, fmt), task in tasks.items():
+        for spec, task in tasks.items():
             if not task.done():
                 pending = True
                 continue
             result = None if task.cancelled() or task.exception() else task.result()
             if result is None:  # a cap or a provider failure: no search for a while
-                self._failed_at[(feed_key(topic, day), fmt)] = now
-                result = await self._yesterday(topic, fmt)
-            found[(topic, fmt)] = result
-        return Gathered(_candidates(found, graph), pending)
+                self._failed_at[(spec.key(day), spec.fmt)] = now
+                result = await self._yesterday(spec)
+            found[spec] = result
+        by_stem: dict[str, list[fr.FeedCandidate]] = {}
+        for spec, results in found.items():
+            by_stem.setdefault(spec.stem, []).extend(_candidates(spec.topic, results, graph))
+        return Gathered([c for cs in by_stem.values() for c in cs], pending, by_stem)
 
-    async def _yesterday(self, topic: str, fmt: Format) -> list[WebResult]:
+    async def _yesterday(self, spec: SearchSpec) -> list[WebResult]:
         day = (datetime.fromisoformat(today_utc()) - timedelta(days=1)).date().isoformat()
-        entry = await self._web.cached_entry(feed_key(topic, day), fmt, feed_query(topic, fmt))
+        entry = await self._web.cached_entry(spec.key(day), spec.fmt, spec.query)
         return entry.results if entry is not None else []
 
 
 def _candidates(
-    found: Mapping[tuple[str, Format], list[WebResult]], graph: ConceptGraph
+    topic: str, results: Sequence[WebResult], graph: ConceptGraph
 ) -> list[fr.FeedCandidate]:
     return [
         fr.FeedCandidate(r, topic, fr.named_concepts(graph, f"{r.title} {r.snippet}"))
-        for (topic, _), results in found.items()
         for r in results
     ]
 

@@ -25,6 +25,10 @@ class Settings(BaseSettings):
     # Embeddings have no fallback: vectors from another model aren't comparable.
     model_embed: str = ""
     embed_dim: int = 256
+    # Landing illustrations (decision 44): a Gemini image model; no fallback. The price per image
+    # is charged whenever LiteLLM can't price the response, so the budget guard never sees 0.
+    model_image: str = ""
+    model_image_price_usd: float = 0.0672
 
     # Concept graph (DESIGN §2): gs:// URI or local path. Empty = no graph (dev and tests).
     concepts_uri: str = ""
@@ -65,6 +69,15 @@ class Settings(BaseSettings):
     feed_search_daily_cap: int = 60
     # Learning goals resolved per reader per UTC day (≤ 1 embed + 1 link_confirm each; M7.5).
     goal_resolve_daily_cap: int = 10
+    # Onboarding (decisions 41, 42): free-text resolves and discover calls that start new
+    # searches, per reader per UTC day; concept searches shared by everyone (within the feed
+    # cap); the topic fallback's cosine floor, set from evals/cases/onboarding_topics.yaml
+    # (2026-10-11: 0.86 → precision 9/9, recall 9/22, the 5 "none" phrases stay unmatched;
+    # with the 109-entry alias list first: 10/22, 0 wrong; 8/20 without the 2 copied phrases).
+    onboarding_resolve_daily_cap: int = 5
+    onboarding_discover_daily_cap: int = 3
+    onboarding_concept_search_daily_cap: int = 20
+    onboarding_topic_threshold: float = 0.86
     youtube_search_daily_cap: int = 90  # YouTube's search.list has its own 100/day bucket
     search_timeout_s: float = 10.0
     recs_cache_ttl_h: float = 48.0

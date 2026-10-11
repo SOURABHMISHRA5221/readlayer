@@ -7,7 +7,7 @@ import type { ReactElement } from "react";
 
 export type MargoMood = "idle" | "think" | "happy" | "oops" | "mark";
 
-const EYES: Record<MargoMood, ReactElement> = {
+export const EYES: Record<MargoMood, ReactElement> = {
   idle: (
     <>
       <circle className="margo__eye" cx="25" cy="33" r="3.2" />
@@ -40,7 +40,7 @@ const EYES: Record<MargoMood, ReactElement> = {
   ),
 };
 
-const MOUTH: Record<MargoMood, string | null> = {
+export const MOUTH: Record<MargoMood, string | null> = {
   idle: "M28.5 40.5 q3.5 3 7 0",
   think: "M30 41.5 h5",
   happy: "M27 39.5 q5 5.5 10 0",

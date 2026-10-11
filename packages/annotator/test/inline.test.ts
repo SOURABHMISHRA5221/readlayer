@@ -77,6 +77,26 @@ describe("inline card host", () => {
     a.destroy();
   });
 
+  it("its first appearance doesn't grow from a skeleton", async () => {
+    const animate = vi.fn();
+    (HTMLElement.prototype as { animate?: unknown }).animate = animate;
+    // A real layout: a revealed skeleton would have height, so a grow would start from it.
+    const oh = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "offsetHeight");
+    Object.defineProperty(HTMLElement.prototype, "offsetHeight", { configurable: true, get: () => 120 });
+    window.matchMedia = ((q: string) =>
+      ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} }) as unknown as MediaQueryList);
+    let resolve: (e: Explanation) => void = () => undefined;
+    const { a } = await setup({ loadExplanation: () => new Promise((r) => (resolve = r)) });
+    a.open("repo");
+    resolve(verified("repo"));
+    await tick();
+    expect(card().hidden).toBe(false);
+    expect(animate).not.toHaveBeenCalled();
+    delete (HTMLElement.prototype as { animate?: unknown }).animate;
+    if (oh) Object.defineProperty(HTMLElement.prototype, "offsetHeight", oh);
+    a.destroy();
+  });
+
   it("a host open is quiet; a reader's tap announces", async () => {
     const { a, root } = await setup();
     a.open("repo");

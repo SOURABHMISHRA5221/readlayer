@@ -158,7 +158,7 @@ def test_onboarding_is_for_signed_in_readers_who_consented(env):
     assert g.post("/v1/onboarding", json=ANSWERS).status_code == 409  # consent first
     assert g.post("/v1/me/consent", json={"version": "v0"}).status_code == 422
     assert g.get("/v1/me/profile").json()["onboarding"] == {
-        "consented": False, "done": False, "step": "consent",
+        "consented": False, "done": False, "step": "consent", "field": None, "interests": [],
     }  # fmt: skip
 
 
@@ -177,7 +177,7 @@ def test_onboarding_sets_theta_interest_frames_and_liked_nudges(env, docs):
     assert user["thinks_in"] == ["software"] and user["field"] == "software"
     assert user["onboarding"]["interests"] == ["finance", "economics"]
     profile = g.get("/v1/me/profile").json()
-    assert profile["onboarding"]["step"] == "calibration" and profile["thinks_in"] == ["software"]
+    assert profile["onboarding"]["step"] == "discover" and profile["thinks_in"] == ["software"]
 
 
 def test_calibration_eight_answers_then_done(env, docs):
@@ -201,7 +201,8 @@ def test_calibration_eight_answers_then_done(env, docs):
     assert body["done"] is True
     assert g.get("/v1/calibration/next").json()["done"] is True
     assert g.get("/v1/me/profile").json()["onboarding"] == {
-        "consented": True, "done": True, "step": "done",
+        "consented": True, "done": True, "step": "done", "field": "software",
+        "interests": ["finance", "economics"],
     }  # fmt: skip
 
 

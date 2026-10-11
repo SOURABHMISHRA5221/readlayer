@@ -471,3 +471,287 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   the CORS list (first version passed vacuously because FastAPI wraps included routers; rewritten
   and shown to fail without the fix).
 - #23 merged on green CI, API redeployed (revision 00019, Sourabh's yes). Live re-check: Save works (preflight allows PUT; saved article in the Saved tab). Design pass done. Next: M8-local, starting with the m8 rebase.
+
+## Landing and onboarding (decision 41) — started 2026-10-11
+
+- Sourabh (decision 41): a Landing and onboarding milestone after the Design pass, before M8.
+  Recorded in BUILD_PLAN and STATUS. Before screenshots of the current live sign-in landing:
+  `docs/evidence/landing/before/`.
+- Plan `docs/plans/landing-onboarding.md`. plan-reviewer round 1: REVISE (21: static-hero flash on
+  other routes, hint key, fonts and the no-network definition, the 60 KB budget meaning, Lighthouse
+  install, free-text tests, consent order, discover cost abuse, pick trusting the client, know rules,
+  onboarding step, the demo build script's cache precheck, an inaccurate trust line, persona names,
+  dead card buttons, routing gaps, acceptance gaps, the extension line, the eval parser, " and "
+  splitting, docs and deploy). Round 2: **APPROVE**; nits applied.
+- Open question to Sourabh: none of "F1", "startups", "Indian politics", "Formula One" resolve on the
+  live graph (checked live, $0.002); proposed taxonomy-topic fallback. The resolve response reserves
+  `topics: []`; work proceeds on everything else.
+- Sourabh answered (decision 42): topic fallback approved (alias list, then phrase-only embedding
+  above a threshold from labelled phrases, shown back as "F1 → Sports" and changeable, consent line
+  updated). Also approved warming the 5 landing-demo notes: `build_landing_demo.py --paragraph
+  23324188:p5 --warm` → 5 cached, verified cards in `apps/web/src/landing/demo.json` (production
+  spend $0.0778 → $0.1081; both temporary readers deleted). Commit 8140d44.
+- Decision 43 (Sourabh): stop with "READY FOR /clear" at milestone ends and at committed
+  mid-milestone checkpoints. Added to CLAUDE.md and STATUS §10.
+- Build step 1 done: annotator `actions: "demo"` + `demoAction` (one call to action replaces Knew
+  this / Helpful / This is wrong; records nothing), `ANNOTATOR_VERSION` 0.6.0, 2 vitests (43 pass);
+  web `readlayer:signed-in` hint written in `auth.ts` on every auth change (`SIGNED_IN_HINT`).
+  Typecheck and web tests green.
+
+- Build steps 1–4 of the old list done (765726d): static hero in index.html generated from
+  `HeroStatic` (vitest pins them; `UPDATE_HERO=1` rewrites), boot switch in theme-init.js, landing
+  sections, live mini-demo (0 fetch/XHR after load), privacy page, eval-numbers generator, routing
+  and deep-link return, SignInPage deleted. Annotator 0.6.1: a kept mark takes the new reader's
+  level (found on the landing: the cricket fan's "bps" stayed "new").
+- **Decision 44** (Sourabh: visuals; light default; repo public at submission after gitleaks, in
+  M9) and **decision 45** (wider layouts: landing now, feed/profile/reader as a "Wide layout"
+  follow-up before M8). Plan amendment V1–V9: plan-reviewer REVISE (9 items applied: spend gated
+  on Sourabh's yes with ≤ 8 images / $0.60, per-image price when LiteLLM can't price, the
+  generate_image contract and tests, reference rasterising, headroom check, media dry run, WCAG
+  2.2.2 pause control, build order), then APPROVE; V9 APPROVE (nits applied).
+- Done: light default (7b00cf0); V1 hero Margo with persona moods, V5 bands and teal trust band
+  (3aff446); annotator 0.6.2 (a scrolling card body is a focusable region, from axe
+  scrollable-region-focusable on the landing); V9 layout (dfed2a1); V2 product shot and V4 clips
+  (05222db) by `tools/shots/landing_media.py` on the live site as temporary demo readers: 6 runs
+  in all, each reader deleted (DELETE /v1/me 204); reruns fixed a blank desktop shot, crops, a
+  flaky map wait and ffmpeg timing. One "Say it simpler" generation (cricket fan, "tighter
+  policy", ≈ $0.005): the Newcomer's "bps" is already at the lowest band. Clips 3.5–5 s, 37–91 KB.
+- Checks (local preview, `tools/shots/landing.py`): axe 0 at every impact on "/" and /privacy at
+  1920/1440/1280/390, light and dark, card open included; no horizontal scroll; first view at
+  390×844 = 316 KB; landing chunk 6.9 KB gzip, main 145.1 KB.
+- V3 code ready, not run (05ed5d7): `llm.generate_image` (route `landing_art`, no fallback,
+  header-checked PNG/JPEG ≥ 512 px, per-image price fallback), prompt `landing-art-v1`,
+  `scripts/landing_art.py` with its own cap; 11 offline tests. Dry run: MODEL_IMAGE
+  `vertex_ai/gemini-3.1-flash-image`, 6 calls, ≈ $0.40, hard stop 8 images / $0.60; production
+  spend today $0.11 of $8.
+- Sourabh (2026-10-11, after the /clear): **yes** to the illustrations: Gemini 3.1 Flash Image,
+  six images, hard stop at $0.60; pick the best three; log model, prompts and cost.
+
+- V3 done: `landing_art --confirmed` made 4 images, then Vertex 429 crashed the script (the
+  uncaught `LLMUnavailable`); fixed: a quota/outage error now stops the run cleanly, and
+  `--scene <name>` finishes one scene (test added). `--scene shredder` made 1 more, then 429 again
+  (clean stop). Total **5 images, $0.339**, ledger $0.1113 → $0.4506 (429s unbilled). Sixth not
+  retried: each scene had a usable pick. Picks: jargon v1, tabs v2, shredder v1 (jargon v2 drew
+  Margo as a human, off-model). White → transparent, 5:4, WebP 460/920 px
+  (`apps/web/public/landing/problem-*.webp`), `ProblemArt` `<img>` with alt text replaces the SVG
+  line glyphs (`Illustrations.tsx` deleted), dark = invert + hue-rotate, footer credit. Checks on
+  the local preview: axe 0 and no horizontal scroll at 1920/1440/1280/390, light and dark; teal
+  6.3:1 (light) and 8.0:1 (dark) on the wash; first view at 390 = 211 KB. Model, prompt, cost in
+  DESIGN §20.1 and STATUS §7; crops and candidates in `docs/evidence/landing/illustrations/`.
+
+### Next steps (resume here, in order)
+1. Lighthouse on the local preview (`pnpm --filter web build && pnpm --filter web preview`),
+   persona chip labels ("Newcomer (software engineer)" …), before/after screenshots into
+   `docs/evidence/landing/`.
+2. Checkpoint 1 (end of Oct 12 IST), then the onboarding API (§C incl. decision 42) and the
+   2-screen WelcomePage (§B).
+
+- Resumed after /clear (2026-10-11). Dark illustrations re-verified on a fresh build: the invert
+  filter gives white strokes and lighter teal on the dark wash at 390 and 1440, clearly visible;
+  no backing needed (shots in `docs/evidence/landing/illustrations/`). Landing checks on the
+  fresh build: axe 0 and no horizontal scroll everywhere, first view at 390 = 211 KB.
+- **Decision 46** (Sourabh, landing polish, 9 items: payoff-first hero with an open note, Margo on
+  the note, fuller nav and a higher hero, phone-only product shot on the hero card, sentence-case
+  labels, halved section padding, problem row + pull quote, re-cropped clips, no empty halves).
+  Recorded in STATUS §10. Before shots: `docs/evidence/landing/d46-before/`. Plan amendment P1–P6
+  drafted. plan-reviewer round 1: REVISE (10: whole demo inside 1440×900, a 390 fallback order,
+  small-caps and tracking too, inline card semantics, persona-switch race, one-frame static→live
+  swap, phone geometry, measured clip legibility, removals together, slip plan); plus 2 found in
+  the annotator (no focus trap, no hover peeks inline). Round 2: **APPROVE**; nits applied (12 px
+  phone clip figure in STATUS; if the phone only fits from 1280, it gets logged and noted in the
+  decision 46 row). Lighthouse moves after the polish.
+- P1 + P2 built (time logged per round 1 item 10): annotator 0.7.0 `inline` host (group role,
+  revealed when the explanation settles, `onCardReady`, quiet host opens, no hover peeks, no
+  close on outside/scroll/Escape, no focus trap, open() doesn't scroll; 7 vitests, 52 pass) and a
+  fix found on the way: the demo button's dark pill was overridden by the generic `.rl-btn` rule
+  (now `.rl-btn.rl-btn--demo`). Hero: featured note open on load (`FEATURED_NOTE`), static
+  `DemoNoteStatic` in a fixed-height slot (330→390 px desktop, 280 px phone), Margo on the note's
+  top edge, "Read as:", nav (How it works, Privacy, Sign in, Try the demo). 1440×900: whole demo
+  ends at y 858. 390×844: fallbacks (a) fine print below the demo, (b) CTAs on one row, (c) level
+  line hidden were all needed; note title + 2 Background lines in view. Main 146.2 KB gzip.
+  Next: P3 phone shot, P4 sections, P5 clips, then the P6 checks in `tools/shots/landing.py`.
+- P3–P5 built: phone on the hero card (desktop only, rendered only ≥ 1024; desktop shot files and
+  capture removed; no V6 file-size vitest existed, the size budget lives in landing_media.py),
+  problem head row + pull quote, centred formats, final CTA with the map clip, `#how-it-works`.
+  Clips re-recorded on the live site in 2 runs (the plan's cap): 1024×900 at DPR 2, crops tight to
+  term + card (cut under the Background), posters checked non-blank; each run 1 temporary reader,
+  `DELETE /v1/me` 204 both times; 0 generations (precheck: all cached). Clips keep their own shape
+  in a staggered 2-column grid (the old shared 3:2 frame letterboxed them).
+- P6 checks (`tools/shots/landing_d46.py`, run by landing.py) first run: all pass except axe
+  scrollable-region-focusable on the hero card at ≥ 1280 and clip-map at 390 (10.4 px < 12).
+  1440×900 demo bottom 879; 390×844 note + Background line by y 820; swap spread 0 px; no caps.
+- **Decision 46b** (Sourabh): left column top-aligned and filled (three value lines with tiny
+  Margo faces, a proof line from evals.json), the open note shows "What the author is saying" in
+  full, check 1440×900 / 1280×800 / 390×844, then freeze the landing and go to onboarding.
+  Amendment Q1–Q4 drafted (real numbers: 24/25 good, not Sourabh's example 25/25); plan-reviewer
+  running.
+- 46b plan-reviewer: round 1 REVISE (3: value lines after the demo below 1024, what must pass at
+  1280×800, clip-map crop guarded by a frame diff), round 2 **APPROVE** (nit: a second proof line
+  after the demo below 1024 for focus order, applied). Built: annotator 0.7.1 (overflow re-check on
+  inline reveal, vitest; 53 pass), top-aligned copy column with Sourabh's three value lines (Margo
+  faces) and the proof line from evals.json ("15/15 … · 24/25 …", the data, not the example's
+  25/25) linking to `#how-we-test`, note at natural height ("What the author is saying" in full,
+  no inner scroll, all personas, 1440/1280/390), source line into the caption, 19px demo
+  paragraph. 1440×900: whole demo in view (bottom 864 for the cricket fan); copy vs card 75px.
+  1280×800: copy vs card 137px (reported). clip-map re-crop not possible: the frame diff shows the
+  map re-lays out across the full width, so the crop stays 480 (390: 10.4px, reported).
+  New failures from the natural-height note: Margo touching the paragraph at 1440, swap spread.
+- **Decisions 46c/46d** (Sourabh): hero without the phone, source line in the card header, "Read
+  with Gloss:" chips, ±40px column/card alignment with the whole hero in view at 1440×900 and
+  1280×800; clips as equal 16:10 tiles at natural zoom (whole lines, never upscaled), each showing
+  its step, mid-clip posters; then freeze and go to onboarding. Amendment R1–R3 drafted;
+  plan-reviewer running.
+- Sourabh (46d answer): "don't cut around the reload. Fix it in the product … Add a test. Then
+  record clip 1 as one continuous take. Everything else in your 46c/46d plan is approved, including
+  leaving out the second phone frame." Plan rounds: product fix REVISE ×2 (second chip / chip kept,
+  refresh=1 not a page view, scorer test; deploy order), then APPROVE.
+- **PR #25** (Know-this refresh, branch off main): milestone-reviewer FIX (recap snapshot reset by
+  the refresh; STATUS) → FIX (recap snapshot from the previous view's notes after a switch; fixed by
+  tagging notes with their view) → **SHIP**; CI green; squash-merged (97ee1bd). API deployed
+  (revision 00020) and web deployed, each on Sourabh's yes. Live check: a temporary demo reader
+  answered "Not really" on "hedging": inked in as a new-idea mark, one chip "Noted, thanks.", no
+  reload; reader deleted (204). main merged into `landing` (4c2035c; landing's earlier drafts of the
+  fix files replaced by the reviewed ones).
+- 46c built (hero: phone out, source line in the card header, Read with Gloss chips; 1440×900 copy
+  vs card 3 px, 1280×800 32 px with the level line hidden at heights ≤ 820, whole hero in view).
+- **Decision 46e** (Sourabh): device frames with HD full-UI captures (a "See it in action" section
+  after the hero: monitor with the feed, laptop with the reader; phone on mobile), How it works as
+  framed full-window loops with a gentle zoom toward the action (≤ 1.15×), section padding ~128 /
+  ~72 px, loops ≤ 600 KB, posters ≤ 120 KB. His answer on the 11px question: "not relevant any
+  more; on phones the framed full-UI shots are pictures of the product, that's fine. Keep a 'tap to
+  play' with the poster on phones if autoplay is blocked." Amendment S1–S5 drafted; plan-reviewer
+  running.
+- 46e plan-reviewer: round 1 REVISE (4: feed capture must cost nothing, final CTA in the same frame,
+  pause stops the zoom, media checks' viewports + slip rule), round 2 **APPROVE** (nit applied: 1x
+  loops for < 1024 via `<source media>`, small first). Precheck extended: the Newcomer feed is the
+  seeded `persona_feeds/newcomer` snapshot (31 items, anonymous feeds never search) and every
+  Up-next query for the demo personas is a fresh cache hit (0 searches), refusing otherwise.
+- 46e media from the live site, 3 runs (the plan's cap), each 1 temporary reader deleted (204):
+  run 1 stills OK (2880×1800 / 780×1688 captures; 1x ≤ 107 KB, 2x ≤ 245 KB) but loop frames were
+  1440 wide and clip 2 found no note in the first view; run 2 frames still 1440 (screencast
+  ignores emulated DPR) and clip 2's notes arrived with the text; run 3 with Chrome launched at
+  device scale 2 and 700 ms emulated latency for clip 2's take: all four loops native 2880×1800
+  (≤ 546 KB; 1x ≤ 242 KB; posters ≤ 102 KB), clip 2 starts plain (0 → 12 marks). 0 generations,
+  0 searches. Found and fixed: annotator 0.7.3 (an inline card's first reveal grew from a
+  skeleton height, an 88/172 px jump at the swap; test fails without the fix); stills render only
+  when near (Chrome's lazy margin fetched the phone still in the 390 first view).
+- Checks (local build): all decision 46 checks pass; axe 0 at 1920/1440/1280/390 light and dark;
+  first view at 390 = 175 KB, no landing media before scroll; swap ≤ 1.3 px. Lighthouse 12.8.2:
+  desktop perf 99, a11y 100, LCP 0.9 s, CLS 0; **mobile perf 81, a11y 100, CLS 0.048, LCP 4.9 s
+  (gate 2.5 s fails)**: observed LCP 212 ms (the demo paragraph once the serif web font lands);
+  the simulated figure follows the font and script downloads. Experiments (reverted): fonts
+  without the opsz axis (−150 KB) → 4.6 s; `display=optional` → 1.8 s, perf 98, CLS 0. Asked
+  Sourabh (optional fonts app-wide vs keep vs self-hosted subsets).
+- Sourabh (screenshot): no gap under the nav and a high empty band at the bottom on a tall window.
+  The desktop hero now fills the first view (`min-height: 100svh − bar`) and centres its content;
+  1440×900: 71 px under the bar, whole hero in view; 1280×800 still fits (card bottom 797);
+  1600×1100: equal room above and below. All checks re-run green.
+- **Decision 47** (Sourabh: self-hosted trimmed fonts). plan-reviewer round 1 REVISE (stop rule,
+  the ₹ sign, stale Google references and silent bad paths), round 2 APPROVE. Built:
+  `tools/fonts/trim_fonts.py` (Fontsource variable 5.3.0 / 5.3.1 via `npm pack`, Latin `wght`
+  files trimmed with fontTools to 400–800 / 400–600 / italic 400–500: 44.7 + 33.4 + 32.3 KB,
+  ≈ 300 KB before) plus a one-glyph ₹ file per face (0.9–1.1 KB, own `unicode-range`), versioned
+  names, `/fonts/**` cached immutable in firebase.json; fonts.css `@font-face` (swap), the hero
+  headline and body files preloaded, Google Fonts links gone; fallback metrics re-measured
+  (the old serif numbers came from Google's opsz display cut at 100px). Font checks in
+  `landing_d46.py`: preloads return `font/woff2`, every face loads, ₹ is a real glyph.
+- Mobile LCP then: 5.9 s (observed 620 ms) with fonts at 8 ms, so not the fonts. Cause 1: React
+  replaced the static hero → `hydrateRoot` on the landing boot (`main.tsx`; index.html now from
+  `renderToString` so text nodes match; `useSyncExternalStore` hooks get a server snapshot);
+  desktop LCP 0.5 s, perf 100. Cause 2 (remaining): the landing chunk re-mounts the hero and the
+  new paragraph (slightly larger once highlights are drawn) is a new LCP candidate at ≈ 640 ms
+  (trace: candidate 1 at 40 ms, 69,300 px²; candidate 2 at 644 ms, 70,980 px²; an out-of-flow
+  dot only shrank the growth to 210 px²). Sourabh: accept the mobile miss for now; the mount
+  restructure goes to the M9 / tweak-window list (STATUS §5).
+- Sourabh: a short transition between light and dark: the toggle cross-fades the page with View
+  Transitions (280 ms; instant under reduced motion or without support).
+- **Landing frozen** (Sourabh, 2026-10-11) until the tweak window.
+- Final landing checks (local build, frozen state): all decision 46 checks green (390×844 first
+  view needed the phone demo paragraph at 18px: the self-hosted serif sets a little wider), font
+  checks green, axe 0 everywhere, first view at 390 = 286 KB (fonts now first-party), no landing
+  media before scroll. Unit tests: web 45, annotator 54.
+
+- **Onboarding API built** (b0f8827, labelled set committed first in 14b7a54). Routes in
+  `app/me/onboarding_flow.py`: resolve, discover, pick, know, finish; consent-v2; step
+  `discover`; `post_onboarding` re-applies screen-2 picks (Edit → Continue) and returns
+  `next: "discover"`. `FeedSearch.gather_specs` (topic and `feed:c:<id>` concept keys share
+  de-duplication, limits, backoff, yesterday fallback; `may_start` reserves the reader's discover
+  count only when a new search would start); concept searches have a shared daily sub-cap
+  (`onboarding_concept` counter in ops/search, 20). 22 new tests (privacy: no search during
+  resolve, models see only individual redacted pieces, nothing of the text in logs at DEBUG or in
+  the store; mutation-checked: a planted debug log of the text fails the test); 662 pass.
+- Topic threshold (decision 42): `evals/onboarding_topics.py` on the 27 committed phrases, one
+  embed call ($0.00003, counted in the production spend counter like earlier evals). Similarities
+  are bunched (0.80–0.92; "asdf qwerty" 0.855), so the lowest threshold with no wrong mapping is
+  **0.86: precision 9/9, recall 9/22**, all 5 "none" phrases unmatched. Kept as the rule says
+  (no method tuning on these cases); the alias list carries the common phrases. For the PR.
+- Deviations from §C (small, recorded): the alias list is checked right after the exact concept
+  lookups, before `resolve_names`, so "F1" makes no model call at all (the plan's test "the
+  alias path makes no model call"); a piece split on " and " that matches no part goes on whole;
+  `onboarding_answered` is a map (concept → known) so screen 2 can resume with the answers;
+  finish also clears `onboarding_picks`; know/pick refuse with 404 `not_offered` / 409
+  `already_answered` / 409 `too_many_answers` / 409 `onboarding_done`; discover is refused (409)
+  after finish; library fallback when fewer than 6 web items and nothing pending; resolve echoes
+  each topic's redacted phrase (`phrase`) next to `phrase_index`; served items capped at 27.
+- Also fixed: ruff errors in `scripts/landing_media_precheck.py` (committed earlier, CI would
+  have failed).
+
+- **Onboarding web built** (c0918ec): `WelcomePage` → `welcome/AboutScreen` (field, topics,
+  free text in React state only, inline consent-v2, matches with "F1 → Sports" selects and
+  removable concept chips), `welcome/DiscoverScreen` (cards, picks, Know this?, readback after 5
+  answers, Edit, Start reading), `lib/onboardingApi.ts`, `lib/readback.ts`; the profile's
+  onboarding block also returns `field` and `interests` (resume and Edit). Welcome chunk 5.1 KB gzip.
+  vitest: readback, helpers, Continue disabled until field + topic + consent, free text only in
+  React state and only in the resolve request after consent, screen 2 resume/picks/know/readback.
+- **Harness run** (`tools/shots/onboarding.py`, emulators; 10 real searches: 9 topic + 1
+  concept; resolve $0): axe 0 at 1440/390 light and dark on both screens. Found and fixed
+  (dc21dd2): "Start reading" bounced back to /welcome (App gate kept a stale "not done"; now
+  cleared when the flow finishes), readback said "more Sports" after two skips (likes minus
+  skips per topic now), off-topic Know this? terms ("Column", "Action point", "OCT": now only the
+  item's own topic, corpus concepts first), Know row wrapping at 390, chips 42px. Rerun: all
+  green, feed topics economics, business, sports after two "Not for me" on Sports; the typed
+  text appears nowhere in the API log.
+- Docs: DESIGN §4, §8, §11.4, §17.1; STATUS §1, §4, §9, new §19; BUILD_PLAN M8 line; privacy
+  page wording (resolved ideas aren't stored, only topics; setup lists cleared at finish).
+
+- Sourabh (before the PR): extend the alias list to ~60 common phrases over all 14 topics and
+  re-run the check. Now 109 entries (≈ 60 phrases plus variants; every topic covered, test).
+  `evals/onboarding_topics.py` also scores the route's order (aliases first, then embedding at
+  0.86): **10/22 recognised, 0 wrong**, the 5 "none" phrases unmatched (was 9/22). Only
+  "smartphones" and "mutual funds" (both named by Sourabh) copy test phrases; without them 8/20,
+  unchanged: the test phrases are longer variants that exact aliases don't match. One embed call
+  per run ($0.00003 each, two runs). API tests 664.
+
+- Sourabh: word-level matching for the topic fallback. `ot.word_topic`: words and adjacent
+  2-word chunks (stop-words, generic words, bare country names dropped; possessives stripped),
+  looked up in the alias list and concept labels; one-word concept chunks only with doc_freq > 0
+  (decided before the run, so "Column"-like seed words can't map nonsense); strongest: 2-word,
+  alias over concept, doc_freq, earlier. Rules fixed before running; nothing tuned after.
+  Result: **18/22, 0 wrong, 5/5 nonsense unrecognised** (alias 2, words 13: 6 via aliases,
+  7 via concepts; embedding 3). Caveat reported: the 6 single-word alias hits come from aliases
+  added after the test set was seen; independent of the alias list, 10 of the other 14.
+  The route test found that word matching ran after `resolve_names` (a model call for
+  "cricket highlights"); moved before it, so model calls happen only when nothing matches.
+  API tests 667.
+
+- **milestone-reviewer: FIX** (5 items + follow-ups). Done: (1) privacy: several free-text
+  pieces could share one `link_confirm` prompt (resolve_names batches names): now one
+  resolve_names call and one embed request per piece; a test with two candidate pieces fails on
+  the old code; DESIGN §11.4 says so. (2) STATUS §19 landing rows from my own run of
+  `tools/shots/landing.py` (now asserts 0 network after load, axe 0 at every level, and a
+  keyboard path); one mobile LCP figure: Lighthouse 12.8.2 × 3 on the final local build =
+  2.6 s, perf 95 (the earlier 5.7/5.9 s unexplained; live run decides). (3) after shots committed
+  (`docs/evidence/landing/after/`, JPEG subset; onboarding `after/`); deviations recorded: no
+  "before" of the old welcome steps, no-flash checked by the boot switch. Keyboard run found a real
+  issue: answered buttons were `disabled`, so focus fell to the page top; now `aria-disabled`,
+  focus stays (harness: axe 0, keyboard all true). (4) `test/evalNumbers.test.ts` (evals.json
+  equals the report; malformed tables throw). (5) STATUS §10 rows 46b, 46c, 46e, 47, 42b.
+  Follow-ups done: finish needs screen 1 saved (409), topic chips capped at 6. API 669, web 52.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on the whole `landing` branch (landing + onboarding) until SHIP.
+2. PR from `landing` ("Landing and onboarding: …"), green CI, squash-merge.
+3. Deploy API then web (Sourabh's yes on each), live check: anonymous landing Lighthouse and
+   no-network demo; Sourabh's own Google onboarding (≤ 18 topic + ≤ 2 concept searches, ≤ 1
+   resolve ≈ $0.002), including the profile showing the Know this? band changes.
+4. STATUS §19 live rows, then READY FOR /clear; then the Wide layout follow-up (decision 45).

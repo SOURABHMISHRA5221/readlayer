@@ -271,3 +271,25 @@ def select(ranked: Sequence[RankedItem], topics: Sequence[str]) -> list[RankedIt
         layer = [p[rank_i] for p in per_topic if rank_i < len(p)]
         out.extend(sorted(layer, key=lambda r: -r.score))
     return out[:MAX_ITEMS]
+
+
+def onboarding_mix(
+    groups: Sequence[Sequence[FeedCandidate]], now: datetime, limit: int
+) -> list[FeedCandidate]:
+    """Onboarding's screen 2 (decision 41): one group per chosen topic or concept, in the
+    reader's order. Within a group articles first, then fresher first (ties by URL); the groups
+    are interleaved so every one with results gets a card before any gets a second. One per URL.
+    """
+    ordered = [
+        sorted(g, key=lambda c: (c.result.format != "article",
+                                 -freshness(c.result.published_at, now), c.result.url))
+        for g in groups
+    ]  # fmt: skip
+    out: list[FeedCandidate] = []
+    seen: set[str] = set()
+    for layer in range(max((len(g) for g in ordered), default=0)):
+        for g in ordered:
+            if layer < len(g) and g[layer].result.url not in seen and len(out) < limit:
+                seen.add(g[layer].result.url)
+                out.append(g[layer])
+    return out

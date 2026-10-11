@@ -5,6 +5,7 @@ enforces the daily budget, retries transient errors, falls back, re-validates ou
 and records cost per call.
 """
 
+import base64
 import json
 import logging
 import re
@@ -118,6 +119,9 @@ ROUTES: dict[str, Route] = {
     "explain": Route("model_quality", "model_fast"),
     # No fallback: if a judge is down, callers show the definition gloss only.
     # judge_model = MODEL_JUDGE, or MODEL_QUALITY when that is empty.
+    # Landing illustrations (decision 44 V3), via generate_image. No fallback: the Gemma
+    # fallback can't make images.
+    "landing_art": Route("model_image", None),
     "verify": Route("judge_model", None),  # the restatement's claims
     "verify_background": Route("judge_model", None),  # the Background
 }
@@ -344,6 +348,182 @@ def _embed_cost(response: Any, model: str, tokens: int, settings: Settings) -> f
         return tokens * settings.model_price_overrides[model][0]
     log.warning("no price for embedding model; cost logged as 0", extra={"model": model})
     return 0.0
+
+
+# ---------------------------------------------------------------- images
+
+IMAGE_MIN_PX = 512
+
+
+class InvalidImage(Exception):
+    """The model answered without exactly one usable image (retried, then LLMRejected)."""
+
+
+@dataclass(frozen=True)
+class ImageResult:
+    data: bytes
+    mime: str
+    width: int
+    height: int
+    model: str
+    prompt_version: str
+    cost_usd: float
+    attempts: int
+
+
+async def generate_image(
+    task: str,
+    prompt_vars: dict[str, Any],
+    *,
+    reference_png: bytes | None = None,
+    settings: Settings | None = None,
+) -> ImageResult:
+    """One image from the task's model (decision 44 V3). Same budget guard, retries, cost
+    logging and spend ledger as run(); the output check (exactly one decodable PNG or JPEG of at
+    least IMAGE_MIN_PX on each side) stands in for a Pydantic schema. No fallback model.
+
+    Raises BudgetExceeded, LLMUnavailable or LLMRejected (no valid image after the retries).
+    """
+    settings = settings or get_settings()
+    route = ROUTES.get(task)
+    if route is None:
+        raise ValueError(f"unknown LLM task: {task}")
+    model = getattr(settings, route.primary, "")
+    if not model:
+        raise LLMUnavailable(f"{route.primary.upper()} is not configured")
+    store = get_spend_store()
+    await _check_budget(task, settings, store)
+    prompt = load_prompt(task)
+    content: list[dict[str, Any]] = [{"type": "text", "text": render(prompt.user, prompt_vars)}]
+    if reference_png:
+        url = "data:image/png;base64," + base64.b64encode(reference_png).decode()
+        content.append({"type": "image_url", "image_url": {"url": url}})
+    messages: list[dict[str, Any]] = [{"role": "user", "content": content}]
+    if prompt.system:
+        messages.insert(0, {"role": "system", "content": prompt.system})
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "modalities": ["image", "text"],
+        "timeout": route.timeout_s or settings.llm_timeout_s,
+        "num_retries": 0,
+    }
+    if model.startswith("vertex_ai/"):
+        kwargs |= {
+            "vertex_project": settings.gcp_project,
+            "vertex_location": settings.vertex_location,
+        }
+
+    attempts, total = 0, 0.0
+    start = time.perf_counter()
+    try:
+        async for attempt in AsyncRetrying(
+            retry=retry_if_exception(
+                lambda e: isinstance(e, InvalidImage) or classify_error(e) == "retry"
+            ),
+            stop=stop_after_attempt(settings.llm_max_retries + 1),
+            wait=retry_wait,
+            reraise=True,
+        ):
+            with attempt:
+                attempts += 1
+                response = await _litellm().acompletion(**kwargs)
+                images = _images(response)
+                cost = _image_cost(response, model, len(images), settings)
+                total += cost
+                usage = getattr(response, "usage", None)
+                await store.add(
+                    cost,
+                    int(getattr(usage, "prompt_tokens", 0) or 0),
+                    int(getattr(usage, "completion_tokens", 0) or 0),
+                )
+                data, mime, width, height = _one_image(images)
+    except InvalidImage as exc:
+        log.error("llm image rejected", extra={"task": task, "model": model, "error": str(exc)})
+        raise LLMRejected(f"{task} on {model}: {exc}") from exc
+    except LLMError:
+        raise
+    except Exception as exc:
+        fields = {"task": task, "model": model, "error_class": type(exc).__name__}
+        if classify_error(exc) == "retry":
+            log.error("llm image unavailable", extra=fields)
+            raise LLMUnavailable(f"{task} on {model}: {type(exc).__name__}") from exc
+        log.error("llm image rejected", extra={**fields, "status": _status(exc)})
+        raise LLMRejected(f"{task} on {model}: {type(exc).__name__}") from exc
+    log.info(
+        "llm image",
+        extra={
+            "task": task,
+            "model": model,
+            "prompt_version": prompt.version,
+            "attempts": attempts,
+            "cost_usd": round(total, 6),
+            "latency_ms": round((time.perf_counter() - start) * 1000, 1),
+        },
+    )
+    return ImageResult(data, mime, width, height, model, prompt.version, round(total, 6), attempts)
+
+
+def _images(response: Any) -> list[str]:
+    """Data URIs of the images in a LiteLLM response (message.images)."""
+    message = response.choices[0].message
+    items = getattr(message, "images", None) or []
+    urls = [_field(_field(item, "image_url"), "url") for item in items]
+    return [u for u in urls if u]
+
+
+def _field(obj: Any, name: str) -> Any:
+    """A key of a dict or an attribute of an object (LiteLLM returns either)."""
+    return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
+
+
+def _image_cost(response: Any, model: str, count: int, settings: Settings) -> float:
+    """LiteLLM's price when it has one; otherwise the configured price per image (at least one
+    image is charged, since a failed generation may still bill)."""
+    try:
+        cost = float(_litellm().completion_cost(completion_response=response, model=model))
+    except Exception:
+        cost = 0.0
+    return cost if cost > 0 else max(count, 1) * settings.model_image_price_usd
+
+
+def _one_image(urls: list[str]) -> tuple[bytes, str, int, int]:
+    if len(urls) != 1:
+        raise InvalidImage(f"expected 1 image, got {len(urls)}")
+    head, _, b64 = urls[0].partition(",")
+    if not head.startswith("data:image/") or ";base64" not in head:
+        raise InvalidImage("not a base64 image data URI")
+    try:
+        data = base64.b64decode(b64, validate=True)
+    except ValueError as exc:
+        raise InvalidImage("undecodable base64") from exc
+    size = image_size(data)
+    if size is None:
+        raise InvalidImage("not a PNG or JPEG")
+    mime, width, height = size
+    if min(width, height) < IMAGE_MIN_PX:
+        raise InvalidImage(f"too small: {width}x{height}")
+    return data, mime, width, height
+
+
+def image_size(data: bytes) -> tuple[str, int, int] | None:
+    """(mime, width, height) of a PNG or JPEG from its header, without an imaging library."""
+    if data[:8] == b"\x89PNG\r\n\x1a\n" and data[12:16] == b"IHDR":
+        return "image/png", int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+    if data[:2] != b"\xff\xd8":
+        return None
+    i = 2
+    while i + 9 < len(data):
+        if data[i] != 0xFF:
+            return None
+        marker, length = data[i + 1], int.from_bytes(data[i + 2 : i + 4], "big")
+        # SOF0–SOF15 carry the frame size, except DHT (C4), JPG (C8) and DAC (CC).
+        if 0xC0 <= marker <= 0xCF and marker not in (0xC4, 0xC8, 0xCC):
+            height = int.from_bytes(data[i + 5 : i + 7], "big")
+            width = int.from_bytes(data[i + 7 : i + 9], "big")
+            return "image/jpeg", width, height
+        i += 2 + length
+    return None
 
 
 def _normalise(rows: list[list[float]]) -> list[list[float]]:
