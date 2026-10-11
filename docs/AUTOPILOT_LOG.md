@@ -498,18 +498,42 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   web `readlayer:signed-in` hint written in `auth.ts` on every auth change (`SIGNED_IN_HINT`).
   Typecheck and web tests green.
 
-### Next steps (resume here, in order)
-1. `apps/web/public/theme-init.js`: on "/" with no `readlayer:signed-in` hint, mark the document
-   for the static hero; otherwise a neutral loading shell (plan §A, "static hero").
-2. `index.html`: static hero markup inside `#root` (headline, subline, demo paragraph in a fixed
-   box, CTAs); fonts non-blocking (preload + media swap). `HeroStatic` component in the main
-   bundle mirroring it; hero CSS in the main stylesheet.
-3. `src/landing/`: `LandingPage` (A1–A8, lazy chunk), `MiniDemo` (createAnnotator on demo.json,
-   `actions: "demo"`, toggle Software engineer / Cricket fan / Policy student, no network),
-   `KnowledgeMapAnim` (reduced-motion safe); `document.fonts.load` for the card faces on mount.
-4. `scripts/eval-numbers.mjs` → `src/landing/evals.json` + vitest; `PrivacyPage` (public, lazy);
-   routing in `App.tsx` (signed out "/" → landing, deep-link return via sessionStorage, signed in
-   "/" → feed); delete `SignInPage` and the `.signin` CSS in `account.css`.
-5. Checkpoint end of Oct 12: landing done (budgets, axe, Lighthouse, screenshots). Then the
-   onboarding API (plan §C incl. decision 42), then the 2-screen WelcomePage (§B).
+- Build steps 1–4 of the old list done (765726d): static hero in index.html generated from
+  `HeroStatic` (vitest pins them; `UPDATE_HERO=1` rewrites), boot switch in theme-init.js, landing
+  sections, live mini-demo (0 fetch/XHR after load), privacy page, eval-numbers generator, routing
+  and deep-link return, SignInPage deleted. Annotator 0.6.1: a kept mark takes the new reader's
+  level (found on the landing: the cricket fan's "bps" stayed "new").
+- **Decision 44** (Sourabh: visuals; light default; repo public at submission after gitleaks, in
+  M9) and **decision 45** (wider layouts: landing now, feed/profile/reader as a "Wide layout"
+  follow-up before M8). Plan amendment V1–V9: plan-reviewer REVISE (9 items applied: spend gated
+  on Sourabh's yes with ≤ 8 images / $0.60, per-image price when LiteLLM can't price, the
+  generate_image contract and tests, reference rasterising, headroom check, media dry run, WCAG
+  2.2.2 pause control, build order), then APPROVE; V9 APPROVE (nits applied).
+- Done: light default (7b00cf0); V1 hero Margo with persona moods, V5 bands and teal trust band
+  (3aff446); annotator 0.6.2 (a scrolling card body is a focusable region, from axe
+  scrollable-region-focusable on the landing); V9 layout (dfed2a1); V2 product shot and V4 clips
+  (05222db) by `tools/shots/landing_media.py` on the live site as temporary demo readers: 6 runs
+  in all, each reader deleted (DELETE /v1/me 204); reruns fixed a blank desktop shot, crops, a
+  flaky map wait and ffmpeg timing. One "Say it simpler" generation (cricket fan, "tighter
+  policy", ≈ $0.005): the Newcomer's "bps" is already at the lowest band. Clips 3.5–5 s, 37–91 KB.
+- Checks (local preview, `tools/shots/landing.py`): axe 0 at every impact on "/" and /privacy at
+  1920/1440/1280/390, light and dark, card open included; no horizontal scroll; first view at
+  390×844 = 316 KB; landing chunk 6.9 KB gzip, main 145.1 KB.
+- V3 code ready, not run (05ed5d7): `llm.generate_image` (route `landing_art`, no fallback,
+  header-checked PNG/JPEG ≥ 512 px, per-image price fallback), prompt `landing-art-v1`,
+  `scripts/landing_art.py` with its own cap; 11 offline tests. Dry run: MODEL_IMAGE
+  `vertex_ai/gemini-3.1-flash-image`, 6 calls, ≈ $0.40, hard stop 8 images / $0.60; production
+  spend today $0.11 of $8.
+- **Waiting on Sourabh:** yes or no on the illustration spend (≈ $0.40, cap $0.60), which is more
+  than his "a few cents".
 
+### Next steps (resume here, in order)
+1. If Sourabh says yes: record it here, run `landing_art --confirmed` (MODEL_IMAGE set, output in
+   the scratchpad), pick one per scene, white → transparent, cwebp at 460/920 px into
+   `apps/web/public/landing/`, `<img>` with alt text in the Problem section, dark treatment
+   contrast-checked, footer credit, DESIGN §20 and STATUS §7 (model, prompt version, cost). If no:
+   keep the line glyphs and record it.
+2. Then: Lighthouse on the local preview, persona chip labels ("Newcomer (software engineer)" …),
+   before/after screenshots into `docs/evidence/landing/`.
+3. Checkpoint 1 (end of Oct 12 IST), then the onboarding API (§C incl. decision 42) and the
+   2-screen WelcomePage (§B).
