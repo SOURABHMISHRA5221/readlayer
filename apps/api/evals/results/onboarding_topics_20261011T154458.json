@@ -1,0 +1,685 @@
+{
+  "ran_at": "2026-10-11T15:44:58.669322+00:00",
+  "model": "vertex_ai/gemini-embedding-001",
+  "cost_usd": 3.48e-05,
+  "rows": [
+    {
+      "id": "T01",
+      "phrase": "badminton tournaments",
+      "expect": "sports",
+      "topic": "sports",
+      "similarity": 0.861,
+      "via": "embedding",
+      "mapped": "sports"
+    },
+    {
+      "id": "T02",
+      "phrase": "marathon running",
+      "expect": "sports",
+      "topic": "sports",
+      "similarity": 0.8329,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T03",
+      "phrase": "electric cars",
+      "expect": "technology",
+      "topic": "environment",
+      "similarity": 0.8586,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T04",
+      "phrase": "smartphones",
+      "expect": "technology",
+      "topic": "technology",
+      "similarity": 0.8544,
+      "via": "alias",
+      "mapped": "technology"
+    },
+    {
+      "id": "T05",
+      "phrase": "machine learning research",
+      "expect": "technology",
+      "topic": "science",
+      "similarity": 0.8576,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T06",
+      "phrase": "mutual funds",
+      "expect": "finance",
+      "topic": "finance",
+      "similarity": 0.8914,
+      "via": "alias",
+      "mapped": "finance"
+    },
+    {
+      "id": "T07",
+      "phrase": "home loans",
+      "expect": "finance",
+      "topic": "finance",
+      "similarity": 0.8458,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T08",
+      "phrase": "quarterly earnings of companies",
+      "expect": "business",
+      "topic": "finance",
+      "similarity": 0.8574,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T09",
+      "phrase": "airline mergers",
+      "expect": "business",
+      "topic": "business",
+      "similarity": 0.8435,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T10",
+      "phrase": "inflation in India",
+      "expect": "economics",
+      "topic": "economics",
+      "similarity": 0.8327,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T11",
+      "phrase": "unemployment",
+      "expect": "economics",
+      "topic": "economics",
+      "similarity": 0.8511,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T12",
+      "phrase": "state elections",
+      "expect": "politics",
+      "topic": "politics",
+      "similarity": 0.8985,
+      "via": "embedding",
+      "mapped": "politics"
+    },
+    {
+      "id": "T13",
+      "phrase": "China's foreign relations",
+      "expect": "politics",
+      "topic": "politics",
+      "similarity": 0.8565,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T14",
+      "phrase": "GST rules",
+      "expect": "policy",
+      "topic": "policy",
+      "similarity": 0.8755,
+      "via": "embedding",
+      "mapped": "policy"
+    },
+    {
+      "id": "T15",
+      "phrase": "court cases",
+      "expect": "law",
+      "topic": "law",
+      "similarity": 0.9229,
+      "via": "embedding",
+      "mapped": "law"
+    },
+    {
+      "id": "T16",
+      "phrase": "black holes",
+      "expect": "science",
+      "topic": "science",
+      "similarity": 0.8104,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T17",
+      "phrase": "vaccines",
+      "expect": "health",
+      "topic": "health",
+      "similarity": 0.8763,
+      "via": "embedding",
+      "mapped": "health"
+    },
+    {
+      "id": "T18",
+      "phrase": "diabetes",
+      "expect": "health",
+      "topic": "health",
+      "similarity": 0.8845,
+      "via": "embedding",
+      "mapped": "health"
+    },
+    {
+      "id": "T19",
+      "phrase": "air pollution in Delhi",
+      "expect": "environment",
+      "topic": "environment",
+      "similarity": 0.8278,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T20",
+      "phrase": "Indian classical music",
+      "expect": "culture",
+      "topic": "culture",
+      "similarity": 0.8461,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "T21",
+      "phrase": "board exams",
+      "expect": "education",
+      "topic": "education",
+      "similarity": 0.871,
+      "via": "embedding",
+      "mapped": "education"
+    },
+    {
+      "id": "T22",
+      "phrase": "caste and religion",
+      "expect": "society",
+      "topic": "society",
+      "similarity": 0.8933,
+      "via": "embedding",
+      "mapped": "society"
+    },
+    {
+      "id": "N01",
+      "phrase": "my cat",
+      "expect": "none",
+      "topic": "environment",
+      "similarity": 0.815,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "N02",
+      "phrase": "weekend plans",
+      "expect": "none",
+      "topic": "health",
+      "similarity": 0.8232,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "N03",
+      "phrase": "knitting",
+      "expect": "none",
+      "topic": "health",
+      "similarity": 0.8096,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "N04",
+      "phrase": "asdf qwerty",
+      "expect": "none",
+      "topic": "technology",
+      "similarity": 0.8552,
+      "via": null,
+      "mapped": null
+    },
+    {
+      "id": "N05",
+      "phrase": "my favourite colour",
+      "expect": "none",
+      "topic": "environment",
+      "similarity": 0.8029,
+      "via": null,
+      "mapped": null
+    }
+  ],
+  "sweep": [
+    {
+      "threshold": 0.4,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.41,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.42,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.43,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.44,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.45,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.46,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.47,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.48,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.49,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.5,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.51,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.52,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.53,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.54,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.55,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.56,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.57,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.58,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.59,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.6,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.61,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.62,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.63,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.64,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.65,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.66,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.67,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.68,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.69,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.7,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.71,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.72,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.73,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.74,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.75,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.76,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.77,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.78,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.79,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.8,
+      "correct": 19,
+      "wrong": 8,
+      "missed": 0,
+      "precision": 0.704,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.81,
+      "correct": 19,
+      "wrong": 6,
+      "missed": 0,
+      "precision": 0.76,
+      "recall": 0.864
+    },
+    {
+      "threshold": 0.82,
+      "correct": 18,
+      "wrong": 5,
+      "missed": 1,
+      "precision": 0.783,
+      "recall": 0.818
+    },
+    {
+      "threshold": 0.83,
+      "correct": 17,
+      "wrong": 4,
+      "missed": 2,
+      "precision": 0.81,
+      "recall": 0.773
+    },
+    {
+      "threshold": 0.84,
+      "correct": 15,
+      "wrong": 4,
+      "missed": 4,
+      "precision": 0.789,
+      "recall": 0.682
+    },
+    {
+      "threshold": 0.85,
+      "correct": 12,
+      "wrong": 4,
+      "missed": 7,
+      "precision": 0.75,
+      "recall": 0.545
+    },
+    {
+      "threshold": 0.86,
+      "correct": 9,
+      "wrong": 0,
+      "missed": 13,
+      "precision": 1.0,
+      "recall": 0.409
+    },
+    {
+      "threshold": 0.87,
+      "correct": 8,
+      "wrong": 0,
+      "missed": 14,
+      "precision": 1.0,
+      "recall": 0.364
+    },
+    {
+      "threshold": 0.88,
+      "correct": 5,
+      "wrong": 0,
+      "missed": 17,
+      "precision": 1.0,
+      "recall": 0.227
+    },
+    {
+      "threshold": 0.89,
+      "correct": 4,
+      "wrong": 0,
+      "missed": 18,
+      "precision": 1.0,
+      "recall": 0.182
+    },
+    {
+      "threshold": 0.9,
+      "correct": 1,
+      "wrong": 0,
+      "missed": 21,
+      "precision": 1.0,
+      "recall": 0.045
+    }
+  ],
+  "chosen": {
+    "threshold": 0.86,
+    "correct": 9,
+    "wrong": 0,
+    "missed": 13,
+    "precision": 1.0,
+    "recall": 0.409
+  },
+  "pipeline": {
+    "threshold": 0.86,
+    "all": {
+      "recognised": "10/22",
+      "wrong": 0,
+      "by_alias": 2
+    },
+    "excluding_alias_copies": {
+      "recognised": "8/20",
+      "wrong": 0,
+      "by_alias": 0
+    },
+    "alias_copies": [
+      "smartphones",
+      "mutual funds"
+    ]
+  }
+}

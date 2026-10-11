@@ -266,11 +266,13 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   comfort step); interest 1.0 chosen, 0.3 otherwise, plus screen-2 picks (below).
 - **Free text** (decision 42, §11.3): redacted, split on commas into ≤ 5 pieces of ≤ 40 chars;
   per piece: exact concept label/alias whole, then its " and "/"&" parts; then the topic alias
-  list `ONBOARDING_TOPIC_ALIASES` (F1, IPL, startups, VC, …; no model call); then `resolve_names`
+  list `ONBOARDING_TOPIC_ALIASES` (109 casefolded phrases covering all 14 topics: F1, IPL,
+  Champions League, LLMs, EVs, crypto, mutual funds, UPSC, ISRO, …; no model call); then `resolve_names`
   (embedding candidates + `link_confirm`, individual pieces only); then the nearest topic scope
   line by embedding at cosine ≥ `ONBOARDING_TOPIC_THRESHOLD` = 0.86 (set on
   `evals/cases/onboarding_topics.yaml`, 27 phrases committed first: precision 9/9, recall 9/22,
-  0/5 "none" phrases mapped). Each phrase is embedded once per request. Nothing of the text is
+  0/5 "none" phrases mapped; the whole order, aliases first: 10/22, 0 wrong, 8/20 on the
+  phrases the alias list doesn't copy). Each phrase is embedded once per request. Nothing of the text is
   stored, logged or sent to search; 5 resolves per reader per day.
 - **Screen 2 "Here's what's out there for you":** `POST /v1/onboarding/discover` with the
   chosen topics (≤ 6) and resolved concepts (≤ 2): shared day-keyed searches (§17.1; concept

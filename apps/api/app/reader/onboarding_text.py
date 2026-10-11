@@ -19,30 +19,35 @@ MAX_TEXT_CHARS = 120
 MAX_PIECES = 5
 MAX_PIECE_CHARS = 40
 
-# Casefolded exact phrase → taxonomy domain. No model call on this path (decision 42).
-ONBOARDING_TOPIC_ALIASES: Mapping[str, str] = {
-    # sports
-    "f1": "sports", "formula 1": "sports", "formula one": "sports", "ipl": "sports",
-    "nba": "sports", "nfl": "sports", "premier league": "sports", "football": "sports",
-    "soccer": "sports", "cricket": "sports", "tennis": "sports", "olympics": "sports",
-    "fifa": "sports", "motorsport": "sports", "chess": "sports",
-    # business
-    "startups": "business", "startup": "business", "vc": "business",
-    "venture capital": "business", "entrepreneurship": "business",
-    # technology
-    "ai": "technology", "artificial intelligence": "technology", "tech": "technology",
-    "gadgets": "technology", "coding": "technology", "programming": "technology",
-    # finance
-    "crypto": "finance", "cryptocurrency": "finance", "bitcoin": "finance",
-    "stock market": "finance", "stocks": "finance", "investing": "finance",
-    "personal finance": "finance",
-    # economics, politics, science, health, environment, culture
-    "economy": "economics", "indian politics": "politics", "geopolitics": "politics",
-    "space": "science", "astronomy": "science", "fitness": "health", "nutrition": "health",
-    "mental health": "health", "climate": "environment", "climate change": "environment",
-    "movies": "culture", "films": "culture", "books": "culture", "music": "culture",
-    "bollywood": "culture",
+# Casefolded exact phrase → taxonomy domain, every topic covered. No model call on this path
+# (decision 42). Common phrases only; never copied from evals/cases/onboarding_topics.yaml
+# except "smartphones" and "mutual funds", which Sourabh named (2026-10-11).
+_ALIASES_BY_TOPIC: Mapping[str, tuple[str, ...]] = {
+    "sports": ("f1", "formula 1", "formula one", "motorsport", "ipl", "cricket", "test cricket",
+               "football", "soccer", "premier league", "champions league", "la liga", "fifa",
+               "nba", "nfl", "tennis", "badminton", "kabaddi", "olympics", "chess"),
+    "technology": ("ai", "artificial intelligence", "llms", "llm", "generative ai", "chatgpt",
+                   "tech", "gadgets", "smartphones", "coding", "programming", "cybersecurity",
+                   "evs", "electric vehicles", "semiconductors"),
+    "finance": ("crypto", "cryptocurrency", "bitcoin", "stock market", "stocks", "sensex",
+                "nifty", "mutual funds", "investing", "trading", "personal finance"),
+    "business": ("startups", "startup", "vc", "venture capital", "entrepreneurship",
+                 "business news", "marketing"),
+    "economics": ("economy", "indian economy", "gdp", "macroeconomics"),
+    "policy": ("gst", "income tax", "taxes", "public policy", "government schemes"),
+    "politics": ("elections", "indian politics", "us politics", "world politics",
+                 "geopolitics", "lok sabha"),
+    "law": ("supreme court", "high court", "constitution", "legal news"),
+    "science": ("space", "isro", "nasa", "astronomy", "physics", "biology", "chemistry"),
+    "health": ("mental health", "fitness", "nutrition", "diet", "yoga", "medicine", "covid"),
+    "environment": ("climate", "climate change", "global warming", "pollution", "wildlife"),
+    "culture": ("movies", "films", "cinema", "bollywood", "books", "music", "art", "anime"),
+    "education": ("upsc", "jee", "neet", "exams", "higher education", "edtech"),
+    "society": ("religion", "gender", "migration", "social issues"),
 }  # fmt: skip
+ONBOARDING_TOPIC_ALIASES: Mapping[str, str] = {
+    phrase: topic for topic, phrases in _ALIASES_BY_TOPIC.items() for phrase in phrases
+}
 
 _SPACES = re.compile(r"\s+")
 _AND = re.compile(r"\s+and\s+|\s*&\s*", re.IGNORECASE)

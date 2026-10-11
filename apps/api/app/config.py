@@ -72,7 +72,8 @@ class Settings(BaseSettings):
     # Onboarding (decisions 41, 42): free-text resolves and discover calls that start new
     # searches, per reader per UTC day; concept searches shared by everyone (within the feed
     # cap); the topic fallback's cosine floor, set from evals/cases/onboarding_topics.yaml
-    # (2026-10-11: 0.86 → precision 9/9, recall 9/22, the 5 "none" phrases stay unmatched).
+    # (2026-10-11: 0.86 → precision 9/9, recall 9/22, the 5 "none" phrases stay unmatched;
+    # with the 109-entry alias list first: 10/22, 0 wrong; 8/20 without the 2 copied phrases).
     onboarding_resolve_daily_cap: int = 5
     onboarding_discover_daily_cap: int = 3
     onboarding_concept_search_daily_cap: int = 20

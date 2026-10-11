@@ -714,6 +714,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Docs: DESIGN §4, §8, §11.4, §17.1; STATUS §1, §4, §9, new §19; BUILD_PLAN M8 line; privacy
   page wording (resolved ideas aren't stored, only topics; setup lists cleared at finish).
 
+- Sourabh (before the PR): extend the alias list to ~60 common phrases over all 14 topics and
+  re-run the check. Now 109 entries (≈ 60 phrases plus variants; every topic covered, test).
+  `evals/onboarding_topics.py` also scores the route's order (aliases first, then embedding at
+  0.86): **10/22 recognised, 0 wrong**, the 5 "none" phrases unmatched (was 9/22). Only
+  "smartphones" and "mutual funds" (both named by Sourabh) copy test phrases; without them 8/20,
+  unchanged: the test phrases are longer variants that exact aliases don't match. One embed call
+  per run ($0.00003 each, two runs). API tests 664.
+
 ### Next steps (resume here, in order)
 1. milestone-reviewer on the whole `landing` branch (landing + onboarding) until SHIP.
 2. PR from `landing` ("Landing and onboarding: …"), green CI, squash-merge.

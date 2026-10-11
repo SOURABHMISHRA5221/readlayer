@@ -6,6 +6,10 @@ Embeds the frozen phrases (cases/onboarding_topics.yaml, committed before this r
 topic scope lines with MODEL_EMBED, exactly as POST /v1/onboarding/resolve does, then reports
 precision and recall per threshold. ONBOARDING_TOPIC_THRESHOLD is the lowest threshold whose
 precision is ≥ TARGET_PRECISION. One embed call per run (≈ 41 short texts).
+
+`pipeline` scores the route's own order at the configured threshold: the alias list first
+(no model call), then the embedding fallback. Phrases the alias list copies verbatim are
+reported apart, since an alias hit on a test phrase says nothing about unseen phrases.
 """
 
 import asyncio
@@ -17,7 +21,8 @@ from typing import Any
 import yaml
 
 from app import llm
-from app.reader.onboarding_text import nearest_topic, topic_texts
+from app.config import get_settings
+from app.reader.onboarding_text import alias_topic, nearest_topic, topic_texts
 
 ROOT = Path(__file__).parent
 CASES = ROOT / "cases" / "onboarding_topics.yaml"
@@ -53,6 +58,12 @@ async def main() -> dict[str, Any]:
         rows.append({"id": case["id"], "phrase": case["phrase"], "expect": case["expect"],
                      "topic": topic, "similarity": round(sim, 4)})  # fmt: skip
     sweep = [score(rows, t) for t in THRESHOLDS]
+    threshold = get_settings().onboarding_topic_threshold
+    for r in rows:
+        alias = alias_topic(r["phrase"])
+        emb = r["topic"] if r["similarity"] >= threshold else None
+        r["via"] = "alias" if alias else "embedding" if emb else None
+        r["mapped"] = alias or emb
     ok = [s for s in sweep if s["precision"] >= TARGET_PRECISION and s["correct"]]
     chosen = ok[0] if ok else None
     return {
@@ -62,7 +73,21 @@ async def main() -> dict[str, Any]:
         "rows": rows,
         "sweep": sweep,
         "chosen": chosen,
+        "pipeline": pipeline(rows, threshold),
     }
+
+
+def pipeline(rows: list[dict[str, Any]], threshold: float) -> dict[str, Any]:
+    def tally(rs: list[dict[str, Any]]) -> dict[str, Any]:
+        pos = [r for r in rs if r["expect"] != "none"]
+        right = sum(r["mapped"] == r["expect"] for r in pos)
+        wrong = sum(r["mapped"] is not None and r["mapped"] != r["expect"] for r in rs)
+        return {"recognised": f"{right}/{len(pos)}", "wrong": wrong,
+                "by_alias": sum(r["via"] == "alias" for r in pos)}  # fmt: skip
+
+    unseen = [r for r in rows if alias_topic(r["phrase"]) is None]
+    return {"threshold": threshold, "all": tally(rows), "excluding_alias_copies": tally(unseen),
+            "alias_copies": [r["phrase"] for r in rows if r not in unseen]}  # fmt: skip
 
 
 if __name__ == "__main__":
@@ -75,3 +100,6 @@ if __name__ == "__main__":
         print(f"{r['similarity']:.3f}  {mark}  {r['id']}  {r['phrase']!r} → {r['topic']} "
               f"(expect {r['expect']})")  # fmt: skip
     print("chosen:", out["chosen"], "cost:", out["cost_usd"], "→", path)
+    for r in out["rows"]:
+        print(f"  {r['id']} {r['phrase']!r}: {r['mapped']} via {r['via']} (expect {r['expect']})")
+    print("pipeline:", json.dumps(out["pipeline"]))

@@ -162,6 +162,16 @@ def test_pieces_split_trim_dedupe_and_cap():
     assert len(long) <= ot.MAX_PIECE_CHARS and not long.endswith(" ")
 
 
+def test_the_alias_list_covers_every_topic_with_valid_ids():
+    topics = set(ot.ONBOARDING_TOPIC_ALIASES.values())
+    assert topics == set(DOMAIN_IDS)
+    assert all(k == k.casefold().strip() for k in ot.ONBOARDING_TOPIC_ALIASES)
+    for phrase, topic in [("IPL", "sports"), ("Champions League", "sports"), ("LLMs", "technology"),
+                          ("EVs", "technology"), ("UPSC", "education"), ("ISRO", "science"),
+                          ("elections", "politics"), ("mental health", "health")]:  # fmt: skip
+        assert ot.alias_topic(phrase) == topic
+
+
 def test_aliases_and_nearest_topic():
     assert ot.alias_topic(" Formula  One ") == "sports" and ot.alias_topic("VC") == "business"
     assert ot.alias_topic("knitting") is None
