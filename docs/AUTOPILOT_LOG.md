@@ -601,3 +601,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   1280×800; clips as equal 16:10 tiles at natural zoom (whole lines, never upscaled), each showing
   its step, mid-clip posters; then freeze and go to onboarding. Amendment R1–R3 drafted;
   plan-reviewer running.
+- Sourabh (46d answer): "don't cut around the reload. Fix it in the product … Add a test. Then
+  record clip 1 as one continuous take. Everything else in your 46c/46d plan is approved, including
+  leaving out the second phone frame." Plan rounds: product fix REVISE ×2 (second chip / chip kept,
+  refresh=1 not a page view, scorer test; deploy order), then APPROVE.
+- **PR #25** (Know-this refresh, branch off main): milestone-reviewer FIX (recap snapshot reset by
+  the refresh; STATUS) → FIX (recap snapshot from the previous view's notes after a switch; fixed by
+  tagging notes with their view) → **SHIP**; CI green; squash-merged (97ee1bd). API deployed
+  (revision 00020) and web deployed, each on Sourabh's yes. Live check: a temporary demo reader
+  answered "Not really" on "hedging": inked in as a new-idea mark, one chip "Noted, thanks.", no
+  reload; reader deleted (204). main merged into `landing` (4c2035c; landing's earlier drafts of the
+  fix files replaced by the reviewed ones).
+- 46c built (hero: phone out, source line in the card header, Read with Gloss chips; 1440×900 copy
+  vs card 3 px, 1280×800 32 px with the level line hidden at heights ≤ 820, whole hero in view).
+- **Decision 46e** (Sourabh): device frames with HD full-UI captures (a "See it in action" section
+  after the hero: monitor with the feed, laptop with the reader; phone on mobile), How it works as
+  framed full-window loops with a gentle zoom toward the action (≤ 1.15×), section padding ~128 /
+  ~72 px, loops ≤ 600 KB, posters ≤ 120 KB. His answer on the 11px question: "not relevant any
+  more; on phones the framed full-UI shots are pictures of the product, that's fine. Keep a 'tap to
+  play' with the poster on phones if autoplay is blocked." Amendment S1–S5 drafted; plan-reviewer
+  running.

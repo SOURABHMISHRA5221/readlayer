@@ -819,3 +819,71 @@ decision 46 checks, the copy/demo bottom check, axe 0, no horizontal scroll. Aft
   `landing_media.py --clips`, and the clips commit is the freeze commit. What the API deploy
   changes for live readers: one extra annotations request per "Know this?" answer (at most three a
   day, DESIGN §6.5); `refresh=1` called arbitrarily only skips the view record and the prompt.
+
+## Amendment: decision 46e, device frames with full-UI captures (Sourabh, 2026-10-11)
+
+Replaces 46d's clip crops (R2 natural-zoom tiles) and settles round 1 item 1: Sourabh: "Answer
+to the 11px question: not relevant any more; on phones the framed full-UI shots are pictures of
+the product, that's fine." The 46d product fix (PR #25) is merged; the API and web deploys come
+first (step 1 needs live "Not really" behaviour), then this, then the freeze and onboarding.
+
+### S1. Frames
+- One CSS/SVG device-frame family (no stock images), shared by both sections: a laptop (screen
+  bezel, camera dot, hinge base), an external monitor (thin bezel, stand) and a phone (rounded
+  body, notch). Screens are 16:10 for laptop and monitor (the 1440×900 captures are 16:10); the
+  phone screen is 390:844. One subtle shadow token (`--shadow-float`), light and dark.
+- `landing/DeviceFrame.tsx`: `<DeviceFrame kind="laptop|monitor|phone">` wrapping a `<picture>`
+  or a `Clip`; frames are decorative, the media carries the alt text.
+
+### S2. "See it in action" (new section right after the hero)
+- Desktop (≥ 1024): an external monitor (right, behind) showing the whole Gloss window on the For
+  you feed, and a larger laptop (left, front, overlapping the monitor's lower left) showing the
+  reader with the "bps" note open as a sidenote. Below 1024: one phone frame showing the reader
+  with the bottom-sheet card. Heading "See it in action", a one-line caption (the source credit:
+  "Gloss on an Economic Times article; the article's words are unchanged").
+- Captures: `landing_media.py --stills` on the live site as the temporary demo reader: 1440×900
+  viewport at deviceScaleFactor 2 (2880×1800), light theme, full window (no crop); the phone at
+  390×844 DPR 2 (780×1688). Exported AVIF + WebP at 1x (1440 / 390 wide) and 2x (2880 / 780),
+  never upscaled; `<picture>` with explicit width/height, lazy (below the fold), `decoding=async`.
+  Budget: posters/stills ≤ 120 KB per file at 1x; the 2x files are stills, ≤ 250 KB each (the
+  budget Sourabh gave is for posters of loops; stills are listed so the reviewer can hold them).
+- The phone frame is rendered only below 1024 and the desktop pair only at ≥ 1024
+  (`useMediaQuery`), so each device downloads only its own images.
+
+### S3. How it works: four framed loops
+- Each step is a laptop frame (16:10) showing the full reader/profile window at 1440×900, recorded
+  at DPR 2 (screencast frames 2880×1800), encoded at native 2880×1800 if within budget, else at
+  the 1x 1440×900 (a downscale, never an upscale). Budget: ≤ 600 KB per loop at 2x; posters ≤
+  120 KB (WebP); reduced motion = poster only (unchanged).
+- Guiding the eye: each clip has a focus box (the action's area as a fraction of the frame, from
+  the DOM during recording, stored in `clip_focus.json`); the tile applies a gentle zoom toward it
+  with a CSS transform on the video (`scale` ≤ 1.15, `transform-origin` at the box centre) eased
+  in after the clip starts and out before it loops, plus a soft radial spotlight overlay (a dimmed
+  edge, opacity only). Off under reduced motion. No hard crop: the full window stays in the frame.
+- Steps (same content as 46d): (1) "Know this?" → Not really → "Noted, thanks." → the term inks in
+  without reload (needs PR #25 live; the run checks it and stops otherwise); (2) a fresh load with
+  the highlights inking in while the margin "N notes for you" list fills (1440 has the rail, so one
+  take); (3) tap a highlight → card opens with Background and analogy tag → Say it simpler;
+  (4) profile knowledge map with 2–3 nodes filling in.
+- Grid: 2×2 at ≥ 768 with equal 16:10 tiles and aligned text rows (46d's subgrid stays); one column
+  below. Phones: the framed full-UI loop is a picture of the product (small text accepted per
+  Sourabh); if autoplay is blocked (`play()` rejects), the poster shows with a centred "Tap to
+  play" button (44px, labelled per clip) that starts the loop.
+- Production writes: ≤ 3 runs of `landing_media.py --clips --stills`, each 1 temporary demo reader
+  and its docs (DELETE /v1/me), 1 "Know this?" answer, ≤ 3 "Knew this", explain hit counters +N;
+  0 generations (precheck must report 0).
+
+### S4. Spacing
+- `--lp-space: clamp(72px, 9vw, 128px)` (≈ 72px at 390, 128px from ≈ 1420px); the hero gets the
+  same bottom padding before "Everyone reads past something"; every section boundary keeps it.
+  Check: the gap between consecutive section contents ≥ 72px at 390 and ≥ 120px at 1440.
+
+### S5. Checks and freeze
+- `landing_d46.py`: 46d's clip-text check is replaced by: tiles 16:10 with equal heights per row,
+  every loop file ≤ 600 KB and poster ≤ 120 KB, stills within S2's budgets, the media query rule
+  (phone images not requested ≥ 1024, desktop images not requested at 390), zoom scale ≤ 1.15 and
+  none under reduced motion, a "Tap to play" fallback test (vitest with `play()` rejecting),
+  section gaps (S4), first view unchanged (< 1.5 MB, no landing media before scroll).
+- Lighthouse (round 1 item 2) before the freeze; screenshots at 1440×900, 1280×800, 390×844, light
+  and dark, into `docs/evidence/landing/d46-after/`; merge `main` into `landing` first (PR #25).
+- Then the landing is frozen; §C and §B (onboarding).
