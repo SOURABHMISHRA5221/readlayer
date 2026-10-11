@@ -2,10 +2,11 @@
 
 Last updated: 2026-10-11 (IST): **Landing and onboarding merged (#26) and live** (API revision
 00021, web deployed; live landing checks pass, mobile Lighthouse LCP median 1.8 s; §19). **Decision
-48** (topic goals, `set_interest`, Redo setup) built and harness-accepted on `d48` (§20); next its
-review fixes, PR and deploys, then Sourabh's Redo setup check on his account (§9). Before that:
-Know-this refresh (#25), Design pass (#22, #23), M7.5 (#20), all live. Next after d48: Wide layout
-(decision 45), then M8-local (rebase `m8` first).
+48** merged (#27) and live (API revision 00022; Sourabh's Redo setup worked; §20). **Decision 50**
+(For you from top outlets, twice-daily job, 60/40 country/global, Refresh) built and
+harness-accepted on `d50` (§21); next review fixes, PR, deploys and the scheduler (§9). Before
+that: Know-this refresh (#25), Design pass (#22, #23), M7.5 (#20), all live. Order (decision 49):
+d50 → M8-local (from `m8-resume`) → Wide layout (decision 45).
 M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
@@ -38,7 +39,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M7.5 | **merged #20 and live** (§17); Sourabh's Google check done (2026-10-11) | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
 | Design pass | **merged #22 + #23 and live** (§18) | — | Gloss: tokens and type, Margo, library as a feed, reader, profile and SVG map (decisions 39, 40) |
 | Landing and onboarding | merged (squash), live | #26 | Landing page with live mini-demo (frozen); onboarding in 2 screens with web results (resolve, discover, pick, know, finish). See §19 |
-| Topics in the older boxes, Redo setup (decision 48) | built on `d48`, harness-accepted; review, PR and deploys next | — | Topic goals (preview, then save), Describe yourself `set_interest` (prompt v7), Redo setup for finished readers. Plan `docs/plans/d48.md`; §20 |
+| Topics in the older boxes, Redo setup (decision 48) | merged (squash), live: API revision 00022, web deployed; Sourabh's Redo setup worked | #27 | Topic goals (preview, then save), Describe yourself `set_interest` (prompt v7), Redo setup for finished readers. Plan `docs/plans/d48.md`; §20 |
+| For you from top outlets (decision 50) | built, harness-accepted on `d50`; review, PR, deploy and scheduler next | — | Outlet registry and twice-daily collection, 60/40 local/global by the reader's country, restricted search fallback, Refresh. Plan `docs/plans/d50.md`; §21 |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -200,6 +202,12 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | d48: the profile_edit eval ran 7 times, not the plan's 2 (v5 before, v6 after) | v6 failed P11 (empty direction); a v7 draft and an "empty = more" default were tried and dropped (the default turned "less cricket" into more on a repeat); the shipped v7 ran twice. Every run is kept and listed in evals/changelog.md; ≈ $0.063 | Recorded |
 | d48: a learning goal's exact concept match now short-circuits before `resolve_names` | Same result, no model path; the whole-phrase topic alias must come before any model call anyway | Keep (DESIGN §18) |
 | d48: "Know this?" acronym terms ("OCT") count only where the text writes them in capitals (found on the harness: "Know OCT?" from a date) | Not in the plan; a deterministic filter on a visible quality problem | Keep (DESIGN §4) |
+| d50: launch registry is BBC, The Guardian, NPR, The Hindu, Mint (plan listed The Indian Express and The Economic Times too) | Both failed the plan's readability rule, fixed before the run (≥ 2 of the 3 newest articles ≥ 400 words): IE 554/394/274, ET 401/360/170 (`docs/evidence/d50/outlets.txt`). The Hindu covers all 14 topics for Indian readers | Keep; re-adding one needs a passing check |
+| d50: one Cloud Scheduler job with two run times (06:00 and 18:00 IST), not two jobs | Same calls, one free-tier slot instead of two | Keep |
+| d50: Preferences shows the country unset (with a line saying For you is global-only) instead of prefilling it from the browser locale | Preferences saves on click, so a prefilled choice would look saved when it isn't; screen 1 prefills, since Continue saves explicitly | Keep |
+| d50: acceptance 1 is 5 of 6 sample articles ≥ 400 words (BBC sports report 324) | The job doesn't check length per item (≈ 300 fetches a run, plan §B); outlets were admitted by the readability rule, and every sampled article opened fully | Recorded (§5) |
+| d50: acceptance 4 measured after the harness, on review (it wasn't run before the first review) | Measured with 43 Tavily credits; result 13/14 topics → keep (§21) | Done |
+| d50: demo readers get 403 on `PATCH /v1/me/settings` with `country` | Plan: anonymous readers neither see nor store it; the settings route was otherwise open to demo readers | Keep |
 | M2.2: variant-precision baseline is 83% on the newly frozen 150-mention sample, not M2's 93% | M2's figure used a different sample and candidate floor; not comparable | Keep |
 ---
 
@@ -232,17 +240,19 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Headlines keep publisher SEO suffixes (" \| Stock Market News"); we don't alter publisher text |
 | Low | In-process catalog cache: docs ingested by another process need an API restart to appear (Open here appends directly) |
 | Low | Up next article searches still send Tavily `exclude_domains`, which made the news topic return only section pages in M7.5 testing; Up next uses the general topic and its results looked fine in M6.5, but this is unverified (feed articles no longer send it) |
-| Medium | Demo snapshots seeded 2026-10-10 are thin on articles for three topics: newcomer economics 1, trader business 1, policy student politics 0 readable articles (every topic has videos and podcasts). Before the Oct 16 re-seed: a second fixed phrase for thin topics in `seed_demo_feed` (≤ 1 extra search per thin topic; ask before the extra production searches) |
-| Medium | Tavily is on the free Researcher plan: 398 of 1,000 monthly credits used on 2026-10-10. Realistic feed + Up next use is ≈ 15–30 credits a day; a day at the feed cap could use ≈ 40. If credits run out, searches fail and the feed serves cached and yesterday's entries |
+| Medium | Until `seed_demo_feed` re-runs after the d50 deploy, demo feeds show no articles (their snapshot articles come from Tavily hosts the registry doesn't list). Run API deploy → feed job setup → manual run → seed in one sitting (§9). Replaces the old thin-topic item: snapshots now read the outlet entries |
+| Medium | d50 acceptance 1 was 5 of 6: a BBC sports report opened at 324 words. The job doesn't check length per item (≈ 300 fetches a run); outlets were chosen by the readability rule and "Open here" handles a short page |
+| Low | A YouTube video with a mostly Telugu title topped one d50 harness feed (its mixed title passed the 70% Latin check). Videos are outside d50; tighten the check or prefer English channels in M9 |
+| Medium | Tavily is on the free Researcher plan: 398 of 1,000 monthly credits used on 2026-10-10. Since then: d50's fallback measurement used 43 (2026-10-11), plus the d48/d50 harness runs' video and podcast searches (not counted separately); check the dashboard before the Oct 16 seed. Realistic feed + Up next use is ≈ 15–30 credits a day; a day at the feed cap could use ≈ 40. If credits run out, searches fail and the feed serves cached and yesterday's entries |
 | Low | A demo reader can hit the 60 requests/minute limit when a script opens many pages quickly (seen in the Design pass harness runs: the profile showed "didn't load" on a 429); real reading doesn't come close |
 | Low | Refresher highlights are a minority (8–16% of shown spans at "For me" across the demo personas); some articles show only "new" highlights |
 | Low | For you headline links are 27px tall text links (above WCAG 2.5.8's 24px, below our 44px control target, which applies to buttons) |
-| Low | For you quality depends on Tavily's news results, which vary run to run (the same query gave 2 or 10 real articles); empty day entries are retried after an hour. "News this week" also pulls event pages ("Mental Health Week") |
+| Low | For you videos and podcasts, onboarding concept searches and thin-topic article fallbacks still depend on Tavily / YouTube results, which vary run to run; feed articles come from outlet feeds (decision 50) |
 | Low | A pasted page stays pending (not in the library) if its reader leaves before the notes finish and the analyse request never ran; the next open of that link analyses it |
 | Low | The English-only filter checks script, not language: a Hinglish title in Latin script passes ("Health Insurance Claim Ka 10% Ab Aapko Dena Hoga?") |
 | Low | Learning-goal resolution takes 8–19 s on the harness (embedding + link_confirm); the form says it is looking the idea up |
 | Low | `rec_shown` relies on IntersectionObserver, which browsers pause in background tabs (seen in automated testing; real readers have the tab in front) |
-| Low | Web main bundle 143.6 KB gzip (budget 150 KB) after the Design pass; For you, Saved and Profile are lazy chunks; the Cytoscape + dagre chunk is gone (the map is SVG) |
+| Low | Web main bundle 147.6 KB gzip after d50 (budget 150 KB; 2.4 KB left with M8 and Wide layout to come); For you, Saved and Profile are lazy chunks; the Cytoscape + dagre chunk is gone (the map is SVG) |
 | Low | The weekly trend is per uid, so a demo session's trend mixes the personas it read as (the page says "this demo session") |
 | Low | Calibration picks the most frequent concepts per domain, which occasionally surfaces a term like "Expiry days"; fine for a quick check, revisit with the gold set |
 | Low | Firestore emulator fails contended transactions faster than production (three prefetched explanations reserving one daily counter); a jittered retry now wraps every transaction (no production occurrence in 7 days of logs) |
@@ -372,6 +382,13 @@ local explanations while testing ≈ $0.03, one "Open here" ingest $0.0024. Unde
 on timeouts). M5 safety evals ≈ $2.53 (five full runs incl. the Pro judge at $1.12); local dev,
 screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all day.
 
+**Decision 50 (2026-10-11):** no LLM anywhere. The outlet check, the dry run and the harness's
+emulator collection are plain feed and article fetches; the harness's searches were videos and
+podcasts only (articles came from outlets). The fallback measurement (`scripts/measure_fallback.py`) used **43 Tavily
+credits** (36 + 7 retries), not counted in `ops/search`. Production expectation: Scheduler 1 job (free tier
+3), ≈ 54 feed fetches and 14 Firestore writes per run, **$0/month**; Tavily article searches
+only for thin topics and onboarding concepts.
+
 **Landing illustrations (2026-10-11, decision 44 V3):** `gemini-3.1-flash-image`, prompt
 `landing-art-v1`, 5 images, **$0.34** (Sourabh approved up to 6 images / $0.60); two 429s,
 unbilled. Details in DESIGN §20.1.
@@ -435,7 +452,8 @@ BUILD_PLAN.md has the prompts. M6, M7 and M2.2 are merged and live.
 | Now | **M7.5** merged #20 and live; steps (1)–(6) below done 2026-10-10 (§17). Step (7), Sourabh's Google check, done 2026-10-11. Post-merge steps, as run: (1) PR, milestone-reviewer SHIP, merge on green CI; (2) `make check-gcp`, deploy the API, then the web (Sourabh's yes on each); (3) `seed_demo_feed --dry-run`, then the real run: ≤ 18 searches (≤ 24 calls) counted in production's `ops/search`, ≤ 18 shared `rec_cache` feed entries, 3 `persona_feeds/{persona}` docs, ≈ 60 local fetch-and-extract checks, no LLM; check each persona has ≥ 2 readable articles per topic (re-run one persona with `--persona` if not); (4) record Tavily's plan and remaining credits here and in §7; (5) `warm_demo --dry-run`, then the real run (≈ 42 explanation entries, ≈ $0.25; today's production ledger is $6.71 of $8, so run it after 00:00 UTC if the deploy lands late on Oct 10 UTC); (6) `live_check_m7_5.py` (one demo reader pastes one non-business article, deleted after); (7) Sourabh's Google check: For you, one learning goal, open a feed article. Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut |
 | Oct 11–13 | **Design pass** (decisions 39, 40): built and accepted on the harness on Oct 11 (§18), ahead of both checkpoints. Next: milestone-reviewer, PR and green CI, deploy API then web (Sourabh's yes), live check (one demo reader saves an article, presses Helpful and asks "Say it simpler" once, ≈ $0.01, deleted after) |
 | Oct 11–13 | **Landing and onboarding** (decisions 41–47): landing built and frozen; onboarding API and 2 screens built and accepted on the harness on Oct 11 (§19), ahead of both checkpoints (end of Oct 12 IST: landing; end of Oct 13 IST: merged). Next: milestone-reviewer, PR from `landing`, green CI, deploy API then web (Sourabh's yes on each), live check (anonymous landing Lighthouse; Sourabh's own Google onboarding: ≤ 18 topic + ≤ 2 concept searches, ≤ 1 resolve ≈ $0.002) |
-| Oct 12–13 | **Decision 48**: topic goals, `set_interest`, Redo setup (plan APPROVE after one REVISE round). Built and harness-accepted Oct 11. Next: milestone-reviewer, PR, deploy API then web (Sourabh's yes), Sourabh's live check with Redo setup on his account. **Checkpoint end of Oct 13 IST:** not merged → ask Sourabh what to cut (decision 27) rather than slipping M8-local (Oct 14) |
+| Oct 12–13 | **Decision 50**: built and harness-accepted Oct 11 (§21), ahead of the Oct 12 checkpoint; no cut needed. Next: milestone-reviewer, PR, deploy API (his yes) → `make setup-feed-job` (his yes: enables Cloud Scheduler, creates `feed-job` SA, 1 job) → `make run-feed-job` (manual run, 14 `rec_cache/outlets:*` docs; record its response body and the doc count in §21) → `seed_demo_feed --dry-run` → real seed (3 `persona_feeds`) → web deploy, API through seed in one sitting (until the seed, demo feeds show no articles) (his yes) → live check on his account (country set, Refresh). Originally: build and harness Oct 12 (checkpoint end of Oct 12 IST with the plan's cut order), review/PR/deploy/scheduler setup (his yes)/live Oct 13. Then **M8-local** (resume from local branch `m8-resume`: plan commits replayed on main; the wip code commit 2f037a1 to be carried over by hand: redaction format + fixture + tests, NOT_CORPUS exclusions for `extension` in scorer/build_concepts/eval_heldout/library candidates; plan needs an amendment: annotator 0.7, per-reader visibility, onboarding redirect), then **Wide layout** |
+| Done Oct 11 | **Decision 48**: topic goals, `set_interest`, Redo setup (plan APPROVE after one REVISE round). Built and harness-accepted Oct 11. Next: milestone-reviewer, PR, deploy API then web (Sourabh's yes), Sourabh's live check with Redo setup on his account. **Checkpoint end of Oct 13 IST:** not merged → ask Sourabh what to cut (decision 27) rather than slipping M8-local (Oct 14) |
 | After Landing ships, before M8 | **Wide layout** follow-up (decision 45): feed/library, profile and reader use the width; own plan, reviewer loop, PR. Pushes M8-local; if M8 or M9 is at risk, ask Sourabh what to cut |
 | Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done; keep M7.5's "visible to the reader who brought it in") |
 | Oct 15 | **M9** hardening and evals, plus four M2.2 follow-ups required before the freeze (Sourabh, 2026-10-10): (1) merge check within one growth batch (same-article duplicates, e.g. Forever chemicals / PFAS); (2) validate grown prerequisites against the domain or drop low-confidence ones (PFOS → PHOSITA); (3) grown-concept precision on a fresh, independent sample of 30, reported with the 87% and 97% samples; (4) README and deck state the frozen-graph misses (64% / 13%) next to the after-growth numbers |
@@ -518,6 +536,9 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 47 | Self-hosted trimmed fonts (Sourabh, 2026-10-11) | Fontsource variable Schibsted Grotesk and Source Serif 4, Latin only, trimmed to the weights used (fontTools), a one-glyph ₹ file per face, hero headline and body preloaded, `font-display: swap`, metric-matched fallbacks, Google Fonts links dropped, `/fonts/**` cached immutable. Mobile LCP still missed the 2.5 s gate (not the fonts: the landing chunk re-mounts the hero); Sourabh accepted the miss, the mount restructure is on the M9 list; landing frozen. Plan amendment F1–F3 |
 | 42b | Onboarding topic matching, more deterministic (Sourabh, 2026-10-11, before the PR) | The topic alias list extended to ~60 common phrases over all 14 topics (109 entries with variants), then word-level matching: words and 2-word chunks (no stop, generic or country words) against the aliases and concept labels, strongest match's topic, before any model call; embedding only when nothing matches. Same 22-phrase set, gate zero wrong and the 5 nonsense phrases unrecognised: 18/22 (§4 has the caveat) |
 | 48 | Topics in the older boxes, and Redo setup (Sourabh, 2026-10-11, after the live check of #26) | "Indian politics" failed as a learning goal and in Describe yourself. (1) Both reuse the topic matcher: a topic-level goal targets the topic plus up to ~10 matching concepts, previewed ("Goal: understand Politics (Indian politics) · 10 ideas") before saving; Describe yourself gains a whitelisted `set_interest(topic, more/less)`, previewed ("More Politics in your feed") with Apply and Undo; same privacy rules. (2) "Redo setup" on the profile reruns the 2 screens for an existing Google reader without deleting anything; consent only if its version changed. Tests, deploy (his yes), his live check with Redo setup. Plan `docs/plans/d48.md` |
+| 49 | Order (Sourabh, 2026-10-11) | Extension (M8-local) before Wide layout; then (same evening) "M7.5 should be finished before everything": the For you feed isn't up to mark, so decision 50 comes first. Order: d50 → M8-local → Wide layout (decision 45) |
+| 50 | A For you feed worth reading (Sourabh, 2026-10-11) | Refresh after preference changes; articles from top organisations, not small local papers; TinyFish judged unsuitable for a feed (browser agent: slow, per-task cost, non-deterministic), so: top outlets' section feeds collected by a job **twice a day** ("as long as cost is not killing": expected $0/month in the free tier), outlet mix **40% global + 60% the reader's country** (country chosen by the reader, prefilled from the browser), web search only as a fallback restricted to top outlets. Plan `docs/plans/d50.md` (REVISE 13 → APPROVE). Persona country: decision 51 |
+| 51 | Demo personas' country (Sourabh, 2026-10-11) | "Keep showing Indian news for neutrals also": demo personas read as India (`PERSONA_COUNTRY = "IN"`), so the demo feed, judges included, is 60% Indian outlets + 40% global |
 
 No decisions are open.
 
@@ -884,3 +905,22 @@ screenshots in `docs/evidence/d48/`.
 | Evals | profile_edit, cases P11–P14 and X05 committed before any run; every run (evals/changelog.md): v5 7/10 (before), v6 9/10, a v7 draft 8/10 (never shipped; file renamed `…v7-draft-direction-required`), v6 + "empty = more" 10/10 then 9/10 (turned "less cricket" into more: dropped), shipped v7 10/10 and 10/10; attacks 5/5 throughout |
 | Tests | API 687, web 58 |
 | Live | Pending: deploy, then Sourabh's Redo setup on his account |
+
+## 21. Decision 50 acceptance (2026-10-11, local and emulator harness)
+
+Plan `docs/plans/d50.md` (plan-reviewer REVISE 13 → APPROVE). Evidence: `tools/shots/d50.py`,
+`docs/evidence/d50/` (screenshots, `outlets.txt`).
+
+| Check | Result |
+|---|---|
+| Outlets readable | 54/54 section feeds answer; BBC 2/3, Guardian 3/3, NPR 2/3, The Hindu 2/3, Mint 3/3 articles ≥ 400 words; IE and ET failed and are out (§4) |
+| Collection | Dry run: every topic has fresh items on both sides (e.g. economics 25, politics 231); emulator run wrote 14 docs, ≤ 20 items per outlet. Endpoint: 403 without a token, with a forged or Firebase token, wrong email / audience / issuer, unverified email, or either setting empty; 200 with the scheduler's claims (pytest, verifier faked) |
+| 1. For you, Indian reader (economics, politics, sports) | 9/9 articles from registry outlets, **5 local / 4 global** (target 5); no article search. 6 opened through "Open here" phase 1 (no LLM): The Hindu 531, Guardian 1013, Mint 992, The Hindu 492, **BBC 324**, Mint 877 words: **5 of 6 ≥ 400** (the BBC one is a short sports report; all open fully) |
+| 2. Refresh / topic change | Refresh: 1 feed request, **0 searches added** (emulator `ops/search`), no reload. Redo setup adding Health → Start reading: same page (no reload), 6 Health rows, topics economics, politics, health, sports |
+| 3. Collect job live | Pending: after deploy and scheduler setup |
+| 4. Search fallback | Measured (`scripts/measure_fallback.py`, `docs/evidence/d50/fallback.txt`; 43 Tavily credits, no LLM): restricted searches give ≥ 2 kept articles for **13/14 topics** (policy 1) and 3/3 sample concepts; plain searches 13/14. First run: 7 restricted searches hit the 10 s timeout; the retry answered all in ≈ 1 s (transient provider slowdown; the feed's backoff and yesterday fallback cover it). Plan rule → **keep**. The fallback runs for a thin topic, before the first collection, and for **every onboarding concept search** (screen 2), which always uses it. Request body: constant `include_domains`, no `exclude_domains`; requests identical across countries (pytest) |
+| Country | Prefilled India from `en-IN` on screen 1, stored IN only on Continue; Preferences choice; demo 403; exported, deleted (pytest, vitest) |
+| axe | 0 on screen 1 with the country field, For you, and Preferences at 1440/390, light and dark; Preferences overflowed at 390 (fixed: the options wrap). Small targets: existing chip inputs and row title links |
+| Tests | API 718, web 63. Main bundle 147.6 KB gzip (budget 150) |
+| Review fixes (milestone-reviewer FIX) | The 60/40 mix now sized over the slots that survive the 24-item cut (6-topic test fails on the old code: local 3/7 vs target 6 in the reviewer's repro); fallback measured; STATUS corrected; Add-your-country link stays in the app and scrolls to Preferences; "Somewhere else" hint says world news from global outlets |
+| Follow-up seen | A YouTube video with a mostly Telugu title topped one harness feed (videos aren't part of d50; the Latin-script check passed on its mixed title). M9 list |

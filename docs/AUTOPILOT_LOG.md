@@ -778,8 +778,64 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Harness (`tools/shots/d48.py`): all flows pass, axe 0 (STATUS §20). First run failed on my
   script (clicked the habit form's Add); fixed.
 
+- milestone-reviewer FIX (interest-only history line blank; eval record; evidence; STATUS) → all
+  fixed (f425072) → **SHIP**. PR #27, CI green, squash-merged (458ef05). API deployed (revision
+  00022) and web deployed, each on Sourabh's yes. Sourabh: "Redo did work."
+
+## Decisions 49 and 50 — feed first, then extension, then Wide layout (2026-10-11)
+
+- Sourabh: extension before Wide layout (49); then "M7.5 should be finished before everything":
+  the For you feed isn't up to mark (no Refresh after preference changes; small local papers).
+  TinyFish setup was blocked by Claude Code's safety check (it writes MCP config into every coding
+  agent on the machine); he can run it himself with `!`; not used for the feed (browser agent
+  unsuited). Decision 50: top outlets' section feeds, twice-daily job ($0 expected), 40% global +
+  60% reader's country, restricted search fallback, Refresh.
+- Evidence before planning: section feeds checked (curl) and readability measured with our own
+  safe_fetch + extract (BBC, Guardian, NPR, The Hindu, Indian Express, Mint, ET readable; ThePrint,
+  Scroll empty; Nature RDF; Ars blocked; Al Jazeera short).
+- Plan `docs/plans/d50.md` on branch `d50`: plan-reviewer REVISE (13) → APPROVE (nits applied).
+- M8 prep done on local branch `m8-resume` (not pushed): the three M8 plan commits replayed onto
+  main; the old docs commit for M2.2 skipped (superseded); the wip code commit 2f037a1 not replayed
+  (7 conflicts, mostly superseded by M7.5's per-reader visibility); carry its redaction format,
+  fixture and tests and the `extension` exclusions over by hand when M8 resumes.
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer on `d48` until SHIP; PR; green CI; merge.
-2. Deploy API then web (Sourabh's yes); live: Sourabh's Redo setup on his account (≤ 18 topic +
-   ≤ 2 concept searches, ≤ 1 resolve), the topic goal and a set_interest edit; STATUS §19/§20 live.
-3. READY FOR /clear; then the Wide layout follow-up (decision 45).
+1. **Decision 50** on branch `d50` (plan approved, `docs/plans/d50.md` incl. Round 1 + 2): build
+   API (outlet registry + `outlet_feed.py` parsing moved from collect_corpus, `OutletStore`,
+   internal collect endpoint with SA-email/aud/iss checks, mix 60/40, `feedx:` fallback with the
+   constant include_domains, country field), web (country on screen 1 + Preferences, For you
+   Refresh + `rl:feed-stale`, unset-country hint), `scripts/check_outlets.py`,
+   `scripts/collect_outlets.py --dry-run`, `make setup-feed-job`; tests; harness; checkpoint end
+   of Oct 12 IST with the cut order.
+2. Demo personas read as India (decision 51, answered): `PERSONA_COUNTRY = "IN"`.
+3. Review, PR, deploy order API → scheduler setup (his yes) → manual run → seed dry run → seed →
+   web; live check on his account (country set, Refresh).
+4. Then M8-local from `m8-resume`, then Wide layout.
+
+### Decision 50 build (2026-10-11, branch d50)
+- API (5ccbe6f): registry, `outlet_feed` (parsing moved from collect_corpus), `outlet_job` +
+  `POST /v1/internal/feeds/collect` (Google OIDC claims, fails closed), `OutletStore`
+  (`rec_cache/outlets:<topic>`), feed outlet-first with `feedx:` restricted fallback, 60/40
+  `article_split`, `country` (onboarding, settings; demo 403), `PERSONA_COUNTRY = "IN"`.
+- Scripts (d971ed5): `check_outlets` dropped Indian Express and Economic Times by the pre-set
+  rule (evidence kept); `collect_outlets --dry-run`; seed_demo_feed from outlets; Makefile
+  `setup-feed-job` / `run-feed-job` (one job, two times); deploy.env.yaml FEED_JOB_* vars.
+- Web (74597a7): country on screen 1 (locale prefill) and Preferences, Refresh, `rl:feed-stale`,
+  country hint, /privacy.
+- Harness (28ddf91): STATUS §21. 9/9 registry articles, 5/4 mix, Refresh 0 searches, Redo
+  in place, axe 0; Preferences overflow at 390 fixed. 5 of 6 sample articles ≥ 400 words.
+- Tests: API 717, web 63. No LLM spend.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on d50 → fix until SHIP → PR → green CI → merge.
+2. Deploy API (his yes) → `make setup-feed-job` (his yes) → `make run-feed-job` → seed dry run
+   → seed → web deploy (his yes) → live check (his account: country, Refresh).
+3. Then M8-local from `m8-resume`, then Wide layout.
+
+### Decision 50 review
+- milestone-reviewer round 1 FIX (3 blocking: fallback unmeasured, 60/40 broken by the
+  24-item cut for 5–6 topics, STATUS stale; 4 non-blocking) → 6d21c82: select sizes the split
+  over surviving slots (6-topic test, fails on old code); fallback 13/14 topics, 3/3 concepts
+  → keep (43 Tavily credits); STATUS fixed; in-app country link; "Somewhere else" hint.
+- Round 2: **SHIP**. Follow-ups: credits in §7/§5 (done), watch policy fallback live.
+- Next: push d50, PR, green CI, merge; then the deploy sequence in STATUS §9.

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { countryFromLocale } from "../lib/country";
+import { markFeedStale } from "../lib/feedStale";
 import { profileApi } from "../lib/profileApi";
 import { navigate } from "../lib/router";
 import {
@@ -45,10 +47,19 @@ export default function WelcomePage() {
         setRedo(!!o.redo);
         // A reader who agreed to an older consent text sees the current one once.
         setConsented(o.consented && o.consent_version === CONSENT_VERSION);
-        setAbout((cur) => ({ ...cur, field: o.field ?? cur.field, topics: o.interests?.length ? o.interests.slice(0, MAX_TOPICS) : cur.topics }));
+        setAbout((cur) => ({
+          ...cur,
+          field: o.field ?? cur.field,
+          topics: o.interests?.length ? o.interests.slice(0, MAX_TOPICS) : cur.topics,
+          // A saved country wins; otherwise the browser's locale suggests one (decision 50).
+          country: p.settings.country ?? cur.country ?? countryFromLocale(navigator.language),
+        }));
         setScreen(o.step === "discover" || o.redo === "discover" ? "discover" : "about");
       })
-      .catch(() => setScreen("about"));
+      .catch(() => {
+        setAbout((cur) => ({ ...cur, country: cur.country ?? countryFromLocale(navigator.language) }));
+        setScreen("about");
+      });
   }, []);
 
   // Each screen change moves focus to its heading, so keyboard and screen-reader users start there.
@@ -66,6 +77,7 @@ export default function WelcomePage() {
 
   const finish = () => {
     window.dispatchEvent(new Event("rl:onboarding-changed"));
+    markFeedStale();
     navigate("/", { replace: true });
   };
 

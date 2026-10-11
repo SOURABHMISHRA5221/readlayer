@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 
 import { api, ApiError, errorKind, type ApiErrorKind } from "../../lib/api";
 import { feedApi, type FeedItem, type FeedResponse } from "../../lib/feedApi";
-import { pendingNote, reaskDelay, snapshotNote, visibleItems } from "../../lib/feedView";
+import { FEED_STALE } from "../../lib/feedStale";
+import { pendingNote, reaskDelay, snapshotNote, visibleItems, wantsCountry } from "../../lib/feedView";
 import { formatDate } from "../../lib/format";
 import { personaParam, type PersonaKey } from "../../lib/personas";
 import { navigate, withParams } from "../../lib/router";
@@ -24,6 +25,8 @@ function time(item: FeedItem): string {
 export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
   const [load, setLoad] = useState<Load>({ status: "loading" });
   const [attempt, setAttempt] = useState(0);
+  const [round, setRound] = useState(0); // bumped by Refresh and by preference changes
+  const [refreshing, setRefreshing] = useState(false);
   const [dismissed, setDismissed] = useState<ReadonlySet<string>>(new Set());
   const [opening, setOpening] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -34,9 +37,22 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
     feedApi
       .feed(persona, ctrl.signal)
       .then((feed) => setLoad({ status: "ready", feed }))
-      .catch((e) => !ctrl.signal.aborted && setLoad({ status: "error", kind: errorKind(e) }));
+      .catch((e) => !ctrl.signal.aborted && setLoad({ status: "error", kind: errorKind(e) }))
+      .finally(() => !ctrl.signal.aborted && setRefreshing(false));
     return () => ctrl.abort();
-  }, [persona, attempt]);
+  }, [persona, attempt, round]);
+
+  // A refresh keeps the current picks on screen until the new ones arrive (decision 50 §F).
+  const refresh = () => {
+    setRefreshing(true);
+    setAttempt(0);
+    setRound((r) => r + 1);
+  };
+  useEffect(() => {
+    const onStale = () => refresh();
+    window.addEventListener(FEED_STALE, onStale);
+    return () => window.removeEventListener(FEED_STALE, onStale);
+  }, []);
 
   const pending = load.status === "ready" && load.feed.pending;
   useEffect(() => {
@@ -87,7 +103,29 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
   };
 
   return (
-    <div className="feedtab">
+    <div className="feedtab" aria-busy={refreshing}>
+      {!feed.snapshot && (
+        <div className="feedtab__bar">
+          <p className="feedtab__note" role="status">
+            {refreshing ? "Refreshing your picks…" : wantsCountry(feed) ? (
+              <>
+                Add your country for news from where you live. <a
+                  href="/profile#prefs-title"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate("/profile#prefs-title");
+                  }}
+                >
+                  Preferences
+                </a>
+              </>
+            ) : null}
+          </p>
+          <button className="btn btn--sm feedtab__refresh" type="button" onClick={refresh} disabled={refreshing}>
+            Refresh
+          </button>
+        </div>
+      )}
       {note && <p className="feedtab__note">{note}</p>}
       {waiting && (
         <p className="feedtab__note" role="status">

@@ -41,7 +41,7 @@ class FakeProvider:
     def __init__(self):
         self.queries = []
 
-    async def search(self, query, fmt):
+    async def search(self, query, fmt, news=False, include_domains=()):
         """One result per query that names the searched concept (so it passes the gate)."""
         self.queries.append(query)
         base = {"article": WEB_ARTICLE, "video": VIDEO, "podcast": PODCAST}[fmt]

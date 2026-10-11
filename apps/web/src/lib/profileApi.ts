@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { Country } from "./country";
 import type { PersonaKey } from "./personas";
 import type { Domain } from "./taxonomy";
 
@@ -44,7 +45,7 @@ export interface Profile {
     moved_up: { concept_id: string; label: string; from: Band; to: Band; domain?: Domain }[];
     trend: { week: string; annotations_per_1000_words: number }[];
   };
-  settings: { density: Density; explanation_style: ExplanationStyle };
+  settings: { density: Density; explanation_style: ExplanationStyle; country?: Country | null };
   persona: PersonaKey | null;
   onboarding: Onboarding;
 }
@@ -181,7 +182,9 @@ export const profileApi = {
       `/v1/me/graph?domain=${domain}${search ? `&q=${encodeURIComponent(search)}` : ""}${q(persona, false)}`,
       signal,
     ),
-  settings: (changes: Partial<{ thinks_in: Frame[]; density: Density; explanation_style: ExplanationStyle; learning_paused: boolean }>) =>
+  settings: (
+    changes: Partial<{ thinks_in: Frame[]; density: Density; explanation_style: ExplanationStyle; learning_paused: boolean; country: Country }>,
+  ) =>
     api.raw.send<Record<string, unknown>>("PATCH", "/v1/me/settings", changes),
   consent: (version: string) => api.raw.send<{ consented: boolean }>("POST", "/v1/me/consent", { version }),
   onboarding: (answers: {
@@ -190,6 +193,7 @@ export const profileApi = {
     comfort?: Partial<Record<Domain, Level>>;
     thinks_in: Frame[];
     liked_content_ids?: string[];
+    country?: Country; // decision 50
   }) => api.raw.send<{ saved: boolean; next: string }>("POST", "/v1/onboarding", answers),
   calibrationNext: () => api.raw.get<CalibrationNext>("/v1/calibration/next"),
   calibrationAnswer: (concept_id: string, answer: "explain" | "heard" | "none") =>

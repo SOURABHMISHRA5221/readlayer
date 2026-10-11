@@ -26,6 +26,7 @@ from app.reader.model import Band, Edge
 from app.reader.personas import PERSONA_THINKS_IN
 from app.reader.state import PersonaKey, ThinksIn
 from app.reader.subgraph import knowledge_subgraph
+from app.recs.outlets import Country
 from app.store.docstore import get_doc_store
 from app.store.reader_repo import Density, ExplanationStyle, ReaderRepo
 
@@ -386,7 +387,12 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
             ],
             "trend": _trend(weekly),
         },
-        "settings": {"density": user.density, "explanation_style": user.explanation_style},
+        "settings": {
+            "density": user.density,
+            "explanation_style": user.explanation_style,
+            # Decision 50; demo readers have none (they read as PERSONA_COUNTRY).
+            "country": None if ctx.caller.is_anonymous else user.country,
+        },
         "persona": ctx.persona,
         "onboarding": {
             "consented": user.may_record,
@@ -416,6 +422,7 @@ class SettingsIn(BaseModel):
     density: Density | None = None
     explanation_style: ExplanationStyle | None = None
     learning_paused: bool | None = None
+    country: Country | None = None  # decision 50; "other" is the way to say "not these"
 
 
 @router.patch("/me/settings")
@@ -424,6 +431,8 @@ async def patch_settings(
 ) -> dict[str, Any]:
     await require_consent(caller)
     changes = body.model_dump(exclude_none=True)
+    if "country" in changes and caller.is_anonymous:  # demo readers read as PERSONA_COUNTRY
+        raise HTTPException(status_code=403, detail="country_needs_sign_in")
     if "thinks_in" in changes:
         changes["thinks_in"] = sorted(set(changes["thinks_in"]))
     user = await _repo().update_settings(caller.uid, changes)
@@ -432,6 +441,7 @@ async def patch_settings(
         "density": user.density,
         "explanation_style": user.explanation_style,
         "learning_paused": user.learning_paused,
+        "country": user.country,
     }
 
 

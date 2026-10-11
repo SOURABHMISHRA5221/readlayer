@@ -9,7 +9,6 @@ robots.txt disallows its APIs (/w/, /api/), so titles are resolved from the arti
 """
 
 import asyncio
-import calendar
 import json
 import re
 import sys
@@ -17,12 +16,10 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from urllib.parse import quote, unquote, urlsplit, urlunsplit
-
-import feedparser
+from urllib.parse import quote, unquote, urlsplit
 
 from app.ingest.safe_fetch import FetchError, SafeFetcher
-from app.ingest.urls import normalize_url
+from app.recs.outlet_feed import FEED_TYPES, MEDIA_DENY, canonical, parse_entries
 
 DATA_DIR = Path(__file__).resolve().parents[3] / "data"
 CORPUS_FILE = DATA_DIR / "corpus_urls.txt"
@@ -33,9 +30,6 @@ WIKI_TARGET = 70
 PROBE_ARTICLES = 2
 SAMPLES_SHOWN = 5
 WIKI_CONCURRENCY = 4
-FEED_TYPES = frozenset(
-    {"application/rss+xml", "application/atom+xml", "application/xml", "text/xml"}
-)
 
 
 @dataclass(frozen=True)
@@ -106,23 +100,13 @@ SOURCES: tuple[Source, ...] = (
     ),
 )
 
-# Formats that aren't a readable article, and paywalled or tip sections.
+# Formats that aren't a readable article (shared with the outlet feeds), and paywalled, tip
+# or off-topic sections of this business corpus.
 PATH_DENY = (
-    "/video",
-    "/photo",
-    "/podcast",
-    "/gallery",
-    "/slideshow",
-    "/web-stories/",
-    "/live/",
-    "liveblog",
-    "live-blog",
-    "live-updates",
+    *MEDIA_DENY,
     "/prime/",
     "/portfolio/",
     "/recos/",
-    "/quiz",
-    "/newsletters/",
     "/sport",
     "/people/",
     "/entertainment/",
@@ -235,12 +219,6 @@ class Item:
     title: str
 
 
-def canonical(url: str) -> str:
-    """News article ids live in the path, so query and fragment are tracking noise."""
-    parts = urlsplit(url.strip())
-    return normalize_url(urlunsplit((parts.scheme, parts.netloc, parts.path, "", "")))
-
-
 def is_relevant(source: Source, url: str, title: str) -> bool:
     path = urlsplit(url).path.lower()
     if not path.startswith(source.path_prefixes):
@@ -251,17 +229,11 @@ def is_relevant(source: Source, url: str, title: str) -> bool:
 
 
 def parse_feed(source: Source, feed_index: int, body: bytes) -> list[Item]:
-    parsed = feedparser.parse(body)
     items = []
-    for entry in parsed.entries:
-        link, title = entry.get("link", ""), entry.get("title", "")
-        if not link.startswith(("http://", "https://")):
-            continue
-        stamp = entry.get("published_parsed") or entry.get("updated_parsed")
-        published = float(calendar.timegm(stamp)) if stamp else 0.0
-        url = canonical(link)
-        if is_relevant(source, url, title):
-            items.append(Item(source.tag, feed_index, published, url, title.strip()))
+    for e in parse_entries(body):
+        published = e.published.timestamp() if e.published else 0.0
+        if is_relevant(source, e.url, e.title):
+            items.append(Item(source.tag, feed_index, published, e.url, e.title))
     return items
 
 

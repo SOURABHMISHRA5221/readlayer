@@ -35,15 +35,18 @@ class TopicProvider:
 
     def __init__(self, delay: float = 0.0):
         self.queries: list[str] = []
+        self.domains: list[tuple[str, ...]] = []
         self.delay = delay
 
-    async def search(self, query, fmt, news=False):
+    async def search(self, query, fmt, news=False, include_domains=()):
         self.queries.append(query)
+        self.domains.append(tuple(include_domains))
         if self.delay:
             await asyncio.sleep(self.delay)
         slug = query.replace(" ", "-") + "-today"  # an article-like slug (≥ 3 words)
-        return [WebResult(url=f"https://x.test/{fmt}/{slug}", title=f"{query} today",
-                          source="x.test", format=fmt)]  # fmt: skip
+        host = include_domains[0] if include_domains else "x.test"  # the fallback: a wire
+        return [WebResult(url=f"https://{host}/{fmt}/{slug}", title=f"{query} today",
+                          source=host, format=fmt)]  # fmt: skip
 
 
 def service(provider, calls=None):
@@ -138,8 +141,10 @@ def test_slow_searches_come_back_pending_and_join_the_inflight_task(env):
     search = feed_mod.FeedSearch(web)
 
     async def run():
-        first = await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=0.05)
-        second = await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0)
+        first = await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=0.05,
+                                    article_topics=["health"])  # fmt: skip
+        second = await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0,
+                                     article_topics=["health"])  # fmt: skip
         return first, second
 
     first, second = asyncio.run(run())
@@ -149,7 +154,8 @@ def test_slow_searches_come_back_pending_and_join_the_inflight_task(env):
 
 
 def _snapshot(prepared_at):
-    item = WebResult(url="https://x.test/a", title="Technology latest news today", source="x.test",
+    item = WebResult(url="https://www.bbc.co.uk/news/articles/c620r33plgppo",
+                     title="Technology latest news today", source="BBC",
                      format="article", published_at=prepared_at)  # fmt: skip
     return feed_mod.Snapshot("newcomer", prepared_at, ("technology", "economics"),
                              (("technology", item),))  # fmt: skip
@@ -171,7 +177,7 @@ def test_a_missing_snapshot_is_an_empty_state(env):
     body = TestClient(app, headers=auth("demo2", anonymous=True)).get(
         "/v1/feed?persona=trader").json()  # fmt: skip
     assert body == {"topics": ["finance", "business"], "items": [], "pending": False,
-                    "snapshot": True, "prepared_at": None}  # fmt: skip
+                    "snapshot": True, "prepared_at": None, "country": None}  # fmt: skip
     assert provider.queries == []
 
 
@@ -186,7 +192,7 @@ def test_feed_items_are_remembered_as_feed_relation(env):
 def test_a_changed_phrase_makes_todays_cached_entry_stale(env):
     provider, web = env
     google("ge", {"health": 1.0}).get("/v1/feed")
-    key = feed_mod.feed_key("health", feed_mod.today_utc())
+    key = feed_mod.fallback_key("health", feed_mod.today_utc())
     query = feed_mod.feed_query("health", "article")
     assert asyncio.run(web.cached_entry(key, "article", query)) is not None
     assert asyncio.run(web.cached_entry(key, "article", query + " v2")) is None
@@ -194,7 +200,7 @@ def test_a_changed_phrase_makes_todays_cached_entry_stale(env):
 
 def test_an_empty_day_entry_is_searched_again_once_then_stops(monkeypatch):
     class Empty(TopicProvider):
-        async def search(self, query, fmt, news=False):
+        async def search(self, query, fmt, news=False, include_domains=()):
             self.queries.append(query)
             return []
 
@@ -202,8 +208,9 @@ def test_an_empty_day_entry_is_searched_again_once_then_stops(monkeypatch):
     search = feed_mod.FeedSearch(service(empty))
 
     async def twice():
-        await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0)
-        await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0)
+        for _ in range(2):
+            await search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0,
+                                article_topics=["health"])  # fmt: skip
 
     asyncio.run(twice())
     assert len(empty.queries) == 3  # within the hour: the empty entries are served
@@ -221,15 +228,17 @@ def test_a_cap_hit_serves_yesterdays_entry_and_backs_off(env, monkeypatch):
         url="https://x.test/2026/10/09/health-story-from-yesterday",
         title="Health story from yesterday", source="x.test", format="article",
     )  # fmt: skip
-    asyncio.run(web._cache.put(feed_mod.feed_key("health", yesterday), "article", [old],
+    asyncio.run(web._cache.put(feed_mod.fallback_key("health", yesterday), "article", [old],
                                ws.cache_key(feed_mod.feed_query("health", "article"))))  # fmt: skip
     monkeypatch.setattr(config.get_settings(), "feed_search_daily_cap", 0)
     search = feed_mod.FeedSearch(web)
-    got = asyncio.run(search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0))
+    got = asyncio.run(search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0,
+                                    article_topics=["health"]))  # fmt: skip
     assert [c.result.title for c in got.candidates] == ["Health story from yesterday"]
     assert got.pending is False and provider.queries == []
     monkeypatch.setattr(config.get_settings(), "feed_search_daily_cap", 60)
-    again = asyncio.run(search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0))
+    again = asyncio.run(search.gather(["health"], GRAPH, datetime.now(UTC), wait_s=1.0,
+                                      article_topics=["health"]))  # fmt: skip
     assert provider.queries == [] and len(again.candidates) == 1  # backing off for 10 minutes
 
 
@@ -246,11 +255,11 @@ def test_a_learning_goal_boosts_the_feed_item_that_names_its_target(env, monkeyp
     monkeypatch.setattr(goals_api, "resolve_names", fake_resolve)
     original = provider.search
 
-    async def naming_offside(query, fmt, news=False):
-        results = await original(query, fmt, news)
+    async def naming_offside(query, fmt, news=False, include_domains=()):
+        results = await original(query, fmt, news, include_domains)
         if fmt == "article":
-            results.append(WebResult(url="https://x.test/2026/10/10/offside-rule-explained-again",
-                                     title="The offside rule, explained", source="x.test",
+            results.append(WebResult(url="https://apnews.com/2026/10/10/offside-rule-explained",
+                                     title="The offside rule, explained", source="apnews.com",
                                      format="article"))  # fmt: skip
         return results
 

@@ -227,6 +227,12 @@
 .sk-card-title { height: 22px; border-radius: 4px; }
 
 .feedtab__note { margin: var(--s4) 0 0; font: 400 14px / 1.5 var(--font-ui); color: var(--muted); }
+/* Decision 50: Refresh and the country hint share one line above the rows. */
+.feedtab__bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); margin-top: var(--s4); }
+.feedtab__bar .feedtab__note { margin: 0; min-width: 0; }
+.feedtab__bar .feedtab__note a { color: var(--ink); text-underline-offset: 3px; }
+.feedtab__refresh { flex: none; }
+.feedtab[aria-busy="true"] .rows { opacity: 0.6; transition: opacity var(--dur-fast) var(--ease); }
 
 /* ---------- sidebar ---------- */
 .side { padding: var(--s10) 0 0 var(--s10); border-left: 1px solid var(--hairline); min-height: calc(100vh - 64px); }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { ApiError } from "../../lib/api";
+import { markFeedStale } from "../../lib/feedStale";
 import type { PersonaKey } from "../../lib/personas";
 import { profileApi, type EditPreview, type EditSummary } from "../../lib/profileApi";
 import { interestLine, previewLines } from "../../lib/profileFormat";
@@ -135,6 +136,7 @@ export function EditBox({ persona, personaName, onChanged }: Props) {
                 onClick={() =>
                   run(async () => {
                     await profileApi.applyEdit(preview.edit_id, persona);
+                    markFeedStale();
                     setPreview(null);
                     setText("");
                     setMessage("Applied. Your next notes and explanations use it.");
@@ -174,6 +176,7 @@ export function EditBox({ persona, personaName, onChanged }: Props) {
                     onClick={() =>
                       run(async () => {
                         await profileApi.undoEdit(e.edit_id, persona);
+                        markFeedStale();
                         await loadEdits();
                         onChanged();
                       })

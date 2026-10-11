@@ -17,6 +17,7 @@ from app.reader import onboarding
 from app.reader.events import ConceptRef
 from app.reader.onboarding import Answer, Level
 from app.reader.state import ThinksIn
+from app.recs.outlets import Country
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
 from app.store.reader_repo import ReaderRepo, UserProfile
@@ -72,6 +73,7 @@ class OnboardingIn(BaseModel):
     liked_content_ids: list[ContentId] = Field(
         default_factory=list, max_length=onboarding.MAX_LIKED
     )
+    country: Country | None = None  # decision 50: "Where do you read from?"
 
 
 @router.post("/onboarding")
@@ -122,6 +124,7 @@ async def post_onboarding(
         liked=liked,
         now=now,
         redo=redo,
+        country=body.country,
     )
     return {"saved": True, "liked_concepts": len(liked), "next": "discover"}
 

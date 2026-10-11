@@ -38,6 +38,7 @@ from app.reader.events import ConceptRef, EventOutcome, ReaderEvent
 from app.reader.model import Edge, Evidence
 from app.reader.profile import iso_week
 from app.reader.state import ExplanationStyle, PersonaKey, ReaderState, touch_engaged
+from app.recs.outlets import Country
 from app.scoring.rules import next_offset
 from app.store.docstore import Doc, DocStore, Txn
 
@@ -99,6 +100,9 @@ class UserProfile(BaseModel):
     # Redo setup (decision 48): a finished reader reruns the 2 screens; onboarding_done stays
     # true throughout, so the app never gates them. "about" = screen 1, "discover" = screen 2.
     onboarding_redo: Literal["about", "discover"] | None = None
+    # Decision 50: the country the reader chose ("Where do you read from?"), only to pick which
+    # outlets count as local in For you. Never sent to a model or a search.
+    country: Country | None = None
 
     @property
     def onboarding_open(self) -> bool:
@@ -564,6 +568,7 @@ class ReaderRepo:
         liked: Mapping[str, tuple[ConceptRef, Any]],
         now: datetime,
         redo: bool = False,
+        country: str | None = None,
     ) -> None:
         """One transaction: answers on users/{uid}, θ and interest per domain, and the liked
         articles' small nudges (`liked`: concept id → (ref, apply(edge | None, θ) -> Edge)).
@@ -595,6 +600,7 @@ class ReaderRepo:
                     "thinks_in": list(thinks_in),
                     "rev": user.rev + 1,
                 }
+                | ({"country": country} if country is not None else {})
                 | (
                     {"onboarding_redo": "discover"}  # done and calibration progress kept
                     if redo

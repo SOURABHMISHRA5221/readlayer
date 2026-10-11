@@ -1,8 +1,13 @@
-"""For you feed (M7.5 §A, DESIGN §17): topics, shared day-keyed searches, demo snapshots.
+"""For you feed (M7.5 §A, decision 50, DESIGN §17): topics, outlet articles, shared
+day-keyed searches, demo snapshots.
 
 A signed-in reader's topics are their strongest stored interests (taxonomy domains); a demo
-persona has a fixed pair and is served a pre-seeded snapshot (decision 38). Search queries are
-only a taxonomy label plus a fixed phrase, never reader text or history. Each (topic, format,
+persona has a fixed pair and is served a pre-seeded snapshot (decision 38). Articles come from
+top outlets' section feeds, collected twice a day (`outlet_job`); a topic with fewer than
+OUTLET_MIN offered outlet articles falls back to one article search restricted to the registry's
+outlets and two wires (`feedx:` keys, so the old unrestricted `feed:` article entries are never
+served again). Videos and podcasts are searched as before. Search queries are only a taxonomy
+or concept label plus a fixed phrase, never reader text, history or country. Each (key, format,
 UTC day) is searched at most once for everyone and cached in `rec_cache`. Missing searches run
 inside the request with a time limit (Cloud Run throttles CPU after a response); what doesn't
 finish in time is `pending` and joins the in-flight task on the next ask. No LLM anywhere.
@@ -10,6 +15,7 @@ finish in time is `pending` and joins the in-flight task on the next ask. No LLM
 
 import asyncio
 import hashlib
+import logging
 from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -20,8 +26,10 @@ from app.graph.models import Concept
 from app.graph.taxonomy import BUSINESS_DOMAINS, BY_ID, DOMAIN_IDS
 from app.recs import feed_rank as fr
 from app.recs.models import FORMATS, Format, WebResult
-from app.recs.web_search import WebSearch, mentions
+from app.recs.outlets import BY_OUTLET, eligible, fallback_domains, side_of
+from app.recs.web_search import WebSearch, host_of, mentions
 from app.store.docstore import DocStore
+from app.store.outlet_repo import OutletList
 from app.store.spend_repo import today_utc
 
 MAX_TOPICS = 6
@@ -44,7 +52,12 @@ PERSONA_TOPICS: Mapping[str, tuple[str, str]] = {
     "trader": ("finance", "business"),
     "policy_student": ("policy", "politics"),
 }
+# Demo personas read as India (decision 51): their snapshots mix 60% Indian outlets + 40% global.
+PERSONA_COUNTRY = "IN"
 SNAPSHOTS = "persona_feeds"
+OUTLET_MIN = 3  # offered outlet articles a topic needs before the search fallback is skipped
+STALE_RUN = timedelta(hours=36)  # newest collection older than this is logged
+log = logging.getLogger("app.recs.feed")
 
 
 def feed_query(domain: str, fmt: Format) -> str:
@@ -53,7 +66,13 @@ def feed_query(domain: str, fmt: Format) -> str:
 
 
 def feed_key(domain: str, day: str) -> str:
+    """Video and podcast entries (unchanged since M7.5)."""
     return f"feed:{domain}:{day}"
+
+
+def fallback_key(domain: str, day: str) -> str:
+    """The restricted article fallback (decision 50)."""
+    return f"feedx:{domain}:{day}"
 
 
 def item_id(url: str) -> str:
@@ -83,7 +102,7 @@ def keep_for(topic: str, graph: ConceptGraph, now: datetime):
 
 
 def concept_key(concept_id: str, day: str) -> str:
-    return f"feed:c:{concept_id}:{day}"
+    return f"feedx:c:{concept_id}:{day}"
 
 
 def concept_query(concept: Concept) -> str:
@@ -118,26 +137,89 @@ class SearchSpec:
     query: str
     keep: Callable[[WebResult], bool]
     sub_cap: tuple[str, int] | None = None
+    include_domains: tuple[str, ...] = ()
 
     def key(self, day: str) -> str:
         return f"{self.stem}:{day}"
 
 
+FALLBACK_DOMAINS: tuple[str, ...] = tuple(fallback_domains())
+
+
 def topic_specs(
-    topics: Sequence[str], formats: Iterable[Format], graph: ConceptGraph, now: datetime
-) -> list[SearchSpec]:
-    return [
-        SearchSpec(f"feed:{t}", t, fmt, feed_query(t, fmt), keep_for(t, graph, now))
-        for t in topics
-        for fmt in FORMATS
-        if fmt in formats
-    ]
+    topics: Sequence[str], formats: Iterable[Format], graph: ConceptGraph, now: datetime,
+    article_topics: Sequence[str] = (),
+) -> list[SearchSpec]:  # fmt: skip
+    """Videos and podcasts for every topic (`feed:` stems); articles only for `article_topics`
+    (the thin ones), restricted to FALLBACK_DOMAINS under `feedx:` stems."""
+    specs = []
+    for t in topics:
+        for fmt in FORMATS:
+            if fmt not in formats:
+                continue
+            if fmt != "article":
+                specs.append(SearchSpec(f"feed:{t}", t, fmt, feed_query(t, fmt),
+                                        keep_for(t, graph, now)))  # fmt: skip
+            elif t in article_topics:
+                specs.append(SearchSpec(f"feedx:{t}", t, fmt, feed_query(t, fmt),
+                                        keep_for(t, graph, now),
+                                        include_domains=FALLBACK_DOMAINS))  # fmt: skip
+    return specs
 
 
 def concept_spec(concept: Concept, now: datetime, sub_cap: tuple[str, int]) -> SearchSpec:
-    """Articles only (decision 41): one search per concept per day, shared by everyone."""
-    return SearchSpec(f"feed:c:{concept.id}", concept.domain, "article", concept_query(concept),
-                      keep_for_concept(concept, now), sub_cap)  # fmt: skip
+    """Articles only (decision 41): one search per concept per day, shared by everyone,
+    restricted to FALLBACK_DOMAINS (decision 50)."""
+    return SearchSpec(f"feedx:c:{concept.id}", concept.domain, "article", concept_query(concept),
+                      keep_for_concept(concept, now), sub_cap,
+                      include_domains=FALLBACK_DOMAINS)  # fmt: skip
+
+
+# ---------------------------------------------------------------- outlet articles (decision 50)
+
+
+def outlet_candidates(
+    lists: Mapping[str, Sequence[OutletList]], country: str | None, graph: ConceptGraph,
+    now: datetime | None = None,
+) -> dict[str, list[fr.FeedCandidate]]:  # fmt: skip
+    """topic → candidates from the outlets this reader is offered (their country's own as local,
+    other global outlets as global). The section is the topic, so no topic-word filter; concepts
+    are still named for readiness. A newest collection older than STALE_RUN is logged."""
+    out: dict[str, list[fr.FeedCandidate]] = {}
+    newest = ""
+    for topic, entries in lists.items():
+        group: list[fr.FeedCandidate] = []
+        for entry in entries:
+            newest = max(newest, entry.fetched_at)
+            outlet = BY_OUTLET.get(entry.outlet_id)
+            if outlet is None or eligible(outlet, country) is None:
+                continue
+            group += _candidates(topic, entry.items, graph)
+        out[topic] = group
+    if now is not None and newest and now - datetime.fromisoformat(newest) > STALE_RUN:
+        log.warning("outlet entries stale", extra={"newest_run": newest})
+    return out
+
+
+def thin_topics(by_topic: Mapping[str, Sequence[fr.FeedCandidate]], topics: Sequence[str]):
+    """Topics with fewer than OUTLET_MIN offered outlet articles (they get the fallback)."""
+    return [t for t in topics if len(by_topic.get(t, ())) < OUTLET_MIN]
+
+
+def side_for(country: str | None) -> fr.SideOf:
+    """A candidate's side for this reader, by its URL's host (None: not offered)."""
+
+    def side(c: fr.FeedCandidate) -> str | None:
+        return side_of(host_of(c.result.url), country)
+
+    return side
+
+
+def offered(candidates: Iterable[fr.FeedCandidate], country: str | None) -> list[fr.FeedCandidate]:
+    """Fallback articles from outlets this reader isn't offered are dropped (the search itself
+    is the same for everyone); videos and podcasts pass."""
+    side = side_for(country)
+    return [c for c in candidates if c.result.format != "article" or side(c) is not None]
 
 
 @dataclass
@@ -183,11 +265,10 @@ class FeedSearch:
 
     async def gather(
         self, topics: Sequence[str], graph: ConceptGraph, now: datetime,
-        wait_s: float = FETCH_WAIT_S,
+        wait_s: float = FETCH_WAIT_S, article_topics: Sequence[str] = (),
     ) -> Gathered:  # fmt: skip
-        return await self.gather_specs(
-            topic_specs(topics, self._web.formats, graph, now), graph, now, wait_s
-        )
+        specs = topic_specs(topics, self._web.formats, graph, now, article_topics)
+        return await self.gather_specs(specs, graph, now, wait_s)
 
     async def gather_specs(
         self, specs: Sequence[SearchSpec], graph: ConceptGraph, now: datetime,
@@ -217,8 +298,9 @@ class FeedSearch:
                     continue
                 self._searches[k] = self._searches.get(k, 0) + 1
                 task = asyncio.create_task(
-                    self._web.fetch_feed(key, spec.fmt, spec.query, spec.keep, spec.sub_cap)
-                )
+                    self._web.fetch_feed(key, spec.fmt, spec.query, spec.keep, spec.sub_cap,
+                                         include_domains=spec.include_domains)
+                )  # fmt: skip
                 self._inflight[k] = task
             tasks[spec] = task
         if tasks:

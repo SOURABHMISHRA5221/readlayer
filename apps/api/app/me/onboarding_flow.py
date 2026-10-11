@@ -41,12 +41,21 @@ from app.reader import onboarding
 from app.reader import onboarding_text as ot
 from app.reader.events import ConceptRef
 from app.recs import feed_rank as fr
-from app.recs.feed import concept_spec, item_id, now_utc, topic_specs
+from app.recs.feed import (
+    concept_spec,
+    item_id,
+    now_utc,
+    offered,
+    outlet_candidates,
+    thin_topics,
+    topic_specs,
+)
 from app.recs.feed_router import get_feed_search
 from app.recs.models import Format, WebResult
 from app.recs.state import DEFAULT_KEY, Served, get_rec_signals
 from app.recs.web_search import ONBOARDING_CONCEPT
 from app.store.docstore import get_doc_store
+from app.store.outlet_repo import OutletStore
 from app.store.reader_repo import OnboardingOutcome, ReaderRepo, UserProfile
 from app.store.spend_repo import today_utc
 
@@ -241,7 +250,11 @@ async def discover(
         raise HTTPException(status_code=422, detail="nothing_chosen")
     search = get_feed_search()
     sub_cap = (ONBOARDING_CONCEPT, settings.onboarding_concept_search_daily_cap)
-    specs = topic_specs(topics, search.formats, graph, now)
+    # Decision 50: topic articles from the collected outlet entries; a thin topic and every
+    # concept search use the restricted fallback (top outlets only).
+    by_topic = outlet_candidates(await OutletStore(get_doc_store()).read(topics), user.country,
+                                 graph)  # fmt: skip
+    specs = topic_specs(topics, search.formats, graph, now, thin_topics(by_topic, topics))
     specs += [concept_spec(c, now, sub_cap) for c in chosen]
 
     async def may_start() -> bool:
@@ -252,8 +265,12 @@ async def discover(
         )
 
     gathered = await search.gather_specs(specs, graph, now, may_start=may_start)
-    stems = [f"feed:{t}" for t in topics] + [f"feed:c:{c.id}" for c in chosen]
-    groups = [gathered.by_stem.get(s, []) for s in stems]
+    found = gathered.by_stem
+    groups = [
+        by_topic.get(t, []) + offered([*found.get(f"feed:{t}", []), *found.get(f"feedx:{t}", [])],
+                                      user.country)
+        for t in topics
+    ] + [offered(found.get(f"feedx:c:{c.id}", []), user.country) for c in chosen]  # fmt: skip
     picked = fr.onboarding_mix(groups, now, onboarding.DISCOVER_ITEMS)
     library: dict[str, str] = {}  # url → content id
     if len(picked) < onboarding.DISCOVER_MIN_ITEMS and not gathered.pending:

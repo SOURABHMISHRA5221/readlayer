@@ -8,6 +8,8 @@ import { StateView } from "../components/StateView";
 import { TopBar } from "../components/TopBar";
 import { api } from "../lib/api";
 import { signOutUser, useIsDemo } from "../lib/auth";
+import { COUNTRIES, COUNTRY_LABEL } from "../lib/country";
+import { markFeedStale } from "../lib/feedStale";
 import { domainLabel } from "../lib/format";
 import { personaOf, personaParam, readerPersona } from "../lib/personas";
 import { FRAMES, profileApi, type Domain, type Frame, type Goal, type Profile } from "../lib/profileApi";
@@ -47,6 +49,15 @@ export default function ProfilePage({ url }: { url: URL }) {
       .catch(() => !ctrl.signal.aborted && setFailed(true));
     return () => ctrl.abort();
   }, [persona, version]);
+
+  // A link to a section (e.g. For you's "Add your country" → #prefs-title) scrolls to it once
+  // the profile has rendered; the browser's own jump runs before the async load.
+  const scrolled = useRef(false);
+  useEffect(() => {
+    if (!profile || scrolled.current || !window.location.hash) return;
+    scrolled.current = true;
+    document.getElementById(decodeURIComponent(window.location.hash.slice(1)))?.scrollIntoView({ block: "start" });
+  }, [profile]);
 
   const name = persona ? personaOf(persona).label : null;
 
@@ -273,6 +284,7 @@ function Preferences({ profile, onChanged, disabled }: { profile: Profile; onCha
     setError(null);
     try {
       await profileApi.settings(changes);
+      if (changes.country) markFeedStale(); // decision 50: For you mixes by country
       onChanged();
     } catch {
       setError("That didn't save. Try again.");
@@ -304,6 +316,15 @@ function Preferences({ profile, onChanged, disabled }: { profile: Profile; onCha
         value={profile.settings.density}
         onChange={(v) => void set({ density: v })}
       />
+      <Segmented
+        label="Where do you read from?"
+        options={COUNTRIES.map((c) => ({ key: c, label: COUNTRY_LABEL[c] }))}
+        value={profile.settings.country ?? null}
+        onChange={(v) => void set({ country: v })}
+      />
+      {!profile.settings.country && (
+        <p className="profile__note">Not set yet, so For you shows global news only. Pick one for news from where you live.</p>
+      )}
       {error && (
         <p className="welcome__error" role="alert">
           {error}
