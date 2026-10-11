@@ -156,7 +156,8 @@ describe("WelcomePage screen 1", () => {
     expect(host.querySelector<HTMLSelectElement>(".matches__select")?.value).toBe("sports");
     await click(button("Continue")); // stays on screen 1 until the second Continue
     const saved = calls.find((c) => c.path === "/v1/onboarding")!.body as Record<string, unknown>;
-    expect(saved).toEqual({ field: "software", interests: ["sports", "finance"], thinks_in: ["software"] });
+    // jsdom's navigator.language is en-US: the prefilled country is saved with Continue (decision 50).
+    expect(saved).toEqual({ field: "software", interests: ["sports", "finance"], thinks_in: ["software"], country: "US" });
     for (const c of calls.filter((c) => c.path !== "/v1/onboarding/resolve")) {
       expect(JSON.stringify(c.body ?? "")).not.toMatch(/F1|bonds|zz/);
     }

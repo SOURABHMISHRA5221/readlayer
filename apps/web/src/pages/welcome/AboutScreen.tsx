@@ -2,6 +2,7 @@ import { useId, useState, type RefObject } from "react";
 
 import { ApiError } from "../../lib/api";
 import { signOutUser } from "../../lib/auth";
+import { COUNTRIES, COUNTRY_LABEL, type Country } from "../../lib/country";
 import { domainLabel } from "../../lib/format";
 import { onboardingApi, type ResolvedConcept, type ResolveResult } from "../../lib/onboardingApi";
 import { DOMAINS, FIELD_FRAME, FIELDS, profileApi, type Domain, type Field, type Frame } from "../../lib/profileApi";
@@ -24,6 +25,8 @@ export interface MappedTopic {
 /** Screen 1's answers. The free text lives only here, in React state: never storage or the URL. */
 export interface About {
   field: Field | null;
+  /** Decision 50: prefilled from the browser's locale, stored only when Continue saves. */
+  country: Country | null;
   topics: Domain[];
   text: string;
   resolvedFor: string | null; // the text the results below belong to
@@ -33,7 +36,7 @@ export interface About {
 }
 
 export const EMPTY_ABOUT: About = {
-  field: null, topics: [], text: "", resolvedFor: null, concepts: [], mapped: [], unrecognised: [],
+  field: null, country: null, topics: [], text: "", resolvedFor: null, concepts: [], mapped: [], unrecognised: [],
 }; // prettier-ignore
 
 /** Interests sent to POST /v1/onboarding: chosen topics, mapped topics, resolved concepts' domains. */
@@ -98,7 +101,12 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
         setError("Pick at least one topic.");
         return;
       }
-      await profileApi.onboarding({ field: about.field ?? "other", interests, thinks_in: frameFor(about.field) });
+      await profileApi.onboarding({
+        field: about.field ?? "other",
+        interests,
+        thinks_in: frameFor(about.field),
+        ...(about.country ? { country: about.country } : {}),
+      });
       onSaved();
     } catch {
       setError("That didn't save. Try again.");
@@ -131,6 +139,13 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
           options={FIELDS.map((f) => ({ key: f, label: FIELD_LABEL[f] }))}
           selected={about.field ? [about.field] : []}
           onToggle={(f) => onChange({ ...about, field: f })}
+        />
+        <ChipGroup
+          legend="Where do you read from?"
+          hint="Most of your news comes from there."
+          options={COUNTRIES.map((c) => ({ key: c, label: COUNTRY_LABEL[c] }))}
+          selected={about.country ? [about.country] : []}
+          onToggle={(c) => onChange({ ...about, country: c })}
         />
         <ChipGroup
           legend="What do you want to read about?"

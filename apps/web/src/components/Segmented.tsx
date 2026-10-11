@@ -8,7 +8,7 @@ interface Option<K extends string> {
 interface SegmentedProps<K extends string> {
   label: string;
   options: readonly Option<K>[];
-  value: K;
+  value: K | null; // null: nothing chosen yet
   onChange: (key: K) => void;
 }
 

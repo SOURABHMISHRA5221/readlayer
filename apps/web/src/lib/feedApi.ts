@@ -1,4 +1,5 @@
 import { api } from "./api";
+import type { Country } from "./country";
 import type { PersonaKey } from "./personas";
 
 /** For you feed (M7.5 §A). */
@@ -28,6 +29,7 @@ export interface FeedResponse {
   pending: boolean;
   snapshot: boolean;
   prepared_at: string | null;
+  country?: Country | null; // decision 50: the signed-in reader's choice; null = not set
 }
 
 export const feedApi = {

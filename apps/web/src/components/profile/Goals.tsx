@@ -1,6 +1,7 @@
 import { useEffect, useId, useState, type FormEvent } from "react";
 
 import { ApiError } from "../../lib/api";
+import { markFeedStale } from "../../lib/feedStale";
 import { profileApi, type Goal, type GoalPreview } from "../../lib/profileApi";
 
 interface Props {
@@ -76,6 +77,7 @@ export function Goals({ demo, refreshKey, onGoals, onShowOnMap }: Props) {
                       aria-label={`Remove goal: ${g.label}`}
                       onClick={async () => {
                         await profileApi.deleteGoal(g.id).catch(() => undefined);
+                        if (g.type === "learning") markFeedStale(); // goal boosts change
                         setVersion((v) => v + 1);
                       }}
                     >
@@ -136,6 +138,7 @@ function AddGoal({ onAdded }: { onAdded: () => void }) {
     setBusy(true);
     try {
       await profileApi.saveLearning(draft);
+      markFeedStale();
       setDraft(null);
       setIdea("");
       onAdded();

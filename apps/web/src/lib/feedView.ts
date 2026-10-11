@@ -22,6 +22,11 @@ export function snapshotNote(feed: Pick<FeedResponse, "snapshot" | "prepared_at"
   return `Picks prepared in advance for this demo${when}, so some may be dated. Sign in with Google for a live feed.`;
 }
 
+/** Decision 50: a signed-in reader without a country gets global outlets only; say how to change it. */
+export function wantsCountry(feed: Pick<FeedResponse, "snapshot" | "country">): boolean {
+  return !feed.snapshot && feed.country === null;
+}
+
 export function visibleItems(items: readonly FeedItem[], dismissed: ReadonlySet<string>): FeedItem[] {
   return items.filter((i) => !dismissed.has(i.id));
 }
