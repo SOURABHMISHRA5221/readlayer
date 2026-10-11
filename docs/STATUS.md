@@ -1,7 +1,8 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-11 (IST): Design pass (Gloss) merged (#22) and live (API revision 00018,
-web deployed); live check found Save blocked by CORS (no PUT), fixed in a follow-up PR (§18). M7.5 merged (#20) and live,
+Last updated: 2026-10-11 (IST): Design pass (Gloss) merged (#22, #23) and live (API revision
+00019, web deployed); live check passed after the CORS fix for Save (§18). Next: M8-local (rebase
+`m8` first). M7.5 merged (#20) and live,
 Sourabh's Google check done.
 M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
@@ -33,7 +34,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
 | M7.5 | **merged #20 and live** (§17); Sourabh's Google check done (2026-10-11) | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
-| Design pass | **merged #22 and live** (§18); CORS fix for Save follows | — | Gloss: tokens and type, Margo, library as a feed, reader, profile and SVG map (decisions 39, 40) |
+| Design pass | **merged #22 + #23 and live** (§18) | — | Gloss: tokens and type, Margo, library as a feed, reader, profile and SVG map (decisions 39, 40) |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -792,4 +793,4 @@ after three rounds).
 | Library, profile, reader | axe 0 serious/critical, no horizontal scroll; reader on the ET markets article: 4 new + 4 refresher highlights, "8 notes for you" in the margin |
 | Say it simpler | "Bourses": own band can explain (verified, cached) → understands (verified, not capped) in 19.9 s |
 | Helpful | 1 `article_helpful` event in the export |
-| Save | **Failed live**: the saved list stayed empty. CORS allowed GET/POST/PATCH/DELETE but not PUT (`PUT /v1/me/saved/{id}`); the harness never saw it because Vite proxies /v1. Fixed by adding PUT and a test that every method a /v1 route uses is allowed (it fails without the fix) |
+| Save | **Failed live**: the saved list stayed empty. CORS allowed GET/POST/PATCH/DELETE but not PUT (`PUT /v1/me/saved/{id}`); the harness never saw it because Vite proxies /v1. Fixed by adding PUT and a test that every method a /v1 route uses is allowed (it fails without the fix); #23, API revision 00019. Re-checked live: the PUT preflight allows PUT, and a demo reader's saved article appears in the Saved tab (reader deleted, 204) |

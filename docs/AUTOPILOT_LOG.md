@@ -470,4 +470,4 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   `design-cors`: PUT allowed, plus a test that checks every method in the OpenAPI schema against
   the CORS list (first version passed vacuously because FastAPI wraps included routers; rewritten
   and shown to fail without the fix).
-
+- #23 merged on green CI, API redeployed (revision 00019, Sourabh's yes). Live re-check: Save works (preflight allows PUT; saved article in the Saved tab). Design pass done. Next: M8-local, starting with the m8 rebase.
