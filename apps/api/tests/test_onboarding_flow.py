@@ -19,7 +19,7 @@ from app.graph.loader import get_graph, set_graph
 from app.graph.models import Concept, ConceptGraphFile
 from app.graph.taxonomy import DOMAIN_IDS
 from app.main import app
-from app.me import onboarding_flow as flow
+from app.me import topic_match
 from app.reader import model, onboarding
 from app.reader import onboarding_text as ot
 from app.recs import feed as feed_mod
@@ -125,7 +125,7 @@ def env(monkeypatch):
     embed, confirm = Embed(), Confirm()
     monkeypatch.setattr(llm, "embed", embed)
     monkeypatch.setattr(resolve_mod, "confirm_links", confirm)
-    flow.reset_topic_vectors()
+    topic_match.reset_topic_vectors()
 
     async def no_llm(*a, **k):
         raise AssertionError("no other model call in onboarding")
@@ -137,7 +137,7 @@ def env(monkeypatch):
     set_graph(previous)
     set_content_store(None)
     read_router.reset_catalog()
-    flow.reset_topic_vectors()
+    topic_match.reset_topic_vectors()
 
 
 def google(uid: str = "g1", consent: bool = True) -> TestClient:

@@ -12,7 +12,9 @@ from typing import Any, Literal
 
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
+from app.graph.taxonomy import BY_ID
 from app.reader import model
+from app.reader import onboarding_text as ot
 from app.reader.state import ReaderState
 
 WORDS_PER_MINUTE = 230
@@ -49,6 +51,30 @@ def targets(graph: ConceptGraph, concept_id: str) -> list[Concept]:
     """The concept and its prerequisite chain, most basic first, at most 8 (the concept last)."""
     chain = graph.prerequisite_chain(concept_id)
     return chain[-MAX_TARGETS:]
+
+
+TOPIC_TARGETS = 10
+
+
+def topic_targets(graph: ConceptGraph, topic: str, phrase: str,
+                  limit: int = TOPIC_TARGETS) -> list[Concept]:  # fmt: skip
+    """A topic goal's ideas (decision 48): concepts of `topic` whose label or an alias shares a
+    whole word with the phrase (the topic's own label word, e.g. "politics", doesn't count),
+    most read first (doc_freq, then id); then filled with the topic's most read concepts.
+    Concepts never met in the corpus (doc_freq 0) only when the topic has too few others."""
+    words = ot.kept_words(phrase) - ot.tokens(BY_ID[topic].label)
+    in_topic = sorted((c for c in graph.concepts if c.domain == topic),
+                      key=lambda c: (-c.doc_freq, c.id))  # fmt: skip
+
+    def names(c: Concept) -> set[str]:
+        return set().union(*(ot.tokens(n) for n in (c.label, *c.aliases)))
+
+    matched = [c for c in in_topic if words & names(c)]
+    out = matched[:limit]
+    met = [c for c in in_topic if c.doc_freq > 0 and c not in out]
+    out += met[: limit - len(out)]
+    out += [c for c in in_topic if c not in out][: limit - len(out)]
+    return out
 
 
 def habit_progress(metric: Metric, per_week: int, weekly: Mapping[str, Any] | None,

@@ -64,7 +64,9 @@ def test_learning_goal_resolves_to_the_concept_and_its_chain_and_stores_no_text(
     assert body["label"] == "Insulin resistance"
     assert [t["label"] for t in body["targets"]] == ["Glucose", "Insulin", "Insulin resistance"]
     assert body["done"] == 1 and body["total"] == 3  # glucose is easy (b = −2): known
-    assert env == [["insulin resistance"]]  # the verb is stripped before resolution
+    # The verb is stripped, so "insulin resistance" matches a label exactly: no model path
+    # (decision 48 order: exact concept before resolve_names).
+    assert env == []
     (doc,) = [d for _, d in asyncio.run(get_doc_store().list("users/g1/goals"))]
     assert "text" not in doc and "understand" not in str(doc)
     assert "insulin resistance" not in caplog.text.casefold()  # logs carry outcome and cost only
