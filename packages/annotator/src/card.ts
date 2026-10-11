@@ -51,7 +51,18 @@ export interface SidenoteBox {
 export interface CardHandlers {
   onAction: (type: AnnotatorEventType) => void;
   onDismiss: () => void;
+  /** "Say it simpler" (-1), "Go deeper" (+1) or back to the reader's own level (0). */
+  onShift?: (shift: -1 | 0 | 1) => void;
 }
+
+const BANDS = ["unaware", "heard of", "understands", "can explain"] as const;
+const PITCH: Record<string, string> = {
+  unaware: "New to you, so this note starts from zero",
+  "heard of": "You've heard of this, so it skips the basics",
+  understands: "You understand this, so it's a one-line refresher",
+  "can explain": "You know this well, so it goes straight to the detail",
+};
+export const BUILDS_ON_LABEL = "Builds on";
 
 let cardCount = 0;
 
@@ -74,6 +85,15 @@ export class Card {
   private readonly background: HTMLParagraphElement;
   private readonly authorSays: HTMLParagraphElement;
   private readonly status: HTMLParagraphElement;
+  private readonly pitch: HTMLDivElement;
+  private readonly meter: HTMLSpanElement;
+  private readonly pitchText: HTMLSpanElement;
+  private readonly depth: HTMLDivElement;
+  private readonly simpler: HTMLButtonElement;
+  private readonly deeper: HTMLButtonElement;
+  private shiftEnabled = false;
+  private shift: -1 | 0 | 1 = 0;
+  private kind: string = "span";
   private sidenote: SidenoteBox | null = null;
   private readonly body: HTMLDivElement;
   // Until when a card opened on purpose (click, tap, keyboard) may scroll the page once to make
@@ -114,13 +134,33 @@ export class Card {
 
     this.prereqs = el(doc, "div", `${C}__prereqs`);
     const prereqLabel = el(doc, "p", `${C}__prereq-label`);
-    prereqLabel.textContent = "Before this";
+    prereqLabel.textContent = BUILDS_ON_LABEL;
     prereqLabel.id = `${id}-prereq`;
     this.prereqList = el(doc, "ul", `${C}__chips`);
     this.prereqList.setAttribute("aria-labelledby", prereqLabel.id);
     this.prereqs.append(prereqLabel, this.prereqList);
 
     this.debug = el(doc, "dl", `${C}__debug`);
+
+    // How the note is pitched: a 4-step meter (decorative) and one plain line (Gloss).
+    this.pitch = el(doc, "div", `${C}__pitch`);
+    this.meter = el(doc, "span", `${C}__meter`);
+    this.meter.setAttribute("aria-hidden", "true");
+    for (let i = 0; i < BANDS.length; i++) this.meter.append(el(doc, "span", ""));
+    this.pitchText = el(doc, "span", "");
+    this.pitch.append(this.meter, this.pitchText);
+    this.pitch.hidden = true;
+
+    // "Say it simpler" / "Go deeper": opt-in for hosts that can load another band.
+    this.depth = el(doc, "div", `${C}__depth`);
+    this.simpler = el(doc, "button", "rl-btn rl-btn--ghost rl-btn--depth");
+    this.deeper = el(doc, "button", "rl-btn rl-btn--ghost rl-btn--depth");
+    for (const [b, shift] of [[this.simpler, -1], [this.deeper, 1]] as const) {
+      b.type = "button";
+      b.addEventListener("click", () => handlers.onShift?.(this.shift === shift ? 0 : shift));
+    }
+    this.depth.append(this.simpler, this.deeper);
+    this.depth.hidden = true;
 
     // One panel holds the background: the glossary definition at once (and as the fallback),
     // replaced in place by the reader's verified Background, which is ours (their frame, the
@@ -141,7 +181,7 @@ export class Card {
     note.textContent = LOADING_TEXT;
     note.setAttribute("aria-hidden", "true"); // the status line announces it
     says.querySelector(`.${C}__skeleton`)?.append(note);
-    this.explain.append(bg, says);
+    this.explain.append(bg, this.depth, says);
     // Announces loading to screen readers; shows the report confirmation.
     this.status = el(doc, "p", `${C}__status`);
     this.status.setAttribute("role", "status");
@@ -172,7 +212,7 @@ export class Card {
 
     // The body scrolls when the card is taller than the room it has; the actions stay pinned.
     this.body = el(doc, "div", `${C}__body`);
-    this.body.append(this.domain, this.title, this.explain, this.status, this.prereqs, this.debug);
+    this.body.append(this.domain, this.title, this.pitch, this.prereqs, this.explain, this.status, this.debug);
     this.body.addEventListener("scroll", () => this.markOverflow(), { passive: true });
     this.el.append(handle, this.arrowEl, this.body, footer);
     doc.body.append(this.scrim, this.el);
@@ -187,12 +227,24 @@ export class Card {
   }
 
   focusables(): HTMLElement[] {
-    return this.buttons.filter((b) => !b.disabled && !b.hidden);
+    const depth = this.depth.hidden ? [] : [this.simpler, this.deeper];
+    return [...depth, ...this.buttons].filter((b) => !b.disabled && !b.hidden);
+  }
+
+  /** The host can load other bands (AnnotatorOptions.loadShifted). */
+  enableShift(on: boolean): void {
+    this.shiftEnabled = on;
+  }
+
+  setShift(shift: -1 | 0 | 1): void {
+    this.shift = shift;
   }
 
   fill(a: CardAnnotation, pressed: ReadonlySet<AnnotatorEventType>): void {
     // Paragraph cards have no concept: nothing to "know", no prerequisites.
     this.el.dataset.kind = a.kind;
+    this.kind = a.kind;
+    this.shift = 0;
     this.knew.hidden = a.kind === "paragraph";
     this.domain.textContent = a.domain ?? "";
     this.domain.hidden = !a.domain;
@@ -238,6 +290,7 @@ export class Card {
     this.bgSection.hidden = !this.background.textContent;
     this.says.hidden = !(verified || loading);
     this.authorSays.textContent = verified ? (state.author_says ?? "") : "";
+    if (!loading) this.fillPitch(verified ? state : null); // keep the buttons under focus while loading
     const frame = background && verified ? state.analogy_domain : null;
     this.frame.textContent = frame ? `Analogy · ${frame}` : "";
     this.frame.hidden = !frame;
@@ -261,6 +314,28 @@ export class Card {
     this.markOverflow();
     // A capped card doesn't resize when its content arrives, so check for room here too.
     if (!this.el.hidden) this.maybeMakeRoom();
+  }
+
+  /** Level meter, pitch line and depth buttons from the band the Background was written for. */
+  private fillPitch(e: Explanation | null): void {
+    const band = e?.band;
+    const i = band ? BANDS.indexOf(band as (typeof BANDS)[number]) : -1;
+    const span = this.kind === "span";
+    this.pitch.hidden = !span || i < 0 || !e?.background;
+    if (!this.pitch.hidden) {
+      Array.from(this.meter.children).forEach((seg, k) => seg.classList.toggle("on", k <= i));
+      this.pitchText.textContent =
+        this.shift === -1 ? "Simpler than your level" : this.shift === 1 ? "Deeper than your level" : (PITCH[band ?? ""] ?? "");
+    }
+    const simplerOk = this.shift === -1 || Boolean(e?.can_simpler);
+    const deeperOk = this.shift === 1 || Boolean(e?.can_deeper);
+    this.depth.hidden = !(this.shiftEnabled && span && e?.background && (simplerOk || deeperOk));
+    this.simpler.hidden = !simplerOk;
+    this.deeper.hidden = !deeperOk;
+    this.simpler.textContent = this.shift === -1 ? "Back to my level" : "Say it simpler";
+    this.deeper.textContent = this.shift === 1 ? "Back to my level" : "Go deeper";
+    this.simpler.setAttribute("aria-pressed", String(this.shift === -1));
+    this.deeper.setAttribute("aria-pressed", String(this.shift === 1));
   }
 
   private grow(from: number, swapped: boolean): void {

@@ -358,13 +358,14 @@
 }
 .segmented__track {
   display: inline-flex;
-  padding: 3px;
-  border: 1px solid var(--hairline);
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--ink) 3%, var(--paper));
+  background: var(--wash);
 }
 .segmented__option {
-  min-height: 32px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 0 var(--s3);
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
@@ -391,7 +392,7 @@
     display: none;
   }
   .segmented__option {
-    min-height: 34px;
+    min-height: 44px;
     padding: 0 10px;
   }
 }

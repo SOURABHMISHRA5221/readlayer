@@ -110,6 +110,7 @@ export class ApiError extends Error {
 }
 
 export type ReaderEventType =
+  | "article_helpful"
   | "explain_opened"
   | "knew_this"
   | "explain_helpful"
@@ -127,6 +128,9 @@ export interface ExplanationResponse {
   background: string | null;
   author_says: string | null;
   analogy_domain: string | null;
+  band?: string;
+  can_simpler?: boolean;
+  can_deeper?: boolean;
   cached: boolean;
 }
 
@@ -142,7 +146,7 @@ export interface ReaderEvent {
 }
 
 /** What POST /v1/explain explains: a span (demand) or a whole paragraph. */
-export type ExplainTarget = { demand_id: string } | { paragraph_id: string };
+export type ExplainTarget = { demand_id: string; shift?: -1 | 1 } | { paragraph_id: string };
 
 /** The API's origin in production (Cloud Run); empty locally, where Vite proxies /v1. */
 const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?? "").replace(/\/$/, "");
@@ -236,6 +240,9 @@ export const api = {
     if (!res.ok) throw await failure(res);
     return "ready";
   },
+  /** Current bands for the recap (Design pass A4). */
+  bands: (conceptIds: string[], persona: PersonaKey | null) =>
+    post<Record<string, string>>(`/v1/me/bands${personaQuery(persona)}`, { concept_ids: conceptIds.slice(0, 50) }),
   /** "Know this?" answer: the reader's own word, strong evidence (DESIGN §6.5). */
   correct: (conceptId: string, known: boolean, persona: PersonaKey | null) =>
     send<{ concept_id: string; band: string; p_know: number }>(

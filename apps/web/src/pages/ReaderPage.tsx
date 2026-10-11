@@ -1,13 +1,16 @@
-import { renderPreread, type CardAnnotation, type PrereadAnnotation } from "@readlayer/annotator";
+import type { CardAnnotation } from "@readlayer/annotator";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArticleImage } from "../components/ArticleImage";
-import { ConceptDrawer, ConceptRail, EndBlock } from "../components/ConceptRail";
-import { External } from "../components/Icons";
-import { ReaderBar } from "../components/ReaderBar";
-import { sendRecEvent } from "../components/UpNext";
-import { SourceMark } from "../components/SourceMark";
+import { ConceptDrawer, ConceptRail } from "../components/ConceptRail";
+import { Margo } from "../components/Margo";
+import { ProgressBar } from "../components/ProgressBar";
+import { ActionBar } from "../components/reader/ActionBar";
+import { PrereadPath } from "../components/reader/PrereadPath";
+import { Recap } from "../components/reader/Recap";
 import { ERROR_COPY, StateView } from "../components/StateView";
+import { TopBar } from "../components/TopBar";
+import { sendRecEvent, UpNext } from "../components/UpNext";
 import { useAnnotator } from "../hooks/useAnnotator";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import {
@@ -20,15 +23,9 @@ import {
 } from "../lib/api";
 import { domainLabel, formatByline, formatDate, readingMinutes, sourceName } from "../lib/format";
 import { useIsDemo } from "../lib/auth";
-import {
-  DEFAULT_DENSITY,
-  DEFAULT_PERSONA,
-  parseDensity,
-  personaParam,
-  readerPersona,
-  type PersonaKey,
-} from "../lib/personas";
+import { DEFAULT_DENSITY, parseDensity, personaParam, readerPersona } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
+import { savedApi } from "../lib/savedApi";
 
 type Load<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; kind: ApiErrorKind };
 type Analysis = { status: "idle" } | { status: "running"; since: number } | { status: "failed"; message: string };
@@ -150,6 +147,43 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   const annotations = notesData?.annotations ?? null;
   const handle = useAnnotator(articleRef, article?.id ?? null, annotations, notesData?.extras ?? null, persona);
 
+  // Recap snapshot (Design pass A4): the bands of this page's noted concepts when the notes load.
+  const [snapshot, setSnapshot] = useState<Record<string, string> | null>(null);
+  const labels = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const a of annotations ?? []) if (a.concept_id) out[a.concept_id] = a.label;
+    for (const x of notesData?.extras ?? []) if (x.kind === "prompt") out[x.concept_id] = x.label;
+    return out;
+  }, [annotations, notesData]);
+  useEffect(() => {
+    setSnapshot(null);
+    const ids = Object.keys(labels);
+    if (!ids.length) return;
+    let live = true;
+    api.bands(ids, persona).then((b) => live && setSnapshot(b), () => undefined);
+    return () => {
+      live = false;
+    };
+  }, [labels, persona]);
+
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    let live = true;
+    savedApi.list(persona).then((items) => live && setSaved(items.some((i) => i.id === id)), () => undefined);
+    return () => {
+      live = false;
+    };
+  }, [id, persona]);
+  const toggleSave = async () => {
+    const was = saved;
+    setSaved(!was);
+    try {
+      await (was ? savedApi.unsave(id, persona) : savedApi.save(id, persona));
+    } catch {
+      setSaved(was);
+    }
+  };
+
   const marked = useMemo<CardAnnotation[]>(() => {
     if (!annotations || !handle.resolved) return [];
     const byId = new Map(annotations.map((a) => [a.id, a]));
@@ -171,15 +205,10 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
       <a className="skip-link" href="#article">
         Skip to article
       </a>
-      <ReaderBar
-        persona={persona}
-        density={density}
-        onPersona={(k) => setParam("persona", k, DEFAULT_PERSONA)}
-        onDensity={(k) => setParam("density", k, DEFAULT_DENSITY)}
-        libraryHref={libraryHref}
-        article={pageRef}
-        debug={debug}
-      />
+      <TopBar url={url} />
+      <div className="readprogress">
+        <ProgressBar target={pageRef} />
+      </div>
       <main className="reader" ref={pageRef} id="article" tabIndex={-1}>
         {content.status === "loading" && <ReaderSkeleton />}
         {content.status === "error" && (
@@ -214,25 +243,37 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
         {article && (
           <div className="reader__grid">
             <ArticleHeader article={article} />
+            <ActionBar
+              article={article}
+              persona={persona}
+              density={density}
+              onDensity={(k) => setParam("density", k, DEFAULT_DENSITY)}
+              saved={saved}
+              onSave={() => void toggleSave()}
+            />
+            <ArticleFigure article={article} />
             {analysis.status === "running" && <PreparingNotice since={analysis.since} />}
             {analysis.status === "failed" && (
               <p className="reader__notice" role="status">
+                <Margo mood="oops" size={28} />
                 {analysis.message}
               </p>
             )}
             {notes.status === "error" && ready && (
               <p className="reader__notice" role="status">
+                <Margo mood="oops" size={28} />
                 Notes are unavailable right now; the article is complete without them.
               </p>
             )}
-            {notesData?.preread && <PrereadCard item={notesData.preread} persona={persona} />}
+            {notesData?.preread && <PrereadPath item={notesData.preread} persona={persona} />}
             <div className="reader__body" ref={bodyRef}>
               <ArticleBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} />
               {wide && annotations && handle.resolved && <ConceptRail items={marked} body={bodyRef} {...link} />}
             </div>
             {annotations && handle.resolved && (
-              <div ref={endRef}>
-                <EndBlock items={marked} contentId={article.id} persona={persona} {...link} />
+              <div ref={endRef} className="reader__end">
+                <Recap contentId={article.id} persona={persona} before={snapshot} labels={labels} answers={handle.answers} />
+                <UpNext contentId={article.id} persona={persona} />
               </div>
             )}
           </div>
@@ -253,79 +294,53 @@ function PreparingNotice({ since }: { since: number }) {
   const seconds = Math.round((Date.now() - since) / 1000);
   return (
     <p className="reader__notice reader__notice--working" role="status">
-      <span className="reader__pulse" aria-hidden="true" />
-      Preparing your notes… <span className="tnum">{seconds} s</span>
+      <Margo mood="think" size={28} />
+      Reading the article and preparing your notes… <span className="tnum">{seconds} s</span>
     </p>
   );
-}
-
-/** The pre-read card (DESIGN §6.4), drawn by the annotator package so the extension shares it. */
-function PrereadCard({ item, persona }: { item: PrereadAnnotation; persona: PersonaKey | null }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const href = (contentId: string) =>
-      withParams(new URL(`/read/${contentId}`, window.location.origin), { persona: personaParam(persona) });
-    const handle = renderPreread(el, item, {
-      href: (step) => href(step.content_id ?? ""),
-      onOpen: (step, e) => {
-        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || !step.content_id) return;
-        e.preventDefault();
-        navigate(href(step.content_id));
-        window.scrollTo(0, 0);
-      },
-    });
-    return () => handle.destroy();
-  }, [item, persona]);
-  return <div ref={ref} className="reader__preread" />;
 }
 
 function ArticleHeader({ article }: { article: ContentDetail }) {
   const date = formatDate(article.published);
   const byline = formatByline(article.author);
   const kicker = domainLabel(article.domain);
+  const source = sourceName(article.site);
   return (
     <header className="article-head">
-      <div className="article-head__source">
-        <SourceMark site={article.site} />
-        {date && (
-          <>
-            <span className="dot" aria-hidden="true" />
-            <time dateTime={article.published ?? undefined}>{date}</time>
-          </>
-        )}
-      </div>
-      {kicker && <p className="article-head__kicker eyebrow">{kicker}</p>}
+      {kicker && <p className="article-head__kicker">{kicker}</p>}
       <h1 className="article-head__title">{article.title}</h1>
-      {article.description && <p className="article-head__standfirst">{article.description}</p>}
-      <div className="article-head__meta">
-        {byline && (
-          <span className="article-head__byline">
-            By <span>{byline}</span>
-          </span>
-        )}
-        <span className="tnum">{readingMinutes(article.word_count)} min read</span>
-        <a className="article-head__original" href={article.url} target="_blank" rel="noopener noreferrer">
-          Read on {sourceName(article.site)}
-          <External size={14} />
-          <span className="visually-hidden"> (opens in a new tab)</span>
-        </a>
+      {article.description && <p className="article-head__dek">{article.description}</p>}
+      <div className="byline">
+        <span className="byline__mark" aria-hidden="true">
+          {(source.replace(/^the\s+/i, "")[0] ?? "?").toUpperCase()}
+        </span>
+        <div>
+          <p className="byline__who">
+            {source}
+            {byline && <span className="byline__author"> · By {byline}</span>}
+          </p>
+          <p className="byline__when tnum">
+            {readingMinutes(article.word_count)} min read
+            {date && (
+              <>
+                {" · "}
+                <time dateTime={article.published ?? undefined}>{date}</time>
+              </>
+            )}
+          </p>
+        </div>
       </div>
-      {article.image && (
-        <figure className="article-head__figure">
-          <ArticleImage
-            src={article.image}
-            site={article.site}
-            domain={article.domain}
-            width={1320}
-            height={743}
-            priority
-          />
-          <figcaption>Image: {sourceName(article.site)}</figcaption>
-        </figure>
-      )}
     </header>
+  );
+}
+
+function ArticleFigure({ article }: { article: ContentDetail }) {
+  if (!article.image) return null;
+  return (
+    <figure className="article-figure">
+      <ArticleImage src={article.image} site={article.site} domain={article.domain} width={1360} height={765} priority />
+      <figcaption>Image: {sourceName(article.site)}</figcaption>
+    </figure>
   );
 }
 

@@ -11,7 +11,7 @@ sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
 
 WEB = "http://localhost:5173"
-API = "http://localhost:8000"
+API = ""  # the Vite dev server proxies /v1
 SIZES = ((1440, False), (1440, True), (390, False), (390, True))
 
 
@@ -42,6 +42,26 @@ async def main(which):
     try:
         await p.viewport(1440)
         await demo(p)
+        if which in ("reader", "all"):
+            lib = (await p.api(API, "GET", "/v1/content?persona=newcomer"))["body"]
+            art = next((i["id"] for i in lib if i["id"].startswith("2332")), lib[0]["id"])
+            await audit(p, "reader", f"/read/{art}?persona=newcomer", ".rl-mark, .reader__notice")
+            await p.viewport(1440)
+            await p.goto(WEB + f"/read/{art}?persona=newcomer", wait=1)
+            await p.wait_for(".rl-mark")
+            await asyncio.sleep(1)
+            await p.eval("document.querySelector('.rl-mark').scrollIntoView({block: 'center'}); document.querySelector('.rl-mark').click(); 1")
+            await asyncio.sleep(6)
+            a = await p.audit()
+            print("[reader card 1440] axe", a["axe"], await p.shot("reader-card-1440-light"))
+            await p.viewport(390, dark=True)
+            await p.goto(WEB + f"/read/{art}?persona=newcomer", wait=1)
+            await p.wait_for(".rl-mark")
+            await asyncio.sleep(1)
+            await p.eval("document.querySelector('.rl-mark').scrollIntoView({block: 'center'}); document.querySelector('.rl-mark').click(); 1")
+            await asyncio.sleep(6)
+            a = await p.audit()
+            print("[reader sheet 390 dark] axe", a["axe"], await p.shot("reader-sheet-390-dark"))
         if which in ("library", "all"):
             await audit(p, "library-foryou", "/?persona=newcomer", ".rows li, .state")
             await audit(p, "library-topics", "/?tab=topics&persona=newcomer", ".rows li")

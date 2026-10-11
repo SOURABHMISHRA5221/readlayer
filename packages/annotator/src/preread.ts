@@ -29,6 +29,8 @@ export function renderPreread(
 ): PrereadHandle {
   const doc = container.ownerDocument;
   injectStyles(doc);
+  // A known step (where the path starts from) is never presented as "meet this first".
+  const steps = item.steps.filter((s) => !s.known);
   const id = `${P}-${++prereadCount}`;
   const section = doc.createElement("section");
   section.className = P;
@@ -41,13 +43,13 @@ export function renderPreread(
   const lede = doc.createElement("p");
   lede.className = `${P}__lede`;
   lede.textContent =
-    item.steps.length > 1
+    steps.length > 1
       ? `This piece assumes ${item.label}. These build up to it, most basic first.`
       : `This piece assumes ${item.label}.`;
 
   const list = doc.createElement("ol");
   list.className = `${P}__steps`;
-  for (const step of item.steps) list.append(stepItem(doc, step, options));
+  for (const step of steps) list.append(stepItem(doc, step, options));
 
   section.append(heading, lede, list);
   container.append(section);

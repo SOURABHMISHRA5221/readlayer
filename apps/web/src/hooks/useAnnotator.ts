@@ -11,7 +11,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 
 import { api } from "../lib/api";
 import { onBeforeFlush, trackEvent } from "../lib/events";
-import { loadExplanation, prefetchExplanations, reportExplanation } from "../lib/explanations";
+import { loadExplanation, loadShifted, prefetchExplanations, reportExplanation } from "../lib/explanations";
 import type { PersonaKey } from "../lib/personas";
 
 const WIDE_PX = 1200; // the margin rail appears here (reader.css)
@@ -35,6 +35,8 @@ export interface AnnotatorHandle {
   active: string | null;
   highlight: (id: string | null) => void;
   open: (id: string, focus?: boolean) => void;
+  /** "Know this?" answers this page view: concept id → { label, known } (for the recap). */
+  answers: ReadonlyMap<string, { label: string; known: boolean }>;
 }
 
 /**
@@ -56,6 +58,7 @@ export function useAnnotator(
   const [resolved, setResolved] = useState<string[] | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<ReadonlyMap<string, { label: string; known: boolean }>>(new Map());
 
   useEffect(() => {
     const el = root.current;
@@ -81,8 +84,10 @@ export function useAnnotator(
       // "Know this?": the reader's own word goes straight to their graph (DESIGN §6.5).
       onAnswer: async (prompt, known) => {
         await api.correct(prompt.concept_id, known, personaRef.current);
+        setAnswers((m) => new Map(m).set(prompt.concept_id, { label: prompt.label, known }));
       },
       loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
+      loadShifted: (a, shift) => loadShifted(articleKey, personaRef.current, a, shift),
       sidenote: () => railColumn(el),
       onHover: setHovered,
       onActive: setActive,
@@ -96,6 +101,7 @@ export function useAnnotator(
       setResolved(null);
       setHovered(null);
       setActive(null);
+      setAnswers(new Map());
     };
   }, [root, articleKey]);
 
@@ -118,5 +124,5 @@ export function useAnnotator(
   const highlight = useCallback((id: string | null) => annotatorRef.current?.highlight(id), []);
   const open = useCallback((id: string, focus = false) => annotatorRef.current?.open(id, { focus }), []);
 
-  return { resolved, hovered, active, highlight, open };
+  return { resolved, hovered, active, highlight, open, answers };
 }

@@ -34,6 +34,32 @@ const CSS = `
   outline: 2px solid var(--rl-focus, var(--rl-accent, #1f5f5b));
   outline-offset: 2px;
 }
+/* Gloss highlight levels: new ideas get a soft fill, an underline and a small dot; refreshers a
+   thin underline only. Shape cues as well as colour (weight, fill, dot). */
+.rl-mark--new {
+  text-decoration-line: none;
+  background-image: linear-gradient(transparent 62%, var(--rl-accent-wash, #e4f2ef) 62%);
+  box-shadow: inset 0 -2px 0 var(--rl-accent-line, var(--rl-accent, #0d6b62));
+}
+.rl-mark--refresher {
+  text-decoration-line: none;
+  box-shadow: inset 0 -1.5px 0 var(--rl-accent-line, var(--rl-accent, #0d6b62));
+}
+.rl-mark--new:hover, .rl-mark--new:focus-visible, .rl-mark--new[aria-expanded="true"], .rl-mark--new.rl-mark--linked,
+.rl-mark--refresher:hover, .rl-mark--refresher:focus-visible, .rl-mark--refresher[aria-expanded="true"], .rl-mark--refresher.rl-mark--linked {
+  background-image: none;
+  background-color: var(--rl-accent-wash, #e4f2ef);
+}
+.rl-mark--new[tabindex]::after {
+  content: "";
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  margin-left: 2px;
+  border-radius: 50%;
+  background: var(--rl-accent, #0d6b62);
+  vertical-align: super;
+}
 .rl-mark--known:not(:hover):not(:focus-visible):not([aria-expanded="true"]) {
   text-decoration-color: color-mix(in srgb, var(--rl-muted, #6b675f) 35%, transparent);
 }
@@ -141,9 +167,17 @@ const CSS = `
   font: 500 11px/1.4 var(--rl-font-ui, system-ui, sans-serif);
 }
 /* What the author is saying: the primary block, ruled in the accent that marks the text. */
-.rl-card__says { padding-left: 12px; border-left: 2px solid var(--rl-accent, #1f5f5b); }
-.rl-card__says .rl-card__section-label { color: var(--rl-accent, #1f5f5b); }
-.rl-card__says .rl-card__text { color: var(--rl-ink, #1c1b19); }
+/* What the author is saying: set as a quote (Gloss), ruled like a pull quote. */
+.rl-card__says { padding-left: 14px; border-left: 2px solid var(--rl-hairline, #ececec); }
+.rl-card__says .rl-card__section-label { color: var(--rl-muted, #5f5f5f); }
+.rl-card__says .rl-card__text { color: var(--rl-ink-soft, var(--rl-ink, #1c1b19)); font-style: italic; font-family: var(--rl-font-read, Georgia, serif); }
+.rl-card__pitch { display: flex; align-items: center; gap: 10px; margin-top: 8px; font: 400 13px/1.4 var(--rl-font-ui, system-ui, sans-serif); color: var(--rl-muted, #5f5f5f); }
+.rl-card__pitch[hidden], .rl-card__depth[hidden] { display: none; }
+.rl-card__meter { display: inline-flex; gap: 3px; flex: none; }
+.rl-card__meter span { width: 16px; height: 4px; border-radius: 2px; background: var(--rl-hairline, #ececec); }
+.rl-card__meter span.on { background: var(--rl-accent, #0d6b62); }
+.rl-card__depth { display: flex; flex-wrap: wrap; gap: 6px; }
+.rl-btn--depth { min-height: 36px; font-size: 13px; }
 .rl-card__explain[data-state="loading"] .rl-card__says .rl-card__text,
 .rl-card__explain[data-state="ready"] .rl-card__skeleton { display: none; }
 .rl-card__section[hidden] { display: none; }

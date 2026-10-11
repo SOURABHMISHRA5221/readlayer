@@ -74,7 +74,7 @@
 
   /* Layout */
   --bar-h: 104px; /* fixed top bar, two rows on phones */
-  --rl-top-inset: 112px; /* --bar-h + 8px, plain px: the annotator parses it */
+  --rl-top-inset: 128px; /* top bar 64 + action bar ~56 + 8, plain px: the annotator parses it */
   --bar-tuck: 52px; /* how far it slides up when scrolled */
   --rail-w: 232px;
 
@@ -110,7 +110,6 @@
     --text-display: 56px;
     --gutter: var(--s8);
     --bar-h: 64px;
-    --rl-top-inset: 72px;
     --bar-tuck: 12px;
   }
 }

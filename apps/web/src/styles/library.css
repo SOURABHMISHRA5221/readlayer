@@ -60,6 +60,10 @@
   .topbar__inner { gap: var(--s1); padding: 0 var(--s4); }
   .topbar__search { display: none; }
 }
+@media (max-width: 420px) {
+  .topbar .persona__name { display: none; }
+  .topbar .persona__chip { padding-right: var(--s2); }
+}
 
 /* Small dialog used for "Read any link" on phones (native <dialog>: focus, Escape, inert page). */
 .sheet {
