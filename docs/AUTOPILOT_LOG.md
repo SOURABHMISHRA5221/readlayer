@@ -755,7 +755,31 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   load, axe 0, keyboard pass; Lighthouse mobile live 1.2 / 2.0 / 1.8 s (median 1.8 s: passes the
   2.5 s gate, unlike the local preview's 2.6 s). Pending: Sourabh's Google onboarding.
 
+
+## Decision 48 — topics in the older boxes, Redo setup (2026-10-11)
+
+- Live check of #26: "Indian politics" failed as a learning goal and in Describe yourself
+  (both only knew concepts and levels); Sourabh's account had finished the M7 onboarding, so
+  the new screens never showed. Sourabh: decision 48 (plan `docs/plans/d48.md`).
+- plan-reviewer: REVISE (15: module split, one embedding per phrase, alias before any model
+  call, whole-token matching, one-step create, guarded undo, old edits, demo, topic cap, eval
+  baseline on v5, done checks in transactions, keep comfort on redo, cancel route, schedule,
+  injection case), all applied; APPROVE (nits applied: X05 forbids set_interest; the alias
+  lookup runs twice in the goal path, documented).
+- Evals (cases committed first, 9cab17f): v5 7/10 / 5/5; v6 9/10 (P11 direction empty); v7
+  "direction always filled" 8/10 (worse); v6 + "empty = more" 10/10 then 9/10 (turned "less
+  cricket" into more: dropped); v7 `read_more` / `read_less` ops 10/10 twice, attacks 5/5.
+  Total ≈ $0.06 (spend counter). Found on the way: topic-eval results in `evals/results/`
+  broke `report.py` (it reads results/*.json): moved to their own folder.
+- Built: `app/me/topic_match.py`; topic goals (preview + save-resolved); `set_interest` with
+  guarded undo; Redo setup (start, cancel, done kept, comfort/frames/θ kept); web goal preview,
+  interest lines, Redo button, redo-aware welcome; finished readers outside a redo are sent
+  home from /welcome; acronym know-terms need capitals. API 686, web 57.
+- Harness (`tools/shots/d48.py`): all flows pass, axe 0 (STATUS §20). First run failed on my
+  script (clicked the habit form's Add); fixed.
+
 ### Next steps (resume here, in order)
-1. Sourabh's Google onboarding on the live site (both screens; the profile shows the Know this?
-   band changes); record it in STATUS §19 live, push this docs branch (his yes), PR, merge.
-2. READY FOR /clear; then the Wide layout follow-up (decision 45).
+1. milestone-reviewer on `d48` until SHIP; PR; green CI; merge.
+2. Deploy API then web (Sourabh's yes); live: Sourabh's Redo setup on his account (≤ 18 topic +
+   ≤ 2 concept searches, ≤ 1 resolve), the topic goal and a set_interest edit; STATUS §19/§20 live.
+3. READY FOR /clear; then the Wide layout follow-up (decision 45).
