@@ -219,7 +219,7 @@ class DiscoverOut(BaseModel):
 
 
 def _not_done(user: UserProfile) -> None:
-    if user.onboarding_done:
+    if not user.onboarding_open:
         raise HTTPException(status_code=409, detail="onboarding_done")
 
 

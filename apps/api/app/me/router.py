@@ -395,6 +395,8 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
             # Screen 2 resumes and Edit refills screen 1 from these (decision 41).
             "field": user.field,
             "interests": list(user.onboarding.get("interests", [])),
+            "redo": user.onboarding_redo,
+            "consent_version": (user.consent or {}).get("version"),
         },
     }
 

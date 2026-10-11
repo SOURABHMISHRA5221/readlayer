@@ -25,6 +25,7 @@ from app.graph.loader import get_graph
 from app.graph.models import DOMAINS
 from app.graph.resolve import resolve_names
 from app.me.router import require_consent
+from app.me.topic_match import Embedder, match_topic
 from app.privacy.redact import redact
 from app.reader import profile_edit as pe
 from app.reader.state import THINKS_IN, PersonaKey
@@ -102,6 +103,7 @@ async def parse_edit(
         ledger.append(result.meta)
         ops = pe.strict(result.output).ops
         names = pe.check_names(ops)
+        topics = pe.check_topics(ops)  # before any embedding (d48)
     except llm.BudgetExceeded:
         await readers.refund_daily("profile_edit_counts", caller.uid, day, shared)
         return _error(503, "llm_budget_exceeded", "Today's AI budget is used up. Try tomorrow.")
@@ -109,18 +111,33 @@ async def parse_edit(
         return _error(422, "not_understood", "Couldn't understand that, try rephrasing.")
     except pe.EditRejected as exc:
         code = str(exc)
-        message = (
-            "Too many concepts in one edit. Name at most 30."
-            if code == "too_many_concepts"
-            else "Couldn't understand that, try rephrasing."
-        )
+        message = {
+            "too_many_concepts": "Too many concepts in one edit. Name at most 30.",
+            "too_many_topics": (
+                f"Too many topics in one edit. Name at most {pe.MAX_TOPICS_PER_EDIT}."
+            ),
+        }.get(code, "Couldn't understand that, try rephrasing.")
         return _error(422, code, message)
     except (llm.LLMUnavailable, llm.LLMRejected) as exc:
         if isinstance(exc.__cause__, ValidationError | ValueError):
             return _error(422, "not_understood", "Couldn't understand that, try rephrasing.")
         return _error(503, "llm_unavailable", "The AI model is unavailable. Try again shortly.")
     ids, unresolved = await resolve_names(graph, names, settings.link_threshold, ledger=ledger)
-    resolved = pe.resolve(ops, ids)
+    topic_map: dict[str, str] = {}
+    note: str | None = None
+    topic_cost = 0.0
+    if topics and scope is not None:
+        note = "Feed topics are fixed in the demo."  # interest isn't modelled per persona
+    elif topics:
+        embedder = Embedder()
+        for phrase in topics:  # one phrase per match: each reaches the embedding alone
+            match = await match_topic(graph, redact(phrase), embedder, settings)
+            if match is not None:
+                topic_map[phrase.casefold()] = match.topic
+            else:
+                unresolved.append(phrase)
+        topic_cost = embedder.cost
+    resolved = pe.resolve(ops, ids, topic_map)
     touched = pe.touched(resolved, graph)
     domains = sorted(set(resolved.domains) | {c.domain for c in touched.values()})
     repo = _repo()
@@ -135,14 +152,15 @@ async def parse_edit(
             "ops": len(ops),
             "concepts": len(resolved.concepts),
             "unresolved": len(unresolved),
-            "cost_usd": round(sum(m.cost_usd for m in ledger), 6),
+            "topics": len(topic_map),
+            "cost_usd": round(sum(m.cost_usd for m in ledger) + topic_cost, 6),
             "demo": scope is not None,
         },
     )
     return {
         "edit_id": edit_id,
         "persona": scope,
-        "preview": pe.preview(resolved, graph, applied, theta, unresolved),
+        "preview": pe.preview(resolved, graph, applied, theta, unresolved, note),
         "expires_in_s": int(PENDING_TTL.total_seconds()),
     }
 

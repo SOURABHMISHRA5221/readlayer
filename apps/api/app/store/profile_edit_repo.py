@@ -150,13 +150,15 @@ class ProfileEditRepo:
                 applied = await self._apply_demo(
                     t, uid, persona, template, resolved, touched, graph, now
                 )  # noqa: E501
+                interest: dict[str, tuple[float, float]] = {}  # demo feeds are fixed (d48)
             else:
-                applied = await self._apply_user(t, uid, resolved, touched, domains, graph, now)
-            done = edit | {
-                "status": "applied",
-                "applied_at": now,
-                "deltas": pe.deltas_to_doc(applied),
-            }
+                applied, interest = await self._apply_user(
+                    t, uid, resolved, touched, domains, graph, now
+                )
+            deltas = pe.deltas_to_doc(applied)
+            if interest:
+                deltas["interest"] = {d: [prev, new] for d, (prev, new) in interest.items()}
+            done = edit | {"status": "applied", "applied_at": now, "deltas": deltas}
             done.pop("expires_at", None)
             t.set(_edit_path(uid, edit_id), done)
             t.set(
@@ -171,7 +173,8 @@ class ProfileEditRepo:
     async def _apply_user(
         self, t: Txn, uid: str, resolved: pe.Resolved, touched: Mapping[str, Any],
         domains: list[str], graph: ConceptGraph, now: datetime,
-    ) -> pe.Applied:  # fmt: skip
+    ) -> tuple[pe.Applied, dict[str, tuple[float, float]]]:  # fmt: skip
+        domains = sorted(set(domains) | set(resolved.interests))
         reads = await t.get_all(
             [user_path(uid)]
             + [sub_path(uid, "knows", c) for c in touched]
@@ -186,13 +189,22 @@ class ProfileEditRepo:
         applied = pe.apply(resolved, graph, edges, theta, _settings(user, None, None), now)
         for cid, edge in applied.edges.items():
             t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, applied.edge_deltas[cid].domain))
+        interest = pe.apply_interests(
+            resolved.interests,
+            {d: float(stored[d].get("interest", 0.0)) for d in resolved.interests},
+        )
+        updates: dict[str, dict[str, Any]] = {}
         for d, th in applied.theta.items():
-            t.set(sub_path(uid, "domains", d), stored.get(d, {}) | {"theta": th})
+            updates.setdefault(d, {})["theta"] = th
+        for d, (_, new) in interest.items():
+            updates.setdefault(d, {})["interest"] = new
+        for d, fields in updates.items():
+            t.set(sub_path(uid, "domains", d), stored.get(d, {}) | fields)
         t.set(
             user_path(uid),
             user.model_copy(update=applied.settings | {"rev": user.rev + 1}).model_dump(),
         )
-        return applied
+        return applied, interest
 
     async def _apply_demo(
         self, t: Txn, uid: str, persona: PersonaKey, template: Any, resolved: pe.Resolved,
@@ -248,16 +260,18 @@ class ProfileEditRepo:
                 )  # noqa: E501
             else:
                 await self._undo_user(
-                    t, uid, edge_deltas, theta_deltas, applied_settings, previous, at
-                )  # noqa: E501
+                    t, uid, edge_deltas, theta_deltas, applied_settings, previous, at,
+                    pe.interests_from_doc(edit["deltas"]),
+                )  # fmt: skip
             done = edit | {"status": "undone", "undone_at": now}
             t.set(_edit_path(uid, edit_id), done)
             return done
 
         return await self._store.run(body)
 
-    async def _undo_user(self, t, uid, edge_deltas, theta_deltas, applied_settings, previous, at):  # type: ignore[no-untyped-def]
-        domains = sorted(set(theta_deltas))
+    async def _undo_user(self, t, uid, edge_deltas, theta_deltas, applied_settings, previous, at,  # type: ignore[no-untyped-def]
+                         interest):  # fmt: skip
+        domains = sorted(set(theta_deltas) | set(interest))
         reads = await t.get_all(
             [user_path(uid)]
             + [sub_path(uid, "knows", c) for c in edge_deltas]
@@ -277,8 +291,16 @@ class ProfileEditRepo:
             t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, edge_deltas[cid].domain))
         for cid in out.removed:
             t.delete(sub_path(uid, "knows", cid))
+        restored = pe.undo_interests(
+            interest, {d: float(stored[d].get("interest", 0.0)) for d in interest}
+        )
+        updates: dict[str, dict[str, Any]] = {}
         for d, th in out.theta.items():
-            t.set(sub_path(uid, "domains", d), stored.get(d, {}) | {"theta": th})
+            updates.setdefault(d, {})["theta"] = th
+        for d, value in restored.items():
+            updates.setdefault(d, {})["interest"] = value
+        for d, fields in updates.items():
+            t.set(sub_path(uid, "domains", d), stored.get(d, {}) | fields)
         t.set(
             user_path(uid),
             user.model_copy(update=out.settings | {"rev": user.rev + 1}).model_dump(),

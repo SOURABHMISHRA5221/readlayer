@@ -96,6 +96,15 @@ class UserProfile(BaseModel):
     onboarding_offered: dict[str, dict[str, Any]] = Field(default_factory=dict)
     onboarding_answered: dict[str, bool] = Field(default_factory=dict)
     onboarding_picks: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    # Redo setup (decision 48): a finished reader reruns the 2 screens; onboarding_done stays
+    # true throughout, so the app never gates them. "about" = screen 1, "discover" = screen 2.
+    onboarding_redo: Literal["about", "discover"] | None = None
+
+    @property
+    def onboarding_open(self) -> bool:
+        """Screen 2's routes are open: first onboarding, or a Redo setup in progress."""
+        return not self.onboarding_done or self.onboarding_redo is not None
+
     # Scoring state (DESIGN §5–6). Demo readers keep offset and engaged per persona instead.
     engaged: dict[str, datetime] = Field(default_factory=dict)  # content_id → last engaged
     prompts: dict[str, list[str]] = Field(default_factory=dict)  # UTC day → prompted contents
@@ -554,6 +563,7 @@ class ReaderRepo:
         interest: Mapping[str, float],
         liked: Mapping[str, tuple[ConceptRef, Any]],
         now: datetime,
+        redo: bool = False,
     ) -> None:
         """One transaction: answers on users/{uid}, θ and interest per domain, and the liked
         articles' small nudges (`liked`: concept id → (ref, apply(edge | None, θ) -> Edge)).
@@ -583,10 +593,13 @@ class ReaderRepo:
                     "field": field,
                     "onboarding": dict(answers),
                     "thinks_in": list(thinks_in),
-                    "calibration": {"asked": [], "answers": 0},
-                    "onboarding_done": False,
                     "rev": user.rev + 1,
                 }
+                | (
+                    {"onboarding_redo": "discover"}  # done and calibration progress kept
+                    if redo
+                    else {"calibration": {"asked": [], "answers": 0}, "onboarding_done": False}
+                )
             )
             t.set(user_path(uid), updated.model_dump())
 
@@ -635,6 +648,21 @@ class ReaderRepo:
         return await self.update_settings(
             uid,
             {"onboarding_done": True, "onboarding_offered": {}, "onboarding_answered": {},
+             "onboarding_picks": {}, "onboarding_redo": None},
+        )  # fmt: skip
+
+    async def start_redo(self, uid: str) -> UserProfile:
+        return await self.update_settings(
+            uid,
+            {"onboarding_redo": "about", "onboarding_offered": {}, "onboarding_answered": {},
+             "onboarding_picks": {}},
+        )  # fmt: skip
+
+    async def cancel_redo(self, uid: str) -> UserProfile:
+        """Leave a Redo setup: only its own state goes; what was saved on the way stays."""
+        return await self.update_settings(
+            uid,
+            {"onboarding_redo": None, "onboarding_offered": {}, "onboarding_answered": {},
              "onboarding_picks": {}},
         )  # fmt: skip
 
@@ -664,7 +692,7 @@ class ReaderRepo:
         async def body(t: Txn) -> OnboardingOutcome:
             user = UserProfile.model_validate(await t.get(user_path(uid)) or {})
             served = user.onboarding_offered.get(item_id)
-            if user.onboarding_done:
+            if not user.onboarding_open:
                 return "done"
             if served is None:
                 return "unknown"
@@ -693,7 +721,7 @@ class ReaderRepo:
                                      sub_path(uid, "domains", ref.domain)])  # fmt: skip
             user = UserProfile.model_validate(reads[user_path(uid)] or {})
             offered = {v.get("concept") for v in user.onboarding_offered.values()}
-            if user.onboarding_done:
+            if not user.onboarding_open:
                 return "done"
             if concept_id not in offered:
                 return "unknown"

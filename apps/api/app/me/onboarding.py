@@ -84,6 +84,7 @@ async def post_onboarding(
     store = get_content_store()
     docs = [d for cid in dict.fromkeys(body.liked_content_ids) if (d := await store.get(cid))]
     now = datetime.now(UTC)
+    redo = user.onboarding_done and user.onboarding_redo is not None
     liked: dict[str, tuple[ConceptRef, Any]] = {}
     for cid in onboarding.liked_concepts(docs):
         concept = graph.get(cid)
@@ -94,20 +95,33 @@ async def post_onboarding(
             return onboarding.apply_liked(c, edge, theta, now)
 
         liked[cid] = (ConceptRef(concept.domain, concept.base_difficulty), apply)
+    answers = {
+        "interests": list(dict.fromkeys(body.interests)),
+        "comfort": dict(body.comfort),
+        "liked_content_ids": [d.content_id for d in docs],
+    }
+    thinks_in = list(dict.fromkeys(body.thinks_in))
+    theta = onboarding.starting_theta(body.comfort)
+    if redo:
+        # Redo setup (decision 48) deletes nothing: earlier comfort answers and liked articles
+        # are kept, frames are kept with the field's frame added, θ isn't reset.
+        before = user.onboarding
+        answers["comfort"] = dict(before.get("comfort", {})) | answers["comfort"]
+        answers["liked_content_ids"] = list(dict.fromkeys(
+            [*before.get("liked_content_ids", []), *answers["liked_content_ids"]]))  # fmt: skip
+        thinks_in = list(dict.fromkeys([*user.thinks_in, *thinks_in]))[: onboarding.MAX_THINKS_IN]
+        theta = {}
     await _repo().save_onboarding(
         caller.uid,
         field=body.field,
-        answers={
-            "interests": list(dict.fromkeys(body.interests)),
-            "comfort": dict(body.comfort),
-            "liked_content_ids": [d.content_id for d in docs],
-        },
-        thinks_in=list(dict.fromkeys(body.thinks_in)),
-        theta=onboarding.starting_theta(body.comfort),
+        answers=answers,
+        thinks_in=thinks_in,
+        theta=theta,
         # Edit → Continue (decision 41): screen 2's picks stay applied on top of the new topics.
         interest=onboarding.interests_with_picks(body.interests, user.onboarding_picks),
         liked=liked,
         now=now,
+        redo=redo,
     )
     return {"saved": True, "liked_concepts": len(liked), "next": "discover"}
 
@@ -180,3 +194,25 @@ async def calibration_skip(
 ) -> dict[str, Literal[True]]:
     await _repo().finish_onboarding(caller.uid)
     return {"done": True}
+
+
+@router.post("/onboarding/redo")
+async def start_redo(
+    caller: Annotated[Caller, Depends(current_caller)],
+    user: Annotated[UserProfile, Depends(consented_user)],
+) -> dict[str, Any]:
+    """Redo setup (decision 48): a finished reader reruns the 2 screens; nothing is deleted and
+    onboarding stays done, so leaving halfway is safe."""
+    if not user.onboarding_done:
+        raise HTTPException(status_code=409, detail="onboarding_not_done")
+    await _repo().start_redo(caller.uid)
+    return {"redo": "about"}
+
+
+@router.post("/onboarding/redo/cancel")
+async def cancel_redo(
+    caller: Annotated[Caller, Depends(current_caller)],
+    _: Annotated[UserProfile, Depends(consented_user)],
+) -> dict[str, Any]:
+    await _repo().cancel_redo(caller.uid)
+    return {"redo": None}
