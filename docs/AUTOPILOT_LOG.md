@@ -839,3 +839,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   → keep (43 Tavily credits); STATUS fixed; in-app country link; "Somewhere else" hint.
 - Round 2: **SHIP**. Follow-ups: credits in §7/§5 (done), watch policy fallback live.
 - Next: push d50, PR, green CI, merge; then the deploy sequence in STATUS §9.
+
+### Decision 50 merged and deployed (2026-10-11)
+- PR #28 squash-merged (cf87f7d) on green CI after SHIP.
+- API deploy 00023 failed to start (feedparser dev-only); traffic stayed on 00022. Fix #29
+  (89cb0ab) + guard test; API 00024 live; collect route 403 unauthenticated.
+- Sourabh: "no one is using the site, deploy web parallely and schedule too": web deployed
+  alongside the API (deploy guard skipped for the web step only), `make setup-feed-job` done.
+- `make run-feed-job`: 200, 54/54 feeds, 710 items, 14 docs. Demo seed dry run → real (3 docs).
+- Next: Sourabh's live check (country, Refresh); then M8-local from `m8-resume`, then Wide layout.
