@@ -197,6 +197,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 
 | Severity | Issue |
 |---|---|
+| Medium | **Landing: mobile Lighthouse LCP 5.7 s simulated (gate 2.5 s), accepted by Sourabh 2026-10-11 for now.** Desktop: perf 100, LCP 0.5 s. Cause: when the landing chunk takes over from the hydrated static hero, React re-mounts the hero (HeroStatic → Suspense → LandingPage), and the new demo paragraph, slightly larger once the annotator's highlights are drawn, becomes the LCP element at ≈ 600 ms observed (first paint of the same text: ≈ 40 ms). **M9 / tweak window: landing mount restructure: the demo attaches to the static hero instead of rebuilding it** |
 | Medium | Cold start **6.0 s** after lazy imports (was 21.9 s, §11). Min instances 1 during judging removes it; the first new article on a fresh instance pays the deferred imports |
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |

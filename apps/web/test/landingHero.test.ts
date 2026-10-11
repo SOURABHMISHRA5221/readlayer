@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { createElement } from "react";
-import { renderToStaticMarkup } from "react-dom/server";
+import { renderToStaticMarkup, renderToString } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import demo from "../src/landing/demo.json";
@@ -15,7 +15,9 @@ const SLOT = /<!-- hero:start -->[\s\S]*<!-- hero:end -->/;
 
 describe("static landing hero", () => {
   it("index.html carries exactly what HeroStatic renders (UPDATE_HERO=1 rewrites it)", () => {
-    const markup = `<!-- hero:start -->${renderToStaticMarkup(createElement(HeroStatic))}<!-- hero:end -->`;
+    // renderToString (not static markup): its text separators let the landing hydrate this exact
+    // DOM instead of replacing it (main.tsx, decision 47).
+    const markup = `<!-- hero:start -->${renderToString(createElement(HeroStatic))}<!-- hero:end -->`;
     const html = readFileSync(INDEX, "utf8");
     expect(html).toMatch(SLOT);
     if (process.env.UPDATE_HERO === "1") writeFileSync(INDEX, html.replace(SLOT, () => markup));

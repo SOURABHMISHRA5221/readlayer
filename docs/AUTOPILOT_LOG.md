@@ -646,3 +646,35 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   The desktop hero now fills the first view (`min-height: 100svh − bar`) and centres its content;
   1440×900: 71 px under the bar, whole hero in view; 1280×800 still fits (card bottom 797);
   1600×1100: equal room above and below. All checks re-run green.
+- **Decision 47** (Sourabh: self-hosted trimmed fonts). plan-reviewer round 1 REVISE (stop rule,
+  the ₹ sign, stale Google references and silent bad paths), round 2 APPROVE. Built:
+  `tools/fonts/trim_fonts.py` (Fontsource variable 5.3.0 / 5.3.1 via `npm pack`, Latin `wght`
+  files trimmed with fontTools to 400–800 / 400–600 / italic 400–500: 44.7 + 33.4 + 32.3 KB,
+  ≈ 300 KB before) plus a one-glyph ₹ file per face (0.9–1.1 KB, own `unicode-range`), versioned
+  names, `/fonts/**` cached immutable in firebase.json; fonts.css `@font-face` (swap), the hero
+  headline and body files preloaded, Google Fonts links gone; fallback metrics re-measured
+  (the old serif numbers came from Google's opsz display cut at 100px). Font checks in
+  `landing_d46.py`: preloads return `font/woff2`, every face loads, ₹ is a real glyph.
+- Mobile LCP then: 5.9 s (observed 620 ms) with fonts at 8 ms, so not the fonts. Cause 1: React
+  replaced the static hero → `hydrateRoot` on the landing boot (`main.tsx`; index.html now from
+  `renderToString` so text nodes match; `useSyncExternalStore` hooks get a server snapshot);
+  desktop LCP 0.5 s, perf 100. Cause 2 (remaining): the landing chunk re-mounts the hero and the
+  new paragraph (slightly larger once highlights are drawn) is a new LCP candidate at ≈ 640 ms
+  (trace: candidate 1 at 40 ms, 69,300 px²; candidate 2 at 644 ms, 70,980 px²; an out-of-flow
+  dot only shrank the growth to 210 px²). Sourabh: accept the mobile miss for now; the mount
+  restructure goes to the M9 / tweak-window list (STATUS §5).
+- Sourabh: a short transition between light and dark: the toggle cross-fades the page with View
+  Transitions (280 ms; instant under reduced motion or without support).
+- **Landing frozen** (Sourabh, 2026-10-11) until the tweak window.
+- Final landing checks (local build, frozen state): all decision 46 checks green (390×844 first
+  view needed the phone demo paragraph at 18px: the self-hosted serif sets a little wider), font
+  checks green, axe 0 everywhere, first view at 390 = 286 KB (fonts now first-party), no landing
+  media before scroll. Unit tests: web 45, annotator 54.
+
+### Next steps (resume here, in order)
+1. Onboarding (decision 41 parts B and C, with decision 42's topic fallback), as planned in
+   `docs/plans/landing-onboarding.md` §B, §C and "Decision 42": the API first
+   (`POST /v1/onboarding/resolve` with the alias list and the embedding fallback, its labelled
+   set `apps/api/evals/cases/onboarding_topics.yaml` committed before choosing the threshold),
+   then the 2-screen `WelcomePage`. Landing is frozen (tweak window only).
+2. Then acceptance, milestone-reviewer, PR from `landing`, deploys (Sourabh's yes), live check.

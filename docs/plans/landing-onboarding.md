@@ -927,8 +927,9 @@ onboarding." (Mobile Lighthouse before: perf 81, LCP 4.9 s simulated, 212 ms obs
   with `uv run --with fonttools --with brotli`, pinned versions): Schibsted wght 400–800; Source Serif
   roman wght 400–600, italic 400–500 (the ranges the Google URL asked for). Output WOFF2 in
   `apps/web/public/fonts/` (stable URLs for preloading) with the OFL text; the script records input
-  package versions and output sizes. The packages are dev dependencies (the source of the files),
-  not imported at runtime.
+  package versions and output sizes. The script fetches the pinned packages with `npm pack` (no
+  package.json or lockfile change; nothing imported at runtime). Prototype sizes: 44.6 / 33.4 /
+  32.4 KB (≈ 110 KB in all, vs ≈ 300 KB from Google).
 - Optical sizing: the `wght` build has no opsz axis, so serif text renders at the font's default
   optical size instead of auto-matching the size. A small visual change at large serif sizes
   (30px pull quote); body sizes are effectively unchanged. Screenshots before/after in the log.
@@ -951,3 +952,21 @@ onboarding." (Mobile Lighthouse before: perf 81, LCP 4.9 s simulated, 212 ms obs
 - Full landing checks (all decision 46 checks, axe, first view), app smoke (reader, feed, profile
   screenshots: fonts load, no fallback stuck), web tests. After screenshots at 1440×900, 1280×800,
   390×844 light/dark. Commit = landing freeze; then §C and §B.
+
+### Decision 47 round 1 (plan-reviewer REVISE, 3 items + nit; applied, these override F1–F3)
+1. **No frozen landing with a failing gate.** If mobile LCP is still > 2.5 s after `optional` on the
+   italic, the next step (optional on the roman/hero body, more trimming, or freezing with a
+   recorded miss) is Sourabh's; asked, his answer logged, and the landing is not frozen before it.
+   The Lighthouse LCP element (headline vs demo paragraph) is recorded with the numbers.
+2. **The rupee sign.** Fontsource's `latin` subset lacks U+20B9 (Google's latin-ext range served
+   it). `trim_fonts.py` also writes a tiny per-face file with only ₹ (from each face's `latin-ext`
+   file, same weight range), declared as its own `@font-face` with `unicode-range: U+20B9`, so it is
+   fetched only on pages that use ₹. Smoke check: "₹25 crore" in each face, `document.fonts.check`
+   true and ₹'s width differs from the Georgia/Arial fallback's.
+3. **No stale Google references, no silent bad paths.** `tools/shots/font_metrics.py` measures
+   against `/fonts/*.woff2` from the local preview; the `fonts.css` header comment is updated;
+   `landing.py` checks each preloaded font URL returns `font/woff2` (Firebase rewrites `**` to
+   index.html, so a bad path would be a 200 HTML) and every face's `FontFace.status` is "loaded"
+   on "/", the reader and the profile.
+- Nit applied: file names carry a version (`*-v1.woff2`) and `firebase.json` serves `/fonts/**`
+  with `Cache-Control: public, max-age=31536000, immutable`.

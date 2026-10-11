@@ -1,0 +1,62 @@
+{
+  "packages": {
+    "@fontsource-variable/schibsted-grotesk": "5.3.0",
+    "@fontsource-variable/source-serif-4": "5.3.1"
+  },
+  "files": {
+    "schibsted-grotesk-latin-v1.woff2": {
+      "from": "@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-wght-normal.woff2",
+      "wght": [
+        400,
+        800
+      ],
+      "in_bytes": 46752,
+      "out_bytes": 44652
+    },
+    "schibsted-grotesk-rupee-v1.woff2": {
+      "from": "@fontsource-variable/schibsted-grotesk/files/schibsted-grotesk-latin-ext-wght-normal.woff2",
+      "wght": [
+        400,
+        800
+      ],
+      "in_bytes": 20924,
+      "out_bytes": 904
+    },
+    "source-serif-4-latin-v1.woff2": {
+      "from": "@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-normal.woff2",
+      "wght": [
+        400,
+        600
+      ],
+      "in_bytes": 50936,
+      "out_bytes": 33432
+    },
+    "source-serif-4-rupee-v1.woff2": {
+      "from": "@fontsource-variable/source-serif-4/files/source-serif-4-latin-ext-wght-normal.woff2",
+      "wght": [
+        400,
+        600
+      ],
+      "in_bytes": 42212,
+      "out_bytes": 1128
+    },
+    "source-serif-4-italic-latin-v1.woff2": {
+      "from": "@fontsource-variable/source-serif-4/files/source-serif-4-latin-wght-italic.woff2",
+      "wght": [
+        400,
+        500
+      ],
+      "in_bytes": 51576,
+      "out_bytes": 32344
+    },
+    "source-serif-4-italic-rupee-v1.woff2": {
+      "from": "@fontsource-variable/source-serif-4/files/source-serif-4-latin-ext-wght-italic.woff2",
+      "wght": [
+        400,
+        500
+      ],
+      "in_bytes": 44420,
+      "out_bytes": 1060
+    }
+  }
+}

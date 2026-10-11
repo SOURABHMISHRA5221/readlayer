@@ -532,6 +532,10 @@
   .lp-demo__toggle {
     margin-bottom: var(--s2);
   }
+  /* The self-hosted serif sets a little wider (decision 47): 18px keeps the paragraph's lines. */
+  .lp-demo__para {
+    font-size: 18px;
+  }
   /* (c): the note's level line gives way, so a line of the Background is in view. */
   .lp-note-static__pitch {
     display: none;

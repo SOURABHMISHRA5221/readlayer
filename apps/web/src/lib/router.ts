@@ -24,7 +24,8 @@ function subscribe(onChange: () => void): () => void {
 const snapshot = () => window.location.pathname + window.location.search;
 
 export function useUrl(): URL {
-  const href = useSyncExternalStore(subscribe, snapshot);
+  // The third argument: the landing hydrates index.html's static hero (main.tsx, decision 47).
+  const href = useSyncExternalStore(subscribe, snapshot, snapshot);
   return new URL(href, window.location.origin);
 }
 

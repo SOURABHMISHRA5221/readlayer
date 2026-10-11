@@ -222,6 +222,41 @@ async def section_gaps(p, base, width):
     return {f"{width} section gaps": check(min(gaps) >= need, smallest=min(gaps), need=need, gaps=gaps)}
 
 
+FONT_CHECK = """(async () => {
+  const preloads = [...document.querySelectorAll('link[rel=preload][as=font]')].map(l => l.href);
+  const types = await Promise.all(preloads.map(u => fetch(u).then(r => [u.split('/').pop(), r.status, r.headers.get('content-type')])));
+  const faces = ['400 16px "Schibsted Grotesk"', '800 16px "Schibsted Grotesk"', '400 16px "Source Serif 4"',
+                 '600 16px "Source Serif 4"', 'italic 400 16px "Source Serif 4"'];
+  await Promise.all(faces.map(f => document.fonts.load(f, 'Ab ₹25 crore')));
+  const status = [...document.fonts].filter(f => /Schibsted|Source Serif/.test(f.family)).map(f => f.family + ' ' + f.style + ' ' + f.unicodeRange.slice(0, 6) + ': ' + f.status);
+  // ₹ in each face must be its own glyph: its width differs from the system fallback's.
+  const c = document.createElement('canvas').getContext('2d');
+  const w = font => { c.font = font; return c.measureText('₹').width; };
+  const rupee = [['"Schibsted Grotesk"', 'Arial'], ['"Source Serif 4"', 'Georgia'], ['italic', 'Georgia']].map(([face, fb]) => {
+    const f = face === 'italic' ? 'italic 400 100px "Source Serif 4"' : '400 100px ' + face;
+    const g = face === 'italic' ? 'italic 400 100px ' + fb : '400 100px ' + fb;
+    return [face, document.fonts.check(f.replace('100px', '16px'), '₹'), Math.round(w(f)), Math.round(w(g))];
+  });
+  return {types, status, rupee};
+})()"""
+
+
+async def fonts(p, base):
+    """Decision 47: self-hosted fonts load (a bad path would come back as index.html), and ₹ is a
+    real glyph in each face."""
+    out = {}
+    for path in ("/", "/privacy"):
+        await p.viewport(1440, 900)
+        await p.goto(base + path, wait=2.5)
+        r = await p.eval(FONT_CHECK)
+        types_ok = len(r["types"]) == 2 and all(t[1] == 200 and t[2] == "font/woff2" for t in r["types"])
+        loaded = [x for x in r["status"] if "U+0000" in x or "U+20B9" in x]
+        status_ok = loaded and all(x.endswith("loaded") for x in loaded)
+        rupee_ok = all(ok and web != fb for _, ok, web, fb in r["rupee"])
+        out[f"{path} fonts"] = check(types_ok and status_ok and rupee_ok, types=r["types"], status=r["status"], rupee=r["rupee"])
+    return out
+
+
 async def run_all(p, base):
     report = {}
     report.update(await first_views(p, base))
@@ -232,6 +267,7 @@ async def run_all(p, base):
     for w in (1024, 1280, 1440, 390):
         report.update(await overlaps(p, base, w))
     report.update(media_budgets())
+    report.update(await fonts(p, base))
     for w in (1440, 390):
         report.update(await swap(p, base, w))
         report.update(await device_media(p, base, w))

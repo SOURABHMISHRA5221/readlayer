@@ -88,7 +88,8 @@ function subscribe(onChange: () => void): () => void {
 }
 
 export function useSession(): Session {
-  return useSyncExternalStore(subscribe, () => session);
+  // Same snapshot while hydrating the landing's static hero (main.tsx, decision 47).
+  return useSyncExternalStore(subscribe, () => session, () => session);
 }
 
 /** A fresh-enough ID token for the current user, or null when signed out. */

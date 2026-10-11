@@ -12,11 +12,9 @@ sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
 
 SENTENCE = "The central bank kept the repo rate at 5.5%, as most economists had expected."
-PAGE = ("data:text/html,<link rel=stylesheet href='https://fonts.googleapis.com/css2?family="
-        "Schibsted+Grotesk:wght@400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;"
-        "1,8..60,400..500&display=swap'><p style=\"font-family:'Source Serif 4'\">a</p>"
-        "<p style=\"font-family:'Source Serif 4';font-style:italic\">a</p>"
-        "<p style=\"font-family:'Schibsted Grotesk'\">a</p>")
+# Measured against the self-hosted files (decision 47), from the local preview (vite preview).
+BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:4173"
+PAGE = BASE + "/privacy"
 CASES = [("Source Serif 4", "", "Georgia"), ("Source Serif 4", "italic ", "Georgia"),
          ("Schibsted Grotesk", "", "Arial")]
 
@@ -27,6 +25,12 @@ async def main():
     try:
         await p.goto(PAGE, wait=4)
         await p.eval("document.fonts.ready.then(() => 1)")
+        # Load every measured face explicitly: a page that hasn't used one yet would measure the
+        # canvas default font instead.
+        faces = [f"{style}400 100px '{web}'" for web, style, _ in CASES]
+        loaded = await p.eval(f"Promise.all({json.dumps(faces)}.map(f => document.fonts.load(f))).then(r => r.map(x => x.length))")
+        if not all(loaded):
+            raise SystemExit(f"a web font didn't load: {loaded}")
         for web, style, local in CASES:
             m = await p.eval(f"""(() => {{ const c = document.createElement('canvas').getContext('2d');
               c.font = "{style}400 100px '{web}'"; const w = c.measureText({json.dumps(SENTENCE)});
