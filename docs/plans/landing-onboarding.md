@@ -10,6 +10,12 @@ replacing consent → field → interests → comfort → frames → liked artic
 The privacy rule stays absolute: free text is never sent to search or to an LLM as-is and is
 never stored.
 
+**Demo data finding (2026-10-11, dry run of `build_landing_demo.py`, read-only):** no candidate
+paragraph in the 3 demo articles has every card cached for all 3 personas. The best paragraph
+(markets article p5: "Basis points" and "Monetary tightening" at unaware / heard of / can explain
+across the personas) needs 5 cards warmed (2 shared restatements + 5 Backgrounds, ≈ $0.03–0.05,
+a production write not in this plan): asked Sourabh.
+
 **Open product question (asked 2026-10-11, pending Sourabh):** the live graph (5,206 concepts) has
 no concept for "F1", "Formula One", "startups" or "Indian politics" (exact lookup and
 `resolve_names` both miss, checked live). Under C as written, the BUILD_PLAN example adds nothing
