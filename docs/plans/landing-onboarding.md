@@ -10,23 +10,31 @@ replacing consent → field → interests → comfort → frames → liked artic
 The privacy rule stays absolute: free text is never sent to search or to an LLM as-is and is
 never stored.
 
-**Demo data finding (2026-10-11, dry run of `build_landing_demo.py`, read-only):** no candidate
-paragraph in the 3 demo articles has every card cached for all 3 personas. The best paragraph
-(markets article p5: "Basis points" and "Monetary tightening" at unaware / heard of / can explain
-across the personas) needs 5 cards warmed (2 shared restatements + 5 Backgrounds, ≈ $0.03–0.05,
-a production write not in this plan): asked Sourabh.
+**Demo data (2026-10-11):** no paragraph was fully cached; Sourabh approved warming the best one
+(markets article p5, "Basis points" and "Monetary tightening" at unaware / heard of / can explain).
+`build_landing_demo.py --paragraph 23324188:p5 --warm` generated the 5 cards through the normal
+verified path (all verified; production spend $0.0778 → $0.1081, $0.03), confirmed them as cache
+hits through the API and wrote `apps/web/src/landing/demo.json`; both temporary readers deleted.
 
-**Open product question (asked 2026-10-11, pending Sourabh):** the live graph (5,206 concepts) has
-no concept for "F1", "Formula One", "startups" or "Indian politics" (exact lookup and
-`resolve_names` both miss, checked live). Under C as written, the BUILD_PLAN example adds nothing
-and shows "Didn't recognise: F1, startups". Proposed addition: a piece that matches no concept is
-mapped to the nearest **taxonomy topic** by embedding similarity to the 14 topic scope lines
-(no LLM; a threshold; the query is then the taxonomy label, as today), e.g. F1 → Sports, startups →
-Business. Built only if Sourabh says yes (then decision 42 in STATUS §10 and BUILD_PLAN C, test
-(b) and the DESIGN free-text sentence extended to the topic step, and a labelled set of 20–30
-phrases with expected topic or "none" committed before choosing the threshold, precision reported
-in the PR per decision 26); otherwise C stays as written. Work starts now: the resolve response
-reserves `topics: []` so screen 1 and its tests don't change either way.
+**Decision 42 (Sourabh, 2026-10-11): topic fallback for unmatched free text** (replaces the open
+question). In `POST /v1/onboarding/resolve`, a piece that matches no concept (after whole-piece and
+" and " lookups and `resolve_names`) goes:
+1. through a small deterministic alias list in code (`ONBOARDING_TOPIC_ALIASES`: F1, Formula 1,
+   Formula One, IPL, NBA, … → sports; startups, startup, VC, venture capital → business; …), casefold
+   exact match, no model call;
+2. else **only the redacted phrase** is embedded (`llm.embed`, MODEL_EMBED; no uid or reader data;
+   not stored; never sent to search) and compared with the embeddings of the 14 topics' scope lines
+   (cached in memory per process); the nearest topic is returned if its cosine similarity is ≥
+   `ONBOARDING_TOPIC_THRESHOLD`, set from a committed labelled set
+   (`apps/api/evals/cases/onboarding_topics.yaml`, ~24 phrases with expected topic or "none",
+   committed before choosing the threshold; precision reported in the PR, decision 26); below it,
+   "didn't recognise".
+The response's `topics` field carries `[{phrase_index, topic, via: "alias" | "embedding"}]`; screen
+1 shows "F1 → Sports" with a select to change or drop it; the chosen topics join the topic chips. The
+consent sentence (consent-v2) adds: "What you type is matched to topics by our model and isn't
+stored." DESIGN §11 records the exception. Tests: the alias path makes no model call; the embedding
+path receives only the redacted phrase; no raw free text in any search request, log record or stored
+document.
 
 ## Dates and checkpoints
 

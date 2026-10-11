@@ -412,6 +412,14 @@ recognise: …". Calibration terms come from concepts linked in the returned art
 close to the reader's current θ per domain, as calibration does. Onboarding searches count against
 the feed search caps and share the (topic/concept, format, day) cache; on failure or a cap, fall
 back to cached feed items, then library items. Demo readers skip onboarding.
+**Decision 42 (Sourabh, 2026-10-11): topic fallback for unmatched free text**, a narrow exception:
+a phrase that matches no concept goes first through a small deterministic alias list (F1 / Formula
+1 / IPL → Sports, startups / VC → Business, …; no model call), else only the phrase is embedded
+(MODEL_EMBED; no uid or reader data; not stored; never sent to search) and mapped to the nearest of
+the 14 topics' scope lines above a similarity threshold set from test phrases; below it, "didn't
+recognise". The mapping is shown back ("F1 → Sports") and can be changed. The consent line says what
+you type is matched to topics by our model and isn't stored. DESIGN §11 records the exception; a test
+proves no raw free text reaches search or Firestore.
 
 **D. Acceptance.** A new mobile visitor understands problem and solution without scrolling past
 section 3 (screenshots in the log); the landing toggle changes highlights, analogy and depth for

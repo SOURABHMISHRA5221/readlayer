@@ -1,0 +1,185 @@
+{
+  "content_id": "2332418841faa08d5f5e157c2d038d1d",
+  "title": "Will Nifty, Sensex plunge for 9th straight week? TCS Q2, RBI MPC among 4 factors to drive Dalal Street from Monday",
+  "site": "The Economic Times",
+  "paragraph": {
+    "id": "p5",
+    "text": "A 25 bps hike in October, rather than December as previously forecast, is possible amid higher energy prices, food inflation and wider price pressures which strengthen the case for tighter policy, according to Bank of America (BofA)."
+  },
+  "personas": {
+    "newcomer": {
+      "label": "Software engineer",
+      "frame": "software",
+      "annotations": [
+        {
+          "id": "d6",
+          "kind": "span",
+          "anchor": {
+            "exact": "bps",
+            "prefix": "A 25 ",
+            "suffix": " hike in October, rather than De",
+            "start": 760,
+            "end": 763
+          },
+          "paragraph_id": "p5",
+          "score": 0.7121,
+          "concept_id": "c_basis_points",
+          "label": "Basis points",
+          "definition": "A unit of measure used in finance to denote the percentage change in financial instruments, where one basis point equals one-hundredth of a percentage point.",
+          "domain": "finance",
+          "prerequisites": [],
+          "band": "unaware",
+          "level": "new",
+          "explanation": {
+            "id": "49463f1107ff167b9be1acd7fc74d6a6989bca3e-ff1327227df314c75117db60cc8214dcd8ba3f4e",
+            "kind": "verified",
+            "background": "A basis point, shortened to bps, is a financial unit equal to one-hundredth of a percentage point (0.01%). It is used to clearly describe tiny changes in interest rates without confusing percentage math. Much like using precise integer units in software to avoid floating-point rounding errors, basis points provide a clear, unambiguous scale.",
+            "author_says": "According to Bank of America (BofA), a 25 bps hike in October, rather than December as previously forecast, is possible due to higher energy prices, food inflation, and wider price pressures that strengthen the case for tighter policy.",
+            "analogy_domain": "software",
+            "band": "unaware",
+            "can_simpler": false,
+            "can_deeper": true
+          }
+        },
+        {
+          "id": "d7",
+          "kind": "span",
+          "anchor": {
+            "exact": "tighter policy",
+            "prefix": "s which strengthen the case for ",
+            "suffix": ", according to Bank of America (",
+            "start": 936,
+            "end": 950
+          },
+          "paragraph_id": "p5",
+          "score": 0.6789,
+          "concept_id": "c_monetary_tightening",
+          "label": "Monetary tightening",
+          "definition": "Actions taken by a central bank, such as raising interest rates, to cool down an overheating economy and curb inflation.",
+          "domain": "economics",
+          "prerequisites": [
+            "Monetary policy",
+            "Central bank"
+          ],
+          "band": "unaware",
+          "level": "new",
+          "explanation": {
+            "id": "187a08b3f689390f481476e0c0bfebdb9782850a-3a58f78cde6024fb5c76eef684ec9c5e3e2c67e8",
+            "kind": "verified",
+            "background": "A country's central bank manages national money, and a \"tighter policy\" means it makes borrowing more expensive by raising interest rates. This cools down overall spending to stop prices from rising too quickly. It works like rate limiting an overloaded server, throttling activity to keep the entire system stable.",
+            "author_says": "According to Bank of America (BofA), a 25 bps hike in October, instead of December as previously forecast, is possible because higher energy prices, food inflation, and broader price pressures make the case for tighter policy stronger.",
+            "analogy_domain": "software",
+            "band": "unaware",
+            "can_simpler": false,
+            "can_deeper": true
+          }
+        }
+      ]
+    },
+    "trader": {
+      "label": "Cricket fan",
+      "frame": "cricket",
+      "annotations": [
+        {
+          "id": "d7",
+          "kind": "span",
+          "anchor": {
+            "exact": "tighter policy",
+            "prefix": "s which strengthen the case for ",
+            "suffix": ", according to Bank of America (",
+            "start": 936,
+            "end": 950
+          },
+          "paragraph_id": "p5",
+          "score": 0.4961,
+          "concept_id": "c_monetary_tightening",
+          "label": "Monetary tightening",
+          "definition": "Actions taken by a central bank, such as raising interest rates, to cool down an overheating economy and curb inflation.",
+          "domain": "economics",
+          "prerequisites": [
+            "Monetary policy",
+            "Central bank"
+          ],
+          "band": "heard of",
+          "level": "new",
+          "explanation": {
+            "id": "187a08b3f689390f481476e0c0bfebdb9782850a-355e56a9a98ed6c51662bc6582ad4856a28cbe42",
+            "kind": "verified",
+            "background": "Tighter policy happens when a central bank raises interest rates to slow down spending and curb inflation. It is like setting a defensive field to dry up easy runs when batsmen are scoring too freely. By making borrowing more expensive, it helps cool down an overheating economy.",
+            "author_says": "According to Bank of America (BofA), a 25 bps hike in October, instead of December as previously forecast, is possible because higher energy prices, food inflation, and broader price pressures make the case for tighter policy stronger.",
+            "analogy_domain": "cricket",
+            "band": "heard of",
+            "can_simpler": true,
+            "can_deeper": true
+          }
+        },
+        {
+          "id": "d6",
+          "kind": "span",
+          "anchor": {
+            "exact": "bps",
+            "prefix": "A 25 ",
+            "suffix": " hike in October, rather than De",
+            "start": 760,
+            "end": 763
+          },
+          "paragraph_id": "p5",
+          "score": 0.4797,
+          "concept_id": "c_basis_points",
+          "label": "Basis points",
+          "definition": "A unit of measure used in finance to denote the percentage change in financial instruments, where one basis point equals one-hundredth of a percentage point.",
+          "domain": "finance",
+          "prerequisites": [],
+          "band": "can explain",
+          "level": "refresher",
+          "explanation": {
+            "id": "49463f1107ff167b9be1acd7fc74d6a6989bca3e-e304fd15fb2ff56bc3d0c55708e133b300413dc3",
+            "kind": "verified",
+            "background": "Central banks calibrate benchmark rates in standard twenty-five basis point increments to fine-tune economic demand and anchor inflation expectations without destabilising financial markets.",
+            "author_says": "According to Bank of America (BofA), a 25 bps hike in October, rather than December as previously forecast, is possible due to higher energy prices, food inflation, and wider price pressures that strengthen the case for tighter policy.",
+            "analogy_domain": null,
+            "band": "can explain",
+            "can_simpler": true,
+            "can_deeper": false
+          }
+        }
+      ]
+    },
+    "policy_student": {
+      "label": "Policy student",
+      "frame": "law",
+      "annotations": [
+        {
+          "id": "d6",
+          "kind": "span",
+          "anchor": {
+            "exact": "bps",
+            "prefix": "A 25 ",
+            "suffix": " hike in October, rather than De",
+            "start": 760,
+            "end": 763
+          },
+          "paragraph_id": "p5",
+          "score": 0.7121,
+          "concept_id": "c_basis_points",
+          "label": "Basis points",
+          "definition": "A unit of measure used in finance to denote the percentage change in financial instruments, where one basis point equals one-hundredth of a percentage point.",
+          "domain": "finance",
+          "prerequisites": [],
+          "band": "heard of",
+          "level": "new",
+          "explanation": {
+            "id": "49463f1107ff167b9be1acd7fc74d6a6989bca3e-96ac573f47c91682cff0d3453bc627a0672b61f3",
+            "kind": "verified",
+            "background": "Basis points, or \"bps,\" are a standard unit for measuring small percentage changes in finance, where one basis point equals one-hundredth of a percentage point. Much like defining precise statutory terms to eliminate ambiguity in a contract, this measure prevents confusion when discussing fractional movements in interest rates.",
+            "author_says": "According to Bank of America (BofA), a 25 bps hike in October, rather than December as previously forecast, is possible due to higher energy prices, food inflation, and wider price pressures that strengthen the case for tighter policy.",
+            "analogy_domain": "law",
+            "band": "heard of",
+            "can_simpler": true,
+            "can_deeper": true
+          }
+        }
+      ]
+    }
+  }
+}
