@@ -243,7 +243,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | Until `seed_demo_feed` re-runs after the d50 deploy, demo feeds show no articles (their snapshot articles come from Tavily hosts the registry doesn't list). Run API deploy → feed job setup → manual run → seed in one sitting (§9). Replaces the old thin-topic item: snapshots now read the outlet entries |
 | Medium | d50 acceptance 1 was 5 of 6: a BBC sports report opened at 324 words. The job doesn't check length per item (≈ 300 fetches a run); outlets were chosen by the readability rule and "Open here" handles a short page |
 | Low | A YouTube video with a mostly Telugu title topped one d50 harness feed (its mixed title passed the 70% Latin check). Videos are outside d50; tighten the check or prefer English channels in M9 |
-| Medium | Tavily is on the free Researcher plan: 398 of 1,000 monthly credits used on 2026-10-10. Realistic feed + Up next use is ≈ 15–30 credits a day; a day at the feed cap could use ≈ 40. If credits run out, searches fail and the feed serves cached and yesterday's entries |
+| Medium | Tavily is on the free Researcher plan: 398 of 1,000 monthly credits used on 2026-10-10. Since then: d50's fallback measurement used 43 (2026-10-11), plus the d48/d50 harness runs' video and podcast searches (not counted separately); check the dashboard before the Oct 16 seed. Realistic feed + Up next use is ≈ 15–30 credits a day; a day at the feed cap could use ≈ 40. If credits run out, searches fail and the feed serves cached and yesterday's entries |
 | Low | A demo reader can hit the 60 requests/minute limit when a script opens many pages quickly (seen in the Design pass harness runs: the profile showed "didn't load" on a 429); real reading doesn't come close |
 | Low | Refresher highlights are a minority (8–16% of shown spans at "For me" across the demo personas); some articles show only "new" highlights |
 | Low | For you headline links are 27px tall text links (above WCAG 2.5.8's 24px, below our 44px control target, which applies to buttons) |
@@ -384,7 +384,8 @@ screenshots, demo exhibits and the live check ≈ $0.30. Under the $8 cap all da
 
 **Decision 50 (2026-10-11):** no LLM anywhere. The outlet check, the dry run and the harness's
 emulator collection are plain feed and article fetches; the harness's searches were videos and
-podcasts only (articles came from outlets). Production expectation: Scheduler 1 job (free tier
+podcasts only (articles came from outlets). The fallback measurement (`scripts/measure_fallback.py`) used **43 Tavily
+credits** (36 + 7 retries), not counted in `ops/search`. Production expectation: Scheduler 1 job (free tier
 3), ≈ 54 feed fetches and 14 Firestore writes per run, **$0/month**; Tavily article searches
 only for thin topics and onboarding concepts.
 

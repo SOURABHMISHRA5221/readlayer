@@ -831,3 +831,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. Deploy API (his yes) → `make setup-feed-job` (his yes) → `make run-feed-job` → seed dry run
    → seed → web deploy (his yes) → live check (his account: country, Refresh).
 3. Then M8-local from `m8-resume`, then Wide layout.
+
+### Decision 50 review
+- milestone-reviewer round 1 FIX (3 blocking: fallback unmeasured, 60/40 broken by the
+  24-item cut for 5–6 topics, STATUS stale; 4 non-blocking) → 6d21c82: select sizes the split
+  over surviving slots (6-topic test, fails on old code); fallback 13/14 topics, 3/3 concepts
+  → keep (43 Tavily credits); STATUS fixed; in-app country link; "Somewhere else" hint.
+- Round 2: **SHIP**. Follow-ups: credits in §7/§5 (done), watch policy fallback live.
+- Next: push d50, PR, green CI, merge; then the deploy sequence in STATUS §9.
