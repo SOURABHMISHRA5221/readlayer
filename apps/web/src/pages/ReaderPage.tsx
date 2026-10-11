@@ -139,10 +139,10 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   useEffect(() => {
     document.title =
       content.status === "ready"
-        ? `${content.data.title} · ReadLayer`
+        ? `${content.data.title} · Gloss`
         : content.status === "error"
-          ? `${ERROR_COPY[content.kind].title} · ReadLayer`
-          : "ReadLayer";
+          ? `${ERROR_COPY[content.kind].title} · Gloss`
+          : "Gloss";
   }, [content]);
 
   const article = content.status === "ready" ? content.data : null;

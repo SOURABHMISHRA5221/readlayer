@@ -36,7 +36,7 @@ export default function ProfilePage({ url }: { url: URL }) {
   );
 
   useEffect(() => {
-    document.title = "Your reading profile · ReadLayer";
+    document.title = "Your reading profile · Gloss";
   }, []);
 
   useEffect(() => {
@@ -400,7 +400,7 @@ function DataControls({ demo, paused, onChanged }: { demo: boolean; paused: bool
           </button>
         ) : (
           <span className="data__confirm" role="group" aria-label="Confirm delete" onKeyDown={(e) => e.key === "Escape" && cancel()}>
-            <span>{demo ? "End the demo and delete what it recorded?" : "Delete everything ReadLayer knows about you? This can't be undone."}</span>
+            <span>{demo ? "End the demo and delete what it recorded?" : "Delete everything Gloss knows about you? This can't be undone."}</span>
             <button type="button" className="btn" autoFocus onClick={cancel} disabled={busy}>
               Cancel
             </button>

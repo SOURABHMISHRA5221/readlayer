@@ -27,7 +27,7 @@ export function ReadAnyLink({ persona }: { persona: PersonaKey | null }) {
         error instanceof ApiError && error.detail
           ? error.detail
           : errorKind(error) === "offline"
-            ? "Couldn't reach ReadLayer. Check your connection and try again."
+            ? "Couldn't reach Gloss. Check your connection and try again."
             : "That link couldn't be opened here. Try another article.";
       setState({ status: "error", message });
     }

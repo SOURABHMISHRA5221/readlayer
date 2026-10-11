@@ -36,7 +36,7 @@ export function LibraryPage({ url }: { url: URL }) {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    document.title = "ReadLayer · Read anything. Understand it your way.";
+    document.title = "Gloss · Read anything. Understand it your way.";
   }, []);
 
   useEffect(() => {

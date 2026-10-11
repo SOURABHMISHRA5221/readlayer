@@ -40,7 +40,7 @@ function useOnboardingDone(uid: string | null, isDemo: boolean): boolean | null 
 
 const loading = (
   <main className="reader__state" aria-busy="true">
-    <StateView title="Opening ReadLayer…" />
+    <StateView title="Opening Gloss…" />
   </main>
 );
 
@@ -50,7 +50,7 @@ export function App() {
   if (session.status === "loading") {
     return (
       <main className="reader__state" aria-busy="true">
-        <StateView title="Opening ReadLayer…" />
+        <StateView title="Opening Gloss…" />
       </main>
     );
   }

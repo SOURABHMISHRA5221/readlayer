@@ -151,7 +151,7 @@ export function AccountMenu() {
           )}
           {step.kind === "confirm-delete" && (
             <div className="account__confirm" role="alert">
-              <p>Delete everything ReadLayer knows about you and your account? This can't be undone.</p>
+              <p>Delete everything Gloss knows about you and your account? This can't be undone.</p>
               <div className="account__confirm-actions">
                 <button type="button" className="btn btn--sm" onClick={() => setStep({ kind: "menu" })}>
                   Keep my data

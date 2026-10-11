@@ -18,7 +18,7 @@ export function SignInPage({ url }: { url: URL }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "ReadLayer · Sign in";
+    document.title = "Gloss · Sign in";
   }, []);
 
   const google = async () => {

@@ -33,7 +33,7 @@ export default function FeedPage({ url }: { url: URL }) {
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    document.title = "For you · ReadLayer";
+    document.title = "For you · Gloss";
   }, []);
 
   useEffect(() => {

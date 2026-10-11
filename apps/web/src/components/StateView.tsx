@@ -33,7 +33,7 @@ export const ERROR_COPY: Record<ApiErrorKind, { title: string; body: string }> =
     body: "The API answered with an error. Try again in a moment.",
   },
   offline: {
-    title: "ReadLayer can't reach its API",
+    title: "Gloss can't reach its API",
     body: "Check your connection, then try again.",
   },
   pending: {
