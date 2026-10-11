@@ -58,7 +58,7 @@ export function Goals({ demo, refreshKey, onGoals, onShowOnMap }: Props) {
                 <li key={g.id} className="goals__item">
                   <div className="goals__head">
                     <span className="goals__label">
-                      {g.type === "learning" ? `Understand ${g.label}${g.kind === "topic" ? " (topic)" : ""}` : g.label}
+                      {g.type === "learning" ? `Understand ${g.label}` : g.label}
                     </span>
                     <span className="goals__value">{progressText(g)}</span>
                   </div>
@@ -164,7 +164,10 @@ function AddGoal({ onAdded }: { onAdded: () => void }) {
       <form className="goals__form" onSubmit={addLearning}>
         <label htmlFor={`${id}-i`} className="goals__form-title">Understand an idea</label>
         <input id={`${id}-i`} className="goals__text" type="text" maxLength={100} value={idea}
-          placeholder="e.g. insulin resistance" onChange={(e) => setIdea(e.target.value)} />
+          placeholder="e.g. insulin resistance" onChange={(e) => {
+            setIdea(e.target.value);
+            setDraft(null); // a preview belongs to the text it was made from
+          }} />
         <button className="btn" type="submit" disabled={busy || !idea.trim()}>{busy ? "Adding…" : "Add"}</button>
       </form>
       {draft && (

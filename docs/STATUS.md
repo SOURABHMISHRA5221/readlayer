@@ -1,11 +1,11 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-11 (IST): Know-this refresh (decision 46d) merged (#25) and live (API revision
-00020, web deployed; live check: "Not really" inks "hedging" in without a reload, one chip in its done
-state, temporary reader deleted). Landing and onboarding built and accepted on the harness on `landing` (landing frozen; onboarding API + 2 screens done; §19); next its reviewer, PR and deploys (§9). Before that: Design pass (Gloss) merged (#22, #23) and live (API revision
-00019, web deployed); live check passed after the CORS fix for Save (§18). Next: M8-local (rebase
-`m8` first). M7.5 merged (#20) and live,
-Sourabh's Google check done.
+Last updated: 2026-10-11 (IST): **Landing and onboarding merged (#26) and live** (API revision
+00021, web deployed; live landing checks pass, mobile Lighthouse LCP median 1.8 s; §19). **Decision
+48** (topic goals, `set_interest`, Redo setup) built and harness-accepted on `d48` (§20); next its
+review fixes, PR and deploys, then Sourabh's Redo setup check on his account (§9). Before that:
+Know-this refresh (#25), Design pass (#22, #23), M7.5 (#20), all live. Next after d48: Wide layout
+(decision 45), then M8-local (rebase `m8` first).
 M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
@@ -197,6 +197,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Onboarding: "Know this?" terms come only from concepts of the item's own topic, corpus concepts first (the plan: closest b to θ among all named concepts) | The harness run offered "Column" on a sports story and "Action point" on an economics one (other domains, seed-only concepts) | Keep (DESIGN §4) |
 | Onboarding: `onboarding_answered` is a map (concept → known), finish also clears the picks, discover is refused after finish, library fallback below 6 web items | Screen 2 resumes with the answers; nothing kept that has no use after onboarding | Keep (DESIGN §4, §11.4) |
 | d48: Describe yourself's `set_interest` is two model-facing ops, `read_more` / `read_less` (prompt v7), not one op with a `direction` field (plan) | v6 left `direction` empty (9/10); defaulting empty to "more" turned "less cricket" into more on a repeat run; v7 10/10 twice, attacks 5/5 | Keep (DESIGN §15.3) |
+| d48: the profile_edit eval ran 7 times, not the plan's 2 (v5 before, v6 after) | v6 failed P11 (empty direction); a v7 draft and an "empty = more" default were tried and dropped (the default turned "less cricket" into more on a repeat); the shipped v7 ran twice. Every run is kept and listed in evals/changelog.md; ≈ $0.063 | Recorded |
 | d48: a learning goal's exact concept match now short-circuits before `resolve_names` | Same result, no model path; the whole-phrase topic alias must come before any model call anyway | Keep (DESIGN §18) |
 | d48: "Know this?" acronym terms ("OCT") count only where the text writes them in capitals (found on the harness: "Know OCT?" from a date) | Not in the plan; a deterministic filter on a visible quality problem | Keep (DESIGN §4) |
 | M2.2: variant-precision baseline is 83% on the newly frozen 150-mention sample, not M2's 93% | M2's figure used a different sample and candidate floor; not comparable | Keep |
@@ -326,6 +327,12 @@ YouTube can take up to 30 searches (60 calls) of its 90-search daily bucket, whi
 shares; past the cap the feed serves today's or yesterday's entries. Realistic judging traffic
 touches 4–8 topics: ≈ 10–20 Tavily credits and 4–8 YouTube searches a day. Demo snapshots are
 seeded once per run (≤ 18 searches, plus ≈ 60 local fetch-and-extract checks, no LLM).
+
+**2026-10-11 UTC (decision 48, local):** profile_edit eval runs: 7 runs × 15 cases ≈ $0.063 (the
+plan budgeted 2 runs, < $0.05: v6 failed, a v7 draft failed, an "empty = more" default was tried
+and dropped, then v7 twice; evals/changelog.md); onboarding topic eval 4 embed calls < $0.001;
+harness runs: a handful of profile_edit and link_confirm calls (< $0.02), feed searches on the
+emulator only. All counted in the production spend counter.
 
 **2026-10-11 UTC (Design pass, local):** harness LLM ≈ $0.23 (explanations while testing, the verified "Say it simpler" checks, one Read any link ingest), 12 harness search calls (Up next on the reader page); refresher-share measurement and font metrics need no LLM. Production ledger for the UTC day: $0.06 (the before screenshots' demo reader and other traffic).
 
@@ -872,7 +879,8 @@ screenshots in `docs/evidence/d48/`.
 | Topic goal | "Indian politics" previews "Goal: understand Politics (Indian politics) · 10 ideas"; saved as `Politics`, kind topic, 10 ideas; no model call (whole-phrase alias); the phrase in no stored document or log (pytest) |
 | Describe yourself | Sourabh's own sentence "See I want to learn about Indian Politics" previews "More Politics in your feed"; Apply: politics interest 0.3 → 1.0, feed topics economics, politics; Undo → 0.3. Guarded undo, topic cap, demo note, old edits loading: pytest (the undo guard and the comfort merge were mutation-checked) |
 | Redo setup | An M7-era reader (consent v1, comfort answers, finished): Redo setup → /welcome with the consent checkbox and Cancel setup; both screens; Start reading → feed (economics, politics, sports); done stayed true, comfort kept, frames cricket + software, consent now v2; the typed text in no export field |
-| axe | 0 on the profile after the edit and on both redo screens at 1440/390, light and dark; no horizontal scroll |
-| Evals | profile_edit: v5 7/10 (before; P11–P13 unknown op), v7 10/10 and 10/10, attacks 5/5; cases P11–P14 and X05 committed before any run |
-| Tests | API 686, web 57 |
+| axe | 0 on the profile (goal preview line and Redo setup button showing) at 1440/390, light and dark, and after the edit; on both redo screens at 1440/390, light and dark; no horizontal scroll. Small targets: the existing Pause learning checkbox (20px, its whole sentence is the label) and two card title links (24px text links). Run log: `docs/evidence/d48/harness.txt` |
+| Review fixes | An interest-only edit's history line was blank (now "More Politics in your feed"); a "less" that changes nothing is dropped; the goal preview clears when the text changes; Redo setup only for finished readers; the saved goal reads "Understand Politics" (no "(topic)") |
+| Evals | profile_edit, cases P11–P14 and X05 committed before any run; every run (evals/changelog.md): v5 7/10 (before), v6 9/10, a v7 draft 8/10 (never shipped; file renamed `…v7-draft-direction-required`), v6 + "empty = more" 10/10 then 9/10 (turned "less cricket" into more: dropped), shipped v7 10/10 and 10/10; attacks 5/5 throughout |
+| Tests | API 687, web 58 |
 | Live | Pending: deploy, then Sourabh's Redo setup on his account |

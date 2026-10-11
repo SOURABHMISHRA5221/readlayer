@@ -50,6 +50,17 @@ async def main():
         await p.eval("document.querySelector('.goals__text').form.requestSubmit(); 1")
         await p.wait_for(".goals__draft", 40)
         print("[goal preview]", await p.eval("document.querySelector('.goals__draft-line').textContent"))
+        # Profile with the draft line and the Redo button, all four sizes, without a reload (a
+        # reload would drop the draft): viewport and the theme attribute change in place.
+        print("[redo button shown]", await p.eval("!!document.querySelector('.data__redo button')"))
+        for w, dark in SIZES:
+            await p.viewport(w, dark=dark)
+            await p.eval(f"document.documentElement.dataset.theme = '{'dark' if dark else 'light'}'; "
+                         f"localStorage.setItem('readlayer:theme', '{'dark' if dark else 'light'}'); 1")
+            await asyncio.sleep(0.8)
+            await audit(p, "profile-goal-draft")
+        await p.viewport(1440)
+        await p.eval("document.documentElement.dataset.theme = 'light'; localStorage.setItem('readlayer:theme', 'light'); 1")
         await p.click_text(".goals__draft button", "Save goal", 2)
         goals = (await p.api("", "GET", "/v1/me/goals"))["body"]
         print("[goal saved]", [(g["label"], g.get("kind"), g["total"]) for g in goals])
@@ -69,6 +80,7 @@ async def main():
         print(f"[edit apply] politics interest {pol(before)} → {pol(after)}; feed topics {feed['topics']}")
         await audit(p, "profile-after-edit")
         await p.click_text("button", "Undo", 2)
+        print("[edit history]", await p.eval("document.querySelector('.editbox__history li span')?.textContent"))
         print("[edit undo] politics interest", pol((await p.api("", "GET", "/v1/me/profile"))["body"]))
 
         # --- Redo setup through the real button

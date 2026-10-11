@@ -366,3 +366,17 @@ def test_an_acronym_term_needs_capitals_in_the_text():
     assert not onboarding.as_written(oct_, "The week in politics (Oct. 7, 2026)")
     assert onboarding.as_written(oct_, "OCT rules changed")
     assert onboarding.as_written(concept("c_party", "Party", "politics", 3), "party")
+
+
+def test_interest_edit_summary_and_no_op_lines(env, docs):
+    c = google()
+    onboard(c, ("economics",))
+    env["edit"].output = _more()
+    r = c.post("/v1/me/profile/edits", json={"text": "more Indian politics"}).json()
+    c.post(f"/v1/me/profile/edits/{r['edit_id']}/apply")
+    history = c.get("/v1/me/profile/edits").json()["edits"]
+    assert history[0]["interests"] == [{"domain": "politics", "direction": "more"}]
+    # "less" on a topic that is already out of the feed changes nothing: no line, no edit field
+    env["edit"].output = _more("cricket", "read_less")
+    p = c.post("/v1/me/profile/edits", json={"text": "less cricket"}).json()["preview"]
+    assert p["interests"] == []

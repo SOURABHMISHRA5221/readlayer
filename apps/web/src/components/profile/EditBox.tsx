@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { ApiError } from "../../lib/api";
 import type { PersonaKey } from "../../lib/personas";
 import { profileApi, type EditPreview, type EditSummary } from "../../lib/profileApi";
-import { previewLines } from "../../lib/profileFormat";
+import { interestLine, previewLines } from "../../lib/profileFormat";
 
 const SETTING_NAMES: Record<string, string> = {
   thinks_in: "analogies",
@@ -161,6 +161,7 @@ export function EditBox({ persona, personaName, onChanged }: Props) {
                     e.concepts ? `${e.concepts} concept${e.concepts > 1 ? "s" : ""}` : "",
                     ...e.domains.map((d) => `${d} level`),
                     ...e.settings.map((k) => SETTING_NAMES[k] ?? k),
+                    ...(e.interests ?? []).map(interestLine),
                   ]
                     .filter(Boolean)
                     .join(", ")}

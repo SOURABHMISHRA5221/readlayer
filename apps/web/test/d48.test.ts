@@ -48,3 +48,10 @@ describe("saving a previewed goal", () => {
     expect(JSON.stringify(sent)).not.toMatch(/Indian/);
   });
 });
+
+describe("edit history", () => {
+  it("names an interest-only edit instead of leaving the line blank", async () => {
+    const { interestLine } = await import("../src/lib/profileFormat");
+    expect(interestLine({ domain: "politics", direction: "more" })).toBe("More Politics in your feed");
+  });
+});

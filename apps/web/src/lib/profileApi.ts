@@ -117,6 +117,7 @@ export interface EditSummary {
   concepts: number;
   domains: string[];
   settings: string[];
+  interests?: { domain: Domain; direction: "more" | "less" }[]; // decision 48
 }
 
 const q = (persona: PersonaKey | null, first = true) => (persona ? `${first ? "?" : "&"}persona=${persona}` : "");

@@ -10,6 +10,7 @@ original. The raw text and any name the reader typed are never stored or logged.
 import logging
 import re
 import uuid
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -138,6 +139,15 @@ async def parse_edit(
                 unresolved.append(phrase)
         topic_cost = embedder.cost
     resolved = pe.resolve(ops, ids, topic_map)
+    if resolved.interests:
+        # Only changes: "less" on a topic already out of the feed says nothing (d48 review).
+        current = {d: s.interest for d, s in (await readers.get_domains(caller.uid)).items()}
+        changing = {
+            d: how
+            for d, how in resolved.interests.items()
+            if pe.interest_after(current.get(d, 0.0), how) != current.get(d, 0.0)
+        }
+        resolved = replace(resolved, interests=changing)
     touched = pe.touched(resolved, graph)
     domains = sorted(set(resolved.domains) | {c.domain for c in touched.values()})
     repo = _repo()
@@ -175,6 +185,9 @@ def _summary(edit_id: str, doc: dict[str, Any]) -> dict[str, Any]:
         "concepts": len(r.get("concepts", {})),
         "domains": sorted(r.get("domains", {})),
         "settings": sorted(r.get("settings", {})),
+        "interests": [
+            {"domain": d, "direction": how} for d, how in sorted(r.get("interests", {}).items())
+        ],  # fmt: skip
     }
 
 

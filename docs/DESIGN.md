@@ -853,8 +853,11 @@ to update your settings. It is not stored."
     interest to max(current, 1.0), `less` to min(current, 0.3); the edit records `{domain:
     [previous, applied]}` and Undo restores the previous value only where the interest still
     equals what the edit applied (a later pick, Redo setup or edit wins). Preview line: "More
-    Politics in your feed". Demo sessions drop it with the note "Feed topics are fixed in the
-    demo". The phrase is never stored.
+    Politics in your feed". A request that changes nothing ("less" on a topic already out of
+    the feed) is dropped from the edit and the preview. Demo sessions drop it with the note
+    "Feed topics are fixed in the demo". The phrase is never stored. Known limit: the guard
+    compares values, so if a later change lands on exactly the value the edit applied (e.g. a
+    Redo setup that also leaves a topic at 0.3), Undo restores the earlier value.
   - The applied edit is stored as a `profile_edit` event and as
     `users/{uid}/profile_edits/{edit_id}` with the ops and the exact deltas applied (Δα/Δβ per
     concept, Δθ per domain, previous setting values).
