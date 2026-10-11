@@ -1,0 +1,24 @@
+[reader 1440-light] ready=True axe=[] hscroll=0 small=[] reader-1440-light.png
+[reader 1440-dark] ready=True axe=[] hscroll=0 small=[] reader-1440-dark.png
+[reader 390-light] ready=True axe=[] hscroll=0 small=[] reader-390-light.png
+[reader 390-dark] ready=True axe=[] hscroll=0 small=[] reader-390-dark.png
+[reader card 1440] axe [] reader-card-1440-light.png
+[reader sheet 390 dark] axe [] reader-sheet-390-dark.png
+[profile 390-light] ready=True axe=[] hscroll=0 small=[] profile-390-light.png
+[profile 390-dark] ready=True axe=[] hscroll=0 small=[] profile-390-dark.png
+[map keyboard] focused='Profit margins, can explain' inspector='Profit margins' tab stops=1
+[map inspector 1440] axe [] profile-map-1440-light.png
+[library-foryou 1440-light] ready=True axe=[] hscroll=0 small=["Has Inequality Ever Been 346x27", "Gadgets of the future? | 353x27", "September CPI is just th 532x27", "Jeff Bezos says AI could 545x27
+[library-foryou 1440-dark] ready=True axe=[] hscroll=0 small=["Has Inequality Ever Been 346x27", "Gadgets of the future? | 353x27", "Economics Explained | Po 433x27", "September CPI is just th 532x27"
+[library-foryou 390-light] ready=True axe=[] hscroll=0 small=[] library-foryou-390-light.png
+[library-foryou 390-dark] ready=True axe=[] hscroll=0 small=[] library-foryou-390-dark.png
+[library-topics 1440-light] ready=True axe=[] hscroll=0 small=[] library-topics-1440-light.png
+[library-topics 1440-dark] ready=True axe=[] hscroll=0 small=[] library-topics-1440-dark.png
+[library-topics 390-light] ready=True axe=[] hscroll=0 small=[] library-topics-390-light.png
+[library-topics 390-dark] ready=True axe=[] hscroll=0 small=[] library-topics-390-dark.png
+[library-saved 1440-light] ready=True axe=[] hscroll=0 small=[] library-saved-1440-light.png
+[library-saved 390-dark] ready=True axe=[] hscroll=0 small=[] library-saved-390-dark.png
+signin 1440 False [] 0 [] signin-1440-light.png
+signin 390 True [] 0 [] signin-390-dark.png
+[profile 1440-light] ready=True axe=[] hscroll=0 small=[] profile-1440-light.png  (re-run: the first run hit the demo rate limit, 429)
+[profile 1440-dark] ready=True axe=[] hscroll=0 small=[] profile-1440-dark.png

@@ -1,0 +1,35 @@
+# Design pass acceptance (2026-10-11, emulator harness unless noted)
+
+## Screenshots
+before/: live site before any change (sign-in, library, For you, reader, profile; 1440 and 390, light and dark)
+after/:  harness after (library For you/Topics/Saved, reader + open card + phone sheet, profile + map + inspector, sign-in)
+after-audit.txt: axe 0 serious/critical and no horizontal scroll on every page above; no control under 44px
+  (the only flags are For you headline links, 27px tall text links in headings, above WCAG 2.5.8's 24px)
+
+## Keyboard
+map: one Tab stop (roving tabindex), ArrowRight moved focus, Enter opened the inspector ("Profit margins, can explain")
+reader: Tab to a highlight, Enter opens the card, Escape returns focus (annotator tests + earlier milestones)
+recap Undo buttons are named for their concept ("Undo the change to Bourses")
+
+## Reduced motion
+Margo blink animation-name = none; map pop = none (no new nodes; CSS rule covers it); card slide off (annotator)
+
+## Non-text contrast (measured, WCAG relative luminance)
+light: accent-line 4.07:1 (refresher/new underline, ready rings, path joins), goal dashes 4.40:1, accent dots 6.37:1,
+       new-highlight underline over its fill 3.54:1; heard-of map dot now outlined in accent-line (fill alone ≈ 2:1)
+dark:  accent-line 5.68:1, goal dashes 7.96:1, accent 8.38:1, new-highlight underline over fill 3.96:1
+
+## Highlight levels (offline measurement, production corpus × demo personas, balanced)
+refresher share: newcomer 8.4%, trader 14.2%, policy student 16.3%; trader on the ET markets demo article: 4 new + 4 refresher
+
+## Flows
+recap with no interaction: "Nothing moved on your map this time." (0 rows)
+Knew this on "Bourses" → recap row Heard of → Understands; Undo → "Undone: now Heard of"
+Say it simpler (trader, refresher span "Bourses"): own band can explain (verified) → simpler understands (verified)
+Helpful in the action bar → 1 article_helpful event in export; Save → Saved tab lists the article; export has saved
+persona chip → URL persona=trader
+new Google (emulator) reader's map: domains economics/finance/business/policy, 64 nodes (48 solid, 16 rings)
+two-phase Read any link (Photosynthesis): article visible in 1.5 s, "Reading the article and preparing your notes…", notes after 88 s
+
+## Bundle
+main 138.7 KB gzip before → 143.3 KB after (budget 150); For you, Saved, Profile are lazy chunks; Cytoscape chunk (155 KB) gone

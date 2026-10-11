@@ -435,3 +435,15 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   m8 conflicts, map keyboard and contrast, bundle, recap correctness, shift warm-up, before
   shots, second checkpoint, DESIGN sections). Round 2: REVISE (map solid vs ready wording;
   extension pre-read must skip known steps). Round 3: **APPROVE**; two nits applied.
+- Build (Oct 11): API A1–A7 with tests (span band/level from the uncapped concept band; ticked
+  pre-read step; Say it simpler / Go deeper through the verified path; recap bands; all-topics
+  map overview; Saved; article Helpful), `warm_demo --shifts`. Refresher-share measurement first:
+  8–16% of shown spans, both styles on a demo article, so no question for Sourabh. Web stages 1–5:
+  tokens and fonts (measured fallbacks), Margo, Gloss name, top bar, library as a feed (For you ·
+  Topics · Saved, rows, sidebar), reader (action bar, path, highlight levels, margin notes with
+  Margo, card pitch and depth buttons, recap), profile (domain cards, SVG map with inspector,
+  Cytoscape removed), sign-in and welcome. The annotator's sidenote and sheet already existed, so
+  the card changes stayed in card.ts (deviation recorded). Found and fixed on the way: a 32px
+  sideways scroll on phones (top bar), sub-44px density and Up next buttons, the persona chip's
+  missing name in compact mode, a heard-of dot under 3:1, domain cards counting the whole graph.
+  Both checkpoints met on Oct 11. Next: milestone-reviewer.
