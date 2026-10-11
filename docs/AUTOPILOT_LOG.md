@@ -560,3 +560,13 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   the annotator (no focus trap, no hover peeks inline). Round 2: **APPROVE**; nits applied (12 px
   phone clip figure in STATUS; if the phone only fits from 1280, it gets logged and noted in the
   decision 46 row). Lighthouse moves after the polish.
+- P1 + P2 built (time logged per round 1 item 10): annotator 0.7.0 `inline` host (group role,
+  revealed when the explanation settles, `onCardReady`, quiet host opens, no hover peeks, no
+  close on outside/scroll/Escape, no focus trap, open() doesn't scroll; 7 vitests, 52 pass) and a
+  fix found on the way: the demo button's dark pill was overridden by the generic `.rl-btn` rule
+  (now `.rl-btn.rl-btn--demo`). Hero: featured note open on load (`FEATURED_NOTE`), static
+  `DemoNoteStatic` in a fixed-height slot (330→390 px desktop, 280 px phone), Margo on the note's
+  top edge, "Read as:", nav (How it works, Privacy, Sign in, Try the demo). 1440×900: whole demo
+  ends at y 858. 390×844: fallbacks (a) fine print below the demo, (b) CTAs on one row, (c) level
+  line hidden were all needed; note title + 2 Background lines in view. Main 146.2 KB gzip.
+  Next: P3 phone shot, P4 sections, P5 clips, then the P6 checks in `tools/shots/landing.py`.

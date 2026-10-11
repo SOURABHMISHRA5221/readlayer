@@ -101,9 +101,7 @@
 }
 .lp-side__count {
   margin-top: var(--s1);
-  font: 600 var(--text-micro) / 1.4 var(--font-ui);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
+  font: 600 var(--text-ui-sm) / 1.4 var(--font-ui);
   color: var(--accent-ink);
 }
 .lp-side__para {
@@ -456,5 +454,36 @@
   }
   .lp-formats__list {
     margin-top: 0;
+  }
+}
+
+/* Decision 46: the hero's open note, the annotator's inline card filling the fixed slot, with
+   sentence-case labels. Selectors outrank the annotator's runtime style tag (styles.ts). */
+.lp .lp-demo__note-live > .rl-card {
+  height: 100%;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+.lp .lp-demo__note .rl-card .rl-card__domain,
+.lp .lp-demo__note .rl-card .rl-card__title {
+  padding-right: calc(var(--lp-margo-w) - var(--s4));
+}
+.lp .lp-demo__note .rl-card .rl-card__domain {
+  font: 600 13px / 1 var(--font-ui);
+  font-variant: normal;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.lp .lp-demo__note .rl-card .rl-card__domain::first-letter {
+  text-transform: uppercase;
+}
+.lp .lp-demo__note .rl-card .rl-card__section-label {
+  font: 600 12.5px / 1.2 var(--font-ui);
+  font-variant: normal;
+  letter-spacing: normal;
+  text-transform: none;
+}
+@media (max-width: 599px) {
+  .lp .lp-demo__note .rl-card .rl-card__pitch {
+    display: none;
   }
 }

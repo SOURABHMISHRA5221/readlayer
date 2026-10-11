@@ -65,3 +65,8 @@ export function noteCount(notes: DemoNote[]): string {
   const parts = [fresh ? part(fresh, "new idea", "new ideas") : null, refreshers ? part(refreshers, "refresher", "refreshers") : null];
   return parts.filter(Boolean).join(" and ") || "no notes";
 }
+
+/** One persona's note as the static first paint shows it (decision 46): the span and its verified explanation. */
+export function demoNote(persona: PersonaKey, annotationId: string): DemoAnnotation | null {
+  return DATA[persona].annotations.find((a) => a.id === annotationId) ?? null;
+}

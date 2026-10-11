@@ -12,3 +12,14 @@ export const DEMO_PERSONAS: readonly { key: PersonaKey; label: string }[] = [
 ];
 
 export const DEFAULT_DEMO_PERSONA: PersonaKey = "newcomer";
+
+/**
+ * The note the hero demo opens for each persona (decision 46): the first with an analogy,
+ * preferring "bps" (d6). The Cricket fan's bps is a refresher without one, so it opens "tighter
+ * policy" (d7). A vitest checks each id exists in demo.json with an analogy.
+ */
+export const FEATURED_NOTE: Readonly<Record<PersonaKey, string>> = {
+  newcomer: "d6",
+  trader: "d7",
+  policy_student: "d6",
+};

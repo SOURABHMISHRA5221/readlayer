@@ -73,6 +73,7 @@ export default function LandingPage({ url }: { url: URL }) {
     <div className="lp">
       <Hero
         themeToggle={<ThemeToggle />}
+        actions={{ onDemo: demo, onGoogle: google, busy }}
         notice={
           deepLink ? (
             <p className="lp-notice" role="status">

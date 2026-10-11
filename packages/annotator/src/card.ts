@@ -40,7 +40,8 @@ const MAKE_ROOM_MS = 3000;
 const TOP_INSET_VAR = "--rl-top-inset";
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-export type CardMode = "float" | "sheet" | "sidenote";
+/** "inline": in the host's own box, in normal flow (a landing demo that keeps one note open). */
+export type CardMode = "float" | "sheet" | "sidenote" | "inline";
 
 /** Where a sidenote goes: the margin column's left edge and usable width, in viewport px. */
 export interface SidenoteBox {
@@ -107,15 +108,20 @@ export class Card {
   private readonly buttons: HTMLButtonElement[];
   private stopAutoUpdate: (() => void) | null = null;
   private mode: CardMode = "float";
+  // Inline cards stay hidden until their explanation settles, so no skeleton is ever shown.
+  private pending = false;
 
   constructor(
     private readonly doc: Document,
     handlers: CardHandlers,
+    /** The inline host: the card lives in it, in flow, at every width (no popover or sheet). */
+    private readonly inline: HTMLElement | null = null,
   ) {
     const id = `rl-card-${++cardCount}`;
     this.el = el(doc, "div", C);
     Object.assign(this.el, { id, hidden: true, tabIndex: -1 });
-    this.el.setAttribute("role", "dialog");
+    // Always open in the page, an inline card is a labelled group, not a dialog.
+    this.el.setAttribute("role", inline ? "group" : "dialog");
     this.el.setAttribute("aria-labelledby", `${id}-title`);
     this.el.setAttribute("aria-describedby", `${id}-bg`);
 
@@ -228,7 +234,8 @@ export class Card {
     this.body.append(this.domain, this.title, this.pitch, this.prereqs, this.explain, this.status, this.debug);
     this.body.addEventListener("scroll", () => this.markOverflow(), { passive: true });
     this.el.append(handle, this.arrowEl, this.body, footer);
-    doc.body.append(this.scrim, this.el);
+    if (inline) inline.append(this.el);
+    else doc.body.append(this.scrim, this.el);
   }
 
   get id(): string {
@@ -288,6 +295,8 @@ export class Card {
   setExplanation(state: ExplanationState): void {
     const verified = typeof state === "object" && state.kind === "verified";
     const loading = state === "loading";
+    this.pending = loading;
+    if (!loading && this.mode === "inline" && this.inline && this.el.hidden && this.anchor) this.el.hidden = false;
     // Skeleton → text: grow from the old height instead of snapping.
     const from = !this.el.hidden ? this.explain.offsetHeight : 0;
     const before = this.background.textContent;
@@ -380,6 +389,12 @@ export class Card {
     this.el.style.maxHeight = "";
     this.el.dataset.mode = mode;
     this.el.style.transform = "";
+    if (mode === "inline") {
+      // In flow in the host: no position, no scrim; shown once the explanation is in.
+      Object.assign(this.el.style, { top: "", left: "" });
+      this.el.hidden = this.pending;
+      return;
+    }
     this.el.hidden = false;
     this.scrim.hidden = mode !== "sheet";
     if (mode === "sheet") {
@@ -389,9 +404,16 @@ export class Card {
     this.stopAutoUpdate = autoUpdate(anchor, this.el, () => void this.place(anchor));
   }
 
+  /** A quiet card's status line isn't a live region (a host opened it; nobody asked). */
+  setQuiet(quiet: boolean): void {
+    if (quiet) this.status.removeAttribute("role");
+    else this.status.setAttribute("role", "status");
+  }
+
   hide(): void {
     this.stopAutoUpdate?.();
     this.stopAutoUpdate = null;
+    this.anchor = null;
     this.el.hidden = true;
     this.scrim.hidden = true;
   }
