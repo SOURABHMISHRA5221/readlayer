@@ -425,7 +425,9 @@ def test_know_offered_only_once_and_same_as_calibration(env, docs):
 def test_finish_clears_the_lists_and_refuses_more(env, docs):
     c = google()
     onboard(c)
-    assert c.get("/v1/me/profile").json()["onboarding"]["step"] == "discover"
+    resumed = c.get("/v1/me/profile").json()["onboarding"]
+    assert resumed["step"] == "discover" and resumed["field"] == "software"
+    assert resumed["interests"] == ["economics", "sports"]
     items = _discover(c)
     c.post("/v1/onboarding/pick", json={"item_id": items[0]["id"], "liked": True})
     assert c.post("/v1/onboarding/finish").json() == {"done": True}

@@ -28,7 +28,9 @@ export const FIELD_FRAME: Partial<Record<Field, Frame>> = {
 export interface Onboarding {
   consented: boolean;
   done: boolean;
-  step: "consent" | "onboarding" | "calibration" | "done";
+  step: "consent" | "onboarding" | "discover" | "calibration" | "done";
+  field?: Field | null;
+  interests?: Domain[];
 }
 
 export interface Profile {
@@ -157,10 +159,10 @@ export const profileApi = {
   onboarding: (answers: {
     field: Field;
     interests: Domain[];
-    comfort: Partial<Record<Domain, Level>>;
+    comfort?: Partial<Record<Domain, Level>>;
     thinks_in: Frame[];
-    liked_content_ids: string[];
-  }) => api.raw.send<{ saved: boolean }>("POST", "/v1/onboarding", answers),
+    liked_content_ids?: string[];
+  }) => api.raw.send<{ saved: boolean; next: string }>("POST", "/v1/onboarding", answers),
   calibrationNext: () => api.raw.get<CalibrationNext>("/v1/calibration/next"),
   calibrationAnswer: (concept_id: string, answer: "explain" | "heard" | "none") =>
     api.raw.send<{ done: boolean; asked: number }>("POST", "/v1/calibration/answer", { concept_id, answer }),

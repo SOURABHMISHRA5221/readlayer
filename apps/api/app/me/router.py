@@ -392,6 +392,9 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
             "consented": user.may_record,
             "done": ctx.caller.is_anonymous or user.onboarding_done,
             "step": _onboarding_step(ctx.caller.is_anonymous, user),
+            # Screen 2 resumes and Edit refills screen 1 from these (decision 41).
+            "field": user.field,
+            "interests": list(user.onboarding.get("interests", [])),
         },
     }
 
