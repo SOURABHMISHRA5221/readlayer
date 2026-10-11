@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { Margo } from "../components/Margo";
 import { Avatar } from "../components/PersonaPicker";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { Wordmark } from "../components/Wordmark";
@@ -53,6 +54,7 @@ export function SignInPage({ url }: { url: URL }) {
       </header>
       <main className="signin__main">
         <section className="signin__intro" aria-labelledby="signin-title">
+          <Margo size={72} blink className="signin__margo" />
           <h1 id="signin-title" className="signin__title">
             Read anything. <em>Understand it your way.</em>
           </h1>

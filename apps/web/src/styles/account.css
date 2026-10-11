@@ -46,23 +46,16 @@
 }
 .signin__title {
   max-width: 14em;
-  font: 500 var(--text-display) / 1.02 var(--font-read);
-  letter-spacing: -0.028em;
+  font: 800 var(--text-display) / 1.04 var(--font-head);
+  letter-spacing: -0.035em;
   text-wrap: balance;
 }
+.signin__title em { font-style: normal; color: var(--muted); text-decoration: none; }
+.signin__margo { display: block; margin-bottom: var(--s5); }
 @media (min-width: 960px) {
   .signin__title {
     font-size: 56px;
   }
-}
-.signin__title em {
-  font-style: italic;
-  font-weight: 400;
-  color: var(--ink-soft);
-  text-decoration: underline dotted color-mix(in srgb, var(--accent) 55%, transparent);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.16em;
-  text-decoration-skip-ink: none;
 }
 .signin__lede {
   max-width: 34em;
