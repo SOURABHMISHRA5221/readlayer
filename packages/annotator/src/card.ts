@@ -40,7 +40,8 @@ const MAKE_ROOM_MS = 3000;
 const TOP_INSET_VAR = "--rl-top-inset";
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-export type CardMode = "float" | "sheet" | "sidenote";
+/** "inline": in the host's own box, in normal flow (a landing demo that keeps one note open). */
+export type CardMode = "float" | "sheet" | "sidenote" | "inline";
 
 /** Where a sidenote goes: the margin column's left edge and usable width, in viewport px. */
 export interface SidenoteBox {
@@ -53,6 +54,8 @@ export interface CardHandlers {
   onDismiss: () => void;
   /** "Say it simpler" (-1), "Go deeper" (+1) or back to the reader's own level (0). */
   onShift?: (shift: -1 | 0 | 1) => void;
+  /** Demo cards (a landing page): one call to action replaces Knew this / Helpful / This is wrong. */
+  demo?: { label: string; onClick: () => void };
 }
 
 const BANDS = ["unaware", "heard of", "understands", "can explain"] as const;
@@ -105,15 +108,20 @@ export class Card {
   private readonly buttons: HTMLButtonElement[];
   private stopAutoUpdate: (() => void) | null = null;
   private mode: CardMode = "float";
+  // Inline cards stay hidden until their explanation settles, so no skeleton is ever shown.
+  private pending = false;
 
   constructor(
     private readonly doc: Document,
     handlers: CardHandlers,
+    /** The inline host: the card lives in it, in flow, at every width (no popover or sheet). */
+    private readonly inline: HTMLElement | null = null,
   ) {
     const id = `rl-card-${++cardCount}`;
     this.el = el(doc, "div", C);
     Object.assign(this.el, { id, hidden: true, tabIndex: -1 });
-    this.el.setAttribute("role", "dialog");
+    // Always open in the page, an inline card is a labelled group, not a dialog.
+    this.el.setAttribute("role", inline ? "group" : "dialog");
     this.el.setAttribute("aria-labelledby", `${id}-title`);
     this.el.setAttribute("aria-describedby", `${id}-bg`);
 
@@ -206,6 +214,17 @@ export class Card {
     }
     const actions = el(doc, "div", `${C}__actions`);
     actions.append(knew, this.report, helpful);
+    if (handlers.demo) {
+      // A demo card records nothing: its only action leads to the real thing.
+      const cta = el(doc, "button", "rl-btn rl-btn--demo");
+      cta.type = "button";
+      cta.textContent = handlers.demo.label;
+      cta.addEventListener("click", handlers.demo.onClick);
+      for (const b of this.buttons) b.hidden = true;
+      this.buttons.length = 0;
+      this.buttons.push(cta);
+      actions.replaceChildren(cta);
+    }
     const label = el(doc, "p", `${C}__note`);
     label.textContent = CARD_LABEL;
     footer.append(actions, label);
@@ -215,7 +234,8 @@ export class Card {
     this.body.append(this.domain, this.title, this.pitch, this.prereqs, this.explain, this.status, this.debug);
     this.body.addEventListener("scroll", () => this.markOverflow(), { passive: true });
     this.el.append(handle, this.arrowEl, this.body, footer);
-    doc.body.append(this.scrim, this.el);
+    if (inline) inline.append(this.el);
+    else doc.body.append(this.scrim, this.el);
   }
 
   get id(): string {
@@ -275,6 +295,8 @@ export class Card {
   setExplanation(state: ExplanationState): void {
     const verified = typeof state === "object" && state.kind === "verified";
     const loading = state === "loading";
+    this.pending = loading;
+    if (!loading && this.mode === "inline" && this.inline && this.el.hidden && this.anchor) this.el.hidden = false;
     // Skeleton → text: grow from the old height instead of snapping.
     const from = !this.el.hidden ? this.explain.offsetHeight : 0;
     const before = this.background.textContent;
@@ -367,6 +389,13 @@ export class Card {
     this.el.style.maxHeight = "";
     this.el.dataset.mode = mode;
     this.el.style.transform = "";
+    if (mode === "inline") {
+      // In flow in the host: no position, no scrim; shown once the explanation is in.
+      Object.assign(this.el.style, { top: "", left: "" });
+      this.el.hidden = this.pending;
+      if (!this.el.hidden) this.markOverflow(); // a scrolling inline body must be reachable
+      return;
+    }
     this.el.hidden = false;
     this.scrim.hidden = mode !== "sheet";
     if (mode === "sheet") {
@@ -376,9 +405,16 @@ export class Card {
     this.stopAutoUpdate = autoUpdate(anchor, this.el, () => void this.place(anchor));
   }
 
+  /** A quiet card's status line isn't a live region (a host opened it; nobody asked). */
+  setQuiet(quiet: boolean): void {
+    if (quiet) this.status.removeAttribute("role");
+    else this.status.setAttribute("role", "status");
+  }
+
   hide(): void {
     this.stopAutoUpdate?.();
     this.stopAutoUpdate = null;
+    this.anchor = null;
     this.el.hidden = true;
     this.scrim.hidden = true;
   }
@@ -447,11 +483,24 @@ export class Card {
     Object.assign(this.arrowEl.style, { left: "-7px", top: `${arrowY}px`, bottom: "" });
   }
 
-  /** Fade the body's bottom edge while there is more to scroll. */
+  /**
+   * Fade the body's bottom edge while there is more to scroll. A body that scrolls at all is a
+   * labelled, focusable region, so keyboard readers can scroll it too (axe
+   * scrollable-region-focusable); one that fits is plain again.
+   */
   private markOverflow(): void {
     const b = this.body;
     const more = b.scrollHeight - b.clientHeight - b.scrollTop > 4;
     b.classList.toggle(`${C}__body--more`, more);
+    if (b.scrollHeight > b.clientHeight + 1) {
+      b.tabIndex = 0;
+      b.setAttribute("role", "region");
+      b.setAttribute("aria-label", "Note");
+    } else {
+      b.removeAttribute("tabindex");
+      b.removeAttribute("role");
+      b.removeAttribute("aria-label");
+    }
   }
 
   private maybeMakeRoom(): void {

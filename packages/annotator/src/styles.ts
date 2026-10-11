@@ -177,6 +177,7 @@ const CSS = `
 .rl-card__meter span { width: 16px; height: 4px; border-radius: 2px; background: var(--rl-hairline, #ececec); }
 .rl-card__meter span.on { background: var(--rl-accent, #0d6b62); }
 .rl-card__depth { display: flex; flex-wrap: wrap; gap: 6px; }
+.rl-btn.rl-btn--demo { padding: 0 16px; font-weight: 600; margin-left: 0; background: var(--rl-ink, #1c1c1c); color: var(--rl-paper, #fff); }
 .rl-btn--depth { min-height: 44px; margin-left: 0; padding: 0 14px; border-color: var(--rl-hairline, #ececec); font-size: 13px; }
 .rl-card__explain[data-state="loading"] .rl-card__says .rl-card__text,
 .rl-card__explain[data-state="ready"] .rl-card__skeleton { display: none; }
@@ -421,6 +422,15 @@ const CSS = `
   background: var(--rl-scrim, rgba(20, 20, 18, 0.32));
   animation: rl-fade-in 200ms var(--rl-ease, ease-out);
 }
+/* Inline: in the host's box, in flow (a landing demo); the host sets width and max-height. */
+.rl-card[data-mode="inline"] {
+  position: relative;
+  z-index: auto;
+  width: auto;
+  box-shadow: none;
+  animation: none;
+}
+.rl-card[data-mode="inline"] .rl-card__arrow { display: none; }
 .rl-card[data-mode="sheet"] {
   inset: auto 0 0 0;
   width: auto;

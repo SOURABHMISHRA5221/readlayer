@@ -350,7 +350,10 @@ async def get_annotations(
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     density: Density | None = None,
     debug: bool = False,
+    refresh: bool = False,
 ) -> AnnotationsResponse:
+    """`refresh=1`: the reader refetching after a "Know this?" answer (decision 46d), not a new
+    page view: no new prompt (one per article view, DESIGN §6.5) and nothing recorded."""
     await refresh_growth()
     doc = await doc_or_error(content_id)
     density = density or ctx.density
@@ -361,12 +364,13 @@ async def get_annotations(
     items += [_paragraph_out(m) for m in result.paragraphs]
     if result.preread is not None:
         items.append(_preread_out(result.preread))
-    if result.prompt is not None:
+    if result.prompt is not None and not refresh:
         items.append(_prompt_out(result.prompt))
     # Annotation trend (DESIGN §15.2) and today's prompt log (§6.5).
-    await ReaderRepo(get_doc_store()).record_view(
-        ctx.uid, doc.content_id, len(result.spans), result.prompt is not None, now
-    )
+    if not refresh:
+        await ReaderRepo(get_doc_store()).record_view(
+            ctx.uid, doc.content_id, len(result.spans), result.prompt is not None, now
+        )
     return AnnotationsResponse(
         content_id=doc.content_id,
         persona=ctx.persona,

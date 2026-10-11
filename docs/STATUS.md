@@ -1,6 +1,7 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-11 (IST): Design pass (Gloss) merged (#22, #23) and live (API revision
+Last updated: 2026-10-11 (IST): Know-this refresh (decision 46d, branch `knowthis-refresh`): a saved
+"Know this?" answer re-inks the marks in place (§10 row 46d). Before that: Design pass (Gloss) merged (#22, #23) and live (API revision
 00019, web deployed); live check passed after the CORS fix for Save (§18). Next: M8-local (rebase
 `m8` first). M7.5 merged (#20) and live,
 Sourabh's Google check done.
@@ -64,7 +65,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M7 build**: revision `readlayer-api-00012-ccv`, https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
 | `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M7 build** (bundle `index-Dm3tU99c.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
-| `packages/annotator` | Bundled into the web app (and the extension in M8-local) | 0.4.0 (M6): two-part card, paragraph markers, "Know this?" chip, pre-read, reading signals |
+| `packages/annotator` | Bundled into the web app (and the extension in M8-local) | 0.7.2 (`ANNOTATOR_VERSION`): two-part card, paragraph markers, "Know this?" chip, pre-read, reading signals (0.4.0, M6); a kept mark takes the new reader's level and a scrolling card body is a focusable region (0.6.x); the landing's inline card host and demo actions (0.7.0–0.7.1, unused by the reader and extension); an answered prompt's chip stays "Noted, thanks." while its term is freed for the refetched notes (0.7.2, decision 46d) |
 | `apps/extension` | — | MV3 scaffold only (M8-local: unpacked, activeTab only, Oct 14) |
 | Vertex AI (Gemini, Gemma MaaS, embeddings) | `global` endpoint, project `readlayer-sourabh-26` | Live, via ADC locally |
 | Firestore (Native) | asia-south1 | Live |
@@ -417,7 +418,7 @@ BUILD_PLAN.md has the prompts. M6, M7 and M2.2 are merged and live.
 | **Oct 17** | **Submit** (deadline Oct 18) |
 
 **Video line:** sign in as a demo persona → library → open an article → hover and open notes →
-"Not really" on a prompt → reload shows the change → Up next → **For you** (demo snapshot with
+"Not really" on a prompt → the term inks in as a note (no reload, decision 46d) → Up next → **For you** (demo snapshot with
 its note; then a Google reader's live topics and a "helps your goal" line) → **Read any link**
 (paste a non-business article; it opens in seconds and concepts grow) → profile: **reading
 goals** (a habit and "understand X" with progress) and the knowledge map's goal view. Design
@@ -478,6 +479,7 @@ record the video; build the deck; Cloud Run min instances 1 for Oct 19 – Nov 6
 | 38 | Demo feed (Sourabh, 2026-10-10) | Demo personas get a predefined (pre-seeded) For you feed, served without live searches, with a subtle note that the picks were prepared in advance and may be dated, and that signing in gives a live feed for the true experience |
 | 39 | Design pass milestone (Sourabh, 2026-10-10) | Right after M7.5 is merged and deployed, before resuming M8: a Medium-style reading product (tokens and type, library as a feed with For you / Topics / Saved, 680px reader with a sticky action bar and highlight-style annotations, profile with domain cards and a redesigned knowledge map that is never empty). Same reviewer loop plus before/after screenshots (desktop, mobile, dark). Keep accessibility, the bundle budget, two-phase loading and annotation behaviour. M7.5's own web parts stay functional and accessible, not polished, since the design pass rebuilds them |
 | 40 | Design pass additions (Sourabh, 2026-10-10 22:06) | Display name **Gloss** (logo, titles, meta, copy, README, deck; Firebase project, URLs, repo and ids unchanged). Visual target `docs/design/mockup.html` (Schibsted Grotesk UI + Source Serif 4 reading; rebuilt in our components, not copied). Mascot **Margo** (the mockup's `margo()` SVG, four moods + 16px mark) in the logo, favicon, extension icon, reader margin header, notes-loading, end-of-article recap, empty and error states; never in article text or on note cards, no animation while reading, aria-hidden. Reader details: "Before you read" as a path, two highlight styles (new vs refresher), "N notes for you" margin list, card level with its line plus pitch meter, "Builds on", "Say it simpler" / "Go deeper" (one band lower/higher through the verified path, cached by band, counted against the explain caps), author quote, "What this article changed" recap with undo and read/watch next. Mobile: bottom-sheet card, paragraph markers only where a paragraph note exists. Details in BUILD_PLAN Design pass items 6–10 |
+| 46d | Know-this answers change the marks in place (Sourabh, 2026-10-11) | After a "Know this?" answer is saved (PATCH /v1/me/graph succeeds) the reader waits 1.2 s (so "Noted, thanks." shows), then refetches the article's annotations with `refresh=1` and re-renders: "Not really" inks the term in as a note, "Yes" leaves no mark; no page reload. `GET /v1/content/{id}/annotations?refresh=1` returns no prompt and records no page view (weekly trend, today's prompt log); it costs one extra annotations request per answer (at most three a day) against the annotations rate limit. The refetch is skipped if the reader moved to another article or persona within the wait. The recap's "before" bands are taken once per view (article, persona, density), so a refresh never resets them and a "Yes" keeps its band move and Undo. Shipped as its own PR ahead of the Landing milestone so a landing clip can be recorded live. The paused `m8` branch also changes `apps/api/app/content/router.py` and `tests/test_scorer.py`: expect conflicts in its rebase |
 
 No decisions are open.
 
