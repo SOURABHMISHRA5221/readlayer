@@ -421,3 +421,17 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   first run stopped at its 5 s assertion (6.8 s, first ingest on the new revision, known cold
   imports). Live axe clean. A browser test reader was first "deleted" against the Hosting origin
   (SPA 200); caught and deleted through the API (204). Left: Sourabh's Google check.
+
+## Design pass (decisions 39, 40) — started 2026-10-11
+
+- Sourabh: M7.5 live Google check done (feed, Read any link, goals); start the Design pass.
+- Plan `docs/plans/design-pass.md`: stages 1–5 over Oct 11–13, checkpoints end of Oct 12 and
+  midday Oct 13 (ask before cutting). Before screenshots from the live site first
+  (`docs/evidence/design/before/`). Reusable headless-Chrome helper now lives in `tools/shots/`
+  (scratch helpers were lost twice on session restarts).
+- plan-reviewer round 1: REVISE (16: band source, refresher rarity, pre-read path, four required
+  items I had dropped — action-bar Helpful, interest on domain cards, the tagline, Margo in
+  empty/error states — persona chip, map node data, Save on feed rows, annotator opt-in safety,
+  m8 conflicts, map keyboard and contrast, bundle, recap correctness, shift warm-up, before
+  shots, second checkpoint, DESIGN sections). Round 2: REVISE (map solid vs ready wording;
+  extension pre-read must skip known steps). Round 3: **APPROVE**; two nits applied.

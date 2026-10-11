@@ -97,6 +97,7 @@ path keeps the walk's own `PREREAD_KNOWN` = 0.7.
      Gloss thinks they know, as the page title says.
    - **Ready to learn** = not known and every prerequisite known, where known = p ≥ `KNOWN_P`
      (above); by `doc_freq`.
+     Solid takes precedence: a heard-of concept is solid, never also a ring (test).
    - Node: `{id, label, domain, band, ready, goal, weight, definition, recent,
      rose_this_week}`: `weight` is `doc_freq` normalised per domain; `recent` is ≤ 3 evidence
      entries `{type, at}` from the edge (empty for prior-only nodes); `rose_this_week` from
@@ -195,7 +196,8 @@ narrow window), `open(id)`, axe on the card in both modes; `pnpm --filter extens
    "Not really" answers listed as next on the path, and two Up next items that teach those
    concepts (Up next items whose triggers include them). Undo applies the opposite correction
    (strong evidence), so the row then shows the resulting band, not necessarily the original
-   one. If no Up next item teaches them, the recap shows Up next's top two under a neutral label
+   one. Each Undo button is named for its concept ("Undo the change to Yield curve") and is in
+   the keyboard pass. If no Up next item teaches them, the recap shows Up next's top two under a neutral label
    ("Read next"), never "teaches X". Up next follows.
 7. **Profile**: a readable summary lede (template over domains and frames, deterministic),
    domain cards (level word, ideas known, **interest**, "+N this week" from `/me/profile`'s
