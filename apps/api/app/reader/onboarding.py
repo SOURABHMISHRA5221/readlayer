@@ -9,7 +9,7 @@ reader's current θ, and each answer is evidence (±) on the concept plus an Elo
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from app.graph.graph import ConceptGraph
 from app.graph.models import DOMAINS, Concept
@@ -141,3 +141,63 @@ def apply_liked(concept: Concept, edge: Edge | None, theta: float, now: datetime
     base = edge or model.init_edge(p0, now)
     w = model.EVIDENCE_WEIGHTS["liked_article_mention"]
     return model.apply_evidence(base, p0, "liked_article_mention", w, now)
+
+
+# ---------------------------------------------------------------- 2-screen onboarding (decision 41)
+
+DISCOVER_ITEMS = 9  # cards on screen 2
+DISCOVER_MIN_ITEMS = 6  # fewer web results than this → library items for the chosen domains
+MAX_OFFERED_ITEMS = 27  # items remembered for picks (3 discover calls × 9)
+MAX_OFFERED_TERMS = 12  # distinct "Know this?" concepts offered
+MAX_PICKS = 9
+MAX_KNOW_ANSWERS = 9
+PICK_DELTA = 0.15  # "I'd read this" / "Not for me" → ± interest in the item's domain
+KNOW_ANSWER: Mapping[bool, Answer] = {True: "explain", False: "none"}
+
+
+def term_order(concepts: Iterable[Concept], theta: Mapping[str, float]) -> list[str]:
+    """Candidate "Know this?" terms for one item: closest difficulty to the reader's θ in the
+    concept's domain first (ties by id)."""
+    ranked = sorted(concepts, key=lambda c: (abs(c.base_difficulty - theta.get(c.domain, 0.0)),
+                                             c.id))  # fmt: skip
+    return [c.id for c in ranked]
+
+
+def offer(
+    offered: Mapping[str, Mapping[str, Any]],
+    new_items: Sequence[tuple[str, str, Sequence[str]]],
+    excluded: Iterable[str],
+) -> dict[str, dict[str, Any]]:
+    """Remember newly served items: item id → {topic, concept}. An item keeps the term it got
+    the first time it was served (stable across re-asks); a new item gets its first candidate
+    that isn't excluded (the resolved concepts) or already offered, while fewer than
+    MAX_OFFERED_TERMS terms are out, else no term. At most MAX_OFFERED_ITEMS items."""
+    out = {k: dict(v) for k, v in offered.items()}
+    taken = {v["concept"] for v in out.values() if v.get("concept")}
+    skip = set(excluded)
+    for item, topic, candidates in new_items:
+        if item in out or len(out) >= MAX_OFFERED_ITEMS:
+            continue
+        term = None
+        if len(taken) < MAX_OFFERED_TERMS:
+            term = next((c for c in candidates if c not in skip and c not in taken), None)
+        if term is not None:
+            taken.add(term)
+        out[item] = {"topic": topic, "concept": term}
+    return out
+
+
+def with_pick(interest: float, liked: bool) -> float:
+    return min(1.0, max(0.0, interest + (PICK_DELTA if liked else -PICK_DELTA)))
+
+
+def interests_with_picks(
+    chosen: Iterable[str], picks: Mapping[str, Mapping[str, Any]]
+) -> dict[str, float]:
+    """Chosen topics at 1.0, the rest at 0.3, then every pick's ± delta on top (in pick order),
+    so Edit → Continue keeps what the reader said on screen 2."""
+    out = interests(chosen)
+    for pick in picks.values():
+        if pick.get("topic") in out:
+            out[pick["topic"]] = with_pick(out[pick["topic"]], bool(pick.get("liked")))
+    return out

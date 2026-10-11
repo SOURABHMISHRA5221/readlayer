@@ -23,7 +23,8 @@ from app.store.reader_repo import ReaderRepo, UserProfile
 
 router = APIRouter()
 
-CONSENT_VERSIONS = frozenset({"consent-v1"})
+# v2 (decision 41): the inline consent of the 2-screen onboarding; v1 stays valid.
+CONSENT_VERSIONS = frozenset({"consent-v1", "consent-v2"})
 ContentId = Annotated[str, Field(max_length=120, pattern=r"^[A-Za-z0-9_-]+$")]
 
 
@@ -77,7 +78,7 @@ class OnboardingIn(BaseModel):
 async def post_onboarding(
     body: OnboardingIn,
     caller: Annotated[Caller, Depends(current_caller)],
-    _: Annotated[UserProfile, Depends(consented_user)],
+    user: Annotated[UserProfile, Depends(consented_user)],
 ) -> dict[str, Any]:
     graph = get_graph()
     store = get_content_store()
@@ -103,11 +104,12 @@ async def post_onboarding(
         },
         thinks_in=list(dict.fromkeys(body.thinks_in)),
         theta=onboarding.starting_theta(body.comfort),
-        interest=onboarding.interests(body.interests),
+        # Edit → Continue (decision 41): screen 2's picks stay applied on top of the new topics.
+        interest=onboarding.interests_with_picks(body.interests, user.onboarding_picks),
         liked=liked,
         now=now,
     )
-    return {"saved": True, "liked_concepts": len(liked), "next": "calibration"}
+    return {"saved": True, "liked_concepts": len(liked), "next": "discover"}
 
 
 async def _next(caller: Caller, user: UserProfile):  # type: ignore[no-untyped-def]

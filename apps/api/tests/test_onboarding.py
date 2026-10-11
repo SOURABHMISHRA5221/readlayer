@@ -177,7 +177,7 @@ def test_onboarding_sets_theta_interest_frames_and_liked_nudges(env, docs):
     assert user["thinks_in"] == ["software"] and user["field"] == "software"
     assert user["onboarding"]["interests"] == ["finance", "economics"]
     profile = g.get("/v1/me/profile").json()
-    assert profile["onboarding"]["step"] == "calibration" and profile["thinks_in"] == ["software"]
+    assert profile["onboarding"]["step"] == "discover" and profile["thinks_in"] == ["software"]
 
 
 def test_calibration_eight_answers_then_done(env, docs):

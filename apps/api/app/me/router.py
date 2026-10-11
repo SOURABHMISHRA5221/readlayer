@@ -401,7 +401,8 @@ def _onboarding_step(anonymous: bool, user: Any) -> str:
         return "done"
     if user.consent is None:
         return "consent"
-    return "calibration" if user.field else "onboarding"
+    # After POST /v1/onboarding the reader is on screen 2 until POST /v1/onboarding/finish.
+    return "discover" if user.field else "onboarding"
 
 
 class SettingsIn(BaseModel):

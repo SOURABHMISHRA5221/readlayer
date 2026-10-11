@@ -19,6 +19,7 @@ from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
 from app.me.goals import router as goals_router
 from app.me.onboarding import router as onboarding_router
+from app.me.onboarding_flow import router as onboarding_flow_router
 from app.me.profile_edit import router as profile_edit_router
 from app.me.router import router as me_router
 from app.me.saved import router as saved_router
@@ -118,6 +119,7 @@ v1.include_router(saved_router)
 v1.include_router(explain_router)
 v1.include_router(me_router)
 v1.include_router(onboarding_router)
+v1.include_router(onboarding_flow_router)
 v1.include_router(profile_edit_router)
 app.include_router(v1)
 

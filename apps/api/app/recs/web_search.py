@@ -311,6 +311,8 @@ class RecCacheStore(Protocol):
 
 ANONYMOUS = "anonymous"  # counter of calls triggered by anonymous (demo) readers
 FEED = "feed"  # counter of calls made for the For you feed (M7.5), within FEED_SEARCH_DAILY_CAP
+# Onboarding's concept searches (decision 41), a shared sub-cap within the feed's calls.
+ONBOARDING_CONCEPT = "onboarding_concept"
 FEED_NEWS_DAYS = 7
 FEED_VIDEO_DAYS = 30
 FEED_MAX_RESULTS = 10  # one credit; 15 timed out at 10 s and Tavily rarely returns more than 10
@@ -320,8 +322,9 @@ class SearchCallStore(Protocol):
     async def count_today(self, provider: str | None = None) -> int: ...
 
     async def add(
-        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False
-    ) -> None: ...
+        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False,
+        extra: str | None = None,
+    ) -> None: ...  # fmt: skip
 
 
 class FirestoreRecCache:
@@ -374,8 +377,9 @@ class FirestoreSearchCalls:
         return int(data.get(provider or "calls", 0))
 
     async def add(
-        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False
-    ) -> None:
+        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False,
+        extra: str | None = None,
+    ) -> None:  # fmt: skip
         fields = {
             "calls": firestore.Increment(calls),
             provider: firestore.Increment(calls),
@@ -385,6 +389,8 @@ class FirestoreSearchCalls:
             fields[ANONYMOUS] = firestore.Increment(calls)
         if feed:
             fields[FEED] = firestore.Increment(calls)
+        if extra:
+            fields[extra] = firestore.Increment(calls)
         await self._doc().set(fields, merge=True)
 
 
@@ -404,24 +410,30 @@ class InMemorySearchCalls:
         self.calls: dict[str, int] = {}
         self.anonymous = 0
         self.feed = 0
+        self.extra: dict[str, int] = {}
 
     async def count_today(self, provider: str | None = None) -> int:
         if provider == ANONYMOUS:
             return self.anonymous
         if provider == FEED:
             return self.feed
+        if provider in self.extra:
+            return self.extra[provider]
         if provider:
             return self.calls.get(provider, 0)
         return sum(self.calls.values())
 
     async def add(
-        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False
-    ) -> None:
+        self, provider: str, calls: int, anonymous: bool = False, feed: bool = False,
+        extra: str | None = None,
+    ) -> None:  # fmt: skip
         self.calls[provider] = self.calls.get(provider, 0) + calls
         if anonymous:
             self.anonymous += calls
         if feed:
             self.feed += calls
+        if extra:
+            self.extra[extra] = self.extra.get(extra, 0) + calls
 
 
 # ---------------------------------------------------------------- service
@@ -553,11 +565,13 @@ class WebSearch:
         return entry
 
     async def fetch_feed(
-        self, key: str, fmt: Format, query: str, keep: Callable[[WebResult], bool]
-    ) -> list[WebResult] | None:
-        """One For you search (M7.5 §A): the feed's own cap and the global caps are checked
-        and reserved together; results pass the blocklist and `keep` (topic relevance, dates)
-        and are cached under `key`. None when a cap is spent or the provider failed."""
+        self, key: str, fmt: Format, query: str, keep: Callable[[WebResult], bool],
+        sub_cap: tuple[str, int] | None = None,
+    ) -> list[WebResult] | None:  # fmt: skip
+        """One For you search (M7.5 §A): the feed's own cap, an optional shared sub-cap
+        (counter, limit) and the global caps are checked and reserved together; results pass
+        the blocklist and `keep` (topic relevance, dates) and are cached under `key`. None when
+        a cap is spent or the provider failed."""
         provider = self._providers.get(fmt)
         if provider is None:
             return []
@@ -568,8 +582,14 @@ class WebSearch:
                 if used + calls > self._settings.feed_search_daily_cap:
                     log.warning("feed search cap reached", extra={"feed_today": used})
                     raise SearchCapReached("daily feed search cap reached")
+                if sub_cap is not None:
+                    sub_used = await self._calls.count_today(sub_cap[0])
+                    if sub_used + calls > sub_cap[1]:
+                        log.warning("feed sub-cap reached", extra={"counter": sub_cap[0]})
+                        raise SearchCapReached(f"daily {sub_cap[0]} cap reached")
                 await self._check_cap(provider.name, calls, anonymous=False)
-                await self._calls.add(provider.name, calls, feed=True)
+                extra = sub_cap[0] if sub_cap is not None else None
+                await self._calls.add(provider.name, calls, feed=True, extra=extra)
         except SearchCapReached:
             return None
         try:
