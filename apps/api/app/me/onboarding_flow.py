@@ -159,9 +159,14 @@ async def resolve(
     pending = [m for m in misses if m not in matched]
     embedder = _Embedder()
     ledger: list[llm.CallMeta] = []
-    if pending:
-        ids, _ = await resolve_names(graph, [p for _, p in pending], settings.link_threshold,
-                                     embed=embedder, ledger=ledger)  # fmt: skip
+    ids: dict[str, str] = {}
+    for _, phrase in pending:
+        # One piece per call (privacy rule): resolve_names batches its names into one
+        # link_confirm prompt, so the model must never get two of the reader's pieces at once.
+        found, _ = await resolve_names(graph, [phrase], settings.link_threshold,
+                                       embed=embedder, ledger=ledger)  # fmt: skip
+        ids |= found
+    if ids:
         for cid in ids.values():
             if (c := graph.get(cid)) is not None:
                 concepts[c.id] = c
@@ -203,7 +208,7 @@ async def _topic_fallback(
         return []
     try:
         scopes = await topic_vectors(settings)
-        vectors = await embedder([p for _, p in misses])
+        vectors = [(await embedder([p]))[0] for _, p in misses]  # one piece per call
     except llm.LLMError:
         return []
     out = []
@@ -467,7 +472,9 @@ async def know(
 @router.post("/onboarding/finish")
 async def finish(
     caller: Annotated[Caller, Depends(current_caller)],
-    _: Annotated[UserProfile, Depends(consented_user)],
+    user: Annotated[UserProfile, Depends(consented_user)],
 ) -> dict[str, Literal[True]]:
+    if user.field is None:  # screen 1 not saved yet: nothing to finish
+        raise HTTPException(status_code=409, detail="onboarding_incomplete")
     await _repo().finish_onboarding(caller.uid)
     return {"done": True}

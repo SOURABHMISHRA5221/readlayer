@@ -39,10 +39,11 @@ interface ChipGroupProps<K extends string> {
   selected: K[];
   onToggle: (key: K) => void;
   multiple?: boolean;
+  max?: number;
 }
 
 /** One row of tappable chips with a visible legend: radios, or checkboxes when `multiple`. */
-export function ChipGroup<K extends string>({ legend, hint, options, selected, onToggle, multiple = false }: ChipGroupProps<K>) {
+export function ChipGroup<K extends string>({ legend, hint, options, selected, onToggle, multiple = false, max }: ChipGroupProps<K>) {
   return (
     <fieldset className="chips">
       <legend className="chips__legend">
@@ -52,9 +53,10 @@ export function ChipGroup<K extends string>({ legend, hint, options, selected, o
       <div className="chips__row">
         {options.map((o) => {
           const on = selected.includes(o.key);
+          const full = !on && max !== undefined && selected.length >= max;
           return (
             <label key={o.key} className="chip" data-on={on}>
-              <input type={multiple ? "checkbox" : "radio"} name={legend} checked={on} onChange={() => onToggle(o.key)} />
+              <input type={multiple ? "checkbox" : "radio"} name={legend} checked={on} disabled={full} onChange={() => onToggle(o.key)} />
               <span>{o.label}</span>
             </label>
           );

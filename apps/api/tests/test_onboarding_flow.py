@@ -70,7 +70,7 @@ class Embed:
                 vecs.append(unit(topics.index(t)))
             elif t == "Formula racing":
                 vecs.append(unit(DOMAIN_IDS.index("sports")))
-            elif t == "price rises":
+            elif t in ("price rises", "rising prices"):
                 vecs.append(unit(14))
             else:
                 vecs.append(unit(15))
@@ -80,8 +80,10 @@ class Embed:
 class Confirm:
     def __init__(self) -> None:
         self.questions: list = []
+        self.calls: list[list] = []
 
     async def __call__(self, questions, run, ledger):
+        self.calls.append(list(questions))
         self.questions += list(questions)
         return {i: "c_bond" if q.phrase == "price rises" else None for i, q in enumerate(questions)}
 
@@ -294,6 +296,20 @@ def test_resolve_privacy_nothing_reaches_search_logs_or_store(env, caplog, docs)
         assert piece not in logged and piece not in stored
 
 
+def test_each_piece_reaches_the_model_alone(env):
+    """Two pieces with candidates: each link_confirm prompt and each embed request carries one
+    piece only (the 14 topic scope lines are embedded on their own, once)."""
+    text = "price rises, rising prices, Formula racing"
+    assert google().post("/v1/onboarding/resolve", json={"text": text}).status_code == 200
+    asked = [[q.phrase for q in call] for call in env["confirm"].calls]
+    assert asked == [["price rises"], ["rising prices"]]
+    topics = set(ot.topic_texts())
+    reader = [[t for t in call if t not in topics] for call in env["embed"].calls]
+    assert all(len(r) <= 1 for r in reader)
+    assert sorted(t for r in reader for t in r) == ["Formula racing", "price rises",
+                                                    "rising prices"]  # fmt: skip
+
+
 def test_exact_matches_make_no_model_call_and_whole_piece_comes_first(env):
     c = google()
     body = c.post(
@@ -490,6 +506,13 @@ def test_finish_clears_the_lists_and_refuses_more(env, docs):
     assert c.post("/v1/onboarding/discover", json={"topics": ["law"]}).status_code == 409
     term = {"concept_id": "c_inflation", "known": True}
     assert c.post("/v1/onboarding/know", json=term).json() == {"error": "onboarding_done"}
+
+
+def test_finish_needs_screen_1_saved(env):
+    c = google()
+    assert c.post("/v1/onboarding/finish").status_code == 409
+    onboard(c)
+    assert c.post("/v1/onboarding/finish").status_code == 200
 
 
 def test_every_new_route_needs_consent_and_a_google_reader(env):

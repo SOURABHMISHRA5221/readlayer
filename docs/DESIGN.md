@@ -657,7 +657,8 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   `onboarding_resolve_counts`, `onboarding_discover_counts`; all covered by export and delete.
 - **Free-text exception (decision 42), in the tests' words:** the onboarding free text never
   reaches search, any log record or any stored document; a model sees only individual redacted
-  pieces with no exact match (embedding, `link_confirm`), never the full text.
+  pieces with no exact or word match (embedding, `link_confirm`), never the full text: **each
+  piece goes in its own embedding request and its own `link_confirm` call** (≤ 5 per resolve).
 - Consent (`consent-v2` inline on onboarding screen 1; `consent-v1` stays valid) states what is
   collected and why, in plain language, and that typed text is matched to topics by our model
   and isn't stored. The API

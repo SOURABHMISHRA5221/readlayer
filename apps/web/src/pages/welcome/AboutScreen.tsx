@@ -10,6 +10,7 @@ import { ChipGroup, DataLinks, MargoSays } from "./parts";
 /** consent-v2 (decision 41): the inline consent on screen 1. v1 stays valid for older readers. */
 export const CONSENT_VERSION = "consent-v2";
 export const MAX_TEXT = 120;
+export const MAX_TOPICS = 6; // screen 2 searches at most 6 topics
 const FIELD_LABEL: Record<Field, string> = {
   software: "Software", finance: "Finance", commerce: "Commerce", law: "Law", science: "Science",
   medicine: "Medicine", design: "Design", teaching: "Teaching", other: "Something else",
@@ -107,7 +108,14 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
   };
 
   const toggleTopic = (d: Domain) =>
-    onChange({ ...about, topics: about.topics.includes(d) ? about.topics.filter((x) => x !== d) : [...about.topics, d] });
+    onChange({
+      ...about,
+      topics: about.topics.includes(d)
+        ? about.topics.filter((x) => x !== d)
+        : about.topics.length < MAX_TOPICS
+          ? [...about.topics, d]
+          : about.topics,
+    });
   const showResults = about.resolvedFor !== null && about.resolvedFor === text;
 
   return (
@@ -126,7 +134,8 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
         />
         <ChipGroup
           legend="What do you want to read about?"
-          hint="Pick any."
+          hint={`Pick up to ${MAX_TOPICS}.`}
+          max={MAX_TOPICS}
           multiple
           options={DOMAINS.map((d) => ({ key: d, label: domainLabel(d) ?? d }))}
           selected={about.topics}

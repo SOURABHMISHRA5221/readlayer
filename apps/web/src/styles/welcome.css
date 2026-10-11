@@ -126,6 +126,8 @@
 }
 .chip[data-on="true"]::before { content: "✓"; margin-right: var(--s2); color: var(--accent); font-weight: 700; }
 .chip:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.chip:has(input:disabled) { opacity: 0.5; cursor: default; }
+.chip:has(input:disabled) input { cursor: default; }
 
 .freetext__input {
   width: 100%;
