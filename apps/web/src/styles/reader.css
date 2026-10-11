@@ -252,7 +252,7 @@
 .recap__mv { display: flex; align-items: center; gap: var(--s2); font-size: 13.5px; color: var(--ink-soft); white-space: nowrap; }
 .recap__mv i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; }
 .recap__mv i[data-band="unaware"] { box-shadow: inset 0 0 0 1.5px var(--accent-line); }
-.recap__mv i[data-band="heard of"] { background: color-mix(in srgb, var(--accent) 45%, var(--paper)); }
+.recap__mv i[data-band="heard of"] { background: color-mix(in srgb, var(--accent) 45%, var(--paper)); box-shadow: inset 0 0 0 1.6px var(--accent-line); }
 .recap__mv i[data-band="understands"] { background: var(--accent); }
 .recap__mv i[data-band="can explain"] { background: var(--accent-ink); box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.5px var(--accent-ink); }
 .recap__mv i[data-band="ready"] { box-shadow: inset 0 0 0 1.5px var(--mark-goal); border-radius: 50%; }

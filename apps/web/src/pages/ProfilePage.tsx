@@ -118,7 +118,7 @@ export function levelStep(theta: number): number {
 }
 
 function interestWord(i: number): string {
-  return i >= 0.75 ? "high" : i >= 0.5 ? "some" : i > 0 ? "a little" : "none yet";
+  return i >= 0.75 ? "high" : i >= 0.5 ? "some" : i > 0 ? "a little" : "not set";
 }
 
 /** Domain cards (Design pass C7): level, ideas on your map, interest, this week's rises. */
@@ -134,7 +134,7 @@ function DomainCards({ profile }: { profile: Profile }) {
         <h3 className="dom__name">{domainLabel(d.domain)}</h3>
         <p className="dom__level">{d.rated ? LEVELS[step] : "Not rated yet"}</p>
         <p className="dom__detail">
-          {d.concepts} {d.concepts === 1 ? "idea" : "ideas"} on your map
+          {d.known ?? 0} {(d.known ?? 0) === 1 ? "idea" : "ideas"} known
           {up > 0 ? <span className="dom__up"> · +{up} this week</span> : ", no change this week"}
         </p>
         <p className="dom__detail">Interest: {interestWord(d.interest)}</p>
