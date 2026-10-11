@@ -722,6 +722,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   unchanged: the test phrases are longer variants that exact aliases don't match. One embed call
   per run ($0.00003 each, two runs). API tests 664.
 
+- Sourabh: word-level matching for the topic fallback. `ot.word_topic`: words and adjacent
+  2-word chunks (stop-words, generic words, bare country names dropped; possessives stripped),
+  looked up in the alias list and concept labels; one-word concept chunks only with doc_freq > 0
+  (decided before the run, so "Column"-like seed words can't map nonsense); strongest: 2-word,
+  alias over concept, doc_freq, earlier. Rules fixed before running; nothing tuned after.
+  Result: **18/22, 0 wrong, 5/5 nonsense unrecognised** (alias 2, words 13: 6 via aliases,
+  7 via concepts; embedding 3). Caveat reported: the 6 single-word alias hits come from aliases
+  added after the test set was seen; independent of the alias list, 10 of the other 14.
+  The route test found that word matching ran after `resolve_names` (a model call for
+  "cricket highlights"); moved before it, so model calls happen only when nothing matches.
+  API tests 667.
+
 ### Next steps (resume here, in order)
 1. milestone-reviewer on the whole `landing` branch (landing + onboarding) until SHIP.
 2. PR from `landing` ("Landing and onboarding: …"), green CI, squash-merge.

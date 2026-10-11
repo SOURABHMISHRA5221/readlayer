@@ -172,6 +172,38 @@ def test_the_alias_list_covers_every_topic_with_valid_ids():
         assert ot.alias_topic(phrase) == topic
 
 
+def test_word_chunks_drop_stop_generic_and_country_words():
+    assert ot.word_chunks("Latest news on inflation in India") == [("inflation", 1)]
+    chunks = ot.word_chunks("China's foreign relations")
+    assert chunks == [("foreign relations", 2), ("foreign", 1), ("relations", 1)]
+    assert ot.word_chunks("quarterly earnings of companies")[0] == ("quarterly earnings", 2)
+
+
+def test_word_topic_prefers_two_word_chunks_and_skips_generic_seed_words():
+    def c(cid, label, domain, freq):
+        return Concept(id=cid, label=label, domain=domain, definition=".", base_difficulty=0.0,
+                       doc_freq=freq, embedding=unit(14))  # fmt: skip
+
+    graph = ConceptGraph(ConceptGraphFile(version="t", concepts=[
+        c("c_black_hole", "Black hole", "science", 0), c("c_black", "Black", "culture", 50),
+        c("c_column", "Column", "culture", 0), c("c_inflation", "Inflation", "economics", 9),
+    ]))  # fmt: skip
+    hole = ot.word_topic(graph, "black holes")
+    assert (hole.topic, hole.via) == ("science", "c_black_hole")  # not "Black" (one word)
+    assert ot.word_topic(graph, "my column") is None  # one seed-only word: too generic
+    assert ot.word_topic(graph, "weekend plans") is None
+    assert ot.word_topic(graph, "inflation news in India").topic == "economics"
+    music = ot.word_topic(graph, "Indian classical music")
+    assert (music.topic, music.via) == ("culture", "alias")
+
+
+def test_resolve_word_match_makes_no_model_call(env):
+    body = google("g2").post("/v1/onboarding/resolve", json={"text": "cricket highlights"}).json()
+    assert body["topics"] == [{"phrase_index": 0, "phrase": "cricket highlights",
+                               "topic": "sports", "via": "words"}]  # fmt: skip
+    assert env["embed"].calls == [] and env["confirm"].questions == []
+
+
 def test_aliases_and_nearest_topic():
     assert ot.alias_topic(" Formula  One ") == "sports" and ot.alias_topic("VC") == "business"
     assert ot.alias_topic("knitting") is None

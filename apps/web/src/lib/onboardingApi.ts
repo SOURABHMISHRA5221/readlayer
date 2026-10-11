@@ -13,7 +13,7 @@ export interface ResolvedTopic {
   phrase_index: number;
   phrase: string;
   topic: Domain;
-  via: "alias" | "embedding";
+  via: "alias" | "words" | "embedding";
 }
 
 export interface ResolveResult {

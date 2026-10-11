@@ -112,3 +112,187 @@ def nearest_topic(
         if best is None or score > best[1]:
             best = (info.id, score)
     return best if best is not None and best[1] >= threshold else None
+
+
+# ---------------------------------------------------------------- word-level topic match
+
+# Removed before matching words (Sourabh, 2026-10-11): stop-words, words that say nothing about
+# a topic, and bare country names (a place alone doesn't say what the reader follows).
+STOP_WORDS = frozenset(
+    [
+        "a",
+        "an",
+        "the",
+        "and",
+        "or",
+        "of",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "from",
+        "with",
+        "by",
+        "about",
+        "into",
+        "over",
+        "under",
+        "after",
+        "before",
+        "my",
+        "our",
+        "your",
+        "their",
+        "his",
+        "her",
+        "its",
+        "this",
+        "that",
+        "these",
+        "those",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "i",
+        "me",
+        "we",
+        "you",
+        "it",
+        "as",
+        "up",
+        "out",
+        "all",
+        "some",
+        "any",
+        "more",
+        "most",
+        "other",
+        "new",
+        "how",
+        "what",
+        "why",
+        "who",
+        "which",
+    ]
+)
+GENERIC_WORDS = frozenset(
+    [
+        "news",
+        "latest",
+        "update",
+        "updates",
+        "today",
+        "daily",
+        "weekly",
+        "week",
+        "stuff",
+        "things",
+        "thing",
+        "topic",
+        "topics",
+        "story",
+        "stories",
+        "current",
+        "events",
+        "world",
+        "global",
+        "local",
+        "general",
+        "info",
+        "information",
+    ]
+)
+COUNTRY_NAMES = frozenset(
+    [
+        "india",
+        "china",
+        "us",
+        "usa",
+        "america",
+        "uk",
+        "britain",
+        "england",
+        "japan",
+        "germany",
+        "france",
+        "russia",
+        "ukraine",
+        "pakistan",
+        "bangladesh",
+        "nepal",
+        "sri",
+        "lanka",
+        "canada",
+        "australia",
+        "brazil",
+        "italy",
+        "spain",
+        "israel",
+        "iran",
+        "korea",
+        "singapore",
+        "indonesia",
+        "africa",
+        "mexico",
+        "turkey",
+    ]
+)
+MIN_WORD_CHARS = 3
+_TOKEN = re.compile(r"[a-z0-9][a-z0-9&'’-]*")
+
+
+def _keep(word: str) -> bool:
+    return word not in STOP_WORDS and word not in GENERIC_WORDS and word not in COUNTRY_NAMES
+
+
+def word_chunks(phrase: str) -> list[tuple[str, int]]:
+    """(chunk, words) for every kept word of ≥ 3 chars and every 2-word chunk of kept words
+    that were adjacent in the phrase; lowercased, possessives dropped. Order of appearance."""
+    words = [re.sub(r"['’]s$", "", w) for w in _TOKEN.findall(phrase.casefold())]
+    out: list[tuple[str, int]] = []
+    for i, w in enumerate(words):
+        if _keep(w) and i + 1 < len(words) and _keep(words[i + 1]):
+            out.append((f"{w} {words[i + 1]}", 2))
+        if _keep(w) and len(w) >= MIN_WORD_CHARS:
+            out.append((w, 1))
+    return out
+
+
+def _forms(chunk: str) -> list[str]:
+    """The chunk, and with a plural last word made singular ("black holes" → "black hole")."""
+    if len(chunk) > 3 and chunk.endswith("s") and not chunk.endswith("ss"):
+        return [chunk, chunk[:-1]]
+    return [chunk]
+
+
+@dataclass(frozen=True)
+class WordMatch:
+    topic: str
+    chunk: str
+    via: str  # "alias" or the concept id
+
+
+def word_topic(graph: ConceptGraph, phrase: str) -> WordMatch | None:
+    """Deterministic, no model call: each chunk is looked up in the alias list and in concept
+    labels/aliases. A one-word chunk counts as a concept only when the concept was met in the
+    corpus (doc_freq > 0; seed-only single words like "Column" are too generic). Strongest wins:
+    2-word chunks, then an alias over a concept, then the concept's doc_freq, then the earlier
+    chunk."""
+    best: tuple[tuple[int, int, int, int], WordMatch] | None = None
+    for pos, (chunk, n) in enumerate(word_chunks(phrase)):
+        for form in _forms(chunk):
+            found: list[tuple[tuple[int, int, int, int], WordMatch]] = []
+            if (topic := alias_topic(form)) is not None:
+                found.append(((n, 1, 0, -pos), WordMatch(topic, form, "alias")))
+            concept = graph.lookup(form)
+            if concept is not None and (n == 2 or concept.doc_freq > 0):
+                key = (n, 0, concept.doc_freq, -pos)
+                found.append((key, WordMatch(concept.domain, form, concept.id)))
+            for key, match in found:
+                if best is None or key > best[0]:
+                    best = (key, match)
+    return best[1] if best is not None else None

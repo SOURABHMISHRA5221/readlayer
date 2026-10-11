@@ -83,7 +83,7 @@ class TopicOut(BaseModel):
     phrase_index: int
     phrase: str  # the redacted piece, echoed to the same client only
     topic: Domain
-    via: Literal["alias", "embedding"]
+    via: Literal["alias", "words", "embedding"]
 
 
 class ResolveOut(BaseModel):
@@ -151,16 +151,24 @@ async def resolve(
                 topics.append(TopicOut(phrase_index=i, phrase=phrase, topic=topic, via="alias"))
             else:
                 misses.append((i, phrase))
+    # Deterministic before any model call: a phrase whose words match the alias list or a
+    # concept label maps to that topic; only the rest reach resolve_names and the embedding.
+    worded = _word_topics(graph, misses)
+    topics += worded
+    matched = {(t.phrase_index, t.phrase) for t in worded}
+    pending = [m for m in misses if m not in matched]
     embedder = _Embedder()
     ledger: list[llm.CallMeta] = []
-    if misses:
-        ids, _ = await resolve_names(graph, [p for _, p in misses], settings.link_threshold,
+    if pending:
+        ids, _ = await resolve_names(graph, [p for _, p in pending], settings.link_threshold,
                                      embed=embedder, ledger=ledger)  # fmt: skip
         for cid in ids.values():
             if (c := graph.get(cid)) is not None:
                 concepts[c.id] = c
-        misses = [(i, p) for i, p in misses if p.casefold() not in ids]
-    topics += await _topic_fallback(misses, embedder, settings)
+        resolved = {(i, p) for i, p in pending if p.casefold() in ids}
+        pending = [m for m in pending if m not in resolved]
+        misses = [m for m in misses if m not in resolved]
+    topics += await _topic_fallback(pending, embedder, settings)
     unrecognised = [p for i, p in misses if not any(t.phrase_index == i and t.phrase == p
                                                     for t in topics)]  # fmt: skip
     cost = round(embedder.cost + sum(m.cost_usd for m in ledger), 8)
@@ -172,6 +180,17 @@ async def resolve(
         topics=topics,
         unrecognised=unrecognised,
     )
+
+
+def _word_topics(graph: ConceptGraph, misses: Sequence[tuple[int, str]]) -> list[TopicOut]:
+    """Word-level match (no model call): the phrase's words and 2-word chunks against the alias
+    list and concept labels; the strongest match's topic."""
+    out = []
+    for i, phrase in misses:
+        match = ot.word_topic(graph, phrase)
+        if match is not None:
+            out.append(TopicOut(phrase_index=i, phrase=phrase, topic=match.topic, via="words"))
+    return out
 
 
 async def _topic_fallback(

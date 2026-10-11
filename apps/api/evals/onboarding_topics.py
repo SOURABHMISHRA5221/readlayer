@@ -7,9 +7,11 @@ topic scope lines with MODEL_EMBED, exactly as POST /v1/onboarding/resolve does,
 precision and recall per threshold. ONBOARDING_TOPIC_THRESHOLD is the lowest threshold whose
 precision is ≥ TARGET_PRECISION. One embed call per run (≈ 41 short texts).
 
-`pipeline` scores the route's own order at the configured threshold: the alias list first
-(no model call), then the embedding fallback. Phrases the alias list copies verbatim are
-reported apart, since an alias hit on a test phrase says nothing about unseen phrases.
+`pipeline` scores the route's own topic order at the configured threshold: the alias list
+(whole phrase), then word-level matching against the alias list and the production concept
+graph (CONCEPTS_URI, read-only; no model call), then the embedding fallback. Phrases the
+alias list copies verbatim are reported apart, since an alias hit on a test phrase says
+nothing about unseen phrases.
 """
 
 import asyncio
@@ -22,7 +24,8 @@ import yaml
 
 from app import llm
 from app.config import get_settings
-from app.reader.onboarding_text import alias_topic, nearest_topic, topic_texts
+from app.graph.loader import load_graph
+from app.reader.onboarding_text import alias_topic, nearest_topic, topic_texts, word_topic
 
 ROOT = Path(__file__).parent
 CASES = ROOT / "cases" / "onboarding_topics.yaml"
@@ -58,12 +61,16 @@ async def main() -> dict[str, Any]:
         rows.append({"id": case["id"], "phrase": case["phrase"], "expect": case["expect"],
                      "topic": topic, "similarity": round(sim, 4)})  # fmt: skip
     sweep = [score(rows, t) for t in THRESHOLDS]
-    threshold = get_settings().onboarding_topic_threshold
+    settings = get_settings()
+    threshold = settings.onboarding_topic_threshold
+    graph = await load_graph(settings.concepts_uri)
     for r in rows:
         alias = alias_topic(r["phrase"])
+        words = word_topic(graph, r["phrase"])
         emb = r["topic"] if r["similarity"] >= threshold else None
-        r["via"] = "alias" if alias else "embedding" if emb else None
-        r["mapped"] = alias or emb
+        r["words"] = f"{words.chunk} → {words.via}" if words else None
+        r["via"] = "alias" if alias else "words" if words else "embedding" if emb else None
+        r["mapped"] = alias or (words.topic if words else None) or emb
     ok = [s for s in sweep if s["precision"] >= TARGET_PRECISION and s["correct"]]
     chosen = ok[0] if ok else None
     return {
@@ -101,5 +108,13 @@ if __name__ == "__main__":
               f"(expect {r['expect']})")  # fmt: skip
     print("chosen:", out["chosen"], "cost:", out["cost_usd"], "→", path)
     for r in out["rows"]:
-        print(f"  {r['id']} {r['phrase']!r}: {r['mapped']} via {r['via']} (expect {r['expect']})")
+        mark = (
+            "ok"
+            if r["mapped"] == r["expect"] or (r["mapped"] is None and r["expect"] == "none")
+            else "--"
+        )
+        print(
+            f"  {mark} {r['id']} {r['phrase']!r}: {r['mapped']} via {r['via']} [{r['words']}]"
+            f" (expect {r['expect']})"
+        )
     print("pipeline:", json.dumps(out["pipeline"]))
