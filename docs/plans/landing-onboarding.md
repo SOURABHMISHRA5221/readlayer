@@ -617,3 +617,50 @@ Same checkpoint 1 (end of Oct 12 IST); built before §C/§B. Dark illustrations 
     note's own mark is a no-op.
 - Round 2: **APPROVE**. Nits: the 12 px phone clip figure is in STATUS §10's decision 46 row; if
   item 7's fallback (phone from 1280 only) is used, it is logged and added to that row.
+
+## Amendment: decision 46b, hero follow-up (Sourabh, 2026-10-11)
+
+After P1–P5 (commits 4fdfb6e…). Then the landing is frozen and the milestone continues with §C
+and §B (onboarding).
+
+### Q1. Left column (items 1, 2)
+- `.lp-hero` at ≥ 1024: `align-items: start`; the copy column starts level with the "Read as:" row.
+- Under the subline, above the CTAs (in `Hero`, so in `HeroStatic` and index.html too): a list of
+  three value lines, each a tiny Margo face (`Margo` 22px; idle, think, happy; aria-hidden) and one
+  sentence in sentence case, the exact copy Sourabh gave. Then one small proof line built from
+  `evals.json` (real numbers, never rounded): "15/15 misleading notes caught · 24/25 faithful notes
+  passed in our tests" (Sourabh's example said 25/25; the data says 24/25, so the line says 24/25),
+  linking to the trust band (`#how-we-test`, the id goes on the trust section). evals.json joins the
+  main bundle (≈ 0.2 KB). Then the two CTAs and the fine print as now (on phones the fine print
+  stays below the demo, round 1 item 2).
+- Spacing tuned so at 1440×900 the copy column's bottom is within ~80px of the demo's bottom
+  (check: |copy bottom − demo bottom| ≤ 80 at 1440×900 and 1280×800).
+
+### Q2. The open note shows "What the author is saying" in full (item 3)
+- The card grows instead of scrolling: the note slot loses its fixed height; the inline card and
+  the static note take their natural height (no inner scroll). No Background trimming (it would
+  drop the analogy sentence, the point of the demo).
+- To keep the whole demo inside 1440×900 for the tallest note (Cricket fan, ≈ +90px), the hero
+  sheds height above the note: the source line moves into the caption ("From The Economic Times:
+  a real paragraph and real notes; the words are unchanged. Tap a highlighted term."), the demo
+  paragraph uses 19px at every width, sheet padding 20px, Margo 88px, hero top padding ≤ 8px,
+  caption one line beside the phone. If it still doesn't fit, the order is: Margo's gap above the
+  note, then the toggle row's margin; anything beyond goes to Sourabh.
+- Static → live: `DemoNoteStatic` mirrors the default note at natural height; the swap check
+  (spread ≤ 4px across frames) stays and now guards that the two heights match.
+- Checks: the 1440×900 whole-demo check for all three personas; a new check that the card body
+  doesn't scroll (scrollHeight ≤ clientHeight + 1) and the author text's last line is inside the
+  card, per persona, at 1440, 1280 and 390; the note-gap check stays.
+
+### Q3. Fixes from the first full check run
+- axe `scrollable-region-focusable` (serious) on the hero card at ≥ 1280: gone with Q2 (nothing
+  scrolls); the annotator also re-runs its overflow check when an inline card is revealed
+  (0.7.1), so a scrolling inline body is always focusable (vitest).
+- clip-map at 390: 10.4px < 12px. Re-cropped from the encoded clip (ffmpeg crop of the existing
+  WebM/MP4/poster to the centre 400 CSS px of the 480; no new recording, no production write);
+  `clip_crops.json` → 400.
+
+### Q4. Checks
+`tools/shots/landing.py` at 1440×900, 1280×800 and 390×844 (plus the existing widths): all
+decision 46 checks, the copy/demo bottom check, axe 0, no horizontal scroll. After screenshots to
+`docs/evidence/landing/d46-after/`. Lighthouse after the freeze (log's next step).

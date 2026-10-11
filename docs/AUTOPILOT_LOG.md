@@ -570,3 +570,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   ends at y 858. 390×844: fallbacks (a) fine print below the demo, (b) CTAs on one row, (c) level
   line hidden were all needed; note title + 2 Background lines in view. Main 146.2 KB gzip.
   Next: P3 phone shot, P4 sections, P5 clips, then the P6 checks in `tools/shots/landing.py`.
+- P3–P5 built: phone on the hero card (desktop only, rendered only ≥ 1024; desktop shot files and
+  capture removed; no V6 file-size vitest existed, the size budget lives in landing_media.py),
+  problem head row + pull quote, centred formats, final CTA with the map clip, `#how-it-works`.
+  Clips re-recorded on the live site in 2 runs (the plan's cap): 1024×900 at DPR 2, crops tight to
+  term + card (cut under the Background), posters checked non-blank; each run 1 temporary reader,
+  `DELETE /v1/me` 204 both times; 0 generations (precheck: all cached). Clips keep their own shape
+  in a staggered 2-column grid (the old shared 3:2 frame letterboxed them).
+- P6 checks (`tools/shots/landing_d46.py`, run by landing.py) first run: all pass except axe
+  scrollable-region-focusable on the hero card at ≥ 1280 and clip-map at 390 (10.4 px < 12).
+  1440×900 demo bottom 879; 390×844 note + Background line by y 820; swap spread 0 px; no caps.
+- **Decision 46b** (Sourabh): left column top-aligned and filled (three value lines with tiny
+  Margo faces, a proof line from evals.json), the open note shows "What the author is saying" in
+  full, check 1440×900 / 1280×800 / 390×844, then freeze the landing and go to onboarding.
+  Amendment Q1–Q4 drafted (real numbers: 24/25 good, not Sourabh's example 25/25); plan-reviewer
+  running.

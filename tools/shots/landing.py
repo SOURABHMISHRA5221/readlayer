@@ -13,6 +13,7 @@ import sys
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
+import landing_d46  # noqa: E402
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:4173"
 SIZES = ((1920, False), (1440, False), (1440, True), (1280, False), (1280, True), (390, False), (390, True))
@@ -114,7 +115,13 @@ async def main():
             "return_to": await p.eval("sessionStorage.getItem('readlayer:return-to')"),
             "url": await p.eval("location.pathname + location.search"),
         }
+        await p.eval(THEME.format("light"))
+        report["d46"] = await landing_d46.run_all(p, BASE)
         print(json.dumps(report, indent=2))
+        failed = [k for k, v in report["d46"].items() if not v["pass"]]
+        print("decision 46 checks:", "all pass" if not failed else f"FAIL {failed}")
+        if failed:
+            raise SystemExit(1)
     finally:
         await ws.close()
         cdp.stop()
