@@ -671,10 +671,33 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   checks green, axe 0 everywhere, first view at 390 = 286 KB (fonts now first-party), no landing
   media before scroll. Unit tests: web 45, annotator 54.
 
+- **Onboarding API built** (b0f8827, labelled set committed first in 14b7a54). Routes in
+  `app/me/onboarding_flow.py`: resolve, discover, pick, know, finish; consent-v2; step
+  `discover`; `post_onboarding` re-applies screen-2 picks (Edit → Continue) and returns
+  `next: "discover"`. `FeedSearch.gather_specs` (topic and `feed:c:<id>` concept keys share
+  de-duplication, limits, backoff, yesterday fallback; `may_start` reserves the reader's discover
+  count only when a new search would start); concept searches have a shared daily sub-cap
+  (`onboarding_concept` counter in ops/search, 20). 22 new tests (privacy: no search during
+  resolve, models see only individual redacted pieces, nothing of the text in logs at DEBUG or in
+  the store; mutation-checked: a planted debug log of the text fails the test); 662 pass.
+- Topic threshold (decision 42): `evals/onboarding_topics.py` on the 27 committed phrases, one
+  embed call ($0.00003, counted in the production spend counter like earlier evals). Similarities
+  are bunched (0.80–0.92; "asdf qwerty" 0.855), so the lowest threshold with no wrong mapping is
+  **0.86: precision 9/9, recall 9/22**, all 5 "none" phrases unmatched. Kept as the rule says
+  (no method tuning on these cases); the alias list carries the common phrases. For the PR.
+- Deviations from §C (small, recorded): the alias list is checked right after the exact concept
+  lookups, before `resolve_names`, so "F1" makes no model call at all (the plan's test "the
+  alias path makes no model call"); a piece split on " and " that matches no part goes on whole;
+  `onboarding_answered` is a map (concept → known) so screen 2 can resume with the answers;
+  finish also clears `onboarding_picks`; know/pick refuse with 404 `not_offered` / 409
+  `already_answered` / 409 `too_many_answers` / 409 `onboarding_done`; discover is refused (409)
+  after finish; library fallback when fewer than 6 web items and nothing pending; resolve echoes
+  each topic's redacted phrase (`phrase`) next to `phrase_index`; served items capped at 27.
+- Also fixed: ruff errors in `scripts/landing_media_precheck.py` (committed earlier, CI would
+  have failed).
+
 ### Next steps (resume here, in order)
-1. Onboarding (decision 41 parts B and C, with decision 42's topic fallback), as planned in
-   `docs/plans/landing-onboarding.md` §B, §C and "Decision 42": the API first
-   (`POST /v1/onboarding/resolve` with the alias list and the embedding fallback, its labelled
-   set `apps/api/evals/cases/onboarding_topics.yaml` committed before choosing the threshold),
-   then the 2-screen `WelcomePage`. Landing is frozen (tweak window only).
+1. Onboarding web (decision 41 part B): the 2-screen `WelcomePage` against the API above
+   (built and tested), `src/lib/onboardingApi.ts`, readback helper, vitest, design critique
+   (desktop, mobile, dark), harness run. Landing is frozen (tweak window only).
 2. Then acceptance, milestone-reviewer, PR from `landing`, deploys (Sourabh's yes), live check.
