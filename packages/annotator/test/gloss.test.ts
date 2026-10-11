@@ -36,6 +36,19 @@ describe("Gloss highlight levels and card", () => {
     a.destroy();
   });
 
+  it("a kept mark takes the new level when another reader's update keeps it", async () => {
+    document.body.innerHTML = HTML;
+    const root = document.getElementById("root")!;
+    const a = createAnnotator(root, {});
+    await a.update([span("repo", "repo rate")], { reader: "newcomer" });
+    const mark = root.querySelector('[data-rl-id="repo"]')!;
+    await a.update([span("repo", "repo rate", { level: "refresher" })], { reader: "trader" });
+    expect(root.querySelector('[data-rl-id="repo"]')).toBe(mark); // kept, not re-wrapped
+    expect(mark.classList.contains("rl-mark--refresher")).toBe(true);
+    expect(mark.classList.contains("rl-mark--new")).toBe(false);
+    a.destroy();
+  });
+
   it("shows the pitch from the explanation's band and Builds on before the Background", async () => {
     document.body.innerHTML = HTML;
     const root = document.getElementById("root")!;

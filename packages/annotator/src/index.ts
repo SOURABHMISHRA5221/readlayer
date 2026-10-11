@@ -36,7 +36,7 @@ export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
-export const ANNOTATOR_VERSION = "0.6.0";
+export const ANNOTATOR_VERSION = "0.6.1";
 
 export interface AnnotatorOptions {
   /** Interaction and reading events (DESIGN §9); the host batches them to /v1/events. */
@@ -442,6 +442,15 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     return map;
   };
 
+  /** The highlight style for the reader's level; a missing level (older APIs) means new. */
+  function setLevel(segments: HTMLElement[], a: CardAnnotation): void {
+    const level = a.level === "refresher" ? "refresher" : "new";
+    for (const m of segments) {
+      m.classList.toggle(`${MARK_CLASS}--new`, level === "new");
+      m.classList.toggle(`${MARK_CLASS}--refresher`, level === "refresher");
+    }
+  }
+
   function removeEntries(ids: string[]): void {
     for (const id of ids) {
       const entry = entries.get(id);
@@ -496,7 +505,10 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     // persona); only the notes that differ animate.
     for (const [id, entry] of entries) {
       const a = next.get(id);
-      if (a) entry.annotation = a;
+      if (a) {
+        entry.annotation = a;
+        setLevel(entry.segments, a); // the same term can be new to one reader, a refresher to another
+      }
       entry.segments.forEach((m) => m.classList.remove(ENTER_CLASS));
     }
     // An open card shows the new data, and its explanation for the new reader (hosts cache,
@@ -515,10 +527,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       const segments = range ? wrapRange(root, range, a.id) : [];
       const first = segments[0];
       if (!range || !first) continue;
-      if (a.kind === "span") {
-        const level = a.level === "refresher" ? "refresher" : "new"; // older APIs: new
-        segments.forEach((m) => m.classList.add(`${MARK_CLASS}--${level}`));
-      }
+      setLevel(segments, a);
       first.tabIndex = 0;
       first.setAttribute("role", "button");
       first.setAttribute("aria-haspopup", "dialog");

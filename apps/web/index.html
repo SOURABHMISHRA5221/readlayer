@@ -14,13 +14,28 @@
     <script src="/theme-init.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts never block the first paint: metric-matched fallbacks (fonts.css) hold the lines. -->
     <link
-      rel="stylesheet"
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..500&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400..600;1,8..60,400..500&display=swap"
+      />
+    </noscript>
+    <!-- theme-init.js sets data-boot: the static hero shows only on "/" for signed-out visitors. -->
+    <style>
+      html[data-boot="shell"] .lp--static {
+        display: none;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><!-- hero:start --><div class="lp lp--static"><header class="lp-bar"><a class="wordmark wordmark--lg" href="/" aria-label="Gloss home"><svg class="margo" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path class="margo__swipe" d="M8 55.5 q24 -5 48 0 v4 q-24 -4.5 -48 0z"></path><path class="margo__body" d="M17 8 h22 l11 11 v29 a6 6 0 0 1 -6 6 h-27 a6 6 0 0 1 -6 -6 v-34 a6 6 0 0 1 6 -6z"></path><path class="margo__fold" d="M39 8 v7 a4 4 0 0 0 4 4 h7"></path><circle class="margo__eye" cx="25" cy="33" r="3.2"></circle><circle class="margo__eye" cx="39" cy="33" r="3.2"></circle><path class="margo__mouth" d="M28.5 40.5 q3.5 3 7 0"></path></svg><span class="wordmark__name">gloss</span></a><div class="lp-bar__end"></div></header><main class="lp-main"><section class="lp-hero" aria-labelledby="lp-hero-title"><div class="lp-hero__copy"><h1 id="lp-hero-title" class="lp-hero__title">Read anything. <span class="lp-hero__mark">Understand all of it.</span></h1><p class="lp-hero__sub">Gloss explains the parts you&#x27;d miss, in words you already know, without changing a word of the original.</p><div class="lp-ctas"><div class="lp-ctas__row"><button type="button" class="btn btn--primary lp-cta">Try it as a demo reader</button><button type="button" class="btn lp-cta">Sign in with Google</button></div><p class="lp-ctas__fine">The demo needs no account, and ending it deletes what it recorded.</p></div></div><figure class="lp-demo"><div class="lp-demo__toggle"><div class="segmented"><span class="segmented__label" id="_R_36_">Read as</span><div class="segmented__track" role="radiogroup" aria-labelledby="_R_36_"><button type="button" role="radio" data-key="newcomer" aria-checked="true" tabindex="0" class="segmented__option">Software engineer</button><button type="button" role="radio" data-key="trader" aria-checked="false" tabindex="-1" class="segmented__option">Cricket fan</button><button type="button" role="radio" data-key="policy_student" aria-checked="false" tabindex="-1" class="segmented__option">Policy student</button></div></div></div><div class="lp-demo__sheet"><p class="lp-demo__source">From The Economic Times</p><div class="lp-demo__body"><svg class="margo lp-demo__margo" width="36" height="36" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path class="margo__swipe" d="M8 55.5 q24 -5 48 0 v4 q-24 -4.5 -48 0z"></path><path class="margo__body" d="M17 8 h22 l11 11 v29 a6 6 0 0 1 -6 6 h-27 a6 6 0 0 1 -6 -6 v-34 a6 6 0 0 1 6 -6z"></path><path class="margo__fold" d="M39 8 v7 a4 4 0 0 0 4 4 h7"></path><circle class="margo__eye" cx="25" cy="33" r="3.2"></circle><circle class="margo__eye" cx="39" cy="33" r="3.2"></circle><path class="margo__mouth" d="M28.5 40.5 q3.5 3 7 0"></path></svg><p class="lp-demo__para" data-rl-paragraph="p5">A 25 bps hike in October, rather than December as previously forecast, is possible amid higher energy prices, food inflation and wider price pressures which strengthen the case for tighter policy, according to Bank of America (BofA).</p></div></div><figcaption class="lp-demo__caption">A real paragraph and real notes. Tap a highlighted term.</figcaption></figure></section></main></div><!-- hero:end --></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

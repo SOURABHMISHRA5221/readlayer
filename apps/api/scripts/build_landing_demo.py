@@ -43,6 +43,9 @@ from scripts.live_check_explain import API, sign_in_anonymously
 from scripts.warm_demo import DEMO_ARTICLES
 
 OUT = Path(__file__).resolve().parents[3] / "apps/web/src/landing/demo.json"
+# The paragraph alone, for the static hero in the web's main bundle (the notes stay in the
+# landing chunk); a web vitest checks it matches demo.json.
+OUT_PARAGRAPH = OUT.with_name("demoParagraph.json")
 # Toggle label → persona (the personas' analogy frames: software / cricket / law).
 LABELS = {
     "newcomer": "Software engineer",
@@ -261,7 +264,9 @@ async def main(args) -> int:
     data = await confirm(args.api.rstrip("/"), doc, para, notes)
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
-    print(f"wrote {OUT}")
+    hero = {k: v for k, v in data.items() if k != "personas"}
+    OUT_PARAGRAPH.write_text(json.dumps(hero, indent=2, ensure_ascii=False) + "\n")
+    print(f"wrote {OUT} and {OUT_PARAGRAPH.name}")
     return 0
 
 
