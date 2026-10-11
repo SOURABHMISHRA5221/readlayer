@@ -119,6 +119,7 @@ export function EditBox({ persona, personaName, onChanged }: Props) {
               </p>
             </details>
           )}
+          {preview.preview.note && <p className="profile__note">{preview.preview.note}</p>}
           {preview.preview.unresolved.length > 0 && (
             <p className="profile__note">Couldn't find: {preview.preview.unresolved.join(", ")}</p>
           )}

@@ -193,3 +193,33 @@ describe("WelcomePage screen 2", () => {
     expect(calls.at(-1)!.path).toBe("/v1/onboarding/finish");
   });
 });
+
+describe("decision 48", () => {
+  it("shows the consent once more to a reader who agreed to an older version", async () => {
+    stubApi({ "/v1/me/profile": { ...PROFILE("onboarding", true), onboarding: { ...PROFILE("onboarding", true).onboarding, step: "onboarding", consent_version: "consent-v1" } } });
+    await mount();
+    expect(host.querySelector(".consent__check")).not.toBeNull();
+    act(() => root.unmount());
+    host.remove();
+    stubApi({ "/v1/me/profile": { ...PROFILE("onboarding", true), onboarding: { ...PROFILE("onboarding", true).onboarding, step: "onboarding", consent_version: "consent-v2" } } });
+    await mount();
+    expect(host.querySelector(".consent__check")).toBeNull();
+  });
+
+  it("Redo setup: resumes per redo, Cancel ends it, a finished reader outside a redo is sent home", async () => {
+    const redoing = { ...PROFILE("done", true), onboarding: { ...PROFILE("done", true).onboarding, done: true, step: "done", redo: "about", consent_version: "consent-v2" } };
+    stubApi({ "/v1/me/profile": redoing, "/v1/onboarding/redo/cancel": { redo: null } });
+    await mount();
+    expect(host.querySelector("h1")?.textContent).toBe("Tell Margo about you");
+    await click(button("Cancel setup"));
+    expect(calls.at(-1)!.path).toBe("/v1/onboarding/redo/cancel");
+    expect(location.pathname).toBe("/profile");
+    act(() => root.unmount());
+    host.remove();
+    history.replaceState(null, "", "/welcome");
+    const finished = { ...PROFILE("done", true), onboarding: { ...PROFILE("done", true).onboarding, done: true, step: "done", redo: null } };
+    stubApi({ "/v1/me/profile": finished });
+    await mount();
+    expect(location.pathname).toBe("/");
+  });
+});

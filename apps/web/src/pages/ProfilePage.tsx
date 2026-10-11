@@ -374,6 +374,29 @@ function DataControls({ demo, paused, onChanged }: { demo: boolean; paused: bool
           <span>Pause learning (reading won't change your profile)</span>
         </label>
       )}
+      {!demo && (
+        <div className="data__redo">
+          <button
+            type="button"
+            className="btn"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setMessage(null);
+              try {
+                await profileApi.redo();
+                navigate("/welcome");
+              } catch {
+                setMessage("Setup didn't start. Try again.");
+                setBusy(false);
+              }
+            }}
+          >
+            Redo setup
+          </button>
+          <p className="profile__note">Pick your field and topics again and see what's out there now. Nothing is deleted.</p>
+        </div>
+      )}
       <div className="data__row">
         {!demo && (
           <button type="button" className="btn" onClick={() => void exportData()} disabled={busy}>
