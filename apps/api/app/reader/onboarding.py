@@ -155,11 +155,14 @@ PICK_DELTA = 0.15  # "I'd read this" / "Not for me" → ± interest in the item'
 KNOW_ANSWER: Mapping[bool, Answer] = {True: "explain", False: "none"}
 
 
-def term_order(concepts: Iterable[Concept], theta: Mapping[str, float]) -> list[str]:
-    """Candidate "Know this?" terms for one item: closest difficulty to the reader's θ in the
-    concept's domain first (ties by id)."""
-    ranked = sorted(concepts, key=lambda c: (abs(c.base_difficulty - theta.get(c.domain, 0.0)),
-                                             c.id))  # fmt: skip
+def term_order(concepts: Iterable[Concept], topic: str, theta: Mapping[str, float]) -> list[str]:
+    """Candidate "Know this?" terms for one item: only concepts of the item's own topic (a
+    sports story named "Column", a culture concept, in the harness run), those met in the corpus
+    first (doc_freq > 0: words readers actually meet), then the difficulty closest to the
+    reader's θ in that domain (ties by id)."""
+    th = theta.get(topic, 0.0)
+    ranked = sorted((c for c in concepts if c.domain == topic),
+                    key=lambda c: (c.doc_freq == 0, abs(c.base_difficulty - th), c.id))  # fmt: skip
     return [c.id for c in ranked]
 
 

@@ -22,7 +22,12 @@ function useOnboardingDone(uid: string | null, isDemo: boolean): boolean | null 
   // Bumped when the welcome flow finishes, so the status is fetched again (not left loading).
   const [checks, setChecks] = useState(0);
   useEffect(() => {
-    const again = () => setChecks((n) => n + 1);
+    // Forget the old answer at once: with a stale "not done", navigating home right after the
+    // flow finishes would bounce the reader back to /welcome before the re-check lands.
+    const again = () => {
+      setDone(null);
+      setChecks((n) => n + 1);
+    };
     window.addEventListener("rl:onboarding-changed", again);
     return () => window.removeEventListener("rl:onboarding-changed", again);
   }, []);

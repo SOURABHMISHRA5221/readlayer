@@ -326,7 +326,10 @@ async def _serve(
     """Remember the items (with their stable Know this? term) and record them as served feed
     items, so picks are rec signals. Items past MAX_OFFERED_ITEMS aren't shown."""
     theta = {d: s.theta for d, s in (await _repo().get_domains(uid)).items()}
-    new = [(_id(c, library), c.topic, onboarding.term_order(c.concepts, theta)) for c in picked]
+    new = [
+        (_id(c, library), c.topic, onboarding.term_order(c.concepts, c.topic, theta))
+        for c in picked
+    ]
     user = await _repo().offer_onboarding(
         uid, lambda offered: onboarding.offer(offered, new, excluded)
     )

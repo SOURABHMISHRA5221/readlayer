@@ -115,7 +115,7 @@
   cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
 }
-.chip input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.chip input { position: absolute; inset: -1px; margin: 0; opacity: 0; cursor: pointer; }
 .chip:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--hairline)); }
 .chip:active { transform: scale(0.97); }
 .chip[data-on="true"] {
@@ -197,8 +197,8 @@
   background: var(--surface);
 }
 .consent__check { display: flex; gap: var(--s3); align-items: flex-start; font: 400 15px / 1.55 var(--font-read); color: var(--ink); cursor: pointer; }
-.consent__check input { flex: none; width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; }
-.consent__link { justify-self: start; min-height: 44px; display: inline-flex; align-items: center; margin-left: calc(22px + var(--s3)); color: var(--accent); font: 500 var(--text-ui) var(--font-ui); text-underline-offset: 3px; }
+.consent__check input { flex: none; width: 24px; height: 24px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; }
+.consent__link { justify-self: start; min-height: 44px; display: inline-flex; align-items: center; margin-left: calc(24px + var(--s3)); color: var(--accent); font: 500 var(--text-ui) var(--font-ui); text-underline-offset: 3px; }
 .consent__link:hover { color: var(--ink); }
 
 /* ---------------------------------------------------------------- screen 2 */
@@ -244,14 +244,13 @@
 .discover-card__answers { display: flex; gap: var(--s2); margin-top: auto; padding-top: var(--s2); }
 .discover-card__answers .answer { flex: 1; }
 .discover-card__know {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--s2);
   padding-top: var(--s3);
   border-top: 1px dashed var(--hairline);
 }
-.discover-card__ask { margin-right: auto; font: 500 15px var(--font-ui); color: var(--ink); }
+.discover-card__ask { grid-column: 1 / -1; font: 500 15px / 1.4 var(--font-ui); color: var(--ink); }
 .discover-card__term {
   padding: 0 2px;
   background: linear-gradient(transparent 55%, color-mix(in srgb, var(--accent) 28%, transparent) 55%);

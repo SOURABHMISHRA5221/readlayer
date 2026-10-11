@@ -17,8 +17,8 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
       "An account id from Google sign-in. Your name and email stay with Google sign-in; our database stores neither.",
       "Your settings: how many notes you want, the explanation style, the analogy worlds you think in, and whether learning is paused.",
       "Your consent: which version you agreed to and when. Nothing about you is recorded before it.",
-      "Your start: the field you chose, your topics, and the topics or ideas we recognised from anything you typed. Never the text you typed.",
-      "Onboarding answers: the cards you marked “I'd read this” or “Not for me” and the terms you were asked about.",
+      "Your start: the field you chose and your topics, including topics we matched from anything you typed. Never the text you typed.",
+      "While you set up: the cards we showed you, which you marked “I'd read this” or “Not for me”, and your “Know this?” answers. The list is cleared when you start reading; the answers stay as evidence on your map and topics.",
     ],
   },
   {

@@ -96,6 +96,8 @@ describe("readback", () => {
       "So: a mix of everything you picked. A and B are new to you, so I'll explain new ideas in plain words.",
     );
     expect(listing(["a", "b", "c"])).toBe("a, b and c");
+    const mixed = readback({ liked: ["Sports", "Law"], skipped: ["Sports", "Sports"], known: [], unknown: [], frame: null });
+    expect(mixed.startsWith("So: more Law, less Sports.")).toBe(true);
   });
 });
 

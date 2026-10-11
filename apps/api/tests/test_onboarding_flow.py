@@ -185,6 +185,16 @@ def test_offer_keeps_terms_stable_excludes_resolved_and_caps():
     assert sum(v["concept"] is not None for v in capped.values()) == onboarding.MAX_OFFERED_TERMS
 
 
+def test_terms_come_from_the_items_topic_corpus_concepts_first():
+    def c(cid, domain, b, freq):
+        return Concept(id=cid, label=cid, domain=domain, definition=".", base_difficulty=b,
+                       doc_freq=freq, embedding=unit(14))  # fmt: skip
+
+    named = [c("c_column", "culture", 0.0, 9), c("c_seed", "sports", 0.0, 0),
+             c("c_far", "sports", 2.0, 5), c("c_near", "sports", 0.2, 5)]  # fmt: skip
+    assert onboarding.term_order(named, "sports", {"sports": 0.0}) == ["c_near", "c_far", "c_seed"]
+
+
 def test_interests_with_picks_apply_deltas_and_clamp():
     picks = {"x": {"topic": "sports", "liked": False}, "y": {"topic": "sports", "liked": False},
              "z": {"topic": "economics", "liked": True}}  # fmt: skip

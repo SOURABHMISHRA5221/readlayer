@@ -21,8 +21,12 @@ export function listing(xs: string[]): string {
 }
 
 export function readback({ liked, skipped, known, unknown, frame }: ReadbackInput): string {
-  const more = unique(liked);
-  const less = unique(skipped).filter((t) => !more.includes(t));
+  // Per topic, likes minus skips: two "Not for me" and one "I'd read this" is still less.
+  const net = new Map<string, number>();
+  for (const t of liked) net.set(t, (net.get(t) ?? 0) + 1);
+  for (const t of skipped) net.set(t, (net.get(t) ?? 0) - 1);
+  const more = [...net].filter(([, n]) => n > 0).map(([t]) => t);
+  const less = [...net].filter(([, n]) => n < 0).map(([t]) => t);
   const parts: string[] = [];
   if (more.length) parts.push(`more ${listing(more)}`);
   if (less.length) parts.push(`less ${listing(less)}`);
