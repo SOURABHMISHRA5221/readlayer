@@ -435,14 +435,30 @@ from evals.json; alternating paper/wash section backgrounds. Budgets unchanged: 
 first view under ~1.5 MB, below-the-fold media lazy, axe 0, alt text on images. **Light is the
 default theme** (dark only via the toggle).
 
+**Decision 45 (Sourabh, 2026-10-11): wider layouts.** Landing (in this milestone): section
+containers up to ~1280px, hero a 50/50 split (copy | big Margo + demo), illustrations, clips and
+the teal trust band may be full-bleed, fluid spacing with clamp(); screenshots at 1280, 1440, 1920
+and 390. Feed/library, profile and reader: a **Wide layout** follow-up before M8 (see that
+section).
+
 **D. Acceptance.** A new mobile visitor understands problem and solution without scrolling past
 section 3 (screenshots in the log); the landing toggle changes highlights, analogy and depth for
 all 3 personas with no network calls after load; a new Google reader reaches the feed in 2 screens
 in under 90 s, the feed reflects their picks and calibration answers show up as band changes on the
 profile; free text like "F1, startups" produces concept-label queries only (a test asserts no raw
 text in any outbound request) and nothing of the free text is stored; Lighthouse mobile LCP <
-2.5 s and accessibility 100; axe 0 at 1440/390, light and dark. Update DESIGN (§4 onboarding,
+2.5 s and accessibility 100; axe 0 at 1280/1440/1920/390, light and dark (decision 45). Update DESIGN (§4 onboarding,
 §11.4 consent, §17 feed search, a new landing section), STATUS and BUILD_PLAN.
+
+## Wide layout (decision 45; after Landing and onboarding, before M8)
+Use the width on wide screens; fluid spacing with clamp() so 1024, 1440 and 1920 all look
+intentional; screenshots at 1280, 1440, 1920 and 390 (light and dark), axe 0.
+- **Feed/library:** container up to ~1280px, wider rows, the sidebar filled; at ≥ 1440px a third
+  column ("Your map this week" mini-map and goals).
+- **Profile:** domain cards in more columns; the knowledge map spans the full container width and
+  is taller.
+- **Reader:** the article text column stays ~680px; the note margin on the right as now; at
+  ≥ 1280px a slim left rail (contents, reading progress, notes count).
 
 ## M8-local — Chrome extension, unpacked (Oct 14)
 Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not

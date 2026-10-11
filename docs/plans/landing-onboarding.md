@@ -446,3 +446,19 @@ scan, added to M9). Built as part 0 of the landing (before §C/§B), same checkp
    stay as stills) or V3. Nothing is dropped without his answer.
 - Nit applied: the dark illustration treatment is contrast-checked against the dark wash in the
   dark screenshots (pixel sample of the teal strokes), not by eye.
+
+### V9. Decision 45 for the landing (Sourabh, 2026-10-11)
+- Containers up to 1280px (`--lp-max: 1280px`) for the bar, hero and every section; the side
+  padding is fluid: `--lp-gutter: clamp(16px, 4vw, 64px)`; section rhythm
+  `--lp-space: clamp(64px, 8vw, 128px)`; headline sizes via clamp() instead of fixed breakpoints.
+- Hero ≥ 1024: a 50/50 grid (copy | Margo + demo); Margo stays beside the sheet's corner inside
+  the right half (no longer pushed into the page margin), 200px at ≥ 1280, ~160px at 1024.
+- Full-bleed: the teal trust band and the wash bands already are; V3's illustrations row and V4's
+  clip grid may run wider than the 1280 text column (up to 1440px) inside their bands.
+- Checks: `tools/shots/landing.py` adds 1280 and 1920 (light and dark) to 1440 and 390; axe 0;
+  no horizontal scroll; the static hero test still pins index.html to `HeroStatic`.
+- Feed/library, profile and reader are the separate **Wide layout** follow-up (BUILD_PLAN), with
+  its own plan; it pushes M8-local, and Sourabh is asked before anything in M8/M9 is cut.
+- Reviewer nits applied: illustrations are encoded at ~460px and ~920px (2x) wide and clips at
+  ~720px wide (each still ≤ 400 KB), so the wider rows stay sharp; BUILD_PLAN acceptance lists
+  axe and screenshots at 1280, 1440, 1920 and 390.

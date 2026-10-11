@@ -4,6 +4,11 @@
  * The demo box has a fixed minimum height, so the live annotator mounts without moving anything.
  */
 .lp {
+  /* Decision 45: a wider container and fluid gutters and rhythm, so 1024, 1440 and 1920 all
+     look intentional. */
+  --lp-max: 1280px;
+  --lp-gutter: clamp(16px, 4vw, 64px);
+  --lp-space: clamp(64px, 8vw, 128px);
   min-height: 100vh;
   background: var(--paper);
   overflow-x: clip;
@@ -13,10 +18,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1200px;
+  max-width: calc(var(--lp-max) + 2 * var(--lp-gutter));
   height: 64px;
   margin: 0 auto;
-  padding: 0 var(--gutter);
+  padding: 0 var(--lp-gutter);
 }
 .lp-bar__end {
   display: flex;
@@ -27,14 +32,14 @@
 .lp-hero {
   display: grid;
   gap: var(--s10);
-  max-width: 1200px;
+  max-width: calc(var(--lp-max) + 2 * var(--lp-gutter));
   margin: 0 auto;
-  padding: var(--s6) var(--gutter) var(--s16);
+  padding: var(--s6) var(--lp-gutter) var(--s16);
 }
 
 .lp-hero__title {
   max-width: 13ch;
-  font: 800 var(--text-display) / 1.02 var(--font-head);
+  font: 800 clamp(40px, 1.5rem + 3.4vw, 76px) / 1.02 var(--font-head);
   letter-spacing: -0.032em;
   color: var(--ink);
   text-wrap: balance;
@@ -243,14 +248,11 @@
 
 @media (min-width: 1024px) {
   .lp-hero {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
-    gap: var(--s16);
-    padding-top: var(--s16);
+    gap: clamp(40px, 5vw, 96px);
+    padding-top: clamp(32px, 4vw, 72px);
     padding-bottom: var(--s8);
-  }
-  .lp-hero__title {
-    font-size: 64px;
   }
   .lp-demo__para {
     min-height: calc(6 * 1.62em);
@@ -263,6 +265,5 @@
 @media (min-width: 1280px) {
   .lp-demo__margo {
     width: 200px;
-    margin-right: -72px; /* into the page margin, beside the sheet's corner */
   }
 }

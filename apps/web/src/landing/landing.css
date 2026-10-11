@@ -14,11 +14,11 @@
 }
 
 /* Full-bleed bands (decision 44: paper / wash alternate, trust is teal); the padding keeps the
-   content in the same 1200px column as the hero. */
+   content in the same 1280px column as the hero (decision 45). */
 .lp-section,
 .lp-final {
-  --lp-inline: max(var(--gutter), calc((100% - 1200px) / 2 + var(--gutter)));
-  padding: var(--s16) var(--lp-inline);
+  --lp-inline: max(var(--lp-gutter), calc((100% - var(--lp-max)) / 2));
+  padding: var(--lp-space) var(--lp-inline);
 }
 .lp-problem,
 .lp-how,
@@ -27,7 +27,7 @@
 }
 .lp-section__title {
   max-width: 18ch;
-  font: 800 var(--text-headline) / 1.06 var(--font-head);
+  font: 800 clamp(32px, 1.2rem + 2.4vw, 56px) / 1.06 var(--font-head);
   letter-spacing: -0.026em;
   text-wrap: balance;
 }
@@ -99,8 +99,8 @@
 /* 2. The solution: the side-by-side sits on a wash band. */
 .lp-side {
   position: relative;
-  margin: var(--s10) calc(-1 * var(--gutter)) 0;
-  padding: var(--s8) var(--gutter);
+  margin: var(--s10) calc(-1 * var(--lp-gutter)) 0;
+  padding: var(--s8) var(--lp-gutter);
   background: var(--wash);
 }
 .lp-side__cols {
@@ -326,7 +326,7 @@
 }
 .lp-final__title {
   max-width: 14ch;
-  font: 800 var(--text-headline) / 1.06 var(--font-head);
+  font: 800 clamp(32px, 1.2rem + 2.4vw, 56px) / 1.06 var(--font-head);
   letter-spacing: -0.026em;
 }
 
@@ -335,9 +335,9 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--s4) var(--s8);
-  max-width: 1200px;
+  max-width: calc(var(--lp-max) + 2 * var(--lp-gutter));
   margin: 0 auto;
-  padding: var(--s8) var(--gutter) var(--s12);
+  padding: var(--s8) var(--lp-gutter) var(--s12);
   border-top: 1px solid var(--hairline);
 }
 .lp-footer__built {
@@ -363,11 +363,6 @@
 }
 
 @media (min-width: 768px) {
-  .lp-section,
-  .lp-final {
-    padding-top: var(--s20);
-    padding-bottom: var(--s20);
-  }
   .lp-problem__list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--s8);

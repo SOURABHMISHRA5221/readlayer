@@ -15,7 +15,7 @@ sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:4173"
-SIZES = ((1440, False), (1440, True), (390, False), (390, True))
+SIZES = ((1920, False), (1440, False), (1440, True), (1280, False), (1280, True), (390, False), (390, True))
 # Dark is only ever the reader's toggle (decision 44), so shots set it the way the toggle does.
 THEME = "localStorage.setItem('readlayer:theme', '{}'); true"
 AXE_ALL = "axe.run(document, {resultTypes: ['violations']}).then(r => r.violations.map(v => v.impact + ' ' + v.id + ':' + v.nodes.length))"
