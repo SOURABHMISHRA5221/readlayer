@@ -20,6 +20,7 @@ from app.content.summary import article_domain
 from app.context import ReaderContext, hidden_ids, reader_context
 from app.graph.loader import get_graph
 from app.ingest.models import ContentDoc, PendingDoc
+from app.reader.model import Band
 from app.reader.state import Density, PersonaKey
 from app.scoring import scorer
 from app.scoring.scorer import Annotations, ExplainerRef, ScoringInputs
@@ -98,6 +99,8 @@ class AnnotationOut(BaseModel):
     definition: str
     domain: str
     prerequisites: list[str]
+    band: Band  # the reader's band for the concept (what the explanation is pitched at)
+    level: Literal["new", "refresher"]  # highlight style (Design pass A1)
     debug: AnnotationDebug | None = None
 
 
@@ -117,6 +120,7 @@ class PrereadStepOut(BaseModel):
     definition: str
     content_id: str | None  # a corpus article explaining the concept, else show the definition
     title: str | None
+    known: bool = False  # where the path starts from, shown ticked (Design pass A2)
 
 
 class PrereadOut(BaseModel):
@@ -392,6 +396,7 @@ def _preread_out(p: scorer.Preread) -> PrereadOut:
                 definition=s.definition,
                 content_id=s.article.content_id if s.article else None,
                 title=s.article.title if s.article else None,
+                known=s.known,
             )
             for s in p.steps
         ],
@@ -419,6 +424,8 @@ def _annotation_out(s: scorer.SpanAnnotation, with_debug: bool) -> AnnotationOut
         definition=s.definition,
         domain=s.domain,
         prerequisites=list(s.prerequisites),
+        band=s.band,
+        level=s.level,
         debug=AnnotationDebug(
             p_know=round(s.p_know, 4),
             salience=s.salience,

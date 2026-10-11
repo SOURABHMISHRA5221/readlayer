@@ -35,6 +35,9 @@ export interface CardAnnotation extends Annotation {
   domain?: string;
   prerequisites: string[];
   debug?: AnnotationDebug | null;
+  /** The reader's band for the concept and the highlight style it gets (Gloss). Missing = new. */
+  band?: string;
+  level?: "new" | "refresher";
 }
 
 /**
@@ -49,6 +52,10 @@ export interface Explanation {
   author_says: string | null;
   /** The reader's frame the Background drew an analogy from, if any. */
   analogy_domain?: string | null;
+  /** The band the Background was written for, and whether a simpler / deeper one exists. */
+  band?: string;
+  can_simpler?: boolean;
+  can_deeper?: boolean;
 }
 
 /** "What this paragraph is saying" margin marker (DESIGN §6, §9). */
@@ -77,6 +84,8 @@ export interface PrereadStep {
   /** A library article that explains the concept; else the step shows its definition. */
   content_id?: string | null;
   title?: string | null;
+  /** Where the path starts from: already known (shown ticked by Gloss; skipped here). */
+  known?: boolean;
 }
 
 /** Pre-read card: what to meet before this article, most basic first. */

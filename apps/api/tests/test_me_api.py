@@ -241,6 +241,10 @@ def test_profile_is_deterministic_and_never_calls_an_llm(env, monkeypatch):
     assert "You think in software." in a["summary"]["text"]
     assert a["settings"] == {"density": "balanced", "explanation_style": "normal"}
     assert a["persona"] is None
+    assert all("known" in d for d in a["domains"])  # Design pass: per-domain known count
+    client.patch("/v1/me/graph/c_curve", json={"state": "known"})
+    after = {d["domain"]: d["known"] for d in client.get("/v1/me/profile").json()["domains"]}
+    assert after["finance"] >= 1
 
 
 def test_settings_validation(env):

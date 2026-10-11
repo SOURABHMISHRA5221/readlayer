@@ -216,7 +216,7 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
         error instanceof ApiError && error.detail
           ? error.detail
           : errorKind(error) === "offline"
-            ? "Couldn't reach ReadLayer. Try again, or open the original."
+            ? "Couldn't reach Gloss. Try again, or open the original."
             : "That page couldn't be opened here. Try the original instead.";
       setOpening({ status: "error", message });
     }

@@ -20,7 +20,7 @@ from app.context import ReaderContext, reader_context, scope_persona
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph
 from app.graph.models import DOMAINS, Concept, Domain
-from app.reader import model, profile
+from app.reader import model, overview, profile
 from app.reader.events import ConceptRef, EventType, ReaderEvent
 from app.reader.model import Band, Edge
 from app.reader.personas import PERSONA_THINKS_IN
@@ -151,6 +151,33 @@ class DomainBandsOut(BaseModel):
     concepts: list[ConceptBandOut]
 
 
+class OverviewNodeOut(BaseModel):
+    id: str
+    label: str
+    domain: str
+    band: Band
+    ready: bool  # "ready to learn" ring (not known, every prerequisite known)
+    goal: bool
+    weight: float
+    definition: str
+    recent: list[EvidenceOut]
+    rose_this_week: bool
+
+
+class OverviewOut(BaseModel):
+    """All-domains map (Design pass A5): solid known concepts and ready-to-learn rings."""
+
+    view: Literal["overview"] = "overview"
+    domains: list[str]
+    nodes: list[OverviewNodeOut]
+    edges: list[GraphEdgeOut]
+
+
+class BandsIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    concept_ids: list[Annotated[str, Field(min_length=1, max_length=120)]] = Field(max_length=50)
+
+
 class GraphSummaryOut(BaseModel):
     domains: list[DomainBandsOut]
     concepts_tracked: int
@@ -189,15 +216,18 @@ def _trend(weekly: dict) -> list[dict[str, Any]]:
     ]
 
 
-@router.get("/me/graph", response_model=SubgraphOut | GraphSummaryOut)
+@router.get("/me/graph", response_model=SubgraphOut | OverviewOut | GraphSummaryOut)
 async def get_my_graph(
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     domain: Domain | None = None,
     q: Annotated[str, Query(max_length=100)] = "",
     goal: Annotated[str | None, Query(pattern=r"^[0-9a-f]{12}$")] = None,
-) -> SubgraphOut | GraphSummaryOut:
+    view: Literal["overview"] | None = None,
+) -> SubgraphOut | OverviewOut | GraphSummaryOut:
     graph = get_graph()
     now = datetime.now(UTC)
+    if view == "overview":
+        return await _overview(ctx, now)
     repo = _repo()
     knows = dict(ctx.state.edges)
     exact: list[str] | None = None
@@ -222,6 +252,38 @@ async def get_my_graph(
         edges=[GraphEdgeOut(from_=a, to=b) for a, b in sub.edges],
         truncated=sub.truncated,
     )
+
+
+async def _overview(ctx: ReaderContext, now: datetime) -> OverviewOut:
+    from app.me.goals import targets_for_feed
+
+    goal_ids = [] if ctx.caller.is_anonymous else list(await targets_for_feed(ctx.uid))
+    interest = {d: s.interest for d, s in ctx.domains.items()}
+    ov = overview.build(get_graph(), ctx.state, interest, goal_ids, now)
+    return OverviewOut(
+        domains=list(ov.domains),
+        nodes=[
+            OverviewNodeOut(
+                **(vars(n) | {"recent": [EvidenceOut(type=k, at=a) for k, a in n.recent]})
+            )
+            for n in ov.nodes
+        ],
+        edges=[GraphEdgeOut(from_=a, to=b) for a, b in ov.edges],
+    )
+
+
+@router.post("/me/bands", response_model=dict[str, Band])
+async def my_bands(
+    body: BandsIn, ctx: Annotated[ReaderContext, Depends(reader_context)]
+) -> dict[str, Band]:
+    """Current bands for the recap (Design pass A4): the same uncapped band explanations use.
+    Unknown ids are left out. A pure read."""
+    graph, now = get_graph(), datetime.now(UTC)
+    return {
+        cid: model.band_of(overview.p_know(c, ctx.state, now))
+        for cid in dict.fromkeys(body.concept_ids)
+        if (c := graph.get(cid)) is not None
+    }
 
 
 class CorrectionIn(BaseModel):
@@ -280,6 +342,11 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     }  # fmt: skip
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
     in_graph = Counter(c.domain for c in graph.concepts)  # the map offers domains with concepts
+    # Ideas the reader has shown they know (an edge at "understands" or above), per domain.
+    known = Counter(
+        c.domain for cid, e in knows.items()
+        if e.band in ("understands", "can explain") and (c := graph.get(cid)) is not None
+    )  # fmt: skip
     # A demo reader's frame is the persona's, the one explanations use (not users/{uid}).
     frames = (
         list(ctx.state.thinks_in or [PERSONA_THINKS_IN[ctx.persona]])
@@ -301,6 +368,7 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
                 "interest": domains[d].interest if d in domains else 0.0,
                 "thinks_in": domains[d].thinks_in if d in domains else 0.0,
                 "concepts": in_graph[d],
+                "known": known[d],
             }
             for d in DOMAINS
         ],
@@ -310,6 +378,7 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
                 {
                     "concept_id": m.concept_id,
                     "label": graph.get(m.concept_id).label,  # type: ignore[union-attr]
+                    "domain": graph.get(m.concept_id).domain,  # type: ignore[union-attr]
                     "from": m.from_band,
                     "to": m.to_band,
                 }

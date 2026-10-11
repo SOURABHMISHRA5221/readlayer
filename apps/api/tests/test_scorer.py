@@ -425,13 +425,37 @@ def test_preread_walks_weak_prerequisites_at_most_three_steps():
     assert [s.concept_id for s in got.steps] == ["c_c", "c_d", "c_e"]  # most basic first
     assert got.steps[0].article == ExplainerRef("other", "On C", 300)
     assert got.steps[1].article is None  # the article being read doesn't count
+    assert not any(s.known for s in got.steps)  # stopped at the step limit: no ticked step
 
 
-def test_preread_stops_at_a_known_prerequisite():
+def test_preread_stops_at_a_known_prerequisite_and_shows_it_ticked():
     reader = state(edges={"c_d": edge(0.75), "c_e": edge(0.1)})
     article = doc([demand("e", "c_e", salience=1.0)])
     got = sc.annotate(article, CHAIN, reader, "balanced", NOW).preread
-    assert got is not None and [s.concept_id for s in got.steps] == ["c_e"]
+    assert got is not None and [s.concept_id for s in got.steps] == ["c_d", "c_e"]
+    assert [s.known for s in got.steps] == [True, False]  # where the path starts from
+
+
+def test_preread_ticked_step_tie_break_is_highest_p_then_id():
+    graph = ConceptGraph(ConceptGraphFile(version="tie", concepts=[
+        concept("c_x", "finance", 0.0), concept("c_y", "finance", 0.0),
+        concept("c_z", "finance", 0.0),
+        concept("c_goal", "finance", 0.0, prereqs=["c_z", "c_y", "c_x"]),
+    ]))  # fmt: skip
+    reader = state(edges={"c_x": edge(0.8), "c_y": edge(0.9), "c_z": edge(0.9),
+                          "c_goal": edge(0.1)})  # fmt: skip
+    got = sc.annotate(doc([demand("g", "c_goal", salience=1.0)]), graph, reader, "balanced",
+                      NOW).preread  # fmt: skip
+    assert got is not None and got.steps[0].concept_id == "c_y" and got.steps[0].known
+
+
+def test_spans_carry_the_concept_band_and_a_highlight_level():
+    reader = state(edges={"c_e": edge(0.1)})
+    span = sc.annotate(doc([demand("e", "c_e", salience=1.0)]), CHAIN, reader, "guided",
+                       NOW).spans[0]  # fmt: skip
+    assert (span.band, span.level) == ("unaware", "new")
+    refresher = sc.SpanAnnotation(**{**span.__dict__, "band": "understands"})
+    assert refresher.level == "refresher"
 
 
 def test_preread_needs_the_assumed_mean_above_threshold():
@@ -495,3 +519,12 @@ def test_personas_see_different_not_nested_sets():
 def test_no_prompt_while_learning_is_paused():
     article = doc([demand("b", "c_bond", salience=0.8)])
     assert annotate(article, inputs=ScoringInputs(prompts_allowed=False)).prompt is None
+
+
+def test_span_level_uses_the_uncapped_concept_band_not_the_capped_span_p():
+    # c_e is understood (0.6) but its prerequisite c_d is weak, so the span's p is capped and
+    # it is shown; the highlight and card still say "refresher" (the band explain uses).
+    reader = state(edges={"c_e": edge(0.6), "c_d": edge(0.05)})
+    spans = sc.annotate(doc([demand("e", "c_e", salience=1.0)]), CHAIN, reader, "guided", NOW).spans
+    assert spans and spans[0].p_know < 0.5
+    assert (spans[0].band, spans[0].level) == ("understands", "refresher")

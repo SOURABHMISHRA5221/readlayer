@@ -34,10 +34,10 @@ export interface Onboarding {
 export interface Profile {
   summary: { text: string; top_domain: string | null; moved_up_this_week: number; learning_paused: boolean };
   /** `rated`: the reader rated, reads in, or has concepts in this domain. */
-  domains: { domain: Domain; theta: number; interest: number; rated: boolean; concepts: number }[];
+  domains: { domain: Domain; theta: number; interest: number; rated: boolean; concepts: number; known?: number }[];
   thinks_in: Frame[];
   week: {
-    moved_up: { concept_id: string; label: string; from: Band; to: Band }[];
+    moved_up: { concept_id: string; label: string; from: Band; to: Band; domain?: Domain }[];
     trend: { week: string; annotations_per_1000_words: number }[];
   };
   settings: { density: Density; explanation_style: ExplanationStyle };
@@ -54,6 +54,27 @@ export interface GraphNode {
   last_seen: string | null;
   depth: number;
   recent: { type: string; at: string }[];
+}
+
+/** All-domains map (Design pass A5). */
+export interface OverviewNode {
+  id: string;
+  label: string;
+  domain: Domain;
+  band: Band;
+  ready: boolean;
+  goal: boolean;
+  weight: number;
+  definition: string;
+  recent: { type: string; at: string }[];
+  rose_this_week: boolean;
+}
+
+export interface Overview {
+  view: "overview";
+  domains: Domain[];
+  nodes: OverviewNode[];
+  edges: { from: string; to: string }[];
 }
 
 export interface Subgraph {
@@ -121,6 +142,8 @@ export const profileApi = {
     api.raw.send<Goal>("POST", "/v1/me/goals", { type: "habit", metric, per_week }),
   addLearning: (text: string) => api.raw.send<Goal>("POST", "/v1/me/goals", { type: "learning", text }),
   deleteGoal: (id: string) => api.raw.send<null>("DELETE", `/v1/me/goals/${id}`, undefined),
+  overview: (persona: PersonaKey | null, signal?: AbortSignal) =>
+    api.raw.get<Overview>(`/v1/me/graph?view=overview${q(persona, false)}`, signal),
   goalGraph: (goalId: string, signal?: AbortSignal) =>
     api.raw.get<Subgraph>(`/v1/me/graph?goal=${encodeURIComponent(goalId)}`, signal),
   graph: (persona: PersonaKey | null, domain: Domain, search = "", signal?: AbortSignal) =>

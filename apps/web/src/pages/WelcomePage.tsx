@@ -47,7 +47,7 @@ export default function WelcomePage() {
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    document.title = "Welcome · ReadLayer";
+    document.title = "Welcome · Gloss";
     profileApi
       .profile(null)
       .then((p) => {
@@ -94,7 +94,7 @@ export default function WelcomePage() {
         <Panel
           heading={heading}
           eyebrow="Before you start"
-          title="What ReadLayer keeps about your reading"
+          title="What Gloss keeps about your reading"
           actions={
             <>
               <button type="button" className="btn" onClick={() => void signOutUser()}>

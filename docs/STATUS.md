@@ -1,8 +1,8 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-11 (IST): M7.5 merged (#20) and live (API revision 00017, web redeployed);
-demo snapshots seeded, demo cards re-warmed, live check passed (§17). Left: Sourabh's Google
-check. Next: the Design pass (decisions 39, 40).
+Last updated: 2026-10-11 (IST): Design pass (Gloss) built and accepted on the harness on branch
+`design` (§18); milestone review, merge, deploy and live check next. M7.5 merged (#20) and live,
+Sourabh's Google check done.
 M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
@@ -32,7 +32,8 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | M5 | merged (squash) | #13 | Verified personalised explanations, safety evals, card UI; live (Oct 10). See §13 |
 | Rest of M6 | merged (squash) | #14 | Paragraph markers, pre-read, "Know this?", full event batching, two-phase "Open here", shared restatement; live (Oct 10). See §14 |
 | M7 | merged (squash), live | #16 | Consent, onboarding, calibration, profile page with knowledge map, edit-by-prompt (demo: session-only), emulator harness. See §15 |
-| M7.5 | **merged #20 and live** (§17); Sourabh's Google check left | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
+| M7.5 | **merged #20 and live** (§17); Sourabh's Google check done (2026-10-11) | — | "For you" feed, "Read any link", reading goals, general explanation prompts (decisions 33, 37, 38) |
+| Design pass | built and accepted on the harness on branch `design` (§18); review, merge, deploy next | — | Gloss: tokens and type, Margo, library as a feed, reader, profile and SVG map (decisions 39, 40) |
 | M8-local | plan approved; redaction + NOT_CORPUS built; **paused** on branch `m8` | — | Unpacked extension, after M7.5 |
 | M9 | not started | — | Hardening and evals |
 
@@ -172,6 +173,13 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M2.2: growth makes a fourth batched call, `link_confirm` on MODEL_QUALITY, to confirm each new concept (decision 36 tightening; the plan had 3 MODEL_FAST calls ≈ $0.004/article) | Raised judged precision from 87% to 97%; adds ≈ $0.004 and up to ~30 s per growing article (within growth's own timeout) | Keep; measure growth time before the flag flip |
 | M2.2: growth timeout 30 s, not the plan's 20 s (still min(30 s, phase-2 time left − 5 s)) | Harness timing with growth on: 4 concepts in 20.0 s (cold instance), 3 in 6.9 s; 20 s would drop growth on a slow model answer | Keep; watch `growth_ms` live |
 | M2.2: linker suite has 16 cases, not the planned 14 | Added a German chancellor negative and a second Chancellor case before any run | Keep |
+| Design pass: the annotator's margin sidenote and phone bottom sheet already existed (since M5/M6, the sheet also in the extension), so no new `margin.ts` / `sheet.ts`; the card changes (pitch meter, Builds on, depth buttons, quote) live in `card.ts` and are opt-in (`loadShifted`) | Rebuilding working, tested placement code days before the freeze adds risk for no gain; the extension's behaviour is unchanged except level classes on marks, `renderPreread` skipping known steps, and card buttons now 44px tall everywhere (our target size; harmless in the extension) | Keep (DESIGN §9) |
+| Design pass: the full extension build isn't checked here | This branch carries only the extension stub (it builds: `dist/background.js`); the real extension source lives on the paused `m8` branch and is built against annotator 0.2.0 at the m8 rebase | M8 rebase (Oct 14) |
+| Design pass: annotator `package.json` 0.1.0 → 0.2.0 while the exported `ANNOTATOR_VERSION` goes 0.4.0 → 0.5.0 | The constant tracked API-shape versions since M5 and the extension reads it; both moved one step | Keep |
+| Design pass: the margin "N notes for you" is a sticky contents list (mockup), not the old chips aligned with their paragraphs | The mockup's list reads better and the open card is already level with its line | Keep (DESIGN §19) |
+| Design pass: "show less like this" only on For you rows; Topics and Saved rows have Save only | There is no library-article dismissal signal; adding one is new scope | Keep |
+| Design pass: not built from the mockup: "Replay this week" on the map, and the illustrative "Gloss reads the transcript" notes for videos and podcasts | Neither is a BUILD_PLAN item; the mockup's content is illustrative | Recorded in the plan; not cut |
+| Design pass: README hero screenshot still shows the pre-rename reader | Retaken with the deck and video on Oct 16 against the final demo data | Oct 16 |
 | M7.5: pages brought in through POST /v1/recs/open ("Open here", Read any link, feed articles) or the extension (`NOT_CORPUS`) are private to the readers who brought them in; the library list and Up next hide them from everyone else. Production holds **7** `user_ingested` docs and 0 `extension` docs (read-only count, 2026-10-10), which disappear from other readers' libraries on deploy | A pasted page is a reader's choice, not editorial content, and M8 extension pages will be the same. Intended, not data loss: the docs stay reachable by id. M8 must keep "visible to the reader who brought it in" | Keep (DESIGN §17.4) |
 | M7.5: feed phrases are "news this week" / "podcast" / "news explained", not the plan's "latest news" / "podcast episode" / "explained"; feed results also pass a page-shape check (article-shaped URL, no podcast chart or genre pages) and an English-only title check; feed news searches send no `exclude_domains`; YouTube feed searches ask for 4–20 minutes from the last 30 days; topics need interest ≥ 0.5 | Harness acceptance: the plan's phrases returned section pages, kids' videos and chart pages, and `exclude_domains` made Tavily return 0 articles of 9 (§17). Still only a taxonomy label + fixed phrase | Keep (DESIGN §17.1) |
 | M7.5: an empty feed day entry may be searched again after an hour (≤ 2 searches per instance per (topic, format, day), ≤ 6 in all) | Tavily's results vary run to run; without a retry one bad sample empties a topic for the whole day | Keep (DESIGN §17.1) |
@@ -211,13 +219,15 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Up next article searches still send Tavily `exclude_domains`, which made the news topic return only section pages in M7.5 testing; Up next uses the general topic and its results looked fine in M6.5, but this is unverified (feed articles no longer send it) |
 | Medium | Demo snapshots seeded 2026-10-10 are thin on articles for three topics: newcomer economics 1, trader business 1, policy student politics 0 readable articles (every topic has videos and podcasts). Before the Oct 16 re-seed: a second fixed phrase for thin topics in `seed_demo_feed` (≤ 1 extra search per thin topic; ask before the extra production searches) |
 | Medium | Tavily is on the free Researcher plan: 398 of 1,000 monthly credits used on 2026-10-10. Realistic feed + Up next use is ≈ 15–30 credits a day; a day at the feed cap could use ≈ 40. If credits run out, searches fail and the feed serves cached and yesterday's entries |
+| Low | A demo reader can hit the 60 requests/minute limit when a script opens many pages quickly (seen in the Design pass harness runs: the profile showed "didn't load" on a 429); real reading doesn't come close |
+| Low | Refresher highlights are a minority (8–16% of shown spans at "For me" across the demo personas); some articles show only "new" highlights |
+| Low | For you headline links are 27px tall text links (above WCAG 2.5.8's 24px, below our 44px control target, which applies to buttons) |
 | Low | For you quality depends on Tavily's news results, which vary run to run (the same query gave 2 or 10 real articles); empty day entries are retried after an hour. "News this week" also pulls event pages ("Mental Health Week") |
 | Low | A pasted page stays pending (not in the library) if its reader leaves before the notes finish and the analyse request never ran; the next open of that link analyses it |
 | Low | The English-only filter checks script, not language: a Hinglish title in Latin script passes ("Health Insurance Claim Ka 10% Ab Aapko Dena Hoga?") |
 | Low | Learning-goal resolution takes 8–19 s on the harness (embedding + link_confirm); the form says it is looking the idea up |
-| Low | Header controls (theme toggle, account chip 40×40, persona chip 40 px tall) are under 44 px; pre-existing, rebuilt in the Design pass |
 | Low | `rec_shown` relies on IntersectionObserver, which browsers pause in background tabs (seen in automated testing; real readers have the tab in front) |
-| Low | Web main bundle 138.7 KB gzip (budget 150 KB; M7.5's For you page is a lazy chunk); M7 pages are lazy chunks (profile 6.8 KB, welcome 3.3 KB), Cytoscape + dagre 155 KB load only when the map opens |
+| Low | Web main bundle 143.6 KB gzip (budget 150 KB) after the Design pass; For you, Saved and Profile are lazy chunks; the Cytoscape + dagre chunk is gone (the map is SVG) |
 | Low | The weekly trend is per uid, so a demo session's trend mixes the personas it read as (the page says "this demo session") |
 | Low | Calibration picks the most frequent concepts per domain, which occasionally surfaces a term like "Expiry days"; fine for a quick check, revisit with the gold set |
 | Low | Firestore emulator fails contended transactions faster than production (three prefetched explanations reserving one daily counter); a jittered retry now wraps every transaction (no production occurrence in 7 days of logs) |
@@ -302,6 +312,8 @@ YouTube can take up to 30 searches (60 calls) of its 90-search daily bucket, whi
 shares; past the cap the feed serves today's or yesterday's entries. Realistic judging traffic
 touches 4–8 topics: ≈ 10–20 Tavily credits and 4–8 YouTube searches a day. Demo snapshots are
 seeded once per run (≤ 18 searches, plus ≈ 60 local fetch-and-extract checks, no LLM).
+
+**2026-10-11 UTC (Design pass, local):** harness LLM ≈ $0.23 (explanations while testing, the verified "Say it simpler" checks, one Read any link ingest), 12 harness search calls (Up next on the reader page); refresher-share measurement and font metrics need no LLM. Production ledger for the UTC day: $0.06 (the before screenshots' demo reader and other traffic).
 
 **2026-10-10 UTC (M7.5, local):** safety evals $0.53 (before) + $0.54 (after); harness LLM
 ≈ $0.52 after the restart (4 Read any link ingests with growth, 3 learning-goal resolutions,
@@ -395,18 +407,21 @@ BUILD_PLAN.md has the prompts. M6, M7 and M2.2 are merged and live.
 | When | Action |
 |---|---|
 | Done | **M7** merged #16 and live; **M2.2** merged #18 and live (§16) |
-| Now | **M7.5** merged #20 and live; steps (1)–(6) below done 2026-10-10 (§17). **Left: (7) Sourabh's Google check.** Post-merge steps, as run: (1) PR, milestone-reviewer SHIP, merge on green CI; (2) `make check-gcp`, deploy the API, then the web (Sourabh's yes on each); (3) `seed_demo_feed --dry-run`, then the real run: ≤ 18 searches (≤ 24 calls) counted in production's `ops/search`, ≤ 18 shared `rec_cache` feed entries, 3 `persona_feeds/{persona}` docs, ≈ 60 local fetch-and-extract checks, no LLM; check each persona has ≥ 2 readable articles per topic (re-run one persona with `--persona` if not); (4) record Tavily's plan and remaining credits here and in §7; (5) `warm_demo --dry-run`, then the real run (≈ 42 explanation entries, ≈ $0.25; today's production ledger is $6.71 of $8, so run it after 00:00 UTC if the deploy lands late on Oct 10 UTC); (6) `live_check_m7_5.py` (one demo reader pastes one non-business article, deleted after); (7) Sourabh's Google check: For you, one learning goal, open a feed article. Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut |
-| Oct 13 | **Design pass** (decisions 39, 40: Gloss name, `docs/design/mockup.html`, Margo, reader details, mobile). Decision 40 adds API work ("Say it simpler" / "Go deeper", "What this article changed"), which squeezes M8 and M9: size it in the plan and ask Sourabh what to cut if it threatens the freeze |
+| Now | **M7.5** merged #20 and live; steps (1)–(6) below done 2026-10-10 (§17). Step (7), Sourabh's Google check, done 2026-10-11. Post-merge steps, as run: (1) PR, milestone-reviewer SHIP, merge on green CI; (2) `make check-gcp`, deploy the API, then the web (Sourabh's yes on each); (3) `seed_demo_feed --dry-run`, then the real run: ≤ 18 searches (≤ 24 calls) counted in production's `ops/search`, ≤ 18 shared `rec_cache` feed entries, 3 `persona_feeds/{persona}` docs, ≈ 60 local fetch-and-extract checks, no LLM; check each persona has ≥ 2 readable articles per topic (re-run one persona with `--persona` if not); (4) record Tavily's plan and remaining credits here and in §7; (5) `warm_demo --dry-run`, then the real run (≈ 42 explanation entries, ≈ $0.25; today's production ledger is $6.71 of $8, so run it after 00:00 UTC if the deploy lands late on Oct 10 UTC); (6) `live_check_m7_5.py` (one demo reader pastes one non-business article, deleted after); (7) Sourabh's Google check: For you, one learning goal, open a feed article. Checkpoint end of day Oct 12 IST: if M7.5 isn't merged, ask Sourabh what to cut |
+| Oct 11–13 | **Design pass** (decisions 39, 40): built and accepted on the harness on Oct 11 (§18), ahead of both checkpoints. Next: milestone-reviewer, PR and green CI, deploy API then web (Sourabh's yes), live check (one demo reader saves an article, presses Helpful and asks "Say it simpler" once, ≈ $0.01, deleted after) |
 | Oct 14 | **M8-local** (resume branch `m8`: plan approved; redaction and NOT_CORPUS done; keep M7.5's "visible to the reader who brought it in") |
 | Oct 15 | **M9** hardening and evals, plus four M2.2 follow-ups required before the freeze (Sourabh, 2026-10-10): (1) merge check within one growth batch (same-article duplicates, e.g. Forever chemicals / PFAS); (2) validate grown prerequisites against the domain or drop low-confidence ones (PFOS → PHOSITA); (3) grown-concept precision on a fresh, independent sample of 30, reported with the 87% and 97% samples; (4) README and deck state the frozen-graph misses (64% / 13%) next to the after-growth numbers |
-| Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles, **re-run `seed_demo_feed`** so the demo feed isn't dated "10 Oct" during judging), README refresh, video, deck |
+| Oct 14, start | **Rebase `m8` onto main** (it also changes `scorer.py`, `content/router.py`, `test_scorer.py`), then build the extension against annotator 0.2.0 |
+| Oct 16 | Code freeze; demo seeding (re-seed persona templates, pre-ingest demo articles, **re-run `seed_demo_feed`** so the demo feed isn't dated "10 Oct" during judging, **`warm_demo --shifts`** after a dry run: ≤ 48 ±1-band Backgrounds, ≈ $0.20, so "Say it simpler" is warm in the video), README refresh and new screenshots, video, deck |
 | **Oct 17** | **Submit** (deadline Oct 18) |
 
 **Video line:** sign in as a demo persona → library → open an article → hover and open notes →
 "Not really" on a prompt → reload shows the change → Up next → **For you** (demo snapshot with
 its note; then a Google reader's live topics and a "helps your goal" line) → **Read any link**
 (paste a non-business article; it opens in seconds and concepts grow) → profile: **reading
-goals** (a habit and "understand X" with progress) and the knowledge map's goal view.
+goals** (a habit and "understand X" with progress) and the knowledge map's goal view. Design
+pass additions: a note's "Say it simpler" (warmed), "What this article changed" with an Undo,
+and the all-topics map with ready-to-learn rings.
 
 **If late:** stop and ask Sourabh what to cut (decision 27). The old cut order (edit-by-prompt →
 knowledge-map graph → M2.2 online growth → extension popup extras) is no longer applied
@@ -748,4 +763,22 @@ Found and fixed during acceptance:
 | Demo cards re-warmed (`warm_demo`) | 24 requests listed by the dry run; real run pass 1: 24 verified, 0 definition-only, slowest 22.0 s; pass 2: 24 cache hits, slowest 149 ms |
 | `live_check_m7_5.py` (Wikipedia "Photosynthesis", new to production) | Feed: snapshot, 10 items, Technology and Economics. Goals: 403 for a demo reader. Read any link: article visible in **6.8 s** on the first run (over the 5 s target: first ingest on the new revision, the known §5 cold-import cost) and 0.2 s when re-opened; listed for the pasting reader, not for a second demo reader. Both readers deleted (204) |
 | Live axe | For you (demo) at 1440 and 390, light and dark, and the library with Read any link: 0 serious or critical, no horizontal scroll; the page shows the "prepared in advance" note. The test reader was deleted through the API (204) |
-| Sourabh's Google check | Pending: For you with his own topics, one learning goal, open a feed article |
+| Sourabh's Google check | Done 2026-10-11 (Sourabh): For you, Read any link and goals all work |
+
+## 18. Design pass acceptance (2026-10-11, emulator harness; live check after deploy)
+
+Evidence: `docs/evidence/design/acceptance.txt`, before/after screenshots in
+`docs/evidence/design/{before,after}/` (1440 and 390, light and dark), audits in
+`docs/evidence/design/after-audit.txt`. Plan: `docs/plans/design-pass.md` (plan-reviewer APPROVE
+after three rounds).
+
+| # | Check | Result |
+|---|---|---|
+| 1 | Before/after screenshots | Pass: before from the live site first (sign-in, library, For you, reader, profile; 1440 and 390, light and dark). After, from the harness: library For you, Topics and Saved, reader, profile and sign-in at all four; the open card at 1440 light and dark; the phone sheet at 390 light and dark; the map inspector at 1440 light and dark and 390 light (the profile pages at 390 include the map's list view); the recap at 1440 light |
+| 2 | axe, keyboard, no horizontal scroll, 44px targets | Pass: axe 0 serious/critical on every page and state above; the map is one Tab stop with arrow keys and Enter; no sideways scroll at 390 (a top-bar overflow found and fixed); the size audit now measures inside the open card and sheet and the recap's Undo (60×44, named per concept): nothing under 44px except For you headline links, which are text links (27px, above WCAG 2.5.8's 24px) |
+| 3 | Reduced motion | Pass: Margo blink and map pop off; card slide off (annotator) |
+| 3b | Non-text contrast ≥ 3:1, both themes | Pass after one fix: accent-line 4.07 / 5.68, goal dashes 4.40 / 7.96, new-highlight underline over its fill 3.54 / 3.96; the heard-of map dot (fill ≈ 2:1) now carries an accent-line outline |
+| 3c | Both highlight styles on a demo article | Pass: trader on the ET markets article, 4 new + 4 refresher (corpus share 8–16% per persona) |
+| 4 | Flows | Pass: a note opens in the margin; "Say it simpler" returned a verified Background one band lower (can explain → understands); recap after Knew this listed Heard of → Understands and Undo showed the resulting band; no interaction → no changes; Helpful recorded one `article_helpful` event; Saved tab and export list the saved article; persona chip switches; a new Google reader's map has 48 solid nodes and 16 rings |
+| 5 | Two-phase Open here and annotations unchanged | Pass: article visible in 1.5 s; the notes inked in after **88 s** on the harness (live: 20–55 s, §5). Not a regression in this branch: phase 2 is unchanged and growth was off; the harness API ran on a laptop shared with the screenshot runs and Vertex latency varies. Watch it at the live check. Tests: API 620, annotator 41, web 26 |
+| 6 | Bundle | Pass: main 138.7 → 143.6 KB gzip (budget 150); Cytoscape chunk gone; For you, Saved and Profile lazy |

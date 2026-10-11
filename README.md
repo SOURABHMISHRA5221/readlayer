@@ -2,10 +2,12 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/images/wordmark-dark.png">
-  <img src="docs/images/wordmark-light.png" alt="ReadLayer" width="236">
+  <img src="docs/images/wordmark-light.png" alt="Gloss" width="200">
 </picture>
 
 ### Read anything. Understand it your way.
+
+<sub>Gloss was called ReadLayer until the Design pass; the repository, URLs and internal ids keep the old name.</sub>
 
 [![CI](https://github.com/SOURABHMISHRA5221/readlayer/actions/workflows/ci.yml/badge.svg)](https://github.com/SOURABHMISHRA5221/readlayer/actions/workflows/ci.yml)
 [![Google Cloud](https://img.shields.io/badge/Google%20Cloud-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/)
@@ -19,7 +21,7 @@
 
 <br>
 
-## Why ReadLayer
+## Why Gloss
 
 Every article, video and podcast is made once, for an imagined average reader. Real readers differ in what they know, the words they're at ease with and the worlds they think in. Today they struggle silently, leave the page to search, or ask an AI to summarise, which replaces the author's voice instead of supporting it.
 
@@ -38,7 +40,7 @@ Every article, video and podcast is made once, for an imagined average reader. R
 - **Privacy by default:** no reader data goes to models or search.
 - **Restraint over noise.**
 
-![The ReadLayer reader: a BBC explainer on UK interest rates with a few quiet dotted underlines, an open card explaining "CPI" with its prerequisites, and a margin rail listing the concepts picked for this reader.](docs/images/hero.png)
+![The Gloss reader (shown before the Design pass rename): a BBC explainer on UK interest rates with a few quiet dotted underlines, an open card explaining "CPI" with its prerequisites, and a margin rail listing the concepts picked for this reader.](docs/images/hero.png)
 
 ## See it
 

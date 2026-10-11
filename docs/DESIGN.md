@@ -310,7 +310,9 @@ and one on *inflation* (α 4.05, β 0.95 → 0.81). One paragraph, structure 0.5
    p_know < 0.5, step to its weakest prerequisite until one has p_know ≥ 0.7; ≤ 3 steps
    including the starting concept, most basic first; each step links to a corpus article
    where that concept is `explained_in_text` (shortest first; never the article being read or
-   a `user_ingested` page), else shows the concept definition.
+   a `user_ingested` page), else shows the concept definition. When the walk stops because the
+   next prerequisite is known (p_know ≥ 0.7; ties: highest p, then id), that prerequisite leads
+   the path as a `known: true` step, shown ticked (Design pass; the extension's card skips it).
 5. Uncertainty prompt ("Know this?"): at most one per article, three per day (a reload of an
    already-prompted article keeps its prompt), only when salience ≥ 0.7 and
    0.35 ≤ p_know ≤ 0.65 and α+β < 4, only for a concept not already annotated, and never while
@@ -361,6 +363,14 @@ Inputs to the prompt are ONLY: the span, its sentence and paragraph, the concept
 up to 3 prerequisite definitions, the reader band, the THINKS_IN frame, the explanation style
 (a test pins the key set). No uid, no history, no web access. Article text is inside the content
 delimiters and stated to be data.
+
+**Say it simpler / Go deeper** (Design pass): a span request may carry `shift: -1 | 1`. The
+Background is then written for the reader's band moved one step (clamped to the four bands)
+through the same verified path and cached under the same key shape (`span_hash, band, frame,
+style`); the shared restatement is reused; the request counts once against the explain caps;
+the response's `band` is the band written for, and `can_simpler` / `can_deeper` say whether the
+reader's own band has a step below / above. Shifted cards load only on click (never
+prefetched); `warm_demo --shifts` warms them for the demo articles.
 
 Since M7.5 (decision 37) `explain` (v5) and `restate` (v2) describe the source as "news on any
 subject", not business and economy news; the judge prompts already said only "news article"
@@ -432,10 +442,14 @@ subject to pause). The next open regenerates.
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
 | DELETE | /v1/me | delete all of the caller's data and their Auth user |
 | GET | /v1/content/{id}/annotations | ranked, budgeted annotations for the caller |
-| POST | /v1/explain | `{content_id, demand_id?, paragraph_id?}` → `{id, kind: verified\|definition, mode, label, definition, background, author_says, analogy_domain, band, thinks_in, style, cached, prompt_version}` (§7) |
+| POST | /v1/explain | `{content_id, demand_id?, paragraph_id?, shift?: -1\|1}` → `{id, kind: verified\|definition, mode, label, definition, background, author_says, analogy_domain, band, can_simpler, can_deeper, thinks_in, style, cached, capped, prompt_version}` (§7; `shift` = "Say it simpler" / "Go deeper", span notes only, 422 with a paragraph) |
 | POST | /v1/explain/{id}/report | `{event_id, content_id, concept_id?}` → `{evicted, event_applied}`: "This is wrong" (§7) |
-| POST | /v1/events | `{events: [{id, type, at, concept_id?, content_id?, paragraph_id?, words?, ms?}], persona?}` → `{applied, events_applied, events_ignored}`; sync, idempotent by event id (stored at `users/{uid}/events/{id}` with `expire_at` for the 90-day TTL); `applied: false` and no writes while learning is paused |
-| GET | /v1/me/graph | concepts by domain with band, plus stats (concepts learned, annotation trend); `?domain=X[&q=]` → capped subgraph for the knowledge map (§15.2) |
+| POST | /v1/events | `{events: [{id, type, at, concept_id?, content_id?, paragraph_id?, words?, ms?}], persona?}` (types include `article_helpful` `{content_id}`: the action bar's Helpful, stored, no evidence) → `{applied, events_applied, events_ignored}`; sync, idempotent by event id (stored at `users/{uid}/events/{id}` with `expire_at` for the 90-day TTL); `applied: false` and no writes while learning is paused |
+| GET | /v1/me/graph | concepts by domain with band, plus stats (concepts learned, annotation trend); `?domain=X[&q=]` → capped subgraph for the knowledge map (§15.2); `?view=overview` → the all-topics map `{domains, nodes[{id, label, domain, band, ready, goal, weight, definition, recent, rose_this_week}], edges}` (§15.1) |
+| POST | /v1/me/bands | `{concept_ids: [≤ 50]}` → `{concept_id: band}`: current bands (edge with forgetting, else the prior), for the end-of-article recap (§19) |
+| GET | /v1/me/saved | the reader's saved articles as library rows, newest first, through the library's visibility filter |
+| GET | /v1/me/saved/ids | just the saved ids (the reader's Save button; no library rows built) |
+| PUT / DELETE | /v1/me/saved/{content_id} | save / unsave a library article the reader can see (corpus or their own pages); ≤ 500; signed-in readers need consent |
 | PATCH | /v1/me/graph/{concept_id} | user correction ("I know this" / "I don't") → strong evidence |
 | GET | /v1/me/profile | reading profile page data: summary, domains, THINKS_IN, weekly band changes, trend (§15.2) |
 | PATCH | /v1/me/settings | `thinks_in`, `density`, `explanation_style`, `learning_paused` |
@@ -472,8 +486,16 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 ## 9. Client behavior (`packages/annotator`)
 - Anchor resolution: find `exact` with matching prefix/suffix inside the article root; fall back
   to fuzzy (normalized whitespace); skip if not found.
-- Span: dotted underline; hover (desktop) / tap (mobile) opens card; card has "Knew this",
-  "Helpful", "This is wrong". Card label: "Explanation — not the author's words".
+- Span: two highlight styles from the item's `level` (Design pass): **new** (unaware or heard
+  of: soft fill, underline and a small dot) and **refresher** (understands or better: a thin
+  underline); a missing level means new. `level` and `band` come from the reader's uncapped band
+  for the concept, the band explanations are written for. Hover (desktop) / tap (mobile) opens
+  the card; card has "Knew this", "Helpful", "This is wrong". Card label: "Explanation — not the
+  author's words". The card also shows how the note is pitched (a 4-step meter and one line, from
+  the explanation's `band`), "Builds on" (prerequisite labels) above the Background, the author
+  line set as a quote, and, when the host passes `loadShifted`, "Say it simpler" / "Go deeper"
+  (one band down / up, "Back to my level" to return); the extension passes nothing and gets no
+  depth buttons.
 - Card (M5): a Background panel (recessed tint; names the analogy frame when one is used) and
   "What the author is saying" (primary, accent rule). The glossary definition fills the
   Background panel at once and is replaced in place by the verified Background (no layout jump;
@@ -487,7 +509,8 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 - "Know this?" prompt: an inline chip after its term (Yes / Not really → PATCH /v1/me/graph),
   collapsing to "Noted, thanks."; the pre-read card sits above the article (`renderPreread`),
   steps most basic first, each a link to its library explainer or a disclosure with the
-  definition.
+  definition. `renderPreread` skips a `known` step; the web app draws the path itself with that
+  step ticked (§19).
 - Controls the annotator inserts carry `data-rl-ui`: anchor resolution skips them, they are
   `user-select: none`, and a copy across one gives back only the article's words.
 - Events batched every 5 s and on `visibilitychange` / `pagehide` (dwell flushed first), one
@@ -650,20 +673,23 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
    "Comfortable in finance, building in economics. You think in software. 6 concepts moved up a
    band this week." Only domains the reader rated, reads in or has concepts in are named (M7).
    Same inputs always give the same text (unit-tested).
-2. **Ability vs interest.** Per domain, two bars: ability (θ, shown on a fixed −2..2 scale) and
-   interest (0..1 from onboarding and reading). Bars carry their numbers as text, not colour alone.
-3. **Knowledge map, one domain at a time.** Cytoscape.js with the dagre layered layout
-   (foundations at the top, advanced below), loaded with a dynamic import only when the section is
-   opened. Nodes coloured by band (§4 bands, plus a text/shape cue for colour-blind readers);
-   edges are prerequisites. At most 60 nodes: the reader's most relevant concepts in the domain
-   (ranked by evidence count × recency decay, ≤ 40), plus their prerequisite closure, cut at 60
-   by depth. A search box finds any other concept and shows it with its prerequisite chain.
-   Clicking (or pressing Enter on) a node opens a card: band, the last 3 evidence items in plain
-   language ("You opened an explanation · 3 Oct", "You tapped Knew this · 1 Oct"), and
-   "I know this" / "I don't" buttons that call PATCH /v1/me/graph/{concept_id}.
-   Accessibility: the canvas is not keyboard-accessible, so the same subgraph is also rendered as
-   a keyboard-navigable list grouped by depth (the default view below 640 px wide); the node card
-   is a dialog with focus management.
+2. **Domain cards** (Design pass). Per topic: a level word from θ (New to you, Getting there,
+   Comfortable, Confident, Advanced) on a 5-step scale with its text, ideas known (edges at
+   understands or above), interest in words, and "+N this week" from the week's band rises in
+   that topic. Rated and chosen topics first; the rest behind "Other topics".
+3. **Knowledge map** (Design pass; replaces the Cytoscape/dagre map). An SVG overview of every
+   topic first: "You" in the middle, one cluster per topic on a ring (deterministic layout with a
+   fixed number of collision passes, `lib/mapLayout.ts`), solid dots for concepts at heard of or
+   above (filled by band, size by doc frequency, can explain ringed), outline rings for ready to
+   learn (every prerequisite known at p ≥ 0.5), dashed rings for learning-goal targets, nodes that
+   rose this week popping in once (not under reduced motion). Topic buttons (and clicking a
+   cluster label) show one topic's subgraph (`?domain=`, ≤ 60 nodes) in the same layout; a goal
+   shows its targets (`?goal=`). Keyboard: the SVG is one Tab stop with a label (roving tabindex;
+   arrow keys move between nodes, Enter opens the inspector); each node's label says "label,
+   band[, ready to learn][, in a goal]"; shapes carry the meaning as well as colour. The
+   inspector beside the map shows the definition, "Why we think so" (the last 3 evidence items,
+   or "our estimate" for prior-only nodes) and "I know this" / "I don't". The list view shows the
+   same nodes by topic (the default below 640 px).
 4. **This week.** Concepts that moved up a band in the last 7 days, and the
    annotations-per-1,000-words trend by week (falling = the overlay is learning).
 5. **Analogy domains.** The reader's THINKS_IN domains, editable (choose from the fixed list
@@ -923,3 +949,35 @@ Signed-in readers only, after consent, at most 5, stored at `users/{uid}/goals/{
 - **Where it shows:** the profile's Goals section (progress bars with text values), the feed's
   goal boost and `why` line (§17.2), and the knowledge map, which rings goal targets and offers
   a "Goal: X" view (GET /v1/me/graph?goal=).
+
+## 19. Gloss UI (Design pass, decisions 39 and 40)
+The product is called **Gloss** in the UI, README and deck; the repository, Firebase project,
+URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/design/mockup.html`.
+
+- **Tokens and type.** White paper / #121212 in dark, near-black ink, one teal accent that only
+  means "a note for you", `--accent-line` for strokes that must read (≥ 3:1 on paper in both
+  themes), `--mark-goal` for goal dashes. Schibsted Grotesk for UI and headlines, Source Serif 4
+  for reading (article body 21px, 19px under 600px), metric-matched local fallbacks
+  (`tools/shots/font_metrics.py`). No reader-facing text under 13px; controls ≥ 44px.
+- **Margo** (`components/Margo.tsx`): one ink outline and one teal swipe; moods idle, think,
+  happy, oops and a 16px mark (favicon, extension icon `public/margo-mark-128.png`). Appears in
+  the logo, the reader's margin header (idle; an occasional blink only before the reader scrolls
+  into the article, never while they read or a note is open, none under reduced motion), the notes-loading notice (think), the recap (happy) and empty and error
+  states (oops). Never in article text, never on note cards. Always `aria-hidden`.
+- **Top bar**: logo, search, "Read any link" (focuses the sidebar field, else a dialog), the demo
+  persona chip, theme, account.
+- **Library**: tabs For you (the feed, §17) · Topics (the corpus with topic and source filters) ·
+  Saved; single-column rows (source initial and name, "in Topic · format", bold title, serif
+  subtitle, time, "N ideas new to you", save where the row has a library id, "show less" on feed
+  rows) and a sidebar with Read any link, goals and topic chips.
+- **Reader**: kicker, 44px title, serif dek, byline; a sticky action bar (notes density Fewer /
+  For me / More, Helpful, save, copy link, open original) and a reading-progress line; "Before you
+  read" as a path (the known prerequisite where it starts, ticked; the article's key idea last; a
+  step shows its definition or links to an explainer); the margin lists "N notes for you" with
+  Margo until a note opens there as a sidenote; **"What this article changed"** at the end: the
+  bands that moved since the notes loaded (`POST /v1/me/bands` at load and at the end, after
+  flushing events), each with Undo (the opposite correction, so the row then shows the resulting
+  band), the "Not really" answers as one row each ("Next on your path", never also a band move),
+  and up to two Up next items that teach them, else Up next's top two under a neutral "Read
+  next"; then Up next.
+- **Profile**: the Gloss title, the summary as a serif lede, domain cards, the map (§15.1).

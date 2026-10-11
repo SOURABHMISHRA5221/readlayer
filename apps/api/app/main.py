@@ -21,6 +21,7 @@ from app.me.goals import router as goals_router
 from app.me.onboarding import router as onboarding_router
 from app.me.profile_edit import router as profile_edit_router
 from app.me.router import router as me_router
+from app.me.saved import router as saved_router
 from app.recs.feed_router import router as feed_router
 from app.recs.router import router as recs_router
 
@@ -113,6 +114,7 @@ v1.include_router(read_router)
 v1.include_router(recs_router)
 v1.include_router(feed_router)
 v1.include_router(goals_router)
+v1.include_router(saved_router)
 v1.include_router(explain_router)
 v1.include_router(me_router)
 v1.include_router(onboarding_router)

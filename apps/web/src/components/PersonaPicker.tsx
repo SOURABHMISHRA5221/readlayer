@@ -81,6 +81,7 @@ export function PersonaPicker({ value, onChange, compact = false }: PersonaPicke
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
+        aria-label={`Reading as ${current.label}`}
         onClick={() => (open ? setOpen(false) : show())}
         onKeyDown={onButtonKey}
       >

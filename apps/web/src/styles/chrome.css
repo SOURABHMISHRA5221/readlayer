@@ -2,30 +2,70 @@
 
 .wordmark {
   display: inline-flex;
-  align-items: baseline;
-  font-family: var(--font-read);
-  font-size: 21px;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: 22px;
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
   color: var(--ink);
   text-decoration: none;
   white-space: nowrap;
 }
 .wordmark--lg {
-  font-size: 26px;
+  font-size: 24px;
 }
-.wordmark__read {
-  font-weight: 600;
+.wordmark svg {
+  flex: none;
 }
-.wordmark__layer {
-  font-style: italic;
-  font-weight: 400;
-  text-decoration: underline dotted color-mix(in srgb, var(--accent) 70%, transparent);
-  text-decoration-thickness: 1.5px;
-  text-underline-offset: 4px;
+
+/* Margo (components/Margo.tsx): ink outline, paper body, one teal swipe. */
+.margo__body {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
 }
-.wordmark:hover .wordmark__layer {
-  text-decoration-style: solid;
+.margo__fold {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.margo__eye {
+  fill: var(--ink);
+}
+.margo__lid,
+.margo__mouth {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+.margo__swipe {
+  fill: var(--accent);
+  opacity: 0.85;
+}
+.margo__cheek {
+  fill: var(--accent);
+  opacity: 0.25;
+}
+.margo__dot {
+  fill: var(--accent);
+}
+.margo--blink .margo__eye {
+  animation: margo-blink 5s infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@keyframes margo-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .margo--blink .margo__eye { animation: none; }
 }
 
 .dot {
@@ -177,7 +217,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--s2);
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 var(--s3) 0 var(--s1);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-pill);
@@ -318,13 +358,14 @@
 }
 .segmented__track {
   display: inline-flex;
-  padding: 3px;
-  border: 1px solid var(--hairline);
+  padding: 0;
+  border: 0;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--ink) 3%, var(--paper));
+  background: var(--wash);
 }
 .segmented__option {
-  min-height: 32px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 0 var(--s3);
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
@@ -351,7 +392,7 @@
     display: none;
   }
   .segmented__option {
-    min-height: 34px;
+    min-height: 44px;
     padding: 0 10px;
   }
 }

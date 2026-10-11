@@ -139,8 +139,8 @@ svg {
 .icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: 0;
   border-radius: var(--radius-pill);
   background: transparent;
@@ -235,8 +235,8 @@ svg {
   padding: var(--s16) 0;
 }
 .state__title {
-  font: 500 28px/1.2 var(--font-read);
-  letter-spacing: var(--tracking-tight);
+  font: 700 26px/1.2 var(--font-head);
+  letter-spacing: -0.02em;
 }
 .state__body {
   color: var(--muted);

@@ -1,14 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { AccountMenu } from "../components/AccountMenu";
-import { ArrowLeft } from "../components/Icons";
 import { EditBox } from "../components/profile/EditBox";
 import { Goals } from "../components/profile/Goals";
 import { KnowledgeMap } from "../components/profile/KnowledgeMap";
 import { Segmented } from "../components/Segmented";
 import { StateView } from "../components/StateView";
-import { ThemeToggle } from "../components/ThemeToggle";
-import { Wordmark } from "../components/Wordmark";
+import { TopBar } from "../components/TopBar";
 import { api } from "../lib/api";
 import { signOutUser, useIsDemo } from "../lib/auth";
 import { domainLabel } from "../lib/format";
@@ -36,7 +33,7 @@ export default function ProfilePage({ url }: { url: URL }) {
   );
 
   useEffect(() => {
-    document.title = "Your reading profile · ReadLayer";
+    document.title = "Your reading profile · Gloss";
   }, []);
 
   useEffect(() => {
@@ -51,31 +48,14 @@ export default function ProfilePage({ url }: { url: URL }) {
     return () => ctrl.abort();
   }, [persona, version]);
 
-  const libraryHref = withParams(new URL("/", window.location.origin), { persona: personaParam(persona) });
   const name = persona ? personaOf(persona).label : null;
 
   return (
     <div className="profile">
-      <header className="profile__bar">
-        <a
-          className="profile__back"
-          href={libraryHref}
-          onClick={(e) => {
-            e.preventDefault();
-            navigate(libraryHref);
-          }}
-        >
-          <ArrowLeft size={16} /> Library
-        </a>
-        <Wordmark />
-        <div className="profile__bar-end">
-          <ThemeToggle />
-          <AccountMenu />
-        </div>
-      </header>
+      <TopBar url={url} />
       <main className="profile__main" id="main">
         <p className="eyebrow">{name ? `${name} · demo` : "Your reading profile"}</p>
-        <h1 className="profile__title">{name ? `What ${name} knows` : "What we think you know"}</h1>
+        <h1 className="profile__title">{name ? `What Gloss thinks ${name} knows` : "What Gloss thinks you know"}</h1>
         {failed && (
           <StateView title="Your profile didn't load" role="alert">
             Try again in a moment.
@@ -95,13 +75,12 @@ export default function ProfilePage({ url }: { url: URL }) {
               </h2>
               <p className="summary__text">{profile.summary.text}</p>
             </section>
-            <DomainBars profile={profile} />
+            <DomainCards profile={profile} />
             <Goals demo={!!persona} refreshKey={version} onGoals={setGoalList}
               onShowOnMap={(g) => setMapGoal({ id: g.id, label: g.label })} />
             <KnowledgeMap
               persona={persona}
-              domains={profile.domains.filter((d) => d.concepts > 0).map((d) => d.domain)}
-              initial={(profile.summary.top_domain as Domain) ?? "finance"}
+              domains={splitDomains(profile.domains)[0].filter((d) => d.concepts > 0).map((d) => d.domain)}
               refreshKey={version}
               onChanged={refresh}
               goal={mapGoal}
@@ -131,48 +110,55 @@ function splitDomains(rows: DomainRow[]): [DomainRow[], DomainRow[]] {
   return [primary, rows.filter((d) => !primary.includes(d))];
 }
 
-function DomainBars({ profile }: { profile: Profile }) {
-  const [primary, rest] = splitDomains(profile.domains);
-  return (
-    <section className="bars" aria-labelledby="bars-title">
-      <h2 id="bars-title" className="profile__h2">
-        Ability and interest
-      </h2>
-      <DomainList rows={primary} />
-      {rest.length > 0 && (
-        <details className="bars__more">
-          <summary>Other domains ({rest.length})</summary>
-          <DomainList rows={rest} />
-        </details>
-      )}
-      <p className="profile__note">Ability is on a scale from −2 (new to it) to +2 (advanced).</p>
-    </section>
-  );
+const LEVELS = ["New to you", "Getting there", "Comfortable", "Confident", "Advanced"] as const;
+
+/** −2..+2 ability → one of five steps. */
+export function levelStep(theta: number): number {
+  return Math.max(0, Math.min(4, Math.round(theta + 2)));
 }
 
-function DomainList({ rows }: { rows: DomainRow[] }) {
+function interestWord(i: number): string {
+  return i >= 0.75 ? "high" : i >= 0.5 ? "some" : i > 0 ? "a little" : "not set";
+}
+
+/** Domain cards (Design pass C7): level, ideas on your map, interest, this week's rises. */
+function DomainCards({ profile }: { profile: Profile }) {
+  const [primary, rest] = splitDomains(profile.domains);
+  const rises = new Map<string, number>();
+  for (const m of profile.week.moved_up) if (m.domain) rises.set(m.domain, (rises.get(m.domain) ?? 0) + 1);
+  const card = (d: DomainRow) => {
+    const step = levelStep(d.theta);
+    const up = rises.get(d.domain) ?? 0;
+    return (
+      <li key={d.domain} className="dom">
+        <h3 className="dom__name">{domainLabel(d.domain)}</h3>
+        <p className="dom__level">{d.rated ? LEVELS[step] : "Not rated yet"}</p>
+        <p className="dom__detail">
+          {d.known ?? 0} {(d.known ?? 0) === 1 ? "idea" : "ideas"} you've shown you know
+          {up > 0 ? <span className="dom__up"> · +{up} this week</span> : ", no change this week"}
+        </p>
+        <p className="dom__detail">Interest: {interestWord(d.interest)}</p>
+        <span className="dom__scale" role="img" aria-label={d.rated ? `Level ${step + 1} of 5` : "Not rated yet"}>
+          {LEVELS.map((_, k) => (
+            <span key={k} className={d.rated && k <= step ? "on" : ""} />
+          ))}
+        </span>
+      </li>
+    );
+  };
   return (
-      <ul className="bars__list">
-        {rows.map((d) => (
-          <li key={d.domain} className="bars__row">
-            <span className="bars__domain">{domainLabel(d.domain)}</span>
-            <span className="bars__pair">
-              <span className="bars__bar" aria-hidden="true">
-                {d.rated && (
-                  <span className="bars__fill bars__fill--ability" style={{ width: `${thetaPercent(d.theta)}%` }} />
-                )}
-              </span>
-              <span className="bars__value">
-                {d.rated ? `Ability ${thetaText(d.theta)} · ${thetaWord(d.theta)}` : "Ability: not rated yet"}
-              </span>
-              <span className="bars__bar" aria-hidden="true">
-                <span className="bars__fill bars__fill--interest" style={{ width: `${Math.round(d.interest * 100)}%` }} />
-              </span>
-              <span className="bars__value">Interest {Math.round(d.interest * 100)}%</span>
-            </span>
-          </li>
-        ))}
-      </ul>
+    <section className="doms" aria-labelledby="doms-title">
+      <h2 id="doms-title" className="visually-hidden">
+        Your topics
+      </h2>
+      <ul className="dom__grid">{primary.map(card)}</ul>
+      {rest.length > 0 && (
+        <details className="bars__more">
+          <summary>Other topics ({rest.length})</summary>
+          <ul className="dom__grid">{rest.map(card)}</ul>
+        </details>
+      )}
+    </section>
   );
 }
 
@@ -400,7 +386,7 @@ function DataControls({ demo, paused, onChanged }: { demo: boolean; paused: bool
           </button>
         ) : (
           <span className="data__confirm" role="group" aria-label="Confirm delete" onKeyDown={(e) => e.key === "Escape" && cancel()}>
-            <span>{demo ? "End the demo and delete what it recorded?" : "Delete everything ReadLayer knows about you? This can't be undone."}</span>
+            <span>{demo ? "End the demo and delete what it recorded?" : "Delete everything Gloss knows about you? This can't be undone."}</span>
             <button type="button" className="btn" autoFocus onClick={cancel} disabled={busy}>
               Cancel
             </button>

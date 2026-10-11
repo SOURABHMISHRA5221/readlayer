@@ -8,6 +8,7 @@ users/{uid}/events/{event_id}  raw events, `expire_at` drives the 90-day Firesto
 users/{uid}/weekly/{iso_week}  words_read, annotations_shown, content_ids (dedupe)
 users/{uid}/profile_edits/{id} M7
 users/{uid}/rec_signals/{key}  app/recs/state.py
+users/{uid}/saved/{content_id} Design pass: articles the reader saved (`at`)
 users/{uid}/ingest_counts/{d}  new URLs ingested that UTC day
 users/{uid}/explain_counts/{d} explanations generated (not cached) that UTC day
 users/{uid}/growth_counts/{d}  concept-growth slots reserved that UTC day (M2.2)
@@ -51,6 +52,7 @@ USER_SUBCOLLECTIONS = (
     "profile_edit_counts",
     "growth_counts",
     "ingested",
+    "saved",
     "goals",
     "goal_resolve_counts",
 )

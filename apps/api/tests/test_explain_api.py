@@ -334,3 +334,83 @@ async def test_two_personas_loading_cold_at_once_share_one_restatement(docs):
     assert ra.key.split("-")[0] == rb.key.split("-")[0]
     assert ra.key.split("-")[1] != rb.key.split("-")[1]
     assert len(reserved) == 2  # each started a Background of its own
+
+
+def test_say_it_simpler_and_go_deeper_shift_only_the_background(client, fake, docs):
+    own = ask(client).json()
+    simpler = client.post(
+        "/v1/explain?persona=newcomer", json={"content_id": "art", "demand_id": "d1", "shift": -1}
+    ).json()
+    deeper = client.post(
+        "/v1/explain?persona=newcomer", json={"content_id": "art", "demand_id": "d1", "shift": 1}
+    ).json()
+    order = ["unaware", "heard of", "understands", "can explain"]
+    i = order.index(own["band"])
+    assert simpler["band"] == order[max(0, i - 1)] and deeper["band"] == order[min(3, i + 1)]
+    assert own["can_simpler"] == (i > 0) and own["can_deeper"] == (i < 3)
+    assert simpler["author_says"] == own["author_says"]  # shared restatement, reused
+    assert fake.count("restate") == 1  # never regenerated for a shift
+    bands = {d["band"] for d in by_part(docs, "background")}
+    assert own["band"] in bands and deeper["band"] in bands  # cached by band
+    again = client.post(
+        "/v1/explain?persona=newcomer", json={"content_id": "art", "demand_id": "d1", "shift": 1}
+    ).json()
+    assert again["cached"] is True
+
+
+def test_shift_clamps_at_the_ends_and_keeps_the_readers_own_flags(client, fake):
+    from app.explain.router import shifted
+
+    assert shifted("unaware", -1) == "unaware" and shifted("can explain", 1) == "can explain"
+    first = client.post(
+        "/v1/explain?persona=newcomer", json={"content_id": "art", "demand_id": "d1", "shift": -1}
+    ).json()
+    own = ask(client).json()
+    assert (first["can_simpler"], first["can_deeper"]) == (own["can_simpler"], own["can_deeper"])
+
+
+def test_shift_is_span_only(client):
+    bad = client.post(
+        "/v1/explain?persona=newcomer", json={"content_id": "art", "paragraph_id": "p0", "shift": 1}
+    )
+    assert bad.status_code == 422
+    assert (
+        client.post(
+            "/v1/explain?persona=newcomer",
+            json={"content_id": "art", "demand_id": "d1", "shift": 2},
+        ).status_code
+        == 422
+    )
+
+
+def _shift(client, shift, persona="newcomer"):
+    return client.post(f"/v1/explain?persona={persona}",
+                       json={"content_id": "art", "demand_id": "d1", "shift": shift})  # fmt: skip
+
+
+def test_a_shifted_request_counts_once_against_the_cap(client, fake, docs):
+    ask(client)
+    _shift(client, 1)  # a new Background at another band: one more generation, one more unit
+    day = datetime.now(UTC).date().isoformat()
+    assert docs.docs[f"users/demo1/explain_counts/{day}"]["count"] == 2
+    _shift(client, 1)  # cached now: free
+    assert docs.docs[f"users/demo1/explain_counts/{day}"]["count"] == 2
+
+
+def test_a_rejected_shifted_background_falls_back_to_the_definition(client, fake, docs):
+    ask(client)
+    fake.script("verify_background", [BG_FAIL])
+    body = _shift(client, 1).json()
+    assert (
+        body["kind"] == "verified" and body["background"] is None
+    )  # definition stays in the panel
+    assert body["author_says"] == GOOD_DRAFT["author_says"]
+
+
+def test_a_capped_shift_says_so(client, fake, monkeypatch):
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "anon_explain_daily_cap", 1)
+    assert ask(client).json()["capped"] is False
+    capped = _shift(client, 1).json()
+    assert capped["capped"] is True and capped["background"] is None

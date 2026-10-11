@@ -1,195 +1,339 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { api } from "../../lib/api";
 import { domainLabel } from "../../lib/format";
+import { layout, type LayoutNode } from "../../lib/mapLayout";
 import type { PersonaKey } from "../../lib/personas";
-import { profileApi, type Band, type Domain, type GraphNode, type Subgraph } from "../../lib/profileApi";
-import { BAND_GLYPH, BAND_LABEL, evidenceText } from "../../lib/profileFormat";
+import { profileApi, type Band, type Domain, type OverviewNode } from "../../lib/profileApi";
+import { BAND_LABEL, evidenceText } from "../../lib/profileFormat";
 import { Segmented } from "../Segmented";
 
 type View = "map" | "list";
-const NARROW = "(max-width: 639px)";
+type Scope = { kind: "all" } | { kind: "domain"; domain: Domain } | { kind: "goal"; id: string; label: string };
+
+/** One node shape for all three sources (overview, a domain's subgraph, a goal's targets). */
+interface MapNode extends Omit<OverviewNode, "definition"> {
+  definition: string | null;
+}
 
 interface Props {
   persona: PersonaKey | null;
   domains: Domain[];
-  initial: Domain;
+  initial?: Domain;
   /** Changes when anything else on the page changed the model (an applied or undone edit). */
   refreshKey: number;
   onChanged: () => void;
-  /** A learning goal to show instead of a topic (M7.5 §C.5); null shows topics. */
+  /** A learning goal to show instead of the overview (M7.5 §C.5); null shows the overview. */
   goal?: { id: string; label: string } | null;
   onClearGoal?: () => void;
-  /** Every learning-goal target, ringed in the map and badged in the list. */
   goalTargets?: ReadonlySet<string>;
 }
 
 const NO_TARGETS: ReadonlySet<string> = new Set();
+const NARROW = "(max-width: 639px)";
+const W = 760;
+const H = 600;
+
+function bandText(n: MapNode): string {
+  if (n.ready) return "ready to learn";
+  return BAND_LABEL[n.band].toLowerCase();
+}
+
+function ariaFor(n: MapNode): string {
+  return [n.label, bandText(n), n.goal ? "in a goal" : ""].filter(Boolean).join(", ");
+}
 
 /**
- * The reader's knowledge in one domain (DESIGN §15.1 item 3): a layered map (Cytoscape + dagre,
- * loaded only when the map is shown) and the same subgraph as a keyboard-navigable list, the
- * default on phones. Either opens the node card: band, last evidence, and corrections.
+ * The knowledge map (Design pass C7, DESIGN §15.1): an overview of every topic first ("You" in
+ * the middle, solid dots for what we think you know, rings for what you're ready to learn,
+ * dashed rings for goal targets), then a topic or a goal on its own. One Tab stop: arrow keys
+ * move between nodes, Enter opens the inspector. The list view shows the same nodes as text.
  */
-export function KnowledgeMap({
-  persona,
-  domains,
-  initial,
-  refreshKey,
-  onChanged,
-  goal = null,
-  onClearGoal,
-  goalTargets = NO_TARGETS,
-}: Props) {
+export function KnowledgeMap({ persona, domains, refreshKey, onChanged, goal = null, onClearGoal, goalTargets = NO_TARGETS }: Props) {
   const narrow = typeof window !== "undefined" && window.matchMedia(NARROW).matches;
-  const [domain, setDomain] = useState<Domain>(initial);
+  const [scope, setScope] = useState<Scope>({ kind: "all" });
   const [view, setView] = useState<View>(narrow ? "list" : "map");
-  const [query, setQuery] = useState("");
-  const [search, setSearch] = useState("");
-  const [graph, setGraph] = useState<Subgraph | null>(null);
+  const [nodes, setNodes] = useState<MapNode[] | null>(null);
+  const [edges, setEdges] = useState<{ from: string; to: string }[]>([]);
+  const [shown, setShown] = useState<Domain[]>([]);
   const [failed, setFailed] = useState(false);
-  const [selected, setSelected] = useState<GraphNode | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
-  const opener = useRef<HTMLElement | null>(null);
 
-  useEffect(() => {
-    const t = setTimeout(() => setSearch(query.trim()), 300);
-    return () => clearTimeout(t);
-  }, [query]);
+  const effective: Scope = goal ? { kind: "goal", id: goal.id, label: goal.label } : scope;
+  const scopeKey = effective.kind === "all" ? "all" : effective.kind === "domain" ? `d:${effective.domain}` : `g:${effective.id}`;
 
   useEffect(() => {
     const ctrl = new AbortController();
     setFailed(false);
-    (goal ? profileApi.goalGraph(goal.id, ctrl.signal) : profileApi.graph(persona, domain, search, ctrl.signal))
-      .then(setGraph)
-      .catch(() => !ctrl.signal.aborted && setFailed(true));
+    const load = async () => {
+      if (effective.kind === "all") {
+        const o = await profileApi.overview(persona, ctrl.signal);
+        setNodes(o.nodes);
+        setEdges(o.edges);
+        setShown(o.domains);
+        return;
+      }
+      const g =
+        effective.kind === "goal"
+          ? await profileApi.goalGraph(effective.id, ctrl.signal)
+          : await profileApi.graph(persona, effective.domain, "", ctrl.signal);
+      const top = Math.max(1, ...g.nodes.map((n) => n.evidence_count));
+      setNodes(
+        g.nodes.map((n) => ({
+          id: n.id, label: n.label, domain: n.domain, band: n.band, ready: false,
+          goal: goalTargets.has(n.id), weight: Math.min(1, 0.35 + n.evidence_count / top),
+          definition: null, recent: n.recent, rose_this_week: false,
+        })),  // prettier-ignore
+      );
+      setEdges(g.edges);
+      setShown([...new Set(g.nodes.map((n) => n.domain))]);
+    };
+    load().catch(() => !ctrl.signal.aborted && setFailed(true));
     return () => ctrl.abort();
-  }, [persona, domain, search, version, refreshKey, goal]);
+    // goalTargets only flags nodes; a new Set each render must not refetch.
+  }, [persona, scopeKey, version, refreshKey]);
 
-  const open = (node: GraphNode, from: HTMLElement | null) => {
-    opener.current = from;
-    setSelected(node);
-  };
-
-  const close = () => {
-    setSelected(null);
-    // After the modal has closed: while it is open, everything behind it is inert.
-    const back = opener.current;
-    requestAnimationFrame(() => back?.focus());
-  };
-
-  const correct = async (node: GraphNode, known: boolean) => {
-    await api.correct(node.id, known, persona);
+  const current = nodes?.find((n) => n.id === selected) ?? null;
+  const correct = async (n: MapNode, known: boolean) => {
+    await api.correct(n.id, known, persona);
     setVersion((v) => v + 1);
     onChanged();
   };
 
-  // Keep the open card in step with refreshed data (a correction changes the band).
-  const current = selected && graph?.nodes.find((n) => n.id === selected.id);
-
   return (
     <section className="kmap" aria-labelledby="kmap-title">
       <div className="kmap__head">
-        <h2 id="kmap-title" className="profile__h2">
-          Knowledge map
-        </h2>
-        <div className="kmap__controls">
-          {goal ? (
-            <p className="kmap__goal">
-              Goal: <strong>{goal.label}</strong>{" "}
-              <button type="button" className="btn btn--sm" onClick={onClearGoal}>
-                Back to topics
-              </button>
-            </p>
-          ) : (
-            <Segmented
-              label="Topic"
-              options={domains.map((d) => ({ key: d, label: domainLabel(d) ?? d }))}
-              value={domain}
-              onChange={setDomain}
-            />
-          )}
-          <Segmented
-            label="View"
-            options={[
-              { key: "map" as View, label: "Map" },
-              { key: "list" as View, label: "List" },
-            ]}
-            value={view}
-            onChange={setView}
-          />
+        <div>
+          <h2 id="kmap-title" className="kmap__title">
+            Your knowledge map
+          </h2>
+          <p className="kmap__sub">Solid dots are ideas we think you know. Rings are what you're ready to learn next.</p>
         </div>
-        <label className="kmap__search">
-          <span className="visually-hidden">Find a concept</span>
-          <input type="search" placeholder="Find a concept" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </label>
+        <Segmented
+          label="View"
+          options={[
+            { key: "map" as View, label: "Map" },
+            { key: "list" as View, label: "List" },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+      </div>
+      <div className="kmap__scopes" role="group" aria-label="Show">
+        {goal ? (
+          <p className="kmap__goal">
+            Goal: <strong>{goal.label}</strong>
+            <button type="button" className="btn btn--sm" onClick={onClearGoal}>
+              Back to all topics
+            </button>
+          </p>
+        ) : (
+          <>
+            <button type="button" className="filter" aria-pressed={scope.kind === "all"} onClick={() => setScope({ kind: "all" })}>
+              All topics
+            </button>
+            {domains.map((d) => (
+              <button
+                key={d}
+                type="button"
+                className="filter"
+                aria-pressed={scope.kind === "domain" && scope.domain === d}
+                onClick={() => setScope({ kind: "domain", domain: d })}
+              >
+                {domainLabel(d)}
+              </button>
+            ))}
+          </>
+        )}
       </div>
       <Legend />
       {failed && <p className="profile__note" role="status">The map didn't load. Try again in a moment.</p>}
-      {graph && graph.nodes.length === 0 && (
-        <p className="profile__note">
-          {search ? `Nothing in ${domainLabel(domain)} matches “${search}”.` : "Read a few articles and your map fills in."}
-        </p>
+      {nodes && nodes.length === 0 && <p className="profile__note">Read a few articles and your map fills in.</p>}
+      {nodes && nodes.length > 0 && (
+        <div className="kmap__grid">
+          {view === "map" ? (
+            <MapSvg
+              nodes={nodes}
+              edges={edges}
+              domains={shown}
+              selected={selected}
+              onSelect={setSelected}
+              onDomain={goal ? undefined : (d) => setScope({ kind: "domain", domain: d })}
+            />
+          ) : (
+            <NodeList nodes={nodes} domains={shown} selected={selected} onSelect={setSelected} />
+          )}
+          <Inspector node={current} onCorrect={correct} />
+        </div>
       )}
-      {graph && graph.nodes.length > 0 && view === "map" && (
-        <MapCanvas graph={graph} goalTargets={goalTargets} onOpen={(n) => open(n, null)} />
-      )}
-      {graph && graph.nodes.length > 0 && view === "list" && (
-        <ConceptList graph={graph} goalTargets={goalTargets} onOpen={open} />
-      )}
-      {graph?.truncated && <p className="profile__note">Showing your 60 most relevant concepts here.</p>}
-      {current && <NodeCard node={current} onClose={close} onCorrect={correct} />}
     </section>
   );
 }
 
 function Legend() {
-  const bands = Object.keys(BAND_LABEL) as Band[];
   return (
     <ul className="kmap__legend" aria-label="Legend">
-      {bands.map((b) => (
-        <li key={b} data-band={b}>
-          <span aria-hidden="true">{BAND_GLYPH[b]}</span> {BAND_LABEL[b]}
-        </li>
-      ))}
+      <li><span className="lg lg--ready" aria-hidden="true" /> Ready to learn</li>
+      <li><span className="lg lg--heard" aria-hidden="true" /> Heard of</li>
+      <li><span className="lg lg--understands" aria-hidden="true" /> Understands</li>
+      <li><span className="lg lg--explain" aria-hidden="true" /> Can explain</li>
+      <li><span className="lg lg--goal" aria-hidden="true" /> In a goal</li>
     </ul>
+  );  // prettier-ignore
+}
+
+function rankWithin(nodes: MapNode[]): LayoutNode[] {
+  const seen = new Map<string, number>();
+  return [...nodes]
+    .sort((a, b) => a.domain.localeCompare(b.domain) || Number(a.ready) - Number(b.ready) || b.weight - a.weight || a.id.localeCompare(b.id))
+    .map((n) => {
+      const r = seen.get(n.domain) ?? 0;
+      seen.set(n.domain, r + 1);
+      return { id: n.id, label: n.label, domain: n.domain, weight: n.weight, rank: r };
+    });
+}
+
+function MapSvg({
+  nodes, edges, domains, selected, onSelect, onDomain,
+}: {
+  nodes: MapNode[];
+  edges: { from: string; to: string }[];
+  domains: Domain[];
+  selected: string | null;
+  onSelect: (id: string) => void;
+  onDomain?: (d: Domain) => void;
+}) {  // prettier-ignore
+  const placed = useMemo(() => layout(rankWithin(nodes), domains, W, H), [nodes, domains]);
+  const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+  const order = useMemo(() => [...placed.nodes].sort((a, b) => a.domain.localeCompare(b.domain) || a.y - b.y || a.x - b.x), [placed]);
+  const [focus, setFocus] = useState<string | null>(order[0]?.id ?? null);
+  const refs = useRef<Record<string, SVGGElement | null>>({});
+  const pos = useMemo(() => new Map(placed.nodes.map((p) => [p.id, p])), [placed]);
+
+  const onKey = (e: KeyboardEvent<SVGGElement>, id: string) => {
+    const i = order.findIndex((p) => p.id === id);
+    const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onSelect(id);
+      return;
+    }
+    if (!step && e.key !== "Home" && e.key !== "End") return;
+    e.preventDefault();
+    const next = e.key === "Home" ? order[0] : e.key === "End" ? order[order.length - 1] : order[(i + step + order.length) % order.length];
+    if (!next) return;
+    setFocus(next.id);
+    refs.current[next.id]?.focus();
+  };
+
+  return (
+    <div className="kmap__canvas">
+      <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Knowledge map: ${nodes.length} ideas across ${domains.length} topics. Arrow keys move between ideas; Enter shows one.`}>
+        {placed.center &&
+          placed.clusters.map((c) => (
+            <line key={`spoke-${c.domain}`} x1={placed.center!.x} y1={placed.center!.y} x2={c.x} y2={c.y} className="kmap__spoke" />
+          ))}
+        {edges.map((e) => {
+          const a = pos.get(e.from);
+          const b = pos.get(e.to);
+          if (!a || !b) return null;
+          const cross = a.domain !== b.domain;
+          return cross ? (
+            <path key={`${e.from}-${e.to}`} d={`M${a.x},${a.y} Q${(a.x + b.x) / 2},${(a.y + b.y) / 2 - 30} ${b.x},${b.y}`} className="kmap__bridge" />
+          ) : (
+            <line key={`${e.from}-${e.to}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} className="kmap__edge" />
+          );
+        })}
+        {placed.center && (
+          <g aria-hidden="true">
+            <circle cx={placed.center.x} cy={placed.center.y} r={22} className="kmap__you" />
+            <text x={placed.center.x} y={placed.center.y + 4} textAnchor="middle" className="kmap__you-text">
+              You
+            </text>
+          </g>
+        )}
+        {placed.nodes.map((p) => {
+          const n = byId.get(p.id);
+          if (!n) return null;
+          return (
+            <g
+              key={p.id}
+              ref={(el) => {
+                refs.current[p.id] = el;
+              }}
+              role="button"
+              tabIndex={(focus ?? order[0]?.id) === p.id ? 0 : -1}
+              aria-label={ariaFor(n)}
+              aria-pressed={selected === p.id}
+              className={`kmap__node${n.rose_this_week ? " kmap__node--new" : ""}${selected === p.id ? " is-selected" : ""}`}
+              data-band={n.band}
+              data-ready={n.ready || undefined}
+              style={{ transformOrigin: `${p.x}px ${p.y}px` }}
+              onClick={() => {
+                setFocus(p.id);
+                onSelect(p.id);
+              }}
+              onFocus={() => setFocus(p.id)}
+              onKeyDown={(e) => onKey(e, p.id)}
+            >
+              {n.goal && <circle cx={p.x} cy={p.y} r={p.r + 5} className="kmap__goal-ring" />}
+              {selected === p.id && <circle cx={p.x} cy={p.y} r={p.r + 9} className="kmap__sel" />}
+              <circle cx={p.x} cy={p.y} r={p.r} className="kmap__dot" />
+              {n.band === "can explain" && !n.ready && <circle cx={p.x} cy={p.y} r={p.r + 3} className="kmap__explain-ring" />}
+              {p.showLabel && (
+                <text x={p.x} y={p.y + p.r + 14} textAnchor="middle" className="kmap__label">
+                  {p.label}
+                </text>
+              )}
+              <title>{ariaFor(n)}</title>
+            </g>
+          );
+        })}
+        {placed.clusters.map((c) =>
+          onDomain ? (
+            <text
+              key={`cl-${c.domain}`}
+              x={c.x}
+              y={c.labelY}
+              textAnchor="middle"
+              className="kmap__cluster kmap__cluster--link"
+              aria-hidden="true"
+              onClick={() => onDomain(c.domain as Domain)}
+            >
+              {domainLabel(c.domain)}
+            </text>
+          ) : (
+            <text key={`cl-${c.domain}`} x={c.x} y={c.labelY} textAnchor="middle" className="kmap__cluster" aria-hidden="true">
+              {domainLabel(c.domain)}
+            </text>
+          ),
+        )}
+      </svg>
+    </div>
   );
 }
 
-function ConceptList({
-  graph,
-  goalTargets,
-  onOpen,
-}: {
-  graph: Subgraph;
-  goalTargets: ReadonlySet<string>;
-  onOpen: (n: GraphNode, from: HTMLElement) => void;
-}) {
-  const levels = useMemo(() => {
-    const by = new Map<number, GraphNode[]>();
-    for (const n of graph.nodes) by.set(n.depth, [...(by.get(n.depth) ?? []), n]);
-    return [...by.entries()].sort(([a], [b]) => a - b);
-  }, [graph]);
+function NodeList({ nodes, domains, selected, onSelect }: { nodes: MapNode[]; domains: Domain[]; selected: string | null; onSelect: (id: string) => void }) {
   return (
     <div className="clist">
-      {levels.map(([depth, nodes]) => (
-        <section key={depth} className="clist__level" aria-labelledby={`clist-${depth}`}>
-          <h3 id={`clist-${depth}`} className="clist__h">
-            {depth === 0 ? "Foundations" : `Builds on level ${depth - 1}`}
+      {domains.map((d) => (
+        <section key={d} className="clist__level" aria-labelledby={`clist-${d}`}>
+          <h3 id={`clist-${d}`} className="clist__h">
+            {domainLabel(d)}
           </h3>
           <ul className="clist__items">
             {nodes
-              .slice()
-              .sort((a, b) => a.label.localeCompare(b.label))
+              .filter((n) => n.domain === d)
+              .sort((a, b) => Number(a.ready) - Number(b.ready) || a.label.localeCompare(b.label))
               .map((n) => (
                 <li key={n.id}>
-                  <button type="button" className="clist__item" data-band={n.band} onClick={(e) => onOpen(n, e.currentTarget)}>
-                    <span className="clist__glyph" aria-hidden="true">
-                      {BAND_GLYPH[n.band]}
-                    </span>
+                  <button type="button" className="clist__item" data-band={n.band} data-ready={n.ready || undefined}
+                    aria-pressed={selected === n.id} onClick={() => onSelect(n.id)}>
+                    <span className="lg" data-kind={n.ready ? "ready" : n.band} aria-hidden="true" />
                     <span className="clist__label">{n.label}</span>
-                    {goalTargets.has(n.id) && <span className="clist__goal">Goal</span>}
-                    <span className="clist__band">{BAND_LABEL[n.band]}</span>
+                    {n.goal && <span className="clist__goal">Goal</span>}
+                    <span className="clist__band">{n.ready ? "Ready to learn" : BAND_LABEL[n.band as Band]}</span>
                   </button>
                 </li>
               ))}
@@ -200,140 +344,15 @@ function ConceptList({
   );
 }
 
-function cssVar(name: string): string {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-/** Cytoscape + dagre, imported on first use (its own chunk). Not keyboard-operable: the list is. */
-function MapCanvas({
-  graph,
-  goalTargets,
-  onOpen,
-}: {
-  graph: Subgraph;
-  goalTargets: ReadonlySet<string>;
-  onOpen: (n: GraphNode) => void;
-}) {
-  const box = useRef<HTMLDivElement>(null);
-  const [ready, setReady] = useState(false);
-  // Read at tap time, so a new callback each render doesn't rebuild the map.
-  const onOpenRef = useRef(onOpen);
-  onOpenRef.current = onOpen;
-  useEffect(() => {
-    let destroyed = false;
-    let cy: { destroy(): void } | null = null;
-    void (async () => {
-      const [{ default: cytoscape }, { default: dagre }] = await Promise.all([
-        import("cytoscape"),
-        import("cytoscape-dagre"),
-      ]);
-      if (destroyed || !box.current) return;
-      cytoscape.use(dagre);
-      const accent = cssVar("--accent") || "#1f5f5b";
-      const wash = cssVar("--accent-wash") || "#e6f0ee";
-      const ink = cssVar("--ink") || "#1c1b19";
-      const paper = cssVar("--surface") || "#fffdf9";
-      const hairline = cssVar("--hairline") || "#e7e1d6";
-      const fill: Record<Band, string> = { unaware: paper, "heard of": wash, understands: `${accent}99`, "can explain": accent };
-      const byId = new Map(graph.nodes.map((n) => [n.id, n]));
-      const instance = cytoscape({
-        container: box.current,
-        elements: [
-          ...graph.nodes.map((n) => ({
-            data: { id: n.id, label: `${BAND_GLYPH[n.band]} ${n.label}`, band: n.band, goal: goalTargets.has(n.id) },
-          })),
-          ...graph.edges.map((e) => ({ data: { id: `${e.from}->${e.to}`, source: e.from, target: e.to } })),
-        ],
-        layout: { name: "dagre", rankDir: "TB", nodeSep: 18, rankSep: 46 } as unknown as { name: string },
-        minZoom: 0.4,
-        maxZoom: 2.2,
-        wheelSensitivity: 0.2,
-        // The community types lag Cytoscape 3.30's style keys (padding, width: "label").
-        style: ([
-          {
-            selector: "node",
-            style: {
-              shape: "round-rectangle",
-              label: "data(label)",
-              width: "label",
-              height: 28,
-              padding: "8px",
-              "font-family": "Inter, system-ui, sans-serif",
-              "font-size": 11,
-              "text-valign": "center",
-              "text-halign": "center",
-              color: ink,
-              "border-width": 1,
-              "border-color": hairline,
-              "background-color": paper,
-            },
-          },
-          ...(Object.keys(fill) as Band[]).map((b) => ({
-            selector: `node[band = "${b}"]`,
-            style: {
-              "background-color": fill[b],
-              color: b === "can explain" ? paper : ink,
-              "border-color": b === "unaware" ? hairline : accent,
-            },
-          })),
-          {
-            selector: "node[?goal]",
-            style: { "border-width": 3, "border-color": accent },
-          },
-          {
-            selector: "edge",
-            style: {
-              width: 1,
-              "line-color": hairline,
-              "target-arrow-color": hairline,
-              "target-arrow-shape": "triangle",
-              "arrow-scale": 0.7,
-              "curve-style": "bezier",
-            },
-          },
-        ] as unknown) as never,
-      });
-      instance.on("tap", "node", (evt: { target: { id(): string } }) => {
-        const node = byId.get(evt.target.id());
-        if (node) onOpenRef.current(node);
-      });
-      cy = instance;
-      setReady(true);
-    })();
-    return () => {
-      destroyed = true;
-      cy?.destroy();
-    };
-  }, [graph, goalTargets]);
-  return (
-    <div className="kmap__canvas-wrap">
-      <div
-        ref={box}
-        className="kmap__canvas"
-        role="img"
-        aria-label={`Map of ${graph.nodes.length} concepts and their prerequisites. Use the List view to browse them with the keyboard.`}
-        aria-busy={!ready}
-      />
-    </div>
-  );
-}
-
-function NodeCard({
-  node,
-  onClose,
-  onCorrect,
-}: {
-  node: GraphNode;
-  onClose: () => void;
-  onCorrect: (node: GraphNode, known: boolean) => Promise<void>;
-}) {
-  const ref = useRef<HTMLDialogElement>(null);
+function Inspector({ node, onCorrect }: { node: MapNode | null; onCorrect: (n: MapNode, known: boolean) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    const d = ref.current;
-    if (d && !d.open) d.showModal();
-  }, []);
+  if (!node)
+    return (
+      <aside className="inspect" aria-live="polite">
+        <p className="profile__note">Pick an idea on the map to see why we think so, and correct us.</p>
+      </aside>
+    );
   const correct = async (known: boolean) => {
     setBusy(true);
     setError(null);
@@ -346,39 +365,40 @@ function NodeCard({
     }
   };
   return (
-    <dialog ref={ref} className="ncard" aria-labelledby="ncard-title" onClose={onClose}>
-      <p className="eyebrow">{domainLabel(node.domain)}</p>
-      <h3 id="ncard-title" className="ncard__title">
+    <aside className="inspect" aria-live="polite" aria-labelledby="inspect-title">
+      <h3 id="inspect-title" className="inspect__title">
         {node.label}
       </h3>
-      <p className="ncard__band" data-band={node.band}>
-        <span aria-hidden="true">{BAND_GLYPH[node.band]}</span> {BAND_LABEL[node.band]}
+      <p className="inspect__meta">
+        {domainLabel(node.domain)}, {bandText(node)}
+        {node.goal ? ", part of a goal" : ""}
       </p>
+      {node.definition && <p className="inspect__def">{node.definition}</p>}
+      <h4 className="inspect__h">Why we think so</h4>
       {node.recent.length > 0 ? (
-        <ul className="ncard__evidence" aria-label="Recent evidence">
+        <ul className="inspect__ev">
           {node.recent.map((e) => (
             <li key={`${e.type}-${e.at}`}>{evidenceText(e.type, e.at)}</li>
           ))}
         </ul>
       ) : (
-        <p className="profile__note">No reading activity on this yet: this is our estimate.</p>
+        <p className="profile__note">
+          {node.ready ? "You know what it builds on, so it's next." : `No reading on this yet: it's our estimate from your level in ${domainLabel(node.domain)}.`}
+        </p>
       )}
       {error && (
         <p className="welcome__error" role="alert">
           {error}
         </p>
       )}
-      <div className="ncard__actions">
-        <button type="button" className="btn" disabled={busy} onClick={() => void correct(false)}>
-          I don't know this
-        </button>
-        <button type="button" className="btn btn--primary" disabled={busy} onClick={() => void correct(true)}>
+      <div className="inspect__acts">
+        <button type="button" className="btn" disabled={busy} onClick={() => void correct(true)}>
           I know this
         </button>
+        <button type="button" className="btn" disabled={busy} onClick={() => void correct(false)}>
+          I don't
+        </button>
       </div>
-      <button type="button" className="icon-btn ncard__close" aria-label="Close" onClick={() => ref.current?.close()}>
-        ×
-      </button>
-    </dialog>
+    </aside>
   );
 }

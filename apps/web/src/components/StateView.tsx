@@ -1,17 +1,21 @@
 import type { ReactNode } from "react";
 
 import type { ApiErrorKind } from "../lib/api";
+import { Margo, type MargoMood } from "./Margo";
 
 interface StateViewProps {
   title: string;
   children?: ReactNode;
   actions?: ReactNode;
   role?: "alert" | "status";
+  /** Margo heads empty and error states (oops) and loading (think), Design pass C9. */
+  margo?: MargoMood;
 }
 
-export function StateView({ title, children, actions, role = "status" }: StateViewProps) {
+export function StateView({ title, children, actions, role = "status", margo }: StateViewProps) {
   return (
     <section className="state" role={role}>
+      {margo && <Margo mood={margo} size={56} className="state__margo" />}
       <h2 className="state__title">{title}</h2>
       {children && <p className="state__body">{children}</p>}
       {actions && <div className="state__actions">{actions}</div>}
@@ -33,7 +37,7 @@ export const ERROR_COPY: Record<ApiErrorKind, { title: string; body: string }> =
     body: "The API answered with an error. Try again in a moment.",
   },
   offline: {
-    title: "ReadLayer can't reach its API",
+    title: "Gloss can't reach its API",
     body: "Check your connection, then try again.",
   },
   pending: {

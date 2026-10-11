@@ -36,8 +36,8 @@
 .welcome__panel { animation: rise var(--dur-slow) var(--ease) both; }
 .welcome__title {
   margin: var(--s2) 0 0;
-  font: 500 var(--text-display) / 1.12 var(--font-read);
-  letter-spacing: var(--tracking-tight);
+  font: 800 var(--text-display) / 1.1 var(--font-head);
+  letter-spacing: -0.03em;
   color: var(--ink);
   outline: none;
   text-wrap: balance;

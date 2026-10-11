@@ -1,32 +1,38 @@
 /*
- * ReadLayer design tokens. Calm editorial: paper and ink, one deep ink-teal accent that only
- * ever means "a note for you". Light by default; dark via the OS or the manual toggle
+ * Gloss design tokens (Design pass, docs/design/mockup.html). White paper and near-black ink,
+ * one teal accent that only ever means "a note for you". Schibsted Grotesk for UI and
+ * headlines, Source Serif 4 for reading. Light by default; dark via the OS or the manual toggle
  * (data-theme on <html>, set before first paint in index.html).
  */
 :root {
   color-scheme: light;
 
   /* Colour: light */
-  --paper: #fbf8f3;
-  --surface: #fffdf9; /* floating layers sit a touch brighter than paper */
-  --ink: #1c1b19;
-  --ink-soft: #3a3833;
-  --muted: #6b675f;
-  --hairline: #e7e1d6;
-  --accent: #1f5f5b;
-  --accent-wash: #e6f0ee;
-  --on-accent: #fbf8f3;
-  --skeleton: #efe9df;
-  --scrim: rgb(28 27 25 / 0.28);
+  --paper: #ffffff;
+  --surface: #ffffff;
+  --wash: #f7f7f5; /* quiet fills: search, chips, segmented controls */
+  --ink: #1c1c1c;
+  --ink-soft: #3a3a3a;
+  --muted: #5f5f5f; /* secondary text, 6.4:1 on paper */
+  --hairline: #ececec;
+  --accent: #0d6b62;
+  --accent-ink: #0a5a52; /* accent text */
+  --accent-wash: #e4f2ef;
+  --accent-line: #3f8a80; /* non-text strokes that must read: ≥ 3:1 on paper */
+  --mark-goal: #a06f00; /* goal dashes on the map, ≥ 3:1 on paper */
+  --on-accent: #ffffff;
+  --skeleton: #f0f0ee;
+  --scrim: rgb(28 28 28 / 0.28);
   --danger: #9b2c2c; /* destructive actions only (delete my data) */
   --persona-newcomer: #8a5a2b;
-  --persona-trader: #1f5f5b;
+  --persona-trader: #0d6b62;
   --persona-policy: #5b4a7a;
 
   /* Type */
-  --font-read: "Newsreader", "Newsreader Fallback", Georgia, serif;
-  --font-ui: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
-  --text-body: 18px;
+  --font-read: "Source Serif 4", "Source Serif Fallback", Georgia, serif;
+  --font-ui: "Schibsted Grotesk", "Schibsted Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-head: var(--font-ui); /* headlines are set in the UI face, heavy and tight */
+  --text-body: 19px;
   --leading-body: 1.62;
   /* ~66 characters of the reading face at body size, fixed so it means the same width on
      every element (a ch unit would scale with each element's own font size). */
@@ -34,8 +40,8 @@
   --text-headline: 34px;
   --text-display: 40px;
   --text-ui: 14px;
-  --text-ui-sm: 13px;
-  --text-micro: 11px;
+  --text-ui-sm: 13.5px;
+  --text-micro: 12.5px; /* never for anything a reader needs */
   --tracking-tight: -0.018em;
   --tracking-caps: 0.08em;
 
@@ -68,7 +74,7 @@
 
   /* Layout */
   --bar-h: 104px; /* fixed top bar, two rows on phones */
-  --rl-top-inset: 112px; /* --bar-h + 8px, plain px: the annotator parses it */
+  --rl-top-inset: 128px; /* top bar 64 + action bar ~56 + 8, plain px: the annotator parses it */
   --bar-tuck: 52px; /* how far it slides up when scrolled */
   --rail-w: 232px;
 
@@ -86,19 +92,24 @@
   --rl-focus: var(--accent);
   --rl-font-ui: var(--font-ui);
   --rl-font-read: var(--font-read);
+  --rl-accent-line: var(--accent-line);
   --rl-duration: var(--dur);
   --rl-scrim: var(--scrim);
   --rl-ease: var(--ease);
 }
 
+@media (min-width: 600px) {
+  :root {
+    --text-body: 21px;
+  }
+}
+
 @media (min-width: 768px) {
   :root {
-    --text-body: 20px;
     --text-headline: 44px;
     --text-display: 56px;
     --gutter: var(--s8);
     --bar-h: 64px;
-    --rl-top-inset: 72px;
     --bar-tuck: 12px;
   }
 }
@@ -112,20 +123,24 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --paper: #141412;
-    --surface: #1b1b18;
-    --ink: #ece7dd;
-    --ink-soft: #d6d0c4;
-    --muted: #a39e93;
-    --hairline: #2a2925;
-    --accent: #6fb3aa;
-    --accent-wash: #1c2a28;
-    --on-accent: #141412;
-    --skeleton: #22211e;
+    --paper: #121212;
+    --surface: #1b1b1b;
+    --wash: #1b1b1b;
+    --ink: #ececec;
+    --ink-soft: #d4d4d4;
+    --muted: #a9a9a9;
+    --hairline: #262626;
+    --accent: #4fbfae;
+    --accent-ink: #7ad3c5;
+    --accent-wash: #163632;
+    --accent-line: #3f9c8f;
+    --mark-goal: #d6a02c;
+    --on-accent: #121212;
+    --skeleton: #222222;
     --scrim: rgb(0 0 0 / 0.62);
     --danger: #e08a7e;
     --persona-newcomer: #d4a373;
-    --persona-trader: #6fb3aa;
+    --persona-trader: #4fbfae;
     --persona-policy: #b3a1d6;
     --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 44px -12px rgb(0 0 0 / 0.7);
   }
@@ -133,20 +148,24 @@
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --paper: #141412;
-  --surface: #1b1b18;
-  --ink: #ece7dd;
-  --ink-soft: #d6d0c4;
-  --muted: #a39e93;
-  --hairline: #2a2925;
-  --accent: #6fb3aa;
-  --accent-wash: #1c2a28;
-  --on-accent: #141412;
-  --skeleton: #22211e;
+  --paper: #121212;
+  --surface: #1b1b1b;
+  --wash: #1b1b1b;
+  --ink: #ececec;
+  --ink-soft: #d4d4d4;
+  --muted: #a9a9a9;
+  --hairline: #262626;
+  --accent: #4fbfae;
+  --accent-ink: #7ad3c5;
+  --accent-wash: #163632;
+  --accent-line: #3f9c8f;
+  --mark-goal: #d6a02c;
+  --on-accent: #121212;
+  --skeleton: #222222;
   --scrim: rgb(0 0 0 / 0.62);
   --danger: #e08a7e;
   --persona-newcomer: #d4a373;
-  --persona-trader: #6fb3aa;
+  --persona-trader: #4fbfae;
   --persona-policy: #b3a1d6;
   --shadow-float: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 44px -12px rgb(0 0 0 / 0.7);
 }

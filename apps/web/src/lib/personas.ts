@@ -30,9 +30,9 @@ export type Persona = (typeof PERSONAS)[number];
 export type PersonaKey = Persona["key"];
 
 export const DENSITIES = [
-  { key: "minimal", label: "Minimal" },
-  { key: "balanced", label: "Balanced" },
-  { key: "guided", label: "Guided" },
+  { key: "minimal", label: "Fewer" },
+  { key: "balanced", label: "For me" },
+  { key: "guided", label: "More" },
 ] as const;
 
 export type Density = (typeof DENSITIES)[number]["key"];

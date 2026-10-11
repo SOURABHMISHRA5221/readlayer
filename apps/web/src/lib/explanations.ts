@@ -13,8 +13,19 @@ export const PREFETCH_TOP = 3;
 
 const cache = new Map<string, Promise<Explanation>>();
 
-const keyOf = (persona: PersonaKey | null, contentId: string, annotationId: string) =>
-  `${persona ?? "me"}|${contentId}|${annotationId}`;
+const keyOf = (persona: PersonaKey | null, contentId: string, annotationId: string, shift = 0) =>
+  `${persona ?? "me"}|${contentId}|${annotationId}|${shift}`;
+
+const toExplanation = (r: Awaited<ReturnType<typeof api.explain>>): Explanation => ({
+  id: r.id,
+  kind: r.kind,
+  background: r.background,
+  author_says: r.author_says,
+  analogy_domain: r.analogy_domain,
+  band: r.band,
+  can_simpler: r.can_simpler,
+  can_deeper: r.can_deeper,
+});
 
 export function loadExplanation(
   contentId: string,
@@ -27,15 +38,23 @@ export function loadExplanation(
   // Paragraph markers are explained by paragraph; spans by their demand id.
   const target =
     annotation.kind === "paragraph" ? { paragraph_id: annotation.paragraph_id } : { demand_id: annotation.id };
-  const pending = api.explain(contentId, target, persona).then(
-    (r): Explanation => ({
-      id: r.id,
-      kind: r.kind,
-      background: r.background,
-      author_says: r.author_says,
-      analogy_domain: r.analogy_domain,
-    }),
-  );
+  const pending = api.explain(contentId, target, persona).then(toExplanation);
+  cache.set(key, pending);
+  pending.catch(() => cache.delete(key));
+  return pending;
+}
+
+/** "Say it simpler" / "Go deeper": only on click, never prefetched (Design pass A3). */
+export function loadShifted(
+  contentId: string,
+  persona: PersonaKey | null,
+  annotation: CardAnnotation,
+  shift: -1 | 1,
+): Promise<Explanation> {
+  const key = keyOf(persona, contentId, annotation.id, shift);
+  const hit = cache.get(key);
+  if (hit) return hit;
+  const pending = api.explain(contentId, { demand_id: annotation.id, shift }, persona).then(toExplanation);
   cache.set(key, pending);
   pending.catch(() => cache.delete(key));
   return pending;
@@ -62,7 +81,7 @@ export async function reportExplanation(
   explanationId: string,
   conceptId: string | null,
 ): Promise<void> {
-  cache.delete(keyOf(persona, contentId, annotationId));
+  for (const shift of [0, -1, 1]) cache.delete(keyOf(persona, contentId, annotationId, shift));
   await api.reportExplanation(
     explanationId,
     { event_id: crypto.randomUUID(), content_id: contentId, concept_id: conceptId },

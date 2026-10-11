@@ -15,7 +15,7 @@ from app.reader.model import Edge
 
 EventType = Literal[
     "explain_opened", "knew_this", "explain_helpful", "report_wrong", "text_searched",
-    "annotation_dismissed", "paragraph_dwell",
+    "annotation_dismissed", "paragraph_dwell", "article_helpful",
 ]  # fmt: skip
 CONCEPT_EVENTS: frozenset[str] = frozenset(
     {
@@ -86,6 +86,16 @@ def apply_events(
             types.append(ev.type)
             if ev.content_id:
                 contents.add(ev.content_id)
+            continue
+        if ev.type == "article_helpful":
+            # The reader's "Helpful" on the whole page (Design pass A7): stored with the other
+            # events for the evals, no concept, so no evidence and no θ change.
+            if not ev.content_id:
+                ignored.append(ev.id)
+                continue
+            applied.append(ev.id)
+            types.append(ev.type)
+            contents.add(ev.content_id)
             continue
         if ev.type == "text_searched" and not ev.concept_id and ev.paragraph_id:
             # A look-up on a paragraph with no notes: moves threshold_offset (DESIGN §5), no

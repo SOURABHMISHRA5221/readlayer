@@ -36,7 +36,7 @@ export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
-export const ANNOTATOR_VERSION = "0.4.0";
+export const ANNOTATOR_VERSION = "0.5.0";
 
 export interface AnnotatorOptions {
   /** Interaction and reading events (DESIGN §9); the host batches them to /v1/events. */
@@ -57,6 +57,11 @@ export interface AnnotatorOptions {
    * Hosts cache and prefetch inside this function, so a prefetched card fills at once.
    */
   loadExplanation?: (annotation: CardAnnotation) => Promise<Explanation>;
+  /**
+   * "Say it simpler" (-1) / "Go deeper" (+1): the explanation one band from the reader's own.
+   * Optional: without it the card has no depth buttons (the extension's default).
+   */
+  loadShifted?: (annotation: CardAnnotation, shift: -1 | 1) => Promise<Explanation>;
   /**
    * The page's margin column, when there is one (e.g. ≥1200px): the card is then set there as
    * a sidenote, level with its line, instead of floating over the text. Null = popover.
@@ -184,7 +189,13 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       emit(event(type, a));
     },
     onDismiss: () => close(true, true),
+    onShift: (shift) => {
+      const target = active && lookup(active.id);
+      if (!target) return;
+      loadInto(target.annotation, shift);
+    },
   });
+  card.enableShift(Boolean(options.loadShifted));
 
   /** What a card shows and what it hangs from: a span's first segment or a paragraph marker. */
   function lookup(id: string): { annotation: CardAnnotation; anchor: HTMLElement } | null {
@@ -262,8 +273,10 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     emit(event("annotation_dismissed", entry.annotation));
   }
 
-  function loadInto(annotation: CardAnnotation): void {
-    const load = options.loadExplanation;
+  function loadInto(annotation: CardAnnotation, shift: -1 | 0 | 1 = 0): void {
+    const shifted = options.loadShifted;
+    const load: ((a: CardAnnotation) => Promise<Explanation>) | undefined =
+      shift && shifted ? (a) => shifted(a, shift as -1 | 1) : options.loadExplanation;
     if (!load) return;
     const token = ++loadToken;
     const settle = (result: Explanation | null) => {
@@ -271,6 +284,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       if (result?.kind === "verified") shown.set(annotation.id, result);
       card.setExplanation(result ?? { id: "", kind: "definition", background: null, author_says: null });
     };
+    card.setShift(shift);
     card.setExplanation("loading");
     load(annotation).then(settle, () => settle(null));
   }
@@ -493,6 +507,10 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       const segments = range ? wrapRange(root, range, a.id) : [];
       const first = segments[0];
       if (!range || !first) continue;
+      if (a.kind === "span") {
+        const level = a.level === "refresher" ? "refresher" : "new"; // older APIs: new
+        segments.forEach((m) => m.classList.add(`${MARK_CLASS}--${level}`));
+      }
       first.tabIndex = 0;
       first.setAttribute("role", "button");
       first.setAttribute("aria-haspopup", "dialog");

@@ -1,8 +1,9 @@
 import type { CardAnnotation } from "@readlayer/annotator";
-import { useLayoutEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
 
 import { plural } from "../lib/format";
 import type { PersonaKey } from "../lib/personas";
+import { Margo } from "./Margo";
 import { UpNext } from "./UpNext";
 
 interface ConceptLinkProps {
@@ -13,56 +14,46 @@ interface ConceptLinkProps {
   onOpen: (id: string, focus: boolean) => void;
 }
 
-const HEAD_PX = 28;
-const LINE_PX = 26; // a mark's box height at body size
-const CHIP_PX = 30;
-const GAP_PX = 6;
+const LEVEL_TEXT = { new: "new to you", refresher: "a quick refresher" } as const;
+const levelOf = (a: CardAnnotation) => ((a as { level?: string }).level === "refresher" ? "refresher" : "new");
 
 /**
- * Margin rail (≥1200px): each concept chip sits level with its paragraph. Positions are
- * measured from the rendered article and re-measured when it resizes (fonts, viewport).
+ * Margin (≥1200px): "N notes for you" as a short contents list, with Margo, until a note
+ * opens; the open card is then set in this column as a sidenote, level with its line, and the
+ * list steps aside (Design pass C6). The column keeps the class `rail`: the annotator measures it.
  */
-export function ConceptRail({ items, body, ...link }: ConceptLinkProps & { body: RefObject<HTMLElement | null> }) {
-  const [tops, setTops] = useState<number[]>([]);
-  const listRef = useRef<HTMLUListElement>(null);
-
-  useLayoutEffect(() => {
-    const container = body.current;
-    const list = listRef.current;
-    if (!container || !list) return;
-    const measure = () => {
-      const origin = list.getBoundingClientRect().top;
-      let floor = HEAD_PX + GAP_PX;
-      setTops(
-        items.map((a) => {
-          // Level with the note's own line; its paragraph if the mark isn't in the DOM yet.
-          const anchor =
-            container.querySelector<HTMLElement>(`.rl-mark[data-rl-id="${CSS.escape(a.id)}"]`) ??
-            container.querySelector<HTMLElement>(`[data-rl-paragraph="${CSS.escape(a.paragraph_id)}"]`);
-          const lineTop = anchor ? anchor.getBoundingClientRect().top - origin : floor;
-          const top = Math.max(lineTop - (CHIP_PX - LINE_PX) / 2, floor);
-          floor = top + CHIP_PX + GAP_PX;
-          return top;
-        }),
-      );
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, [items, body]);
-
+export function ConceptRail({ items, body, ...link }: ConceptLinkProps & { body?: RefObject<HTMLElement | null> }) {
+  const reading = link.active !== null;
+  const early = useBeforeArticle(body);
   return (
-    // An open card is set over this column as a sidenote: the other chips step back.
-    <aside className="rail" aria-label="Concepts in this article" data-card-open={link.active !== null}>
-      <p className="rail__head eyebrow">{plural(items.length, "concept")} for you</p>
-      <ul className="rail__list" ref={listRef}>
-        {items.map((a, i) => (
-          <li key={a.id} className="rail__item" style={{ transform: `translateY(${tops[i] ?? 0}px)` }}>
-            <ConceptChip annotation={a} {...link} />
-          </li>
-        ))}
-      </ul>
+    <aside className="rail" aria-label="Notes in this article" data-card-open={reading}>
+      <div className="rail__toc" inert={reading}>
+        <h2 className="rail__head">
+          <Margo size={34} blink={!reading && early} />
+          {plural(items.length, "note")} for you
+        </h2>
+        <p className="rail__sub">Pitched for what you already know. Tap a highlight or pick one here.</p>
+        <ul className="rail__list">
+          {items.map((a) => (
+            <li key={a.id}>
+              <button
+                type="button"
+                className="rail__item"
+                data-level={levelOf(a)}
+                data-linked={link.hovered === a.id}
+                onPointerEnter={() => link.onHighlight(a.id)}
+                onPointerLeave={() => link.onHighlight(null)}
+                onFocus={() => link.onHighlight(a.id)}
+                onBlur={() => link.onHighlight(null)}
+                onClick={(e) => link.onOpen(a.id, e.detail === 0)}
+              >
+                <span className="rail__dot" aria-hidden="true" />
+                {a.label}, {LEVEL_TEXT[levelOf(a)]}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </aside>
   );
 }
@@ -110,7 +101,7 @@ export function ConceptDrawer({ items, hidden: tucked = false, ...link }: Concep
         }}
       >
         <span className="drawer__count tnum">{items.length}</span>
-        <span>{items.length === 1 ? "concept" : "concepts"} for you</span>
+        <span>{items.length === 1 ? "note" : "notes"} for you</span>
         <span className="drawer__caret" aria-hidden="true" />
       </button>
       <div
@@ -167,4 +158,28 @@ export function EndBlock({ items, contentId, persona, ...link }: ConceptLinkProp
       <UpNext contentId={contentId} persona={persona} />
     </section>
   );
+}
+
+/** True until the reader scrolls into the article body: Margo may blink then, never while
+ *  they read (BUILD_PLAN Design pass item 8). */
+function useBeforeArticle(body?: RefObject<HTMLElement | null>): boolean {
+  const [early, setEarly] = useState(true);
+  useEffect(() => {
+    let frame = 0;
+    const check = () => {
+      frame = 0;
+      const top = body?.current?.getBoundingClientRect().top;
+      setEarly(top === undefined || top > window.innerHeight * 0.5);
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(check);
+    };
+    check();
+    window.addEventListener("scroll", schedule, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", schedule);
+      cancelAnimationFrame(frame);
+    };
+  }, [body]);
+  return early;
 }

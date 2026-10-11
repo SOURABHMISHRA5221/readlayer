@@ -24,6 +24,7 @@ PARAGRAPHS_PER_MARKER = 3
 PREREAD_WEAK = 0.5  # an assumed concept below this starts the pre-read walk
 PREREAD_KNOWN = 0.7  # the walk stops at a prerequisite known at least this well
 PREREAD_MAX_STEPS = 3
+REFRESHER_BANDS = frozenset({"understands", "can explain"})  # quieter highlight (Design pass A1)
 PROMPT_MIN_SALIENCE = 0.7
 PROMPT_P_RANGE = (0.35, 0.65)
 PROMPT_MAX_CONFIDENCE = 4.0
@@ -73,6 +74,14 @@ class SpanAnnotation:
     p_know: float
     salience: float
     score: float
+    # The reader's band for the concept itself (edge or prior, no prerequisite cap): the band
+    # the explanation is written for (explain.inputs.concept_band), so highlight, card and recap
+    # agree. Design pass A1.
+    band: model.Band = "unaware"
+
+    @property
+    def level(self) -> str:
+        return "refresher" if self.band in REFRESHER_BANDS else "new"
 
 
 @dataclass(frozen=True)
@@ -89,6 +98,7 @@ class PrereadStep:
     definition: str
     p_know: float
     article: ExplainerRef | None  # else the card shows the definition
+    known: bool = False  # the prerequisite where the walk stopped, shown ticked (Design pass A2)
 
 
 @dataclass(frozen=True)
@@ -232,7 +242,9 @@ def preread_path(
 ) -> Preread | None:
     """DESIGN §6.4: triggered when the assumed concepts' mean span_score passes the pre-read
     threshold. From the weakest-known high-scoring assumed concept, walk to its weakest
-    prerequisite until one is known at ≥ 0.7; ≤ 3 steps, returned most basic first."""
+    prerequisite until one is known at ≥ 0.7; ≤ 3 steps, returned most basic first. When the
+    walk stops at a known prerequisite, that one leads the path as a ticked step (ties: highest
+    p, then id), so the reader sees where the path starts from."""
     assumed = [s for s in firsts if not s.demand.explained_in_text and s.demand.type == "concept"]
     if not assumed:
         return None
@@ -252,21 +264,29 @@ def preread_path(
             for q in graph.prerequisites(path[-1].id)
             if q.id not in on_path
         ]
-        options = [o for o in options if o[0] < PREREAD_KNOWN]
-        if not options:
+        unknown = [o for o in options if o[0] < PREREAD_KNOWN]
+        if not unknown:
+            known = [o for o in options if o[0] >= PREREAD_KNOWN]
+            reached = min(known, key=lambda o: (-o[0], o[1]))[2] if known else None
             break
-        path.append(min(options, key=lambda o: (o[0], o[1]))[2])
-    steps = tuple(
-        PrereadStep(
+        path.append(min(unknown, key=lambda o: (o[0], o[1]))[2])
+    else:
+        reached = None  # stopped at the step limit: no known prerequisite reached
+
+    def step(c: Concept, known: bool) -> PrereadStep:
+        ref = inputs.explainers.get(c.id)
+        return PrereadStep(
             concept_id=c.id,
             label=c.label,
             definition=c.definition,
             p_know=rules.concept_p(c, state, now),
-            article=ref if (ref := inputs.explainers.get(c.id)) and ref.content_id != doc_id
-            else None,
+            article=ref if ref and ref.content_id != doc_id else None,
+            known=known,
         )
-        for c in reversed(path)
-    )  # fmt: skip
+
+    steps = ((step(reached, True),) if reached is not None else ()) + tuple(
+        step(c, False) for c in reversed(path)
+    )
     return Preread(score=mean, concept_id=start.id, steps=steps)
 
 
@@ -350,14 +370,14 @@ def annotate(
     shown = {s.concept.id for s in spans if s.concept is not None}
     prompt = uncertainty_prompt(firsts, shown, state, now, inputs, doc.content_id)
     return Annotations(
-        spans=tuple(_span(s, graph) for s in spans),
+        spans=tuple(_span(s, graph, state, now) for s in spans),
         paragraphs=tuple(paragraphs),
         preread=preread,
         prompt=prompt,
     )
 
 
-def _span(s: Scored, graph: ConceptGraph) -> SpanAnnotation:
+def _span(s: Scored, graph: ConceptGraph, state: ReaderState, now: datetime) -> SpanAnnotation:
     c = s.concept
     assert c is not None
     return SpanAnnotation(
@@ -373,6 +393,7 @@ def _span(s: Scored, graph: ConceptGraph) -> SpanAnnotation:
         p_know=s.p_know,
         salience=s.demand.salience,
         score=s.score,
+        band=model.band_of(rules.concept_p(c, state, now)),
     )
 
 

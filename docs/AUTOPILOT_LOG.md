@@ -421,3 +421,44 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   first run stopped at its 5 s assertion (6.8 s, first ingest on the new revision, known cold
   imports). Live axe clean. A browser test reader was first "deleted" against the Hosting origin
   (SPA 200); caught and deleted through the API (204). Left: Sourabh's Google check.
+
+## Design pass (decisions 39, 40) — started 2026-10-11
+
+- Sourabh: M7.5 live Google check done (feed, Read any link, goals); start the Design pass.
+- Plan `docs/plans/design-pass.md`: stages 1–5 over Oct 11–13, checkpoints end of Oct 12 and
+  midday Oct 13 (ask before cutting). Before screenshots from the live site first
+  (`docs/evidence/design/before/`). Reusable headless-Chrome helper now lives in `tools/shots/`
+  (scratch helpers were lost twice on session restarts).
+- plan-reviewer round 1: REVISE (16: band source, refresher rarity, pre-read path, four required
+  items I had dropped — action-bar Helpful, interest on domain cards, the tagline, Margo in
+  empty/error states — persona chip, map node data, Save on feed rows, annotator opt-in safety,
+  m8 conflicts, map keyboard and contrast, bundle, recap correctness, shift warm-up, before
+  shots, second checkpoint, DESIGN sections). Round 2: REVISE (map solid vs ready wording;
+  extension pre-read must skip known steps). Round 3: **APPROVE**; two nits applied.
+- Build (Oct 11): API A1–A7 with tests (span band/level from the uncapped concept band; ticked
+  pre-read step; Say it simpler / Go deeper through the verified path; recap bands; all-topics
+  map overview; Saved; article Helpful), `warm_demo --shifts`. Refresher-share measurement first:
+  8–16% of shown spans, both styles on a demo article, so no question for Sourabh. Web stages 1–5:
+  tokens and fonts (measured fallbacks), Margo, Gloss name, top bar, library as a feed (For you ·
+  Topics · Saved, rows, sidebar), reader (action bar, path, highlight levels, margin notes with
+  Margo, card pitch and depth buttons, recap), profile (domain cards, SVG map with inspector,
+  Cytoscape removed), sign-in and welcome. The annotator's sidenote and sheet already existed, so
+  the card changes stayed in card.ts (deviation recorded). Found and fixed on the way: a 32px
+  sideways scroll on phones (top bar), sub-44px density and Up next buttons, the persona chip's
+  missing name in compact mode, a heard-of dot under 3:1, domain cards counting the whole graph.
+  Both checkpoints met on Oct 11. Next: milestone-reviewer.
+- milestone-reviewer round 1: **FIX** (6): the lockfile and wordmark script uncommitted (CI would
+  fail), the recap listing a "Not really" concept twice, Margo blinking during reading,
+  `warm_demo --shifts` running into the anonymous cap silently, missing planned tests and the
+  recap's neutral fallback, stale STATUS lines. All fixed: one row per concept ("Next on your
+  path"), Up next's top two under "Read next" when nothing teaches the unknown concepts, blink only
+  before the reader scrolls into the article, `capped` on the explain response, one demo reader
+  per article in `warm_demo` with capped cards reported and a non-zero exit, tests for the shift
+  cap and fallback, bands, the saved cap, Margo `aria-hidden` and tab ↔ URL. Also from the review:
+  44px card buttons, no overlap between depth buttons, "Back to my level" after a rejected shift,
+  Helpful keeping focus, a one-row phone action bar, a light `GET /v1/me/saved/ids` for the reader,
+  snippet cleanup (markdown, sponsor links), domain-card copy matching what it counts.
+- After screenshots (32): `docs/evidence/design/after/` (library For you / Topics / Saved,
+  reader, open card, phone sheet, recap, profile, map inspector, sign-in); before (20):
+  `docs/evidence/design/before/`; audits: `docs/evidence/design/after-audit.txt`; flows,
+  contrast and measurements: `docs/evidence/design/acceptance.txt`.
