@@ -372,6 +372,7 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
                 {
                     "concept_id": m.concept_id,
                     "label": graph.get(m.concept_id).label,  # type: ignore[union-attr]
+                    "domain": graph.get(m.concept_id).domain,  # type: ignore[union-attr]
                     "from": m.from_band,
                     "to": m.to_band,
                 }
