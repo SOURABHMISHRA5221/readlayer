@@ -807,7 +807,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    Refresh + `rl:feed-stale`, unset-country hint), `scripts/check_outlets.py`,
    `scripts/collect_outlets.py --dry-run`, `make setup-feed-job`; tests; harness; checkpoint end
    of Oct 12 IST with the cut order.
-2. Ask Sourabh: demo personas' country (global-only by default); record as a decision.
+2. Demo personas read as India (decision 51, answered): `PERSONA_COUNTRY = "IN"`.
 3. Review, PR, deploy order API → scheduler setup (his yes) → manual run → seed dry run → seed →
    web; live check on his account (country set, Refresh).
 4. Then M8-local from `m8-resume`, then Wide layout.
