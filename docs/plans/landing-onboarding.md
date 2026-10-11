@@ -754,3 +754,58 @@ decision 46 checks, the copy/demo bottom check, axe 0, no horizontal scroll. Aft
 - Before/after screenshots at 1440×900, 1280×800 and 390×844, light and dark, into
   `docs/evidence/landing/d46-after/` and the log. Commit; the landing is frozen until the tweak
   window; then §C and §B (onboarding).
+
+### 46c/46d round 1 (plan-reviewer REVISE, 3 items; applied, these override R1–R3)
+1. **Phone clip legibility (option b, ask first).** ≈ 11px clip text on phones is put to Sourabh as
+   a question before the freeze commit; his answer goes in AUTOPILOT_LOG. Until he says yes, R3
+   lists "390 clip text ≥ 16px" as failing. If he wants phone versions instead, each `--clips` run
+   also records a 390px take from the same temporary reader (same write counts), served below
+   768px via `<source media>` with a phone poster, ≤ 400 KB each, checked ≥ 16px at 390.
+2. **Lighthouse before the freeze** (moved from Q4 into R3): pinned `lighthouse@12.8.2` against the
+   local preview, mobile (390) and desktop (1440), light theme; CLS < 0.1 and mobile LCP < 2.5 s
+   are gates; numbers in `docs/evidence/landing/d46-after/lighthouse.txt`. If CLS fails, the static
+   note gets the same metric-matched font fallbacks as the live card before the freeze.
+3. **Step 1's text says what the clip shows:** "Every note you open, skip or mark “Knew this”, and
+   every “Know this?” you answer, updates your map. Say “Not really” and next time that term is
+   highlighted for you." `landing_d46.py` checks step 1's rendered text contains "next time".
+
+### 46d product fix (Sourabh, 2026-10-11): no cut around the reload
+- Sourabh: "don't cut around the reload. Fix it in the product." After a "Know this?" answer is
+  saved (PATCH /v1/me/graph succeeds), the reader refetches the article's annotations and calls
+  `annotator.update()` with them, so "Not really" turns the term into a highlight at once and
+  "Yes" removes its mark, with the usual staggered ink-in; no page reload. A failed refetch keeps
+  the current marks (the answer is already saved; logged, no error shown). Test (web vitest): after
+  a successful answer the annotations are refetched and update() receives the new list; a failed
+  PATCH refetches nothing. Clip 1 is one continuous take (chip → "Not really" → "Noted, thanks."
+  → the term inks in). Step 1's text then needs no "next time" (round 1 item 3 is dropped): "…and
+  every “Know this?” you answer, updates your map, right away."
+- Sourabh approved the rest of R1–R3 including leaving out the phone frame; his approval of the
+  plan as written is taken to include R2's ≈ 11px phone clip text (confirmed with him in the
+  report).
+
+### 46d product fix round 1 (plan-reviewer REVISE, 3 items + note; applied, built and tested)
+1. **No second chip, and the answered chip stays.** The API leaves the prompt out on
+   `refresh=1`; the client also drops any prompt from the refetched list (`withoutPrompts`). The
+   annotator (0.7.2) frees an answered prompt's term when the prompt leaves the list (so the new
+   span can take it) but keeps its "Noted, thanks." chip until the page goes (cleared on a reader
+   change). Vitests (web `knowThisRefresh.test.ts`): a refetch carrying a different prompt renders
+   no second chip; the done chip is still there after `update()`; "Not really" inks the term in;
+   "Yes" leaves no mark; the article's text is unchanged; save failure → no refresh; refresh
+   failure → marks kept, logged.
+2. **Not a new page view.** `GET …/annotations?refresh=1` skips `record_view` (weekly trend,
+   today's prompt log) and the prompt; API test `test_refresh_after_an_answer_records_no_view_and_
+   brings_no_prompt`. It counts once per answer against the annotations rate limit (fine). The
+   refetch lives in `ReaderPage` (owner of the annotations) and is passed to `useAnnotator`; the
+   web `api.get` has no client cache and the URL differs; an open card stays open if its note is in
+   the new list (the annotator only closes leaving ones).
+3. **Scoring decides it, so it's tested where it's decided:**
+   `test_a_know_this_answer_turns_the_prompt_into_a_span_or_nothing` (tests/test_scorer.py): the
+   fixture's prompt concept is not a span before; after the same `correction()` PATCH applies,
+   "Not really" makes it a span and "Yes" makes it neither (nor the prompt). The clip relies on the
+   live article's "hedging" behaving the same; the recording run checks it.
+- Step 1's text: "Every note you open or mark “Knew this”, and every “Know this?” you answer,
+  updates your map, right away." ("skip" dropped: per DESIGN §6 a dismissal moves the annotation
+  threshold, not the map.)
+- 11px phone clip text: Sourabh's words so far are "Everything else in your 46c/46d plan is
+  approved, including leaving out the second phone frame." That isn't an explicit answer, so it is
+  asked again; until he says yes, "390 clip text ≥ 16px" stays failing in R3.

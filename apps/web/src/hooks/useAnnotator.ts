@@ -9,6 +9,7 @@ import {
 } from "@readlayer/annotator";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
+import { answerAndRefresh } from "../lib/answers";
 import { api } from "../lib/api";
 import { onBeforeFlush, trackEvent } from "../lib/events";
 import { loadExplanation, loadShifted, prefetchExplanations, reportExplanation } from "../lib/explanations";
@@ -50,11 +51,15 @@ export function useAnnotator(
   annotations: CardAnnotation[] | null,
   extras: (ParagraphMarker | PromptAnnotation)[] | null,
   persona: PersonaKey | null,
+  /** Refetch the article's annotations after a saved "Know this?" answer (decision 46d). */
+  refreshNotes?: () => Promise<void>,
 ): AnnotatorHandle {
   const annotatorRef = useRef<Annotator | null>(null);
   // Read at event time, so a persona switch doesn't rebuild the annotator.
   const personaRef = useRef(persona);
   personaRef.current = persona;
+  const refreshRef = useRef(refreshNotes);
+  refreshRef.current = refreshNotes;
   const [resolved, setResolved] = useState<string[] | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -82,10 +87,14 @@ export function useAnnotator(
     const annotator = createAnnotator(el, {
       onEvent,
       // "Know this?": the reader's own word goes straight to their graph (DESIGN §6.5).
-      onAnswer: async (prompt, known) => {
-        await api.correct(prompt.concept_id, known, personaRef.current);
-        setAnswers((m) => new Map(m).set(prompt.concept_id, { label: prompt.label, known }));
-      },
+      onAnswer: (prompt, known) =>
+        answerAndRefresh({
+          save: async () => {
+            await api.correct(prompt.concept_id, known, personaRef.current);
+            setAnswers((m) => new Map(m).set(prompt.concept_id, { label: prompt.label, known }));
+          },
+          refresh: () => refreshRef.current?.() ?? Promise.resolve(),
+        }),
       loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
       loadShifted: (a, shift) => loadShifted(articleKey, personaRef.current, a, shift),
       sidenote: () => railColumn(el),

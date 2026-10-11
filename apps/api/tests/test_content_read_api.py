@@ -119,3 +119,47 @@ def test_detail_carries_publisher_metadata(client):
         "2026-10-01",
     )
     assert body["domain"] == "finance"
+
+
+def test_refresh_after_an_answer_records_no_view_and_brings_no_prompt(client, monkeypatch):
+    """Decision 46d: the reader refetches after a "Know this?" answer with refresh=1."""
+    from app.store.reader_repo import ReaderRepo
+
+    views = []
+
+    async def record_view(self, *args):
+        views.append(args)
+
+    monkeypatch.setattr(ReaderRepo, "record_view", record_view)
+    # The demo reader here is never asked; give the scorer's result a real prompt (the bond one
+    # from the scorer fixture) so the route's handling of it is what's tested.
+    import dataclasses
+
+    from app.scoring import scorer as sc
+    from tests.test_scorer import annotate as fixture_annotate
+
+    asked = fixture_annotate(doc([
+        demand("a", "c_ebitda", pid="p0", salience=1.0),
+        demand("b", "c_bond", pid="p1", start=100, salience=0.8),
+    ], paras(2, 200))).prompt  # fmt: skip
+    assert isinstance(asked, sc.UncertaintyPrompt)
+    original = read_router.score_for
+
+    async def score_with_prompt(*args, **kwargs):
+        return dataclasses.replace(await original(*args, **kwargs), prompt=asked)
+
+    monkeypatch.setattr(read_router, "score_for", score_with_prompt)
+    store = InMemoryContentStore()
+    store.docs["p1"] = article("p1", "t", "s", [
+        demand("a", "c_ebitda", pid="p0", salience=1.0),
+        demand("b", "c_bond", pid="p1", start=100, salience=0.8),
+    ])  # fmt: skip
+    set_content_store(store)
+    first = client.get("/v1/content/p1/annotations").json()
+    assert len(views) == 1
+    assert any(a["kind"] == "prompt" for a in first["annotations"])  # a normal view asks
+    again = client.get("/v1/content/p1/annotations?refresh=1").json()
+    assert len(views) == 1  # not a new page view
+    assert all(a["kind"] != "prompt" for a in again["annotations"])
+    spans = lambda body: [a["id"] for a in body["annotations"] if a["kind"] == "span"]  # noqa: E731
+    assert spans(again) == spans(first)

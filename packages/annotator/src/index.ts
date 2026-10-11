@@ -36,7 +36,7 @@ export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
-export const ANNOTATOR_VERSION = "0.7.1";
+export const ANNOTATOR_VERSION = "0.7.2";
 
 export interface AnnotatorOptions {
   /** Interaction and reading events (DESIGN §9); the host batches them to /v1/events. */
@@ -170,6 +170,8 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   const prompts = new Map<string, Prompt>();
   // Prompts answered by this reader (a re-render after an update keeps them answered).
   const answered = new Set<string>();
+  // Their chips, kept in their "Noted" state after the prompt left the list (cleared for a new reader).
+  const released: HTMLElement[] = [];
   const pressed = new Map<string, Set<AnnotatorEventType>>();
   let active: Active | null = null;
   let linked: string | null = null;
@@ -500,6 +502,11 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     if (linked && leaving.includes(linked)) highlight(null);
     // Prompts step aside while spans move (a prompt's term is never a span's), then return.
     removePrompts(readerChanged ? [...prompts.keys()] : []);
+    if (readerChanged) released.splice(0).forEach((el) => el.remove());
+    // An answered prompt that's no longer listed frees its term (the refetched notes may make it
+    // a span, decision 46d) but keeps its "Noted, thanks." chip until the page goes.
+    const listed = new Set(annotations.filter((a) => a.kind === "prompt").map((a) => a.id));
+    releaseAnswered([...prompts.keys()].filter((id) => answered.has(id) && !listed.has(id)));
 
     if (leaving.length) {
       for (const id of leaving) {
@@ -608,6 +615,16 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       p.ask.el.remove();
       unwrap(root, p.segments);
       prompts.delete(id);
+    }
+  }
+
+  function releaseAnswered(ids: string[]): void {
+    for (const id of ids) {
+      const p = prompts.get(id);
+      if (!p) continue;
+      unwrap(root, p.segments);
+      prompts.delete(id);
+      released.push(p.ask.el);
     }
   }
 
