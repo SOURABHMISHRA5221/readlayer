@@ -15,6 +15,7 @@ import asyncio
 import logging
 import time
 from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING
 
 from app import llm
 from app.config import get_settings
@@ -41,7 +42,6 @@ from app.ingest.models import (
     StoredParagraph,
 )
 from app.ingest.urls import normalize_url, url_hash
-from app.privacy.redact import redact
 from app.store.content_repo import get_content_store
 from app.store.pending_repo import (
     PENDING_TTL,
@@ -50,6 +50,9 @@ from app.store.pending_repo import (
     NotPending,
     get_pending_repo,
 )
+
+if TYPE_CHECKING:
+    from app.privacy.pii import Findings
 
 log = logging.getLogger("app.ingest")
 
@@ -70,10 +73,17 @@ async def ingest_url(url: str, source: Source = "fetch", grow_slots: int = 0) ->
     return await analyse_pending(content_id)
 
 
-def submitted_texts(paragraphs: list[str]) -> list[str]:
-    """Extension text: cleaned like fetched text, then the strict redactor on top of the
-    client's own redaction (DESIGN §11.3)."""
-    return [redact(t) for t in clean_paragraphs(paragraphs)]
+def clean_submitted(paragraphs: list[str]) -> list[str]:
+    """Extension text, cleaned like fetched text. The PII backstop scans this; the strict
+    redactor then runs over it before anything is stored (router, DESIGN §11.3)."""
+    return clean_paragraphs(paragraphs)
+
+
+async def pii_check(paragraphs: list[str]) -> "Findings":
+    """The Presidio backstop (M8 §A3), off the event loop: spaCy is CPU-bound."""
+    from app.privacy import pii
+
+    return await asyncio.to_thread(pii.check, paragraphs)
 
 
 async def store_submitted(

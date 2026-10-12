@@ -16,7 +16,7 @@ from app.ingest import quota, submitted
 from app.ingest.models import ContentDoc, PendingDoc
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import ext_id, url_hash
-from app.privacy.redact import count_redactions
+from app.privacy.redact import count_redactions, redact
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
 from app.store.pending_repo import AnalysisBusy, AnalysisFailed, NotPending, get_pending_repo
@@ -24,6 +24,7 @@ from app.store.reader_repo import ReaderRepo
 
 router = APIRouter()
 
+PERSONAL_DATA = "This page looks like it holds personal information, so ReadLayer won't read it."
 MAX_URL_CHARS = 2048
 MAX_SUBMITTED_PARAGRAPHS = 200
 MAX_SUBMITTED_PARAGRAPH_CHARS = 5000
@@ -89,10 +90,16 @@ async def ingest_url(
     return await service.ingest_url(url, source=source, grow_slots=grow_slots)
 
 
-def submitted_texts(paragraphs: list[str]) -> list[str]:
+def clean_submitted(paragraphs: list[str]) -> list[str]:
     from app.ingest import service
 
-    return service.submitted_texts(paragraphs)
+    return service.clean_submitted(paragraphs)
+
+
+async def pii_refuses(paragraphs: list[str]) -> bool:
+    from app.ingest import service
+
+    return (await service.pii_check(paragraphs)).refuse
 
 
 async def store_submitted(
@@ -176,11 +183,14 @@ async def _post_submitted(
     try:
         doc: ContentDoc | PendingDoc | None = await submitted.reusable(caller.uid, body.url)
         if doc is None:
-            texts = submitted_texts(body.paragraphs)
+            cleaned = clean_submitted(body.paragraphs)
+            texts = [redact(t) for t in cleaned]  # the server's redaction on top of the client's
             found = sum(count_redactions(t) for t in body.paragraphs)
             content_id = ext_id(body.url, texts)
             doc = await submitted.get_any(content_id)
             if doc is None:
+                if await pii_refuses(cleaned):  # before anything is stored or charged
+                    return _error(422, "personal_data", PERSONAL_DATA)
                 if not await quota.reserve(caller, settings):
                     return quota.cap_reached(
                         caller, settings, "Articles already in the library stay free."

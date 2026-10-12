@@ -15,8 +15,13 @@ from collections.abc import Callable
 
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _PAN = re.compile(r"\b[A-Z]{5}[0-9]{4}[A-Z]\b")
-# Cards: 13–19 digits, grouped by single spaces/dashes or not at all; checked with Luhn.
-_CARD = re.compile(r"(?<![\w,.])(?:\d{4}[ -]){3}\d{1,7}(?![\w,.])|(?<![\w,.])\d{13,19}(?![\w,.])")
+# Cards: 13–19 digits, grouped by single spaces/dashes or not at all; checked with Luhn. An
+# ungrouped run also needs an issuer prefix (Visa 4, Mastercard 51–55 / 22–27, Amex 34/37,
+# Discover and RuPay 6, RuPay 81/82), so a 14-digit timestamp like 20081024060408 survives.
+_CARD = re.compile(
+    r"(?<![\w,.])(?:\d{4}[ -]){3}\d{1,7}(?![\w,.])"
+    r"|(?<![\w,.])(?:4|5[1-5]|2[2-7]|3[47]|6|8[12])\d{11,17}(?![\w,.])"
+)
 # Aadhaar: 12 digits printed as 4-4-4 groups with spaces (dashes would catch "2019-2020-2021").
 _AADHAAR = re.compile(r"(?<![\d,.])(?<!\d )[2-9]\d{3} \d{4} \d{4}(?! ?\d)(?![,.]\d)")
 # Phones: an international number (+country code), an Indian mobile (10 digits from 6–9,

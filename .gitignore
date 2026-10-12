@@ -23,6 +23,7 @@ data/concepts.prev.json
 data/links.prev.json
 data/heldout_state.jsonl
 data/heldout_report.md
+# M8 read-only corpus text export for the redaction / PII measurement (never committed)
 firestore-debug.log
 ui-debug.log
 
@@ -31,3 +32,4 @@ ui-debug.log
 
 # M2.2 seeding (local only)
 data/concepts.seeded.json
+data/corpus_paragraphs.json

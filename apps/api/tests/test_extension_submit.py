@@ -122,3 +122,17 @@ def test_demo_readers_are_never_gated(store, fetcher, fake_llm):
 def test_too_little_text_refunds_the_slot(store, fetcher, fake_llm, docs):
     resp = submit(client("e1", anonymous=True), ["Subscribe to read the full story here."])
     assert resp.status_code == 422 and slots_used(docs, "e1") == 0
+
+
+def test_a_page_of_personal_data_is_refused_before_anything_is_stored(
+    store, fetcher, fake_llm, docs
+):
+    import json
+    from pathlib import Path
+
+    pages = json.loads((Path(__file__).parent / "fixtures" / "pii_pages.json").read_text())
+    resp = submit(client("e1", anonymous=True), pages["refuse"][1]["paragraphs"])
+    assert resp.status_code == 422 and resp.json()["error"] == "personal_data"
+    assert store.docs == {} and not [p for p in docs.docs if p.startswith("pending_contents/")]
+    assert slots_used(docs, "e1") == 0 and ingested("e1") == frozenset()
+    assert fake_llm.calls == []

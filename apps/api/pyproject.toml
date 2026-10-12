@@ -15,6 +15,7 @@ dependencies = [
     "litellm==1.104.0",
     "networkx>=3.7",
     "numpy>=2.5.3",
+    "presidio-analyzer==2.2.362",
     "pydantic-settings>=2.15.0",
     "pyyaml>=6.0.3",
     "spacy>=3.8.16",

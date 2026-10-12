@@ -876,3 +876,25 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 ### Next steps (resume here, in order)
 1. Build on `m8-resume`: A2/A5 carry-over commit first, then API (A1, A3, A5 read gate, A6),
    annotator 0.8, extension, web `/connect`, README; tests; harness; checkpoint end of Oct 13 IST.
+
+### Build (2026-10-12)
+- 54d23ae carry-over from 2f037a1 (redaction format, fixture, typed mode, NOT_CORPUS exclusions).
+- 7056293 A1 + A6: `ext:` id per URL and text, fetch doc wins, same-reader reuse, `defer`,
+  `add_ingested` on every path, `pii_found_before_backstop`, 409 `onboarding_required`.
+- 42d40fd A5 read gate (6 routes; mutation check: 5 tests fail with the gate off).
+- 9cca874 PII fixtures frozen first. Then measured (read-only export of 338 stored docs, 323
+  fetch + 15 user_ingested, 12,369 paragraphs; `scripts/export_corpus_text`, `measure_pii`):
+  - Strict redactor: 10 paragraphs changed; 9 journalists' contact emails (real), 1 false
+    positive (a 14-digit timestamp passing Luhn as a card) → ungrouped card runs now need an
+    issuer prefix → 9 changed, all real contact data. Timestamp added to the shared fixture.
+  - Presidio: phones score exactly 0.4; PAN hits below 0.5 are its catch-all pattern lifted by
+    context (up to 19 per 1,000 words in ordinary articles). Policy: phones from 0.4, others
+    from 0.5. Corpus max 3.98 per 1,000 words (contact emails), 34/338 with any finding, ≤ 1
+    card. Fixtures: refuse 110 and 79, pass ≤ 6.9. Threshold 20 per 1,000 words with ≥ 3
+    findings, or ≥ 3 cards → **0 of 338 corpus articles refused**.
+  - Emails at `.example` aren't found (tldextract rejects non-public suffixes); the frozen
+    fixtures still refuse on phones. Client placeholders count as findings, so a page the
+    extension already redacted is still refused (test).
+  - Analyzer build 0.58 s, max RSS 165 MB (Cloud Run 1 GiB); a 1,350-word article scans in
+    0.2 s (runs in a thread). Built-in Aadhaar (Verhoeff) and PAN recognizers used instead of
+    hand-written regexes. Offline test counts socket attempts (tldextract falls back silently).
