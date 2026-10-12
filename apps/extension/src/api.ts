@@ -48,7 +48,7 @@ export async function run(op: ApiOp): Promise<ApiReply> {
   const session = await load();
   const persona = session?.persona ?? null;
   const density = session?.density ?? "balanced";
-  const p = persona ? `persona=${persona}` : "";
+  const p = persona ? `persona=${encodeURIComponent(persona)}` : "";
   const q = (extra = "") => {
     const parts = [extra, p].filter(Boolean).join("&");
     return parts ? `?${parts}` : "";

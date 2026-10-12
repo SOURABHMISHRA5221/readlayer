@@ -23,7 +23,7 @@ FEED_JOB := readlayer-feed-collect
 SECRETS  := UID_HASH_SALT=uid-hash-salt:latest,TAVILY_API_KEY=tavily-api-key:latest,YOUTUBE_API_KEY=youtube-api-key:latest
 
 .PHONY: dev dev-api dev-web dev-emulator test test-emulator smoke check-gcp setup-gcp web-config deploy-api \
-	deploy-web deploy-rules deploy-guard setup-feed-job run-feed-job extension-config
+	deploy-web deploy-rules deploy-guard setup-feed-job run-feed-job
 
 # Local only: API (:8000, real Firebase sign-in, reads Firestore + graph with this project's ADC)
 # and web (:5173, proxies /v1). Ctrl-C stops both. Needs apps/web/.env.local (make web-config).
@@ -99,16 +99,6 @@ print('\n'.join(f'VITE_FIREBASE_{k}={c[v]}' for k,v in [('API_KEY','apiKey'),('A
 	@echo "VITE_API_BASE=$$(gcloud run services describe $(SERVICE) --region $(REGION) --format='value(status.url)')" \
 		> apps/web/.env.production.local
 	@echo "wrote apps/web/.env.local and apps/web/.env.production.local (gitignored)"
-
-# M8: the extension's production build settings (gitignored), from the web app's public Firebase
-# config (make web-config) and the API's URL. Then: pnpm --filter extension build → apps/extension/dist.
-extension-config: check-gcp
-	test -f apps/web/.env.local || $(MAKE) web-config
-	@{ grep '^VITE_FIREBASE_API_KEY=' apps/web/.env.local; \
-	   echo "VITE_API_BASE=$$(gcloud run services describe $(SERVICE) --region $(REGION) --format='value(status.url)')"; \
-	   echo "VITE_WEB_BASE=https://$(PROJECT).web.app"; \
-	   echo "VITE_WEB_ORIGINS=$(HOSTING)"; } > apps/extension/.env.production.local
-	@echo "wrote apps/extension/.env.production.local (gitignored)"
 
 # Hosting origins only for CORS; secrets from Secret Manager, never env files or the image.
 # Startup CPU boost: extra CPU while an instance starts, which roughly halves cold starts.

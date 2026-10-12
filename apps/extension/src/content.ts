@@ -94,11 +94,13 @@ async function start({ webBase }: { webBase: string }): Promise<void> {
   const detail = await api<{ paragraphs: ServerParagraph[] }>({ op: "detail", id });
   const tagged = detail.ok ? tagParagraphs(document, detail.data.paragraphs) : null;
   if (!tagged) {
+    document.documentElement.removeAttribute(MOUNTED_ATTR); // a later click may try again
     showToast("Gloss couldn't place notes on this page.");
     return;
   }
   const notes = await loadNotes(id);
   if (!notes) {
+    document.documentElement.removeAttribute(MOUNTED_ATTR);
     showToast("Notes couldn't load. Try again in a minute.");
     return;
   }

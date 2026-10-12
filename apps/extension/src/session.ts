@@ -1,4 +1,4 @@
-import { FIREBASE_API_KEY, SECURETOKEN_URL } from "./config";
+import { SECURETOKEN_URL } from "./config";
 import type { Density, PersonaKey } from "./messages";
 
 /**
@@ -14,6 +14,7 @@ export interface Session {
   idToken: string;
   refreshToken: string;
   expiresAt: number; // ms since epoch
+  apiKey: string; // the web app's Firebase web API key (public), for securetoken
   persona: PersonaKey | null;
   density: Density;
 }
@@ -58,7 +59,7 @@ export async function idToken(force = false): Promise<string | null> {
   const session = await load();
   if (!session) return null;
   if (!force && session.expiresAt - Date.now() > REFRESH_MARGIN_MS) return session.idToken;
-  const res = await fetch(`${SECURETOKEN_URL}?key=${encodeURIComponent(FIREBASE_API_KEY)}`, {
+  const res = await fetch(`${SECURETOKEN_URL}?key=${encodeURIComponent(session.apiKey)}`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: session.refreshToken }),

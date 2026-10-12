@@ -14,7 +14,15 @@ export type PersonaKey = (typeof PERSONAS)[number]["key"];
 /** From the web app's Connect page (chrome.runtime.sendMessage to our id). */
 export type ExternalMessage =
   | { type: "ping" }
-  | { type: "connect"; idToken: string; refreshToken: string; expiresAt: number; persona?: PersonaKey | null }
+  | {
+      type: "connect";
+      idToken: string;
+      refreshToken: string;
+      expiresAt: number;
+      /** The web app's Firebase web API key (public), for refreshing the token. */
+      apiKey: string;
+      persona?: PersonaKey | null;
+    }
   | { type: "disconnect" };
 
 export interface Status {

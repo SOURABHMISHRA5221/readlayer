@@ -48,6 +48,7 @@ export interface ExtensionCredentials {
   idToken: string;
   refreshToken: string;
   expiresAt: number;
+  apiKey: string;
   persona: string | null;
 }
 

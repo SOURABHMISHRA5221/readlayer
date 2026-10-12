@@ -3,6 +3,7 @@ import { ANNOTATOR_CSS } from "@readlayer/annotator/src/styles";
 import { call, run } from "./api";
 import { WEB_BASE, WEB_ORIGINS } from "./config";
 import type { Prepared } from "./content";
+import { PERSONAS } from "./messages";
 import type {
   ContentMessage,
   Density,
@@ -79,7 +80,8 @@ async function status(): Promise<Status> {
 async function settings(persona?: PersonaKey, density?: Density): Promise<Status> {
   const session = await load();
   if (session) {
-    await save({ ...session, persona: persona ?? session.persona, density: density ?? session.density });
+    const known = persona && PERSONAS.some((p) => p.key === persona) ? persona : session.persona;
+    await save({ ...session, persona: known, density: density ?? session.density });
     if (density && !claims(session.idToken).anonymous) await call("PATCH", "/v1/me/settings", { density });
   }
   return status();
@@ -112,15 +114,18 @@ export async function onExternal(message: ExternalMessage, origin: string | unde
     return { ok: true };
   }
   if (message.type === "connect") {
+    const persona = message.persona ?? null;
     const valid = typeof message.idToken === "string" && typeof message.refreshToken === "string"
-      && Number.isFinite(message.expiresAt);  // prettier-ignore
+      && typeof message.apiKey === "string" && Number.isFinite(message.expiresAt)
+      && (persona === null || PERSONAS.some((p) => p.key === persona));  // prettier-ignore
     if (!valid) return { ok: false, error: "invalid" };
     const previous = await load();
     await save({
       idToken: message.idToken,
       refreshToken: message.refreshToken,
       expiresAt: message.expiresAt,
-      persona: message.persona ?? null,
+      apiKey: message.apiKey,
+      persona,
       density: previous?.density ?? "balanced",
     });
     return { ok: true };

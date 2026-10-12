@@ -37,8 +37,21 @@ describe("lib/extension", () => {
       sent = m;
       reply({ ok: true });
     });
-    const ok = await connectExtension({ idToken: "t", refreshToken: "r", expiresAt: 1, persona: "trader" });
+    const ok = await connectExtension({ idToken: "t", refreshToken: "r", expiresAt: 1, apiKey: "k", persona: "trader" });
     expect(ok).toBe(true);
-    expect(sent).toEqual({ type: "connect", idToken: "t", refreshToken: "r", expiresAt: 1, persona: "trader" });
+    expect(sent).toEqual({ type: "connect", idToken: "t", refreshToken: "r", expiresAt: 1, apiKey: "k", persona: "trader" });
+  });
+});
+
+describe("signing out lets the extension go", () => {
+  it("sign-out (also End demo and Delete my data) sends disconnect before Firebase sign-out", async () => {
+    const sent: string[] = [];
+    fakeChrome((_id, m, reply) => {
+      sent.push(m.type);
+      reply({ ok: true });
+    });
+    const { signOutUser } = await import("../src/lib/auth");
+    await signOutUser();
+    expect(sent).toEqual(["disconnect"]);
   });
 });

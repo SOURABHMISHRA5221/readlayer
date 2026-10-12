@@ -251,7 +251,7 @@ make dev                                  # API on :8000, web on :5173
 | Guardrails | `LLM_DAILY_BUDGET_USD`, `LLM_TIMEOUT_S`, `LLM_MAX_RETRIES`, `INGEST_DAILY_CAP`, `ANON_INGEST_DAILY_CAP`, `ANON_GLOBAL_INGEST_DAILY_CAP`, `ANON_SEARCH_DAILY_CAP`, `SEARCH_DAILY_CAP`, `YOUTUBE_SEARCH_DAILY_CAP` |
 | Secrets (Secret Manager in production) | `UID_HASH_SALT`, `TAVILY_API_KEY`, `YOUTUBE_API_KEY` |
 | Web app (written by `make web-config`) | `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, `VITE_API_BASE` |
-| Extension (written by `make extension-config`) | `VITE_FIREBASE_API_KEY`, `VITE_API_BASE`, `VITE_WEB_BASE`, `VITE_WEB_ORIGINS` |
+| Extension (committed, public: `apps/extension/.env.production`, `.env.emulator`) | `VITE_API_BASE`, `VITE_WEB_BASE`, `VITE_WEB_ORIGINS`, `VITE_USE_EMULATORS` |
 
 **Tests**
 
@@ -264,7 +264,7 @@ make test-emulator    # export and delete against the Firestore and Auth emulato
 
 Gloss also runs on any news page through a Chrome extension. It isn't on the Chrome Web Store; you load it unpacked. It asks for `activeTab`, `scripting` and `storage` only: no access to any site until you click it, and it never reads mail, banking or private pages, or a page with a password or card field.
 
-1. Build it: `make extension-config && pnpm --filter extension build` (writes `apps/extension/dist`).
+1. Build it: `pnpm install && pnpm --filter extension build` (writes `apps/extension/dist`; no cloud access needed: the build settings in `apps/extension/.env.production` are public, and the web app hands the extension its sign-in when you connect).
 2. Open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick `apps/extension/dist`.
 3. Pin Gloss to the toolbar.
 4. In the web app, open your account menu → **Use Gloss on any site** and press **Connect** (a demo session connects as its sample reader).

@@ -468,7 +468,7 @@ async def main() -> None:
         # Popup backstop first: this unfinished reader's session handed straight to the extension.
         token = await h.p.token()
         await worker.eval(f"chrome.storage.session.set({{session: {{idToken: {json.dumps(token)}, refreshToken: 'x', "
-                          f"expiresAt: Date.now() + 3e6, persona: null, density: 'balanced'}}}}).then(() => 1)")
+                          f"expiresAt: Date.now() + 3e6, apiKey: 'demo-key', persona: null, density: 'balanced'}}}}).then(() => 1)")
         await h.goto(SITES["bbc"], wait=5)
         pop = await h.popup()
         record("unfinished popup", {"setup_shown": await pop.eval("!document.getElementById('setup').hidden"),

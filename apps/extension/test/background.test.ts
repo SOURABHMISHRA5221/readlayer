@@ -61,7 +61,10 @@ const bg = await import("../src/background");
 
 function connect(provider: "anonymous" | "google.com") {
   store = {
-    session: { idToken: token(provider), refreshToken: "r", expiresAt: Date.now() + 3_600_000, persona: null, density: "balanced" },
+    session: {
+      idToken: token(provider), refreshToken: "r", expiresAt: Date.now() + 3_600_000, apiKey: "k", persona: null,
+      density: "balanced",
+    },  // prettier-ignore
   };
 }
 
@@ -121,12 +124,14 @@ describe("readTab", () => {
 });
 
 describe("onExternal (the web app's Connect page)", () => {
-  const msg = { type: "connect" as const, idToken: token("google.com"), refreshToken: "r", expiresAt: Date.now() + 1000 };
+  const msg = {
+    type: "connect" as const, idToken: token("google.com"), refreshToken: "r", expiresAt: Date.now() + 1000, apiKey: "k",
+  };  // prettier-ignore
 
   it("accepts our own origin", async () => {
     store = {};
     expect(await bg.onExternal(msg, "https://readlayer.web.app")).toEqual({ ok: true });
-    expect(store.session).toMatchObject({ refreshToken: "r", persona: null });
+    expect(store.session).toMatchObject({ refreshToken: "r", persona: null, apiKey: "k" });
   });
 
   it.each([undefined, "https://evil.example", "https://readlayer.web.app.evil.example"])(
@@ -137,6 +142,11 @@ describe("onExternal (the web app's Connect page)", () => {
       expect(store.session).toBeUndefined();
     },
   );
+
+  it("refuses a persona that isn't one of ours", async () => {
+    const bad = { ...msg, persona: "x&debug=1" } as unknown as typeof msg;
+    expect(await bg.onExternal(bad, "https://readlayer.web.app")).toEqual({ ok: false, error: "invalid" });
+  });
 
   it("refuses a malformed connect", async () => {
     const bad = { ...msg, refreshToken: 5 } as unknown as typeof msg;

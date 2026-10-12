@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "VITE_");
   const origins = (env.VITE_WEB_ORIGINS ?? "").split(",").map((o) => o.trim().replace(/\/$/, "")).filter(Boolean);
   if (!env.VITE_API_BASE || !origins.length) {
-    throw new Error(`extension build (${mode}): VITE_API_BASE and VITE_WEB_ORIGINS are required (make extension-config)`);
+    throw new Error(`extension build (${mode}): VITE_API_BASE and VITE_WEB_ORIGINS are required (see apps/extension/.env.production)`);
   }
   return {
     plugins: [manifest(origins)],

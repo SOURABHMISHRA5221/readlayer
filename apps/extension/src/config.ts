@@ -1,8 +1,7 @@
 /**
- * Build-time settings (Vite env). Production: `make extension-config` writes .env.production.local
- * from the web app's public Firebase config and the API's URL. Emulator harness:
- * `vite build --mode emulator` reads the committed .env.emulator (local hosts, demo key).
- * Nothing here is secret: a Firebase web API key identifies the project, it grants nothing alone.
+ * Build-time settings (Vite env), all public: the committed .env.production (the live API's
+ * URL and the web app's origins) or .env.emulator (local hosts, `vite build --mode emulator`).
+ * The Firebase web API key isn't built in: the Connect page hands it over with the session.
  */
 
 const env = import.meta.env as Record<string, string | undefined>;
@@ -11,7 +10,6 @@ const trim = (s: string | undefined) => (s ?? "").replace(/\/$/, "");
 
 export const API_BASE = trim(env.VITE_API_BASE);
 export const WEB_BASE = trim(env.VITE_WEB_BASE);
-export const FIREBASE_API_KEY = env.VITE_FIREBASE_API_KEY ?? "";
 export const USE_EMULATORS = env.VITE_USE_EMULATORS === "1";
 /** Firebase's token refresh endpoint (the Auth emulator serves the same path locally). */
 export const SECURETOKEN_URL = USE_EMULATORS
