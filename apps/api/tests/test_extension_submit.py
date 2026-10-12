@@ -101,6 +101,9 @@ def test_server_redaction_backstop_is_counted_and_applied(store, fetcher, fake_l
     assert "[REDACTED:email]" in store.docs[body["content_id"]].paragraphs[0].text
     clean = submit(client("e2", anonymous=True), UPDATED).json()
     assert clean["pii_found_before_backstop"] == 0
+    # The extension's own placeholders are not something the backstop found.
+    redacted = [PARAS[0] + " Write to [REDACTED:email] for tips.", *PARAS[1:]]
+    assert submit(client("e3", anonymous=True), redacted).json()["pii_found_before_backstop"] == 0
 
 
 @pytest.mark.parametrize("finished", [False, True])

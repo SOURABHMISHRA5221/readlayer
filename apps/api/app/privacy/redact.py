@@ -84,4 +84,5 @@ def redact(text: str, typed: bool = False) -> str:
 
 
 def count_redactions(text: str) -> int:
-    return redact(text).count("[REDACTED:")
+    """Placeholders `redact` adds: personal data still in `text` (existing ones don't count)."""
+    return redact(text).count("[REDACTED:") - text.count("[REDACTED:")

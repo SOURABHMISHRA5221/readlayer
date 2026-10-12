@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from app.privacy.redact import redact
+from app.privacy.redact import count_redactions, redact
 
 CASES = json.loads((Path(__file__).parent / "fixtures" / "redaction.json").read_text())
 
@@ -18,6 +18,11 @@ def test_contact_data_is_redacted(case):
 @pytest.mark.parametrize("text", CASES["unchanged"], ids=lambda t: t[:30])
 def test_news_text_is_left_alone(text):
     assert redact(text) == text
+
+
+def test_count_redactions_counts_only_what_is_left_to_redact():
+    assert count_redactions("Mail sam@x.com or [REDACTED:phone].") == 1
+    assert count_redactions("Already clean: [REDACTED:email], [REDACTED:phone].") == 0
 
 
 @pytest.mark.parametrize("text", ["Call 415-555-0132 now", "or 020 7946 0958 at home"])

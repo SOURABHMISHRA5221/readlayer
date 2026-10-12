@@ -176,9 +176,7 @@ async def _post_submitted(
 ) -> ContentResponse | JSONResponse:
     """Extension text (M8): an existing doc if there is one (free), else a new `ext:` doc."""
     if not caller.is_anonymous and not await submitted.onboarded(caller.uid):
-        return _error(
-            409, "onboarding_required", "Finish setting up Gloss in the web app first."
-        )
+        return _error(409, "onboarding_required", "Finish setting up Gloss in the web app first.")
     found = 0
     try:
         doc: ContentDoc | PendingDoc | None = await submitted.reusable(caller.uid, body.url)

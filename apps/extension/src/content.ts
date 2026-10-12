@@ -27,6 +27,7 @@ import { showToast } from "./toast";
 export type Prepared = { mounted: true } | { refused: Refusal } | { noArticle: true } | { ready: true };
 
 const MOUNTED_ATTR = "data-rl-mounted";
+const SCHEME_ATTR = "data-rl-scheme";
 const ANALYSE_LIMIT_MS = 180_000;
 const RETRY_MS = 2_000;
 const FLUSH_MS = 5_000;
@@ -101,6 +102,7 @@ async function start({ webBase }: { webBase: string }): Promise<void> {
     showToast("Notes couldn't load. Try again in a minute.");
     return;
   }
+  document.documentElement.setAttribute(SCHEME_ATTR, pageScheme(tagged.root));
   const overlay = mountOverlay(id, tagged.root, webBase);
   const { resolved } = await overlay.show(notes);
   const preread = notes.find((a): a is PrereadAnnotation => a.kind === "preread");
@@ -108,6 +110,17 @@ async function start({ webBase }: { webBase: string }): Promise<void> {
   showToast(resolved ? `Notes are ready: ${resolved} on this page.` : "Nothing new for you on this page.", {
     hideAfterMs: 4_000,
   });
+}
+
+/** Light or dark, from the article's own background (the first opaque one up the tree). */
+export function pageScheme(from: Element): "light" | "dark" {
+  for (let el: Element | null = from; el; el = el.parentElement) {
+    const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/.exec(getComputedStyle(el).backgroundColor);
+    if (!m || (m[4] !== undefined && Number(m[4]) < 0.5)) continue;
+    const [r, g, b] = [m[1], m[2], m[3]].map((v) => Number(v) / 255) as [number, number, number];
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b < 0.45 ? "dark" : "light";
+  }
+  return "light"; // browsers paint a transparent page white
 }
 
 async function loadNotes(id: string, refresh = false): Promise<AnyAnnotation[] | null> {
