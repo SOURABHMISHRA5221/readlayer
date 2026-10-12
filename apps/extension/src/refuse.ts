@@ -1,6 +1,6 @@
 /**
- * Pages ReadLayer never reads (DESIGN §11.3), checked on click before anything else: mail, banking
- * and private-network URLs, non-web schemes, and any page with a password or card field. A
+ * Pages Gloss never reads (DESIGN §11.3), checked on click before anything else: mail, banking,
+ * sign-in and private-network URLs, non-web schemes, and any page with a password or card field. A
  * refused page gets nothing from us (no CSS, no attributes); the popup says why.
  */
 
@@ -18,6 +18,9 @@ const BANK_HOSTS = ["onlinesbi.sbi", "sbi.co.in", "kotak.com", "paypal.com", "ch
   "hsbc.com", "hsbc.co.in", "hsbc.co.uk", "revolut.com", "wise.com", "paytm.com",
   "phonepe.com", "razorpay.com", "lloydsbank.com", "natwest.com", "santander.co.uk"];  // prettier-ignore
 const BANK_WORD = /bank|netbanking|ibanking/;
+// Sign-in pages (accounts.google.com, login.microsoftonline.com, …): a signed-out mail tab lands
+// on one, and its first step has no password field yet.
+const SIGN_IN_LABEL = /^(accounts|login|signin|auth|sso)\./;
 const PRIVATE_SUFFIXES = [".local", ".internal", ".corp", ".lan", ".home", ".home.arpa", ".intranet",
   ".localhost"];  // prettier-ignore
 
@@ -49,6 +52,7 @@ export function refusalForUrl(href: string): Refusal | null {
   if (!host.includes(".") || host === "localhost") return "private_page"; // single-label: intranet
   if (privateIp(host) || PRIVATE_SUFFIXES.some((s) => host.endsWith(s))) return "private_page";
   if (onHost(host, MAIL_HOSTS) || onHost(host, BANK_HOSTS) || BANK_WORD.test(host)) return "private_page";
+  if (SIGN_IN_LABEL.test(host)) return "private_page";
   return null;
 }
 
