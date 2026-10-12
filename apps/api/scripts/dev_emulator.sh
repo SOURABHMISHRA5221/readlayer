@@ -24,7 +24,10 @@ SEED="$(uv run python -m scripts.seed_emulator)"
 echo "$SEED"
 BUDGET="$(echo "$SEED" | sed -n 's/^HARNESS_BUDGET_USD=//p')"
 
+# The web app reaches the API through Vite's proxy; the extension (emulator build) calls it
+# directly from its own origin (M8).
 ENV=dev FIRESTORE_PROJECT=demo-readlayer FIREBASE_PROJECT=demo-readlayer \
+  CORS_ORIGINS=http://localhost:5173,chrome-extension://lnfamfbeffepopbmedfenfmgljoacbmg \
   LLM_DAILY_BUDGET_USD="$BUDGET" uv run fastapi dev app/main.py --port 8000 &
 
 cd "$ROOT"
