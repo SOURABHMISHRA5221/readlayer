@@ -14,7 +14,11 @@ import re
 from collections.abc import Callable
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-_EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# Emails: anything but spaces, quotes and brackets around one @, with a dotted domain. Not \w,
+# which in Python leaves out combining marks (Devanagari vowel signs); redact.ts uses the same.
+_EMAIL_CHARS = r"[^\s@<>()\[\]{},;:\"'`]"
+_LABEL = r"[^\s@<>()\[\]{},;:\"'`.]+"
+_EMAIL = re.compile(rf"{_EMAIL_CHARS}+@{_LABEL}(?:\.{_LABEL})+")
 _PAN = re.compile(r"\b[A-Z]{5}[0-9]{4}[A-Z]\b")
 # Cards: 13–19 digits, grouped by single spaces/dashes or not at all; checked with Luhn. An
 # ungrouped run also needs an issuer prefix (Visa 4, Mastercard 51–55 / 22–27, Amex 34/37,

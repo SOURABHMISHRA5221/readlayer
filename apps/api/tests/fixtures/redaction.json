@@ -32,6 +32,18 @@
     {
       "in": "Paid with 4111111111111111 online.",
       "out": "Paid with [REDACTED:card] online."
+    },
+    {
+      "in": "लिखें राम@उदाहरण.भारत पर।",
+      "out": "लिखें [REDACTED:email] पर।"
+    },
+    {
+      "in": "फ़ोन करें +९१ ९८७६५ ४३२१० पर।",
+      "out": "फ़ोन करें [REDACTED:phone] पर।"
+    },
+    {
+      "in": "Mail (desk@news.example), then wait.",
+      "out": "Mail ([REDACTED:email]), then wait."
     }
   ],
   "unchanged": [
@@ -45,6 +57,8 @@
     "The 10-year yield rose 12 basis points to 4.25% between 1990 and 2024.",
     "Card 4111 1111 1111 1112 is not a valid number.",
     "Its order book stood at 3,40,500 crore, with 2,34,56,789 shares traded.",
-    "Archived copy captured at 20081024060408 by the Wayback Machine."
+    "Archived copy captured at 20081024060408 by the Wayback Machine.",
+    "सेंसेक्स १,२३४.५६ अंक गिरकर ८१,५०१.३६ पर बंद हुआ।",
+    "Follow @ReadLayer and #markets for updates."
   ]
 }

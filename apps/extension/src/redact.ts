@@ -8,31 +8,44 @@
 
 const W = "[\\p{L}\\p{M}\\p{N}_]";
 
-const EMAIL = new RegExp(`[\\p{L}\\p{M}\\p{N}_.+-]+@[\\p{L}\\p{M}\\p{N}_-]+(?:\\.[\\p{L}\\p{M}\\p{N}_-]+)+`, "gu");
+// Emails: anything but spaces, quotes and brackets around one @, with a dotted domain (as Python).
+const EMAIL_CHARS = "[^\\s@<>()\\[\\]{},;:\"'`]";
+const LABEL = "[^\\s@<>()\\[\\]{},;:\"'`.]+";
+const EMAIL = new RegExp(`${EMAIL_CHARS}+@${LABEL}(?:\\.${LABEL})+`, "gu");
 const PAN = new RegExp(`(?<!${W})[A-Z]{5}[0-9]{4}[A-Z](?!${W})`, "gu");
 // Cards: 13–19 digits grouped 4-4-4-x, or ungrouped with an issuer prefix; Luhn-checked.
 const CARD = new RegExp(
-  `(?<![\\p{L}\\p{M}\\p{N}_,.])(?:\\d{4}[ -]){3}\\d{1,7}(?![\\p{L}\\p{M}\\p{N}_,.])` +
-    `|(?<![\\p{L}\\p{M}\\p{N}_,.])(?:4|5[1-5]|2[2-7]|3[47]|6|8[12])\\d{11,17}(?![\\p{L}\\p{M}\\p{N}_,.])`,
+  `(?<![\\p{L}\\p{M}\\p{N}_,.])(?:\\p{Nd}{4}[ -]){3}\\p{Nd}{1,7}(?![\\p{L}\\p{M}\\p{N}_,.])` +
+    `|(?<![\\p{L}\\p{M}\\p{N}_,.])(?:4|5[1-5]|2[2-7]|3[47]|6|8[12])\\p{Nd}{11,17}(?![\\p{L}\\p{M}\\p{N}_,.])`,
   "gu",
 );
 // Aadhaar: 4-4-4 with spaces, first digit 2–9.
-const AADHAAR = /(?<![\d,.])(?<!\d )[2-9]\d{3} \d{4} \d{4}(?! ?\d)(?![,.]\d)/gu;
+const AADHAAR = /(?<![\p{Nd},.])(?<!\p{Nd} )[2-9]\p{Nd}{3} \p{Nd}{4} \p{Nd}{4}(?! ?\p{Nd})(?![,.]\p{Nd})/gu;
 // Phones: +country code, an Indian mobile (0?[6-9]xxxx xxxxx), or a bracketed area code.
 const PHONE = new RegExp(
-  "\\+\\d{1,3}(?:[ -]?\\(?\\d{1,5}\\)?){2,5}" +
-    "|(?<![\\d,.])0?[6-9]\\d{4}[ -]?\\d{5}(?!\\d|[,.]\\d)" +
-    "|\\(0?\\d{2,4}\\)[ -]?\\d{3,4}[ -]?\\d{3,4}(?!\\d|[,.]\\d)",
+  "\\+\\p{Nd}{1,3}(?:[ -]?\\(?\\p{Nd}{1,5}\\)?){2,5}" +
+    "|(?<![\\p{Nd},.])0?[6-9]\\p{Nd}{4}[ -]?\\p{Nd}{5}(?!\\p{Nd}|[,.]\\p{Nd})" +
+    "|\\(0?\\p{Nd}{2,4}\\)[ -]?\\p{Nd}{3,4}[ -]?\\p{Nd}{3,4}(?!\\p{Nd}|[,.]\\p{Nd})",
   "gu",
 );
 
-const digits = (s: string) => s.replace(/\D/g, "");
+// Python's \d and int() take any Unicode digit (Devanagari, Bengali, …); so do these.
+const digits = (s: string) => s.replace(/[^\p{Nd}]/gu, "");
+const ZEROS = [0x30, 0x660, 0x6f0, 0x7c0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xbe6, 0xc66, 0xce6, 0xd66,
+  0xde6, 0xe50, 0xed0, 0xf20, 0x1040, 0xff10];  // prettier-ignore
+const digitValue = (ch: string) => {
+  const cp = ch.codePointAt(0)!;
+  const zero = ZEROS.find((z) => cp >= z && cp <= z + 9);
+  return zero === undefined ? NaN : cp - zero;
+};
 
 function luhn(ds: string): boolean {
   let total = 0;
   let alt = false;
-  for (let i = ds.length - 1; i >= 0; i--) {
-    let d = Number(ds[i]);
+  const chars = [...ds];
+  for (let i = chars.length - 1; i >= 0; i--) {
+    let d = digitValue(chars[i]!);
+    if (Number.isNaN(d)) return false;
     if (alt) {
       d *= 2;
       if (d > 9) d -= 9;
@@ -45,10 +58,11 @@ function luhn(ds: string): boolean {
 
 const notCard = (m: string) => {
   const d = digits(m);
-  return !(d.length >= 13 && d.length <= 19 && luhn(d));
+  const n = [...d].length;
+  return !(n >= 13 && n <= 19 && luhn(d));
 };
 const notPhone = (m: string) => {
-  const n = digits(m).length;
+  const n = [...digits(m)].length;
   return n < 8 || n > 15;
 };
 
