@@ -22,7 +22,7 @@
 .profile__back:hover { color: var(--accent); }
 .profile__bar-end { display: flex; justify-content: flex-end; align-items: center; gap: var(--s2); }
 .profile__main {
-  width: min(100% - 2 * var(--gutter), 1100px);
+  width: min(100% - 2 * var(--gutter), var(--page-max));
   margin: 0 auto;
   padding: var(--s12) 0 var(--s24);
 }
@@ -34,7 +34,16 @@
   text-wrap: balance;
 }
 @media (max-width: 600px) { .profile__title { font-size: 32px; } }
-.profile__main > section:not(.kmap):not(.doms):not(.summary) { max-width: 760px; }
+/* Wide layout (decision 45): the sections around the map sit in pairs, side by side from about
+   1000px and stacked below it; a pair with one section is a single column. Text keeps its measure. */
+.profile__pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+  align-items: start;
+  gap: var(--section-gap) var(--col-gap);
+  margin-top: var(--section-gap);
+}
+.profile__pair > section { min-width: 0; max-width: 760px; margin-top: 0; animation: rise var(--dur-slow) var(--ease) both; }
 .profile__h2 {
   margin: 0 0 var(--s4);
   font: 700 22px / 1.25 var(--font-head);
@@ -84,19 +93,26 @@
 /* Domain cards (Design pass C7) */
 .dom__grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1px;
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
   margin: 0;
   padding: 0;
   list-style: none;
   border: 1px solid var(--hairline);
   border-radius: 10px;
   overflow: hidden;
-  background: var(--hairline);
+  background: var(--paper);
 }
-.dom { padding: var(--s5) var(--s5) var(--s4); background: var(--paper); }
+/* Each card rules its own right and bottom edge (the grid clips the outer ones), so a short
+   last row leaves plain paper, not a grey cell. */
+.dom { padding: var(--s5) var(--s5) var(--s4); background: var(--paper); box-shadow: 1px 0 0 var(--hairline), 0 1px 0 var(--hairline); }
+/* More columns as the page widens; ProfilePage sets --cols-N (rows filled evenly) for the
+   number that fit at each width. */
+@media (min-width: 961px) { .dom__grid { --cols: var(--cols-4, 4); } }
+@media (min-width: 1100px) { .dom__grid { --cols: var(--cols-5, 4); } }
+@media (min-width: 1280px) { .dom__grid { --cols: var(--cols-6, 4); } }
+@media (min-width: 1680px) { .dom__grid { --cols: var(--cols-7, 4); } }
 .dom__name { margin: 0 0 2px; font: 600 16px / 1.3 var(--font-ui); }
-.dom__level { margin: var(--s2) 0 2px; font: 700 26px / 1.15 var(--font-head); letter-spacing: -0.02em; }
+.dom__level { margin: var(--s2) 0 2px; font: 700 clamp(21px, 1.72vw, 26px) / 1.15 var(--font-head); letter-spacing: -0.02em; }
 .dom__detail { margin: 0; font: 400 13.5px / 1.45 var(--font-ui); color: var(--muted); }
 .dom__up { color: var(--accent-ink); font-weight: 500; }
 .dom__scale { display: flex; gap: 3px; margin-top: var(--s3); }
@@ -122,7 +138,7 @@
 .lg--goal { box-shadow: inset 0 0 0 1.6px var(--mark-goal); border: 1px dashed var(--mark-goal); box-sizing: border-box; background: none; }
 .kmap__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 360px);
   border: 1px solid var(--hairline);
   border-radius: 12px;
   overflow: hidden;
@@ -130,6 +146,10 @@
 }
 .kmap__canvas { position: relative; background: var(--paper); }
 .kmap__canvas svg { display: block; width: 100%; height: 100%; }
+/* Wide layout: above 760px the map is drawn at its own pixel size (lib/mapLayout.ts mapSize),
+   centred in the canvas, so labels stay 12px instead of scaling with the box. */
+.kmap__canvas[data-fit="exact"] { display: grid; place-items: center; }
+.kmap__canvas[data-fit="exact"] svg { width: auto; height: auto; }
 .kmap__spoke, .kmap__edge { stroke: var(--hairline); stroke-width: 1.2; }
 .kmap__bridge { fill: none; stroke: var(--accent-line); stroke-width: 1.2; stroke-dasharray: 3 4; opacity: 0.8; }
 .kmap__you { fill: var(--ink); }
@@ -283,6 +303,7 @@
 
 /* Reading goals and the map's goal view (M7.5; restyled in the design pass). */
 .goals { margin-top: var(--s8); }
+.profile__pair > .goals { margin-top: 0; }
 .goals__list { list-style: none; margin: 0 0 var(--s4); padding: 0; display: grid; gap: var(--s4); }
 .goals__item { display: grid; gap: var(--s2); }
 .goals__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); }

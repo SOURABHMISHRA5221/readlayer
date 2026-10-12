@@ -47,7 +47,7 @@ export function Row(p: RowProps) {
           <span className="row__source">{p.source}</span>
           <span className="row__context">{p.context}</span>
         </p>
-        <h3 className="row__title">
+        <h2 className="row__title">
           <a
             href={p.href}
             target={p.external ? "_blank" : undefined}
@@ -65,7 +65,7 @@ export function Row(p: RowProps) {
             {p.title}
             {p.external && <span className="visually-hidden"> (opens in a new tab)</span>}
           </a>
-        </h3>
+        </h2>
         {p.subtitle && cleanSnippet(p.subtitle) && <p className="row__sub">{cleanSnippet(p.subtitle)}</p>}
         {p.why && <p className="row__why">{p.why}</p>}
         <div className="row__meta">

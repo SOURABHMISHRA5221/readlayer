@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { BAND_GLYPH, evidenceText, previewLines, thetaPercent, thetaText, thetaWord } from "../src/lib/profileFormat";
+import { BAND_GLYPH, evidenceText, previewLines, thetaPercent, thetaText, thetaWord, cardColumns } from "../src/lib/profileFormat";
 
 describe("profile wording", () => {
   it("turns evidence into plain language with a date", () => {
@@ -41,5 +41,25 @@ describe("profile wording", () => {
       "Explanation length: normal → short",
       "Analogies from: none → software",
     ]);
+  });
+});
+
+// Wide layout (decision 45): topic cards fill their rows evenly, so a row never ends in one
+// stray card beside empty cells.
+describe("card columns", () => {
+  it.each([
+    [4, 6, 4], // a demo persona: one row of four
+    [5, 6, 5],
+    [6, 6, 6],
+    [6, 5, 3], // six cards where five fit: 3 + 3, not 5 + 1
+    [7, 6, 4], // 4 + 3
+    [8, 6, 4],
+    [10, 6, 5],
+    [10, 7, 5],
+    [14, 7, 7],
+    [1, 6, 1],
+    [0, 6, 1],
+  ])("%i cards with room for %i across sit %i across", (cards, room, want) => {
+    expect(cardColumns(cards, room)).toBe(want);
   });
 });

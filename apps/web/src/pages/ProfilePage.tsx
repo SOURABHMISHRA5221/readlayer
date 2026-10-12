@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 import { EditBox } from "../components/profile/EditBox";
 import { Goals } from "../components/profile/Goals";
@@ -14,7 +14,7 @@ import { domainLabel } from "../lib/format";
 import { personaOf, personaParam, readerPersona } from "../lib/personas";
 import { FRAMES, profileApi, type Domain, type Frame, type Goal, type Profile } from "../lib/profileApi";
 import { BUSINESS_DOMAINS } from "../lib/taxonomy";
-import { thetaPercent, thetaText, thetaWord } from "../lib/profileFormat";
+import { cardColumns } from "../lib/profileFormat";
 import { navigate, withParams } from "../lib/router";
 import "../styles/profile.css";
 
@@ -87,8 +87,11 @@ export default function ProfilePage({ url }: { url: URL }) {
               <p className="summary__text">{profile.summary.text}</p>
             </section>
             <DomainCards profile={profile} />
-            <Goals demo={!!persona} refreshKey={version} onGoals={setGoalList}
-              onShowOnMap={(g) => setMapGoal({ id: g.id, label: g.label })} />
+            <div className="profile__pair">
+              <Goals demo={!!persona} refreshKey={version} onGoals={setGoalList}
+                onShowOnMap={(g) => setMapGoal({ id: g.id, label: g.label })} />
+              <WeekCard profile={profile} demo={!!persona} />
+            </div>
             <KnowledgeMap
               persona={persona}
               domains={splitDomains(profile.domains)[0].filter((d) => d.concepts > 0).map((d) => d.domain)}
@@ -98,11 +101,14 @@ export default function ProfilePage({ url }: { url: URL }) {
               onClearGoal={() => setMapGoal(null)}
               goalTargets={goalTargets}
             />
-            <WeekCard profile={profile} demo={!!persona} />
-            <Frames profile={profile} demoName={name} onChanged={refresh} />
-            <Preferences profile={profile} onChanged={refresh} disabled={!!persona} />
-            <EditBox persona={persona} personaName={name} onChanged={refresh} />
-            <DataControls demo={isDemo} canRedo={!isDemo && profile.onboarding.done} paused={profile.summary.learning_paused} onChanged={refresh} />
+            <div className="profile__pair">
+              <Frames profile={profile} demoName={name} onChanged={refresh} />
+              <Preferences profile={profile} onChanged={refresh} disabled={!!persona} />
+            </div>
+            <div className="profile__pair">
+              <EditBox persona={persona} personaName={name} onChanged={refresh} />
+              <DataControls demo={isDemo} canRedo={!isDemo && profile.onboarding.done} paused={profile.summary.learning_paused} onChanged={refresh} />
+            </div>
           </>
         )}
       </main>
@@ -130,6 +136,11 @@ export function levelStep(theta: number): number {
 
 function interestWord(i: number): string {
   return i >= 0.75 ? "high" : i >= 0.5 ? "some" : i > 0 ? "a little" : "not set";
+}
+
+/** How many cards fit across at each width (profile.css picks one), rows filled evenly. */
+function columnsFor(cards: number): CSSProperties {
+  return Object.fromEntries([4, 5, 6, 7].map((room) => [`--cols-${room}`, cardColumns(cards, room)])) as CSSProperties;
 }
 
 /** Domain cards (Design pass C7): level, ideas on your map, interest, this week's rises. */
@@ -162,11 +173,11 @@ function DomainCards({ profile }: { profile: Profile }) {
       <h2 id="doms-title" className="visually-hidden">
         Your topics
       </h2>
-      <ul className="dom__grid">{primary.map(card)}</ul>
+      <ul className="dom__grid" style={columnsFor(primary.length)}>{primary.map(card)}</ul>
       {rest.length > 0 && (
         <details className="bars__more">
           <summary>Other topics ({rest.length})</summary>
-          <ul className="dom__grid">{rest.map(card)}</ul>
+          <ul className="dom__grid" style={columnsFor(rest.length)}>{rest.map(card)}</ul>
         </details>
       )}
     </section>

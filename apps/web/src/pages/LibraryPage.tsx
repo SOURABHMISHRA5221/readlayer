@@ -269,7 +269,7 @@ export function LibraryPage({ url }: { url: URL }) {
             )}
           </section>
         </main>
-        <Sidebar persona={persona} demo={demo} topics={topics} onTopic={(d) => go({ tab: "topics", topic: d })} />
+        <Sidebar persona={persona} demo={demo} topics={topics} settled={load.status !== "loading"} onTopic={(d) => go({ tab: "topics", topic: d })} />
       </div>
     </>
   );

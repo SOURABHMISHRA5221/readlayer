@@ -460,6 +460,15 @@ intentional; screenshots at 1280, 1440, 1920 and 390 (light and dark), axe 0.
 - **Reader:** the article text column stays ~680px; the note margin on the right as now; at
   ≥ 1280px a slim left rail (contents, reading progress, notes count).
 
+**Built 2026-10-13** (plan `docs/plans/wide-layout.md`, web only). Two readings of the words
+above, flagged to Sourabh and recorded in STATUS §4: the rail's "contents" is a **reading spine**
+(a track of the article with a dot per note; articles have no headings), and the "mini-map" is a
+**grid of topic tiles** (a cluster of dots per topic; the full map is not legible at 240–280px).
+The container is 1520px from 1440px so rows never get narrower than before. Acceptance (STATUS
+§23): `tools/shots/wide.py` passes every check at 1024, 1280, 1440, 1920 and 390, light and dark
+(axe 0 at every impact level, no horizontal scroll, row and map sizes, the text column 680px,
+note cards in the right margin, the article's words unchanged); main bundle ≤ 150 KB.
+
 ## M8-local — Chrome extension, unpacked (Oct 14)
 Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not
 published to the Chrome Web Store (a post-hackathon item).

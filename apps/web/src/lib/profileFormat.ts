@@ -88,3 +88,10 @@ export function previewLines(p: EditPreview["preview"]): string[] {
 export function interestLine(i: { domain: string; direction: "more" | "less" }): string {
   return `${i.direction === "more" ? "More" : "Less"} ${domainLabel(i.domain) ?? i.domain} in your feed`;
 }
+
+/** Topic cards across (Wide layout, decision 45): as many as fit, but rows filled evenly, so six
+ *  cards where five fit sit 3 + 3 rather than 5 + 1. */
+export function cardColumns(cards: number, room: number): number {
+  if (cards < 1) return 1;
+  return Math.ceil(cards / Math.ceil(cards / Math.max(1, room)));
+}

@@ -26,7 +26,9 @@ function railColumn(root: HTMLElement): SidenoteBox | null {
   const rail = root.closest(".reader__body")?.querySelector<HTMLElement>(".rail");
   const box = rail?.getBoundingClientRect();
   if (!box || box.width === 0) return null;
-  return { left: box.left, width: Math.min(SIDENOTE_MAX_PX, view.innerWidth - box.left - EDGE_PX) };
+  // Up to the content's right edge, not the window's: a classic scrollbar is inside innerWidth.
+  const right = root.ownerDocument.documentElement.clientWidth || view.innerWidth;
+  return { left: box.left, width: Math.min(SIDENOTE_MAX_PX, right - box.left - EDGE_PX) };
 }
 
 export interface AnnotatorHandle {

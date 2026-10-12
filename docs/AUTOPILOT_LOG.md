@@ -1030,3 +1030,44 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    (body names the four deviations), green CI, merge, `make deploy-web` (his yes), live check.
 4. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut. Then M9 (Oct 15).
 
+## Wide layout (decision 45) — built (2026-10-13)
+
+- 3c13084 the 760px map snapshot before any change; 3b707e1 `tools/shots/wide.py` and the
+  **before run** (rows 720px from 1280, map 798×630 scaled 1.05, six topic cards 4 + 2 with a
+  grey cell, reader grid 1044px; three moderate axe findings the older harness filtered out).
+  An orphaned Firestore emulator from the M8 harness (java on :8085, parent gone) was stopped
+  first so the stack could start.
+- Built in the plan's order, pure helpers test-first: `mapSize` and the ellipse above 760px
+  (the pinned 760 snapshots still match; dots no longer pile on the edges: clamping now takes
+  part in every pass on the wide path), `lib/weekMap.ts`, `lib/spine.ts`,
+  `lib/readingProgress.ts`, `cardColumns`; then tokens, profile, library (two sidebar groups,
+  lazy `WeekPanel`), reader (lazy `ReadingSpine`, `railColumn` on `clientWidth`).
+- Harness on the final code: **0 failed checks**, axe 0 at every impact level on 85 states,
+  main bundle 148.32 KB. STATUS §23 has the numbers and what changed from the plan.
+- Three things the harness caught that screenshots alone would not: the Read any link field
+  overflowing the narrower sidebar; a new reader's first library load taking ≈ 20 s on the
+  emulator once a fourth request raced the others to create the user record (the map request
+  now waits for the library's first answer; STATUS §5); and a headless page going "hidden"
+  after a key press, which froze transitions and looked like an app bug.
+
+## Extension shows no notes on a Hindu article (Sourabh, 2026-10-13, mid-session)
+
+- Not site-specific and not an error. Production logs for his four clicks (19:08–19:11 UTC):
+  every request 200, the article read as 11 paragraphs, but demands linked 1/18, 0/8, 1/45 and
+  2/8 and **no concept growth ran**. Earlier that evening five articles he opened each reserved 5
+  growth slots (25 = his daily cap) while adding 17 concepts; slots are never returned.
+- Told him in the session with a three-part proposal (return unused slots, raise the caps,
+  grow again on reopen plus an honest message). **Waiting for his answer** before touching the
+  caps (cost guardrails, decision 35). STATUS §5, first row.
+
+### Next steps (resume here, in order)
+1. Sourabh's answers: (a) the extension fix above: now, or first item of M9; (b) the two
+   readings of decision 45 (reading spine, topic tiles); (c) his manual Gmail and bank-login
+   refusal check (still the only open M8 item).
+2. Wide layout: milestone-reviewer on `wide-layout` → fix until SHIP → push, PR `Wide layout: …`
+   (body names the four deviations), green CI, merge → `make deploy-web` (his yes) → live check
+   at 1440 as a demo reader, and his own look at the three pages.
+3. The emulator stack is running from this session (`make dev-emulator`, log in the session's
+   scratchpad); stop it when the review is done.
+4. M9 (Oct 15), freeze Oct 16.
+

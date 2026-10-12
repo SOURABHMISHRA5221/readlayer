@@ -768,7 +768,9 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
 2. **Domain cards** (Design pass). Per topic: a level word from θ (New to you, Getting there,
    Comfortable, Confident, Advanced) on a 5-step scale with its text, ideas known (edges at
    understands or above), interest in words, and "+N this week" from the week's band rises in
-   that topic. Rated and chosen topics first; the rest behind "Other topics".
+   that topic. Rated and chosen topics first; the rest behind "Other topics". As many across as
+   fit (4 at 961px up to 7 at 1680px), rows filled evenly (`cardColumns`: six cards where five
+   fit sit 3 + 3); 2 across to 960px, 1 to 420px.
 3. **Knowledge map** (Design pass; replaces the Cytoscape/dagre map). An SVG overview of every
    topic first: "You" in the middle, one cluster per topic on a ring (deterministic layout with a
    fixed number of collision passes, `lib/mapLayout.ts`), solid dots for concepts at heard of or
@@ -781,9 +783,14 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
    band[, ready to learn][, in a goal]"; shapes carry the meaning as well as colour. The
    inspector beside the map shows the definition, "Why we think so" (the last 3 evidence items,
    or "our estimate" for prior-only nodes) and "I know this" / "I don't". The list view shows the
-   same nodes by topic (the default below 640 px).
+   same nodes by topic (the default below 640 px). **Size (Wide layout, decision 45):** in a
+   box of 760px or more the map is laid out for the box (`mapSize`: its width in 40px steps up
+   to 1160, height 680 to 780) and drawn at that pixel size, with the clusters on an ellipse so
+   they reach the sides; in a narrower box (phones, tablets, 1024px) it keeps the fixed 760×600
+   canvas scaled in, and `layout()` returns exactly what it did before (pinned by a snapshot).
 4. **This week.** Concepts that moved up a band in the last 7 days, and the
-   annotations-per-1,000-words trend by week (falling = the overlay is learning).
+   annotations-per-1,000-words trend by week (falling = the overlay is learning). Since the Wide
+   layout it sits beside Reading goals, above the map (on a phone: goals, this week, map).
 5. **Analogy domains.** The reader's THINKS_IN domains, editable (choose from the fixed list
    used by explanations; at most 3).
 6. **Data controls.** Export (GET /v1/me/export), Delete (DELETE /v1/me), and a
@@ -1131,7 +1138,17 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
 - **Library**: tabs For you (the feed, §17) · Topics (the corpus with topic and source filters) ·
   Saved; single-column rows (source initial and name, "in Topic · format", bold title, serif
   subtitle, time, "N ideas new to you", save where the row has a library id, "show less" on feed
-  rows) and a sidebar with Read any link, goals and topic chips.
+  rows) and a sidebar with Read any link, goals and topic chips. **Wide layout (decision 45):**
+  the top bar, library and profile share one container, 1280px and 1520px from 1440px; rows up
+  to 820px wide with a 4:3 thumbnail from 1280px. The sidebar has two groups, tools (Read any
+  link, Topics for you) and the reader's own (Your map this week, Your goals): one column up to
+  1439px, side by side from 1440px (the third column), DOM order equal to visual order. **Your
+  map this week** (from 960px; a lazy chunk; one `GET /v1/me/graph?view=overview`, asked for
+  after the library's first answer): a tile per topic with a small cluster of dots (up to 8 a
+  topic, 24 in all, this week's risers first and ringed), the topic's name and idea count in
+  text, the week in one line ("3 ideas moved up this week: …") and a link to the full map. It
+  is a picture with a text equivalent, not a control, and not a scaled copy of the profile's map
+  (STATUS §4).
 - **Reader**: kicker, 44px title, serif dek, byline; a sticky action bar (notes density Fewer /
   For me / More, Helpful, save, copy link, open original) and a reading-progress line; "Before you
   read" as a path (the known prerequisite where it starts, ticked; the article's key idea last; a
@@ -1141,8 +1158,18 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   flushing events), each with Undo (the opposite correction, so the row then shows the resulting
   band), the "Not really" answers as one row each ("Next on your path", never also a band move),
   and up to two Up next items that teach them, else Up next's top two under a neutral "Read
-  next"; then Up next.
+  next"; then Up next. **Wide layout (decision 45):** from 1280px a slim left rail, the
+  **reading spine** (a lazy chunk): the notes count, minutes left ("Finished" at the end) and a
+  track of the whole article with a dot where each note sits (solid new, ring refresher, the
+  hovered or open note's dot enlarged) and the part above mid-screen filled. Articles are stored
+  without headings, so this stands in for "contents" (STATUS §4); the dots are a picture, the
+  margin list and the highlights are the controls. The text column stays 680px; the grid is
+  1164px at 1280 and 1392px at 1920; the right margin is 300–360px.
 - **Profile**: the Gloss title, the summary as a serif lede, domain cards, the map (§15.1).
+  **Wide layout (decision 45):** the library's container; topic cards 4 to 7 across with rows
+  filled evenly; the map laid out at its box's own size; the sections around the map in pairs
+  (Reading goals | This week, Analogies | Preferences, Describe yourself | Your data), side by
+  side from about 1000px.
 
 ## 20. Landing (Landing and onboarding, decisions 41, 44, 45)
 

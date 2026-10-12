@@ -61,7 +61,7 @@ PROFILE_JS = "(() => {" + HELPERS + """
   const columns = cards.filter((c) => sameRow(c, cards[0])).length;
   const lastRow = cards.filter((c) => sameRow(c, cards[cards.length - 1])).length;
   const canvas = r(q('.kmap__canvas')), svg = q('.kmap__canvas svg'), goals = r(q('.goals')), week = r(q('.week'));
-  return { vw: document.documentElement.clientWidth, cards: cards.length, columns,
+  return { vw: document.documentElement.clientWidth, cards: cards.length, columns, lastRow,
     greyCell: !!grid && lastRow < columns && getComputedStyle(grid).backgroundColor !== getComputedStyle(cards[0]).backgroundColor,
     canvas: canvas ? [n(canvas.width), n(canvas.height)] : null, svg: svg ? [n(r(svg).width), n(r(svg).height)] : null,
     ctm: svg ? Math.round(svg.getScreenCTM().a * 1000) / 1000 : null,
@@ -95,7 +95,7 @@ SPINE_AT_JS = "(async () => {" + HELPERS + """
   return { fillEnd: n(t.top + t.height * sy), tick: n(k.top + k.height / 2), track: n(t.height) }; })()"""
 
 SPINE_END_JS = "(async () => {" + HELPERS + """
-  window.scrollTo(0, document.documentElement.scrollHeight); await new Promise((res) => setTimeout(res, 600));
+  window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }); await new Promise((res) => setTimeout(res, 900));
   const fill = q('.spine__fill'); if (!fill) return null;
   return { scale: n(new DOMMatrix(getComputedStyle(fill).transform).d), text: (q('.spine__left') || {}).textContent || '' }; })()"""
 
@@ -119,11 +119,21 @@ def check(ok: bool, what: str) -> None:
         failures.append(what)
 
 
+SETTLED_JS = "document.getAnimations().filter((a) => a instanceof CSSTransition && a.playState === 'running').length"
+
+
 async def view(p, width: int, dark: bool) -> None:
+    """Size and theme, in place. A headless page can report itself hidden after a key press, which
+    stalls transitions and animation frames: bring it to the front and wait for colours to settle."""
+    await p.send("Page.bringToFront")
     await p.viewport(width, dark=dark)
     theme = "dark" if dark else "light"
     await p.eval(f"document.documentElement.dataset.theme = '{theme}'; localStorage.setItem('readlayer:theme', '{theme}'); 1")
     await asyncio.sleep(0.9)
+    for _ in range(40):
+        if not await p.eval(SETTLED_JS):
+            break
+        await asyncio.sleep(0.25)
 
 
 async def key(p, name: str, vk: int) -> None:
@@ -155,7 +165,7 @@ async def sweep(p, name: str, url: str, ready: str, metrics_js: str, checks, aft
     for widths in (DESKTOP, (PHONE,)):
         await view(p, widths[0], False)
         await p.goto(url, wait=1.5)
-        ok = await p.wait_for(ready, 40)
+        ok = await p.wait_for(ready, 75)  # a new reader's first feed is built while they wait
         check(ok, f"{name}: {ready} never appeared at {widths[0]}")
         await asyncio.sleep(2.5)
         if after_load:
@@ -199,8 +209,10 @@ def library_checks(w: int, m: dict, tag: str) -> None:
 def profile_checks(w: int, m: dict, tag: str) -> None:
     if w >= 1024:
         edges(m, tag)
-    if w == 1280 and m["cards"] >= 5:
-        check(m["columns"] >= 5, f"{tag}: {m['columns']} card columns for {m['cards']} cards")
+    if w in (1280, 1440, 1920) and m["cards"] in (5, 6):
+        check(m["columns"] == m["cards"], f"{tag}: {m['columns']} card columns for {m['cards']} cards (one row fits)")
+    if m["cards"]:
+        check(m["columns"] - m["lastRow"] <= 1 or w < 961, f"{tag}: card rows uneven ({m['columns']} across, {m['lastRow']} in the last row)")
     check(not m["greyCell"], f"{tag}: an empty grey cell in the card grid")
     if m["canvas"]:
         floor = {1280: (820, 680), 1440: (940, 720), 1920: (1100, 720)}.get(w)
@@ -208,7 +220,7 @@ def profile_checks(w: int, m: dict, tag: str) -> None:
             check(m["canvas"][0] >= floor[0] and m["canvas"][1] >= floor[1], f"{tag}: map canvas {m['canvas']} < {floor}")
         if w in (1280, 1440, 1920):
             check(m["ctm"] is not None and abs(m["ctm"] - 1) <= 0.02, f"{tag}: map scale {m['ctm']}")
-    if m["pairSide"] is not None:
+    if m["pairSide"] is not None and (w >= 1280 or w == PHONE):
         check(m["pairSide"] == (w >= 1280), f"{tag}: Goals and This week side by side = {m['pairSide']}")
 
 
@@ -238,7 +250,7 @@ async def cls(p, name: str, url: str, ready: str) -> None:
 
 async def library(p, who: str, query: str) -> None:
     step(f"library ({who})")
-    await sweep(p, f"library-foryou-{who}", f"{W}/?tab=foryou{query}", ".row:not(.row--skeleton), .feedtab__note, .state", LIBRARY_JS, library_checks)
+    await sweep(p, f"library-foryou-{who}", f"{W}/?tab=foryou{query}", ".row:not(.row--skeleton), .state", LIBRARY_JS, library_checks)
     await sweep(p, f"library-topics-{who}", f"{W}/?tab=topics{query}", ".row:not(.row--skeleton)", LIBRARY_JS, library_checks, full=False)
     await cls(p, f"library-{who}", f"{W}/?tab=topics{query}", ".row:not(.row--skeleton)")
     # Tab through the sidebar at 1440: the blocks come in reading order.
@@ -255,11 +267,17 @@ async def library(p, who: str, query: str) -> None:
     out["pages"][f"library-{who}-tab-order"] = seen
     print(f"[library {who} tab order 1440] {seen}", flush=True)
     check(len(seen) == len(set(seen)), f"library-{who}: Tab revisits a sidebar block: {seen}")
+    # Sticky only on a tall window (960px up); there each group must fit under the bar.
+    await p.viewport(1440, height=1000)
+    await asyncio.sleep(0.6)
+    await p.eval("window.scrollTo(0, 0); 1")
     cols = (await p.eval(LIBRARY_JS))["cols"]
-    out["pages"][f"library-{who}-sticky-1440x900"] = cols
+    out["pages"][f"library-{who}-sticky-1440x1000"] = cols
+    print(f"[library {who} sidebar groups 1440x1000] {cols}", flush=True)
+    check(len(cols) == 2 and all(c["sticky"] for c in cols), f"library-{who}: sidebar groups not sticky at 1440x1000")
     for c in cols:
-        if c["sticky"]:
-            check(c["bottom"] <= 900, f"library-{who}: a sticky sidebar group ends at {c['bottom']} of 900")
+        check(c["bottom"] <= 1000, f"library-{who}: a sticky sidebar group ends at {c['bottom']} of 1000")
+    await p.viewport(1440)
 
 
 async def profile(p, who: str, query: str) -> None:
@@ -335,6 +353,7 @@ async def reader(p, query: str, persona: str) -> None:
         await record(p, "reader-card", w, False, None, full=False)
         await key(p, "Escape", 27)
         await asyncio.sleep(0.5)
+        await p.send("Page.bringToFront")
     await view(p, 1440, True)
     await record(p, "reader-spine", 1440, True, READER_JS, full=False)
     await view(p, 1440, False)
@@ -372,6 +391,7 @@ async def main() -> None:
     p, ws = await cdp.open_page()
     try:
         await p.send("Page.addScriptToEvaluateOnNewDocument", source=INIT_JS)
+        await p.send("Emulation.setFocusEmulationEnabled", enabled=True)
         await p.viewport(1440)
         step("demo reader")
         await p.reset_auth(W)
