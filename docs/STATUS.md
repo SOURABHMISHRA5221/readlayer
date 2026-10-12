@@ -66,7 +66,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 
 | Piece | Where it runs | State |
 |---|---|---|
-| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live**: revision `readlayer-api-00024` (decision 50; M8 not deployed yet), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
+| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live**: revision `readlayer-api-00025-cf4` (M8, 2026-10-12), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
 | `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live** (decision 50 build; M8's Connect page not deployed yet): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
 | `packages/annotator` | Bundled into the web app and the extension | 0.8.0 (`ANNOTATOR_VERSION` = package.json): as 0.7.x (two-part card, paragraph markers, "Know this?" chip, pre-read, reading signals, inline host, 46d refresh) plus `styles: "external"` on `createAnnotator` and `renderPreread` and the exported `ANNOTATOR_CSS`, so the extension applies the CSS itself (M8) |

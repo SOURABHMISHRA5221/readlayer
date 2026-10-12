@@ -964,3 +964,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    test reader deleted → Sourabh's manual Gmail and bank-login refusals.
 3. `make extension-zip` → GitHub release with the zip (his yes) → STATUS §1/§22 live rows.
 4. Then Wide layout (decision 45; 1.9 KB of bundle headroom).
+
+### M8 API deployed (2026-10-12)
+- `make deploy-api` on Sourabh's yes: revision `readlayer-api-00025-cf4`, 100% of traffic.
+  Smoke: /health 200; unauthenticated submitted body 401; CORS preflight 200 for the extension
+  origin and the Hosting origin, 400 for another extension's origin; startup log clean (graph
+  2026-10-10-folded-5206+g1 in 1.0 s); no warnings beyond the smoke requests.
+- Next: `make deploy-web` (his yes), then the live check, the manual refusals and the release zip.
