@@ -162,12 +162,13 @@ def test_heldout_urls_may_not_overlap_the_corpus(tmp_path, monkeypatch):
     assert set(build_concepts.corpus_sources()) == {"https://x.test/a"}
 
 
-def test_user_ingested_docs_are_never_corpus(tmp_path):
+@pytest.mark.parametrize("source", ["user_ingested", "extension"])
+def test_reader_brought_docs_are_never_corpus(source):
     from tests.test_scorer import doc
 
     listed = doc([]).model_copy(update={"content_id": "a", "url": "https://x.test/a"})
     reader = listed.model_copy(
-        update={"content_id": "b", "url": "https://x.test/b", "source": "user_ingested"}
+        update={"content_id": "b", "url": "https://x.test/b", "source": source}
     )
     unlisted = listed.model_copy(update={"content_id": "c", "url": "https://x.test/c"})
     sources = {"https://x.test/a": "mint", "https://x.test/b": "mint"}

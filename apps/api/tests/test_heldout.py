@@ -6,6 +6,15 @@ from scripts import eval_heldout
 from scripts.ingest_corpus import CorpusEntry, parse_corpus
 
 
+@pytest.mark.parametrize("source", ["user_ingested", "extension"])
+def test_heldout_docs_skip_missing_and_reader_brought(source):
+    from tests.test_scorer import doc
+
+    kept = doc([]).model_copy(update={"content_id": "a"})
+    brought = kept.model_copy(update={"content_id": "b", "source": source})
+    assert [d.content_id for d in eval_heldout.heldout_docs([kept, None, brought])] == ["a"]
+
+
 def test_parse_reads_an_optional_domain_column():
     entries = parse_corpus(
         ["# header", "https://a.test/1\tmint", "https://b.test/2\tbbc\thealth", ""]

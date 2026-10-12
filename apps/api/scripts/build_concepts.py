@@ -50,7 +50,7 @@ from app.graph.overrides import (
     pending_adds,
     split_groups,
 )
-from app.ingest.models import USER_INGESTED, ContentDoc, Demand
+from app.ingest.models import ContentDoc, Demand, is_corpus
 from app.ingest.safe_fetch import FetchError, SafeFetcher
 from app.ingest.urls import normalize_url
 from app.log import configure_logging
@@ -112,7 +112,7 @@ def heldout_urls() -> set[str]:
 
 def select_corpus(docs: list[ContentDoc], sources: dict[str, str]) -> list[ContentDoc]:
     """Docs listed in the corpus file, never reader-ingested ones (even if the URL is listed)."""
-    return [d for d in docs if d.url in sources and d.source != USER_INGESTED]
+    return [d for d in docs if d.url in sources and is_corpus(d)]
 
 
 def corpus_sources() -> dict[str, str]:

@@ -284,7 +284,8 @@ def test_resolve_privacy_nothing_reaches_search_logs_or_store(env, caplog, docs)
     assert env["provider"].queries == []
     # (b) models see only individual redacted pieces with no exact match, never the full text
     embedded = [t for call in env["embed"].calls for t in call if t not in ot.topic_texts()]
-    assert set(embedded) == {"Formula racing", "price rises", "zz unknown thing", "[email]"}
+    redacted = "[REDACTED:email]"
+    assert set(embedded) == {"Formula racing", "price rises", "zz unknown thing", redacted}
     assert all(text not in t and "me@example.com" not in t for t in embedded)
     asked = [q.phrase for q in env["confirm"].questions]
     assert asked == ["price rises"]  # the only piece with candidates above the threshold

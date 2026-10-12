@@ -187,7 +187,8 @@ def test_prompt_gets_redacted_text_and_fixed_lists_only(env, caplog):
     assert resp.status_code == 200
     (call,) = env.calls
     assert set(call["vars"]) == {"text", "domains", "frames"}
-    assert "sam@example.com" not in call["vars"]["text"] and "[email]" in call["vars"]["text"]
+    text = call["vars"]["text"]
+    assert "sam@example.com" not in text and "[REDACTED:email]" in text
     assert "98765" not in call["vars"]["text"]
     assert "g1" not in repr(call["vars"])
     assert not [r for r in caplog.records if "options well" in r.getMessage() + repr(r.__dict__)]
