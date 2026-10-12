@@ -38,3 +38,27 @@ describe("knowledge map layout", () => {
     expect(layout(nodes.filter((n) => n.domain === "finance"), ["finance"], 760, 560).center).toBeNull();
   });
 });
+
+/** The demo personas' shape: 4 topics of 16 ideas. */
+const persona: LayoutNode[] = ["economics", "finance", "business", "policy"].flatMap((d) =>
+  Array.from({ length: 16 }, (_, i) => ({ id: `${d}-${i}`, label: `${d} idea ${i}`, domain: d, weight: 1 - i / 20, rank: i })),
+);
+const coords = (l: ReturnType<typeof layout>) => ({
+  center: l.center,
+  clusters: l.clusters.map((c) => [c.domain, Math.round(c.x * 100) / 100, Math.round(c.labelY * 100) / 100]),
+  nodes: l.nodes.map((n) => [n.id, Math.round(n.x * 100) / 100, Math.round(n.y * 100) / 100, n.showLabel]),
+});
+
+// Wide layout (decision 45): phones, tablets and 1024px keep the 760px canvas, so its output
+// must not move. Snapshot taken from the code before the wide change.
+describe("knowledge map layout at 760px and below is unchanged", () => {
+  it("three topics at 760×560", () => {
+    expect(coords(layout(nodes, ["finance", "health", "sports"], 760, 560))).toMatchSnapshot();
+  });
+  it("a persona's four topics at 760×600", () => {
+    expect(coords(layout(persona, ["economics", "finance", "business", "policy"], 760, 600))).toMatchSnapshot();
+  });
+  it("one topic at 760×600", () => {
+    expect(coords(layout(persona.filter((n) => n.domain === "finance"), ["finance"], 760, 600))).toMatchSnapshot();
+  });
+});
