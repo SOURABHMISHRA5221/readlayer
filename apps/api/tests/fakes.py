@@ -127,3 +127,15 @@ def consented(client):
 
 
 from tests.fake_auth import FakeAuthAdmin, auth, token  # noqa: E402,F401  (re-export)
+
+
+def onboard(uid: str) -> None:
+    """A signed-in reader who has consented and finished onboarding (M8's extension gate)."""
+    import asyncio
+
+    from app.store.docstore import get_doc_store
+
+    async def seed(t):
+        t.set(f"users/{uid}", {"consent": {"version": "consent-v1"}, "onboarding_done": True})
+
+    asyncio.run(get_doc_store().run(seed))

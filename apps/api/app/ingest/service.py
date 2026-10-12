@@ -41,6 +41,7 @@ from app.ingest.models import (
     StoredParagraph,
 )
 from app.ingest.urls import normalize_url, url_hash
+from app.privacy.redact import redact
 from app.store.content_repo import get_content_store
 from app.store.pending_repo import (
     PENDING_TTL,
@@ -69,21 +70,22 @@ async def ingest_url(url: str, source: Source = "fetch", grow_slots: int = 0) ->
     return await analyse_pending(content_id)
 
 
-async def ingest_submitted(
-    url: str, title: str, paragraphs: list[str], grow_slots: int = 0
-) -> ContentDoc:
-    """Extension shape: text already extracted (and redacted) client-side."""
+def submitted_texts(paragraphs: list[str]) -> list[str]:
+    """Extension text: cleaned like fetched text, then the strict redactor on top of the
+    client's own redaction (DESIGN §11.3)."""
+    return [redact(t) for t in clean_paragraphs(paragraphs)]
+
+
+async def store_submitted(
+    content_id: str, url: str, title: str, texts: list[str], grow_slots: int = 0
+) -> PendingDoc:
+    """Phase 1 for extension text (no fetch, no LLM): the pending doc under its `ext:` id, or the
+    one another request stored first."""
     host = fetch.validate_url(url).host
-    content_id = url_hash(url)
-    if cached := await _cached(content_id):
-        return cached
-    if await get_pending_repo().get(content_id) is None:
-        texts = clean_paragraphs(paragraphs)
-        await _store_pending(
-            content_id, url, url, title.strip() or host, host, texts, "extension",
-            grow_slots=grow_slots,
-        )  # fmt: skip
-    return await analyse_pending(content_id)
+    return await _store_pending(
+        content_id, url, normalize_url(url), title.strip() or host, host, texts, "extension",
+        grow_slots=grow_slots,
+    )  # fmt: skip
 
 
 async def fetch_and_extract(url: str, source: Source = "fetch", grow_slots: int = 0) -> PendingDoc:
