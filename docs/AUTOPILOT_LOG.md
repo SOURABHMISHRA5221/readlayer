@@ -857,3 +857,22 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    `extension` NOT_CORPUS exclusions by hand). Plan → plan-reviewer loop → build.
 2. Then Wide layout (decision 45). Follow-ups on the M9 list: Telugu-title video, policy fallback
    thin, bundle headroom 2.4 KB.
+
+## M8-local (resumed 2026-10-12, branch m8-resume)
+
+### Plan amendment
+- `m8-resume` was an ancestor of main: fast-forwarded to 0ba30e1. The approved Oct 10 plan
+  (5d6d00f) amended for today's main: annotator 0.8 (`styles: "external"`, CSS via
+  `insertCSS`), per-reader visibility (M7.5 built most of it), onboarding gate, wip 2f037a1
+  carried by hand (redaction format + fixture + tests, three remaining `is_corpus` exclusions).
+- plan-reviewer round 1: **REVISE** (12). My round-1 text started from the pre-approval draft on
+  main and dropped approved items (`ext:` id, Presidio evidence, token/URL safeguards, approved
+  acceptance): all restored. New: extension text readable only by its submitters (+ a text hash
+  in the `ext:` id), typed-mode redaction keeps the broad catch, `/connect` survives the
+  onboarding gate, `renderPreread` styles, token sheet, bundle budget.
+- Round 2: **REVISE** (2): same reader reuses their own `ext:` doc; refusals before `insertCSS`.
+- Round 3: **APPROVE** (nits applied, d79bab9).
+
+### Next steps (resume here, in order)
+1. Build on `m8-resume`: A2/A5 carry-over commit first, then API (A1, A3, A5 read gate, A6),
+   annotator 0.8, extension, web `/connect`, README; tests; harness; checkpoint end of Oct 13 IST.
