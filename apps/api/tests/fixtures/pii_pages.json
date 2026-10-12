@@ -1,0 +1,72 @@
+{
+  "_doc": "M8 §A3 refuse/pass pages for the Presidio backstop (app/privacy/pii.py). Frozen: committed before the corpus measurement and never changed afterwards (decision 26). All synthetic; names, numbers and addresses are made up.",
+  "refuse": [
+    {
+      "name": "contact page",
+      "paragraphs": [
+        "Contact our newsroom. For story tips write to tips@dailyledger.example or call the night desk on +91 98201 44312. Corrections go to corrections@dailyledger.example.",
+        "Business desk: Priya Raman, business editor, priya.raman@dailyledger.example, +91 98330 21876. Markets: Arjun Mehta, arjun.mehta@dailyledger.example, 098670 55120.",
+        "Politics desk: Sana Qureshi, sana.qureshi@dailyledger.example, +91 99200 31457. Sports: Dev Kapoor, dev.kapoor@dailyledger.example, +91 97690 88213.",
+        "Subscriptions and billing: subscriptions@dailyledger.example, (022) 4921 7700, Monday to Saturday, 9 am to 6 pm. Advertising: ads@dailyledger.example, (022) 4921 7711.",
+        "London bureau: +44 20 7946 0321, london@dailyledger.example. New York bureau: +1 (212) 555-0187, newyork@dailyledger.example. Singapore: +65 6555 0192."
+      ]
+    },
+    {
+      "name": "donor list",
+      "paragraphs": [
+        "Our supporters this quarter. We thank every reader who gave to the Reader Fund. Donors who agreed to be named are listed below with the contact details they gave us for receipts.",
+        "Anita Desai, Pune, Rs 5,000, anita.desai@mailbox.example, 98220 41355. Rohan Iyer, Chennai, Rs 2,500, rohan.iyer@mailbox.example, 94440 18276. Meera Nair, Kochi, Rs 10,000, meera.n@mailbox.example, 98470 22931.",
+        "Karan Singh, Delhi, Rs 1,000, karan.singh@mailbox.example, 98110 70442. Leela Bose, Kolkata, Rs 3,000, leela.bose@mailbox.example, 98300 66518. Farhan Ali, Lucknow, Rs 2,000, farhan.ali@mailbox.example, 94150 37209.",
+        "Gift by card ending 4242 from Vikram Rao, card 4111 1111 1111 1111 on file for the monthly gift. PAN for the 80G receipt: ABCPR1234K. Aadhaar for KYC: 2345 6789 0123.",
+        "Sunita Joshi, Jaipur, Rs 7,500, sunita.joshi@mailbox.example, 98290 14567. Thomas George, Bengaluru, Rs 4,000, t.george@mailbox.example, 98450 90311."
+      ]
+    }
+  ],
+  "pass": [
+    {
+      "name": "markets wrap",
+      "paragraphs": [
+        "MUMBAI, Oct 9 - The Sensex fell 1,234.56 points, or 1.5%, to 81,501.36 on Wednesday, while the Nifty 50 lost 412.3 points to 24,781.10, as foreign investors sold Rs 8,293 crore of shares, provisional exchange data showed.",
+        "The rupee closed at 83.97 per dollar, weaker than its previous close of 83.82. The 10-year government bond yield rose 4 basis points to 6.82%, the highest since August 14, after inflation data due on October 14 was seen above 5.1%.",
+        "Turnover on the NSE cash segment was Rs 1,12,456 crore, against a six-month average of Rs 98,340 crore. Volume in Reliance Industries shares was 12345678, about twice its 20-day average, the exchange said.",
+        "Brokerages cut their year-end Nifty targets to between 25,500 and 26,200 from 26,800. Analysts at one firm said earnings growth for 2024-2025 would slow to 11-12% from 20% in 2023-2024."
+      ]
+    },
+    {
+      "name": "budget numbers",
+      "paragraphs": [
+        "NEW DELHI, Feb 1 - The government set its fiscal deficit target at 4.9% of GDP for 2024-25 and 4.5% for 2025-26, with gross market borrowing of Rs 14.01 lakh crore, Finance Minister Nirmala Sitharaman told Parliament.",
+        "Capital expenditure was raised 11.1% to Rs 11,11,111 crore, about 3.4% of GDP. Tax revenue is projected at Rs 38.40 lakh crore, of which direct taxes account for Rs 22.07 lakh crore and GST for Rs 10.62 lakh crore.",
+        "The standard deduction rises to Rs 75,000 from Rs 50,000. Income up to Rs 3,00,000 stays tax-free; slabs of 5%, 10%, 15%, 20% and 30% apply above it, the 1,200-page Finance Bill shows.",
+        "Economists at three banks put real GDP growth for the year at 6.5-7.0%, against 8.2% in 2023-24. The Economic Survey, tabled on January 31, projected 6.5% to 7%."
+      ]
+    },
+    {
+      "name": "public notice with a helpline",
+      "paragraphs": [
+        "BENGALURU, Jul 22 - The state government extended the deadline for crop insurance enrolment to August 31 after heavy rain in 14 districts damaged an estimated 2,40,000 hectares of standing crops, officials said on Monday.",
+        "About 18.6 lakh farmers had enrolled by July 20, against 24 lakh last year. The premium is 2% of the sum insured for kharif crops and 1.5% for rabi crops; the state pays the rest, at a cost of Rs 1,450 crore this year.",
+        "Farmers can enrol at any of the 6,021 common service centres or through the scheme's toll-free helpline, 1800-180-1551, the agriculture department said. Claims for losses after July 1 will be settled within 60 days, it added.",
+        "Rainfall in the state was 38% above normal between June 1 and July 21, the India Meteorological Department said, with Udupi recording 2,914 mm, the highest in the state."
+      ]
+    },
+    {
+      "name": "company results",
+      "paragraphs": [
+        "Infosys reported a 4.7% rise in quarterly net profit to Rs 6,368 crore for the July-September quarter, beating estimates of Rs 6,215 crore, and raised its 2024-25 revenue growth forecast to 3.75-4.5% in constant currency.",
+        "Revenue grew 5.1% to Rs 40,986 crore. Large deal wins were $2.4 billion, of which 41% were net new. The company added 2,456 employees, taking headcount to 3,17,788, and attrition fell to 12.9% from 14.6% a year earlier.",
+        "Its operating margin was 21.1%, against 21.2% in the June quarter. The board declared an interim dividend of Rs 21 a share, with October 29 as the record date and November 8 as the payment date.",
+        "Shares closed 0.4% lower at Rs 1,876.40 on the BSE ahead of the results, giving the company a market value of about Rs 7.79 lakh crore, or $92.7 billion."
+      ]
+    },
+    {
+      "name": "science and dates",
+      "paragraphs": [
+        "Researchers tracked 1,024 patients between 2019 and 2023 across 12 hospitals, reporting in a paper published on 2024-03-15 that the new regimen cut relapse rates from 31.4% to 18.9% over 36 months.",
+        "The trial, registered as CTRI/2019/04/018456, enrolled adults aged 18-65. Doses of 250 mg twice daily were compared with 500 mg once daily; adverse events occurred in 7.2% and 7.9% of patients respectively.",
+        "The team sequenced 3,000,000,000 base pairs per sample and found 41 variants linked to response. Funding came from a Rs 12.5 crore grant awarded in 2018-2019.",
+        "A follow-up study of 4,800 patients is planned for 2025-2028, with results expected by December 2028, the lead author said at a briefing on March 18."
+      ]
+    }
+  ]
+}
