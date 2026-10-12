@@ -60,7 +60,7 @@
 .rl-ext-toast__brand {
   display: block;
   margin-bottom: 2px;
-  color: var(--rl-accent);
+  color: var(--rl-ink); /* the teal accent only ever means "a note for you" */
   font: 700 11px/1.2 var(--rl-font-ui);
   letter-spacing: 0.08em;
   text-transform: uppercase;

@@ -1,0 +1,63 @@
+/* /connect (M8 §D): the extension's Connect page. Profile's quiet editorial column: one panel
+   with the state and its single next step, then what the extension can see. */
+.connect { min-height: 100dvh; background: var(--paper); }
+.connect__main {
+  width: min(100% - 2 * var(--gutter), 720px);
+  margin: 0 auto;
+  padding: var(--s12) 0 var(--s24);
+}
+.connect__title {
+  margin: var(--s2) 0 0;
+  font: 800 var(--text-headline) / 1.08 var(--font-head);
+  letter-spacing: -0.026em;
+  text-wrap: balance;
+}
+.connect__lede {
+  margin: var(--s4) 0 0;
+  font: 400 20px / 1.55 var(--font-read);
+  color: var(--ink-soft);
+}
+.connect__panel {
+  display: grid;
+  gap: var(--s4);
+  justify-items: start;
+  margin-top: var(--s10);
+  padding: var(--s6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.connect__state {
+  margin: 0;
+  font: 700 19px / 1.35 var(--font-head);
+}
+.connect__note { margin: 0; color: var(--ink-soft); font: 400 var(--text-ui) / 1.5 var(--font-ui); }
+.connect__steps {
+  margin: 0;
+  padding-left: 1.3em;
+  color: var(--ink-soft);
+  font: 400 var(--text-ui) / 1.55 var(--font-ui);
+}
+.connect__steps li + li { margin-top: var(--s2); }
+.connect__steps li::marker { color: var(--muted); font-weight: 600; }
+.connect__actions { display: flex; flex-wrap: wrap; gap: var(--s3); }
+.connect .btn--quiet { border-color: transparent; color: var(--muted); }
+.connect .btn--quiet:hover { color: var(--ink); }
+.connect__group {
+  margin-top: var(--s12);
+  padding-top: var(--s4);
+  border-top: 2px solid var(--ink);
+}
+.connect__group h2 { margin: 0; font: 700 19px / 1.3 var(--font-head); }
+.connect__group ul { margin: var(--s3) 0 0; padding-left: 1.1em; }
+.connect__group li {
+  margin-top: var(--s2);
+  font: 400 17px / 1.6 var(--font-read);
+  color: var(--ink-soft);
+}
+.connect__group li::marker { color: var(--muted); }
+.connect__more { margin: var(--s6) 0 0; font: 500 var(--text-ui) var(--font-ui); }
+.connect__more a { color: var(--ink); text-underline-offset: 3px; }
+@media (min-width: 768px) {
+  .connect__title { font-size: 44px; }
+}

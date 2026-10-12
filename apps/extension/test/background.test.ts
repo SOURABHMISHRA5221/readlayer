@@ -155,3 +155,14 @@ describe("token custody", () => {
     for (const f of ["background.ts", "session.ts", "api.ts"]) expect(src(f)).not.toMatch(/setAccessLevel/);
   });
 });
+
+describe("extension id", () => {
+  it("the manifest's public key gives the id the web app's Connect page uses", async () => {
+    const { createHash } = await import("node:crypto");
+    const manifest = JSON.parse(readFileSync(resolve(__dirname, "../manifest.base.json"), "utf8")) as { key: string };
+    const hex = createHash("sha256").update(Buffer.from(manifest.key, "base64")).digest("hex").slice(0, 32);
+    const id = [...hex].map((c) => String.fromCharCode(97 + parseInt(c, 16))).join("");
+    const web = readFileSync(resolve(__dirname, "../../web/src/lib/extension.ts"), "utf8");
+    expect(web).toContain(`EXTENSION_ID = "${id}"`);
+  });
+});

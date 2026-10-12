@@ -98,6 +98,18 @@ export async function idToken(forceRefresh = false): Promise<string | null> {
   return user ? user.getIdToken(forceRefresh) : null;
 }
 
+/**
+ * What the Gloss extension needs to act as this reader (Connect page, M8 §D): a fresh ID token,
+ * its expiry and the refresh token, sent only to our own extension id. The extension refreshes it
+ * itself, so no Gloss tab has to stay open.
+ */
+export async function extensionCredentials(): Promise<{ idToken: string; refreshToken: string; expiresAt: number } | null> {
+  const user = auth?.currentUser;
+  if (!user) return null;
+  const result = await user.getIdTokenResult(true);
+  return { idToken: result.token, refreshToken: user.refreshToken, expiresAt: Date.parse(result.expirationTime) };
+}
+
 export async function signInWithGoogle(): Promise<void> {
   if (!auth) throw new Error("sign-in is not configured");
   await signInWithPopup(auth, new GoogleAuthProvider());
