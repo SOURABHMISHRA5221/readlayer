@@ -469,7 +469,18 @@ const CSS = `
 }
 `;
 
-export function injectStyles(doc: Document): void {
+/**
+ * The stylesheet itself, for hosts that apply it their own way: the extension inserts it with
+ * chrome.scripting.insertCSS, which a publisher's Content-Security-Policy can't block (an inline
+ * <style> would also send CSP violation reports to the publisher).
+ */
+export const ANNOTATOR_CSS = CSS;
+
+/** "inject" (default): a <style> element in the document head. "external": the host did it. */
+export type StyleMode = "inject" | "external";
+
+export function injectStyles(doc: Document, mode: StyleMode = "inject"): void {
+  if (mode === "external") return;
   if (doc.getElementById(STYLE_ID)) return;
   const style = doc.createElement("style");
   style.id = STYLE_ID;

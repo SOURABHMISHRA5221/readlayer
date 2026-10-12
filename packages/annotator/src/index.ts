@@ -10,7 +10,7 @@ import { Card, SHEET_QUERY, type CardMode, type SidenoteBox } from "./card";
 import { MARK_CLASS, markId, unwrap, wrapRange } from "./mark";
 import { createMarker, paragraphCard, PMARK_CLASS } from "./paragraph";
 import { Signals } from "./signals";
-import { injectStyles } from "./styles";
+import { injectStyles, type StyleMode } from "./styles";
 import type {
   AnnotatorEvent,
   AnnotatorEventType,
@@ -36,7 +36,9 @@ export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
-export const ANNOTATOR_VERSION = "0.7.3";
+export { ANNOTATOR_CSS, type StyleMode } from "./styles";
+
+export const ANNOTATOR_VERSION = "0.8.0";
 
 export interface AnnotatorOptions {
   /** Interaction and reading events (DESIGN §9); the host batches them to /v1/events. */
@@ -82,6 +84,8 @@ export interface AnnotatorOptions {
   inline?: HTMLElement;
   /** The open card's explanation settled (shown, verified or not). */
   onCardReady?: (id: string) => void;
+  /** "external": the host has applied ANNOTATOR_CSS itself (the extension); no <style>. */
+  styles?: StyleMode;
   /** Attribute naming a paragraph element, used to scope anchor search. */
   paragraphAttribute?: string;
   hoverDelayMs?: number;
@@ -163,7 +167,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   const leaveMs = reducedMotion ? 0 : (options.leaveMs ?? 180);
   const staggerMs = reducedMotion ? 0 : (options.staggerMs ?? 20);
   const emit = options.onEvent ?? (() => {});
-  injectStyles(doc);
+  injectStyles(doc, options.styles);
 
   const entries = new Map<string, Entry>();
   const markers = new Map<string, Marker>();
