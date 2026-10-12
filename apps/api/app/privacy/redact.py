@@ -12,6 +12,7 @@ patterns, then a broad catch for any digit run that could be a phone number ("41
 
 import re
 from collections.abc import Callable
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _PAN = re.compile(r"\b[A-Z]{5}[0-9]{4}[A-Z]\b")
@@ -81,6 +82,14 @@ def redact(text: str, typed: bool = False) -> str:
     for step in _STEPS:
         text = step(text)
     return _TYPED(text) if typed else text
+
+
+def redact_url(url: str) -> str:
+    """A submitted page URL as stored: no fragment, every query value redacted (they can carry
+    emails or session ids). The extension does the same before sending (redact.ts)."""
+    parts = urlsplit(url)
+    query = urlencode([(k, redact(v)) for k, v in parse_qsl(parts.query, keep_blank_values=True)])
+    return urlunsplit((parts.scheme, parts.netloc, parts.path, query, ""))
 
 
 def count_redactions(text: str) -> int:

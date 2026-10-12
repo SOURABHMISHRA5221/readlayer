@@ -16,7 +16,7 @@ from app.ingest import quota, submitted
 from app.ingest.models import ContentDoc, PendingDoc
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import ext_id, url_hash
-from app.privacy.redact import count_redactions, redact
+from app.privacy.redact import count_redactions, redact, redact_url
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
 from app.store.pending_repo import AnalysisBusy, AnalysisFailed, NotPending, get_pending_repo
@@ -178,13 +178,15 @@ async def _post_submitted(
     if not caller.is_anonymous and not await submitted.onboarded(caller.uid):
         return _error(409, "onboarding_required", "Finish setting up Gloss in the web app first.")
     found = 0
+    # The server's redaction covers the URL and title too, not only the paragraphs.
+    url, title = redact_url(body.url), redact(body.title)
     try:
-        doc: ContentDoc | PendingDoc | None = await submitted.reusable(caller.uid, body.url)
+        doc: ContentDoc | PendingDoc | None = await submitted.reusable(caller.uid, url)
         if doc is None:
             cleaned = clean_submitted(body.paragraphs)
             texts = [redact(t) for t in cleaned]  # the server's redaction on top of the client's
             found = sum(count_redactions(t) for t in body.paragraphs)
-            content_id = ext_id(body.url, texts)
+            content_id = ext_id(url, texts)
             doc = await submitted.get_any(content_id)
             if doc is None:
                 if await pii_refuses(cleaned):  # before anything is stored or charged
@@ -195,7 +197,7 @@ async def _post_submitted(
                     )
                 try:
                     slots = await quota.reserve_growth(caller, settings)
-                    doc = await store_submitted(content_id, body.url, body.title, texts, slots)
+                    doc = await store_submitted(content_id, url, title, texts, slots)
                 except Exception:
                     await quota.refund(caller)
                     raise

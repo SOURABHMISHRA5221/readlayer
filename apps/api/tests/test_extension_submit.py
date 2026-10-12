@@ -139,3 +139,18 @@ def test_a_page_of_personal_data_is_refused_before_anything_is_stored(
     assert store.docs == {} and not [p for p in docs.docs if p.startswith("pending_contents/")]
     assert slots_used(docs, "e1") == 0 and ingested("e1") == frozenset()
     assert fake_llm.calls == []
+
+
+def test_the_server_redacts_the_title_and_url_too(store, fetcher, fake_llm):
+    url = "https://news.example/live/rbi-policy?ref=sam@x.com&page=2#c3"
+    body = (
+        client("e1", anonymous=True)
+        .post(
+            "/v1/content",
+            json={"url": url, "title": "RBI holds; tips to desk@news.example", "paragraphs": PARAS},
+        )
+        .json()
+    )
+    doc = store.docs[body["content_id"]]
+    assert "sam@x.com" not in doc.url and "desk@news.example" not in doc.title
+    assert "page=2" in doc.url and "#" not in doc.url and "[REDACTED:email]" in doc.title

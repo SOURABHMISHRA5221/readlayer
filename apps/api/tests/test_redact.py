@@ -35,3 +35,10 @@ def test_typed_text_keeps_the_broad_phone_catch(text):
 
 def test_typed_mode_still_applies_the_shaped_patterns():
     assert redact("mail sam@x.com", typed=True) == "mail [REDACTED:email]"
+
+
+def test_redact_url_drops_the_fragment_and_redacts_query_values():
+    from app.privacy.redact import redact_url
+
+    got = redact_url("https://n.example/a?u=sam@x.com&id=7#top")
+    assert got == "https://n.example/a?u=%5BREDACTED%3Aemail%5D&id=7"
