@@ -9,7 +9,7 @@ from app.ingest import safe_fetch as sf
 from app.ingest.safe_fetch import FetchedPage, FetchError
 from app.main import app
 from app.store.content_repo import InMemoryContentStore, set_content_store
-from tests.fakes import FakeLLM, auth
+from tests.fakes import FakeLLM, auth, onboard
 
 FIXTURE = (Path(__file__).parent / "fixtures" / "article_business.html").read_bytes()
 URL = "https://news.example/rbi"
@@ -95,6 +95,7 @@ def test_repost_is_a_cache_hit_with_no_fetch_or_llm(store, fetcher, fake_llm, ca
 
 
 def test_extension_shape_ingests_without_fetching(store, fetcher, fake_llm):
+    onboard("writer")
     paragraphs = [
         "The Reserve Bank of India kept its repo rate unchanged at 6.5% on Wednesday, the tenth "
         "straight meeting without a move, as retail inflation eased to 3.9% in August.",
@@ -153,6 +154,7 @@ def test_unsafe_url_rejected_before_cache_or_fetch(store, fetcher, fake_llm):
 
 
 def test_too_little_text_is_422(store, fetcher, fake_llm):
+    onboard("writer")
     resp = client.post(
         "/v1/content",
         json={"url": URL, "title": "t", "paragraphs": ["Subscribe to read the full story here."]},

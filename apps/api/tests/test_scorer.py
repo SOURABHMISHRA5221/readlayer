@@ -488,11 +488,12 @@ def test_preread_needs_the_assumed_mean_above_threshold():
     assert sc.annotate(article, CHAIN, reader, "balanced", NOW).preread is None
 
 
-def test_explainer_index_prefers_shortest_and_skips_reader_opened():
+@pytest.mark.parametrize("source", ["user_ingested", "extension"])
+def test_explainer_index_prefers_shortest_and_skips_reader_brought(source):
     long = doc([demand("x", "c_bond", explained=True)], words=900, content_id="long")
     short = doc([demand("x", "c_bond", explained=True)], words=200, content_id="short")
     opened = doc([demand("x", "c_bond", explained=True)], words=50, content_id="opened")
-    opened = opened.model_copy(update={"source": "user_ingested"})
+    opened = opened.model_copy(update={"source": source})
     got = sc.explainer_index([long, opened, short])
     assert got["c_bond"].content_id == "short"
 

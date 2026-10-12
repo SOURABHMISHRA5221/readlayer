@@ -95,7 +95,7 @@ async def parse_edit(
     graph = get_graph()
     ledger: list[llm.CallMeta] = []
     variables = {
-        "text": redact(body.text),
+        "text": redact(body.text, typed=True),
         "domains": ", ".join(DOMAINS),
         "frames": ", ".join(THINKS_IN),
     }
@@ -132,7 +132,7 @@ async def parse_edit(
     elif topics:
         embedder = Embedder()
         for phrase in topics:  # one phrase per match: each reaches the embedding alone
-            match = await match_topic(graph, redact(phrase), embedder, settings)
+            match = await match_topic(graph, redact(phrase, typed=True), embedder, settings)
             if match is not None:
                 topic_map[phrase.casefold()] = match.topic
             else:

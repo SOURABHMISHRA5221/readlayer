@@ -7,7 +7,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-HEAVY = ("spacy", "trafilatura", "wordfreq", "litellm")
+HEAVY = ("spacy", "trafilatura", "wordfreq", "litellm", "presidio_analyzer")
 
 IMPORT_ONLY = f"""
 import json, sys

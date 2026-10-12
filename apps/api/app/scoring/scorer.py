@@ -13,7 +13,7 @@ from datetime import datetime
 from app.content.summary import article_domain
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
-from app.ingest.models import Anchor, ContentDoc, Demand
+from app.ingest.models import Anchor, ContentDoc, Demand, is_corpus
 from app.reader import model
 from app.reader.state import Density, ReaderState
 from app.scoring import rules
@@ -402,10 +402,10 @@ def _span(s: Scored, graph: ConceptGraph, state: ReaderState, now: datetime) -> 
 
 def explainer_index(docs: Iterable[ContentDoc]) -> dict[str, ExplainerRef]:
     """Concept → the shortest corpus article explaining it in its own text (pre-read links).
-    Reader-opened pages (`user_ingested`) are not corpus and never linked."""
+    Reader-brought pages (NOT_CORPUS) are never linked."""
     best: dict[str, ExplainerRef] = {}
     for doc in docs:
-        if doc.source == "user_ingested":
+        if not is_corpus(doc):
             continue
         words = word_count(doc)
         for d in doc.demands:

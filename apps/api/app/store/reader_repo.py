@@ -810,6 +810,12 @@ class ReaderRepo:
     async def ingested_ids(self, uid: str) -> frozenset[str]:
         return frozenset(cid for cid, _ in await self._store.list(f"{user_path(uid)}/ingested"))
 
+    async def ingested_newest_first(self, uid: str) -> list[str]:
+        rows = await self._store.list(f"{user_path(uid)}/ingested")
+        return [
+            cid for cid, doc in sorted(rows, key=lambda r: str(r[1].get("at", "")), reverse=True)
+        ]
+
     async def ingests_on(self, uid: str, day: str) -> int:
         doc = await self._store.get(sub_path(uid, "ingest_counts", day))
         return int((doc or {}).get("count", 0))

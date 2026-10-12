@@ -13,6 +13,8 @@ import {
 } from "firebase/auth";
 import { useSyncExternalStore } from "react";
 
+import { disconnectExtension } from "./extension";
+
 /**
  * Firebase Auth: Google sign-in, or Anonymous sign-in for the demo (personas). The web config
  * is public by design; it comes from Vite env (apps/web/.env.local, written by `make web-config`)
@@ -98,6 +100,28 @@ export async function idToken(forceRefresh = false): Promise<string | null> {
   return user ? user.getIdToken(forceRefresh) : null;
 }
 
+/**
+ * What the Gloss extension needs to act as this reader (Connect page, M8 §D): a fresh ID token,
+ * its expiry and the refresh token, sent only to our own extension id. The extension refreshes it
+ * itself, so no Gloss tab has to stay open.
+ */
+export async function extensionCredentials(): Promise<{
+  idToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  apiKey: string;
+} | null> {
+  const user = auth?.currentUser;
+  if (!user || !config.apiKey) return null;
+  const result = await user.getIdTokenResult(true);
+  return {
+    idToken: result.token,
+    refreshToken: user.refreshToken,
+    expiresAt: Date.parse(result.expirationTime),
+    apiKey: config.apiKey, // public: the same key ships in this bundle
+  };
+}
+
 export async function signInWithGoogle(): Promise<void> {
   if (!auth) throw new Error("sign-in is not configured");
   await signInWithPopup(auth, new GoogleAuthProvider());
@@ -108,7 +132,9 @@ export async function startDemo(): Promise<void> {
   if (!auth.currentUser) await signInAnonymously(auth);
 }
 
+/** Sign-out, End demo and Delete my data all end here: the extension lets go of the session too. */
 export async function signOutUser(): Promise<void> {
+  await disconnectExtension().catch(() => false);
   if (auth) await signOut(auth);
 }
 

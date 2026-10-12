@@ -114,7 +114,7 @@ async def resolve(
     if not ok:
         return _error(429, "resolve_cap_reached", "That's enough for today. Pick topics instead.")
     graph = get_graph()
-    phrases = ot.pieces(redact(body.text))
+    phrases = ot.pieces(redact(body.text, typed=True))
     concepts: dict[str, Concept] = {}
     topics: list[TopicOut] = []
     misses: list[tuple[int, str]] = []

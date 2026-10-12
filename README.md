@@ -251,6 +251,7 @@ make dev                                  # API on :8000, web on :5173
 | Guardrails | `LLM_DAILY_BUDGET_USD`, `LLM_TIMEOUT_S`, `LLM_MAX_RETRIES`, `INGEST_DAILY_CAP`, `ANON_INGEST_DAILY_CAP`, `ANON_GLOBAL_INGEST_DAILY_CAP`, `ANON_SEARCH_DAILY_CAP`, `SEARCH_DAILY_CAP`, `YOUTUBE_SEARCH_DAILY_CAP` |
 | Secrets (Secret Manager in production) | `UID_HASH_SALT`, `TAVILY_API_KEY`, `YOUTUBE_API_KEY` |
 | Web app (written by `make web-config`) | `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, `VITE_API_BASE` |
+| Extension (committed, public: `apps/extension/.env.production`, `.env.emulator`) | `VITE_API_BASE`, `VITE_WEB_BASE`, `VITE_WEB_ORIGINS`, `VITE_USE_EMULATORS` |
 
 **Tests**
 
@@ -258,6 +259,18 @@ make dev                                  # API on :8000, web on :5173
 make test             # ruff, pytest, TypeScript typecheck and package tests
 make test-emulator    # export and delete against the Firestore and Auth emulators
 ```
+
+### Install the extension locally
+
+Gloss also runs on any news page through a Chrome extension. It isn't on the Chrome Web Store; you load it unpacked. It asks for `activeTab`, `scripting` and `storage` only: no access to any site until you click it, and it never reads mail, banking or private pages, or a page with a password or card field.
+
+1. Get it: download `gloss-extension.zip` from the [latest release](https://github.com/SOURABHMISHRA5221/readlayer/releases/latest) and unzip it, or build it yourself with `pnpm install && pnpm --filter extension build` (writes `apps/extension/dist`; no cloud access needed: the build settings in `apps/extension/.env.production` are public, and the web app hands the extension its sign-in when you connect).
+2. Open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick the unzipped folder (or `apps/extension/dist`).
+3. Pin Gloss to the toolbar.
+4. In the web app, open your account menu → **Use Gloss on any site** and press **Connect** (a demo session connects as its sample reader).
+5. Open a news article and click Gloss in the toolbar, then **Read this page** (or press Alt+Shift+R).
+
+The extension sends only the article's title and paragraphs, after removing emails, phone numbers, card numbers, Aadhaar and PAN numbers in your browser. A page you bring in is visible only to you.
 
 ## Repository structure
 
@@ -308,7 +321,7 @@ Today a card shows the concept's definition and its prerequisites.
 - **Rest of M6:** paragraph notes, the pre-read path and "Know this?" prompts. The API already computes them.
 - **M2.2:** open domains and online concept growth (done); frozen-graph linking on unseen articles stays below target, see the held-out report.
 - **M7:** onboarding and the reading profile page. Readers will see and correct their graph there; the API for it exists. This is also where the reader's own analogy domain is set.
-- **M8:** the Chrome extension.
+- **M8:** the Gloss Chrome extension: built and accepted locally, shipping next (see "Install the extension locally").
 - **M9:** quality evals on a hand-labelled gold set.
 
 **Beyond the hackathon.** Videos and podcasts appear today as recommendations only; annotating them is outside the hackathon scope ([DESIGN §14](docs/DESIGN.md#14-out-of-scope-for-the-hackathon)).

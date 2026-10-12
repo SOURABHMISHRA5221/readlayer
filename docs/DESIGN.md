@@ -486,7 +486,7 @@ subject to pause). The next open regenerates.
 ## 8. API (FastAPI, `/v1`, Firebase ID token in `Authorization: Bearer`)
 | method | path | purpose |
 |---|---|---|
-| POST | /v1/content | `{url}` (server fetches via safe_fetch) or `{url, title, paragraphs[]}` (extension, already extracted and redacted) → `{content_id, title, paragraphs}`; ingests if new. Requires auth and the per-user daily cap; disabled in prod until both are in place |
+| POST | /v1/content | `{url}` (server fetches via safe_fetch) or `{url, title, paragraphs[], defer?}` (extension, already extracted and redacted) → `{content_id, title, paragraphs, status, pii_found_before_backstop?}`; ingests if new. Requires auth and the per-user daily cap. Extension text (M8): the fetch path's doc for the URL is returned if one exists, else the reader's own earlier extension doc for it (free, no new analysis), else a new doc under `ext:` id = hash(normalised URL + hash of the cleaned, redacted text) so client text never answers the fetch path and nobody is served text they didn't submit. `defer: true` returns `status: "analysing"` after phase 1 (then POST …/analyse, as "Open here"). Every path records the page in the reader's `ingested`. Errors: 409 `onboarding_required` (a Google reader who hasn't finished onboarding), 422 `personal_data` (Presidio backstop, §11.3). `pii_found_before_backstop` = placeholders the server's redactor added (0 when the client did its job) |
 | GET | /v1/content?q=&persona=&density= | library list: `{id, title, site, word_count, description, author, published, image, domain, concepts_new}`; `domain` = graph domain with the most linked salience; `concepts_new` = span annotations this reader would get |
 | GET | /v1/content/{id} | article for rendering: metadata + `paragraphs[{id, text}]` + `status: ready \| analysing` (a pending article, §3; annotations and recommendations answer 409 until it is ready) |
 | POST | /v1/content/{id}/analyse | phase 2 of "Open here" (§3): 200 `{status: ready}` (no LLM call if already analysed), 202 `{status: analysing}` while another request holds the lease, 410 after 3 failed analyses, 504 on the 120 s timeout; no ingest slot (taken in phase 1) |
@@ -581,6 +581,15 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   paragraph only when it has no marks; never the text), paragraph_dwell (IntersectionObserver at
   50% visibility while the page is visible; stretches under 1 s dropped; `words` on a
   paragraph's first dwell per page view, 0 after, so re-reading doesn't inflate words read).
+- **Extension mounting (M8).** The content script runs only after the reader's click. It tags the
+  live page's paragraphs against the server's stored paragraphs (`data-rl-paragraph`), matching
+  each on its redacted, whitespace-normalised text, then falling back to a prefix match for a
+  fetch-path doc (its own extraction); the deepest matching element wins and no text changes.
+  The annotator mounts on the common ancestor with `styles: "external"`: the worker applies
+  `ANNOTATOR_CSS` and the Gloss token sheet with `chrome.scripting.insertCSS` (a publisher's CSP
+  can't block it, and no inline `<style>` triggers CSP reports). Notes take light or dark tokens
+  from the article's own background (`data-rl-scheme`), not the OS. Popover and bottom sheet
+  only (no sidenote, no depth buttons); the pre-read sits above the first tagged paragraph.
 
 ## 10. LLM layer (`app/llm.py`)
 - Backend: LiteLLM Python SDK, in-process. Not the LiteLLM proxy: a separate gateway service is
@@ -630,7 +639,7 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 | Private page content sent by extension (email, banking, intranet) | extension | activation rules + client redaction (11.3) |
 | Reading profile leakage (what someone does/doesn't know) | Firestore, logs | per-user rules, pseudonymous logs, export/delete (11.4) |
 | Cost exhaustion / abuse | all LLM paths | auth required, per-user caps, daily budget, Cloud Run max instances |
-| Token theft from extension | extension | short-lived Firebase ID tokens, refresh via web app, no tokens in storage beyond session |
+| Token theft from extension | extension | short-lived Firebase ID tokens in `chrome.storage.session` only (default trusted-contexts access: content scripts can't read it), refreshed by the worker through Firebase's securetoken endpoint (M8: no Gloss tab needs to stay open), handed over only by the web app's Connect page from our own origins (re-checked in the worker), never logged |
 
 ### 11.2 `safe_fetch`
 - Schemes `http`/`https` only; ports 80/443 only.
@@ -643,15 +652,26 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 
 ### 11.3 PII handling
 - Article content is public material, not PII, but it is still untrusted input.
-- Extension activation: runs only when the user clicks the toolbar button or the site is on the
-  user's allowlist (default: a curated list of news domains). Never on pages with a password
-  field, `autocomplete="cc-*"` inputs, or URLs matching mail/bank/intranet patterns.
-- Extension sends only the Readability-extracted article text and URL (not raw HTML, not
-  comments sections, not form fields).
-- Client-side redaction before sending: emails, phone numbers, card-like digit runs (Luhn),
-  Aadhaar/PAN-like patterns → `[REDACTED:type]`.
-- Server-side backstop: Presidio analyzers on extension-submitted text; if PII density exceeds a
-  threshold, refuse ingestion and tell the user why.
+- Extension activation (as built, M8): only when the reader clicks the toolbar button (`activeTab`,
+  no host permissions, no allowlist). Refused before anything is read, and told in the popup:
+  non-web schemes; mail, banking, sign-in and private-network URLs (checked in the worker before
+  any script is injected); any page with a password field or an `autocomplete="cc-*"` input
+  (checked first by the injected script). A refused page gets none of our CSS or attributes.
+- Extension sends only the Readability-extracted article text (from a clone of the page) and the
+  URL without its fragment or user info, query values redacted; never raw HTML, comments or form
+  fields.
+- Client-side redaction before sending (`redact.ts`): emails, phone numbers (a phone shape:
+  country code, Indian mobile, bracketed area code), Luhn-valid card numbers (grouped, or
+  ungrouped with an issuer prefix), Aadhaar (4-4-4) and PAN → `[REDACTED:type]`. The API's
+  `app/privacy/redact.py` uses the same patterns, pinned by one shared fixture; news figures,
+  dates and year ranges survive. Reader-typed text (profile edits, goals, onboarding) is
+  redacted with `typed=True`, which also keeps the older broad catch for any phone-like run.
+- Server-side backstop (`app/privacy/pii.py`): Presidio (spaCy `en_core_web_sm`; email, phone,
+  card, IBAN, Aadhaar with its checksum, PAN) on the cleaned extension text before anything is
+  stored or charged; client placeholders count as findings. Refused (422 `personal_data`) above
+  20 findings per 1,000 words (with at least 3) or at 3 card numbers; set from the stored
+  corpus (max 3.98, 0 of 338 refused) and frozen refuse/pass fixtures. Below it the strict
+  redactor runs on every paragraph. Offline (tldextract's bundled snapshot), lazy, logs counts only.
 - Google Cloud Sensitive Data Protection is the managed upgrade path; not used in the hackathon
   build because Presidio covers it at no per-call cost.
 
@@ -1055,8 +1075,11 @@ any link** box uses the same route. Pages that reach ReadLayer this way (`user_i
 the extension (`extension`), the `NOT_CORPUS` sources, are private to the readers who brought
 them in: `users/{uid}/ingested/{content_id}` is written on every successful open, and the library
 list and Up next drop other readers' `NOT_CORPUS` docs per request, after the shared caches (Up
-next filters before its per-relation cut). A doc stays reachable by id; POST /v1/content with a
-URL stays public (source `fetch`).
+next filters before its per-relation cut). A `user_ingested` doc (fetched by the server itself)
+stays reachable by id; POST /v1/content with a URL stays public (source `fetch`). An `extension`
+doc is readable **only** by readers whose `ingested` holds it (M8, decision 52): content, annotations,
+explain, recommendations, analyse and saved answer anyone else with the same 404 as an unknown
+id, since its text can be a subscriber's paywalled article and its id derives from the URL.
 
 ## 18. Reading goals (M7.5)
 Signed-in readers only, after consent, at most 5, stored at `users/{uid}/goals/{goal_id}`.

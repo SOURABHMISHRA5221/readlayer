@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Gloss",
+  "version": "0.8.0",
+  "description": "Gloss notes the ideas in a news article you're likely to miss, explained your way. Runs only when you click it.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1UzsFQa5UYWDOEq/P2WMXfbMCj6zJl6ER9Hr4mKaOa8zZhbKYPHFK18d4gFonlMcL5eEvJYePZQSU1U7B5qmoSFY2bHJ9m2fBAtXTf0sL9LZGog2Db+LqcPeHIEA4M9od79RRbrqIuuEWL3qrOuLh7WJjC5F0VwT/hpip0R3OFzCeMcNsi5csRd0FblkqIGi2jnBK/IP5ncascfyOZ6sh4AXihmRQMunkux7+L+R4cZa6jBB1AzfJAP3xXPs4wLDZ1R8Tizo7b/Q4SNTprMXt2zKfWlsqfCXpmzpM2R+4/IYdwgw8a8V8raV9QV954YwdNqff+ZtBhxFVFEYdpz2wIDAQAB",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Gloss",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/margo-128.png",
+      "32": "icons/margo-128.png"
+    }
+  },
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+R"
+      },
+      "description": "Open Gloss"
+    }
+  },
+  "externally_connectable": {
+    "matches": []
+  },
+  "icons": {
+    "16": "icons/margo-128.png",
+    "48": "icons/margo-128.png",
+    "128": "icons/margo-128.png"
+  }
+}

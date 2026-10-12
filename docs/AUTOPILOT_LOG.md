@@ -857,3 +857,96 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    `extension` NOT_CORPUS exclusions by hand). Plan → plan-reviewer loop → build.
 2. Then Wide layout (decision 45). Follow-ups on the M9 list: Telugu-title video, policy fallback
    thin, bundle headroom 2.4 KB.
+
+## M8-local (resumed 2026-10-12, branch m8-resume)
+
+### Plan amendment
+- `m8-resume` was an ancestor of main: fast-forwarded to 0ba30e1. The approved Oct 10 plan
+  (5d6d00f) amended for today's main: annotator 0.8 (`styles: "external"`, CSS via
+  `insertCSS`), per-reader visibility (M7.5 built most of it), onboarding gate, wip 2f037a1
+  carried by hand (redaction format + fixture + tests, three remaining `is_corpus` exclusions).
+- plan-reviewer round 1: **REVISE** (12). My round-1 text started from the pre-approval draft on
+  main and dropped approved items (`ext:` id, Presidio evidence, token/URL safeguards, approved
+  acceptance): all restored. New: extension text readable only by its submitters (+ a text hash
+  in the `ext:` id), typed-mode redaction keeps the broad catch, `/connect` survives the
+  onboarding gate, `renderPreread` styles, token sheet, bundle budget.
+- Round 2: **REVISE** (2): same reader reuses their own `ext:` doc; refusals before `insertCSS`.
+- Round 3: **APPROVE** (nits applied, d79bab9).
+
+### Next steps (resume here, in order)
+1. Build on `m8-resume`: A2/A5 carry-over commit first, then API (A1, A3, A5 read gate, A6),
+   annotator 0.8, extension, web `/connect`, README; tests; harness; checkpoint end of Oct 13 IST.
+
+### Build (2026-10-12)
+- 54d23ae carry-over from 2f037a1 (redaction format, fixture, typed mode, NOT_CORPUS exclusions).
+- 7056293 A1 + A6: `ext:` id per URL and text, fetch doc wins, same-reader reuse, `defer`,
+  `add_ingested` on every path, `pii_found_before_backstop`, 409 `onboarding_required`.
+- 42d40fd A5 read gate (6 routes; mutation check: 5 tests fail with the gate off).
+- 9cca874 PII fixtures frozen first. Then measured (read-only export of 338 stored docs, 323
+  fetch + 15 user_ingested, 12,369 paragraphs; `scripts/export_corpus_text`, `measure_pii`):
+  - Strict redactor: 10 paragraphs changed; 9 journalists' contact emails (real), 1 false
+    positive (a 14-digit timestamp passing Luhn as a card) → ungrouped card runs now need an
+    issuer prefix → 9 changed, all real contact data. Timestamp added to the shared fixture.
+  - Presidio: phones score exactly 0.4; PAN hits below 0.5 are its catch-all pattern lifted by
+    context (up to 19 per 1,000 words in ordinary articles). Policy: phones from 0.4, others
+    from 0.5. Corpus max 3.98 per 1,000 words (contact emails), 34/338 with any finding, ≤ 1
+    card. Fixtures: refuse 110 and 79, pass ≤ 6.9. Threshold 20 per 1,000 words with ≥ 3
+    findings, or ≥ 3 cards → **0 of 338 corpus articles refused**.
+  - Emails at `.example` aren't found (tldextract rejects non-public suffixes); the frozen
+    fixtures still refuse on phones. Client placeholders count as findings, so a page the
+    extension already redacted is still refused (test).
+  - Analyzer build 0.58 s, max RSS 165 MB (Cloud Run 1 GiB); a 1,350-word article scans in
+    0.2 s (runs in a thread). Built-in Aadhaar (Verhoeff) and PAN recognizers used instead of
+    hand-written regexes. Offline test counts socket attempts (tldextract falls back silently).
+- 7a20ee0..1c81ef8: CORS test; annotator 0.8.0 (`styles: "external"`, `ANNOTATOR_CSS`); extension
+  (pure modules + jsdom tests, worker/content/popup, build + manifest check, stable id from a
+  public key, private key discarded); the extension is **Gloss** (decision 40: name, Margo icon,
+  real tokens; popup buttons ink pills, the teal accent only means a note); web `/connect` (lazy,
+  under the gate, remembered through `/welcome`, "Use Gloss on any site" in the account menu);
+  `make extension-config`, CORS origin in deploy.env, harness CORS; README install steps.
+  Added beyond the plan: sign-in hosts refused (a signed-out Gmail tab lands on one).
+- TypeScript redactor over the corpus export: the same 9 paragraphs as Python, all contact emails.
+- Harness `tools/shots/m8.py` (STATUS §22): branded Chrome 154 ignores `--load-extension`
+  (checked), so Chrome for Testing 153; `Extensions.triggerAction` needs the tab target id. Runs
+  1–6 failed on the harness itself (buffered output, first navigation of a fresh profile not
+  confirmed, popup can't take a metrics override, SW response bodies evicted → Fetch
+  interception, error-page tab lookup, emulator rules → "Bearer owner"). Two real findings:
+  `pii_found_before_backstop` counted the client's own placeholders (fixed + test); the design
+  pass showed heavy dark marks on a light page under a dark OS (notes now follow the page's
+  background) and the toast over the phone bottom sheet (toast at the top on phones).
+  Final run: all 8 acceptance checks pass; harness spend ≈ $0.16 over all runs.
+- Publisher-page overlay shots kept local (gitignored), STATUS §4.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on `m8-resume` → fix until SHIP → push, PR `M8: …`, green CI, merge.
+2. Deploy API (his yes) → check the Firebase web key's restrictions allow the extension origin →
+   deploy web (his yes) → `pnpm --filter extension build` → live check:
+   one demo reader, 1 page not in the library (dry run first), test reader deleted after;
+   Sourabh's manual Gmail and bank-login refusals. Then STATUS §1/§22 live rows.
+3. Then Wide layout (decision 45).
+
+### M8 review
+- milestone-reviewer round 1: **FIX** (4 blocking: Presidio cost unbounded at the 150k-char
+  maximum; README install needed gcloud; sign-out/delete left the extension holding the token;
+  STATUS stale; 7 more). Applied: 346422d chunked Presidio (1.6 s / 201 MB at the maximum; a
+  test caught a chunk reorder), 0e34069 Firebase web key via the Connect page + public build
+  settings committed + sign-out disconnects + persona allowlist + retry after a failed read,
+  3d5d355 server redacts title and URL query, dd300ed Unicode-digit and email parity (corpus
+  check unchanged), privacy page, STATUS (header, §2, §4, §5, §7, §22). Not changed: `reusable`
+  cost and live pages reused per reader (STATUS §5).
+- milestone-reviewer round 2: **FIX** (2, both evidence: no end-to-end run on the final code;
+  stale bundle numbers). Harness re-run on 8f6d4d7: every check passes with the same counts,
+  $0.00; evidence refreshed. Bundle 148.08 KB main / 1.40 KB Connect. Also: emails need a
+  lettered last label ("10@2.5" stays; corpus check unchanged).
+- Sourabh (2026-10-12): yes to a ready-made extension zip for judges → `make extension-zip`
+  (151 KB), README links the latest release; the release is created after the merge.
+- milestone-reviewer round 3: **SHIP** (699a5c6). Follow-ups in STATUS §9: release zip, token
+  refresh exercised in the live check, Firebase key restrictions, BBC shot retake.
+
+### Next steps (resume here, in order)
+1. Push `m8-resume`, PR `M8: …`, green CI, squash-merge (pre-approved after SHIP + green CI).
+2. Deploy API (his yes) → check the Firebase web key's restrictions → deploy web (his yes) →
+   `pnpm --filter extension build` → live check (1 page, dry run first, test reader deleted;
+   force one token refresh) → Sourabh's manual Gmail and bank refusals → `make extension-zip`
+   and the GitHub release → STATUS §1/§22 live rows.
+3. Then Wide layout (decision 45; 1.9 KB of bundle headroom).

@@ -31,3 +31,12 @@ ui-debug.log
 
 # M2.2 seeding (local only)
 data/concepts.seeded.json
+# M8 read-only corpus text export for the redaction / PII measurement (never committed)
+data/corpus_paragraphs.json
+
+# M8: the extension's build settings hold no secrets (public URLs only)
+!apps/extension/.env.emulator
+!apps/extension/.env.production
+apps/extension/gloss-extension.zip
+# M8: overlay screenshots on publisher pages (their ads and photos): local evidence only
+docs/evidence/m8/publisher/

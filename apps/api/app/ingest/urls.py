@@ -24,3 +24,10 @@ def normalize_url(url: str) -> str:
 
 def url_hash(url: str) -> str:
     return hashlib.sha256(normalize_url(url).encode()).hexdigest()[:32]
+
+
+def ext_id(url: str, texts: list[str]) -> str:
+    """Extension submissions (M8, DESIGN §8): their own id per URL *and* text, so client text
+    never answers the fetch path's lookup and nobody is served text they didn't submit."""
+    digest = hashlib.sha256("\n".join(texts).encode()).hexdigest()
+    return hashlib.sha256(f"ext:{normalize_url(url)}\n{digest}".encode()).hexdigest()[:32]

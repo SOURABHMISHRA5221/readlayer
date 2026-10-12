@@ -75,8 +75,7 @@ def test_learning_goal_resolves_to_the_concept_and_its_chain_and_stores_no_text(
 def test_goal_text_is_redacted_before_resolution(env):
     text = "understand insulin, mail me@x.com"
     google("g2").post("/v1/me/goals", json={"type": "learning", "text": text})
-    # main's placeholder is "[email]"; M8 changes it to "[REDACTED:email]"
-    assert "me@x.com" not in str(env) and "email]" in str(env)
+    assert "me@x.com" not in str(env) and "[REDACTED:email]" in str(env)
 
 
 def test_unresolvable_goals_are_422_and_nothing_is_stored(env):

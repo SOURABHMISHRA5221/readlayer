@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from app import ratelimit
 from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
+from app.content.access import require_readable
 from app.context import ReaderContext, reader_context, scope_persona
 from app.explain import service
 from app.explain.inputs import ExplainInputs, paragraph_inputs, span_inputs
@@ -114,6 +115,7 @@ async def _inputs(body: ExplainRequest, ctx: ReaderContext, now: datetime) -> Ex
     doc = await get_content_store().get(body.content_id)
     if doc is None:
         raise HTTPException(status_code=404, detail="content not found")
+    await require_readable(doc, ctx.uid, ctx.ingested)
     frame, style = frame_for(ctx), ctx.user.explanation_style
     if body.paragraph_id is not None:
         inputs = paragraph_inputs(doc, body.paragraph_id, get_graph(), ctx.state, frame, style)

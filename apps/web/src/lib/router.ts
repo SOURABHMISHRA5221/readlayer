@@ -8,6 +8,7 @@ export type Route =
   | { name: "profile" }
   | { name: "feed" }
   | { name: "privacy" }
+  | { name: "connect" }
   | { name: "missing" };
 
 const NAV_EVENT = "rl:navigate";
@@ -35,6 +36,7 @@ export function matchRoute(pathname: string): Route {
   if (pathname === "/profile") return { name: "profile" };
   if (pathname === "/for-you") return { name: "feed" };
   if (pathname === "/privacy") return { name: "privacy" };
+  if (pathname === "/connect") return { name: "connect" };
   const reader = /^\/read\/([A-Za-z0-9_-]+)$/.exec(pathname);
   if (reader?.[1]) return { name: "reader", id: reader[1] };
   return { name: "missing" };
@@ -47,7 +49,15 @@ export function onboardingRedirect(done: boolean | null, route: Route["name"]): 
 
 const RETURN_KEY = "readlayer:return-to";
 /** Routes worth coming back to after sign-in (a signed-out deep link shows the landing). */
-const RETURNABLE: readonly Route["name"][] = ["reader", "profile", "feed"];
+const RETURNABLE: readonly Route["name"][] = ["reader", "profile", "feed", "connect"];
+
+/**
+ * Routes the onboarding gate brings a reader back to after the 2 screens (M8 §D): only the
+ * extension's Connect page, so connecting survives onboarding. Others land home, as before.
+ */
+export function returnsAfterOnboarding(route: Route["name"]): boolean {
+  return route === "connect";
+}
 
 /**
  * A signed-out deep link: keep its path (never the query) in sessionStorage so the reader lands

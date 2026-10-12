@@ -11,10 +11,12 @@ from app import llm
 from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
-from app.ingest import quota
+from app.content.access import require_readable
+from app.ingest import quota, submitted
 from app.ingest.models import ContentDoc, PendingDoc
 from app.ingest.safe_fetch import FetchError, validate_url
-from app.ingest.urls import url_hash
+from app.ingest.urls import ext_id, url_hash
+from app.privacy.redact import count_redactions, redact, redact_url
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
 from app.store.pending_repo import AnalysisBusy, AnalysisFailed, NotPending, get_pending_repo
@@ -22,6 +24,7 @@ from app.store.reader_repo import ReaderRepo
 
 router = APIRouter()
 
+PERSONAL_DATA = "This page looks like it holds personal information, so Gloss won't read it."
 MAX_URL_CHARS = 2048
 MAX_SUBMITTED_PARAGRAPHS = 200
 MAX_SUBMITTED_PARAGRAPH_CHARS = 5000
@@ -52,6 +55,9 @@ class SubmittedRequest(BaseModel):
         max_length=MAX_SUBMITTED_PARAGRAPHS,
         json_schema_extra={"items": {"maxLength": MAX_SUBMITTED_PARAGRAPH_CHARS}},
     )
+    # Return as soon as the text is stored ("analysing"); the client then calls
+    # POST /v1/content/{id}/analyse, as "Open here" does (M8).
+    defer: bool = False
 
 
 class ParagraphOut(BaseModel):
@@ -63,6 +69,10 @@ class ContentResponse(BaseModel):
     content_id: str
     title: str
     paragraphs: list[ParagraphOut]
+    status: Literal["ready", "analysing"] = "ready"
+    # Submitted text only: placeholders the server's redactor added, i.e. personal data the
+    # client's redaction missed (0 when the extension did its job). Absent for URL bodies.
+    pii_found_before_backstop: int | None = None
 
 
 def _error(status: int, code: str, message: str, retry_after: int | None = None) -> JSONResponse:
@@ -80,12 +90,24 @@ async def ingest_url(
     return await service.ingest_url(url, source=source, grow_slots=grow_slots)
 
 
-async def ingest_submitted(
-    url: str, title: str, paragraphs: list[str], grow_slots: int = 0
-) -> ContentDoc:
+def clean_submitted(paragraphs: list[str]) -> list[str]:
     from app.ingest import service
 
-    return await service.ingest_submitted(url, title, paragraphs, grow_slots)
+    return service.clean_submitted(paragraphs)
+
+
+async def pii_refuses(paragraphs: list[str]) -> bool:
+    from app.ingest import service
+
+    return (await service.pii_check(paragraphs)).refuse
+
+
+async def store_submitted(
+    content_id: str, url: str, title: str, texts: list[str], grow_slots: int = 0
+) -> PendingDoc:
+    from app.ingest import service
+
+    return await service.store_submitted(content_id, url, title, texts, grow_slots)
 
 
 async def fetch_and_extract(
@@ -116,7 +138,7 @@ def _seconds_to_utc_midnight(now: datetime | None = None) -> int:
     return max(1, int((midnight - now).total_seconds()))
 
 
-@router.post("/content", response_model=ContentResponse)
+@router.post("/content", response_model=ContentResponse, response_model_exclude_none=True)
 async def post_content(
     body: SubmittedRequest | UrlRequest,
     caller: Annotated[Caller, Depends(current_caller)],
@@ -131,19 +153,14 @@ async def post_content(
         validate_url(body.url)
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
+    if isinstance(body, SubmittedRequest):
+        return await _post_submitted(body, caller, settings)
     known = await is_known(url_hash(body.url))
     if not known and not await quota.reserve(caller, settings):
         return quota.cap_reached(caller, settings, "Articles already in the library stay free.")
     try:
         slots = 0 if known else await quota.reserve_growth(caller, settings)
-        if isinstance(body, SubmittedRequest):
-            doc = await ingest_submitted(body.url, body.title, body.paragraphs, slots)
-            # Submitted text is a reader-brought page: visible to its submitter (M7.5).
-            await ReaderRepo(get_doc_store()).add_ingested(
-                caller.uid, doc.content_id, datetime.now(UTC).isoformat()
-            )
-        else:
-            doc = await ingest_url(body.url, grow_slots=slots)
+        doc = await ingest_url(body.url, grow_slots=slots)
     except Exception as exc:
         if not known:
             await quota.refund(caller)
@@ -152,6 +169,52 @@ async def post_content(
         raise
     catalog.add(doc)  # no-op if listed; a URL that was pending is new to the catalog too
     return _response(doc)
+
+
+async def _post_submitted(
+    body: SubmittedRequest, caller: Caller, settings: Settings
+) -> ContentResponse | JSONResponse:
+    """Extension text (M8): an existing doc if there is one (free), else a new `ext:` doc."""
+    if not caller.is_anonymous and not await submitted.onboarded(caller.uid):
+        return _error(409, "onboarding_required", "Finish setting up Gloss in the web app first.")
+    found = 0
+    # The server's redaction covers the URL and title too, not only the paragraphs.
+    url, title = redact_url(body.url), redact(body.title)
+    try:
+        doc: ContentDoc | PendingDoc | None = await submitted.reusable(caller.uid, url)
+        if doc is None:
+            cleaned = clean_submitted(body.paragraphs)
+            texts = [redact(t) for t in cleaned]  # the server's redaction on top of the client's
+            found = sum(count_redactions(t) for t in body.paragraphs)
+            content_id = ext_id(url, texts)
+            doc = await submitted.get_any(content_id)
+            if doc is None:
+                if await pii_refuses(cleaned):  # before anything is stored or charged
+                    return _error(422, "personal_data", PERSONAL_DATA)
+                if not await quota.reserve(caller, settings):
+                    return quota.cap_reached(
+                        caller, settings, "Articles already in the library stay free."
+                    )
+                try:
+                    slots = await quota.reserve_growth(caller, settings)
+                    doc = await store_submitted(content_id, url, title, texts, slots)
+                except Exception:
+                    await quota.refund(caller)
+                    raise
+        # The reader brought it in: their library lists it and they may read it (M7.5, A5).
+        await ReaderRepo(get_doc_store()).add_ingested(
+            caller.uid, doc.content_id, datetime.now(UTC).isoformat()
+        )
+        if isinstance(doc, PendingDoc) and not body.defer:
+            doc = await analyse_pending(doc.content_id)
+    except Exception as exc:
+        if isinstance(exc, INGEST_ERRORS):
+            return _ingest_error(exc)
+        raise
+    if isinstance(doc, PendingDoc):
+        return _pending_response(doc, found)
+    catalog.add(doc)
+    return _response(doc).model_copy(update={"pii_found_before_backstop": found})
 
 
 class AnalyseResponse(BaseModel):
@@ -166,7 +229,10 @@ async def analyse_content(
 ) -> AnalyseResponse | JSONResponse:
     """Phase 2 of "Open here": demand extraction and linking for a fetched article. Already
     analysed → ready, no LLM call. Another request analysing it → 202. The ingest slot was taken
-    in phase 1, so this costs the reader nothing against the daily cap."""
+    in phase 1, so this costs the reader nothing against the daily cap. Extension text: its
+    submitters only (M8 §A5)."""
+    if (pending := await get_pending_repo().get(content_id)) is not None:
+        await require_readable(pending, caller.uid)
     try:
         doc = await analyse_pending(content_id)
     except NotPending:
@@ -221,6 +287,16 @@ def _ingest_error(exc: Exception) -> JSONResponse:
             retry_after=60,
         )
     return _error(502, "llm_rejected", "The analysis request failed. This has been logged.")
+
+
+def _pending_response(doc: PendingDoc, found: int) -> ContentResponse:
+    return ContentResponse(
+        content_id=doc.content_id,
+        title=doc.title,
+        paragraphs=[ParagraphOut(id=p.id, text=p.text) for p in doc.paragraphs],
+        status="analysing",
+        pii_found_before_backstop=found,
+    )
 
 
 def _response(doc: ContentDoc) -> ContentResponse:

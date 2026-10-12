@@ -3,7 +3,7 @@
  * Framework-free so the extension can show it too. Text only: nothing is parsed as HTML.
  */
 
-import { injectStyles } from "./styles";
+import { injectStyles, type StyleMode } from "./styles";
 import type { PrereadAnnotation, PrereadStep } from "./types";
 
 export const PREREAD_HEADING = "Before you read";
@@ -14,6 +14,8 @@ export interface PrereadOptions {
   href: (step: PrereadStep) => string;
   /** A step's explainer link was followed (hosts may navigate client-side and log it). */
   onOpen?: (step: PrereadStep, event: MouseEvent) => void;
+  /** "external": the host has applied ANNOTATOR_CSS itself (the extension); no <style>. */
+  styles?: StyleMode;
 }
 
 export interface PrereadHandle {
@@ -28,7 +30,7 @@ export function renderPreread(
   options: PrereadOptions,
 ): PrereadHandle {
   const doc = container.ownerDocument;
-  injectStyles(doc);
+  injectStyles(doc, options.styles);
   // A known step (where the path starts from) is never presented as "meet this first".
   const steps = item.steps.filter((s) => !s.known);
   const id = `${P}-${++prereadCount}`;

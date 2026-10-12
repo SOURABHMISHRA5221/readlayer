@@ -128,6 +128,17 @@ export function AccountMenu() {
               >
                 {demo ? "This reader's profile" : "Your reading profile"}
               </button>
+              <button
+                type="button"
+                className="account__action"
+                onClick={() => {
+                  const persona = new URL(window.location.href).searchParams.get("persona");
+                  close();
+                  navigate(persona ? `/connect?persona=${encodeURIComponent(persona)}` : "/connect");
+                }}
+              >
+                Use Gloss on any site
+              </button>
               {!demo && (
                 <button type="button" className="account__action" onClick={() => run("Preparing your export…", downloadExport, "The export didn't download. Try again.")}>
                   Export my data

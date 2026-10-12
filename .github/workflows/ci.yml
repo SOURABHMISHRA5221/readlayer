@@ -36,3 +36,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm -r typecheck
       - run: pnpm -r test
+      # M8 acceptance 4: the extension builds and its manifest keeps activeTab/scripting/storage only.
+      - run: pnpm --filter extension build:emulator

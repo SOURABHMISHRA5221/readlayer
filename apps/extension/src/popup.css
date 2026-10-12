@@ -1,0 +1,54 @@
+:root {
+  color-scheme: light dark;
+  --paper: #ffffff;
+  --ink: #1c1c1c;
+  --muted: #5f5f5f;
+  --surface: #ffffff;
+  --recess: #f7f7f5;
+  --line: #ececec;
+  --focus: #0d6b62;
+  --danger: #9b2c2c;
+  font: 400 14px/1.45 "Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #121212;
+    --ink: #ececec;
+    --muted: #a9a9a9;
+    --surface: #1b1b1b;
+    --recess: #262626;
+    --line: #2e2e2e;
+    --focus: #4fbfae;
+    --danger: #e08a7e;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; width: 300px; background: var(--surface); color: var(--ink); }
+.popup { padding: 16px 16px 14px; display: grid; gap: 12px; }
+.popup__head { display: grid; gap: 2px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.popup__brand { display: flex; align-items: center; gap: 8px; margin: 0; font: 800 20px/1 inherit; font-family: inherit; letter-spacing: -0.02em; text-transform: lowercase; }
+.popup__brand img { width: 24px; height: 24px; }
+.popup__who { margin: 0; color: var(--muted); font-size: 13px; }
+.popup__hint, .popup__note { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; }
+.popup__note { color: var(--ink); font-size: 13.5px; margin: 0 0 10px; }
+.popup__message { margin: 0; min-height: 1.45em; font-size: 13px; }
+.popup__message[data-tone="error"] { color: var(--danger); }
+section { display: grid; gap: 10px; }
+section[hidden] { display: none; }
+.btn {
+  display: block; width: 100%; min-height: 40px; padding: 10px 16px; border: 1px solid var(--ink); border-radius: 999px;
+  font: 600 14px/1.2 inherit; font-family: inherit; text-align: center; text-decoration: none; cursor: pointer;
+}
+.btn--primary { background: var(--ink); color: var(--paper); }
+.btn--primary:hover { background: color-mix(in srgb, var(--ink) 86%, var(--paper)); }
+.btn--primary:active { transform: translateY(1px); }
+.btn[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
+.btn:focus-visible, select:focus-visible, .link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+.field label { color: var(--muted); font-size: 13px; }
+select {
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--recess); color: var(--ink); font: inherit; font-size: 13px;
+}
+.link { color: var(--ink); font-size: 13px; text-underline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .btn--primary:active { transform: none; } }

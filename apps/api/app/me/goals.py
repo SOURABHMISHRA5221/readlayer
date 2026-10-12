@@ -200,7 +200,7 @@ async def _resolve(caller: Caller, text: str, settings: Settings) -> dict[str, A
     )
     if not ok:
         return _error(429, "goal_cap_reached", "That's enough new goals for today. Try tomorrow.")
-    phrase = g.strip_prefix(redact(text))
+    phrase = g.strip_prefix(redact(text, typed=True))
     graph = get_graph()
     ledger: list[llm.CallMeta] = []
     embedder = Embedder()

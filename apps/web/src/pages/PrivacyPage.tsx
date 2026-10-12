@@ -42,6 +42,15 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
       "Daily counters that keep usage within limits (links added, explanations made, edits, goals, onboarding matches).",
     ],
   },
+  {
+    id: "pv-extension",
+    title: "The Gloss extension",
+    items: [
+      "Nothing until you click it on a page. Then the article's title, text and address, with emails, phone numbers and card numbers removed in your browser first. Never forms, comments or anything you type, and never mail, banking or private pages.",
+      "Your sign-in stays in the browser's session storage until the browser closes. Signing out, ending the demo or deleting your data disconnects it.",
+      "A page you bring in with it is stored once and readable only by the readers who brought it in. It is listed with the pages you brought in, and deleting your data removes that link.",
+    ],
+  },
 ];
 
 export default function PrivacyPage() {
