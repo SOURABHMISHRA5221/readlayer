@@ -77,3 +77,30 @@ def test_the_analyzer_builds_and_runs_with_sockets_blocked():
         timeout=120,
     )
     assert out.returncode == 0 and out.stdout.strip() == "ok", out.stderr[-2000:]
+
+
+def test_no_analyze_call_gets_more_than_a_chunk(monkeypatch):
+    engine = pii.analyzer()
+    sizes: list[int] = []
+    real = engine.analyze
+
+    def spy(text, **kw):
+        sizes.append(len(text))
+        return real(text=text, **kw)
+
+    monkeypatch.setattr(engine, "analyze", spy)
+    long = ("Bond yields fell three basis points as markets priced a long pause. " * 80).strip()
+    pii.scan([long] * 30)  # ~160k chars, paragraphs longer than nothing special
+    assert sizes and max(sizes) <= pii.CHUNK_CHARS
+
+
+def test_chunks_keep_every_word_and_cut_long_paragraphs_at_spaces():
+    paras = ["word " * 3000, "short paragraph here", "x" * 25_000]
+    out = pii.chunks([p.strip() for p in paras], size=10_000)
+    assert all(len(c) <= 10_000 for c in out)
+    assert "".join(out).replace("\n", "").replace(" ", "") == "".join(paras).replace(" ", "")
+
+
+def test_the_parser_and_ner_are_off():
+    names = next(iter(pii.analyzer().nlp_engine.nlp.values())).pipe_names
+    assert "parser" not in names and "ner" not in names and "lemmatizer" in names

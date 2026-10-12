@@ -36,6 +36,11 @@ MAX_PER_1000_WORDS = 20.0
 MIN_FINDINGS = 3
 MAX_CARDS = 3
 PLACEHOLDER = "[REDACTED:"
+# Bounded work per analyze call: spaCy's cost grows faster than the text (150k chars in one call
+# took 29.6 s and 717 MB), so pages are scanned in chunks of at most this many characters.
+CHUNK_CHARS = 10_000
+# Recognizers here are patterns plus context words (lemmas): the parser and NER aren't used.
+UNUSED_PIPES = ("parser", "ner")
 
 
 @dataclass(frozen=True)
@@ -85,6 +90,8 @@ def analyzer() -> Any:
             "models": [{"lang_code": LANG, "model_name": "en_core_web_sm"}],
         }
     ).create_engine()
+    for model in nlp.nlp.values():
+        model.select_pipes(disable=[p for p in UNUSED_PIPES if p in model.pipe_names])
     registry = RecognizerRegistry(supported_languages=[LANG])
     for recognizer in (
         EmailRecognizer(),
@@ -104,8 +111,11 @@ def scan(paragraphs: list[str], min_score: float | None = None) -> Findings:
     a contact page is still a contact page after the extension redacted it.
     `min_score` replaces the per-type floors (measurement only)."""
     text = "\n\n".join(paragraphs)
-    results = analyzer().analyze(text=text, language=LANG, entities=list(ENTITIES))
-    counts = Counter(r.entity_type for r in results if r.score >= _floor(r.entity_type, min_score))
+    engine = analyzer()
+    counts: Counter[str] = Counter()
+    for chunk in chunks(paragraphs):
+        results = engine.analyze(text=chunk, language=LANG, entities=list(ENTITIES))
+        counts.update(r.entity_type for r in results if r.score >= _floor(r.entity_type, min_score))
     if placeholders := text.count(PLACEHOLDER):
         counts["CLIENT_REDACTED"] = placeholders
     return Findings(
@@ -113,6 +123,29 @@ def scan(paragraphs: list[str], min_score: float | None = None) -> Findings:
         by_type=dict(sorted(counts.items())),
         client_cards=text.count(f"{PLACEHOLDER}card]"),
     )
+
+
+def chunks(paragraphs: list[str], size: int = CHUNK_CHARS) -> list[str]:
+    """Paragraphs packed into chunks of at most `size` characters; a longer paragraph is cut at
+    whitespace (a finding split by a cut is lost: rare, and the strict redactor runs anyway)."""
+    out: list[str] = []
+    current = ""
+    for para in paragraphs:
+        if len(para) > size and current:  # keep page order: flush before cutting a long one
+            out.append(current)
+            current = ""
+        while len(para) > size:
+            cut = para.rfind(" ", 0, size)
+            cut = cut if cut > 0 else size
+            out.append(para[:cut])
+            para = para[cut:].lstrip()
+        if current and len(current) + 2 + len(para) > size:
+            out.append(current)
+            current = ""
+        current = f"{current}\n\n{para}" if current else para
+    if current:
+        out.append(current)
+    return out
 
 
 def _floor(entity: str, override: float | None) -> float:
