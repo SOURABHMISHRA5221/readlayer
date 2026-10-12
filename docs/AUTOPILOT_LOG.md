@@ -994,3 +994,39 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. Wide layout (decision 45): own plan in `docs/plans/`, plan-reviewer loop, build. Main bundle
    headroom is 1.9 KB.
 3. M9 hardening (Oct 15), freeze Oct 16.
+
+## Wide layout (decision 45) — plan (2026-10-13)
+
+- Resumed after /clear. Sourabh's manual Gmail and bank-login refusal check is still open (asked
+  again at the start of this session); it does not block this work.
+- Plan `docs/plans/wide-layout.md`, branch `wide-layout`. Web only: no API, Firestore, prompt,
+  model or annotator-package change; the only production action is `make deploy-web` (his yes).
+- plan-reviewer round 1: **REVISE** (13 items + 3 nits): reader clamps overflowed at 1280; the
+  sidenote check assumed the card is as wide as the rail (it is sized from the window edge); spine
+  fill and ticks in different coordinate systems; `Anchor.start` is already article-level; feed
+  rows narrower than today at 1440; the map not actually taller; the ellipse changing the 760
+  canvas phones use; `layout()` unusable at 300×230; the map link dropping the demo persona;
+  four harness gaps (incl. a before run); automatic cuts; recording; the bundle fallback.
+  Round 2: **REVISE** (3 + 2): the spine needs its own progress function (`placeInArticle`);
+  acceptance 3 must ignore the "Know this?" chip's own text; record the tile grid. Round 3:
+  **APPROVE**. Every item applied; the round sections at the end of the plan override its body.
+- **Two readings of decision 45's words, flagged to Sourabh in the session, both in STATUS §4
+  and §10:** (1) the reader's left-rail "contents" is a **reading spine** (a track of the article
+  with a tick per note, the read part filled, notes count, minutes left) because articles have
+  no headings; (2) the library's "mini-map" is a **grid of topic tiles** (one cluster of dots per
+  topic), not a small copy of the full map, which is not legible at 240–280px. Two more
+  deviations: the container is 1520px from 1440px; This week moves beside Goals above the map
+  (not in decision 45, dropped first if late).
+- Baseline before any change (`pnpm --filter web build`): main JS **148.08 KB** gzip, main CSS
+  10.85 KB, profile chunk 10.01 KB JS / 3.30 KB CSS.
+
+### Next steps (resume here, in order)
+1. `tools/shots/wide.py` with `--before`; run it on the unchanged web code into
+   `docs/evidence/wide/before/` (emulators; the Google reader seeded with 6 topics and 3 goals).
+2. Build in the plan's order, tests first for the pure helpers: snapshot of today's `layout()`
+   → `mapSize` and the ellipse; `lib/weekMap.ts`; `lib/spine.ts` and `lib/readingProgress.ts`;
+   then tokens and library, profile, reader. Check the main bundle after each page.
+3. Harness run with assertions, design check on the shots, milestone-reviewer until SHIP, PR
+   (body names the four deviations), green CI, merge, `make deploy-web` (his yes), live check.
+4. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut. Then M9 (Oct 15).
+
