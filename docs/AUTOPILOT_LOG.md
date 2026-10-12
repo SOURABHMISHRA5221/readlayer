@@ -940,3 +940,13 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   lettered last label ("10@2.5" stays; corpus check unchanged).
 - Sourabh (2026-10-12): yes to a ready-made extension zip for judges → `make extension-zip`
   (151 KB), README links the latest release; the release is created after the merge.
+- milestone-reviewer round 3: **SHIP** (699a5c6). Follow-ups in STATUS §9: release zip, token
+  refresh exercised in the live check, Firebase key restrictions, BBC shot retake.
+
+### Next steps (resume here, in order)
+1. Push `m8-resume`, PR `M8: …`, green CI, squash-merge (pre-approved after SHIP + green CI).
+2. Deploy API (his yes) → check the Firebase web key's restrictions → deploy web (his yes) →
+   `pnpm --filter extension build` → live check (1 page, dry run first, test reader deleted;
+   force one token refresh) → Sourabh's manual Gmail and bank refusals → `make extension-zip`
+   and the GitHub release → STATUS §1/§22 live rows.
+3. Then Wide layout (decision 45; 1.9 KB of bundle headroom).
