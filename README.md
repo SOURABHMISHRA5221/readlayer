@@ -264,8 +264,8 @@ make test-emulator    # export and delete against the Firestore and Auth emulato
 
 Gloss also runs on any news page through a Chrome extension. It isn't on the Chrome Web Store; you load it unpacked. It asks for `activeTab`, `scripting` and `storage` only: no access to any site until you click it, and it never reads mail, banking or private pages, or a page with a password or card field.
 
-1. Build it: `pnpm install && pnpm --filter extension build` (writes `apps/extension/dist`; no cloud access needed: the build settings in `apps/extension/.env.production` are public, and the web app hands the extension its sign-in when you connect).
-2. Open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick `apps/extension/dist`.
+1. Get it: download `gloss-extension.zip` from the [latest release](https://github.com/SOURABHMISHRA5221/readlayer/releases/latest) and unzip it, or build it yourself with `pnpm install && pnpm --filter extension build` (writes `apps/extension/dist`; no cloud access needed: the build settings in `apps/extension/.env.production` are public, and the web app hands the extension its sign-in when you connect).
+2. Open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick the unzipped folder (or `apps/extension/dist`).
 3. Pin Gloss to the toolbar.
 4. In the web app, open your account menu → **Use Gloss on any site** and press **Connect** (a demo session connects as its sample reader).
 5. Open a news article and click Gloss in the toolbar, then **Read this page** (or press Alt+Shift+R).

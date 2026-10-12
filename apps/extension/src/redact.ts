@@ -11,7 +11,8 @@ const W = "[\\p{L}\\p{M}\\p{N}_]";
 // Emails: anything but spaces, quotes and brackets around one @, with a dotted domain (as Python).
 const EMAIL_CHARS = "[^\\s@<>()\\[\\]{},;:\"'`]";
 const LABEL = "[^\\s@<>()\\[\\]{},;:\"'`.]+";
-const EMAIL = new RegExp(`${EMAIL_CHARS}+@${LABEL}(?:\\.${LABEL})+`, "gu");
+// The last label starts with a letter, so "shares at 10@2.5" stays.
+const EMAIL = new RegExp(`${EMAIL_CHARS}+@${LABEL}(?:\\.${LABEL})*\\.(?=\\p{L})${LABEL}`, "gu");
 const PAN = new RegExp(`(?<!${W})[A-Z]{5}[0-9]{4}[A-Z](?!${W})`, "gu");
 // Cards: 13–19 digits grouped 4-4-4-x, or ungrouped with an issuer prefix; Luhn-checked.
 const CARD = new RegExp(
