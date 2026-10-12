@@ -219,7 +219,7 @@ async def recommendations(
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     prefer: Format | None = None,
 ) -> RecsResponse:
-    doc = await doc_or_error(content_id)
+    doc = await doc_or_error(content_id, ctx)
     graph = get_graph()
     theta = ctx.theta
     spans = (await score_for(ctx, doc, "balanced", datetime.now(UTC))).spans

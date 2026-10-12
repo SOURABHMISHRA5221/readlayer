@@ -14,8 +14,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from app import ratelimit
+from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
+from app.content.access import require_readable
 from app.content.summary import article_domain
 from app.context import ReaderContext, hidden_ids, reader_context
 from app.graph.loader import get_graph
@@ -269,12 +271,15 @@ def _summary(doc: ContentDoc, domain: str | None, concepts_new: int) -> ContentS
     )
 
 
-async def doc_or_error(content_id: str) -> ContentDoc:
-    """An analysed article; 409 while it is fetched but not analysed yet, else 404."""
+async def doc_or_error(content_id: str, ctx: ReaderContext) -> ContentDoc:
+    """An analysed article this reader may read; 409 while it is fetched but not analysed yet,
+    else 404."""
     doc = await get_content_store().get(content_id)
     if doc is not None:
+        await require_readable(doc, ctx.uid, ctx.ingested)
         return doc
-    if await get_pending_repo().get(content_id) is not None:
+    if (pending := await get_pending_repo().get(content_id)) is not None:
+        await require_readable(pending, ctx.uid, ctx.ingested)
         raise HTTPException(status_code=409, detail="content_pending")
     raise HTTPException(status_code=404, detail="content not found")
 
@@ -297,14 +302,18 @@ async def list_content(
 
 
 @router.get("/content/{content_id}", response_model=ContentDetail)
-async def get_content(content_id: str) -> ContentDetail:
+async def get_content(
+    content_id: str, caller: Annotated[Caller, Depends(current_caller)]
+) -> ContentDetail:
     await refresh_growth()
     doc = await get_content_store().get(content_id)
     if doc is None:
         pending = await get_pending_repo().get(content_id)
         if pending is None:
             raise HTTPException(status_code=404, detail="content not found")
+        await require_readable(pending, caller.uid)
         return _pending_detail(pending)
+    await require_readable(doc, caller.uid)
     return ContentDetail(
         id=doc.content_id,
         title=doc.title,
@@ -355,7 +364,7 @@ async def get_annotations(
     """`refresh=1`: the reader refetching after a "Know this?" answer (decision 46d), not a new
     page view: no new prompt (one per article view, DESIGN §6.5) and nothing recorded."""
     await refresh_growth()
-    doc = await doc_or_error(content_id)
+    doc = await doc_or_error(content_id, ctx)
     density = density or ctx.density
     now = datetime.now(UTC)
     result = await score_for(ctx, doc, density, now)

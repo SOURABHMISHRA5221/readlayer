@@ -11,6 +11,7 @@ from app import llm
 from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
+from app.content.access import require_readable
 from app.ingest import quota, submitted
 from app.ingest.models import ContentDoc, PendingDoc
 from app.ingest.safe_fetch import FetchError, validate_url
@@ -218,7 +219,10 @@ async def analyse_content(
 ) -> AnalyseResponse | JSONResponse:
     """Phase 2 of "Open here": demand extraction and linking for a fetched article. Already
     analysed → ready, no LLM call. Another request analysing it → 202. The ingest slot was taken
-    in phase 1, so this costs the reader nothing against the daily cap."""
+    in phase 1, so this costs the reader nothing against the daily cap. Extension text: its
+    submitters only (M8 §A5)."""
+    if (pending := await get_pending_repo().get(content_id)) is not None:
+        await require_readable(pending, caller.uid)
     try:
         doc = await analyse_pending(content_id)
     except NotPending:
