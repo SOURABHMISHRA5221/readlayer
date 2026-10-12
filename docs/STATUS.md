@@ -218,7 +218,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M8: extraction fixtures are three publisher layouts with synthetic text, not saved pages (plan: "trimmed saved pages") | The repo goes public on Oct 17; no publisher's article is kept in it. Live publisher pages are covered by the harness (BBC, Guardian, The Hindu) | Keep |
 | M8 evidence: overlay screenshots on publisher pages stay local (`docs/evidence/m8/publisher/`, gitignored) | They carry the publishers' ads and photos of real people; Gloss UI and fixture-page shots are committed | Sourabh may choose to publish |
 | M8: the Connect page is reached from the account menu ("Use Gloss on any site"), not linked from the profile page (plan D) | One place that every signed-in and demo reader already uses; the profile page stays about the reader's model | Keep |
-| M8: no prebuilt extension download (plan E: "build or download `dist`") | The build needs no cloud access now (public settings committed, the Firebase web key comes from the Connect page), so `pnpm --filter extension build` works for anyone; a release zip is one push away if judges want it | Ask Sourabh before the repo goes public |
+| M8: the extension download is a GitHub release asset, not a file in the repo (plan E: "build or download `dist`") | Sourabh (2026-10-12): yes to a ready-made zip for judges. `make extension-zip` builds it (no cloud access needed: public settings committed, the Firebase web key comes from the Connect page); the README links the latest release | Create the release after M8 merges (needs his yes on the push) |
 
 ## 5. Known issues and tech debt
 
@@ -264,7 +264,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | The English-only filter checks script, not language: a Hinglish title in Latin script passes ("Health Insurance Claim Ka 10% Ab Aapko Dena Hoga?") |
 | Low | Learning-goal resolution takes 8–19 s on the harness (embedding + link_confirm); the form says it is looking the idea up |
 | Low | `rec_shown` relies on IntersectionObserver, which browsers pause in background tabs (seen in automated testing; real readers have the tab in front) |
-| Low | Web main bundle 147.6 KB gzip after d50 (budget 150 KB; 2.4 KB left with M8 and Wide layout to come); For you, Saved and Profile are lazy chunks; the Cytoscape + dagre chunk is gone (the map is SVG) |
+| Low | Web main bundle 148.08 KB gzip after M8 (budget 150 KB; 1.9 KB left with Wide layout to come); For you, Saved and Profile are lazy chunks; the Cytoscape + dagre chunk is gone (the map is SVG) |
 | Low | The weekly trend is per uid, so a demo session's trend mixes the personas it read as (the page says "this demo session") |
 | Low | Calibration picks the most frequent concepts per domain, which occasionally surfaces a term like "Expiry days"; fine for a quick check, revisit with the gold set |
 | Low | Firestore emulator fails contended transactions faster than production (three prefetched explanations reserving one daily counter); a jittered retry now wraps every transaction (no production occurrence in 7 days of logs) |
@@ -403,7 +403,7 @@ only for thin topics and onboarding concepts.
 
 **M8-local (2026-10-12, emulator harness):** harness LLM ≈ **$0.16** over all runs on the
 harness ledger (three live articles and the fixture pages ingested once each, explanations for
-two readers; cap $1.05); the final evidence run $0.013. Corpus measurements (`measure_pii`,
+two readers; cap $1.05); the evidence runs $0.013 and, after the review fixes, $0.00 (cached). Corpus measurements (`measure_pii`,
 `measure-redact.mjs`) are offline: no LLM, no writes. Production: nothing yet.
 
 **Landing illustrations (2026-10-11, decision 44 V3):** `gemini-3.1-flash-image`, prompt
@@ -967,6 +967,7 @@ activeTab like a toolbar click), then the popup's "Read this page".
 | 7. Visibility | A second demo reader: GET `/v1/content/{id}` 404 for all three extension docs, none in its library; the Google reader's library lists all three |
 | 8. Design and a11y | axe 0 on the popup (light, dark) and the Connect page (1440 light/dark, 390). Phone: the status line moved to the top, clear of the bottom sheet. Dark OS on a light page now keeps light notes; a dark page gets dark notes (`data-rl-scheme`). Small targets: Connect 90×40 and the popup selects (the web app's existing button size) |
 | Review round 1 (milestone-reviewer FIX: 4 blocking, 7 more) | Presidio bounded (chunks, row 5); extension builds without cloud access (Firebase web key from the Connect page; public settings committed); sign-out, End demo and Delete my data disconnect the extension; server redacts the title and URL query values too; Unicode-digit and email parity (fixture +5); Connect refuses unknown personas; a failed read can be retried; privacy page covers the extension; STATUS refreshed. Left as known issues (§5): `reusable` cost, live pages reused per reader |
-| Tests | API 788 (+71), web 71 (+8), annotator 57 (+3), extension 84. Web main bundle 147.79 KB gzip (budget 150); Connect page 1.65 KB lazy. Extension: worker 8 KB, content script 38 KB gzip |
+| Re-run on the final code | `tools/shots/m8.py` again on 8f6d4d7 (after both review rounds: Connect now hands over the Firebase web key, both redactors changed, the server redacts title and URL): every check above passed with the same counts; $0.00 LLM (all cached). `harness.txt` and `m8-results.json` are from this run |
+| Tests | API 789 (+72), web 71 (+8), annotator 57 (+3), extension 85. Web main bundle **148.08 KB** gzip (budget 150; 1.9 KB of headroom before Wide layout: `auth.ts` now imports `lib/extension.ts` for sign-out); Connect page 1.40 KB lazy. Extension: worker 8 KB, content script 38 KB gzip; release zip 151 KB (`make extension-zip`) |
 | Harness spend | ≈ $0.16 over all runs on the harness ledger (cap $1.05); the final run $0.013 |
 

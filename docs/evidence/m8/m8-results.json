@@ -23,7 +23,7 @@
       "state": "ready",
       "says": "What the author is sayingWriting an explanation and checking it against the article\u2026The Institute for Fiscal Studies (IFS) said that if the "
     },
-    "shot": "docs/evidence/m8/overlay-demo-bbc-1440-light.png",
+    "shot": "docs/evidence/m8/publisher/overlay-demo-bbc-1440-light.png",
     "content_id": "0beef2ecc51068ab8cb6e50beebe411f"
   },
   "demo guardian": {
@@ -40,7 +40,7 @@
       "state": "ready",
       "says": "What the author is sayingWriting an explanation and checking it against the article\u2026It said that if John Healey sets out spending envelopes "
     },
-    "shot": "docs/evidence/m8/overlay-demo-guardian-1440-light.png",
+    "shot": "docs/evidence/m8/publisher/overlay-demo-guardian-1440-light.png",
     "content_id": "9e92fbe169089abf863161e7c3f43e7c"
   },
   "demo hindu": {
@@ -57,16 +57,16 @@
       "state": "ready",
       "says": "What the author is sayingWriting an explanation and checking it against the article\u2026In September 2026, inflation measured by the Consumer Pr"
     },
-    "shot": "docs/evidence/m8/overlay-demo-hindu-1440-light.png",
+    "shot": "docs/evidence/m8/publisher/overlay-demo-hindu-1440-light.png",
     "content_id": "e1afa09e28632bc8af3d1373b3eec0e7"
   },
   "design bbc 390-light-os": {
     "scheme": "light",
-    "shot": "docs/evidence/m8/overlay-demo-bbc-390-light-os.png"
+    "shot": "docs/evidence/m8/publisher/overlay-demo-bbc-390-light-os.png"
   },
   "design bbc 1440-dark-os": {
     "scheme": "light",
-    "shot": "docs/evidence/m8/overlay-demo-bbc-1440-dark-os.png"
+    "shot": "docs/evidence/m8/publisher/overlay-demo-bbc-1440-dark-os.png"
   },
   "design dark-page 1440-light-os": {
     "scheme": "dark",
@@ -133,7 +133,7 @@
       "state": "ready",
       "says": "What the author is sayingWriting an explanation and checking it against the article\u2026The Institute for Fiscal Studies (IFS) said that if the "
     },
-    "shot": "docs/evidence/m8/overlay-google-bbc-1440-light.png"
+    "shot": "docs/evidence/m8/publisher/overlay-google-bbc-1440-light.png"
   },
   "google guardian": {
     "popup": "Reading this page. Notes appear on it shortly; you can close this.",
@@ -149,7 +149,7 @@
       "state": "ready",
       "says": "What the author is sayingWriting an explanation and checking it against the article\u2026Last week, Andrew Bailey, the governor of the Bank of En"
     },
-    "shot": "docs/evidence/m8/overlay-google-guardian-1440-light.png"
+    "shot": "docs/evidence/m8/publisher/overlay-google-guardian-1440-light.png"
   },
   "google hindu": {
     "popup": "Reading this page. Notes appear on it shortly; you can close this.",
@@ -165,12 +165,12 @@
       "state": "ready",
       "says": "What the author is sayingWriting an explanation and checking it against the article\u2026The Reserve Bank of India's upper comfort limit for reta"
     },
-    "shot": "docs/evidence/m8/overlay-google-hindu-1440-light.png"
+    "shot": "docs/evidence/m8/publisher/overlay-google-hindu-1440-light.png"
   },
   "google library has its pages": [
     "bbc",
     "guardian",
     "hindu"
   ],
-  "spend_usd": 0.0132
+  "spend_usd": 0.0
 }

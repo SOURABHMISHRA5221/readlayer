@@ -934,3 +934,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   3d5d355 server redacts title and URL query, dd300ed Unicode-digit and email parity (corpus
   check unchanged), privacy page, STATUS (header, §2, §4, §5, §7, §22). Not changed: `reusable`
   cost and live pages reused per reader (STATUS §5).
+- milestone-reviewer round 2: **FIX** (2, both evidence: no end-to-end run on the final code;
+  stale bundle numbers). Harness re-run on 8f6d4d7: every check passes with the same counts,
+  $0.00; evidence refreshed. Bundle 148.08 KB main / 1.40 KB Connect. Also: emails need a
+  lettered last label ("10@2.5" stays; corpus check unchanged).
+- Sourabh (2026-10-12): yes to a ready-made extension zip for judges → `make extension-zip`
+  (151 KB), README links the latest release; the release is created after the merge.
