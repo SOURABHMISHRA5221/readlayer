@@ -985,3 +985,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 1. `make extension-zip` → GitHub release with the zip (Sourabh said yes) → push the docs commits.
 2. Sourabh's manual check: his Gmail tab and a real bank login page are refused.
 3. Then Wide layout (decision 45; 1.9 KB of bundle headroom).
+- Release `extension-v0.8.0` on main (02c0bdd) with `gloss-extension.zip` (production build,
+  manifest: activeTab, scripting, storage; the two Hosting origins). Docs pushed to main.
+
+### Next steps (resume here, in order)
+1. Sourabh's manual check with the release zip: his Gmail tab and a real bank login page are
+   refused with the popup message (STATUS §22 acceptance 2, the only open M8 item).
+2. Wide layout (decision 45): own plan in `docs/plans/`, plan-reviewer loop, build. Main bundle
+   headroom is 1.9 KB.
+3. M9 hardening (Oct 15), freeze Oct 16.
