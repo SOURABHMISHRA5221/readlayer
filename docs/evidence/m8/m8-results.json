@@ -1,0 +1,176 @@
+{
+  "browser": "Chrome/153.0.8010.12",
+  "connect_axe_demo_1440-light": [],
+  "connect_axe_demo_1440-dark": [],
+  "connect_axe_demo_390-light": [],
+  "demo connect": "Connected to the Newcomer demo reader",
+  "popup_axe_light": [],
+  "popup_axe_dark": [],
+  "demo bbc": {
+    "executeScript_before_click": "refused: Cannot access contents of the page. Extension manifest must request permission to access the respective host.",
+    "page_traces_before_click": false,
+    "api_calls_before_click": 0,
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "notes": true,
+    "counts": {
+      "marks": 8,
+      "markers": 4,
+      "paragraphs": 32,
+      "preread": false,
+      "toast": "GlossNotes are ready: 7 on this page."
+    },
+    "card": {
+      "state": "ready",
+      "says": "What the author is sayingWriting an explanation and checking it against the article\u2026The Institute for Fiscal Studies (IFS) said that if the "
+    },
+    "shot": "docs/evidence/m8/overlay-demo-bbc-1440-light.png",
+    "content_id": "0beef2ecc51068ab8cb6e50beebe411f"
+  },
+  "demo guardian": {
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "notes": true,
+    "counts": {
+      "marks": 6,
+      "markers": 3,
+      "paragraphs": 22,
+      "preread": false,
+      "toast": "GlossNotes are ready: 5 on this page."
+    },
+    "card": {
+      "state": "ready",
+      "says": "What the author is sayingWriting an explanation and checking it against the article\u2026It said that if John Healey sets out spending envelopes "
+    },
+    "shot": "docs/evidence/m8/overlay-demo-guardian-1440-light.png",
+    "content_id": "9e92fbe169089abf863161e7c3f43e7c"
+  },
+  "demo hindu": {
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "notes": true,
+    "counts": {
+      "marks": 6,
+      "markers": 3,
+      "paragraphs": 11,
+      "preread": true,
+      "toast": "GlossNotes are ready: 5 on this page."
+    },
+    "card": {
+      "state": "ready",
+      "says": "What the author is sayingWriting an explanation and checking it against the article\u2026In September 2026, inflation measured by the Consumer Pr"
+    },
+    "shot": "docs/evidence/m8/overlay-demo-hindu-1440-light.png",
+    "content_id": "e1afa09e28632bc8af3d1373b3eec0e7"
+  },
+  "design bbc 390-light-os": {
+    "scheme": "light",
+    "shot": "docs/evidence/m8/overlay-demo-bbc-390-light-os.png"
+  },
+  "design bbc 1440-dark-os": {
+    "scheme": "light",
+    "shot": "docs/evidence/m8/overlay-demo-bbc-1440-dark-os.png"
+  },
+  "design dark-page 1440-light-os": {
+    "scheme": "dark",
+    "shot": "docs/evidence/m8/overlay-demo-dark-page-1440-light-os.png"
+  },
+  "refused password page": {
+    "popup": "This page has a password or card field, so Gloss won't read it.",
+    "page_traces": false,
+    "our_css_on_page": false,
+    "api_calls": 0
+  },
+  "refused bank login": {
+    "popup": "Gloss doesn't read mail, banking or private pages.",
+    "page_traces": false,
+    "our_css_on_page": false,
+    "api_calls": 0
+  },
+  "refused gmail tab": {
+    "popup": "Gloss doesn't read mail, banking or private pages.",
+    "page_traces": "n/a (error page)",
+    "our_css_on_page": "n/a (error page)",
+    "api_calls": 0
+  },
+  "redaction": {
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "request_has_email_placeholder": true,
+    "request_has_phone_placeholder": true,
+    "raw_email_sent": false,
+    "raw_phone_sent": false,
+    "pii_found_before_backstop": 0,
+    "status": "ready"
+  },
+  "redaction content id": "6607328f6a20b8846642f6e2fdf9de21",
+  "second reader": {
+    "detail_status": {
+      "bbc": 404,
+      "guardian": 404,
+      "hindu": 404
+    },
+    "in_library": []
+  },
+  "unfinished popup": {
+    "setup_shown": true,
+    "read_hidden": true
+  },
+  "unfinished page traces": false,
+  "connect redirects to": "/welcome",
+  "after onboarding": "/connect",
+  "connect_axe_google_1440-light": [],
+  "connect_axe_google_1440-dark": [],
+  "connect_axe_google_390-light": [],
+  "google connect": "Connected to you",
+  "google bbc": {
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "notes": true,
+    "counts": {
+      "marks": 5,
+      "markers": 3,
+      "paragraphs": 32,
+      "preread": false,
+      "toast": "GlossNotes are ready: 4 on this page."
+    },
+    "card": {
+      "state": "ready",
+      "says": "What the author is sayingWriting an explanation and checking it against the article\u2026The Institute for Fiscal Studies (IFS) said that if the "
+    },
+    "shot": "docs/evidence/m8/overlay-google-bbc-1440-light.png"
+  },
+  "google guardian": {
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "notes": true,
+    "counts": {
+      "marks": 3,
+      "markers": 3,
+      "paragraphs": 22,
+      "preread": false,
+      "toast": "GlossNotes are ready: 2 on this page."
+    },
+    "card": {
+      "state": "ready",
+      "says": "What the author is sayingWriting an explanation and checking it against the article\u2026Last week, Andrew Bailey, the governor of the Bank of En"
+    },
+    "shot": "docs/evidence/m8/overlay-google-guardian-1440-light.png"
+  },
+  "google hindu": {
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "notes": true,
+    "counts": {
+      "marks": 4,
+      "markers": 3,
+      "paragraphs": 11,
+      "preread": false,
+      "toast": "GlossNotes are ready: 3 on this page."
+    },
+    "card": {
+      "state": "ready",
+      "says": "What the author is sayingWriting an explanation and checking it against the article\u2026The Reserve Bank of India's upper comfort limit for reta"
+    },
+    "shot": "docs/evidence/m8/overlay-google-hindu-1440-light.png"
+  },
+  "google library has its pages": [
+    "bbc",
+    "guardian",
+    "hindu"
+  ],
+  "spend_usd": 0.0132
+}

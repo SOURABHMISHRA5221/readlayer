@@ -898,3 +898,29 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   - Analyzer build 0.58 s, max RSS 165 MB (Cloud Run 1 GiB); a 1,350-word article scans in
     0.2 s (runs in a thread). Built-in Aadhaar (Verhoeff) and PAN recognizers used instead of
     hand-written regexes. Offline test counts socket attempts (tldextract falls back silently).
+- 7a20ee0..1c81ef8: CORS test; annotator 0.8.0 (`styles: "external"`, `ANNOTATOR_CSS`); extension
+  (pure modules + jsdom tests, worker/content/popup, build + manifest check, stable id from a
+  public key, private key discarded); the extension is **Gloss** (decision 40: name, Margo icon,
+  real tokens; popup buttons ink pills, the teal accent only means a note); web `/connect` (lazy,
+  under the gate, remembered through `/welcome`, "Use Gloss on any site" in the account menu);
+  `make extension-config`, CORS origin in deploy.env, harness CORS; README install steps.
+  Added beyond the plan: sign-in hosts refused (a signed-out Gmail tab lands on one).
+- TypeScript redactor over the corpus export: the same 9 paragraphs as Python, all contact emails.
+- Harness `tools/shots/m8.py` (STATUS §22): branded Chrome 154 ignores `--load-extension`
+  (checked), so Chrome for Testing 153; `Extensions.triggerAction` needs the tab target id. Runs
+  1–6 failed on the harness itself (buffered output, first navigation of a fresh profile not
+  confirmed, popup can't take a metrics override, SW response bodies evicted → Fetch
+  interception, error-page tab lookup, emulator rules → "Bearer owner"). Two real findings:
+  `pii_found_before_backstop` counted the client's own placeholders (fixed + test); the design
+  pass showed heavy dark marks on a light page under a dark OS (notes now follow the page's
+  background) and the toast over the phone bottom sheet (toast at the top on phones).
+  Final run: all 8 acceptance checks pass; harness spend ≈ $0.16 over all runs.
+- Publisher-page overlay shots kept local (gitignored), STATUS §4.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on `m8-resume` → fix until SHIP → push, PR `M8: …`, green CI, merge.
+2. Deploy API (his yes) → check the Firebase web key's restrictions allow the extension origin →
+   deploy web (his yes) → `make extension-config && pnpm --filter extension build` → live check:
+   one demo reader, 1 page not in the library (dry run first), test reader deleted after;
+   Sourabh's manual Gmail and bank-login refusals. Then STATUS §1/§22 live rows.
+3. Then Wide layout (decision 45).

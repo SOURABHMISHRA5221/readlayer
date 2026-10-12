@@ -321,7 +321,7 @@ Today a card shows the concept's definition and its prerequisites.
 - **Rest of M6:** paragraph notes, the pre-read path and "Know this?" prompts. The API already computes them.
 - **M2.2:** open domains and online concept growth (done); frozen-graph linking on unseen articles stays below target, see the held-out report.
 - **M7:** onboarding and the reading profile page. Readers will see and correct their graph there; the API for it exists. This is also where the reader's own analogy domain is set.
-- **M8:** the Chrome extension.
+- **M8:** the Gloss Chrome extension: built and accepted locally, shipping next (see "Install the extension locally").
 - **M9:** quality evals on a hand-labelled gold set.
 
 **Beyond the hackathon.** Videos and podcasts appear today as recommendations only; annotating them is outside the hackathon scope ([DESIGN §14](docs/DESIGN.md#14-out-of-scope-for-the-hackathon)).

@@ -36,3 +36,5 @@ data/corpus_paragraphs.json
 
 # M8: the extension's emulator build settings hold no secrets (local hosts, demo key)
 !apps/extension/.env.emulator
+# M8: overlay screenshots on publisher pages (their ads and photos): local evidence only
+docs/evidence/m8/publisher/
