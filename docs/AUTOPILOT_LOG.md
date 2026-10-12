@@ -950,3 +950,17 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    force one token refresh) → Sourabh's manual Gmail and bank refusals → `make extension-zip`
    and the GitHub release → STATUS §1/§22 live rows.
 3. Then Wide layout (decision 45; 1.9 KB of bundle headroom).
+
+### M8 merged (2026-10-12)
+- Pushed `m8-resume`, PR #30, CI green (api, typescript incl. the extension build), squash-merged
+  (189fe7f) after SHIP. Firebase browser key: no referrer restriction, securetoken allowed.
+- Not deployed yet. The emulator harness is stopped.
+
+### Next steps (resume here, in order)
+1. `make deploy-api` (his yes) → smoke: healthz, a submitted body from an unauthenticated caller
+   is 401, CORS preflight from the extension origin → `make deploy-web` (his yes).
+2. `pnpm --filter extension build` → live check: dry run (neither id exists), one demo reader,
+   https://en.wikipedia.org/wiki/Term_structure_of_interest_rates, one forced token refresh,
+   test reader deleted → Sourabh's manual Gmail and bank-login refusals.
+3. `make extension-zip` → GitHub release with the zip (his yes) → STATUS §1/§22 live rows.
+4. Then Wide layout (decision 45; 1.9 KB of bundle headroom).
