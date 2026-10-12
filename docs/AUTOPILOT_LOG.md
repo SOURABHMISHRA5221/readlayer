@@ -971,3 +971,17 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   origin and the Hosting origin, 400 for another extension's origin; startup log clean (graph
   2026-10-10-folded-5206+g1 in 1.0 s); no warnings beyond the smoke requests.
 - Next: `make deploy-web` (his yes), then the live check, the manual refusals and the release zip.
+
+### M8 live (2026-10-12)
+- `make deploy-web` on Sourabh's yes; live `/connect` and the account-menu item verified.
+- Live check run 1 (the plan's Wikipedia page): passed, but the page redirects to "Yield curve",
+  already a corpus doc, so the fetch doc was reused and no `ext:` doc or Presidio run happened
+  in production. My dry run had checked the pre-redirect URL: follow redirects in dry runs.
+- Sourabh: yes to a second throwaway demo reader. Run 2 (an NPR article, dry run with
+  redirects): new `extension` doc 84c9a717… (22 paragraphs, $0.0027), Presidio ran live, forced
+  token refresh 200, test reader deleted. STATUS §22 "Live" row.
+
+### Next steps (resume here, in order)
+1. `make extension-zip` → GitHub release with the zip (Sourabh said yes) → push the docs commits.
+2. Sourabh's manual check: his Gmail tab and a real bank login page are refused.
+3. Then Wide layout (decision 45; 1.9 KB of bundle headroom).

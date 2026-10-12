@@ -1,0 +1,28 @@
+# tools/shots/m8_live.py against production (2026-10-12): API revision 00025, web deployed. Overlay shots are local only.
+## run 1: the plan's Wikipedia page (redirects to Yield curve, already a corpus doc)
+-- 23:42:05 demo sign-in
+-- 23:42:19 signed in as demo: https://readlayer-sourabh-26.web.app/
+-- 23:42:19 connect page
+[live connect] "Connected to the Newcomer demo reader"
+-- 23:42:24 read live-demo wikipedia
+[popup-live-demo-wikipedia] docs/evidence/m8/live/popup-live-demo-wikipedia.png
+[live read] {"executeScript_before_click": "refused: Cannot access contents of the page. Extension manifest must request permission to access the respective host.", "page_traces_before_click": false, "api_calls_before_click": 0, "popup": "Reading this page. Notes appear on it shortly; you can close this.", "notes": true, "counts": {"marks": 51, "markers": 32, "paragraphs": 55, "preread": true, "toast": "GlossNotes are ready: 49 on this page."}, "card": {"state": "ready", "says": "What the author is sayingWriting an explanation and checking it against the article\u2026A yield curve displays the relationshi
+[worker talked to] ["readlayer-api-d2sfihz3za-el.a.run.app"]
+[after forced refresh] {"popup": "Reading this page. Notes appear on it shortly; you can close this.", "notes": true, "securetoken_calls": ["https://securetoken.googleapis.com/v1/token"], "securetoken_status": [200], "same_doc": true, "counts": {"marks": 51, "markers": 32, "paragraphs": 55, "preread": true, "toast": "GlossNotes are ready: 49 on this page."}}
+[in the reader's library] true
+[delete test reader] 204
+[results] docs/evidence/m8/live/m8-live-results.json
+## run 2: an NPR article not in production (new ext: doc)
+-- 23:44:17 demo sign-in
+-- 23:44:27 signed in as demo: https://readlayer-sourabh-26.web.app/
+-- 23:44:27 connect page
+[live connect] "Connected to the Newcomer demo reader"
+-- 23:44:32 read live-demo npr
+[popup-live-demo-npr] docs/evidence/m8/live/popup-live-demo-npr.png
+[live read] {"executeScript_before_click": "refused: Cannot access contents of the page. Extension manifest must request permission to access the respective host.", "page_traces_before_click": false, "api_calls_before_click": 0, "popup": "Reading this page. Notes appear on it shortly; you can close this.", "notes": true, "counts": {"marks": 2, "markers": 0, "paragraphs": 22, "preread": false, "toast": "GlossNotes are ready: 1 on this page."}, "card": {"state": "ready", "says": "What the author is sayingWriting an explanation and checking it against the article\u2026In many cases, people's unemployment ben
+[worker talked to] ["readlayer-api-d2sfihz3za-el.a.run.app"]
+[after forced refresh] {"popup": "Reading this page. Notes appear on it shortly; you can close this.", "notes": true, "securetoken_calls": ["https://securetoken.googleapis.com/v1/token"], "securetoken_status": [200], "same_doc": true, "counts": {"marks": 2, "markers": 0, "paragraphs": 22, "preread": true, "toast": "GlossNotes are ready: 1 on this page."}}
+[in the reader's library] true
+[delete test reader] 204
+[results] docs/evidence/m8/live/m8-live-results-npr.json
+[exited with code 0]

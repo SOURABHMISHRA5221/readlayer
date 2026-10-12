@@ -1,0 +1,46 @@
+{
+  "live connect": "Connected to the Newcomer demo reader",
+  "live read": {
+    "executeScript_before_click": "refused: Cannot access contents of the page. Extension manifest must request permission to access the respective host.",
+    "page_traces_before_click": false,
+    "api_calls_before_click": 0,
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "notes": true,
+    "counts": {
+      "marks": 51,
+      "markers": 32,
+      "paragraphs": 55,
+      "preread": true,
+      "toast": "GlossNotes are ready: 49 on this page."
+    },
+    "card": {
+      "state": "ready",
+      "says": "What the author is sayingWriting an explanation and checking it against the article\u2026A yield curve displays the relationship between yields a"
+    },
+    "shot": "docs/evidence/m8/publisher/overlay-live-demo-wikipedia-1440-light.png",
+    "content_id": "4a4a18915e77e0ae677f2f5c50e87b97"
+  },
+  "worker talked to": [
+    "readlayer-api-d2sfihz3za-el.a.run.app"
+  ],
+  "after forced refresh": {
+    "popup": "Reading this page. Notes appear on it shortly; you can close this.",
+    "notes": true,
+    "securetoken_calls": [
+      "https://securetoken.googleapis.com/v1/token"
+    ],
+    "securetoken_status": [
+      200
+    ],
+    "same_doc": true,
+    "counts": {
+      "marks": 51,
+      "markers": 32,
+      "paragraphs": 55,
+      "preread": true,
+      "toast": "GlossNotes are ready: 49 on this page."
+    }
+  },
+  "in the reader's library": true,
+  "delete test reader": 204
+}
