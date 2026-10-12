@@ -848,3 +848,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   alongside the API (deploy guard skipped for the web step only), `make setup-feed-job` done.
 - `make run-feed-job`: 200, 54/54 feeds, 710 items, 14 docs. Demo seed dry run → real (3 docs).
 - Next: Sourabh's live check (country, Refresh); then M8-local from `m8-resume`, then Wide layout.
+- 2026-10-12: scheduled runs 06:00 IST (703 items) and 18:00 IST (720), 54/54 feeds each. Live
+  `feed mix` logs: a country-set reader, 4 local / 2 global of 6. d50 done.
+
+### Next steps (resume here, in order)
+1. M8-local from local branch `m8-resume` (plan amendment first: annotator 0.7, per-reader
+   visibility, onboarding redirect; carry over wip 2f037a1's redaction format, fixture, tests and
+   `extension` NOT_CORPUS exclusions by hand). Plan → plan-reviewer loop → build.
+2. Then Wide layout (decision 45). Follow-ups on the M9 list: Telugu-title video, policy fallback
+   thin, bundle headroom 2.4 KB.
