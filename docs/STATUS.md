@@ -1,13 +1,12 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-11 (IST): **Landing and onboarding merged (#26) and live** (API revision
-00021, web deployed; live landing checks pass, mobile Lighthouse LCP median 1.8 s; §19). **Decision
-48** merged (#27) and live (API revision 00022; Sourabh's Redo setup worked; §20). **Decision 50**
-(For you from top outlets, twice-daily job, 60/40 country/global, Refresh) built and
-harness-accepted on `d50` (§21); next review fixes, PR, deploys and the scheduler (§9). Before
-that: Know-this refresh (#25), Design pass (#22, #23), M7.5 (#20), all live. Order (decision 49):
-d50 → M8-local (from `m8-resume`) → Wide layout (decision 45).
-M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M8 paused. M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
+Last updated: 2026-10-12 (IST): **M8-local built and harness-accepted** on `m8-resume` (§22): the
+Gloss extension, unpacked, activeTab only; milestone-reviewer FIX round 1 applied, review round 2
+next, then PR, deploys (API, web) and the live check (§9). **Decision 50** merged (#28, #29) and
+live (API revision 00024; scheduled runs confirmed, §21). Before that: Decision 48 (#27),
+Landing and onboarding (#26), Know-this refresh (#25), Design pass (#22, #23), M7.5 (#20), all
+live. Order (decision 49): d50 → M8-local → Wide layout (decision 45).
+M2.2 merged (#18) and live (§16; frozen-graph headline missed, decision 36). M7 live (#16, §15); M6 live (#14, #15, §14). Autopilot run log in `docs/AUTOPILOT_LOG.md`.
 Read this together with `CLAUDE.md` (rules), `docs/DESIGN.md` (spec) and `docs/BUILD_PLAN.md`
 (milestone prompts). Where this file and DESIGN.md disagree, the "Deviations" section explains
 why; DESIGN.md is still the target unless a deviation says otherwise.
@@ -67,11 +66,11 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 
 | Piece | Where it runs | State |
 |---|---|---|
-| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live, M7 build**: revision `readlayer-api-00012-ccv`, https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
-| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live, M7 build** (bundle `index-Dm3tU99c.js`): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
+| `apps/api` FastAPI, Python 3.12 | Local `make dev` on :8000. Cloud Run `readlayer-api`, asia-south1, min 0 / max 3, 1 vCPU / 1 GiB | **Live**: revision `readlayer-api-00024` (decision 50; M8 not deployed yet), https://readlayer-api-d2sfihz3za-el.a.run.app (also https://readlayer-api-751104670850.asia-south1.run.app) |
+| `apps/web` Vite + React + Firebase Auth | Local `make dev` on :5173, proxies `/v1` to :8000. Firebase Hosting | **Live** (decision 50 build; M8's Connect page not deployed yet): https://readlayer-sourabh-26.web.app (Firebase web app `readlayer-web`) |
 | Firebase Auth | Google + Anonymous providers | Live. Anonymous = demo mode with personas |
 | `packages/annotator` | Bundled into the web app and the extension | 0.8.0 (`ANNOTATOR_VERSION` = package.json): as 0.7.x (two-part card, paragraph markers, "Know this?" chip, pre-read, reading signals, inline host, 46d refresh) plus `styles: "external"` on `createAnnotator` and `renderPreread` and the exported `ANNOTATOR_CSS`, so the extension applies the CSS itself (M8) |
-| `apps/extension` | Loaded unpacked (Developer mode); id `lnfamfbeffepopbmedfenfmgljoacbmg` from the manifest's public key | Gloss 0.8.0, MV3: `activeTab`, `scripting`, `storage` only (build check). Worker holds the token (`storage.session`, refreshed via securetoken) and makes every API call; content script injected on click (refusals, Readability, `redact.ts`, paragraph tagging, annotator 0.8); popup (persona, density, setup state); Connect page in the web app (`/connect`). Builds: `build:emulator` (harness) and `build` (`make extension-config`) |
+| `apps/extension` | Loaded unpacked (Developer mode); id `lnfamfbeffepopbmedfenfmgljoacbmg` from the manifest's public key | Gloss 0.8.0, MV3: `activeTab`, `scripting`, `storage` only (build check). Worker holds the token (`storage.session`, refreshed via securetoken) and makes every API call; content script injected on click (refusals, Readability, `redact.ts`, paragraph tagging, annotator 0.8); popup (persona, density, setup state); Connect page in the web app (`/connect`). Builds: `build:emulator` (harness) and `build` (public settings committed; no cloud access needed) |
 | Vertex AI (Gemini, Gemma MaaS, embeddings) | `global` endpoint, project `readlayer-sourabh-26` | Live, via ADC locally |
 | Firestore (Native) | asia-south1 | Live |
 | Cloud Storage | `gs://readlayer-sourabh-26-graph/concepts.json` (+ `concepts.prev.json`) | Live, loaded at API start |
@@ -218,6 +217,8 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | M8 harness: Chrome for Testing 153 (Playwright's build), not branded Chrome | Branded Chrome ignores `--load-extension` since 137 (checked: the worker never appeared in 154); CfT loads it and has `Extensions.triggerAction` | Keep |
 | M8: extraction fixtures are three publisher layouts with synthetic text, not saved pages (plan: "trimmed saved pages") | The repo goes public on Oct 17; no publisher's article is kept in it. Live publisher pages are covered by the harness (BBC, Guardian, The Hindu) | Keep |
 | M8 evidence: overlay screenshots on publisher pages stay local (`docs/evidence/m8/publisher/`, gitignored) | They carry the publishers' ads and photos of real people; Gloss UI and fixture-page shots are committed | Sourabh may choose to publish |
+| M8: the Connect page is reached from the account menu ("Use Gloss on any site"), not linked from the profile page (plan D) | One place that every signed-in and demo reader already uses; the profile page stays about the reader's model | Keep |
+| M8: no prebuilt extension download (plan E: "build or download `dist`") | The build needs no cloud access now (public settings committed, the Firebase web key comes from the Connect page), so `pnpm --filter extension build` works for anyone; a release zip is one push away if judges want it | Ask Sourabh before the repo goes public |
 
 ## 5. Known issues and tech debt
 
@@ -228,6 +229,9 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Medium | **M9: Firebase App Check (reCAPTCHA Enterprise)** to stop scripted anonymous sign-ups. Shared anonymous caps bound the cost today (30 new URLs/day, 100 search calls/day), but a script can still mint accounts and burn those shared allowances for everyone |
 | Medium | **M9: scheduled cleanup of anonymous users with no activity for 30 days** (Auth user + `users/{uid}`). "End demo" deletes on request; abandoned demo sessions pile up until then |
 | Medium | "Open here" (M6, two-phase): the article shows in 1.4 s locally but took **7.3 s live** (M7.5 live check, first ingest on revision 00017: 6.8 s; a known pending link 0.2 s) on the first ingest of the new revision (phase 1 5.2 s server-side: deferred ingestion imports on a 1-vCPU instance shared with other readers' requests). A second live run (Wikipedia "Forward guidance", instance warm for health checks but its first ingest) gave the same: phase 1 6.6 s, article 7.5 s, notes 43.7 s. Phase-1 timing fields (`fetch_ms`, `extract_ms`) ship with M7 to split the cost; the likely cause is the deferred ingestion imports on a 1-vCPU instance. M9: preload them at startup while min instances = 1 (judging), where cold-start time no longer matters. Notes 20–55 s after; the reader shows "Preparing your notes… N s" |
+| Low | **M8:** `submitted.reusable` reads every id in the reader's `ingested` list (up to two reads each) on every extension submission. Fine at today's caps (≤ 20 new pages a day); bound it (newest N, or a url field on the entry) if lists grow |
+| Low | **M8:** the extension is another holder of a reader's ID token. Sign-out, End demo and Delete my data disconnect it first (best effort: if the extension isn't reachable, its copy expires within the hour, and the revocation caveat below applies) |
+| Low | **M8:** pages that change between clicks (live blogs) are reused for the same reader (their own earlier `ext:` doc), so a reload doesn't pick up new paragraphs; unmatched paragraphs just get no notes |
 | Low | Deleted-account revocation is per instance and in memory, so it is also lost on a restart. Seen in M6 local testing: a demo session deleted at 07:02:41 UTC sent one event batch at 07:10:19 after the dev server restarted, leaving `users/{uid}` + 6 `events` + 1 `demo_graphs/newcomer` (8 docs) under a deleted Auth user (Sourabh's own session). Left for the M9 anonymous cleanup unless Sourabh asks for a delete now; events expire by TTL in 90 days |
 | Low | A cold explanation card (both parts missing) costs $0.0090 and p95 31 s (was $0.0070, 22 s): two judge calls. Reuse across readers repays it |
 | Medium | Base difficulty `b` (LLM-estimated at build) drives every prior, so a wrong `b` mis-scores a concept for every reader without an edge. The linked-reference rule only trusts a prior ≥ 0.8 for that reason (DESIGN §6.7) |
@@ -396,6 +400,11 @@ podcasts only (articles came from outlets). The fallback measurement (`scripts/m
 credits** (36 + 7 retries), not counted in `ops/search`. Production expectation: Scheduler 1 job (free tier
 3), ≈ 54 feed fetches and 14 Firestore writes per run, **$0/month**; Tavily article searches
 only for thin topics and onboarding concepts.
+
+**M8-local (2026-10-12, emulator harness):** harness LLM ≈ **$0.16** over all runs on the
+harness ledger (three live articles and the fixture pages ingested once each, explanations for
+two readers; cap $1.05); the final evidence run $0.013. Corpus measurements (`measure_pii`,
+`measure-redact.mjs`) are offline: no LLM, no writes. Production: nothing yet.
 
 **Landing illustrations (2026-10-11, decision 44 V3):** `gemini-3.1-flash-image`, prompt
 `landing-art-v1`, 5 images, **$0.34** (Sourabh approved up to 6 images / $0.60); two 429s,
@@ -940,7 +949,9 @@ Plan `docs/plans/d50.md` (plan-reviewer REVISE 13 → APPROVE). Evidence: `tools
 
 Plan `docs/plans/M8.md` (approved 2026-10-10, amended 2026-10-12: REVISE 12 → REVISE 2 → APPROVE).
 Evidence: `tools/shots/m8.py`, `docs/evidence/m8/` (`harness.txt`, `m8-results.json`, Gloss UI and
-fixture-page shots; publisher-page overlays kept local, §4). Browser: Chrome for Testing 153,
+fixture-page shots). Publisher-page overlays are kept local (§4): the `overlay-*-bbc|guardian|hindu`
+paths in `harness.txt` and `m8-results.json` point into the gitignored `docs/evidence/m8/publisher/`.
+The local BBC 1440 shot caught the card mid-fade: retake it before using it in the deck. Browser: Chrome for Testing 153,
 `--load-extension` (emulator build), the click is CDP `Extensions.triggerAction` on the tab (grants
 activeTab like a toolbar click), then the popup's "Read this page".
 
@@ -951,10 +962,11 @@ activeTab like a toolbar click), then the popup's "Read this page".
 | 2. Refusals | Password page: "This page has a password or card field…"; bank login (`netbanking.hdfcbank.com`) and Gmail tab: "Gloss doesn't read mail, banking or private pages." Each: no page traces, none of our CSS, 0 API calls. Unit tests for every rule. Sourabh's manual check (his Gmail, a real bank login) is in the live step |
 | 3. Redaction | Fixture article with an email and a phone in its body: the worker's request carried `[REDACTED:email]` and `[REDACTED:phone]`, neither raw value; `pii_found_before_backstop` 0. (The first harness run read 2: the count included the client's own placeholders; fixed to count only what the server adds, test) |
 | 4. Manifest | Build check on both builds: `activeTab`, `scripting`, `storage` only; no host permissions, no content scripts |
-| 5. Corpus checks (338 stored docs, 12,369 paragraphs, read-only export) | Redactors: Python and TypeScript change the same 9 paragraphs, all journalists' contact emails (the first run also hit a 14-digit timestamp as a card: fixed with issuer prefixes). Presidio: max 3.98 findings per 1,000 words, threshold 20 (≥ 3 findings) or ≥ 3 cards → **0 of 338 refused**; refuse fixtures 110 and 79, pass ≤ 6.9. Analyzer: 0.58 s build, 165 MB max RSS, 0.2 s per 1,350-word article |
+| 5. Corpus checks (338 stored docs, 12,369 paragraphs, read-only export) | Redactors: Python and TypeScript change the same 9 paragraphs, all journalists' contact emails (the first run also hit a 14-digit timestamp as a card: fixed with issuer prefixes; unchanged after the review's Unicode-digit and email changes). Presidio: max 3.98 findings per 1,000 words, threshold 20 (≥ 3 findings) or ≥ 3 cards → **0 of 338 refused**; refuse fixtures 110 and 79, pass ≤ 6.9. Analyzer: 0.58 s build; 0.2 s per 1,350-word article; at the endpoint's maximum (148,800 chars after the cleaner) **1.6 s and 201 MB peak RSS for the whole process** in 10k-char chunks with the parser and NER off (one call before: 4.0 s and 899 MB; the reviewer measured 29.6 s / 717 MB): well inside Cloud Run's 1 GiB |
 | 6. Onboarding, the real path | Unfinished emulator Google reader: popup with a handed-over session shows "Finish setting up" and injects nothing; `/connect` → `/welcome` → 2 screens → back on `/connect` → Connect → reads all three sites |
 | 7. Visibility | A second demo reader: GET `/v1/content/{id}` 404 for all three extension docs, none in its library; the Google reader's library lists all three |
 | 8. Design and a11y | axe 0 on the popup (light, dark) and the Connect page (1440 light/dark, 390). Phone: the status line moved to the top, clear of the bottom sheet. Dark OS on a light page now keeps light notes; a dark page gets dark notes (`data-rl-scheme`). Small targets: Connect 90×40 and the popup selects (the web app's existing button size) |
-| Tests | API 778 (+61), web 70 (+7), annotator 57 (+3), extension 78. Web main bundle 147.79 KB gzip (budget 150); Connect page 1.65 KB lazy. Extension: worker 8 KB, content script 38 KB gzip |
+| Review round 1 (milestone-reviewer FIX: 4 blocking, 7 more) | Presidio bounded (chunks, row 5); extension builds without cloud access (Firebase web key from the Connect page; public settings committed); sign-out, End demo and Delete my data disconnect the extension; server redacts the title and URL query values too; Unicode-digit and email parity (fixture +5); Connect refuses unknown personas; a failed read can be retried; privacy page covers the extension; STATUS refreshed. Left as known issues (§5): `reusable` cost, live pages reused per reader |
+| Tests | API 788 (+71), web 71 (+8), annotator 57 (+3), extension 84. Web main bundle 147.79 KB gzip (budget 150); Connect page 1.65 KB lazy. Extension: worker 8 KB, content script 38 KB gzip |
 | Harness spend | ≈ $0.16 over all runs on the harness ledger (cap $1.05); the final run $0.013 |
 

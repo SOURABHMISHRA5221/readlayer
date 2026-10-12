@@ -920,7 +920,17 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 ### Next steps (resume here, in order)
 1. milestone-reviewer on `m8-resume` → fix until SHIP → push, PR `M8: …`, green CI, merge.
 2. Deploy API (his yes) → check the Firebase web key's restrictions allow the extension origin →
-   deploy web (his yes) → `make extension-config && pnpm --filter extension build` → live check:
+   deploy web (his yes) → `pnpm --filter extension build` → live check:
    one demo reader, 1 page not in the library (dry run first), test reader deleted after;
    Sourabh's manual Gmail and bank-login refusals. Then STATUS §1/§22 live rows.
 3. Then Wide layout (decision 45).
+
+### M8 review
+- milestone-reviewer round 1: **FIX** (4 blocking: Presidio cost unbounded at the 150k-char
+  maximum; README install needed gcloud; sign-out/delete left the extension holding the token;
+  STATUS stale; 7 more). Applied: 346422d chunked Presidio (1.6 s / 201 MB at the maximum; a
+  test caught a chunk reorder), 0e34069 Firebase web key via the Connect page + public build
+  settings committed + sign-out disconnects + persona allowlist + retry after a failed read,
+  3d5d355 server redacts title and URL query, dd300ed Unicode-digit and email parity (corpus
+  check unchanged), privacy page, STATUS (header, §2, §4, §5, §7, §22). Not changed: `reusable`
+  cost and live pages reused per reader (STATUS §5).
