@@ -28,7 +28,7 @@ export async function call<T>(method: string, path: string, body?: unknown): Pro
       ...(body === undefined ? {} : { headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }),
     });
   } catch {
-    return { ok: false, status: 0, error: "offline", message: "ReadLayer couldn't reach its server. Try again." };
+    return { ok: false, status: 0, error: "offline", message: "Gloss couldn't reach its server. Try again." };
   }
   const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
   if (res.ok) return { ok: true, status: res.status, data: data as T };

@@ -24,7 +24,7 @@ from app.store.reader_repo import ReaderRepo
 
 router = APIRouter()
 
-PERSONAL_DATA = "This page looks like it holds personal information, so ReadLayer won't read it."
+PERSONAL_DATA = "This page looks like it holds personal information, so Gloss won't read it."
 MAX_URL_CHARS = 2048
 MAX_SUBMITTED_PARAGRAPHS = 200
 MAX_SUBMITTED_PARAGRAPH_CHARS = 5000
@@ -177,7 +177,7 @@ async def _post_submitted(
     """Extension text (M8): an existing doc if there is one (free), else a new `ext:` doc."""
     if not caller.is_anonymous and not await submitted.onboarded(caller.uid):
         return _error(
-            409, "onboarding_required", "Finish setting up ReadLayer in the web app first."
+            409, "onboarding_required", "Finish setting up Gloss in the web app first."
         )
     found = 0
     try:

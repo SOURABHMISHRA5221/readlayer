@@ -34,22 +34,22 @@ async function onboarded(): Promise<boolean | null> {
 
 export async function readTab(tabId: number): Promise<ReadResult> {
   const session = await load();
-  if (!session) return fail("signed_out", "Connect ReadLayer from the web app first.");
+  if (!session) return fail("signed_out", "Connect Gloss from the web app first.");
   const tab = await chrome.tabs.get(tabId);
   // URL rules first: a mail, bank or private page never even gets our script.
   const byUrl = refusalForUrl(tab.url ?? "");
   if (byUrl) return fail("refused", REFUSAL_TEXT[byUrl]);
   if (!claims(session.idToken).anonymous && (await onboarded()) === false) {
-    return fail("onboarding", "Finish setting up ReadLayer in the web app first.");
+    return fail("onboarding", "Finish setting up Gloss in the web app first.");
   }
   const target = { tabId };
   await chrome.scripting.executeScript({ target, files: ["content.js"] });
   const [first] = await chrome.scripting.executeScript({ target, func: () => globalThis.__readlayer!.prepare() });
   const prepared = first?.result as Prepared | undefined;
-  if (!prepared) return fail("error", "ReadLayer couldn't read this page.");
+  if (!prepared) return fail("error", "Gloss couldn't read this page.");
   if ("mounted" in prepared) return { ok: true, already: true };
   if ("refused" in prepared) return fail("refused", REFUSAL_TEXT[prepared.refused]);
-  if ("noArticle" in prepared) return fail("no_article", "ReadLayer couldn't find an article on this page.");
+  if ("noArticle" in prepared) return fail("no_article", "Gloss couldn't find an article on this page.");
   // Only now, on an accepted page that isn't mounted yet: our CSS, then the overlay.
   await chrome.scripting.insertCSS({ target, css: ANNOTATOR_CSS + TOKENS_CSS });
   await chrome.scripting.executeScript({
@@ -95,7 +95,7 @@ chrome.runtime.onMessage.addListener((message: PopupMessage | ContentMessage, se
   if (message.type === "api" && fromContent(sender)) work = run(message.call);
   else if (fromPopup(sender)) {
     if (message.type === "status") work = status();
-    else if (message.type === "read") work = readTab(message.tabId).catch(() => fail("error", "ReadLayer couldn't read this page."));
+    else if (message.type === "read") work = readTab(message.tabId).catch(() => fail("error", "Gloss couldn't read this page."));
     else if (message.type === "settings") work = settings(message.persona, message.density);
   }
   if (!work) return false;

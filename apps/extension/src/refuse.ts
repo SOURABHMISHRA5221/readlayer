@@ -7,8 +7,8 @@
 export type Refusal = "private_page" | "sensitive_fields";
 
 export const REFUSAL_TEXT: Record<Refusal, string> = {
-  private_page: "ReadLayer doesn't read mail, banking or private pages.",
-  sensitive_fields: "This page has a password or card field, so ReadLayer won't read it.",
+  private_page: "Gloss doesn't read mail, banking or private pages.",
+  sensitive_fields: "This page has a password or card field, so Gloss won't read it.",
 };
 
 const MAIL_HOSTS = ["mail.google.com", "outlook.live.com", "outlook.office.com", "outlook.office365.com",

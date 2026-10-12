@@ -17,7 +17,7 @@ export function showToast(text: string, options: { busy?: boolean; hideAfterMs?:
   }
   const brand = document.createElement("span");
   brand.className = "rl-ext-toast__brand";
-  brand.textContent = "ReadLayer";
+  brand.textContent = "Gloss";
   const line = document.createElement("span");
   line.textContent = text;
   toast.replaceChildren(brand, line);

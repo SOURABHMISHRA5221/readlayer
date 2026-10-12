@@ -93,7 +93,7 @@ async function start({ webBase }: { webBase: string }): Promise<void> {
   const detail = await api<{ paragraphs: ServerParagraph[] }>({ op: "detail", id });
   const tagged = detail.ok ? tagParagraphs(document, detail.data.paragraphs) : null;
   if (!tagged) {
-    showToast("ReadLayer couldn't place notes on this page.");
+    showToast("Gloss couldn't place notes on this page.");
     return;
   }
   const notes = await loadNotes(id);
