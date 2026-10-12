@@ -1,0 +1,47 @@
+/*
+ * Gloss tokens for the overlay on publisher pages (M8 §B): the annotator's --rl-* custom
+ * properties, light by default and dark with the OS setting (a publisher's own theme isn't
+ * visible to us). Scoped to our own elements so the page's styles keep theirs. Inserted by the
+ * worker with chrome.scripting.insertCSS together with ANNOTATOR_CSS, only on accepted pages.
+ */
+.rl-mark, .rl-card, .rl-scrim, .rl-pmark, .rl-ask, .rl-preread, .rl-ext-toast {
+  --rl-accent: #1f5f5b;
+  --rl-ink: #1c1b19;
+  --rl-ink-soft: #3b3935;
+  --rl-muted: #5f5f5f;
+  --rl-surface: #fffdf8;
+  --rl-recess: #f3efe6;
+  --rl-line: #e2ddd2;
+  --rl-font-ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --rl-font-read: "Newsreader", Georgia, "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark) {
+  .rl-mark, .rl-card, .rl-scrim, .rl-pmark, .rl-ask, .rl-preread, .rl-ext-toast {
+    --rl-accent: #7cc4bc;
+    --rl-ink: #ece8df;
+    --rl-ink-soft: #d6d1c6;
+    --rl-muted: #a9a49a;
+    --rl-surface: #1d1c1a;
+    --rl-recess: #262522;
+    --rl-line: #3a3833;
+  }
+}
+.rl-ext-toast {
+  position: fixed;
+  z-index: 2147483001;
+  right: 16px;
+  bottom: 16px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 12px 16px;
+  border: 1px solid var(--rl-line);
+  border-radius: 10px;
+  background: var(--rl-surface);
+  color: var(--rl-ink);
+  font: 500 14px/1.45 var(--rl-font-ui);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.16);
+  transition: opacity 180ms ease-out, transform 180ms ease-out;
+}
+.rl-ext-toast[data-state="hidden"] { opacity: 0; transform: translateY(8px); pointer-events: none; }
+.rl-ext-toast__brand { display: block; margin-bottom: 2px; color: var(--rl-accent); font: 600 11px/1.2 var(--rl-font-ui); letter-spacing: 0.06em; text-transform: uppercase; }
+.rl-ext-preread { margin: 0 0 1.5em; }
+@media (prefers-reduced-motion: reduce) { .rl-ext-toast { transition: none; } }

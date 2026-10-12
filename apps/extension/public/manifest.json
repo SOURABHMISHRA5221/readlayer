@@ -1,8 +1,0 @@
-{
-  "manifest_version": 3,
-  "name": "ReadLayer",
-  "version": "0.1.0",
-  "description": "Personal reading layer for news articles.",
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_title": "ReadLayer" }
-}

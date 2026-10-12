@@ -1,10 +1,11 @@
 {
   "name": "extension",
-  "version": "0.1.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "tsc -p tsconfig.json && vite build",
+    "build": "tsc -p tsconfig.json && vite build && vite build -c vite.content.config.ts && node scripts/check-manifest.mjs",
+    "build:emulator": "tsc -p tsconfig.json && vite build --mode emulator && vite build -c vite.content.config.ts --mode emulator && node scripts/check-manifest.mjs",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
   },

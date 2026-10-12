@@ -1,0 +1,54 @@
+:root {
+  color-scheme: light dark;
+  --accent: #1f5f5b;
+  --accent-ink: #ffffff;
+  --ink: #1c1b19;
+  --muted: #5f5f5f;
+  --surface: #fffdf8;
+  --recess: #f3efe6;
+  --line: #e2ddd2;
+  --focus: #1f5f5b;
+  font: 400 14px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #7cc4bc;
+    --accent-ink: #10201e;
+    --ink: #ece8df;
+    --muted: #a9a49a;
+    --surface: #1d1c1a;
+    --recess: #262522;
+    --line: #3a3833;
+    --focus: #7cc4bc;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; width: 300px; background: var(--surface); color: var(--ink); }
+.popup { padding: 16px 16px 14px; display: grid; gap: 12px; }
+.popup__head { display: grid; gap: 2px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.popup__brand { margin: 0; font: 500 20px/1.2 "Newsreader", Georgia, serif; letter-spacing: -0.01em; }
+.popup__who { margin: 0; color: var(--muted); font-size: 13px; }
+.popup__hint, .popup__note { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; }
+.popup__note { color: var(--ink); font-size: 13.5px; margin: 0 0 10px; }
+.popup__message { margin: 0; min-height: 1.45em; font-size: 13px; }
+.popup__message[data-tone="error"] { color: #a33a2a; }
+@media (prefers-color-scheme: dark) { .popup__message[data-tone="error"] { color: #f09a8a; } }
+section { display: grid; gap: 10px; }
+section[hidden] { display: none; }
+.btn {
+  display: block; width: 100%; padding: 10px 14px; border: 0; border-radius: 8px;
+  font: 600 14px/1.2 inherit; font-family: inherit; text-align: center; text-decoration: none; cursor: pointer;
+}
+.btn--primary { background: var(--accent); color: var(--accent-ink); }
+.btn--primary:hover { filter: brightness(1.08); }
+.btn--primary:active { transform: translateY(1px); }
+.btn[aria-disabled="true"] { opacity: 0.55; cursor: progress; }
+.btn:focus-visible, select:focus-visible, .link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.field { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; }
+.field label { color: var(--muted); font-size: 13px; }
+select {
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--recess); color: var(--ink); font: inherit; font-size: 13px;
+}
+.link { color: var(--accent); font-size: 13px; text-underline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .btn--primary:active { transform: none; } }

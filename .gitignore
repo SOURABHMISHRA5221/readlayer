@@ -33,3 +33,6 @@ ui-debug.log
 data/concepts.seeded.json
 # M8 read-only corpus text export for the redaction / PII measurement (never committed)
 data/corpus_paragraphs.json
+
+# M8: the extension's emulator build settings hold no secrets (local hosts, demo key)
+!apps/extension/.env.emulator

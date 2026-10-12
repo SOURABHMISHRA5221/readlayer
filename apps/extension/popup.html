@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ReadLayer</title>
+    <link rel="stylesheet" href="./src/popup.css" />
+  </head>
+  <body>
+    <main class="popup" aria-labelledby="title">
+      <header class="popup__head">
+        <h1 id="title" class="popup__brand">ReadLayer</h1>
+        <p id="who" class="popup__who">…</p>
+      </header>
+
+      <section id="connected" hidden>
+        <button id="read" class="btn btn--primary" type="button">Read this page</button>
+        <p class="popup__hint">Notes for what you're likely to miss. Nothing runs until you press this.</p>
+
+        <div id="persona-row" class="field" hidden>
+          <label for="persona">Reading as</label>
+          <select id="persona"></select>
+        </div>
+        <div class="field">
+          <label for="density">How many notes</label>
+          <select id="density">
+            <option value="minimal">Fewer</option>
+            <option value="balanced">Balanced</option>
+            <option value="guided">More</option>
+          </select>
+        </div>
+        <a id="profile" class="link" target="_blank" rel="noopener">Open your reading profile</a>
+      </section>
+
+      <section id="setup" hidden>
+        <p class="popup__note">Finish setting up ReadLayer first. It takes two short screens.</p>
+        <a id="setup-link" class="btn btn--primary" target="_blank" rel="noopener">Finish setting up</a>
+      </section>
+
+      <section id="signed-out" hidden>
+        <p class="popup__note">Connect the extension from the ReadLayer web app to start.</p>
+        <a id="connect" class="btn btn--primary" target="_blank" rel="noopener">Connect</a>
+      </section>
+
+      <p id="message" class="popup__message" role="status" aria-live="polite"></p>
+    </main>
+    <script type="module" src="./src/popup.ts"></script>
+  </body>
+</html>
