@@ -1428,6 +1428,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Tests: annotator 60, web 164 (+16, `test/media.test.tsx`: helpers, player messaging, ReaderPage
   transcribing → transcript → notes, timeout retry, refusals), extension 85, API 934; typecheck clean.
 
+- Step 3 re-run, 19:21 UTC, fresh emulator (seeded production $0.6543, harness budget $1.6543):
+  open 200 free; **whole 16-min video transcribe → 504 after 91.5 s, $0.096** (one charge, no
+  in-run retry, as designed). The 3-min probe at 19:03 answered in 27 s. So short clips answer and
+  the whole video still hangs; tonight's spend so far $0.111. Stopped for Sourabh.
+
 ### Next steps (resume here, in order)
 1. Step 3 re-run on a fresh emulator (`make dev-emulator`, verify gcloud identity first): acceptance
    1–3 video half and T04; state expected cost (≤ $0.20) before running.
