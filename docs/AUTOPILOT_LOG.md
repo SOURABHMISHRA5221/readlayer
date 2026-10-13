@@ -1395,3 +1395,6 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - T04's decision rule could not be measured; Round 4's 20-min cap and single call stay as
   committed but unverified. Next: a $0.02 re-probe (first 3 min) later today; when it answers,
   re-run acceptance 1–3 and T04. Until then, step 4 (web) needs no Vertex.
+- Re-probe at 19:03 UTC (first 3 min, low, offsets, 180 s limit, bare Firestore emulator
+  ledger): **OK in 27 s, $0.015**, 8 paragraphs, 375 words, starts 2..177, en. Vertex's YouTube
+  fetch answers again. Acceptance 1–3 and T04 not re-run yet (asked Sourabh: now, or step 4 first).
