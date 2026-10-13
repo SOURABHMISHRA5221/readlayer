@@ -1244,3 +1244,39 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. M9 (Oct 15): plan with a cut order; first the growth and extension fix. Freeze Oct 16.
 3. Still open from M8: his Gmail and bank-login refusal check.
 
+
+## Media — measured, plan drafted (2026-10-13, late night)
+
+- Measured Gemini on Vertex on real items before fixing caps (scratch script, not committed;
+  budget check before and ledger write after each call): 15 paid calls, **$0.56** in the
+  ledger (day $0.65 of $8). Two temporary audio objects in the graph bucket, both deleted
+  (Sourabh's yes on each). Table and conclusions in `docs/plans/media.md` "Evidence".
+- What it settled: transcripts on `MODEL_QUALITY` at low thinking (the fast model dropped a
+  third of the speech on a window, twice, with no error); ten-minute windows (one call on a
+  68-min video overran the output limit and looped); about **$0.025 per 10 minutes**; podcasts
+  as MP3 pieces sent inline (links work only for small files, offsets are ignored on audio, no
+  bucket needed); LiteLLM 1.104 leaves audio tokens out of its cost, so `llm.py` must add them.
+- Cached results: 95% of videos ≤ 30 min; podcasts are mostly Apple show pages and Spotify;
+  only Apple episode links resolve to audio (15 of 19, 13 MP3). No CSP exists on the site.
+- Plan written: `docs/plans/media.md`. First plan-reviewer run was cut off by the session limit;
+  re-running.
+- Sourabh said **"yes"** to paying per recording (about $0.025 per 10 minutes, capped, inside
+  $8). Recorded in the plan's decision 1.
+- Plan-reviewer round 1: REVISE, 15 items, all applied (plan section "Round 1"). Audio has no
+  price in LiteLLM and none was found on Vertex's page, so audio is priced by an override at
+  $2.50 per 1M (cautious guess; about $0.05 per 10 minutes). Sourabh, asked to check the
+  billing SKU: **"mark 3 dollar budget"**: `MEDIA_DAILY_BUDGET_USD = 3` inside the $8, no
+  billing check. Round 2 running.
+
+- Round 2: REVISE, 5 items, all applied. Round 3: **APPROVE** (2026-10-14, just after
+  midnight IST); its two nits applied. Plan and log committed on `main` as docs.
+
+### Next steps (resume here, in order)
+1. Branch `media` from `main`. Build in the plan's order ("Schedule and cut order", reordered
+   in round 1): frozen transcript cases first (R13), then YouTube end to end, harness run on
+   the 16-minute video, web; **midday check-in with Sourabh** before podcasts; podcasts behind
+   `MEDIA_AUDIO_ENABLED`. Read the plan's Round 1 and Round 2 sections first: they override the
+   earlier ones.
+2. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
+3. M9 (Oct 15): growth and extension fix first. Freeze Oct 16.
+4. Still open from M8: Sourabh's Gmail and bank-login refusal check.
