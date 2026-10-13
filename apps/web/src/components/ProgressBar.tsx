@@ -1,5 +1,7 @@
 import { useEffect, useRef, type RefObject } from "react";
 
+import { readingProgress } from "../lib/readingProgress";
+
 /** Thin reading-progress line; writes a transform directly, so scrolling never re-renders. */
 export function ProgressBar({ target }: { target: RefObject<HTMLElement | null> }) {
   const bar = useRef<HTMLDivElement>(null);
@@ -10,8 +12,7 @@ export function ProgressBar({ target }: { target: RefObject<HTMLElement | null> 
       const el = target.current;
       if (!el || !bar.current) return;
       const rect = el.getBoundingClientRect();
-      const span = rect.height - window.innerHeight * 0.6;
-      const progress = span <= 0 ? 1 : Math.min(1, Math.max(0, -rect.top / span));
+      const progress = readingProgress(rect.top, rect.height, window.innerHeight);
       bar.current.style.transform = `scaleX(${progress})`;
       bar.current.parentElement?.setAttribute("aria-valuenow", String(Math.round(progress * 100)));
     };

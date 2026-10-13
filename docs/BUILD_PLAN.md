@@ -438,7 +438,7 @@ default theme** (dark only via the toggle).
 **Decision 45 (Sourabh, 2026-10-11): wider layouts.** Landing (in this milestone): section
 containers up to ~1280px, hero a 50/50 split (copy | big Margo + demo), illustrations, clips and
 the teal trust band may be full-bleed, fluid spacing with clamp(); screenshots at 1280, 1440, 1920
-and 390. Feed/library, profile and reader: a **Wide layout** follow-up before M8 (see that
+and 390. Feed/library, profile and reader: a **Wide layout** follow-up (after M8-local since decision 49; see that
 section).
 
 **D. Acceptance.** A new mobile visitor understands problem and solution without scrolling past
@@ -450,7 +450,7 @@ text in any outbound request) and nothing of the free text is stored; Lighthouse
 2.5 s and accessibility 100; axe 0 at 1280/1440/1920/390, light and dark (decision 45). Update DESIGN (§4 onboarding,
 §11.4 consent, §17 feed search, a new landing section), STATUS and BUILD_PLAN.
 
-## Wide layout (decision 45; after Landing and onboarding, before M8)
+## Wide layout (decision 45; after M8-local since decision 49)
 Use the width on wide screens; fluid spacing with clamp() so 1024, 1440 and 1920 all look
 intentional; screenshots at 1280, 1440, 1920 and 390 (light and dark), axe 0.
 - **Feed/library:** container up to ~1280px, wider rows, the sidebar filled; at ≥ 1440px a third
@@ -459,6 +459,15 @@ intentional; screenshots at 1280, 1440, 1920 and 390 (light and dark), axe 0.
   is taller.
 - **Reader:** the article text column stays ~680px; the note margin on the right as now; at
   ≥ 1280px a slim left rail (contents, reading progress, notes count).
+
+**Built 2026-10-13** (plan `docs/plans/wide-layout.md`, web only). Two readings of the words
+above, flagged to Sourabh, who said yes to both on 2026-10-13 (STATUS §4): the rail's "contents" is a **reading spine**
+(a track of the article with a dot per note; articles have no headings), and the "mini-map" is a
+**grid of topic tiles** (a cluster of dots per topic; the full map is not legible at 240–280px).
+The container is 1520px from 1440px so rows never get narrower than before. Acceptance (STATUS
+§23): `tools/shots/wide.py` passes every check at 1024, 1280, 1440, 1920 and 390, light and dark
+(axe 0 at every impact level, no horizontal scroll, row and map sizes, the text column 680px,
+note cards in the right margin, the article's words unchanged); main bundle ≤ 150 KB.
 
 ## M8-local — Chrome extension, unpacked (Oct 14)
 Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not

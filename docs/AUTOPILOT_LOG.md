@@ -994,3 +994,209 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. Wide layout (decision 45): own plan in `docs/plans/`, plan-reviewer loop, build. Main bundle
    headroom is 1.9 KB.
 3. M9 hardening (Oct 15), freeze Oct 16.
+
+## Wide layout (decision 45) — plan (2026-10-13)
+
+- Resumed after /clear. Sourabh's manual Gmail and bank-login refusal check is still open (asked
+  again at the start of this session); it does not block this work.
+- Plan `docs/plans/wide-layout.md`, branch `wide-layout`. Web only: no API, Firestore, prompt,
+  model or annotator-package change; the only production action is `make deploy-web` (his yes).
+- plan-reviewer round 1: **REVISE** (13 items + 3 nits): reader clamps overflowed at 1280; the
+  sidenote check assumed the card is as wide as the rail (it is sized from the window edge); spine
+  fill and ticks in different coordinate systems; `Anchor.start` is already article-level; feed
+  rows narrower than today at 1440; the map not actually taller; the ellipse changing the 760
+  canvas phones use; `layout()` unusable at 300×230; the map link dropping the demo persona;
+  four harness gaps (incl. a before run); automatic cuts; recording; the bundle fallback.
+  Round 2: **REVISE** (3 + 2): the spine needs its own progress function (`placeInArticle`);
+  acceptance 3 must ignore the "Know this?" chip's own text; record the tile grid. Round 3:
+  **APPROVE**. Every item applied; the round sections at the end of the plan override its body.
+- **Two readings of decision 45's words, flagged to Sourabh in the session, both in STATUS §4
+  and §10:** (1) the reader's left-rail "contents" is a **reading spine** (a track of the article
+  with a tick per note, the read part filled, notes count, minutes left) because articles have
+  no headings; (2) the library's "mini-map" is a **grid of topic tiles** (one cluster of dots per
+  topic), not a small copy of the full map, which is not legible at 240–280px. Two more
+  deviations: the container is 1520px from 1440px; This week moves beside Goals above the map
+  (not in decision 45, dropped first if late).
+- Baseline before any change (`pnpm --filter web build`): main JS **148.08 KB** gzip, main CSS
+  10.85 KB, profile chunk 10.01 KB JS / 3.30 KB CSS.
+
+### Next steps (resume here, in order)
+1. `tools/shots/wide.py` with `--before`; run it on the unchanged web code into
+   `docs/evidence/wide/before/` (emulators; the Google reader seeded with 6 topics and 3 goals).
+2. Build in the plan's order, tests first for the pure helpers: snapshot of today's `layout()`
+   → `mapSize` and the ellipse; `lib/weekMap.ts`; `lib/spine.ts` and `lib/readingProgress.ts`;
+   then tokens and library, profile, reader. Check the main bundle after each page.
+3. Harness run with assertions, design check on the shots, milestone-reviewer until SHIP, PR
+   (body names the four deviations), green CI, merge, `make deploy-web` (his yes), live check.
+4. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut. Then M9 (Oct 15).
+
+## Wide layout (decision 45) — built (2026-10-13)
+
+- 3c13084 the 760px map snapshot before any change; 3b707e1 `tools/shots/wide.py` and the
+  **before run** (rows 720px from 1280, map 798×630 scaled 1.05, six topic cards 4 + 2 with a
+  grey cell, reader grid 1044px; three moderate axe findings the older harness filtered out).
+  An orphaned Firestore emulator from the M8 harness (java on :8085, parent gone) was stopped
+  first so the stack could start.
+- Built in the plan's order, pure helpers test-first: `mapSize` and the ellipse above 760px
+  (the pinned 760 snapshots still match; dots no longer pile on the edges: clamping now takes
+  part in every pass on the wide path), `lib/weekMap.ts`, `lib/spine.ts`,
+  `lib/readingProgress.ts`, `cardColumns`; then tokens, profile, library (two sidebar groups,
+  lazy `WeekPanel`), reader (lazy `ReadingSpine`, `railColumn` on `clientWidth`).
+- Harness on the final code: **0 failed checks**, axe 0 at every impact level on 85 states,
+  main bundle 148.32 KB. STATUS §23 has the numbers and what changed from the plan.
+- Three things the harness caught that screenshots alone would not: the Read any link field
+  overflowing the narrower sidebar; a new reader's first library load taking ≈ 20 s on the
+  emulator once a fourth request raced the others to create the user record (the map request
+  now waits for the library's first answer; STATUS §5); and a headless page going "hidden"
+  after a key press, which froze transitions and looked like an app bug.
+
+## Extension shows no notes on a Hindu article (Sourabh, 2026-10-13, mid-session)
+
+- Not site-specific and not an error. Production logs for his four clicks (19:08–19:11 UTC):
+  every request 200, the article read as 11 paragraphs, but demands linked 1/18, 0/8, 1/45 and
+  2/8 and **no concept growth ran**. Earlier that evening five articles he opened each reserved 5
+  growth slots (25 = his daily cap) while adding 17 concepts; slots are never returned.
+- Told him in the session with a three-part proposal (return unused slots, raise the caps,
+  grow again on reopen plus an honest message). **Waiting for his answer** before touching the
+  caps (cost guardrails, decision 35). STATUS §5, first row.
+
+### Next steps (resume here, in order)
+1. Sourabh's answers: (a) the extension fix above: now, or first item of M9; (b) the two
+   readings of decision 45 (reading spine, topic tiles); (c) his manual Gmail and bank-login
+   refusal check (still the only open M8 item).
+2. Wide layout: milestone-reviewer on `wide-layout` → fix until SHIP → push, PR `Wide layout: …`
+   (body names the four deviations), green CI, merge → `make deploy-web` (his yes) → live check
+   at 1440 as a demo reader, and his own look at the three pages.
+3. The emulator stack is running from this session (`make dev-emulator`, log in the session's
+   scratchpad); stop it when the review is done.
+4. M9 (Oct 15), freeze Oct 16.
+
+## Wide layout — milestone review round 1 (2026-10-13, evening)
+
+- milestone-reviewer on 6d81e18: **FIX**, 5 blocking: the map drawn 680px tall in the stacked
+  440px canvas at 866–960px (a half-screen window on a 1920 display; the harness only had 390
+  and 1024); the tile "N ideas" count was the overview's capped length, contradicting the
+  profile's cards; the rules between topic cards gone; "nothing changed at 390" contradicted by
+  the shots and never measured at tablet widths; STATUS stale in four places. Five more, all
+  taken: sticky groups at any height, a state with risen ideas, a boundary around the lazy
+  parts, the 960/961 breakpoint, the schedule.
+- The session ended overnight with the fixes on disk, uncommitted; resumed in the evening
+  (Sourabh: "continue"). Restarted the emulator stack.
+- Before run at tablet widths: the fixes stashed, `apps/web/src` checked out at 3b707e1,
+  `wide.py --before --narrow`, tree restored (same 13 paths, stash empty).
+- Harness on the fixed code: **0 failed checks**, axe 0 on 110 states (tablet widths, sticky
+  at 1440×900 and 1440×760, the risers state). Main bundle 148.43 KB. STATUS §23 rewritten;
+  the two readings in §4 are marked open until Sourabh answers.
+- Sourabh asked for a check of the background tasks during the run: stack and harness running,
+  nothing orphaned.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 2 on the fix commit → until SHIP.
+2. Sourabh's answers: the two readings (reading spine, topic tiles) before the deploy; the
+   extension fix (STATUS §5 first row): now, or first item of M9; his Gmail and bank-login
+   refusal check.
+3. Push `wide-layout`, PR `Wide layout: …` (body names the four deviations), green CI, merge,
+   `make deploy-web` (his yes), live check at 1440 as a demo reader.
+4. Stop the emulator stack (`make dev-emulator`, started this evening). M9 Oct 15, freeze Oct 16.
+
+## Growth caps raised (decision 53, 2026-10-13, evening)
+
+- Sourabh: "if the three items can be done in next 10 minutes then go yes else wait". Told him
+  the extension fix is an hour or two (API change, tests, plan review, deploy, a new zip), not
+  ten minutes, and that only the cap raise is quick. His answer: **"just cap raise now"**.
+- Identity checked, then `gcloud run services update readlayer-api --update-env-vars
+  GROWTH_PER_UID_DAY=60,GROWTH_PER_DAY=300` (his yes on the prompt): revision
+  `readlayer-api-00026-wc2`, 100% of traffic, same image, 21 env vars, max instances 3.
+  Smoke: /health 200, unauthenticated profile 401, startup clean (graph
+  2026-10-10-folded-5206+g1 in 1.3 s), no warnings beyond the smoke request.
+- Also written to `apps/api/deploy.env.yaml` so the next `make deploy-api` keeps it; STATUS §5
+  first row, §7, §10 decision 53. The code defaults (25 / 100) are unchanged.
+- Not done, M9: return unused slots, grow again on reopen (his four pages stay empty), the
+  honest message.
+
+## Wide layout — milestone review round 2 (2026-10-13, evening)
+
+- milestone-reviewer on a9da102: **FIX**, 1 blocking. Every round-1 item confirmed fixed (it
+  swept the map at 16 widths and scanned the shots for the card rules). The blocker: the
+  panel's "+N this week", its line and its labels were counted from the overview's nodes, which
+  are a topic's top 12 by band then frequency, so a rise outside them was invisible and the
+  panel could say "Nothing moved up" while the profile listed moves. The harness state had only
+  shown the constructed case (two corrections land at the top of the list).
+- Fix: the week's numbers come from `GET /v1/me/profile` `week.moved_up` (uncapped); the
+  overview only draws the dots. Unit and component tests with a rise the overview doesn't
+  carry; the harness asserts the panel's count equals the profile's list.
+- Also taken: ring quota capped at the room left, rings sized so two neighbours don't cross,
+  "We think you know" in the key, the last block's margin in a sticky group, the Saved tab,
+  search and Connect in the harness (which found `role="status"` on Connect's heading, a minor
+  axe finding from M8: now a span inside it), a seven-topic reader (cards 4 + 3, 7 at 1920).
+- Harness on the final code: **0 failed checks**, axe 0 on 123 states. Main bundle 148.43 KB,
+  week panel 1.68 KB. Web tests 148.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 3 → until SHIP.
+2. Sourabh's answers: the two readings (reading spine, topic tiles) before the web deploy; his
+   Gmail and bank-login refusal check. The rest of the extension fix is M9's first item.
+3. Push `wide-layout`, PR `Wide layout: …` (body names the four deviations and the
+   `deploy.env.yaml` caps), green CI, merge, `make deploy-web` (his yes), live check at 1440.
+4. Stop the emulator stack (`make dev-emulator`, started this evening). M9 Oct 15, freeze Oct 16.
+
+## Wide layout — milestone review round 3 (2026-10-13, late evening)
+
+- milestone-reviewer on 59261f7: **FIX, docs only**; no code change and no harness re-run asked
+  for. The layout work and the round-2 fix stand. Five statements corrected: DESIGN §2's growth
+  caps (defaults 25 / 100, production 60 / 300); a STATUS §5 row on anonymous traffic (at most
+  150 of 300); a §6 row and a §8 line for the growth settings; the cost of the higher caps, which
+  I had given Sourabh as "about thirty-five cents a day" without a source (logged range: $0.3 to
+  $0.5 at most); §23 row 1a″ (no top-bar check runs on Connect).
+- Its recommendation, not taken: move the caps commit (3fcda42) to its own PR. Kept on this
+  branch to avoid a second push, CI run and a rebase of the docs two days before the freeze;
+  the PR's first line will name it, STATUS §23 and §1 say so, and the branch merges before any
+  API deploy. Sourabh can ask for the split.
+- Three cosmetic points left as they are (STATUS §5). Sourabh's answer on the two readings is now
+  wanted before the merge, not just before the deploy.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 4 (doc diff only) → SHIP.
+2. Ask Sourabh again: the two readings (before the merge); push and PR (his yes).
+3. PR `Wide layout: … (+ growth caps, decision 53)`, green CI, merge, `make deploy-web` (his
+   yes), live check at 1440. No API deploy before this merges.
+4. Stop the emulator stack. M9 Oct 15 (first item: the rest of the extension fix), freeze Oct 16.
+
+## Wide layout — milestone review round 4, and Sourabh's yes (2026-10-13, late evening)
+
+- **Sourabh said "yes"** to the two readings asked together (the reading spine as the reader's
+  left rail; topic tiles as the library's mini-map). STATUS §4 rows are now "Keep".
+- milestone-reviewer on 9d99133: **FIX, docs only**. Two statements wrong: "at most 150 of the
+  300" for anonymous traffic (its own round-3 wording; false, because growth slots are reserved
+  before the fetch and kept when it fails: its local probe took the day's counter to 300 with
+  60 failed opens and no spend), and the cost "at most" (6 of 14 paid runs). Checked the 14 runs
+  in the production log again: $0.0024 to $0.0127, mean $0.0050, $0.070 for 50 concepts.
+- **New risk recorded, STATUS §5 Medium:** 60 failed link opens by anonymous readers stop growth
+  for everyone until 00:00 UTC. M2.2 behaviour; it goes with the rest of the growth fix as M9's
+  first item. Told Sourabh.
+- BUILD_PLAN's "before M8" wording brought in line with decision 49.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 5 (`git show` of the fix commit) → SHIP.
+2. Push `wide-layout` and open the PR (his yes on the prompt): `Wide layout: … (+ growth caps,
+   decision 53)`; green CI; merge; `make deploy-web` (his yes); live check at 1440.
+3. No API deploy before that merge. Stop the emulator stack.
+4. M9 Oct 15, first item the growth and extension fix; freeze Oct 16. Sourabh's Gmail and
+   bank-login refusal check is still open.
+
+## Wide layout — milestone review round 5: SHIP (2026-10-13, night)
+
+- milestone-reviewer on 9158161: **SHIP**. It re-ran typecheck, web 148 / annotator 57 /
+  extension 85, API pytest (789 passed, 2 skipped), ruff and the build (148.43 KB), and checked
+  the cost figures against the production log and the caps on the live service.
+- Emulator stack stopped. Next: push and PR (Sourabh's yes on the prompt).
+
+### Next steps (resume here, in order)
+1. Push `wide-layout`, PR `Wide layout: … (+ growth caps, decision 53)`; the body states the
+   two readings in plain words, the four deviations and the settings commit. Green CI → merge.
+2. `make deploy-web` from up-to-date main (his yes) → live check at 1440 as a demo reader →
+   STATUS §23 live row. No API deploy before the merge.
+3. M9 (Oct 15): plan with a cut order; first the growth and extension fix (refund on a failed
+   fetch and regrowth on reopen protect the demo). Freeze Oct 16.
+4. Still open from M8: Sourabh's Gmail and bank-login refusal check.
+

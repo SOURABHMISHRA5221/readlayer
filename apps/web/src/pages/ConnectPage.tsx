@@ -73,13 +73,16 @@ export default function ConnectPage({ url, isDemo }: { url: URL; isDemo: boolean
         </p>
 
         <section className="connect__panel" aria-labelledby="connect-state" aria-busy={view === "checking" || view === "working"}>
-          <h2 id="connect-state" className="connect__state" role="status">
-            {view === "checking" && "Looking for the extension…"}
-            {view === "working" && "One moment…"}
-            {view === "missing" && "The extension isn't installed in this browser yet"}
-            {view === "disconnected" && `Installed. Connect it to ${who}.`}
-            {view === "connected" && `Connected to ${who}`}
-            {view === "failed" && "That didn't work"}
+          {/* The announcement is the span: a heading can't carry the status role itself. */}
+          <h2 id="connect-state" className="connect__state">
+            <span role="status">
+              {view === "checking" && "Looking for the extension…"}
+              {view === "working" && "One moment…"}
+              {view === "missing" && "The extension isn't installed in this browser yet"}
+              {view === "disconnected" && `Installed. Connect it to ${who}.`}
+              {view === "connected" && `Connected to ${who}`}
+              {view === "failed" && "That didn't work"}
+            </span>
           </h2>
 
           {view === "missing" && (

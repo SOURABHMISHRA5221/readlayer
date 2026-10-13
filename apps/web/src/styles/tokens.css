@@ -77,6 +77,12 @@
   --rl-top-inset: 128px; /* top bar 64 + action bar ~56 + 8, plain px: the annotator parses it */
   --bar-tuck: 52px; /* how far it slides up when scrolled */
   --rail-w: 232px;
+  /* Wide layout (decision 45): one container for the top bar, library and profile, and fluid
+     gaps between page columns and sections. --gutter stays stepwise: the reader grid, the
+     annotator's insets and the landing depend on it. */
+  --page-max: 1280px;
+  --col-gap: clamp(40px, 4.5vw, 72px);
+  --section-gap: clamp(48px, 5vw, 80px);
 
   /* packages/annotator theme */
   --rl-accent: var(--accent);
@@ -117,6 +123,12 @@
 @media (min-width: 1280px) {
   :root {
     --gutter: var(--s12);
+  }
+}
+
+@media (min-width: 1440px) {
+  :root {
+    --page-max: 1520px;
   }
 }
 

@@ -1,10 +1,11 @@
 import type { CardAnnotation } from "@readlayer/annotator";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArticleImage } from "../components/ArticleImage";
 import { ConceptDrawer, ConceptRail } from "../components/ConceptRail";
 import { Margo } from "../components/Margo";
 import { ProgressBar } from "../components/ProgressBar";
+import { Quiet } from "../components/Quiet";
 import { ActionBar } from "../components/reader/ActionBar";
 import { PrereadPath } from "../components/reader/PrereadPath";
 import { Recap } from "../components/reader/Recap";
@@ -33,6 +34,9 @@ type Load<T> = { status: "loading" } | { status: "ready"; data: T } | { status: 
 type Analysis = { status: "idle" } | { status: "running"; since: number } | { status: "failed"; message: string };
 
 const RAIL_QUERY = "(min-width: 1200px)";
+// The left rail (Wide layout, decision 45): its own chunk, loaded only where it is shown.
+const SPINE_QUERY = "(min-width: 1280px)";
+const ReadingSpine = lazy(() => import("../components/reader/ReadingSpine"));
 // Two-phase "Open here": the server's analysis is cut off at 120 s; past this we stop waiting.
 const ANALYSE_WINDOW_MS = 180_000;
 const ANALYSE_RETRY_MS = 3000;
@@ -46,6 +50,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   // Scoring internals on the card: dev builds only; the API also refuses outside ENV=dev.
   const debug = import.meta.env.DEV && url.searchParams.get("debug") === "1";
   const wide = useMediaQuery(RAIL_QUERY);
+  const spine = useMediaQuery(SPINE_QUERY);
 
   const [content, setContent] = useState<Load<ContentDetail>>({ status: "loading" });
   const [notes, setNotes] = useState<Load<AnnotationsResponse>>({ status: "loading" });
@@ -236,10 +241,10 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
         Skip to article
       </a>
       <TopBar url={url} />
-      <div className="readprogress">
-        <ProgressBar target={pageRef} />
-      </div>
       <main className="reader" ref={pageRef} id="article" tabIndex={-1}>
+        <div className="readprogress">
+          <ProgressBar target={pageRef} />
+        </div>
         {content.status === "loading" && <ReaderSkeleton />}
         {content.status === "error" && (
           <div className="reader__state">
@@ -297,6 +302,20 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
             )}
             {notesData?.preread && <PrereadPath item={notesData.preread} persona={persona} />}
             <div className="reader__body" ref={bodyRef}>
+              {spine && (
+                <Quiet>
+                  <Suspense fallback={null}>
+                    <ReadingSpine
+                      article={articleRef}
+                      paragraphs={article.paragraphs}
+                      wordCount={article.word_count}
+                      notes={annotations && handle.resolved ? marked : null}
+                      hovered={handle.hovered}
+                      active={handle.active}
+                    />
+                  </Suspense>
+                </Quiet>
+              )}
               <ArticleBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} />
               {wide && annotations && handle.resolved && <ConceptRail items={marked} body={bodyRef} {...link} />}
             </div>

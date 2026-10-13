@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { api } from "../../lib/api";
 import { domainLabel } from "../../lib/format";
-import { layout, type LayoutNode } from "../../lib/mapLayout";
+import { layout, mapSize, type LayoutNode } from "../../lib/mapLayout";
 import type { PersonaKey } from "../../lib/personas";
 import { profileApi, type Band, type Domain, type OverviewNode } from "../../lib/profileApi";
 import { BAND_LABEL, evidenceText } from "../../lib/profileFormat";
@@ -31,8 +31,7 @@ interface Props {
 
 const NO_TARGETS: ReadonlySet<string> = new Set();
 const NARROW = "(max-width: 639px)";
-const W = 760;
-const H = 600;
+const BESIDE = "(min-width: 961px)"; // the inspector sits beside the map (profile.css)
 
 function bandText(n: MapNode): string {
   if (n.ready) return "ready to learn";
@@ -204,7 +203,27 @@ function MapSvg({
   onSelect: (id: string) => void;
   onDomain?: (d: Domain) => void;
 }) {  // prettier-ignore
-  const placed = useMemo(() => layout(rankWithin(nodes), domains, W, H), [nodes, domains]);
+  // Wide layout (decision 45): beside the inspector the map is laid out for the box it sits in.
+  // Measured before the first paint, so it never draws at one size and jumps to another. Stacked
+  // (960px and under, where the canvas has a fixed height) and in a box under 800px it keeps the
+  // fixed canvas, scaled into the box by CSS as before.
+  const canvas = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState(() => mapSize(0));
+  useLayoutEffect(() => {
+    const el = canvas.current;
+    if (!el) return;
+    const measure = () => {
+      const next = mapSize(window.matchMedia(BESIDE).matches ? el.clientWidth : 0);
+      setSize((now) => (now.width === next.width && now.height === next.height ? now : next));
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  const exact = size.width > mapSize(0).width;
+  const placed = useMemo(() => layout(rankWithin(nodes), domains, size.width, size.height), [nodes, domains, size]);
   const byId = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const order = useMemo(() => [...placed.nodes].sort((a, b) => a.domain.localeCompare(b.domain) || a.y - b.y || a.x - b.x), [placed]);
   const [focus, setFocus] = useState<string | null>(order[0]?.id ?? null);
@@ -228,8 +247,8 @@ function MapSvg({
   };
 
   return (
-    <div className="kmap__canvas">
-      <svg viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Knowledge map: ${nodes.length} ideas across ${domains.length} topics. Arrow keys move between ideas; Enter shows one.`}>
+    <div className="kmap__canvas" ref={canvas} data-fit={exact ? "exact" : "scale"}>
+      <svg viewBox={`0 0 ${size.width} ${size.height}`} width={exact ? size.width : undefined} height={exact ? size.height : undefined} role="group" aria-label={`Knowledge map: ${nodes.length} ideas across ${domains.length} topics. Arrow keys move between ideas; Enter shows one.`}>
         {placed.center &&
           placed.clusters.map((c) => (
             <line key={`spoke-${c.domain}`} x1={placed.center!.x} y1={placed.center!.y} x2={c.x} y2={c.y} className="kmap__spoke" />
@@ -349,9 +368,9 @@ function Inspector({ node, onCorrect }: { node: MapNode | null; onCorrect: (n: M
   const [error, setError] = useState<string | null>(null);
   if (!node)
     return (
-      <aside className="inspect" aria-live="polite">
+      <div className="inspect" aria-live="polite">
         <p className="profile__note">Pick an idea on the map to see why we think so, and correct us.</p>
-      </aside>
+      </div>
     );
   const correct = async (known: boolean) => {
     setBusy(true);
@@ -365,7 +384,7 @@ function Inspector({ node, onCorrect }: { node: MapNode | null; onCorrect: (n: M
     }
   };
   return (
-    <aside className="inspect" aria-live="polite" aria-labelledby="inspect-title">
+    <div className="inspect" role="group" aria-live="polite" aria-labelledby="inspect-title">
       <h3 id="inspect-title" className="inspect__title">
         {node.label}
       </h3>
@@ -399,6 +418,6 @@ function Inspector({ node, onCorrect }: { node: MapNode | null; onCorrect: (n: M
           I don't
         </button>
       </div>
-    </aside>
+    </div>
   );
 }

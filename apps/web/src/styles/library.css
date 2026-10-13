@@ -13,7 +13,8 @@
   align-items: center;
   gap: var(--s3);
   height: 64px;
-  max-width: 1240px;
+  /* The same container as the pages below it (tokens.css), so the edges line up. */
+  max-width: calc(var(--page-max) + 2 * var(--gutter));
   margin: 0 auto;
   padding: 0 var(--gutter);
 }
@@ -85,13 +86,13 @@
 /* ---------- page layout ---------- */
 .feedwrap {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
-  gap: 72px;
-  max-width: 1240px;
+  grid-template-columns: minmax(0, 1fr) clamp(280px, 24vw, 340px);
+  gap: var(--col-gap);
+  max-width: calc(var(--page-max) + 2 * var(--gutter));
   margin: 0 auto;
   padding: 0 var(--gutter) var(--s20);
 }
-.feedmain { min-width: 0; max-width: 720px; padding-top: var(--s8); }
+.feedmain { min-width: 0; max-width: 820px; padding-top: var(--s8); }
 .feedmain:focus { outline: none; }
 .feedmain__lede {
   margin: 0 0 var(--s6);
@@ -189,6 +190,13 @@
 .row__thumb { align-self: center; width: 120px; height: 120px; border-radius: 4px; overflow: hidden; background: var(--wash); }
 .row__thumb img, .row__thumb .row__img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .row--skeleton .row__body > * { margin-bottom: var(--s3); }
+@media (min-width: 961px) { .feedmain__lede { max-width: 640px; } }
+/* Wide layout (decision 45): the thumbnail goes 4:3 and grows a little past 1600px. */
+@media (min-width: 1280px) {
+  .row { grid-template-columns: minmax(0, 1fr) clamp(132px, 8.25vw, 160px); }
+  .row__thumb { width: 100%; height: auto; aspect-ratio: 4 / 3; }
+  .row__title { font-size: clamp(22px, 1.1rem + 0.35vw, 26px); }
+}
 @media (max-width: 600px) {
   .row { grid-template-columns: minmax(0, 1fr) 80px; gap: var(--s4); padding: var(--s5) 0; }
   .row__thumb { width: 80px; height: 80px; align-self: start; margin-top: 28px; }
@@ -235,7 +243,8 @@
 .feedtab[aria-busy="true"] .rows { opacity: 0.6; transition: opacity var(--dur-fast) var(--ease); }
 
 /* ---------- sidebar ---------- */
-.side { padding: var(--s10) 0 0 var(--s10); border-left: 1px solid var(--hairline); min-height: calc(100vh - 64px); }
+.side { min-width: 0; padding: var(--s10) 0 0 var(--s10); border-left: 1px solid var(--hairline); min-height: calc(100vh - 64px); }
+.side__col { min-width: 0; } /* a text field's own width must not widen the column */
 .side__block { margin-bottom: var(--s10); }
 .side__h { margin: 0 0 var(--s3); font: 600 16px / 1.3 var(--font-ui); color: var(--ink); }
 .side__note { margin: 0; font: 400 14px / 1.5 var(--font-ui); color: var(--muted); }
@@ -264,9 +273,59 @@
 @media (max-width: 960px) {
   .side { border-left: 0; border-top: 1px solid var(--hairline); padding: var(--s8) 0 0; min-height: 0; }
 }
+/* Wide layout (decision 45): from 1440px the sidebar's two groups sit side by side, the second
+   being the third column. 40px between columns, the rule in the middle of each gap. */
+@media (min-width: 1440px) {
+  .feedwrap { grid-template-columns: minmax(0, 1fr) auto; gap: 20px; }
+  .side {
+    display: grid;
+    grid-template-columns: calc(clamp(248px, 17.2vw, 296px) + 20px) calc(clamp(264px, 18.3vw, 332px) + 20px);
+    align-items: start;
+    gap: 20px;
+    padding: 0;
+    border-left: 0;
+    min-height: 0;
+  }
+  /* Both groups stay beside the feed while it scrolls (the bar is 64px and its rule). A group
+     taller than the window, six topic tiles and three goals on a small laptop, scrolls inside
+     itself, so its end is always reachable. */
+  .side__col {
+    position: sticky;
+    top: 65px;
+    height: calc(100vh - 65px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: var(--s10) 6px 0 20px; /* 6px: room for focus rings inside the scroll box */
+    border-left: 1px solid var(--hairline);
+  }
+  /* The last block's own gap would only add to what a tall group has to scroll. */
+  .side__col > .side__block:last-child { margin-bottom: var(--s4); }
+}
+
+/* "Your map this week": a tile per topic (components/library/WeekPanel.tsx). */
+.weekmap__skeleton { height: 240px; border-radius: var(--radius); }
+.weekmap__tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: var(--s4) var(--s3); margin: 0; padding: 0; list-style: none; }
+.weekmap__tile svg { display: block; overflow: visible; }
+.weekmap__dot circle { fill: var(--accent); }
+.weekmap__dot[data-band="heard of"] circle { fill: color-mix(in srgb, var(--accent) 45%, var(--paper)); stroke: var(--accent-line); stroke-width: 1.4; }
+.weekmap__dot[data-band="can explain"] circle { fill: var(--accent-ink); }
+.weekmap__dot[data-band="unaware"] circle { fill: var(--paper); stroke: var(--muted); stroke-width: 1.4; }
+.weekmap__dot[data-ready] circle { fill: var(--paper); stroke: var(--accent-line); stroke-width: 1.4; }
+.weekmap__dot .weekmap__ring { fill: none; stroke: var(--accent-ink); stroke-width: 1.2; }
+.weekmap__topic { margin: var(--s1) 0 0; font: 600 13.5px / 1.3 var(--font-ui); color: var(--ink); }
+.weekmap__up { margin: 0; font: 500 13px / 1.35 var(--font-ui); color: var(--accent-ink); }
+.weekmap__key { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); margin: var(--s3) 0 0; padding: 0; list-style: none; font: 400 13px / 1.4 var(--font-ui); color: var(--muted); }
+.weekmap__key li { display: inline-flex; align-items: center; gap: 6px; }
+.weekmap__mark { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.weekmap__mark[data-kind="ready"] { background: var(--paper); box-shadow: inset 0 0 0 1.4px var(--accent-line); }
+.weekmap__mark[data-kind="rose"] { margin-left: 4px; background: var(--accent); box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.4px var(--accent-ink); } /* 4px: its halo stays inside the column */
+.weekmap__line { margin: var(--s4) 0 0; font: 400 14px / 1.5 var(--font-ui); color: var(--ink-soft); }
+.weekmap__link { display: inline-flex; align-items: center; min-height: 44px; margin-top: var(--s2); font: 500 14px / 1 var(--font-ui); color: var(--accent-ink); text-underline-offset: 3px; }
+.weekmap__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
 
 /* ---------- Read any link ---------- */
-.anylink { display: grid; gap: var(--s2); }
+/* One shrinkable column: the text field's own width must not set the track (240px sidebar). */
+.anylink { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s2); }
 .anylink__label { font: 600 var(--text-ui-sm) / 1.3 var(--font-ui); color: var(--ink); }
 .anylink__row { display: flex; gap: var(--s2); }
 .anylink__input {
