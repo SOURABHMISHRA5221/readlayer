@@ -1367,7 +1367,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   a timed-out window is retried inside a run that cannot fit the retry.
 - Not run yet: analyse, second reader, personas, card, refusals. Extra test videos (Hindi, two
   short English) need a read of production `rec_cache`; that read was blocked by the permission
-  classifier. Driver: scratch `harness_media.py` (not committed).
+  classifier. Driver: `scripts/harness_media.py`; one-call probe: `scripts/probe_media.py`.
 - Sourabh: "yes do what u feel is correct". Probe of window 600–949 (ending at the real end, one
   attempt): timeout at 91 s, $0.035, so ending past the end was not the cause. Production
   `rec_cache` read blocked again by the classifier; not retried.
