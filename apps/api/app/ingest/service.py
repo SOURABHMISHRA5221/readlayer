@@ -47,6 +47,7 @@ from app.store.pending_repo import (
     PENDING_TTL,
     AnalysisBusy,
     AnalysisFailed,
+    ContentTranscribing,
     NotPending,
     get_pending_repo,
 )
@@ -139,6 +140,8 @@ async def analyse_pending(content_id: str) -> ContentDoc:
     status, pending = await repo.acquire(content_id, datetime.now(UTC), lease)
     if status == "missing" or pending is None:
         raise NotPending(content_id)
+    if status == "wrong_stage":
+        raise ContentTranscribing(content_id)
     if status == "busy":
         raise AnalysisBusy(content_id)
     if status == "exhausted":
@@ -284,6 +287,24 @@ def _llm_call(m: llm.CallMeta) -> LLMCall:
     )
 
 
+def _transcript_calls(pending: PendingDoc) -> list[LLMCall]:
+    """A recording's transcribe calls, as one entry (every window, retry and re-ask summed)."""
+    record = pending.media.transcript if pending.media else None
+    if record is None:
+        return []
+    return [
+        LLMCall(
+            task="transcribe",
+            model=record.model,
+            prompt_version=record.prompt_version,
+            tokens_in=record.tokens_in,
+            tokens_out=record.tokens_out,
+            cost_usd=record.cost_usd,
+            fell_back=False,
+        )
+    ]
+
+
 async def _analyse(pending: PendingDoc, deadline: float = float("inf")) -> ContentDoc:
     paragraphs = _paragraphs(pending)
     parse_scores = await asyncio.to_thread(lambda: [parse_structure(p.text) for p in paragraphs])
@@ -311,13 +332,17 @@ async def _analyse(pending: PendingDoc, deadline: float = float("inf")) -> Conte
         image=pending.image,
         paragraphs=[
             StoredParagraph(
-                id=p.id, text=p.text, structure=structure(score, result.dense.get(p.id, False))
+                id=p.id,
+                text=p.text,
+                structure=structure(score, result.dense.get(p.id, False)),
+                start_s=stored.start_s,
             )
-            for p, score in zip(paragraphs, parse_scores, strict=True)
+            for p, score, stored in zip(paragraphs, parse_scores, pending.paragraphs, strict=True)
         ],
         demands=demands,
         demands_dropped=result.dropped,
-        llm_calls=[*result.calls, *growth_calls],
+        llm_calls=[*_transcript_calls(pending), *result.calls, *growth_calls],
+        media=pending.media,
     )
     await get_content_store().put(doc)
     log.info(
