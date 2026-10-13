@@ -26,8 +26,8 @@ def fresh_cache():
     [
         ("https://news.example/a", "article", None, True),
         (VIDEO, "video", 949, True),
-        (VIDEO, "video", 1800, True),
-        (VIDEO, "video", 1801, False),  # past MEDIA_MAX_VIDEO_S
+        (VIDEO, "video", 1200, True),
+        (VIDEO, "video", 1201, False),  # past MEDIA_MAX_VIDEO_S
         (VIDEO, "video", None, False),  # unknown length
         ("https://vimeo.com/123", "video", 600, False),
         ("https://open.spotify.com/episode/x", "podcast", 1200, False),

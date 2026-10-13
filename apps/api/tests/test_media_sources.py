@@ -92,6 +92,15 @@ async def test_the_cap_is_a_setting():
     assert info.duration_s == 3900
 
 
+async def test_the_default_cap_is_twenty_minutes():
+    """One whole-URL call per video, so the cap is 20 minutes (plan Round 4, R4.2)."""
+    info = await youtube_info(VID, settings(), transport([video(contentDetails__duration="PT20M")]))
+    assert info.duration_s == 1200
+    with pytest.raises(MediaRefused) as err:
+        await youtube_info(VID, settings(), transport([video(contentDetails__duration="PT20M1S")]))
+    assert err.value.code == "too_long"
+
+
 async def test_not_found_is_not_public():
     with pytest.raises(MediaRefused) as err:
         await youtube_info(VID, settings(), transport([]))

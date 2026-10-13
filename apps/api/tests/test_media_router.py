@@ -67,7 +67,7 @@ def test_open_transcribe_analyse_through_the_api(env, docs):
     assert done.status_code == 200 and done.json() == {"content_id": CID, "status": "analysing"}
     detail = c.get(f"/v1/content/{CID}").json()
     assert detail["status"] == "analysing"
-    assert [p["start_s"] for p in detail["paragraphs"]][:2] == [0, 200]
+    assert [p["start_s"] for p in detail["paragraphs"]][:2] == [0, 316]
 
     assert c.post(f"/v1/content/{CID}/analyse").json()["status"] == "ready"
     ready = c.get(f"/v1/content/{CID}").json()
@@ -77,7 +77,7 @@ def test_open_transcribe_analyse_through_the_api(env, docs):
     # Listed in this reader's library (brought in by them), and a repeat open is free.
     again = c.post("/v1/recs/open", json={"url": "https://www.youtube.com/watch?v=d6fUwCBvVc0"})
     assert again.json()["ready"] is True and again.json()["stage"] is None
-    assert len(env["fake"].windows) == 2
+    assert len(env["fake"].windows) == 1
 
 
 @pytest.mark.parametrize("code", ["not_embeddable", "too_long", "not_english", "live"])
@@ -121,6 +121,19 @@ def test_a_refusal_while_transcribing_shows_on_the_page(env):
     assert resp.status_code == 422 and resp.json()["error"] == "not_english"
     detail = c.get(f"/v1/content/{CID}").json()
     assert detail["status"] == "refused" and detail["refusal"]["code"] == "not_english"
+
+
+def test_a_timed_out_call_is_504_and_the_page_may_retry(env):
+    env["fake"].time_out = True
+    c = client()
+    c.post("/v1/recs/open", json={"url": URL})
+    resp = c.post(f"/v1/content/{CID}/transcribe")
+    assert resp.status_code == 504
+    assert resp.json() == {
+        "error": "transcribe_timeout",
+        "message": "Transcribing took too long. Try again.",
+    }
+    assert c.get(f"/v1/content/{CID}").json()["status"] == "transcribing"
 
 
 def test_transcribe_of_an_unknown_id_is_404(env):

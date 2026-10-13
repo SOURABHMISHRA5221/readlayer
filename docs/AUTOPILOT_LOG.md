@@ -1350,3 +1350,21 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. Step 4, web: lazy `MediaReader`, click-to-load player, time buttons, follow, entry points,
    "failed" status; then shots. Then the midday check-in with Sourabh before podcasts.
 3. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
+
+## Media build, step 3 (2026-10-14, in progress, stopped for Sourabh)
+
+- Harness up (`make dev-emulator`); seeded production spend $0.6543, harness budget $1.6543;
+  the emulator ledger is the emulator's (read back after seeding).
+- `dev_emulator.sh` now passes production's `MODEL_AUDIO_PRICE_OVERRIDES` to the local API: the
+  first transcribe was refused before any call ("no media price for model"), $0 (R6 guard works).
+- **Acceptance 1 fails on the 16-min video.** videos.list says PT16M (960 s); the measured
+  transcript ends at 15:49 (949 s). Window 1 (0–600 s): ok, 27 s, $0.049. Window 2 (600–960 s)
+  timed out at 90 s, was retried by `_MediaCall.run` (timeout counts as transient), and the retry
+  was cancelled by the 150 s run limit. Page-style retry (window 2 only): same, timeout + cancel.
+  Item spend $0.193 (two ok-less estimates per attempt, $0.036 each), no transcript; the next
+  attempt would hit the 2× ceiling ($0.192). Harness spend so far $0.19.
+- Suspect (unproven): window 2's `end_offset` is 11 s past the real end. Design gap either way:
+  a timed-out window is retried inside a run that cannot fit the retry.
+- Not run yet: analyse, second reader, personas, card, refusals. Extra test videos (Hindi, two
+  short English) need a read of production `rec_cache`; that read was blocked by the permission
+  classifier. Driver: scratch `harness_media.py` (not committed).

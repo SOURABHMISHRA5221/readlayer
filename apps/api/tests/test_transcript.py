@@ -16,6 +16,7 @@ from app.media.transcript import (
     is_english,
     main_language,
     parse_clock,
+    plan_for,
     plan_windows,
 )
 
@@ -48,6 +49,13 @@ def test_plan_windows_covers_the_recording_back_to_back():
 def test_a_tail_under_a_minute_joins_the_window_before():
     assert plan_windows(1230) == [Window(0, 0, 600), Window(1, 600, 1230)]
     assert plan_windows(1260) == [Window(0, 0, 600), Window(1, 600, 1200), Window(2, 1200, 1260)]
+
+
+def test_a_video_is_one_window_and_audio_keeps_ten_minute_pieces():
+    assert plan_for("youtube", 949) == [Window(0, 0, 949)]
+    assert plan_for("youtube", 1190) == [Window(0, 0, 1190)]
+    assert plan_for("youtube", 0) == []
+    assert plan_for("audio", 1230) == plan_windows(1230)
 
 
 @pytest.mark.parametrize(

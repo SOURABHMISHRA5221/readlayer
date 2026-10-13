@@ -69,6 +69,11 @@ class LLMRejected(LLMError):
     """The provider refused the request (400/401/403, or an unclassified error); no fallback."""
 
 
+class MediaTimeout(TimeoutError):
+    """A transcribe call timed out: charged its estimate once, never retried in the run; the
+    route answers 504 and the page's own retry is the only retry (plan Round 4, R4.2)."""
+
+
 ErrorAction = Literal["retry", "fallback", "raise"]
 
 
@@ -533,17 +538,18 @@ def image_size(data: bytes) -> tuple[str, int, int] | None:
 
 # ---------------------------------------------------------------- media transcripts
 
-TRANSCRIBE_MAX_TOKENS = 8000  # measured 10-minute windows used ≤ 3,600
+TRANSCRIBE_MAX_TOKENS = 16_000  # 20 dense minutes ≈ 7,200 (rows 7, 14); free unless used
 YOUTUBE_FPS = 0.1  # one frame every 10 s at low detail: the words were the same as at 1 fps
 
 
 @dataclass(frozen=True)
 class YouTubeClip:
-    """A window of a public YouTube video, read by Vertex from the URL itself."""
+    """A public YouTube video, read by Vertex from the URL itself. No offsets = the whole
+    video, which is what the product sends: offset windows can hang (plan Round 4)."""
 
     url: str
-    start_s: int
-    end_s: int
+    start_s: int | None = None
+    end_s: int | None = None
 
 
 @dataclass(frozen=True)
@@ -602,7 +608,8 @@ async def transcribe[T: BaseModel](
 
     Invalid output (schema, `check` raising ValueError, or cut off at the token limit) is asked
     again once, unchanged; a call that times out or is cancelled is charged `estimate_usd`
-    (Vertex may still bill it). Raises BudgetExceeded, LLMUnavailable or LLMRejected.
+    (Vertex may still bill it), and a timeout is not retried. Raises BudgetExceeded,
+    LLMUnavailable, LLMRejected or MediaTimeout.
     """
     settings = settings or get_settings()
     route = ROUTES.get(task)
@@ -672,7 +679,7 @@ class _MediaCall:
         """One request with retries on transient errors; every attempt is costed."""
         try:
             async for attempt in AsyncRetrying(
-                retry=retry_if_exception(lambda e: classify_error(e) == "retry"),
+                retry=retry_if_exception(_media_retryable),
                 stop=stop_after_attempt(self.settings.llm_max_retries + 1),
                 wait=retry_wait,
                 reraise=True,
@@ -682,6 +689,8 @@ class _MediaCall:
         except LLMError:
             raise
         except Exception as exc:
+            if isinstance(exc, _litellm().Timeout):  # charged in _attempt; the page retries
+                raise MediaTimeout(f"{self.task} on {self.model}: timed out") from exc
             fields = {"task": self.task, "model": self.model, "error_class": type(exc).__name__}
             if classify_error(exc) == "raise":
                 log.error("llm media rejected", extra={**fields, "status": _status(exc)})
@@ -743,19 +752,26 @@ class _MediaCall:
         )
 
 
+def _media_retryable(exc: BaseException) -> bool:
+    """Transient errors are retried in the run, a timeout is not: with a 90 s call inside a
+    150 s run the retry could never finish, it only paid twice (plan Round 4, R4.2)."""
+    return classify_error(exc) == "retry" and not isinstance(exc, _litellm().Timeout)
+
+
 def _media_part(clip: MediaClip) -> dict[str, Any]:
     if isinstance(clip, YouTubeClip):
+        metadata: dict[str, Any] = {"fps": YOUTUBE_FPS}
+        if clip.start_s is not None:
+            metadata["start_offset"] = f"{clip.start_s}s"
+        if clip.end_s is not None:
+            metadata["end_offset"] = f"{clip.end_s}s"
         return {
             "type": "file",
             "file": {
                 "file_id": clip.url,
                 "format": "video/mp4",
                 "detail": "low",
-                "video_metadata": {
-                    "fps": YOUTUBE_FPS,
-                    "start_offset": f"{clip.start_s}s",
-                    "end_offset": f"{clip.end_s}s",
-                },
+                "video_metadata": metadata,
             },
         }
     uri = f"data:{clip.mime};base64," + base64.b64encode(clip.data).decode("ascii")

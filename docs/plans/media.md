@@ -577,3 +577,103 @@ estimate accepted with spend bounded by `MEDIA_DAILY_BUDGET_USD = 3`; no billing
 ## Round 3: APPROVE (plan-reviewer, 2026-10-14); nits applied
 Both nits applied: the audio-price risk line in Risks, and the atomic no-wait semaphore try
 in 2.3.
+
+## Round 4 (harness evidence, 2026-10-14; overrides everything above where it differs)
+**What the harness showed** (emulator, real Vertex, `transcribe-v1`, quality model, low thinking):
+the 16-minute video (`videos.list`: PT16M, 960 s; the measured transcript ends at 15:49)
+planned as windows 0–600 and 600–960. Window 1: ok, 27 s, $0.049 (audio at $2.50 per 1M).
+Window 2 timed out at 90 s **five times out of five**: twice inside one run (the timeout was
+retried by `_MediaCall.run`, the retry cancelled by the 150 s run limit), twice on the page-style
+retry, and once as a direct probe of 600–949 (ending at the real end, one attempt, no retry).
+Each timeout or cancel is charged its estimate ($0.036): **$0.23 on one video, no transcript.**
+With rows 9 (a 183 s offset window on the fast model) and 3 (the whole video, no offsets, 29 s),
+offset windows on Vertex are not reliable enough to ship: some start offsets work (row 10,
+window 1 here), some hang with no error. Ending past the real end is not the cause (the probe).
+
+**4.1 One call per video, no offsets.** A YouTube video is transcribed in **one call on the whole
+URL, without `start_offset` / `end_offset`** (row 3's shape: fps 0.1, low detail). `YouTubeClip`
+gains `whole: bool`; whole → `video_metadata` carries `fps` only. The plan has one window
+`[0, duration_s]`; the "window 1 alone when the language is unknown" step and the parallel
+windows no longer apply to YouTube (audio pieces keep 10-minute windows and inline MP3: offsets
+were never used for audio). `check_window` is unchanged (absolute and relative coincide).
+
+**4.2 Videos over 20 minutes are refused for now.** `MEDIA_MAX_VIDEO_S` 1800 → **1200** (90% of
+cached videos are ≤ 20 min; rows 3 and 8 bound the output: 16 min gave 3,300 output tokens, so
+20 min stays well under `max_tokens = 8000`; row 8's 68-minute single call is what failed).
+Refusal `too_long` as today ("Open original"). Raising it again needs evidence that offsets, or
+a longer single call, work; not in this build.
+
+**4.3 No retry of a timed-out media call inside a run.** `_MediaCall.run` retries transient
+errors except a timeout: a timed-out window is charged its estimate once and the run fails with
+504; the page's own retry (with the 2× per-item ceiling) is the only retry. A test pins one
+attempt and one charge on timeout.
+
+**4.4 Acceptance.** Acceptance 1's video half stands (±10% of 1,822 words, last start ≥ 15:00,
+transcribe ≤ $0.10, analyse ≤ 100 s) and is re-run after this change on a fresh emulator. The
+failed runs' spend ($0.23) is reported in STATUS. Acceptance 3's "68-minute video" refusal is now
+also the 20-minute cap's case. Frozen eval cases are not edited (decision 26): T01's note ("two
+windows") describes the old plan, its expectations hold; T03 (an offset window of the 68-minute
+video) now tests a path the product does not use and stays as a record.
+
+## Round 4 review (plan-reviewer REVISE, 6 items; all applied, these override Round 4)
+**R4.1 Output limit and the cap's evidence.** `TRANSCRIBE_MAX_TOKENS` 8,000 → **16,000** (free
+unless used; rows 7 and 14 imply ~7,200 for 20 dense minutes, so 8,000 was not "well under";
+`check_window`'s 300 words a minute still catches loops). New frozen case **T04** appended to
+the eval cases file before any run of it (nothing above it edited, decision 26): Dan Pink, "The
+puzzle of motivation" (`rrkrvAUbU9Y`, 1,117 s, `en`), a fast, dense speaker, one whole-URL call;
+no reference transcript, so a stated floor (≥ 2,600 words, last start ≥ 17:30). **Decision rule,
+fixed now:** if T04 takes > 60 s or > 7,000 output tokens, `MEDIA_MAX_VIDEO_S` = **1000** (not
+900: videos.list gives T01 960 s, and the acceptance video must stay openable) instead of 1200. T01 and T04 both record output tokens and latency.
+
+**R4.2 A timed-out call ends in 504.** Only `_MediaCall.run`'s retry predicate changes (a litellm
+timeout is not retried there; `classify_error` is untouched, so `run()` and `image()` keep
+retrying timeouts). After charging the estimate, `transcribe` raises `MediaTimeout`
+(a `TimeoutError` subclass in `app/llm.py`), so the route's existing handler answers 504
+`transcribe_timeout` "Transcribing took too long. Try again."; a router test pins status and
+body. Web (step 4): on 504 the page retries once automatically, then shows "Try again" and
+"Open original". §G gains this line.
+
+**R4.3 One place decides a recording's windows.** `transcript.plan_for(kind, duration_s)`:
+YouTube → `[Window(0, 0, duration_s)]`; audio → `plan_windows(duration_s)`. Used by the budget
+pre-check in `transcribe_pending`, by `_Run.go`, and by the dry run's window plan; unit-tested.
+`YouTubeClip.start_s` / `end_s` become `int | None = None`; `None` → `video_metadata` has `fps`
+only (T03 stays runnable with explicit offsets). R8's "window 1 alone" path needs no change: with
+one window it is the whole run. **Risk added:** a `not_english` refusal now costs the whole
+video (≤ 20 × $0.006 ≈ $0.12 estimated, ~$0.10 at window 1's measured rate), not one window;
+it is still remembered for the day.
+
+**R4.4 Cap, copy and deploy env together.** `deploy.env.yaml` `MEDIA_MAX_VIDEO_S: "1200"`
+(it overrides the default); `config.py` default 1200, comment "90% of cached videos";
+`refusals.py` `too_long`: "videos up to 20 minutes, podcasts 45". Plan text: §E row →
+`1200 | 90% of cached videos; one call ≈ $0.10`; Decisions item 4 → "video ≤ 20 min, one call";
+R2's worst case → a 20-min video ≤ $0.24 across all attempts; 2.4's seeding bound → 6 × 20 ×
+$0.006 ≈ $0.72. Feed and Up next `open_here` turn off for videos of 20–30 minutes in the demo
+snapshots (they show "Open original"). Acceptance 3 gains Ken Robinson's talk (`iG9CE55wbtY`,
+1,204 s): `too_long` just over the cap, no model call.
+
+**R4.5 Tests, named.** `tests/test_llm_transcribe.py`: `test_a_timeout_is_charged_its_estimate_
+then_retried` replaced by `test_a_timeout_is_charged_once_and_not_retried` (one attempt, one
+charge, `MediaTimeout`); `CLIP` and the parts test: a whole clip has `fps` and no offsets, an
+offset clip keeps them, audio parts unchanged. `tests/test_transcript.py`: `plan_for` (YouTube
+one window; audio unchanged; `plan_windows` tests stay). `tests/test_media_service.py`: a 1,190 s
+video makes exactly one call over `[0, 1190]`; unknown language → one call, then `not_english`;
+the ceiling allows two timed-out runs and refuses the third (`too_costly`); a 1,201 s video is
+refused `too_long` at open with no model call. Router: 504 body on `MediaTimeout`.
+
+**R4.6 Docs and the spend record.** DESIGN §21: one call per video, no offsets, the 20-minute
+cap, the hang evidence. STATUS §4 deviations: offset windows dropped; video cap 30 → 20 min.
+STATUS known issues: Vertex offset windows can hang with no error, cause unknown. Spend: the
+failed runs cost **$0.229** of real Vertex money recorded in the *emulator* ledger only (the
+production $8 guard never saw it): run 1 $0.121 (window 1 $0.049 + timeout $0.036 + cancel
+$0.036), run 2 $0.072 (timeout + cancel), probe $0.035. The log's $0.193 was runs 1–2 only.
+
+**Optional item taken as a stated risk:** `PendingDoc.windows` is keyed by index; an emulator
+that still holds the old window "0" (0–600) would look complete under the one-window plan. The
+re-run uses a fresh emulator and production has no media pending docs, so no code change.
+
+## Round 4 review, round 2 (REVISE, 2 items; applied)
+1. The fallback cap is **1000 s**, not 900 (R4.1 and the T04 comment): videos.list gives T01
+   960 s, and a 900 s cap would refuse the acceptance video at open. The at-cap refusal case
+   follows the cap (Ken Robinson, 1,204 s, is over both 1,200 and 1,000).
+2. T04 is frozen by commit `7622bb7` ("media: freeze T04 before the whole-URL run"), made before
+   any harness run touches it; "appended before any run of it" refers to that commit.

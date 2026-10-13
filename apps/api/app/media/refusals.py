@@ -7,7 +7,7 @@ MESSAGES: dict[str, str] = {
     "not_public": "This video isn't public, so Gloss can't read it.",
     "not_embeddable": "This video can't be played outside YouTube.",
     "live": "Live streams can't be read in Gloss.",
-    "too_long": "This recording is too long for Gloss (videos up to 30 minutes, podcasts 45).",
+    "too_long": "This recording is too long for Gloss (videos up to 20 minutes, podcasts 45).",
     "not_english": "Gloss reads English recordings only for now.",
     "no_speech": "Gloss couldn't find enough speech in this recording.",
     "episode_not_found": "Gloss couldn't find this episode's audio.",

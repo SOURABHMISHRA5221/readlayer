@@ -14,7 +14,7 @@ QUALITY = "vertex_ai/gemini-3.8-flash"  # in LiteLLM's price map: $0.75 / $3.75 
 TEXT_PRICE = 0.75e-6
 AUDIO_PRICE = 2.5e-6
 VALID = '{"language": "en", "paragraphs": [{"start": "00:01", "text": "Hello there."}]}'
-CLIP = YouTubeClip("https://www.youtube.com/watch?v=d6fUwCBvVc0", 600, 949)
+CLIP = YouTubeClip("https://www.youtube.com/watch?v=d6fUwCBvVc0")  # the whole video
 
 
 def media_settings(**overrides) -> Settings:
@@ -96,7 +96,7 @@ async def test_youtube_request_uses_the_measured_settings(monkeypatch, store):
     call = fake.calls[0]
     assert call["model"] == QUALITY
     assert call["reasoning_effort"] == "low"
-    assert call["max_tokens"] == 8000
+    assert call["max_tokens"] == 16_000
     assert call["timeout"] == 90.0
     assert call["num_retries"] == 0
     assert call["response_format"] is TranscriptWindow
@@ -110,11 +110,18 @@ async def test_youtube_request_uses_the_measured_settings(monkeypatch, store):
             "file_id": CLIP.url,
             "format": "video/mp4",
             "detail": "low",
-            "video_metadata": {"fps": 0.1, "start_offset": "600s", "end_offset": "949s"},
+            "video_metadata": {"fps": 0.1},  # no offsets: offset windows can hang (Round 4)
         },
     }
     assert result.meta.prompt_version == "transcribe-v1"
     assert result.output.paragraphs[0].text == "Hello there."
+
+
+async def test_an_offset_clip_still_sends_its_offsets(monkeypatch, store):
+    fake = FakeLiteLLM(monkeypatch, [response(VALID)])
+    await run(clip=YouTubeClip(CLIP.url, 600, 949))
+    metadata = fake.calls[0]["messages"][1]["content"][1]["file"]["video_metadata"]
+    assert metadata == {"fps": 0.1, "start_offset": "600s", "end_offset": "949s"}
 
 
 async def test_audio_is_sent_inline_as_base64(monkeypatch, store):
@@ -224,16 +231,20 @@ async def test_transient_errors_are_retried_on_the_same_model(monkeypatch, store
     assert result.meta.attempts == 2
 
 
-async def test_a_timeout_is_charged_its_estimate_then_retried(monkeypatch, store):
-    FakeLiteLLM(monkeypatch, [timeout(), response(VALID)])
+async def test_a_timeout_is_charged_once_and_not_retried(monkeypatch, store):
+    fake = FakeLiteLLM(monkeypatch, [timeout(), response(VALID)])
     meter = MediaMeter()
-    result = await run(meter=meter, estimate=0.05)
-    assert meter.calls == 2
-    answered = 4_284 * TEXT_PRICE + 15_000 * AUDIO_PRICE + 2_722 * 3.75e-6
-    assert meter.cost_usd == pytest.approx(0.05 + answered)
-    assert result.meta.cost_usd == pytest.approx(meter.cost_usd)
-    assert store.media == pytest.approx(meter.cost_usd)
-    assert store.calls == 2
+    with pytest.raises(llm.MediaTimeout):
+        await run(meter=meter, estimate=0.05)
+    assert len(fake.calls) == 1 and meter.calls == 1
+    assert meter.cost_usd == pytest.approx(0.05) and store.media == pytest.approx(0.05)
+    assert store.calls == 1
+
+
+def test_a_media_timeout_is_a_timeout_error():
+    """So the route's existing TimeoutError handler answers 504, not 503 (R4.2)."""
+    assert issubclass(llm.MediaTimeout, TimeoutError)
+    assert not issubclass(llm.MediaTimeout, llm.LLMError)
 
 
 async def test_a_cancelled_call_is_charged_its_estimate(monkeypatch, store):

@@ -1,9 +1,9 @@
 """Transcript windows → timed paragraphs (Media plan §D "Assembly"). Pure: no I/O.
 
-A recording is transcribed in windows of about ten minutes. Each window's model output is
-checked here (times inside the window, no loops, a believable speaking rate), then the windows
-are joined into one list of paragraphs with start times. Words are never changed, dropped or
-reordered: only whitespace is collapsed and paragraphs are grouped.
+A video is transcribed in one call, a podcast in windows of about ten minutes. Each window's
+output is checked here (times inside the window, no loops, a believable speaking rate), then
+the windows are joined into one list of paragraphs with start times. Words are never changed,
+dropped or reordered: only whitespace is collapsed and paragraphs are grouped.
 """
 
 import re
@@ -86,6 +86,14 @@ def plan_windows(duration_s: int, size_s: int = WINDOW_S) -> list[Window]:
     if len(bounds) > 2 and bounds[-1] - bounds[-2] < MIN_LAST_WINDOW_S:
         del bounds[-2]
     return [Window(i, a, b) for i, (a, b) in enumerate(zip(bounds, bounds[1:], strict=False))]
+
+
+def plan_for(kind: str, duration_s: int) -> list[Window]:
+    """A recording's windows. A YouTube video is one call on the whole URL: Vertex offset
+    windows can hang with no error (plan Round 4). Audio keeps ten-minute MP3 pieces."""
+    if kind == "youtube":
+        return [Window(0, 0, duration_s)] if duration_s > 0 else []
+    return plan_windows(duration_s)
 
 
 def parse_clock(text: str) -> int:

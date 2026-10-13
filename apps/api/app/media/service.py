@@ -39,7 +39,7 @@ from app.media.transcript import (
     assemble,
     check_window,
     is_english,
-    plan_windows,
+    plan_for,
 )
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
@@ -187,7 +187,9 @@ async def transcribe_pending(content_id: str, settings: Settings) -> None:
     if pending.stage == "analyse":
         return
     remaining = [
-        w for w in plan_windows(pending.media.duration_s) if str(w.index) not in pending.windows
+        w
+        for w in plan_for(pending.media.kind, pending.media.duration_s)
+        if str(w.index) not in pending.windows
     ]
     await llm.check_media_budget(
         sum(_estimate(w.length_s, settings) for w in remaining), settings=settings
@@ -258,7 +260,7 @@ class _Run:
         media = self.pending.media
         assert media is not None and media.kind == "youtube" and media.video_id
         started = time.perf_counter()
-        windows = plan_windows(media.duration_s)
+        windows = plan_for(media.kind, media.duration_s)
         done: dict[int, WindowText] = {
             int(k): WindowText(
                 rec.language, tuple(TimedParagraph(p.start_s, p.text) for p in rec.paragraphs)
@@ -299,9 +301,7 @@ class _Run:
             result = await llm.transcribe(
                 "transcribe",
                 TranscriptWindow,
-                llm.YouTubeClip(
-                    urls.YouTube(media.video_id).canonical, window.start_s, window.end_s
-                ),
+                llm.YouTubeClip(urls.YouTube(media.video_id).canonical),  # whole video (R4.3)
                 estimate_usd=estimate,
                 meter=self.meter,
                 check=lambda out: check_window(out, window, relative_only=False),
