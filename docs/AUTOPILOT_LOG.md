@@ -1502,8 +1502,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   beside the Apple lookup (next).
 - API suite 1019 passed, 2 skipped; ruff clean.
 
+- `sources.apple_episode(show, episode, settings)` + `probe_audio(url, settings, fetcher)` +
+  `estimated_duration_s` (30 tests added to `test_media_sources.py`, written first). Lookup
+  `itunes.apple.com/lookup?id=<show>&entity=podcastEpisode&limit=200`; show page →
+  `not_an_episode` with no request; `trackId` matched as int; `episodeUrl` https ≤ 2,048 else
+  `episode_not_found`; extension other than mp3 → `unsupported_audio`, missing falls through;
+  length 0 = unknown, < 30 s `no_speech`, over cap `too_long`; non-Latin title `not_english`;
+  title ≤ 300, show ≤ 120, artwork https only; HTTP / network / garbage → `MediaUnavailable`.
+  Probe: head through the guard; no total → `unsupported_audio`, over bytes cap → `too_long`;
+  ID3 past the head → 16 KB second probe at the tag's end (5R1, tested with a 1 MB tag, with and
+  without Range); no frame → `unsupported_audio`; transient FetchError → `MediaUnavailable`,
+  other → `unsupported_audio` (5R5). Logs carry codes and statuses only, never the URL.
+- API suite 1049 passed, 2 skipped; ruff clean.
+
 ### Next steps (resume here, in order)
-1. `sources.apple_episode` + audio probe (5.3, 5R1, 5R5, 5R11) → switches + service audio
-   branch → web `AudioPlayer` → suites.
+1. Switches (`MEDIA_VIDEO_ENABLED`, `media_kind_on`, `apple_link_only`, `media_off` never
+   remembered: 5.1, 5.2, 5R7) → service audio branch of `open_media` (counts, budget pre-check,
+   `create_media`) and `transcribe_pending` / `_Run` (semaphore, fetch, walk, split,
+   fingerprint: 5.4, 5R3, 5R5, 5R6, 5R10) → `openable` → router → web `AudioPlayer` → suites.
 2. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
 3. Step 7. Checkpoint end of Oct 14 IST (decision 27).
