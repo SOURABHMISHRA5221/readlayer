@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("../src/lib/auth", () => ({ idToken: async () => "token", signOutUser: async () => undefined, useIsDemo: () => false }));
 
 import { Sidebar } from "../src/components/library/Sidebar";
+import { Quiet } from "../src/components/Quiet";
 import type { PersonaKey } from "../src/lib/personas";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -66,9 +67,36 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe("an optional part that fails to load", () => {
+  const Broken = (): never => {
+    throw new Error("chunk failed");
+  };
+  it("shows its fallback and leaves the rest of the page standing", async () => {
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined); // React reports the caught error
+    host = document.createElement("div");
+    document.body.append(host);
+    root = createRoot(host);
+    await act(async () =>
+      root.render(
+        <>
+          <p>article</p>
+          <Quiet fallback={<span>no map</span>}>
+            <Broken />
+          </Quiet>
+          <Quiet>
+            <Broken />
+          </Quiet>
+        </>,
+      ),
+    );
+    expect(host.textContent).toBe("articleno map");
+    quiet.mockRestore();
+  });
+});
+
 describe("library sidebar on a wide screen", () => {
-  it("has no map block and asks for no map under 960px", async () => {
-    stub(800);
+  it("has no map block and asks for no map while the sidebar is stacked (960px and under)", async () => {
+    stub(960);
     await mount();
     expect(headings()).toEqual(["Read any link", "Topics for you", "Your goals"]);
     expect(graphCalls()).toEqual([]);
@@ -83,7 +111,9 @@ describe("library sidebar on a wide screen", () => {
     expect(graphCalls()).toEqual(["/v1/me/graph?view=overview"]);
     expect(host.querySelectorAll(".weekmap__tile")).toHaveLength(2);
     expect(host.querySelector(".weekmap__line")?.textContent).toBe("1 idea moved up this week: repo_rate");
-    expect(host.querySelector(".weekmap__tile svg")?.getAttribute("aria-label")).toBe("Finance: 1 idea on your map, 1 moved up this week");
+    const labels = [...host.querySelectorAll(".weekmap__tile svg")].map((s) => s.getAttribute("aria-label"));
+    expect(labels).toEqual(["Finance: 1 idea moved up this week", "Policy: no change this week"]);
+    expect(host.querySelector(".weekmap")?.textContent).not.toMatch(/\d+ ideas?(?! moved)/); // no per-topic totals
   });
 
   it("waits for the library's first answer before asking for the map", async () => {

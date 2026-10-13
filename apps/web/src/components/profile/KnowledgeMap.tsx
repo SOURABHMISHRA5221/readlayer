@@ -31,6 +31,7 @@ interface Props {
 
 const NO_TARGETS: ReadonlySet<string> = new Set();
 const NARROW = "(max-width: 639px)";
+const BESIDE = "(min-width: 961px)"; // the inspector sits beside the map (profile.css)
 
 function bandText(n: MapNode): string {
   if (n.ready) return "ready to learn";
@@ -202,16 +203,17 @@ function MapSvg({
   onSelect: (id: string) => void;
   onDomain?: (d: Domain) => void;
 }) {  // prettier-ignore
-  // Wide layout (decision 45): the map is laid out for the box it sits in. Measured before the
-  // first paint, so it never draws at one size and jumps to another; under 760px the canvas is
-  // the fixed one, scaled into the box by CSS as before.
+  // Wide layout (decision 45): beside the inspector the map is laid out for the box it sits in.
+  // Measured before the first paint, so it never draws at one size and jumps to another. Stacked
+  // (960px and under, where the canvas has a fixed height) and in a box under 800px it keeps the
+  // fixed canvas, scaled into the box by CSS as before.
   const canvas = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(() => mapSize(0));
   useLayoutEffect(() => {
     const el = canvas.current;
     if (!el) return;
     const measure = () => {
-      const next = mapSize(el.clientWidth);
+      const next = mapSize(window.matchMedia(BESIDE).matches ? el.clientWidth : 0);
       setSize((now) => (now.width === next.width && now.height === next.height ? now : next));
     };
     measure();

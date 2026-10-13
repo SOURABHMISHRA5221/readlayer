@@ -29,13 +29,18 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 835.2,
+      "bottom": 852.4,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 3077,
+    "lede": 633.9,
     "small": []
    },
    "r429": 0
@@ -68,13 +73,18 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 814.2,
+      "bottom": 809.3,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 2921,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -102,18 +112,23 @@
       "left": 820,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1108,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 2991,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -141,18 +156,23 @@
       "left": 1032,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1368,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 3035,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -185,13 +205,18 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 835.2,
+      "bottom": 852.4,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 3077,
+    "lede": 633.9,
     "small": []
    },
    "r429": 0
@@ -224,13 +249,18 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 814.2,
+      "bottom": 809.3,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 2921,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -258,18 +288,23 @@
       "left": 820,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1108,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 2991,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -297,18 +332,155 @@
       "left": 1032,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1368,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 3035,
+    "lede": 640,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-foryou-demo-768-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 768,
+    "stacked": true,
+    "content": 704,
+    "row": 704,
+    "thumb": 120,
+    "rowText": 560,
+    "bar": [
+     32,
+     736
+    ],
+    "page": [
+     32,
+     736
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 2947.9,
+      "bottom": 3168.4,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 3208.4,
+      "bottom": 3262.2,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 3382,
+    "lede": 600,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-foryou-demo-900-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 900,
+    "stacked": true,
+    "content": 836,
+    "row": 836,
+    "thumb": 120,
+    "rowText": 692,
+    "bar": [
+     32,
+     868
+    ],
+    "page": [
+     32,
+     868
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 2871.9,
+      "bottom": 3092.4,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 3132.4,
+      "bottom": 3186.2,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 3306,
+    "lede": 600,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-foryou-demo-960-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 960,
+    "stacked": true,
+    "content": 896,
+    "row": 896,
+    "thumb": 120,
+    "rowText": 752,
+    "bar": [
+     32,
+     928
+    ],
+    "page": [
+     32,
+     928
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 2796.5,
+      "bottom": 3017,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 3057,
+      "bottom": 3110.8,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 3231,
+    "lede": 600,
     "small": []
    },
    "r429": 0
@@ -348,6 +520,11 @@
     "week": false,
     "tiles": 0,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 3704,
+    "lede": 358,
     "small": []
    },
    "r429": 0
@@ -387,6 +564,11 @@
     "week": false,
     "tiles": 0,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 3704,
+    "lede": 358,
     "small": []
    },
    "r429": 0
@@ -419,13 +601,18 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 835.2,
+      "bottom": 852.4,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1687,
+    "lede": 633.9,
     "small": []
    },
    "r429": 0
@@ -458,13 +645,18 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 814.2,
+      "bottom": 809.3,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1605,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -492,18 +684,23 @@
       "left": 820,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1108,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1669,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -531,18 +728,23 @@
       "left": 1032,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1368,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1694,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -575,13 +777,18 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 835.2,
+      "bottom": 852.4,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1687,
+    "lede": 633.9,
     "small": []
    },
    "r429": 0
@@ -614,13 +821,18 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 814.2,
+      "bottom": 809.3,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1605,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -648,18 +860,23 @@
       "left": 820,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1108,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1669,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -687,18 +904,155 @@
       "left": 1032,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1368,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 4,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1694,
+    "lede": 640,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-topics-demo-768-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 768,
+    "stacked": true,
+    "content": 704,
+    "row": 704,
+    "thumb": 120,
+    "rowText": 560,
+    "bar": [
+     32,
+     736
+    ],
+    "page": [
+     32,
+     736
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 1612.2,
+      "bottom": 1832.7,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 1872.7,
+      "bottom": 1926.5,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 2046,
+    "lede": 600,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-topics-demo-900-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 900,
+    "stacked": true,
+    "content": 836,
+    "row": 836,
+    "thumb": 120,
+    "rowText": 692,
+    "bar": [
+     32,
+     868
+    ],
+    "page": [
+     32,
+     868
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 1557.2,
+      "bottom": 1777.7,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 1817.7,
+      "bottom": 1871.5,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 1991,
+    "lede": 600,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-topics-demo-960-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 960,
+    "stacked": true,
+    "content": 896,
+    "row": 896,
+    "thumb": 120,
+    "rowText": 752,
+    "bar": [
+     32,
+     928
+    ],
+    "page": [
+     32,
+     928
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 1529.7,
+      "bottom": 1750.2,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 1790.2,
+      "bottom": 1844,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 1964,
+    "lede": 600,
     "small": []
    },
    "r429": 0
@@ -738,6 +1092,11 @@
     "week": false,
     "tiles": 0,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 2353,
+    "lede": 358,
     "small": []
    },
    "r429": 0
@@ -777,30 +1136,235 @@
     "week": false,
     "tiles": 0,
     "goals": 0,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 2353,
+    "lede": 358,
     "small": []
    },
    "r429": 0
   },
-  "library-demo-cls-1440": 0.001,
+  "library-demo-cls-1440": 0.002,
   "library-demo-tab-order": [
    "Read any link",
    "Topics for you",
    "Newcomer's map this week"
   ],
-  "library-demo-sticky-1440x1000": [
-   {
-    "left": 820,
-    "top": 65,
-    "bottom": 1000,
-    "sticky": true
+  "library-demo-sticky-1440x900": {
+   "scrolled": 600,
+   "cols": [
+    {
+     "top": 65,
+     "bottom": 900,
+     "end": 344.4,
+     "scrolls": false,
+     "sticky": true
+    },
+    {
+     "top": 65,
+     "bottom": 900,
+     "end": 573.1,
+     "scrolls": false,
+     "sticky": true
+    }
+   ]
+  },
+  "library-demo-sticky-1440x760": {
+   "scrolled": 600,
+   "cols": [
+    {
+     "top": 65,
+     "bottom": 760,
+     "end": 344.4,
+     "scrolls": false,
+     "sticky": true
+    },
+    {
+     "top": 65,
+     "bottom": 760,
+     "end": 573.1,
+     "scrolls": false,
+     "sticky": true
+    }
+   ]
+  },
+  "library-risers-demo-1440-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "stacked": false,
+    "content": 1344,
+    "row": 752,
+    "thumb": 132,
+    "rowText": 596,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": [
+     48,
+     1392
+    ],
+    "cols": [
+     {
+      "left": 820,
+      "top": 65,
+      "bottom": 900,
+      "sticky": true
+     },
+     {
+      "left": 1108,
+      "top": 65,
+      "bottom": 900,
+      "sticky": true
+     }
+    ],
+    "week": true,
+    "tiles": 4,
+    "goals": 0,
+    "rings": 2,
+    "ups": 1,
+    "line": "2 ideas moved up this week: Fiscal deficit and Depreciation",
+    "height": 1669,
+    "lede": 640,
+    "small": []
    },
-   {
-    "left": 1108,
-    "top": 65,
-    "bottom": 1000,
-    "sticky": true
-   }
-  ],
+   "r429": 0
+  },
+  "library-risers-demo-1440-dark": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "stacked": false,
+    "content": 1344,
+    "row": 752,
+    "thumb": 132,
+    "rowText": 596,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": [
+     48,
+     1392
+    ],
+    "cols": [
+     {
+      "left": 820,
+      "top": 65,
+      "bottom": 900,
+      "sticky": true
+     },
+     {
+      "left": 1108,
+      "top": 65,
+      "bottom": 900,
+      "sticky": true
+     }
+    ],
+    "week": true,
+    "tiles": 4,
+    "goals": 0,
+    "rings": 2,
+    "ups": 1,
+    "line": "2 ideas moved up this week: Fiscal deficit and Depreciation",
+    "height": 1669,
+    "lede": 640,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-risers-demo-1280-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1280,
+    "stacked": false,
+    "content": 1184,
+    "row": 819.2,
+    "thumb": 132,
+    "rowText": 663.2,
+    "bar": [
+     48,
+     1232
+    ],
+    "page": [
+     48,
+     1232
+    ],
+    "cols": [
+     {
+      "left": 965.8,
+      "top": 105,
+      "bottom": 344.4,
+      "sticky": false
+     },
+     {
+      "left": 965.8,
+      "top": 384.4,
+      "bottom": 847.8,
+      "sticky": false
+     }
+    ],
+    "week": true,
+    "tiles": 4,
+    "goals": 0,
+    "rings": 2,
+    "ups": 1,
+    "line": "2 ideas moved up this week: Fiscal deficit and Depreciation",
+    "height": 1605,
+    "lede": 640,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-risers-demo-1280-dark": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1280,
+    "stacked": false,
+    "content": 1184,
+    "row": 819.2,
+    "thumb": 132,
+    "rowText": 663.2,
+    "bar": [
+     48,
+     1232
+    ],
+    "page": [
+     48,
+     1232
+    ],
+    "cols": [
+     {
+      "left": 965.8,
+      "top": 105,
+      "bottom": 344.4,
+      "sticky": false
+     },
+     {
+      "left": 965.8,
+      "top": 384.4,
+      "bottom": 847.8,
+      "sticky": false
+     }
+    ],
+    "week": true,
+    "tiles": 4,
+    "goals": 0,
+    "rings": 2,
+    "ups": 1,
+    "line": "2 ideas moved up this week: Fiscal deficit and Depreciation",
+    "height": 1605,
+    "lede": 640,
+    "small": []
+   },
+   "r429": 0
+  },
   "profile-demo-1024-light": {
    "axe": [],
    "hscroll": 0,
@@ -819,6 +1383,10 @@
      519.5
     ],
     "ctm": 0.866,
+    "svgInside": true,
+    "height": 1987,
+    "level": "21px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -850,6 +1418,10 @@
      680
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2187,
+    "level": "22.016px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -881,6 +1453,10 @@
      720
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2254,
+    "level": "24.768px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -912,6 +1488,10 @@
      780
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2320,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -943,6 +1523,10 @@
      519.5
     ],
     "ctm": 0.866,
+    "svgInside": true,
+    "height": 1987,
+    "level": "21px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -974,6 +1558,10 @@
      680
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2187,
+    "level": "22.016px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -1005,6 +1593,10 @@
      720
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2254,
+    "level": "24.768px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -1036,6 +1628,10 @@
      780
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2320,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -1045,6 +1641,111 @@
     "page": [
      200,
      1720
+    ]
+   },
+   "r429": 0
+  },
+  "profile-demo-768-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 768,
+    "cards": 4,
+    "columns": 2,
+    "lastRow": 2,
+    "greyCell": false,
+    "canvas": [
+     702,
+     440
+    ],
+    "svg": [
+     702,
+     440
+    ],
+    "ctm": 0.733,
+    "svgInside": true,
+    "height": 2509,
+    "level": "26px",
+    "cardRule": true,
+    "pairSide": false,
+    "weekAboveMap": true,
+    "bar": [
+     32,
+     736
+    ],
+    "page": [
+     32,
+     736
+    ]
+   },
+   "r429": 0
+  },
+  "profile-demo-900-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 900,
+    "cards": 4,
+    "columns": 2,
+    "lastRow": 2,
+    "greyCell": false,
+    "canvas": [
+     834,
+     440
+    ],
+    "svg": [
+     834,
+     440
+    ],
+    "ctm": 0.733,
+    "svgInside": true,
+    "height": 2361,
+    "level": "26px",
+    "cardRule": true,
+    "pairSide": false,
+    "weekAboveMap": true,
+    "bar": [
+     32,
+     868
+    ],
+    "page": [
+     32,
+     868
+    ]
+   },
+   "r429": 0
+  },
+  "profile-demo-960-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 960,
+    "cards": 4,
+    "columns": 2,
+    "lastRow": 2,
+    "greyCell": false,
+    "canvas": [
+     894,
+     440
+    ],
+    "svg": [
+     894,
+     440
+    ],
+    "ctm": 0.733,
+    "svgInside": true,
+    "height": 2114,
+    "level": "26px",
+    "cardRule": true,
+    "pairSide": true,
+    "weekAboveMap": true,
+    "bar": [
+     32,
+     928
+    ],
+    "page": [
+     32,
+     928
     ]
    },
    "r429": 0
@@ -1061,6 +1762,10 @@
     "canvas": null,
     "svg": null,
     "ctm": null,
+    "svgInside": null,
+    "height": 6642,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": false,
     "weekAboveMap": null,
     "bar": [
@@ -1086,6 +1791,10 @@
     "canvas": null,
     "svg": null,
     "ctm": null,
+    "svgInside": null,
+    "height": 6642,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": false,
     "weekAboveMap": null,
     "bar": [
@@ -1122,6 +1831,10 @@
      680
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2187,
+    "level": "22.016px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -1153,6 +1866,10 @@
      720
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2254,
+    "level": "24.768px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -1184,6 +1901,10 @@
      780
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2320,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -1215,6 +1936,10 @@
      720
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2254,
+    "level": "24.768px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -1250,6 +1975,7 @@
     "ticks": 0,
     "notes": 0,
     "marks": 12,
+    "height": 7642,
     "small": []
    },
    "r429": 0
@@ -1273,6 +1999,7 @@
     "ticks": 11,
     "notes": 11,
     "marks": 12,
+    "height": 7259,
     "small": []
    },
    "r429": 0
@@ -1296,6 +2023,7 @@
     "ticks": 11,
     "notes": 11,
     "marks": 12,
+    "height": 7259,
     "small": []
    },
    "r429": 0
@@ -1319,6 +2047,7 @@
     "ticks": 11,
     "notes": 11,
     "marks": 12,
+    "height": 7259,
     "small": []
    },
    "r429": 0
@@ -1339,6 +2068,7 @@
     "ticks": 0,
     "notes": 0,
     "marks": 12,
+    "height": 7642,
     "small": []
    },
    "r429": 0
@@ -1362,6 +2092,7 @@
     "ticks": 11,
     "notes": 11,
     "marks": 12,
+    "height": 7259,
     "small": []
    },
    "r429": 0
@@ -1385,6 +2116,7 @@
     "ticks": 11,
     "notes": 11,
     "marks": 12,
+    "height": 7259,
     "small": []
    },
    "r429": 0
@@ -1408,6 +2140,70 @@
     "ticks": 11,
     "notes": 11,
     "marks": 12,
+    "height": 7259,
+    "small": []
+   },
+   "r429": 0
+  },
+  "reader-768-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 768,
+    "prose": 680,
+    "grid": 680,
+    "gutter": 32,
+    "rail": null,
+    "spine": false,
+    "spineHitsMarker": false,
+    "spineCount": null,
+    "railCount": null,
+    "ticks": 0,
+    "notes": 0,
+    "marks": 12,
+    "height": 7642,
+    "small": []
+   },
+   "r429": 0
+  },
+  "reader-900-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 900,
+    "prose": 680,
+    "grid": 680,
+    "gutter": 32,
+    "rail": null,
+    "spine": false,
+    "spineHitsMarker": false,
+    "spineCount": null,
+    "railCount": null,
+    "ticks": 0,
+    "notes": 0,
+    "marks": 12,
+    "height": 7642,
+    "small": []
+   },
+   "r429": 0
+  },
+  "reader-960-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 960,
+    "prose": 680,
+    "grid": 680,
+    "gutter": 32,
+    "rail": null,
+    "spine": false,
+    "spineHitsMarker": false,
+    "spineCount": null,
+    "railCount": null,
+    "ticks": 0,
+    "notes": 0,
+    "marks": 12,
+    "height": 7642,
     "small": []
    },
    "r429": 0
@@ -1428,6 +2224,7 @@
     "ticks": 0,
     "notes": 0,
     "marks": 12,
+    "height": 10784,
     "small": []
    },
    "r429": 0
@@ -1448,6 +2245,7 @@
     "ticks": 0,
     "notes": 0,
     "marks": 12,
+    "height": 10784,
     "small": []
    },
    "r429": 0
@@ -1536,6 +2334,7 @@
     "ticks": 11,
     "notes": 11,
     "marks": 12,
+    "height": 7259,
     "small": []
    },
    "r429": 0
@@ -1563,6 +2362,7 @@
     "ticks": 11,
     "notes": 11,
     "marks": 12,
+    "height": 7340,
     "small": []
    },
    "r429": 0
@@ -1596,13 +2396,18 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 1204.7,
+      "bottom": 1204.4,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 5682,
+    "lede": 633.9,
     "small": []
    },
    "r429": 0
@@ -1635,13 +2440,18 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 1204.7,
+      "bottom": 1182.2,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 5417,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -1669,18 +2479,23 @@
       "left": 820,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1108,
       "top": 65,
-      "bottom": 965.3,
-      "sticky": false
+      "bottom": 900,
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 5577,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -1708,18 +2523,23 @@
       "left": 1032,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1368,
       "top": 65,
-      "bottom": 965.3,
-      "sticky": false
+      "bottom": 900,
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 5628,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -1752,13 +2572,18 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 1204.7,
+      "bottom": 1204.4,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 5682,
+    "lede": 633.9,
     "small": []
    },
    "r429": 0
@@ -1791,13 +2616,18 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 1204.7,
+      "bottom": 1182.2,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 5417,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -1825,18 +2655,23 @@
       "left": 820,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1108,
       "top": 65,
-      "bottom": 965.3,
-      "sticky": false
+      "bottom": 900,
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 5577,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -1864,18 +2699,155 @@
       "left": 1032,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1368,
       "top": 65,
-      "bottom": 965.3,
-      "sticky": false
+      "bottom": 900,
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 5628,
+    "lede": 640,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-foryou-google-768-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 768,
+    "stacked": true,
+    "content": 704,
+    "row": 704,
+    "thumb": 120,
+    "rowText": 560,
+    "bar": [
+     32,
+     736
+    ],
+    "page": [
+     32,
+     736
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 5501.3,
+      "bottom": 5721.8,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 5761.8,
+      "bottom": 6087,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 6207,
+    "lede": 600,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-foryou-google-900-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 900,
+    "stacked": true,
+    "content": 836,
+    "row": 836,
+    "thumb": 120,
+    "rowText": 692,
+    "bar": [
+     32,
+     868
+    ],
+    "page": [
+     32,
+     868
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 5288.5,
+      "bottom": 5508.9,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 5548.9,
+      "bottom": 5874.2,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 5994,
+    "lede": 600,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-foryou-google-960-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 960,
+    "stacked": true,
+    "content": 896,
+    "row": 896,
+    "thumb": 120,
+    "rowText": 752,
+    "bar": [
+     32,
+     928
+    ],
+    "page": [
+     32,
+     928
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 5237,
+      "bottom": 5457.5,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 5497.5,
+      "bottom": 5822.7,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 5943,
+    "lede": 600,
     "small": []
    },
    "r429": 0
@@ -1901,20 +2873,25 @@
     "cols": [
      {
       "left": 16,
-      "top": 3432.5,
-      "bottom": 3671.9,
+      "top": 6099.4,
+      "bottom": 6338.8,
       "sticky": false
      },
      {
       "left": 16,
-      "top": 3711.9,
-      "bottom": 4037.1,
+      "top": 6378.8,
+      "bottom": 6704,
       "sticky": false
      }
     ],
     "week": false,
     "tiles": 0,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 6808,
+    "lede": 358,
     "small": []
    },
    "r429": 0
@@ -1940,20 +2917,25 @@
     "cols": [
      {
       "left": 16,
-      "top": 3432.5,
-      "bottom": 3671.9,
+      "top": 6099.4,
+      "bottom": 6338.8,
       "sticky": false
      },
      {
       "left": 16,
-      "top": 3711.9,
-      "bottom": 4037.1,
+      "top": 6378.8,
+      "bottom": 6704,
       "sticky": false
      }
     ],
     "week": false,
     "tiles": 0,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 6808,
+    "lede": 358,
     "small": []
    },
    "r429": 0
@@ -1986,13 +2968,18 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 1204.7,
+      "bottom": 1204.4,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1687,
+    "lede": 633.9,
     "small": []
    },
    "r429": 0
@@ -2025,13 +3012,18 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 1204.7,
+      "bottom": 1182.2,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1605,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -2059,18 +3051,23 @@
       "left": 820,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1108,
       "top": 65,
-      "bottom": 965.3,
-      "sticky": false
+      "bottom": 900,
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1669,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -2098,18 +3095,23 @@
       "left": 1032,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1368,
       "top": 65,
-      "bottom": 965.3,
-      "sticky": false
+      "bottom": 900,
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1694,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -2142,13 +3144,18 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 1204.7,
+      "bottom": 1204.4,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1687,
+    "lede": 633.9,
     "small": []
    },
    "r429": 0
@@ -2181,13 +3188,18 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 1204.7,
+      "bottom": 1182.2,
       "sticky": false
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1605,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -2215,18 +3227,23 @@
       "left": 820,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1108,
       "top": 65,
-      "bottom": 965.3,
-      "sticky": false
+      "bottom": 900,
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1669,
+    "lede": 640,
     "small": []
    },
    "r429": 0
@@ -2254,18 +3271,155 @@
       "left": 1032,
       "top": 65,
       "bottom": 900,
-      "sticky": false
+      "sticky": true
      },
      {
       "left": 1368,
       "top": 65,
-      "bottom": 965.3,
-      "sticky": false
+      "bottom": 900,
+      "sticky": true
      }
     ],
     "week": true,
     "tiles": 6,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": "Nothing moved up yet this week",
+    "height": 1694,
+    "lede": 640,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-topics-google-768-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 768,
+    "stacked": true,
+    "content": 704,
+    "row": 704,
+    "thumb": 120,
+    "rowText": 560,
+    "bar": [
+     32,
+     736
+    ],
+    "page": [
+     32,
+     736
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 1612.2,
+      "bottom": 1832.7,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 1872.7,
+      "bottom": 2197.9,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 2318,
+    "lede": 600,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-topics-google-900-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 900,
+    "stacked": true,
+    "content": 836,
+    "row": 836,
+    "thumb": 120,
+    "rowText": 692,
+    "bar": [
+     32,
+     868
+    ],
+    "page": [
+     32,
+     868
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 1557.2,
+      "bottom": 1777.7,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 1817.7,
+      "bottom": 2142.9,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 2263,
+    "lede": 600,
+    "small": []
+   },
+   "r429": 0
+  },
+  "library-topics-google-960-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 960,
+    "stacked": true,
+    "content": 896,
+    "row": 896,
+    "thumb": 120,
+    "rowText": 752,
+    "bar": [
+     32,
+     928
+    ],
+    "page": [
+     32,
+     928
+    ],
+    "cols": [
+     {
+      "left": 32,
+      "top": 1529.7,
+      "bottom": 1750.2,
+      "sticky": false
+     },
+     {
+      "left": 32,
+      "top": 1790.2,
+      "bottom": 2115.4,
+      "sticky": false
+     }
+    ],
+    "week": false,
+    "tiles": 0,
+    "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 2235,
+    "lede": 600,
     "small": []
    },
    "r429": 0
@@ -2305,6 +3459,11 @@
     "week": false,
     "tiles": 0,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 2625,
+    "lede": 358,
     "small": []
    },
    "r429": 0
@@ -2344,30 +3503,59 @@
     "week": false,
     "tiles": 0,
     "goals": 3,
+    "rings": 0,
+    "ups": 0,
+    "line": null,
+    "height": 2625,
+    "lede": 358,
     "small": []
    },
    "r429": 0
   },
-  "library-google-cls-1440": 0.013,
+  "library-google-cls-1440": 0.012,
   "library-google-tab-order": [
    "Read any link",
    "Topics for you",
    "Your map this week"
   ],
-  "library-google-sticky-1440x1000": [
-   {
-    "left": 820,
-    "top": 65,
-    "bottom": 1000,
-    "sticky": true
-   },
-   {
-    "left": 1108,
-    "top": 65,
-    "bottom": 1000,
-    "sticky": true
-   }
-  ],
+  "library-google-sticky-1440x900": {
+   "scrolled": 600,
+   "cols": [
+    {
+     "top": 65,
+     "bottom": 900,
+     "end": 344.4,
+     "scrolls": false,
+     "sticky": true
+    },
+    {
+     "top": 65,
+     "bottom": 900,
+     "end": 860,
+     "scrolls": true,
+     "sticky": true
+    }
+   ]
+  },
+  "library-google-sticky-1440x760": {
+   "scrolled": 600,
+   "cols": [
+    {
+     "top": 65,
+     "bottom": 760,
+     "end": 344.4,
+     "scrolls": false,
+     "sticky": true
+    },
+    {
+     "top": 65,
+     "bottom": 760,
+     "end": 720,
+     "scrolls": true,
+     "sticky": true
+    }
+   ]
+  },
   "profile-google-1024-light": {
    "axe": [],
    "hscroll": 0,
@@ -2386,6 +3574,10 @@
      519.5
     ],
     "ctm": 0.866,
+    "svgInside": true,
+    "height": 2715,
+    "level": "21px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2417,6 +3609,10 @@
      680
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2697,
+    "level": "22.016px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2448,6 +3644,10 @@
      720
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2723,
+    "level": "24.768px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2479,6 +3679,10 @@
      780
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2808,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2510,6 +3714,10 @@
      519.5
     ],
     "ctm": 0.866,
+    "svgInside": true,
+    "height": 2715,
+    "level": "21px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2541,6 +3749,10 @@
      680
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2697,
+    "level": "22.016px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2572,6 +3784,10 @@
      720
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2723,
+    "level": "24.768px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2603,6 +3819,10 @@
      780
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2808,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2612,6 +3832,111 @@
     "page": [
      200,
      1720
+    ]
+   },
+   "r429": 0
+  },
+  "profile-google-768-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 768,
+    "cards": 6,
+    "columns": 2,
+    "lastRow": 2,
+    "greyCell": false,
+    "canvas": [
+     702,
+     440
+    ],
+    "svg": [
+     702,
+     440
+    ],
+    "ctm": 0.733,
+    "svgInside": true,
+    "height": 3432,
+    "level": "26px",
+    "cardRule": true,
+    "pairSide": false,
+    "weekAboveMap": true,
+    "bar": [
+     32,
+     736
+    ],
+    "page": [
+     32,
+     736
+    ]
+   },
+   "r429": 0
+  },
+  "profile-google-900-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 900,
+    "cards": 6,
+    "columns": 2,
+    "lastRow": 2,
+    "greyCell": false,
+    "canvas": [
+     834,
+     440
+    ],
+    "svg": [
+     834,
+     440
+    ],
+    "ctm": 0.733,
+    "svgInside": true,
+    "height": 3313,
+    "level": "26px",
+    "cardRule": true,
+    "pairSide": false,
+    "weekAboveMap": true,
+    "bar": [
+     32,
+     868
+    ],
+    "page": [
+     32,
+     868
+    ]
+   },
+   "r429": 0
+  },
+  "profile-google-960-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 960,
+    "cards": 6,
+    "columns": 2,
+    "lastRow": 2,
+    "greyCell": false,
+    "canvas": [
+     894,
+     440
+    ],
+    "svg": [
+     894,
+     440
+    ],
+    "ctm": 0.733,
+    "svgInside": true,
+    "height": 2872,
+    "level": "26px",
+    "cardRule": true,
+    "pairSide": true,
+    "weekAboveMap": true,
+    "bar": [
+     32,
+     928
+    ],
+    "page": [
+     32,
+     928
     ]
    },
    "r429": 0
@@ -2628,6 +3953,10 @@
     "canvas": null,
     "svg": null,
     "ctm": null,
+    "svgInside": null,
+    "height": 10109,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": false,
     "weekAboveMap": null,
     "bar": [
@@ -2653,6 +3982,10 @@
     "canvas": null,
     "svg": null,
     "ctm": null,
+    "svgInside": null,
+    "height": 10109,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": false,
     "weekAboveMap": null,
     "bar": [
@@ -2689,6 +4022,10 @@
      680
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2697,
+    "level": "22.016px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2720,6 +4057,10 @@
      720
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2723,
+    "level": "24.768px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2751,6 +4092,10 @@
      780
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2808,
+    "level": "26px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [
@@ -2782,6 +4127,10 @@
      720
     ],
     "ctm": 1,
+    "svgInside": true,
+    "height": 2723,
+    "level": "24.768px",
+    "cardRule": true,
     "pairSide": true,
     "weekAboveMap": true,
     "bar": [

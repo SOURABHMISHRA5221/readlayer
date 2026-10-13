@@ -14,6 +14,7 @@ const MAX_DOTS = 24;
 const GOLDEN = 2.399963;
 const SPREAD = 10.5; // spiral step: the two closest dots end up just over a diameter apart
 const NAMED = 3;
+const READY_PLACES = 2; // rings kept in a tile for what the reader is ready to learn next
 
 type MapData = Pick<Overview, "domains" | "nodes">;
 
@@ -28,8 +29,8 @@ export interface TileDot {
 
 export interface TopicTile {
   domain: Domain;
-  /** Ideas at "heard of" or above on the reader's map in this topic. */
-  known: number;
+  /** Ideas in this topic that moved up a level this week. (No total: the overview caps what it
+   *  returns per topic, so its length is not the reader's count; the profile's cards have that.) */
   rose: number;
   dots: TileDot[];
 }
@@ -42,6 +43,18 @@ function byImportance(a: OverviewNode, b: OverviewNode): number {
     b.weight - a.weight ||
     a.id.localeCompare(b.id)
   );
+}
+
+/** A topic's `count` dots: every riser, then known ideas with up to READY_PLACES rings kept for
+ *  what is ready to learn next (more of either when the other runs out). `queue` is sorted. */
+function pick(queue: readonly OverviewNode[], count: number): OverviewNode[] {
+  const risers = queue.filter((n) => n.rose_this_week).slice(0, count);
+  const rest = queue.filter((n) => !n.rose_this_week);
+  const known = rest.filter((n) => !n.ready);
+  const ready = rest.filter((n) => n.ready);
+  const room = count - risers.length;
+  const rings = Math.min(ready.length, Math.max(Math.min(READY_PLACES, Math.floor(count / 3)), room - known.length));
+  return [...risers, ...known.slice(0, room - rings), ...ready.slice(0, Math.max(0, rings))].slice(0, count);
 }
 
 /**
@@ -66,7 +79,7 @@ export function miniMapNodes(overview: MapData, perTopic = PER_TOPIC, max = MAX_
       }
     });
   }
-  return queues.flatMap((queue, i) => queue.slice(0, taken[i]));
+  return queues.flatMap((queue, i) => pick(queue, taken[i] ?? 0));
 }
 
 /** `count` dots on a sunflower spiral in a TILE_W × TILE_H box, the first in the middle. */
@@ -89,7 +102,6 @@ export function topicTiles(overview: MapData): TopicTile[] {
     return [
       {
         domain,
-        known: mine.filter((n) => !n.ready).length,
         rose: mine.filter((n) => n.rose_this_week).length,
         dots: shown.map((n, i) => ({ id: n.id, x: at[i]?.x ?? 0, y: at[i]?.y ?? 0, band: n.band, ready: n.ready, rose: n.rose_this_week })),
       },

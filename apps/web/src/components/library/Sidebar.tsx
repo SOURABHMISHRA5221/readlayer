@@ -4,6 +4,7 @@ import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { domainLabel } from "../../lib/format";
 import { personaOf, type PersonaKey } from "../../lib/personas";
 import { profileApi, type Goal } from "../../lib/profileApi";
+import { Quiet } from "../Quiet";
 import { ReadAnyLink } from "../ReadAnyLink";
 
 const MapSkeleton = () => <div className="skeleton weekmap__skeleton" role="status" aria-label="Loading your map" />;
@@ -18,7 +19,7 @@ function goalLine(g: Goal): string {
 // Its own chunk, and only where there is a sidebar column to hold it: phones make no extra
 // request (Wide layout, decision 45).
 const WeekPanel = lazy(() => import("./WeekPanel"));
-const SIDE_QUERY = "(min-width: 960px)";
+const SIDE_QUERY = "(min-width: 961px)"; // beside the feed (library.css stacks it at 960px)
 
 /**
  * Beside the feed on wide screens, below it on narrow ones (Design pass C5). Two groups (Wide
@@ -64,9 +65,11 @@ export function Sidebar({
             {/* Asked for once the library has answered: a new reader's first requests each create
                 their user record, and one more at that moment only makes them queue. */}
             {settled ? (
-              <Suspense fallback={<MapSkeleton />}>
-                <WeekPanel persona={persona} />
-              </Suspense>
+              <Quiet fallback={<p className="side__note">Your map didn't load.</p>}>
+                <Suspense fallback={<MapSkeleton />}>
+                  <WeekPanel persona={persona} />
+                </Suspense>
+              </Quiet>
             ) : (
               <MapSkeleton />
             )}

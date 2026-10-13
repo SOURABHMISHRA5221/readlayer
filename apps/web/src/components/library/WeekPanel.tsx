@@ -9,8 +9,7 @@ import { DOT_R, TILE_H, TILE_W, topicTiles, weekLine, type TopicTile } from "../
 type Load = { status: "loading" } | { status: "ready"; overview: Overview } | { status: "error" };
 
 function tileLabel(t: TopicTile): string {
-  const moved = t.rose ? `, ${t.rose} moved up this week` : "";
-  return `${domainLabel(t.domain)}: ${plural(t.known, "idea")} on your map${moved}`;
+  return `${domainLabel(t.domain)}: ${t.rose ? `${plural(t.rose, "idea")} moved up this week` : "no change this week"}`;
 }
 
 /**
@@ -57,14 +56,22 @@ export default function WeekPanel({ persona }: { persona: PersonaKey | null }) {
               ))}
             </svg>
             <p className="weekmap__topic">{domainLabel(t.domain)}</p>
-            <p className="weekmap__meta tnum">
-              {plural(t.known, "idea")}
-              {t.rose > 0 && <span className="weekmap__up"> · +{t.rose} this week</span>}
-            </p>
+            {t.rose > 0 && <p className="weekmap__up tnum">+{t.rose} this week</p>}
           </li>
         ))}
       </ul>
       <p className="weekmap__line">{weekLine(load.overview.nodes)}</p>
+      <ul className="weekmap__key" aria-label="Key">
+        <li>
+          <span className="weekmap__mark" aria-hidden="true" /> You know
+        </li>
+        <li>
+          <span className="weekmap__mark" data-kind="ready" aria-hidden="true" /> Ready next
+        </li>
+        <li>
+          <span className="weekmap__mark" data-kind="rose" aria-hidden="true" /> Moved up
+        </li>
+      </ul>
       <a className="weekmap__link" href={mapHref}>
         Open your map
       </a>

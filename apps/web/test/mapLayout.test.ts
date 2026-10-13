@@ -103,7 +103,9 @@ describe("map size for its box", () => {
   it.each([
     [320, 760, 600], // phones, tablets and 1024px keep today's canvas, scaled into the box
     [759, 760, 600],
-    [760, 760, 680],
+    [760, 760, 600], // a box that only fits the old canvas keeps it, height and all
+    [799, 760, 600],
+    [800, 800, 680],
     [874.8, 840, 680], // 1280px
     [996.4, 960, 720], // 1440px
     [1158, 1120, 780], // 1920px

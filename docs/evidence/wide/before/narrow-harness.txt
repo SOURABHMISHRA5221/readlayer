@@ -1,0 +1,105 @@
+Wide layout: BEFORE run at tablet and phone widths (tools/shots/wide.py --before --narrow), 2026-10-13.
+The web code as it was before the change (apps/web/src at 3b707e1), same emulator stack as the final run.
+Recorded only; FAIL lines are checks the old layout does not meet.
+
+-- 21:09:48 demo reader
+-- 21:09:57 library (demo)
+[library-foryou-demo-768-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 768, "stacked": true, "content": 704, "row": 704, "thumb": 120, "rowText": 560, "bar": [32, 736], "page": [32, 736], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 3382, "lede": 600, "small": []}
+FAIL library-foryou-demo-768-light: axe ['moderate:heading-order:1']
+FAIL library-foryou-demo-768-light: 0 sidebar groups
+[library-foryou-demo-900-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 900, "stacked": true, "content": 836, "row": 836, "thumb": 120, "rowText": 692, "bar": [32, 868], "page": [32, 868], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 3306, "lede": 600, "small": []}
+FAIL library-foryou-demo-900-light: axe ['moderate:heading-order:1']
+FAIL library-foryou-demo-900-light: 0 sidebar groups
+[library-foryou-demo-960-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 960, "stacked": true, "content": 896, "row": 896, "thumb": 120, "rowText": 752, "bar": [32, 928], "page": [32, 928], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 3231, "lede": 600, "small": []}
+FAIL library-foryou-demo-960-light: axe ['moderate:heading-order:1']
+FAIL library-foryou-demo-960-light: 0 sidebar groups
+[library-foryou-demo-390-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 390, "stacked": true, "content": 358, "row": 358, "thumb": 80, "rowText": 262, "bar": [16, 374], "page": [16, 374], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 3704, "lede": 358, "small": []}
+FAIL library-foryou-demo-390-light: axe ['moderate:heading-order:1']
+FAIL library-foryou-demo-390-light: 0 sidebar groups
+[library-foryou-demo-390-dark] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 390, "stacked": true, "content": 358, "row": 358, "thumb": 80, "rowText": 262, "bar": [16, 374], "page": [16, 374], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 3704, "lede": 358, "small": []}
+FAIL library-foryou-demo-390-dark: axe ['moderate:heading-order:1']
+FAIL library-foryou-demo-390-dark: 0 sidebar groups
+[library-topics-demo-768-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 768, "stacked": true, "content": 704, "row": 704, "thumb": 120, "rowText": 560, "bar": [32, 736], "page": [32, 736], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 2046, "lede": 600, "small": []}
+FAIL library-topics-demo-768-light: axe ['moderate:heading-order:1']
+FAIL library-topics-demo-768-light: 0 sidebar groups
+[library-topics-demo-900-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 900, "stacked": true, "content": 836, "row": 836, "thumb": 120, "rowText": 692, "bar": [32, 868], "page": [32, 868], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 1991, "lede": 600, "small": []}
+FAIL library-topics-demo-900-light: axe ['moderate:heading-order:1']
+FAIL library-topics-demo-900-light: 0 sidebar groups
+[library-topics-demo-960-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 960, "stacked": true, "content": 896, "row": 896, "thumb": 120, "rowText": 752, "bar": [32, 928], "page": [32, 928], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 1964, "lede": 600, "small": []}
+FAIL library-topics-demo-960-light: axe ['moderate:heading-order:1']
+FAIL library-topics-demo-960-light: 0 sidebar groups
+[library-topics-demo-390-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 390, "stacked": true, "content": 358, "row": 358, "thumb": 80, "rowText": 262, "bar": [16, 374], "page": [16, 374], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 2353, "lede": 358, "small": []}
+FAIL library-topics-demo-390-light: axe ['moderate:heading-order:1']
+FAIL library-topics-demo-390-light: 0 sidebar groups
+[library-topics-demo-390-dark] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 390, "stacked": true, "content": 358, "row": 358, "thumb": 80, "rowText": 262, "bar": [16, 374], "page": [16, 374], "cols": [], "week": false, "tiles": 0, "goals": 0, "rings": 0, "ups": 0, "line": null, "height": 2353, "lede": 358, "small": []}
+FAIL library-topics-demo-390-dark: axe ['moderate:heading-order:1']
+FAIL library-topics-demo-390-dark: 0 sidebar groups
+-- 21:10:28 profile (demo)
+[profile-demo-768-light] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 768, "cards": 4, "columns": 2, "lastRow": 2, "greyCell": false, "canvas": [702, 440], "svg": [702, 440], "ctm": 0.733, "svgInside": true, "height": 2481, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": false, "bar": [32, 736], "page": [32, 736]}
+FAIL profile-demo-768-light: axe ['moderate:landmark-complementary-is-top-level:1']
+[profile-demo-900-light] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 900, "cards": 4, "columns": 2, "lastRow": 2, "greyCell": false, "canvas": [834, 440], "svg": [834, 440], "ctm": 0.733, "svgInside": true, "height": 2333, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": false, "bar": [32, 868], "page": [32, 868]}
+FAIL profile-demo-900-light: axe ['moderate:landmark-complementary-is-top-level:1']
+[profile-demo-960-light] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 960, "cards": 4, "columns": 2, "lastRow": 2, "greyCell": false, "canvas": [894, 440], "svg": [894, 440], "ctm": 0.733, "svgInside": true, "height": 2333, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": false, "bar": [32, 928], "page": [32, 928]}
+FAIL profile-demo-960-light: axe ['moderate:landmark-complementary-is-top-level:1']
+[profile-demo-390-light] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 390, "cards": 4, "columns": 1, "lastRow": 1, "greyCell": false, "canvas": null, "svg": null, "ctm": null, "svgInside": null, "height": 6559, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": null, "bar": [16, 374], "page": [16, 374]}
+FAIL profile-demo-390-light: axe ['moderate:landmark-complementary-is-top-level:1']
+[profile-demo-390-dark] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 390, "cards": 4, "columns": 1, "lastRow": 1, "greyCell": false, "canvas": null, "svg": null, "ctm": null, "svgInside": null, "height": 6559, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": null, "bar": [16, 374], "page": [16, 374]}
+FAIL profile-demo-390-dark: axe ['moderate:landmark-complementary-is-top-level:1']
+-- 21:10:44 reader
+[reader-768-light] axe=['moderate:region:1'] hscroll=0 429=0 {"vw": 768, "prose": 680, "grid": 680, "gutter": 32, "rail": null, "spine": false, "spineHitsMarker": false, "spineCount": null, "railCount": null, "ticks": 0, "notes": 0, "marks": 12, "height": 7664, "small": []}
+FAIL reader-768-light: axe ['moderate:region:1']
+[reader-900-light] axe=['moderate:region:1'] hscroll=0 429=0 {"vw": 900, "prose": 680, "grid": 680, "gutter": 32, "rail": null, "spine": false, "spineHitsMarker": false, "spineCount": null, "railCount": null, "ticks": 0, "notes": 0, "marks": 12, "height": 7664, "small": []}
+FAIL reader-900-light: axe ['moderate:region:1']
+[reader-960-light] axe=['moderate:region:1'] hscroll=0 429=0 {"vw": 960, "prose": 680, "grid": 680, "gutter": 32, "rail": null, "spine": false, "spineHitsMarker": false, "spineCount": null, "railCount": null, "ticks": 0, "notes": 0, "marks": 12, "height": 7664, "small": []}
+FAIL reader-960-light: axe ['moderate:region:1']
+[reader-390-light] axe=['moderate:region:1'] hscroll=0 429=0 {"vw": 390, "prose": 358, "grid": 358, "gutter": 16, "rail": null, "spine": false, "spineHitsMarker": false, "spineCount": null, "railCount": null, "ticks": 0, "notes": 0, "marks": 12, "height": 8885, "small": []}
+FAIL reader-390-light: axe ['moderate:region:1']
+[reader-390-dark] axe=['moderate:region:1'] hscroll=0 429=0 {"vw": 390, "prose": 358, "grid": 358, "gutter": 16, "rail": null, "spine": false, "spineHitsMarker": false, "spineCount": null, "railCount": null, "ticks": 0, "notes": 0, "marks": 12, "height": 8885, "small": []}
+FAIL reader-390-dark: axe ['moderate:region:1']
+-- 21:10:59 google reader
+[google reader] setup=[200, 200, 200] goals=[200, 200, 200]
+-- 21:11:24 library (google)
+[library-foryou-google-768-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 768, "stacked": true, "content": 704, "row": 704, "thumb": 120, "rowText": 560, "bar": [32, 736], "page": [32, 736], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 4634, "lede": 600, "small": []}
+FAIL library-foryou-google-768-light: axe ['moderate:heading-order:1']
+FAIL library-foryou-google-768-light: 0 sidebar groups
+[library-foryou-google-900-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 900, "stacked": true, "content": 836, "row": 836, "thumb": 120, "rowText": 692, "bar": [32, 868], "page": [32, 868], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 5994, "lede": 600, "small": []}
+FAIL library-foryou-google-900-light: axe ['moderate:heading-order:1']
+FAIL library-foryou-google-900-light: 0 sidebar groups
+[library-foryou-google-960-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 960, "stacked": true, "content": 896, "row": 896, "thumb": 120, "rowText": 752, "bar": [32, 928], "page": [32, 928], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 5943, "lede": 600, "small": []}
+FAIL library-foryou-google-960-light: axe ['moderate:heading-order:1']
+FAIL library-foryou-google-960-light: 0 sidebar groups
+[library-foryou-google-390-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 390, "stacked": true, "content": 358, "row": 358, "thumb": 80, "rowText": 262, "bar": [16, 374], "page": [16, 374], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 6808, "lede": 358, "small": []}
+FAIL library-foryou-google-390-light: axe ['moderate:heading-order:1']
+FAIL library-foryou-google-390-light: 0 sidebar groups
+[library-foryou-google-390-dark] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 390, "stacked": true, "content": 358, "row": 358, "thumb": 80, "rowText": 262, "bar": [16, 374], "page": [16, 374], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 6808, "lede": 358, "small": []}
+FAIL library-foryou-google-390-dark: axe ['moderate:heading-order:1']
+FAIL library-foryou-google-390-dark: 0 sidebar groups
+[library-topics-google-768-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 768, "stacked": true, "content": 704, "row": 704, "thumb": 120, "rowText": 560, "bar": [32, 736], "page": [32, 736], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 2318, "lede": 600, "small": []}
+FAIL library-topics-google-768-light: axe ['moderate:heading-order:1']
+FAIL library-topics-google-768-light: 0 sidebar groups
+[library-topics-google-900-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 900, "stacked": true, "content": 836, "row": 836, "thumb": 120, "rowText": 692, "bar": [32, 868], "page": [32, 868], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 2263, "lede": 600, "small": []}
+FAIL library-topics-google-900-light: axe ['moderate:heading-order:1']
+FAIL library-topics-google-900-light: 0 sidebar groups
+[library-topics-google-960-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 960, "stacked": true, "content": 896, "row": 896, "thumb": 120, "rowText": 752, "bar": [32, 928], "page": [32, 928], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 2235, "lede": 600, "small": []}
+FAIL library-topics-google-960-light: axe ['moderate:heading-order:1']
+FAIL library-topics-google-960-light: 0 sidebar groups
+[library-topics-google-390-light] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 390, "stacked": true, "content": 358, "row": 358, "thumb": 80, "rowText": 262, "bar": [16, 374], "page": [16, 374], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 2625, "lede": 358, "small": []}
+FAIL library-topics-google-390-light: axe ['moderate:heading-order:1']
+FAIL library-topics-google-390-light: 0 sidebar groups
+[library-topics-google-390-dark] axe=['moderate:heading-order:1'] hscroll=0 429=0 {"vw": 390, "stacked": true, "content": 358, "row": 358, "thumb": 80, "rowText": 262, "bar": [16, 374], "page": [16, 374], "cols": [], "week": false, "tiles": 0, "goals": 3, "rings": 0, "ups": 0, "line": null, "height": 2625, "lede": 358, "small": []}
+FAIL library-topics-google-390-dark: axe ['moderate:heading-order:1']
+FAIL library-topics-google-390-dark: 0 sidebar groups
+-- 21:11:59 profile (google)
+[profile-google-768-light] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 768, "cards": 6, "columns": 2, "lastRow": 2, "greyCell": false, "canvas": [702, 440], "svg": [702, 440], "ctm": 0.733, "svgInside": true, "height": 3437, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": false, "bar": [32, 736], "page": [32, 736]}
+FAIL profile-google-768-light: axe ['moderate:landmark-complementary-is-top-level:1']
+[profile-google-900-light] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 900, "cards": 6, "columns": 2, "lastRow": 2, "greyCell": false, "canvas": [834, 440], "svg": [834, 440], "ctm": 0.733, "svgInside": true, "height": 3318, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": false, "bar": [32, 868], "page": [32, 868]}
+FAIL profile-google-900-light: axe ['moderate:landmark-complementary-is-top-level:1']
+[profile-google-960-light] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 960, "cards": 6, "columns": 2, "lastRow": 2, "greyCell": false, "canvas": [894, 440], "svg": [894, 440], "ctm": 0.733, "svgInside": true, "height": 3318, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": false, "bar": [32, 928], "page": [32, 928]}
+FAIL profile-google-960-light: axe ['moderate:landmark-complementary-is-top-level:1']
+[profile-google-390-light] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 390, "cards": 6, "columns": 1, "lastRow": 1, "greyCell": false, "canvas": null, "svg": null, "ctm": null, "svgInside": null, "height": 10120, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": null, "bar": [16, 374], "page": [16, 374]}
+FAIL profile-google-390-light: axe ['moderate:landmark-complementary-is-top-level:1']
+[profile-google-390-dark] axe=['moderate:landmark-complementary-is-top-level:1'] hscroll=0 429=0 {"vw": 390, "cards": 6, "columns": 1, "lastRow": 1, "greyCell": false, "canvas": null, "svg": null, "ctm": null, "svgInside": null, "height": 10120, "level": "26px", "cardRule": true, "pairSide": false, "weekAboveMap": null, "bar": [16, 374], "page": [16, 374]}
+FAIL profile-google-390-dark: axe ['moderate:landmark-complementary-is-top-level:1']
+FAIL google: None goals in the sidebar
+
+0 failed checks

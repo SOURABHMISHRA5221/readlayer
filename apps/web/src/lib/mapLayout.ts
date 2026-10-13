@@ -39,10 +39,10 @@ const MAX_W = 1160;
 const STEP = 40; // the layout only changes at these steps while a window is resized
 const EDGE = { left: 56, right: 56, top: 52, bottom: 72 };
 
-/** The canvas for a box of this width: today's 760×600 under 760px, else the box's width in
- *  whole steps and a taller 4:3-ish height. */
+/** The canvas for a box of this width: the fixed 760×600 until a wider one fits (800px), then
+ *  the box's width in whole steps and a taller 4:3-ish height. */
 export function mapSize(boxWidth: number): { width: number; height: number } {
-  if (boxWidth < NARROW_W) return { width: NARROW_W, height: NARROW_H };
+  if (boxWidth < NARROW_W + STEP) return { width: NARROW_W, height: NARROW_H };
   const width = Math.min(MAX_W, Math.floor(boxWidth / STEP) * STEP);
   return { width, height: Math.min(780, Math.max(680, Math.round(width * 0.75))) };
 }

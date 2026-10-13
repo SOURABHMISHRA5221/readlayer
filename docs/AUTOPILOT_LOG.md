@@ -1071,3 +1071,31 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    scratchpad); stop it when the review is done.
 4. M9 (Oct 15), freeze Oct 16.
 
+## Wide layout — milestone review round 1 (2026-10-13, evening)
+
+- milestone-reviewer on 6d81e18: **FIX**, 5 blocking: the map drawn 680px tall in the stacked
+  440px canvas at 866–960px (a half-screen window on a 1920 display; the harness only had 390
+  and 1024); the tile "N ideas" count was the overview's capped length, contradicting the
+  profile's cards; the rules between topic cards gone; "nothing changed at 390" contradicted by
+  the shots and never measured at tablet widths; STATUS stale in four places. Five more, all
+  taken: sticky groups at any height, a state with risen ideas, a boundary around the lazy
+  parts, the 960/961 breakpoint, the schedule.
+- The session ended overnight with the fixes on disk, uncommitted; resumed in the evening
+  (Sourabh: "continue"). Restarted the emulator stack.
+- Before run at tablet widths: the fixes stashed, `apps/web/src` checked out at 3b707e1,
+  `wide.py --before --narrow`, tree restored (same 13 paths, stash empty).
+- Harness on the fixed code: **0 failed checks**, axe 0 on 110 states (tablet widths, sticky
+  at 1440×900 and 1440×760, the risers state). Main bundle 148.43 KB. STATUS §23 rewritten;
+  the two readings in §4 are marked open until Sourabh answers.
+- Sourabh asked for a check of the background tasks during the run: stack and harness running,
+  nothing orphaned.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 2 on the fix commit → until SHIP.
+2. Sourabh's answers: the two readings (reading spine, topic tiles) before the deploy; the
+   extension fix (STATUS §5 first row): now, or first item of M9; his Gmail and bank-login
+   refusal check.
+3. Push `wide-layout`, PR `Wide layout: …` (body names the four deviations), green CI, merge,
+   `make deploy-web` (his yes), live check at 1440 as a demo reader.
+4. Stop the emulator stack (`make dev-emulator`, started this evening). M9 Oct 15, freeze Oct 16.
+

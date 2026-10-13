@@ -6,8 +6,9 @@ and the layout numbers the plan's acceptance names (docs/plans/wide-layout.md). 
     SHOTS_OUT=/tmp/wide uv run --project apps/api python tools/shots/wide.py
 
 `--before` records the same shots and numbers without asserting (run on the code before the
-change). Without it, any failed check or any 429 exits non-zero. Sizes and themes change in
-place; a page is loaded once for the desktop sizes and once at 390.
+change); `--narrow` keeps only the tablet and phone sweeps. Without `--before`, any failed check
+or any 429 exits non-zero. Sizes and themes change in place; a page is loaded once for the
+desktop sizes, once for the tablet ones (768, 900, 960; light) and once at 390.
 """
 
 import asyncio
@@ -20,8 +21,10 @@ import cdp  # noqa: E402
 
 W = "http://localhost:5173"
 DESKTOP = (1024, 1280, 1440, 1920)
+TABLET = (768, 900, 960)  # stacked layouts; 960 is half of a 1920 screen
 PHONE = 390
 BEFORE = "--before" in sys.argv
+NARROW_ONLY = "--narrow" in sys.argv  # tablet and phone sweeps only (used for the before run)
 TOPICS = ["economics", "finance", "business", "policy", "technology", "science"]
 
 # Installed before the app's code on every load: counts 429s and sums layout shifts.
@@ -53,6 +56,8 @@ LIBRARY_JS = "(() => {" + HELPERS + """
     bar: inner(q('.topbar__inner')), page: main && side ? [n(main.left), n(stacked ? main.right : side.right)] : null,
     cols: all('.side__col').map((e) => { const b = r(e); return { left: n(b.left), top: n(b.top), bottom: n(b.bottom), sticky: getComputedStyle(e).position === 'sticky' }; }),
     week: !!q('.weekmap'), tiles: all('.weekmap__tile').length, goals: all('.goals-mini li').length,
+    rings: all('.weekmap__ring').length, ups: all('.weekmap__up').length, line: (q('.weekmap__line') || {}).textContent || null,
+    height: document.documentElement.scrollHeight, lede: q('.feedmain__lede') ? n(r(q('.feedmain__lede')).width) : null,
     small: small('.side *') }; })()"""
 
 PROFILE_JS = "(() => {" + HELPERS + """
@@ -65,6 +70,9 @@ PROFILE_JS = "(() => {" + HELPERS + """
     greyCell: !!grid && lastRow < columns && getComputedStyle(grid).backgroundColor !== getComputedStyle(cards[0]).backgroundColor,
     canvas: canvas ? [n(canvas.width), n(canvas.height)] : null, svg: svg ? [n(r(svg).width), n(r(svg).height)] : null,
     ctm: svg ? Math.round(svg.getScreenCTM().a * 1000) / 1000 : null,
+    svgInside: canvas && svg ? r(svg).left >= canvas.left - 1 && r(svg).right <= canvas.right + 1 && r(svg).top >= canvas.top - 1 && r(svg).bottom <= canvas.bottom + 1 : null,
+    height: document.documentElement.scrollHeight, level: cards.length ? getComputedStyle(cards[0].querySelector('.dom__level')).fontSize : null,
+    cardRule: cards.length ? getComputedStyle(cards[0]).boxShadow.includes('inset') || getComputedStyle(grid).gap === '1px' : null,
     pairSide: goals && week ? Math.abs(goals.top - week.top) < 4 && Math.abs(goals.left - week.left) > 100 : null,
     weekAboveMap: week && canvas ? week.top < canvas.top : null,
     bar: inner(q('.topbar__inner')), page: inner(q('.profile__main')) }; })()"""
@@ -78,12 +86,20 @@ READER_JS = "(() => {" + HELPERS + """
     spine: !!spine && sr.width > 0, spineHitsMarker: !!spine && all('.rl-pmark').some((m) => hit(r(m), sr)),
     spineCount: num(q('.spine__count')), railCount: num(q('.rail__head')), ticks: all('.spine__tick').length,
     notes: all('.rail__item').length, marks: new Set(all('.rl-mark').map((m) => m.dataset.rlId)).size,
+    height: document.documentElement.scrollHeight,
     small: small('.spine *') }; })()"""
 
 CARD_JS = "(() => {" + HELPERS + """
   const card = r(q('.rl-card')), rail = r(q('.rail')), prose = r(q('.prose'));
   return card && rail ? { left: n(card.left), right: n(card.right), width: n(card.width), railLeft: n(rail.left),
     railWidth: n(rail.width), vw: document.documentElement.clientWidth, overProse: hit(card, prose) } : null; })()"""
+
+# With the page scrolled: each sidebar group's box, and where its last block ends once the group
+# itself is scrolled to its end.
+STICKY_JS = "(() => {" + HELPERS + """
+  return all('.side__col').map((e) => { e.scrollTop = e.scrollHeight; const b = r(e), last = e.lastElementChild ? r(e.lastElementChild) : b;
+    return { top: n(b.top), bottom: n(b.bottom), end: n(last.bottom), scrolls: e.scrollHeight > e.clientHeight + 1,
+      sticky: getComputedStyle(e).position === 'sticky' }; }); })()"""
 
 # A mark at mid-viewport: where the spine's fill ends against that note's tick.
 SPINE_AT_JS = "(async () => {" + HELPERS + """
@@ -161,8 +177,8 @@ async def record(p, name: str, width: int, dark: bool, metrics_js: str | None, f
 
 
 async def sweep(p, name: str, url: str, ready: str, metrics_js: str, checks, after_load=None, full: bool = True) -> None:
-    """One load for the desktop sizes (light, then dark), one at 390."""
-    for widths in (DESKTOP, (PHONE,)):
+    """One load for the desktop sizes (light, then dark), one for the tablet ones (light), one at 390."""
+    for widths in ((TABLET, (PHONE,)) if NARROW_ONLY else (DESKTOP, TABLET, (PHONE,))):
         await view(p, widths[0], False)
         await p.goto(url, wait=1.5)
         ok = await p.wait_for(ready, 75)  # a new reader's first feed is built while they wait
@@ -170,7 +186,7 @@ async def sweep(p, name: str, url: str, ready: str, metrics_js: str, checks, aft
         await asyncio.sleep(2.5)
         if after_load:
             await after_load(p)
-        for dark in (False, True):
+        for dark in ((False,) if widths is TABLET else (False, True)):
             for w in widths:
                 await view(p, w, dark)
                 await p.eval("window.scrollTo(0, 0); 1")
@@ -194,12 +210,14 @@ def library_checks(w: int, m: dict, tag: str) -> None:
         check(m["row"] is not None and m["row"] >= 720, f"{tag}: row {m['row']} < 720")
     if w == 1024:
         check(m["row"] is not None and m["row"] >= 600, f"{tag}: row {m['row']} < 600")
-    if w >= 1024:
+    check(len(m["cols"]) == 2, f"{tag}: {len(m['cols'])} sidebar groups")
+    if w >= 961:
         check(m["week"], f"{tag}: no map block")
-        check(len(m["cols"]) == 2, f"{tag}: {len(m['cols'])} sidebar groups")
+        check(not m["stacked"], f"{tag}: the sidebar is stacked")
         edges(m, tag)
-    if w == PHONE:
-        check(not m["week"], f"{tag}: the map block is rendered on a phone")
+    else:
+        check(not m["week"], f"{tag}: the map block is rendered in a stacked sidebar")
+        check(m["stacked"], f"{tag}: the sidebar is not stacked")
     if len(m["cols"]) == 2:
         beside = abs(m["cols"][0]["left"] - m["cols"][1]["left"]) > 100
         check(beside == (w >= 1440), f"{tag}: sidebar groups side by side = {beside}")
@@ -214,6 +232,9 @@ def profile_checks(w: int, m: dict, tag: str) -> None:
     if m["cards"]:
         check(m["columns"] - m["lastRow"] <= 1 or w < 961, f"{tag}: card rows uneven ({m['columns']} across, {m['lastRow']} in the last row)")
     check(not m["greyCell"], f"{tag}: an empty grey cell in the card grid")
+    check(m["cardRule"] is not False, f"{tag}: no rules between the topic cards")
+    if m["svgInside"] is not None:
+        check(m["svgInside"], f"{tag}: the map {m['svg']} does not fit its canvas {m['canvas']}")
     if m["canvas"]:
         floor = {1280: (820, 680), 1440: (940, 720), 1920: (1100, 720)}.get(w)
         if floor:
@@ -252,6 +273,8 @@ async def library(p, who: str, query: str) -> None:
     step(f"library ({who})")
     await sweep(p, f"library-foryou-{who}", f"{W}/?tab=foryou{query}", ".row:not(.row--skeleton), .state", LIBRARY_JS, library_checks)
     await sweep(p, f"library-topics-{who}", f"{W}/?tab=topics{query}", ".row:not(.row--skeleton)", LIBRARY_JS, library_checks, full=False)
+    if NARROW_ONLY:
+        return
     await cls(p, f"library-{who}", f"{W}/?tab=topics{query}", ".row:not(.row--skeleton)")
     # Tab through the sidebar at 1440: the blocks come in reading order.
     await p.eval("(() => { window.scrollTo(0, 0); const f = document.querySelector('.side input, .side button, .side a'); if (f) f.focus(); return 1; })()")
@@ -267,22 +290,55 @@ async def library(p, who: str, query: str) -> None:
     out["pages"][f"library-{who}-tab-order"] = seen
     print(f"[library {who} tab order 1440] {seen}", flush=True)
     check(len(seen) == len(set(seen)), f"library-{who}: Tab revisits a sidebar block: {seen}")
-    # Sticky only on a tall window (960px up); there each group must fit under the bar.
-    await p.viewport(1440, height=1000)
-    await asyncio.sleep(0.6)
-    await p.eval("window.scrollTo(0, 0); 1")
-    cols = (await p.eval(LIBRARY_JS))["cols"]
-    out["pages"][f"library-{who}-sticky-1440x1000"] = cols
-    print(f"[library {who} sidebar groups 1440x1000] {cols}", flush=True)
-    check(len(cols) == 2 and all(c["sticky"] for c in cols), f"library-{who}: sidebar groups not sticky at 1440x1000")
-    for c in cols:
-        check(c["bottom"] <= 1000, f"library-{who}: a sticky sidebar group ends at {c['bottom']} of 1000")
+    # Both groups stay beside the feed on any window height; a tall one scrolls inside itself.
+    for height in (900, 760):
+        await p.viewport(1440, height=height)
+        await asyncio.sleep(0.6)
+        scrolled = await p.eval("(() => { window.scrollTo({ top: 600, behavior: 'instant' }); return window.scrollY; })()")
+        await asyncio.sleep(0.4)
+        cols = await p.eval(STICKY_JS)
+        out["pages"][f"library-{who}-sticky-1440x{height}"] = {"scrolled": scrolled, "cols": cols}
+        print(f"[library {who} sidebar groups 1440x{height}, page scrolled {scrolled}] {cols}", flush=True)
+        check(len(cols) == 2 and all(c["sticky"] for c in cols), f"library-{who}: sidebar groups not sticky at 1440x{height}")
+        for c in cols:
+            check(scrolled < 200 or abs(c["top"] - 65) <= 1, f"library-{who}: a sidebar group is at {c['top']}, not under the bar, at 1440x{height}")
+            check(c["bottom"] <= height + 0.5, f"library-{who}: a sidebar group ends at {c['bottom']} of {height}")
+            check(c["end"] <= height + 0.5, f"library-{who}: the end of a sidebar group can't be reached ({c['end']} of {height})")
+    await p.eval("(() => { document.querySelectorAll('.side__col').forEach((e) => { e.scrollTop = 0; }); window.scrollTo(0, 0); return 1; })()")
     await p.viewport(1440)
+    if who == "demo":
+        await risers(p, query)
+
+
+async def risers(p, query: str) -> None:
+    """The "this week" half of the map panel: two ideas the demo reader says they know rise a
+    level, so the tiles show rings and "+N this week" and the line names them."""
+    persona = query.split("persona=")[-1]
+    nodes = (await p.api("", "GET", f"/v1/me/graph?view=overview&persona={persona}"))["body"]["nodes"]
+    picks = [n["id"] for n in nodes if n["band"] == "heard of" and not n["ready"]][:2] or [n["id"] for n in nodes if n["ready"]][:2]
+    done = [(await p.api("", "PATCH", f"/v1/me/graph/{cid}?persona={persona}", {"state": "known"}))["status"] for cid in picks]
+    after = (await p.api("", "GET", f"/v1/me/graph?view=overview&persona={persona}"))["body"]["nodes"]
+    rose = [n["label"] for n in after if n["rose_this_week"]]
+    print(f"[library risers] corrected {picks} -> {done}; risen this week: {rose}", flush=True)
+    check(len(rose) >= 1, "library risers: no idea counts as risen after two corrections")
+    await view(p, 1440, False)
+    await p.goto(f"{W}/?tab=topics{query}", wait=1.5)
+    ok = await p.wait_for(".weekmap__ring", 45)
+    check(ok, "library risers: no ring on a tile")
+    await asyncio.sleep(1.5)
+    for w, dark in ((1440, False), (1440, True), (1280, False), (1280, True)):
+        await view(p, w, dark)
+        m = (await record(p, "library-risers-demo", w, dark, LIBRARY_JS, full=False))["m"]
+        check(m["rings"] >= 1 and m["ups"] >= 1, f"library-risers-demo-{w}: rings {m['rings']}, '+N this week' lines {m['ups']}")
+        check(bool(m["line"]) and "moved up this week:" in m["line"], f"library-risers-demo-{w}: line {m['line']!r}")
+        check(not m["small"], f"library-risers-demo-{w}: text under 13px {m['small']}")
 
 
 async def profile(p, who: str, query: str) -> None:
     step(f"profile ({who})")
     await sweep(p, f"profile-{who}", f"{W}/profile{query}", ".kmap__canvas svg, .clist", PROFILE_JS, profile_checks)
+    if NARROW_ONLY:
+        return
     # A topic on its own, the inspector and the list view, at the three wide sizes (light).
     await view(p, 1440, False)
     await p.goto(f"{W}/profile{query}", wait=1.5)
@@ -320,6 +376,8 @@ async def reader(p, query: str, persona: str) -> None:
     art = next((i["id"] for i in lib if i["id"].startswith("2332")), lib[0]["id"])
     url = f"{W}/read/{art}{query}"
     await sweep(p, "reader", url, ".rl-mark, .reader__notice", READER_JS, reader_checks, full=False)
+    if NARROW_ONLY:
+        return
 
     # The article's words are untouched: each paragraph, minus the overlay's own UI, equals the API's.
     await view(p, 1440, False)

@@ -102,9 +102,16 @@
   overflow: hidden;
   background: var(--paper);
 }
-/* Each card rules its own right and bottom edge (the grid clips the outer ones), so a short
-   last row leaves plain paper, not a grey cell. */
-.dom { padding: var(--s5) var(--s5) var(--s4); background: var(--paper); box-shadow: 1px 0 0 var(--hairline), 0 1px 0 var(--hairline); }
+/* Rules between cards without a grey grid behind them (a short last row then leaves plain
+   paper). Each card sits 1px over its neighbours above and to the left and draws its own left
+   and top rule inside itself; the grid clips those of the first column and row. The outer right
+   and bottom rules only show where there is no neighbour to cover them. */
+.dom {
+  margin: -1px 0 0 -1px;
+  padding: var(--s5) var(--s5) var(--s4);
+  background: var(--paper);
+  box-shadow: inset 1px 0 0 var(--hairline), inset 0 1px 0 var(--hairline), 1px 0 0 var(--hairline), 0 1px 0 var(--hairline);
+}
 /* More columns as the page widens; ProfilePage sets --cols-N (rows filled evenly) for the
    number that fit at each width. */
 @media (min-width: 961px) { .dom__grid { --cols: var(--cols-4, 4); } }
@@ -112,7 +119,9 @@
 @media (min-width: 1280px) { .dom__grid { --cols: var(--cols-6, 4); } }
 @media (min-width: 1680px) { .dom__grid { --cols: var(--cols-7, 4); } }
 .dom__name { margin: 0 0 2px; font: 600 16px / 1.3 var(--font-ui); }
-.dom__level { margin: var(--s2) 0 2px; font: 700 clamp(21px, 1.72vw, 26px) / 1.15 var(--font-head); letter-spacing: -0.02em; }
+.dom__level { margin: var(--s2) 0 2px; font: 700 26px / 1.15 var(--font-head); letter-spacing: -0.02em; }
+/* Up to seven across from 961px: the level word gives a little so it stays on one line. */
+@media (min-width: 961px) { .dom__level { font-size: clamp(21px, 1.72vw, 26px); } }
 .dom__detail { margin: 0; font: 400 13.5px / 1.45 var(--font-ui); color: var(--muted); }
 .dom__up { color: var(--accent-ink); font-weight: 500; }
 .dom__scale { display: flex; gap: 3px; margin-top: var(--s3); }

@@ -5,6 +5,7 @@ import { ArticleImage } from "../components/ArticleImage";
 import { ConceptDrawer, ConceptRail } from "../components/ConceptRail";
 import { Margo } from "../components/Margo";
 import { ProgressBar } from "../components/ProgressBar";
+import { Quiet } from "../components/Quiet";
 import { ActionBar } from "../components/reader/ActionBar";
 import { PrereadPath } from "../components/reader/PrereadPath";
 import { Recap } from "../components/reader/Recap";
@@ -302,16 +303,18 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
             {notesData?.preread && <PrereadPath item={notesData.preread} persona={persona} />}
             <div className="reader__body" ref={bodyRef}>
               {spine && (
-                <Suspense fallback={null}>
-                  <ReadingSpine
-                    article={articleRef}
-                    paragraphs={article.paragraphs}
-                    wordCount={article.word_count}
-                    notes={annotations && handle.resolved ? marked : null}
-                    hovered={handle.hovered}
-                    active={handle.active}
-                  />
-                </Suspense>
+                <Quiet>
+                  <Suspense fallback={null}>
+                    <ReadingSpine
+                      article={articleRef}
+                      paragraphs={article.paragraphs}
+                      wordCount={article.word_count}
+                      notes={annotations && handle.resolved ? marked : null}
+                      hovered={handle.hovered}
+                      active={handle.active}
+                    />
+                  </Suspense>
+                </Quiet>
               )}
               <ArticleBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} />
               {wide && annotations && handle.resolved && <ConceptRail items={marked} body={bodyRef} {...link} />}

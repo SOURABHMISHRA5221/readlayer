@@ -96,7 +96,7 @@
 .feedmain:focus { outline: none; }
 .feedmain__lede {
   margin: 0 0 var(--s6);
-  max-width: 640px;
+  max-width: 600px;
   font: 400 19px / 1.45 var(--font-read);
   color: var(--muted);
 }
@@ -190,6 +190,7 @@
 .row__thumb { align-self: center; width: 120px; height: 120px; border-radius: 4px; overflow: hidden; background: var(--wash); }
 .row__thumb img, .row__thumb .row__img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .row--skeleton .row__body > * { margin-bottom: var(--s3); }
+@media (min-width: 961px) { .feedmain__lede { max-width: 640px; } }
 /* Wide layout (decision 45): the thumbnail goes 4:3 and grows a little past 1600px. */
 @media (min-width: 1280px) {
   .row { grid-template-columns: minmax(0, 1fr) clamp(132px, 8.25vw, 160px); }
@@ -285,12 +286,18 @@
     border-left: 0;
     min-height: 0;
   }
-  .side__col { padding: var(--s10) 0 0 20px; border-left: 1px solid var(--hairline); min-height: calc(100vh - 65px); }
-}
-/* On a tall enough screen the groups stay beside the feed (the tallest is six topic tiles and
-   three goals, about 850px). */
-@media (min-width: 1440px) and (min-height: 960px) {
-  .side__col { position: sticky; top: 65px; } /* the bar is 64px and its rule */
+  /* Both groups stay beside the feed while it scrolls (the bar is 64px and its rule). A group
+     taller than the window, six topic tiles and three goals on a small laptop, scrolls inside
+     itself, so its end is always reachable. */
+  .side__col {
+    position: sticky;
+    top: 65px;
+    height: calc(100vh - 65px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding: var(--s10) 6px 0 20px; /* 6px: room for focus rings inside the scroll box */
+    border-left: 1px solid var(--hairline);
+  }
 }
 
 /* "Your map this week": a tile per topic (components/library/WeekPanel.tsx). */
@@ -304,8 +311,12 @@
 .weekmap__dot[data-ready] circle { fill: var(--paper); stroke: var(--accent-line); stroke-width: 1.4; }
 .weekmap__dot .weekmap__ring { fill: none; stroke: var(--accent-ink); stroke-width: 1.4; }
 .weekmap__topic { margin: var(--s1) 0 0; font: 600 13.5px / 1.3 var(--font-ui); color: var(--ink); }
-.weekmap__meta { margin: 0; font: 400 13px / 1.35 var(--font-ui); color: var(--muted); }
-.weekmap__up { font-weight: 500; color: var(--accent-ink); }
+.weekmap__up { margin: 0; font: 500 13px / 1.35 var(--font-ui); color: var(--accent-ink); }
+.weekmap__key { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s4); margin: var(--s3) 0 0; padding: 0; list-style: none; font: 400 13px / 1.4 var(--font-ui); color: var(--muted); }
+.weekmap__key li { display: inline-flex; align-items: center; gap: 6px; }
+.weekmap__mark { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.weekmap__mark[data-kind="ready"] { background: var(--paper); box-shadow: inset 0 0 0 1.4px var(--accent-line); }
+.weekmap__mark[data-kind="rose"] { background: var(--accent); box-shadow: 0 0 0 2px var(--paper), 0 0 0 3.4px var(--accent-ink); }
 .weekmap__line { margin: var(--s4) 0 0; font: 400 14px / 1.5 var(--font-ui); color: var(--ink-soft); }
 .weekmap__link { display: inline-flex; align-items: center; min-height: 44px; font: 500 14px / 1 var(--font-ui); color: var(--accent-ink); text-underline-offset: 3px; }
 .weekmap__link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }

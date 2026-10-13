@@ -47,6 +47,22 @@ describe("mini-map selection", () => {
     expect(miniMapNodes(ov).map((n) => n.id)).toEqual(["law_0", "law_1", "law_2", "law_3"]);
   });
 
+  it("keeps a place for what the reader is ready to learn next: up to 2 rings a topic", () => {
+    const picked = miniMapNodes(overview(SIX.slice(0, 4))); // a demo persona: 6 dots a topic
+    expect(picked.filter((n) => n.domain === "finance").map((n) => n.id)).toEqual(
+      ["finance_0", "finance_1", "finance_2", "finance_3", "finance_12", "finance_13"],
+    );
+    const four = miniMapNodes(overview(SIX)).filter((n) => n.domain === "policy"); // 4 dots: one ring
+    expect(four.map((n) => n.ready)).toEqual([false, false, false, true]);
+  });
+
+  it("fills with rings when a topic has few known ideas, and with known ideas when it has no rings", () => {
+    const few = { domains: ["law"] as Domain[], nodes: [node("law", 0), ...[1, 2, 3, 4].map((i) => node("law", i, { ready: true }))] };
+    expect(miniMapNodes(few).map((n) => n.id)).toEqual(["law_0", "law_1", "law_2", "law_3", "law_4"]);
+    const solid = { domains: ["law"] as Domain[], nodes: [0, 1, 2].map((i) => node("law", i)) };
+    expect(miniMapNodes(solid).map((n) => n.id)).toEqual(["law_0", "law_1", "law_2"]);
+  });
+
   it("is the same for the same input", () => {
     const ov = overview(SIX, { science: [2] });
     expect(miniMapNodes(ov)).toEqual(miniMapNodes(ov));
@@ -58,7 +74,8 @@ describe("topic tiles", () => {
     const ov = overview(["finance", "health"], { finance: [0, 13] });
     const tiles = topicTiles({ domains: ["finance", "sports", "health"], nodes: ov.nodes });
     expect(tiles.map((t) => t.domain)).toEqual(["finance", "health"]);
-    expect(tiles[0]).toMatchObject({ known: 12, rose: 2 });
+    expect(tiles[0]).toMatchObject({ rose: 2 });
+    expect(tiles[0]).not.toHaveProperty("known"); // the overview caps a topic at 12: not a count to show
     expect(tiles[0]?.dots).toHaveLength(8);
     expect(tiles[0]?.dots[0]).toMatchObject({ id: "finance_0", rose: true });
   });
