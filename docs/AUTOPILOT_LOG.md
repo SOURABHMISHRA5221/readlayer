@@ -1436,10 +1436,17 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   call: **504 after 90.1 s, $0.112**. So it is not the 16-min video: whole-video YouTube-URL calls
   on Vertex time out tonight while a 3-min clip answers. T04's decision rule still unmeasured.
   Tonight's spend $0.223, emulator ledgers only. Stopped for Sourabh (park video transcripts or not).
+- Sourabh: "yes do what u feel is correct" → **video transcripts parked**. Step 4's web code stays.
+  Nothing is deployed, so no switch is flipped now. Only `MEDIA_ENABLED` (all media) and
+  `MEDIA_AUDIO_ENABLED` (podcasts) exist; shipping podcasts with videos off needs a
+  `MEDIA_VIDEO_ENABLED` switch (open → `media_off`, `open_here` false for videos). It goes into
+  step 6's plan round, not tonight. Before deploy: a $0.02 short-clip probe plus one whole-video
+  call; if the whole video still times out, deploy with videos off.
 
 ### Next steps (resume here, in order)
-1. Step 3 re-run on a fresh emulator (`make dev-emulator`, verify gcloud identity first): acceptance
-   1–3 video half and T04; state expected cost (≤ $0.20) before running.
-2. Acceptance 4 shots (`tools/shots/media.py`, to write) on the transcribed video from 1: 1440 /
-   1024 / 390, light and dark, seek, follow, axe 0, no horizontal scroll, words equal paragraphs.
-3. Midday check-in with Sourabh before podcasts (step 6).
+1. Midday check-in with Sourabh (asked 2026-10-14 ~01:00 IST): step 4 done, videos parked, spend
+   tonight $0.223 (emulator ledgers), production today $0.6543. Whether to start podcasts (step 6).
+2. Step 6 plan round (podcasts + `MEDIA_VIDEO_ENABLED`) → plan-reviewer → build → harness run on the
+   22-min episode. Acceptance 4 shots then use the podcast; video shots wait for a working probe.
+3. Before deploy: re-probe video (short clip, then one whole video); off unless both answer.
+4. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
