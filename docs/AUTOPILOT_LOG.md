@@ -1487,9 +1487,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Local timing: a 65 MB, 45-min 192 kbps stream walks in 0.03 s; pieces 4 × 14.4 MB + 7.2 MB.
 - API suite 980 passed, 2 skipped; ruff clean.
 
+- `SafeFetcher.audio_head(url, start=0, length=64 KB)` and `fetch_audio(url, max_bytes,
+  expected_bytes)` + `tests/test_safe_fetch_audio.py` (39 tests, written first). Same per-hop
+  validation, pinned connect and robots rule as pages; 6 redirects; `Accept: audio/mpeg,*/*;q=0.1`;
+  type `audio/mpeg` / `audio/mp3` else the guard's `not_html`. Head: `Range` GET, total from
+  `Content-Range` on 206 or `Content-Length` on 200; a host ignoring Range is read to 64 KB and
+  closed (5R2, pinned: < 1 MB of a 50 MB body pulled); `start` serves 5R1's second probe (skips
+  on a 200; a 206 for another range is an error). Fetch: 45 s, one bytearray preallocated from
+  the head's total, cut off past `max_bytes`, error bodies never read (5R10).
+  `is_transient(FetchError)`: timeout, connection error, 5xx, 429 (5R5). `_get` gained
+  `max_redirects` / `timeout_s` / `headers` / `read`; page fetches unchanged (old tests pass).
+- Split of duties: `safe_fetch` stays HTTP-only. The ID3 second probe, `mp3.first_frame`, size
+  caps and FetchError → `unsupported_audio` / `MediaUnavailable("audio")` go in `sources.py`
+  beside the Apple lookup (next).
+- API suite 1019 passed, 2 skipped; ruff clean.
+
 ### Next steps (resume here, in order)
-1. `safe_fetch.audio_head` / `fetch_audio` (5.3, 5.4, 5R1, 5R2, 5R5, 5R10, 5R11) +
-   `test_safe_fetch_audio.py` → Apple lookup → switches + service audio branch → web
-   `AudioPlayer` → suites.
+1. `sources.apple_episode` + audio probe (5.3, 5R1, 5R5, 5R11) → switches + service audio
+   branch → web `AudioPlayer` → suites.
 2. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
 3. Step 7. Checkpoint end of Oct 14 IST (decision 27).
