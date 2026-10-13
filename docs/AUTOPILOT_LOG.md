@@ -1128,7 +1128,8 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Also taken: ring quota capped at the room left, rings sized so two neighbours don't cross,
   "We think you know" in the key, the last block's margin in a sticky group, the Saved tab,
   search and Connect in the harness (which found `role="status"` on Connect's heading, a minor
-  axe finding from M8: now a span inside it), a seven-topic reader (cards 4 + 3, 7 at 1920).- Harness on the final code: **0 failed checks**, axe 0 on 123 states. Main bundle 148.43 KB,
+  axe finding from M8: now a span inside it), a seven-topic reader (cards 4 + 3, 7 at 1920).
+- Harness on the final code: **0 failed checks**, axe 0 on 123 states. Main bundle 148.43 KB,
   week panel 1.68 KB. Web tests 148.
 
 ### Next steps (resume here, in order)
@@ -1138,4 +1139,26 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 3. Push `wide-layout`, PR `Wide layout: …` (body names the four deviations and the
    `deploy.env.yaml` caps), green CI, merge, `make deploy-web` (his yes), live check at 1440.
 4. Stop the emulator stack (`make dev-emulator`, started this evening). M9 Oct 15, freeze Oct 16.
+
+## Wide layout — milestone review round 3 (2026-10-13, late evening)
+
+- milestone-reviewer on 59261f7: **FIX, docs only**; no code change and no harness re-run asked
+  for. The layout work and the round-2 fix stand. Five statements corrected: DESIGN §2's growth
+  caps (defaults 25 / 100, production 60 / 300); a STATUS §5 row on anonymous traffic (at most
+  150 of 300); a §6 row and a §8 line for the growth settings; the cost of the higher caps, which
+  I had given Sourabh as "about thirty-five cents a day" without a source (logged range: $0.3 to
+  $0.5 at most); §23 row 1a″ (no top-bar check runs on Connect).
+- Its recommendation, not taken: move the caps commit (3fcda42) to its own PR. Kept on this
+  branch to avoid a second push, CI run and a rebase of the docs two days before the freeze;
+  the PR's first line will name it, STATUS §23 and §1 say so, and the branch merges before any
+  API deploy. Sourabh can ask for the split.
+- Three cosmetic points left as they are (STATUS §5). Sourabh's answer on the two readings is now
+  wanted before the merge, not just before the deploy.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 4 (doc diff only) → SHIP.
+2. Ask Sourabh again: the two readings (before the merge); push and PR (his yes).
+3. PR `Wide layout: … (+ growth caps, decision 53)`, green CI, merge, `make deploy-web` (his
+   yes), live check at 1440. No API deploy before this merges.
+4. Stop the emulator stack. M9 Oct 15 (first item: the rest of the extension fix), freeze Oct 16.
 

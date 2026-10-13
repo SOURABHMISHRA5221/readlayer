@@ -98,7 +98,8 @@ personas stay curated on the original four.
   the new definition explain the mention in its sentence? drops wrong senses and generic words;
   ≈ $0.004 and up to ~30 s more per growing article), one batched `concept_prereqs`. Slots are reserved
   when the article is first fetched, for any reader within the ingest caps (demo readers too):
-  ≤ 5 per article, 25 per reader and 100 per day for the service. Growth has its own timeout
+  ≤ 5 per article, 25 per reader and 100 per day for the service by default; production runs
+  60 per reader and 300 per day since decision 53 (2026-10-13, `deploy.env.yaml`). Growth has its own timeout
   inside phase 2 and never fails the ingest; held-out URLs never grow. Concepts are stored
   create-if-absent in Firestore `graph_growth/` (no user data), merged at startup and polled
   every 60 s by each instance (server timestamps, 120 s overlap window), and folded into
@@ -1154,7 +1155,9 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   its "This week" shows; the overview keeps only a topic's top 12 ideas (by band, then
   frequency), so a rise from unaware to heard of is usually not among its nodes and nothing is
   counted from them. No per-topic total of ideas is shown, for the same reason. If either read
-  fails the panel says the map didn't load rather than claim a quiet week. It is a picture with a text equivalent, not a
+  fails the panel says the map didn't load rather than claim a quiet week. The overview carries
+  at most six topics, so a rise in a seventh is named in the line but has no tile: the tiles'
+  "+N" can add up to less than the line, on purpose. It is a picture with a text equivalent, not a
   control, and not a scaled copy of the profile's map (STATUS §4). From 1440px both groups stay
   beside the feed while it scrolls (a group taller than the window scrolls inside itself). The
   week panel and the reader's spine sit in a boundary, so a chunk that fails to load leaves the
