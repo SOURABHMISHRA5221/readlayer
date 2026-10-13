@@ -31,6 +31,8 @@ Out of scope: the landing, onboarding, Connect and privacy pages; the extension;
 
 ## One open interpretation (flagged to Sourabh, not blocking)
 
+**Answered 2026-10-13:** Sourabh said yes to this reading and to the topic tiles (Round 2 item 3).
+
 **R1 "contents" in the reader's left rail.** Articles are stored as flat paragraphs
 (`ContentDetail.paragraphs: {id, text}[]`; `app/ingest/extract.py` keeps no headings), so there
 are no sections to list. Extracting headings would change ingestion and need the 290-article

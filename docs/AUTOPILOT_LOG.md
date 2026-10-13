@@ -1184,3 +1184,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 4. M9 Oct 15, first item the growth and extension fix; freeze Oct 16. Sourabh's Gmail and
    bank-login refusal check is still open.
 
+## Wide layout — milestone review round 5: SHIP (2026-10-13, night)
+
+- milestone-reviewer on 9158161: **SHIP**. It re-ran typecheck, web 148 / annotator 57 /
+  extension 85, API pytest (789 passed, 2 skipped), ruff and the build (148.43 KB), and checked
+  the cost figures against the production log and the caps on the live service.
+- Emulator stack stopped. Next: push and PR (Sourabh's yes on the prompt).
+
+### Next steps (resume here, in order)
+1. Push `wide-layout`, PR `Wide layout: … (+ growth caps, decision 53)`; the body states the
+   two readings in plain words, the four deviations and the settings commit. Green CI → merge.
+2. `make deploy-web` from up-to-date main (his yes) → live check at 1440 as a demo reader →
+   STATUS §23 live row. No API deploy before the merge.
+3. M9 (Oct 15): plan with a cut order; first the growth and extension fix (refund on a failed
+   fetch and regrowth on reopen protect the demo). Freeze Oct 16.
+4. Still open from M8: Sourabh's Gmail and bank-login refusal check.
+
