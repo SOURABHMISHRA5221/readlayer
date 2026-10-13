@@ -1432,6 +1432,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   open 200 free; **whole 16-min video transcribe → 504 after 91.5 s, $0.096** (one charge, no
   in-run retry, as designed). The 3-min probe at 19:03 answered in 27 s. So short clips answer and
   the whole video still hangs; tonight's spend so far $0.111. Stopped for Sourabh.
+- Sourabh: "test". T04 (`rrkrvAUbU9Y`, 18.6 min, a different video), 19:27 UTC, one whole-URL
+  call: **504 after 90.1 s, $0.112**. So it is not the 16-min video: whole-video YouTube-URL calls
+  on Vertex time out tonight while a 3-min clip answers. T04's decision rule still unmeasured.
+  Tonight's spend $0.223, emulator ledgers only. Stopped for Sourabh (park video transcripts or not).
 
 ### Next steps (resume here, in order)
 1. Step 3 re-run on a fresh emulator (`make dev-emulator`, verify gcloud identity first): acceptance
