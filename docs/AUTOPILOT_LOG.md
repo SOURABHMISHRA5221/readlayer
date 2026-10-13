@@ -1227,3 +1227,20 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. M9 (Oct 15): plan with a cut order; first the growth and extension fix. Freeze Oct 16.
 3. Still open from M8: his Gmail and bank-login refusal check.
 
+## Decision 54 — videos and audio next (Sourabh, 2026-10-13, night)
+
+- His words: "next I want youtube and audio please", after I had laid out three options and
+  recommended a YouTube-only slice. So both, next, before M9. Recorded: STATUS §9 and §10,
+  BUILD_PLAN "Media" (a draft prompt in his terms and what the plan has to settle).
+- Unanswered: whether paying per item for Gemini to read the media is fine (default yes, capped),
+  and the calendar trade (default: Oct 14 with a checkpoint at the end of the day; M9's growth
+  fix stays Oct 15).
+- Nothing built yet. Wide layout is fully closed (merged, live, logged).
+
+### Next steps (resume here, in order)
+1. **Media plan**: read DESIGN §3, §7, §9, §16–17 and `app/ingest/`, `app/recs/`, the reader
+   page; measure Gemini on one YouTube URL and one podcast file (tokens, cost, time) before
+   fixing caps; write `docs/plans/media.md`; plan-reviewer until APPROVE; then build on a branch.
+2. M9 (Oct 15): plan with a cut order; first the growth and extension fix. Freeze Oct 16.
+3. Still open from M8: his Gmail and bank-login refusal check.
+

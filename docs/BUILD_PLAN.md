@@ -469,6 +469,46 @@ The container is 1520px from 1440px so rows never get narrower than before. Acce
 (axe 0 at every impact level, no horizontal scroll, row and map sizes, the text column 680px,
 note cards in the right margin, the article's words unchanged); main bundle ≤ 150 KB.
 
+## Media — YouTube videos and audio in Gloss (decision 54; Oct 14, before M9)
+Sourabh, 2026-10-13: "someone can view youtube videos and podcast too on our platform and we will
+analysis its transcript to suggest meaning before/after this just like the article thing", then,
+offered a YouTube-only slice with podcasts after submission: **"next I want youtube and audio
+please"**. Not in the original plan; own plan in `docs/plans/`, plan-reviewer loop, milestone branch.
+
+**Prompt (draft; the plan firms it)**
+> A reader opens a YouTube video or a podcast episode inside Gloss: the player on the page, its
+> transcript beside it following playback, and the same overlay as an article on the transcript:
+> a "Before you watch" / "Before you listen" path, notes only on the spans this reader is likely
+> to miss, the recap and Up next after. The transcript is the content: stored as paragraphs with
+> start times, never rewritten or summarised. Reuse the article pipeline unchanged (demands,
+> linking, growth, scoring, explanations, verifier); scoring stays deterministic math.
+> Transcripts come through `app/llm.py` only (a named task, a schema, the budget guard), with
+> Gemini on Vertex reading the YouTube URL or the audio. Audio is fetched only through
+> `safe_fetch`. One transcript per item, cached by URL hash and shared by every reader. Caps: a
+> maximum duration per item, a per-reader and a shared anonymous daily cap on new media.
+> Entry points: the For you feed's video and podcast rows ("Open here") and Read any link for a
+> YouTube or podcast URL.
+
+**To settle in the plan (none decided yet)**
+- **Transcript source and cost.** Recommended: Gemini reads the media (no unofficial caption
+  scraping). Measure tokens and cost on two real items before fixing the caps; Sourabh was asked
+  whether paying per item is acceptable and has not answered: default yes, inside
+  `LLM_DAILY_BUDGET_USD`, with caps.
+- **A model transcript is not the speaker's exact words.** Say so on the page ("Transcript made
+  by Gemini; it can contain errors"); "What the author is saying" becomes what the speaker is
+  saying and must stay faithful to the transcript text, which is what the verifier checks.
+- **Playback.** YouTube: the embedded player (privacy-enhanced domain), which needs the CSP's
+  `frame-src` changed; podcasts: `<audio>` from the publisher's own file, nothing re-hosted.
+  Notes follow the playhead; clicking a transcript line seeks.
+- **Long audio.** Episodes run an hour: file size, time to transcribe, and what the reader sees
+  while it runs (the two-phase "Open here" pattern).
+- **Not in scope:** the extension, downloads, live streams, videos without speech.
+
+**Schedule and cut order.** Plan and reviews Oct 14 morning, build Oct 14. **Checkpoint end of
+Oct 14 IST:** not merged → ask Sourabh what to cut (decision 27); nothing is cut automatically.
+If one half has to go, audio goes before YouTube. M9 (Oct 15) keeps the growth and extension
+fix, which protects the demo (STATUS §5); freeze Oct 16.
+
 ## M8-local — Chrome extension, unpacked (Oct 14)
 Replaces the original M8. Loaded unpacked via chrome://extensions → Developer mode; not
 published to the Chrome Web Store (a post-hackathon item).
