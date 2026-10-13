@@ -1470,3 +1470,26 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    switches + service audio branch → web `AudioPlayer` → suites.
 2. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
 3. Step 7. Checkpoint end of Oct 14 IST (decision 27).
+
+## Media build, step 6 (2026-10-14, podcasts; build)
+
+- Resumed after /clear: "resume at building step 6, starting with the MP3 splitter".
+- `app/media/mp3.py` (pure) + `tests/test_mp3.py` (46 tests, written first, red then green):
+  Layer III headers (MPEG 1, 2, 2.5), ID3v2 (footer flag), ID3v1 and APEv2 skipped and left out
+  of the 90% share (5R1), resync confirmed by the next header, cut-off last frame dropped,
+  < 30 s or < 90% frames → `unsupported_audio`. Frame times are integer samples / rate per run,
+  so a 660.0 s file floors to 660, not 659. `split` cuts at the first frame ≥ each window start,
+  raises `ValueError` unless the windows are `plan_windows(floor(walk.duration_s))`, refuses a
+  piece over `MAX_PIECE_BYTES = 14_500_000` (5R3, 5R4); pieces are memoryviews. Tails 59.4 /
+  59.6 / 60.0 / 60.4 s pinned. `id3v2_size` and `first_frame` ready for `audio_head`.
+- Signature note: `split(walk, windows)` takes the `Walk` (which holds the bytes) instead of
+  5R3's `split(data, windows)`, so the bytes are walked once; same rule, same assertion.
+- Local timing: a 65 MB, 45-min 192 kbps stream walks in 0.03 s; pieces 4 × 14.4 MB + 7.2 MB.
+- API suite 980 passed, 2 skipped; ruff clean.
+
+### Next steps (resume here, in order)
+1. `safe_fetch.audio_head` / `fetch_audio` (5.3, 5.4, 5R1, 5R2, 5R5, 5R10, 5R11) +
+   `test_safe_fetch_audio.py` → Apple lookup → switches + service audio branch → web
+   `AudioPlayer` → suites.
+2. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
+3. Step 7. Checkpoint end of Oct 14 IST (decision 27).
