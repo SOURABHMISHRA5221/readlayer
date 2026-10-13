@@ -1215,3 +1215,15 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 3. M9 (Oct 15): plan with a cut order; first the growth and extension fix. Freeze Oct 16.
 4. Still open from M8: his Gmail and bank-login refusal check.
 
+## Wide layout live (2026-10-13, night)
+
+- `make deploy-web` on Sourabh's yes; the live site serves `index-D-bYE-YM.js`. Live check at
+  1440 with one throwaway demo reader, reads only: library, profile and reader as on the
+  harness (STATUS §23 "Live" row); the reader deleted through "End demo".
+- Wide layout is done: merged, deployed, STATUS and this log updated.
+
+### Next steps (resume here, in order)
+1. Sourabh's decision on the video and podcast feature (asked: scope and what it displaces).
+2. M9 (Oct 15): plan with a cut order; first the growth and extension fix. Freeze Oct 16.
+3. Still open from M8: his Gmail and bank-login refusal check.
+
