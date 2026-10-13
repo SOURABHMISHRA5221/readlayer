@@ -51,6 +51,7 @@ class ContentSummary(BaseModel):
     domain: str | None
     # Span annotations this persona would get at this density: "N concepts new to you".
     concepts_new: int
+    format: Literal["article", "video", "podcast"] = "article"
 
 
 class ParagraphOut(BaseModel):
@@ -288,6 +289,7 @@ def _summary(doc: ContentDoc, domain: str | None, concepts_new: int) -> ContentS
         image=doc.image,
         domain=domain,
         concepts_new=concepts_new,
+        format=media_out(doc.media).kind if doc.media else "article",
     )
 
 

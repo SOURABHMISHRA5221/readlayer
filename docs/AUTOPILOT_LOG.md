@@ -1313,3 +1313,40 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    the POST /v1/content `use_open_here` guard (R4). Plan's Round 1 and 2 sections override.
 2. Then the harness run on the 16-minute video; web; midday check-in with Sourabh before podcasts.
 3. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
+
+## Media build, step 2 (2026-10-14)
+
+- **YouTube end to end in the API**, offline-tested with fakes (no paid call yet):
+  `app/media/urls.py` (classify, canonical ids), `sources.py` (`videos.list`: not public,
+  not embeddable, age-restricted, live, < 30 s, > `MEDIA_MAX_VIDEO_S`, non-English audio or
+  title), `refusals.py` (codes and reader messages), `service.py` (open: cached → remembered
+  refusal → pending → slot → lookup cap → lookup → media budget → `create_media`; transcribe:
+  budget pre-check for the missing windows, staged lease with token, window 1 alone when the
+  language is unknown, four windows at a time under the 2× ceiling (`too_costly`), each window
+  saved as it finishes, assembly, `finish_transcript`), `openable.py` (`open_here`),
+  `store/media_repo.py` (day map of refusals, demo count, `media_lookup` on the search day doc
+  without touching `calls`). `media_counts` added to `USER_SUBCOLLECTIONS`.
+- Routes: `/v1/recs/open` media branch (`kind`, `stage`; 422 per code, 429
+  `media_cap_reached`, 503 `media_unavailable` (new code: a failed lookup, not remembered) or
+  `llm_budget_exceeded`); `POST /v1/content/{id}/transcribe` (200, 202, 404, 410, 422, 503, 504);
+  GET content: `status` transcribing / analysing / ready / refused / failed, `media`, `refusal`,
+  `start_s`; library rows `format`; feed and recommendations items `open_here`; POST /v1/content
+  422 `use_open_here` for both shapes; analyse on a transcribe-stage doc 409
+  `content_transcribing`. Phase 2 copies `media` and `start_s` and lists the transcribe calls.
+- `deploy.env.yaml` gains the media lines and the $2.50 per 1M audio price.
+- Choices to flag at review: transcribe uses analyse's access rule (any signed-in reader may
+  continue a recording someone opened; the slot was taken at open). GET status "failed" now also
+  shows for an *article* whose analysis attempts are used up (was "analysing"); the web must
+  handle it in step 4. Podcasts: `open_media` answers `media_off` and `open_here` is false until
+  step 6.
+
+### Next steps (resume here, in order)
+1. Step 3, harness run on real Vertex (`make dev-emulator`): open the 16-minute video
+   (`d6fUwCBvVc0`) through Read any link; acceptance 1–3, video half (words ±10% of 1,822, last
+   start ≥ 15:00, transcribe ≤ $0.10, phase timings, two personas, a verified card), a second
+   reader free, refusals (Hindi video, 68-min video, Spotify, `MEDIA_ENABLED=false`, caps).
+   Check the emulator's spend ledger is the emulator's, and state the expected cost (≤ $0.20)
+   before running.
+2. Step 4, web: lazy `MediaReader`, click-to-load player, time buttons, follow, entry points,
+   "failed" status; then shots. Then the midday check-in with Sourabh before podcasts.
+3. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).

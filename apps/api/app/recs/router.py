@@ -37,6 +37,7 @@ from app.ingest.router import (
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import url_hash
 from app.media import urls as media_urls
+from app.media.openable import open_here
 from app.reader.state import PersonaKey
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
@@ -80,6 +81,9 @@ class RecItem(BaseModel):
     why: str
     triggers: list[TriggerOut]
     score: float
+    # Opens in Gloss (library items, articles, videos within the media caps) or only at the
+    # source.
+    open_here: bool = True
 
 
 class RecsResponse(BaseModel):
@@ -297,7 +301,11 @@ async def recommendations(
             items.append(_library_item(lc, index.docs[lc.content_id], graph, s))
         else:
             r, trigger_id, _ = web_by_id[cand.id]
-            items.append(_web_item(r, trigger_id, graph, s))
+            item = _web_item(r, trigger_id, graph, s)
+            here = await open_here(
+                item.url, item.format, item.duration_or_read_time, get_settings(), anonymous
+            )
+            items.append(item.model_copy(update={"open_here": here}))
     if ctx.user.may_record:  # nothing recorded for a signed-in reader before consent
         await signals.remember_served(
             ctx.uid, ctx.rec_key, {i.id: Served(i.format, i.relation) for i in items}, now
