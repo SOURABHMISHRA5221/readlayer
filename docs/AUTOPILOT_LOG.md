@@ -1162,3 +1162,25 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    yes), live check at 1440. No API deploy before this merges.
 4. Stop the emulator stack. M9 Oct 15 (first item: the rest of the extension fix), freeze Oct 16.
 
+## Wide layout — milestone review round 4, and Sourabh's yes (2026-10-13, late evening)
+
+- **Sourabh said "yes"** to the two readings asked together (the reading spine as the reader's
+  left rail; topic tiles as the library's mini-map). STATUS §4 rows are now "Keep".
+- milestone-reviewer on 9d99133: **FIX, docs only**. Two statements wrong: "at most 150 of the
+  300" for anonymous traffic (its own round-3 wording; false, because growth slots are reserved
+  before the fetch and kept when it fails: its local probe took the day's counter to 300 with
+  60 failed opens and no spend), and the cost "at most" (6 of 14 paid runs). Checked the 14 runs
+  in the production log again: $0.0024 to $0.0127, mean $0.0050, $0.070 for 50 concepts.
+- **New risk recorded, STATUS §5 Medium:** 60 failed link opens by anonymous readers stop growth
+  for everyone until 00:00 UTC. M2.2 behaviour; it goes with the rest of the growth fix as M9's
+  first item. Told Sourabh.
+- BUILD_PLAN's "before M8" wording brought in line with decision 49.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 5 (`git show` of the fix commit) → SHIP.
+2. Push `wide-layout` and open the PR (his yes on the prompt): `Wide layout: … (+ growth caps,
+   decision 53)`; green CI; merge; `make deploy-web` (his yes); live check at 1440.
+3. No API deploy before that merge. Stop the emulator stack.
+4. M9 Oct 15, first item the growth and extension fix; freeze Oct 16. Sourabh's Gmail and
+   bank-login refusal check is still open.
+
