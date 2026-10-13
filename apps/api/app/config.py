@@ -58,6 +58,28 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2
     # Per-token (input, output) USD prices for models missing from LiteLLM's price map.
     model_price_overrides: dict[str, tuple[float, float]] = Field(default_factory=dict)
+    # Per-token USD price of audio input, for models whose LiteLLM entry has none (LiteLLM 1.104
+    # has none for Gemini 3.x). A media call on a model with no audio price is refused, so an
+    # unpriced recording can never reach the ledger as cheap (Media plan R6).
+    model_audio_price_overrides: dict[str, float] = Field(default_factory=dict)
+
+    # Media: YouTube videos and podcast episodes read as transcripts (decision 54, DESIGN §21).
+    media_enabled: bool = True  # kill switch: false → media URLs answer "Open original"
+    media_audio_enabled: bool = True  # podcasts only (plan R12)
+    media_max_video_s: int = 1800  # 95% of cached videos
+    media_max_audio_s: int = 2700  # 12 of 15 resolved Apple episodes
+    media_max_audio_bytes: int = 70_000_000  # 45 min at 192 kbps is 65 MB
+    # New recordings per UTC day: per signed-in reader, per demo reader, all demo readers.
+    media_daily_cap: int = 5
+    anon_media_daily_cap: int = 1
+    anon_global_media_daily_cap: int = 10
+    # videos.list, Apple lookups and audio pre-checks per UTC day, everyone together (R5).
+    media_lookup_daily_cap: int = 300
+    # Media spend per UTC day inside LLM_DAILY_BUDGET_USD (Sourabh: "mark 3 dollar budget", R7).
+    media_daily_budget_usd: float = 3.0
+    # Expected transcribe cost per minute of recording, at the cautious audio price (R6): drives
+    # the budget pre-check, the per-item ceiling (2×) and a timed-out window's ledger charge.
+    media_est_usd_per_min: float = 0.006
 
     uid_hash_salt: str = ""
 

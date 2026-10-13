@@ -1280,3 +1280,36 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
 3. M9 (Oct 15): growth and extension fix first. Freeze Oct 16.
 4. Still open from M8: Sourabh's Gmail and bank-login refusal check.
+
+## Media build, step 1 (2026-10-14)
+
+- Branch `media` from `main`. First commit: `evals/cases/media_transcripts.yaml` frozen (R13):
+  the 16-min video, the 22-min Apple episode, the 50:00–60:00 window of the 68-min video, with
+  the measured references (no transcript text kept).
+- `llm.transcribe` (task `transcribe`, `transcribe-v1` = the measured wording): quality model,
+  low thinking, 8,000 tokens, 90 s, no fallback; one unchanged re-ask on invalid output (schema,
+  the window check, or cut off at the limit); a timed-out or cancelled call is charged its
+  window's estimate; a shared `MediaMeter` carries what a failed run cost (R2). Both budgets
+  checked per call (`check_media_budget`: the $8 and the $3 media share; the ledger gains
+  `media_usd`).
+- **Pricing differs from the plan's §D wording, matches R6:** checked locally that LiteLLM 1.104's
+  `completion_cost`, given a response that splits out text tokens, prices only those and drops
+  video as well as audio. So media calls are priced by us from the token counts: (input − audio)
+  at the input price, audio at LiteLLM's audio price or `MODEL_AUDIO_PRICE_OVERRIDES`, output at
+  the output price; no audio price → refused before the call. Test pins row 11 ($0.0247 with
+  audio at the text price; $0.0509 at $2.50 per 1M).
+- `app/media/transcript.py` (pure): window plan, clock parsing, per-window check (absolute or
+  relative times, loops, > 300 words a minute, monotone), language majority, cross-window join,
+  short-paragraph merges, the 200-paragraph cap by merging, `no_speech`, `not_english`,
+  `too_long`; words-unchanged test. Media settings added to `config.py` (not yet in
+  `deploy.env.yaml`: that comes with the caps step).
+- API suite 838 passed, ruff clean.
+
+### Next steps (resume here, in order)
+1. Step 2 of the plan's schedule: `app/media/urls.py` (classify, canonical ids) and YouTube
+   `videos.list` with its refusals and the `media_lookup` counter → `app/media/service.py`
+   (stages, windows stored as they finish, lease token, refusal memory, the per-item ceiling) →
+   caps → routes (`/v1/recs/open` media branch, `/v1/content/{id}/transcribe`, GET fields) and
+   the POST /v1/content `use_open_here` guard (R4). Plan's Round 1 and 2 sections override.
+2. Then the harness run on the 16-minute video; web; midday check-in with Sourabh before podcasts.
+3. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
