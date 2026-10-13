@@ -1368,3 +1368,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Not run yet: analyse, second reader, personas, card, refusals. Extra test videos (Hindi, two
   short English) need a read of production `rec_cache`; that read was blocked by the permission
   classifier. Driver: scratch `harness_media.py` (not committed).
+- Sourabh: "yes do what u feel is correct". Probe of window 600–949 (ending at the real end, one
+  attempt): timeout at 91 s, $0.035, so ending past the end was not the cause. Production
+  `rec_cache` read blocked again by the classifier; not retried.
+- Plan Round 4 (one whole-URL call per video, 20-min cap, no in-run timeout retry, 504 on
+  timeout, max tokens 16,000) → plan-reviewer REVISE 6, REVISE 2, APPROVE. T04 frozen in
+  `7622bb7`; code in `88e932f`; API suite 934 passed, ruff clean.
+- **Re-run on a fresh emulator: the whole 16-min video in one call also timed out at 90 s**
+  ($0.096, one charge, no retry, 504 as designed). So offsets were not the cause: tonight every
+  call that reaches past minute 10 of this video hangs, while 0–600 answered in 27 s and
+  yesterday's whole-video call (row 3, default thinking) answered in 29 s. Round 4's premise is
+  unproven; its timeout handling stands on its own.
+- Real Vertex spend tonight $0.325, all in emulator ledgers (a fresh emulator re-seeds only
+  production's spend, so the harness allowance resets each restart; capped by hand at $1).
+- Stopped for Sourabh. Next (his call): one call in row 3's exact shape (default thinking,
+  ~$0.08) to test low thinking as the cause, then a second video (T04) if it still hangs; or
+  park video transcripts and move to step 4 / M9.
