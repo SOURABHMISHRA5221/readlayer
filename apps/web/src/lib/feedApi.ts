@@ -21,6 +21,8 @@ export interface FeedItem {
   goal: string | null;
   why: string;
   score: number;
+  /** Opens in Gloss (articles; videos within the media caps). Older APIs omit it: articles only. */
+  open_here?: boolean;
 }
 
 export interface FeedResponse {

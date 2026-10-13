@@ -1,4 +1,4 @@
-import type { CardAnnotation } from "@readlayer/annotator";
+import type { CardAnnotation, CardLabels } from "@readlayer/annotator";
 import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArticleImage } from "../components/ArticleImage";
@@ -7,6 +7,7 @@ import { Margo } from "../components/Margo";
 import { ProgressBar } from "../components/ProgressBar";
 import { Quiet } from "../components/Quiet";
 import { ActionBar } from "../components/reader/ActionBar";
+import { PreparingNotice, StopNotice } from "../components/reader/Notices";
 import { PrereadPath } from "../components/reader/PrereadPath";
 import { Recap } from "../components/reader/Recap";
 import { ERROR_COPY, StateView } from "../components/StateView";
@@ -24,7 +25,7 @@ import {
   type ApiErrorKind,
   type ContentDetail,
 } from "../lib/api";
-import { domainLabel, formatByline, formatDate, readingMinutes, sourceName } from "../lib/format";
+import { clock, domainLabel, formatByline, formatDate, minutes, readingMinutes, sourceName } from "../lib/format";
 import { useIsDemo } from "../lib/auth";
 import { DEFAULT_DENSITY, parseDensity, personaParam, readerPersona } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
@@ -32,6 +33,7 @@ import { savedApi } from "../lib/savedApi";
 
 type Load<T> = { status: "loading" } | { status: "ready"; data: T } | { status: "error"; kind: ApiErrorKind };
 type Analysis = { status: "idle" } | { status: "running"; since: number } | { status: "failed"; message: string };
+
 
 const RAIL_QUERY = "(min-width: 1200px)";
 // The left rail (Wide layout, decision 45): its own chunk, loaded only where it is shown.
@@ -41,6 +43,16 @@ const ReadingSpine = lazy(() => import("../components/reader/ReadingSpine"));
 const ANALYSE_WINDOW_MS = 180_000;
 const ANALYSE_RETRY_MS = 3000;
 const ANALYSE_FAILED = "Notes are unavailable for this article; it's complete without them.";
+// The media reader (player, time buttons, follow): one lazy chunk, loaded only for a recording (R11).
+const MediaReader = lazy(() => import("../components/reader/MediaReader"));
+const TranscriptBody = lazy(() =>
+  import("../components/reader/MediaReader").then((m) => ({ default: m.TranscriptBody })),
+);
+const TRANSCRIBE_FAILED = "Gloss couldn't transcribe this. Open the original instead.";
+const SPEAKER_LABELS: CardLabels = {
+  author: "What the speaker is saying",
+  card: "Explanation — not the speaker's words",
+};
 
 const NO_LABELS: Readonly<Record<string, string>> = {};
 
@@ -57,6 +69,9 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   // The view (article|persona|density) the notes in `notes` were requested for (decision 46d).
   const [notesView, setNotesView] = useState<string | null>(null);
   const [analysis, setAnalysis] = useState<Analysis>({ status: "idle" });
+  // The lazy transcript body is in the DOM: the annotator may attach to it.
+  const [bodyReady, setBodyReady] = useState(false);
+  const onBodyMount = useCallback(() => setBodyReady(true), []);
   const [attempt, setAttempt] = useState(0);
   const articleRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
@@ -103,8 +118,14 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   }, [id, attempt]);
 
   // A missing status (older API) means ready.
-  const analysing = content.status === "ready" && content.data.status === "analysing";
-  const ready = content.status === "ready" && !analysing;
+  const status = content.status === "ready" ? (content.data.status ?? "ready") : null;
+  const transcribing = status === "transcribing";
+  const analysing = status === "analysing";
+  const ready = status === "ready";
+
+  // The media reader transcribes a recording, then hands the content back: reloaded in place, so
+  // the player keeps playing, and phase 2 continues as for an article.
+  const onTranscribed = useCallback((data: ContentDetail) => setContent({ status: "ready", data }), []);
 
   // Phase 2: the article is on screen; ask the API to analyse it, then let the notes ink in.
   useEffect(() => {
@@ -171,7 +192,12 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
         }),
     [id, persona, density, debug],
   );
-  const handle = useAnnotator(articleRef, article?.id ?? null, annotations, notesData?.extras ?? null, persona, refreshNotes);
+  const media = article?.media ?? null;
+  // A transcript's annotator waits for the lazy body and its paragraphs.
+  const annotatorKey = article && (!media || (bodyReady && article.paragraphs.length > 0)) ? article.id : null;
+  const handle = useAnnotator(
+    articleRef, annotatorKey, annotations, notesData?.extras ?? null, persona, refreshNotes, media ? SPEAKER_LABELS : undefined,
+  );
 
   // Recap snapshot (Design pass A4): the bands of this page's noted concepts when the notes load,
   // taken once per view; a refetch after a "Know this?" answer only adds labels (decision 46d).
@@ -286,8 +312,31 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
               saved={saved}
               onSave={() => void toggleSave()}
             />
-            <ArticleFigure article={article} />
-            {analysis.status === "running" && <PreparingNotice since={analysis.since} />}
+            {media ? (
+              <Suspense fallback={<div className="mplayer mplayer--loading" aria-hidden="true" />}>
+                <MediaReader
+                  contentId={article.id}
+                  media={media}
+                  title={article.title}
+                  url={article.url}
+                  paragraphs={article.paragraphs}
+                  article={articleRef}
+                  transcribing={transcribing}
+                  onTranscribed={onTranscribed}
+                />
+              </Suspense>
+            ) : (
+              <ArticleFigure article={article} />
+            )}
+            {(status === "refused" || status === "failed") && (
+              <StopNotice message={article.refusal?.message ?? (media ? TRANSCRIBE_FAILED : ANALYSE_FAILED)} url={article.url} />
+            )}
+            {analysis.status === "running" && (
+              <PreparingNotice
+                since={analysis.since}
+                text={media ? "Reading the transcript and preparing your notes…" : "Reading the article and preparing your notes…"}
+              />
+            )}
             {analysis.status === "failed" && (
               <p className="reader__notice" role="status">
                 <Margo mood="oops" size={28} />
@@ -300,7 +349,9 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
                 Notes are unavailable right now; the article is complete without them.
               </p>
             )}
-            {notesData?.preread && <PrereadPath item={notesData.preread} persona={persona} />}
+            {notesData?.preread && (
+              <PrereadPath item={notesData.preread} persona={persona} heading={media ? PREREAD_HEADING[media.kind] : undefined} />
+            )}
             <div className="reader__body" ref={bodyRef}>
               {spine && (
                 <Quiet>
@@ -316,7 +367,13 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
                   </Suspense>
                 </Quiet>
               )}
-              <ArticleBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} />
+              {media ? (
+                <Suspense fallback={null}>
+                  <TranscriptBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} onMount={onBodyMount} />
+                </Suspense>
+              ) : (
+                <ArticleBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} />
+              )}
               {wide && annotations && handle.resolved && <ConceptRail items={marked} body={bodyRef} {...link} />}
             </div>
             {annotations && handle.resolved && (
@@ -333,32 +390,26 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   );
 }
 
-/** Phase 2 in progress: the article is readable; say what's coming and how long it's been. */
-function PreparingNotice({ since }: { since: number }) {
-  const [, tick] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => tick((n) => n + 1), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const seconds = Math.round((Date.now() - since) / 1000);
-  return (
-    <p className="reader__notice reader__notice--working" role="status">
-      <Margo mood="think" size={28} />
-      Reading the article and preparing your notes… <span className="tnum">{seconds} s</span>
-    </p>
-  );
-}
+const PREREAD_HEADING = { video: "Before you watch", podcast: "Before you listen" } as const;
+const MEDIA_NAME = { video: "Video", podcast: "Podcast" } as const;
 
 function ArticleHeader({ article }: { article: ContentDetail }) {
   const date = formatDate(article.published);
   const byline = formatByline(article.author);
-  const kicker = domainLabel(article.domain);
-  const source = sourceName(article.site);
+  const media = article.media;
+  const source = media ? article.site : sourceName(article.site);
+  // A recording: "Video · 16 min · channel" (media plan §G).
+  const kicker = media ? `${MEDIA_NAME[media.kind]} · ${minutes(media.duration_s)} · ${source}` : domainLabel(article.domain);
   return (
     <header className="article-head">
       {kicker && <p className="article-head__kicker">{kicker}</p>}
       <h1 className="article-head__title">{article.title}</h1>
       {article.description && <p className="article-head__dek">{article.description}</p>}
+      {media && (
+        <p className="article-head__note">
+          A transcript made automatically from the {media.kind === "video" ? "video" : "episode"}. It can differ from what's said; the recording is the source.
+        </p>
+      )}
       <div className="byline">
         <span className="byline__mark" aria-hidden="true">
           {(source.replace(/^the\s+/i, "")[0] ?? "?").toUpperCase()}
@@ -369,7 +420,7 @@ function ArticleHeader({ article }: { article: ContentDetail }) {
             {byline && <span className="byline__author"> · By {byline}</span>}
           </p>
           <p className="byline__when tnum">
-            {readingMinutes(article.word_count)} min read
+            {media ? `${clock(media.duration_s)} ${media.kind}` : `${readingMinutes(article.word_count)} min read`}
             {date && (
               <>
                 {" · "}

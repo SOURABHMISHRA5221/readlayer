@@ -2,6 +2,7 @@ import {
   createAnnotator,
   type Annotator,
   type AnnotatorEvent,
+  type CardLabels,
   type CardAnnotation,
   type ParagraphMarker,
   type PromptAnnotation,
@@ -55,6 +56,8 @@ export function useAnnotator(
   persona: PersonaKey | null,
   /** Refetch the article's annotations after a saved "Know this?" answer (decision 46d). */
   refreshNotes?: () => Promise<void>,
+  /** Card wording for a transcript ("What the speaker is saying"); keep the value stable. */
+  labels?: CardLabels,
 ): AnnotatorHandle {
   const annotatorRef = useRef<Annotator | null>(null);
   // Read at event time, so a persona switch doesn't rebuild the annotator.
@@ -105,6 +108,7 @@ export function useAnnotator(
       loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
       loadShifted: (a, shift) => loadShifted(articleKey, personaRef.current, a, shift),
       sidenote: () => railColumn(el),
+      labels,
       onHover: setHovered,
       onActive: setActive,
     });
@@ -119,7 +123,7 @@ export function useAnnotator(
       setActive(null);
       setAnswers(new Map());
     };
-  }, [root, articleKey]);
+  }, [root, articleKey, labels]);
 
   useEffect(() => {
     const annotator = annotatorRef.current;

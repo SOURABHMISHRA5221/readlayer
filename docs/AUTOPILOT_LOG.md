@@ -1398,3 +1398,39 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Re-probe at 19:03 UTC (first 3 min, low, offsets, 180 s limit, bare Firestore emulator
   ledger): **OK in 27 s, $0.015**, 8 paragraphs, 375 words, starts 2..177, en. Vertex's YouTube
   fetch answers again. Acceptance 1–3 and T04 not re-run yet (asked Sourabh: now, or step 4 first).
+
+## Media build, step 4 (2026-10-14, web; code done, shots after the step 3 re-run)
+
+- Sourabh: "go to four then check after that": step 4 first, then step 3's acceptance 1–3 and T04.
+- **Annotator 0.9.0**: `labels: {author?, card?}` option; `data-rl-ui="host"` marks a control
+  the host owns: anchors and copy skip it, `destroy` leaves it (React StrictMode mounts, destroys
+  and re-mounts the annotator in dev, which would otherwise strip the time buttons). Extension
+  untouched (still 0.8.0, not rebuilt). Test: `test/host.test.ts`.
+- **Web**: lazy `components/reader/MediaReader.tsx` (one chunk, two exports): `MediaReader`
+  (click-to-load no-cookie player, seeking over postMessage with a strict origin and source check,
+  spoken paragraph marked with `data-rl-now`, Follow along toggle paused 5 s by wheel / touch /
+  scroll keys, transcribe loop: 202 → 5 s, 504 retried once then "Try again" + "Open original",
+  422 / 410 → the API's message + "Open original") and `TranscriptBody` (a time button per
+  paragraph). `lib/media.ts` pure, chunk-only. ReaderPage: kicker "Video · 16 min · channel",
+  transcript note under the dek, stored `refused` / `failed` stop with "Open original" (also an
+  article's `failed`), "Before you watch", speaker labels on cards, the annotator waits for the
+  lazy body. Entry points use `open_here` (feed, Up next "Open here" + "Watch on YouTube"); Read
+  any link says "article or YouTube link" (podcast wording waits for step 6, so a cut of podcasts
+  needs no copy change); library rows get a Video / Podcast badge; privacy page: Videos section and
+  "videos opened" in daily counters.
+- Choices to flag at review: `allow` adds `autoplay` (the click must start playback) and
+  `fullscreen`; the disclaimer line wording is mine ("A transcript made automatically from the
+  video. It can differ from what's said; the recording is the source."); the spoken-paragraph
+  mark uses wash + ink rule, not the accent (the accent only means a note).
+- Bundle: main **149.46 KB** gzip (148.31 at `8bf7797`; budget 150, 0.54 KB left). The transcribe
+  loop moved into the media chunk to get there (149.80 before). Media chunk 2.82 KB JS + 0.85 KB
+  CSS. Step 6 must keep main-bundle changes near zero.
+- Tests: annotator 60, web 164 (+16, `test/media.test.tsx`: helpers, player messaging, ReaderPage
+  transcribing → transcript → notes, timeout retry, refusals), extension 85, API 934; typecheck clean.
+
+### Next steps (resume here, in order)
+1. Step 3 re-run on a fresh emulator (`make dev-emulator`, verify gcloud identity first): acceptance
+   1–3 video half and T04; state expected cost (≤ $0.20) before running.
+2. Acceptance 4 shots (`tools/shots/media.py`, to write) on the transcribed video from 1: 1440 /
+   1024 / 390, light and dark, seek, follow, axe 0, no horizontal scroll, words equal paragraphs.
+3. Midday check-in with Sourabh before podcasts (step 6).

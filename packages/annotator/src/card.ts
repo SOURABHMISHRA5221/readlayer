@@ -56,6 +56,13 @@ export interface CardHandlers {
   onShift?: (shift: -1 | 0 | 1) => void;
   /** Demo cards (a landing page): one call to action replaces Knew this / Helpful / This is wrong. */
   demo?: { label: string; onClick: () => void };
+  /** Overrides for the restatement's heading and the footer line (a transcript: "speaker"). */
+  labels?: CardLabels;
+}
+
+export interface CardLabels {
+  author?: string;
+  card?: string;
 }
 
 const BANDS = ["unaware", "heard of", "understands", "can explain"] as const;
@@ -183,7 +190,7 @@ export class Card {
     const bg = section(doc, `${C}__bg`, BACKGROUND_LABEL, this.background, 0, this.frame);
     this.bgLabel = bg.querySelector(`.${C}__section-label`)!;
     this.bgSection = bg;
-    this.says = section(doc, `${C}__says`, AUTHOR_LABEL, this.authorSays, 1);
+    this.says = section(doc, `${C}__says`, handlers.labels?.author ?? AUTHOR_LABEL, this.authorSays, 1);
     const says = this.says;
     const note = el(doc, "p", `${C}__loading-note`);
     note.textContent = LOADING_TEXT;
@@ -226,7 +233,7 @@ export class Card {
       actions.replaceChildren(cta);
     }
     const label = el(doc, "p", `${C}__note`);
-    label.textContent = CARD_LABEL;
+    label.textContent = handlers.labels?.card ?? CARD_LABEL;
     footer.append(actions, label);
 
     // The body scrolls when the card is taller than the room it has; the actions stay pinned.

@@ -39,7 +39,15 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
       "Weekly totals: words read, notes shown and the articles they came from.",
       "What you opened or dismissed in your feed, your saved articles and the pages you brought in.",
       "Reading goals: their type, numbers and target topics, never the goal as you wrote it.",
-      "Daily counters that keep usage within limits (links added, explanations made, edits, goals, onboarding matches).",
+      "Daily counters that keep usage within limits (links added, videos opened, explanations made, edits, goals, onboarding matches).",
+    ],
+  },
+  {
+    id: "pv-videos",
+    title: "Videos",
+    items: [
+      "A video's page shows its thumbnail from YouTube, so YouTube sees your IP address, browser and the video's id. The player loads only when you press play, from YouTube's no-cookie domain; after that YouTube gets what any embedded video sends and may store data in your browser.",
+      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and readable only by the readers who opened the video.",
     ],
   },
   {

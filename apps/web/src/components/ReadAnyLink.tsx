@@ -7,7 +7,7 @@ import { Margo } from "./Margo";
 
 type State = { status: "idle" } | { status: "busy" } | { status: "error"; message: string };
 
-/** Paste any article URL: it opens in the reader at once (two-phase "Open here", M7.5 §B).
+/** Paste any article or YouTube URL: it opens in the reader at once (two-phase "Open here", M7.5 §B).
  *  Sends the URL and nothing else; the page stays visible only to readers who bring it in. */
 type Props = { persona: PersonaKey | null; hideLabel?: boolean; id?: string };
 
@@ -50,7 +50,7 @@ export function ReadAnyLink({ persona, hideLabel = false, id }: Props) {
           autoComplete="off"
           spellCheck={false}
           required
-          placeholder="Paste an article link"
+          placeholder="Paste an article or YouTube link"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           disabled={state.status === "busy"}
@@ -61,7 +61,7 @@ export function ReadAnyLink({ persona, hideLabel = false, id }: Props) {
       </div>
       <p id={hintId} className={`anylink__hint${state.status === "error" ? " anylink__hint--error" : ""}`} aria-live="polite">
         {state.status === "error" && <Margo mood="oops" size={28} />}
-        <span>{state.status === "error" ? state.message : "Opens here with notes for you. The original stays untouched."}</span>
+        <span>{state.status === "error" ? state.message : "Opens here with notes for you. Videos get a transcript. The original stays untouched."}</span>
       </p>
     </form>
   );
