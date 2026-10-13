@@ -1200,3 +1200,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    fetch and regrowth on reopen protect the demo). Freeze Oct 16.
 4. Still open from M8: Sourabh's Gmail and bank-login refusal check.
 
+## Wide layout merged (2026-10-13, night)
+
+- Pushed `wide-layout`, PR #31, CI green (api 47 s, typescript 1 m 15 s), squash-merged
+  (13d9772). `main` now carries decision 53's caps in `deploy.env.yaml`, so an API deploy is
+  safe again. The emulator stack is stopped.
+- Sourabh, as the merge finished: next he wants **videos and podcasts readable in Gloss, with
+  the transcript analysed like an article** (meaning before and after). Not in BUILD_PLAN; the
+  freeze is Oct 16 and M9 (Oct 15) holds the growth fix. Asked him how to fit it (below).
+
+### Next steps (resume here, in order)
+1. `make deploy-web` (his yes) → live check at 1440 as a demo reader → STATUS §23 live row.
+2. His decision on the video and podcast feature: scope and what it displaces.
+3. M9 (Oct 15): plan with a cut order; first the growth and extension fix. Freeze Oct 16.
+4. Still open from M8: his Gmail and bank-login refusal check.
+
