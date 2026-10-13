@@ -677,3 +677,196 @@ re-run uses a fresh emulator and production has no media pending docs, so no cod
    follows the cap (Ken Robinson, 1,204 s, is over both 1,200 and 1,000).
 2. T04 is frozen by commit `7622bb7` ("media: freeze T04 before the whole-URL run"), made before
    any harness run touches it; "appended before any run of it" refers to that commit.
+
+## Round 5: step 6, podcasts and a video switch (2026-10-14; overrides everything above where it differs)
+**Context.** Check-in answered (Sourabh, 2026-10-14 ~01:10 IST: "start podcast plan"). Video
+transcripts are parked: whole-video YouTube-URL calls on Vertex time out tonight while a 3-min clip
+answers (log, step 3). Step 4's web code is in. Already built and kept: `urls.classify` for Apple
+(`ApplePodcast`) and `.mp3` links, `Media.audio_url`, `llm.AudioClip` and audio pricing, the
+`transcribe` route with `TranscribeBusy` → 202, `plan_for`, `check_window(relative_only=…)`, the
+web `media.kind === "podcast"` copy in ReaderPage. Not built: Apple lookup, audio head and fetch,
+`mp3.py`, the audio branch of `open_media` and `_Run`, the semaphore, the web audio player.
+
+**5.1 `MEDIA_VIDEO_ENABLED` (default true), beside `MEDIA_AUDIO_ENABLED`.** One helper,
+`media_kind_on(media, settings)`: `media_enabled` and the kind's switch. Used by `open_media`
+(first check, as `media_enabled` is today: refused `media_off`, before the day map, so a switch is
+never remembered as a refusal and turning it back on works at once), by `openable` (a YouTube item
+→ `open_here: false`) and at the **top of `transcribe_pending`, before the lease** (a pending doc of
+a switched-off kind → `MediaRefused("media_off")` raised before `try`, so no `refused` mark, no day
+map entry, no attempt). A `contents/` doc already transcribed stays readable through GET
+/v1/content (reading isn't opening). `deploy.env.yaml` gains `MEDIA_VIDEO_ENABLED: "true"`; the
+deploy decision (off unless a short clip and a whole video both answer) is step 7's.
+Web copy follows a **build-time** flag, `VITE_MEDIA_VIDEO` (default on, no runtime fetch, no main
+bundle cost beyond a constant): Read any link's placeholder is "Paste an article, YouTube or
+podcast link" when on, "Paste an article or podcast link" when off. The deploy sets it to match.
+
+**5.2 Scope cut: Apple episode links only.** A direct `.mp3` link (`AudioFile`) answers `media_off`
+("Open original") in this build. It needs a title and show from nowhere (no lookup) and isn't in
+the cached links (4 "other" of 146). STATUS §4 already lists "Apple episode links only". Spotify,
+show pages, M4A unchanged (refused).
+
+**5.3 Open a podcast (§A, R3, R5, R8 as written, Apple half).**
+- `sources.apple_episode(show_id, episode_id, settings, transport=None) -> MediaInfo + audio_url`:
+  GET `https://itunes.apple.com/lookup?id=<show>&entity=podcastEpisode&limit=200` (ids are our
+  digits; plain `httpx`, `SEARCH_TIMEOUT_S`, no key, no reader data). Episode = `trackId` match
+  (`episode_not_found`); needs `episodeUrl` https (`episode_not_found`); `episodeFileExtension`
+  not `mp3` → `unsupported_audio`; `trackTimeMillis` over `MEDIA_MAX_AUDIO_S` → `too_long`; title
+  fails `mostly_latin` → `not_english`. Kept: `trackName`, `collectionName`, `artworkUrl600`
+  (https only), `releaseDate`, duration, `episodeUrl`. No `i=` → `not_an_episode` before any
+  lookup (no lookup counted). HTTP error → `MediaUnavailable("apple")` (503, not remembered).
+- `safe_fetch.audio_head(url) -> AudioHead{final_url, total_bytes, first_bytes}`: ranged GET
+  (`Range: bytes=0-65535`) through the same hop validation, pinned connect and robots rule;
+  `MAX_AUDIO_REDIRECTS = 6`; type `audio/mpeg` / `audio/mp3` (else `unsupported_audio`); total from
+  `Content-Range` or `Content-Length`, missing or over `MEDIA_MAX_AUDIO_BYTES` → `too_long` /
+  `unsupported_audio`; `mp3.first_frame(first_bytes)` must find a frame (else
+  `unsupported_audio`). Duration missing from the lookup → `total_bytes × 8 / bitrate`, cap
+  applied. A fetch error, robots refusal or blocked address → `unsupported_audio` ("Open
+  original"), remembered for the day.
+- Both lookups count one each under `media_lookup` (R5's cap). Then the media budget pre-check,
+  growth slots and `create_media` exactly as the YouTube path. `Media(kind="audio",
+  audio_url=episodeUrl, duration_s, language=None)`; `url` = the canonical Apple link. Language
+  is never declared, so window 1 always runs alone first (R8): a non-English episode costs one
+  10-minute window (≈ $0.05), refused and remembered.
+- `openable`: an `ApplePodcast` with an episode id is openable when the audio switch is on and
+  its duration is unknown or within `MEDIA_MAX_AUDIO_S` (the open checks it; feed items from
+  search often lack a length). Show pages, Spotify and `.mp3` stay "Open original".
+
+**5.4 Transcribe a podcast (§B, §C, R1, R2, R9, 2.3).**
+- `transcribe_pending`, audio: the no-wait per-instance semaphore try (2.3) before the lease;
+  YouTube skips it. `TRANSCRIBE_TIMEOUT_S` (150 s) wraps fetch, split, windows and the finish.
+- `SafeFetcher.fetch_audio(url)`: `episodeUrl` again through the guard (6 redirects, 45 s overall,
+  type check, `MEDIA_MAX_AUDIO_BYTES` cut-off mid-stream), read into one `bytearray` (no chunk
+  list, so 70 MB stays ~70 MB). Bytes live only for the run, never stored or logged. A fetch error
+  → `unsupported_audio`, refused and remembered (a model call may have been billed on an earlier
+  attempt; that cost stays counted).
+- `mp3.split(data, max_seconds=600)` cuts **on time only**, frame boundaries, a tail under 60 s
+  joins the last piece: the same rule as `plan_windows`, so piece *i* is window *i*. A piece over
+  `MAX_PIECE_BYTES = 15_000_000` (above ~200 kbps; row 14's 14.4 MB was accepted) →
+  `unsupported_audio`. The walk's exact duration replaces the lookup's: over `MEDIA_MAX_AUDIO_S` →
+  `too_long`; the window plan used for this run is `plan_windows(walk_duration)`.
+- **Dynamic ads.** Podcast hosts may stitch different ads per download, so a retry can fetch
+  different bytes. The pending doc keeps `audio_fingerprint = "<frames>:<bytes>"` from the first
+  billed run's walk; a retry whose walk differs drops the saved windows (their cost stays in
+  `transcribe_cost_usd`, so the 2× ceiling still bounds the item) and starts over. Stated as a
+  risk; a test pins it.
+- `_Run` generalised: `clip_for(window)` → `YouTubeClip(canonical)` or `AudioClip(piece.data)`;
+  `check_window(…, relative_only=True)` for audio. Windows four at a time after window 1 (R8).
+  `MediaTimeout` is not retried in a run (4.3), audio too.
+- Peak RSS logged once per audio run (`resource.getrusage`), as R9 says.
+
+**5.5 Web (`MediaReader` chunk only; main bundle ≤ 150 KB, 0.54 KB left).**
+- `AudioPlayer`: `<audio controls preload="none" src={audio_url}>`, `timeupdate` → time, `seek(s)`
+  sets `currentTime` and plays; `error` → "This episode's audio couldn't be played here" with Open
+  original. Time buttons, follow and the marked paragraph are shared with the video player.
+- Privacy page "Podcasts" section with R10's wording (publisher and redirect hosts get IP and user
+  agent on play, our origin as referrer). Read any link copy per 5.1. Nothing else in main.
+
+**5.6 Tests (offline).** `test_mp3.py` (§C list plus: time-only cuts match `plan_windows`; piece
+over 15 MB refused; `first_frame`); `test_safe_fetch_audio.py` (§ tests list plus range head,
+`Content-Range` total, bytearray cut-off); `test_media_sources.py` (Apple hit, miss, no
+`episodeUrl`, M4A, too long, non-Latin title, HTTP error → unavailable); `test_media_service.py`
+(podcast open → transcribe → analyse with fakes, `audio_url` and `start_s` reach `contents/`;
+window 1 alone then the rest; non-English after window 1; busy semaphore leaves lease and counters
+untouched; fingerprint change drops saved windows; fetch error refused and remembered;
+`media_off` per switch is never remembered and costs nothing; `.mp3` link → `media_off`);
+`test_openable.py` (switches, Apple episode with and without duration, show page); router: a
+podcast's refusal codes. Web: `AudioPlayer` seek and `timeupdate`, error state, podcast ReaderPage
+path, placeholder under both flag values. Full suites, ruff, typecheck, bundle.
+
+**5.7 Acceptance for this step (emulator harness, real Vertex; video half stays parked).**
+Expected spend ≤ **$0.35** in the emulator ledger: T02 transcribe ≤ 23 × $0.006 ≈ $0.14, analyse
+≈ $0.05–0.10, a second persona's explanations ≈ $0.05; stated before running.
+1. T02 by its Apple link through Read any link: ≥ 3,600 words, last start ≥ 21:00, times
+   non-decreasing and inside the duration; transcribe ≤ $0.14; phase timings; peak RSS ≤ 600 MB;
+   analyse ≤ 100 s (else lower `MEDIA_MAX_AUDIO_S` and say so); two personas, different note
+   counts; one `verified` card labelled "What the speaker is saying".
+2. A second reader: no model call, no slot.
+3. Refusals, no model call: Apple show page, an episode outside the latest 200, an M4A episode,
+   Spotify, a `.mp3` link, `MEDIA_AUDIO_ENABLED=false`, `MEDIA_VIDEO_ENABLED=false` on T01's URL
+   (then true again: opens at once, nothing remembered). Ids for the first three come from the
+   evidence list if it is still on disk; otherwise from a fresh Apple search, said in the log.
+4. Pre-check pass count over the resolved MP3 episodes (no model call) if the production
+   `rec_cache` read is allowed; if the classifier blocks it again, skipped and said so.
+5. Shots (`tools/shots/media.py`) with the podcast: 1440 / 1024 / 390, light and dark, a time
+   button seeks the audio within 2 s, follow, axe 0, no horizontal scroll.
+
+**5.8 Schedule.** Plan approved → commit → `mp3.py` → `audio_head` / `fetch_audio` → Apple lookup →
+switch + service audio branch → web → harness (5.7) → shots → log. Then step 7. Checkpoint end of
+Oct 14 IST unchanged (decision 27). No production writes in this step.
+
+**5.9 Docs.** DESIGN §21: Apple links only, time-only pieces, fingerprint, the video switch.
+STATUS §4: `.mp3` links cut; video transcripts parked behind `MEDIA_VIDEO_ENABLED`. Risks: dynamic
+ad insertion (retries restart), hosts refusing ranged GETs or our user agent ("Open original").
+
+## Round 5 review (plan-reviewer REVISE, 12 items; all applied, these override Round 5)
+**5R1. Big ID3 tags.** `audio_head` reads the ID3v2 syncsafe size from the first 10 bytes; if the
+tag ends past 64 KB, a second ranged GET of 16 KB at the tag's end (same `media_lookup` count)
+supplies the frame check. §C's "≥ 90% of bytes inside frames" leaves ID3v2, ID3v1 and APE tags out
+of the denominator. Tests: a 1 MB tag in `test_mp3.py` and `test_safe_fetch_audio.py`.
+
+**5R2. Hosts that ignore Range.** `audio_head` streams, keeps the first 64 KB and closes; it never
+uses `_read_capped`. Total: 206 → `Content-Range`; 200 → `Content-Length`. Test: a 200 with a
+50 MB Content-Length passes the head.
+
+**5R3. One source for pieces and windows.** `mp3.split(data, windows)` takes
+`plan_windows(floor(walk_duration))` and cuts at the first frame boundary at or after each
+`window.start_s`; it asserts `len(pieces) == len(windows)`. Tests: tails of 59.4, 59.6, 60.0 and
+60.4 s. The walk's duration replaces `media.duration_s` for the run's windows (`_Run.go`), the
+ceiling (`_Run._window`) and the `media` stored by `_finish`. `audio_fingerprint` is written in the
+same lease-checked transaction as the first `save_window`; a mismatch on a retry drops the saved
+windows in a lease-checked write before any model call.
+
+**5R4. Piece size.** `MAX_PIECE_BYTES = 14_500_000` (row 14's 14.4 MB is the measured success;
+base64 of 15 MB would be exactly 20 MB, on the inline limit).
+
+**5R5. Transient fetch failures are not refusals.** At open (head) and at transcribe (fetch):
+timeout, 5xx, 429, connection error → `MediaUnavailable("audio")`, not remembered (at transcribe an
+attempt counts only if a call was billed). Wrong type, over size, robots, unsafe address,
+401/403/404/410 → `unsupported_audio`, remembered. The transcribe handler gains `MediaUnavailable`
+→ 503 `media_unavailable` with Retry-After 60; router test.
+
+**5R6. Semaphore order and release.** `transcribe_pending`: cached → switch check → `refused` →
+(audio) semaphore no-wait try → budget pre-check → lease → run, with one `try/finally` from the
+semaphore on, so every exit (budget, `NotPending`, busy, exhausted, `wrong_stage`, refusal, error,
+cancel) releases it. Test: after a budget-refused run and after a refused run, the next audio
+transcribe is not busy.
+
+**5R7. `media_off` is never remembered, by construction; `.mp3` links get their own code.**
+`remember_refusal` and the `refused` mark skip `media_off` (today `youtube_info` raises it inside
+the try on a missing key). Direct `.mp3` links: new code `apple_link_only` ("Gloss opens podcast
+episodes from their Apple Podcasts link."), raised before the try, never remembered; router test.
+
+**5R8. The web flag can't drift.** `deploy-web` reads `MEDIA_VIDEO_ENABLED` from
+`apps/api/deploy.env.yaml` and passes `VITE_MEDIA_VIDEO` to the build (not via `web-config`, which
+rewrites `.env.production.local`). Step 7's deploy checklist gains: "web flag matches the API".
+
+**5R9. The video switch check is API only.** Acceptance 3's `MEDIA_VIDEO_ENABLED` false → true on
+T01 uses POST /v1/recs/open only (harness), never the page (it would call the parked
+`/transcribe`). Expected spend $0; the pending doc and slot it creates are expected.
+
+**5R10. Memory.** `ru_maxrss` normalised (bytes on macOS, KB on Linux); the figure is local, not
+Cloud Run. The `bytearray` is preallocated from the head's total (capped at
+`MEDIA_MAX_AUDIO_BYTES`). Over 600 MB → first `MEDIA_AUDIO_PARALLEL_WINDOWS` (new setting, 4 → 2;
+each in-flight window holds ~3 × 20 MB of base64 and JSON), only then `MEDIA_MAX_AUDIO_BYTES`.
+
+**5R11. Apple lookup details.** Missing `episodeFileExtension` falls through to the head's type and
+frame check. `trackId` compared as int against our digits (test). `episodeUrl`: https only,
+≤ 2,048 chars, never logged. `trackName` ≤ 300, `collectionName` ≤ 120. Audio hops send
+`Accept: audio/mpeg,*/*;q=0.1`.
+
+**5R12. Tests added** to 5.6: semaphore release (5R6); transient vs permanent errors at open and
+transcribe (5R5); head on a 200 (5R2); ID3 over 64 KB (5R1); piece count at fractional tails and
+the walk's duration in ceiling and stored media (5R3); `remember_refusal` ignores `media_off`
+(5R7); `openable` for an Apple episode with `MEDIA_AUDIO_ENABLED=false`; the build flag under both
+values.
+
+**Optional cut if late (reviewer's):** the bitrate-based duration estimate at open; an episode with
+no `trackTimeMillis` then relies on the walk's exact check at transcribe, before any model call.
+The fingerprint stays.
+
+## Round 5 review, round 2: APPROVE (plan-reviewer, 2026-10-14); nits applied
+1. `apple_link_only` goes into `MESSAGES` in `app/media/refusals.py` (`MediaRefused` rejects
+   unknown codes).
+2. `transcribe_pending`'s free-exit test widens to `(llm.BudgetExceeded, MediaUnavailable)` with
+   nothing billed, so an unbilled transient fetch failure uses no attempt; pinned in 5R12's
+   transient-error test.

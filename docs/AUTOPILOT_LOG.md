@@ -1450,3 +1450,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    22-min episode. Acceptance 4 shots then use the podcast; video shots wait for a working probe.
 3. Before deploy: re-probe video (short clip, then one whole video); off unless both answer.
 4. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
+
+## Media build, step 6 (2026-10-14, podcasts; plan round)
+
+- Check-in answered, ~01:10 IST. Sourabh: "start podcast plan".
+- Plan Round 5 written into `docs/plans/media.md`: Apple episode links only (direct `.mp3` links
+  cut), `MEDIA_VIDEO_ENABLED` switch (never remembered as a refusal), MP3 pieces cut on time only
+  so piece i = window i, a fingerprint so a retry with different dynamic ads starts over, web
+  audio player in the media chunk, harness on T02 (expected ≤ $0.35, emulator ledger).
+  Sent to plan-reviewer.
+- plan-reviewer: REVISE 12 (big ID3 tags, hosts ignoring Range, one source for pieces and
+  windows, piece ≤ 14.5 MB, transient fetch errors not remembered, semaphore released on every
+  exit, `media_off` never remembered and `apple_link_only` for `.mp3` links, web flag read from
+  `deploy.env.yaml`, video switch checked by API only, memory units, Apple field caps, tests) →
+  all applied → **APPROVE**, two nits applied.
+
+### Next steps (resume here, in order)
+1. Build step 6 per Round 5 + its review: `mp3.py` → `audio_head` / `fetch_audio` → Apple lookup →
+   switches + service audio branch → web `AudioPlayer` → suites.
+2. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
+3. Step 7. Checkpoint end of Oct 14 IST (decision 27).
