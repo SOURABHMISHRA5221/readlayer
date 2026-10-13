@@ -1384,3 +1384,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Stopped for Sourabh. Next (his call): one call in row 3's exact shape (default thinking,
   ~$0.08) to test low thinking as the cause, then a second video (T04) if it still hangs; or
   park video transcripts and move to step 4 / M9.
+- Sourabh: "go ahead and do it today". Probes (one attempt each, 180 s limit, emulator ledger):
+  whole 16-min video at **default** thinking → timeout 181 s ($0.095); T04 whole (18.6 min, low)
+  → timeout 181 s ($0.112); **first 3 min of the 16-min video → timeout 181 s ($0.018)**. Text
+  smoke on the same model: ok, 5 s, $0.001. So since about 18:23 UTC every YouTube-URL call
+  hangs, at any length, with or without offsets, at any thinking level; 0–600 answered in 27 s
+  just before. Cause is on Vertex's YouTube fetch, not our code (Google AI forum has reports of
+  YouTube-URL input on Vertex failing intermittently with 400 / 504 / timeouts).
+- Real Vertex spend tonight ≈ $0.55 (first emulator $0.229, second $0.322), emulator ledgers only.
+- T04's decision rule could not be measured; Round 4's 20-min cap and single call stay as
+  committed but unverified. Next: a $0.02 re-probe (first 3 min) later today; when it answers,
+  re-run acceptance 1–3 and T04. Until then, step 4 (web) needs no Vertex.
