@@ -36,6 +36,7 @@ from app.ingest.router import (
 )
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import url_hash
+from app.media import urls as media_urls
 from app.reader.state import PersonaKey
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
@@ -114,6 +115,10 @@ class OpenResponse(BaseModel):
     # False while the article is fetched but not analysed: the reader shows it at once and
     # calls POST /v1/content/{id}/analyse for the notes (two-phase "Open here").
     ready: bool
+    kind: Literal["article", "video", "podcast"] = "article"
+    # What the page calls next: "transcribe" (a recording with no transcript yet), "analyse",
+    # or None when ready.
+    stage: Literal["transcribe", "analyse"] | None = None
 
 
 # Library index per catalog version (pure derivation over all docs).
@@ -337,6 +342,8 @@ async def open_web_article(
         validate_url(body.url)
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
+    if (media := media_urls.classify(body.url)) is not None:
+        return await _open_media(media, caller, settings)
     content_id = url_hash(body.url)
     existing = await get_content_store().get(content_id)
     if existing is not None:
@@ -349,7 +356,7 @@ async def open_web_article(
         if pending.source in NOT_CORPUS:
             await _remember_ingested(caller, content_id)
         log.info("rec opened", extra={"content_id": content_id, "new": False, "ready": False})
-        return OpenResponse(content_id=content_id, new=False, ready=False)
+        return OpenResponse(content_id=content_id, new=False, ready=False, stage="analyse")
     if not await quota.reserve(caller, settings):
         return quota.cap_reached(caller, settings, "Use “Open original” for this one.")
     try:
@@ -362,7 +369,50 @@ async def open_web_article(
         raise
     await _remember_ingested(caller, content_id)
     log.info("rec opened", extra={"content_id": content_id, "new": True, "ready": False})
-    return OpenResponse(content_id=content_id, new=True, ready=False)
+    return OpenResponse(content_id=content_id, new=True, ready=False, stage="analyse")
+
+
+async def _open_media(
+    media: media_urls.Media, caller: Caller, settings: Settings
+) -> OpenResponse | JSONResponse:
+    """A YouTube video or podcast episode (DESIGN §21): checks and a pending doc, no model call.
+    The page then calls .../transcribe and .../analyse."""
+    from app import llm
+    from app.media.refusals import MediaCapReached, MediaRefused, MediaUnavailable, message
+    from app.media.service import open_media
+
+    try:
+        opened = await open_media(media, caller, settings)
+    except MediaRefused as exc:
+        return _error(422, exc.code, message(exc.code))
+    except MediaCapReached:
+        return _media_cap_reached(caller, settings)
+    except MediaUnavailable:
+        return _error(503, "media_unavailable", message("media_unavailable"), retry_after=60)
+    except llm.BudgetExceeded as exc:
+        return _ingest_error(exc)
+    await _remember_ingested(caller, opened.content_id)
+    log.info(
+        "rec opened",
+        extra={"content_id": opened.content_id, "new": opened.new, "stage": opened.stage},
+    )
+    return OpenResponse(
+        content_id=opened.content_id,
+        new=opened.new,
+        ready=opened.stage is None,
+        kind=media_urls.kind(media),
+        stage=opened.stage,
+    )
+
+
+def _media_cap_reached(caller: Caller, settings: Settings) -> JSONResponse:
+    if caller.is_anonymous:
+        limit = "The demo can open only a few new videos and podcasts a day."
+        more = " Sign in with Google for more."
+    else:
+        limit = f"You can open {settings.media_daily_cap} new videos and podcasts a day."
+        more = " Or try again tomorrow."
+    return _error(429, "media_cap_reached", f"{limit} Use “Open original” for this one.{more}")
 
 
 async def _remember_ingested(caller: Caller, content_id: str) -> None:

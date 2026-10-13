@@ -21,14 +21,14 @@ from app.content.access import require_readable
 from app.content.summary import article_domain
 from app.context import ReaderContext, hidden_ids, reader_context
 from app.graph.loader import get_graph
-from app.ingest.models import ContentDoc, PendingDoc
+from app.ingest.models import ContentDoc, Media, PendingDoc
 from app.reader.model import Band
 from app.reader.state import Density, PersonaKey
 from app.scoring import scorer
 from app.scoring.scorer import Annotations, ExplainerRef, ScoringInputs
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
-from app.store.pending_repo import get_pending_repo
+from app.store.pending_repo import MAX_ATTEMPTS, get_pending_repo
 from app.store.reader_repo import ReaderRepo
 
 log = logging.getLogger(__name__)
@@ -56,6 +56,21 @@ class ContentSummary(BaseModel):
 class ParagraphOut(BaseModel):
     id: str
     text: str
+    start_s: int | None = None  # transcript paragraphs: where it starts in the recording
+
+
+class MediaOut(BaseModel):
+    """The recording a transcript was made from (DESIGN §21); the page plays it from here."""
+
+    kind: Literal["video", "podcast"]
+    video_id: str | None
+    audio_url: str | None
+    duration_s: int
+
+
+class RefusalOut(BaseModel):
+    code: str
+    message: str
 
 
 class ContentDetail(BaseModel):
@@ -71,7 +86,12 @@ class ContentDetail(BaseModel):
     domain: str | None
     paragraphs: list[ParagraphOut]
     # "analysing": fetched, notes not ready yet; the client calls POST .../analyse.
-    status: Literal["ready", "analysing"]
+    # "transcribing": a recording with no transcript yet (paragraphs empty); the client calls
+    # POST .../transcribe. "refused" (with `refusal`) and "failed" (attempts used up): the page
+    # shows the message with "Open original" and stops calling.
+    status: Literal["transcribing", "analysing", "ready", "refused", "failed"]
+    media: MediaOut | None = None
+    refusal: RefusalOut | None = None
 
 
 class AnchorOut(BaseModel):
@@ -325,13 +345,37 @@ async def get_content(
         published=doc.published,
         image=doc.image,
         domain=article_domain(doc, get_graph()),
-        paragraphs=[ParagraphOut(id=p.id, text=p.text) for p in doc.paragraphs],
+        paragraphs=[ParagraphOut(id=p.id, text=p.text, start_s=p.start_s) for p in doc.paragraphs],
         status="ready",
+        media=media_out(doc.media),
     )
 
 
+def media_out(media: Media | None) -> MediaOut | None:
+    if media is None:
+        return None
+    return MediaOut(
+        kind="video" if media.kind == "youtube" else "podcast",
+        video_id=media.video_id,
+        audio_url=media.audio_url,
+        duration_s=media.duration_s,
+    )
+
+
+def _pending_status(doc: PendingDoc) -> str:
+    if doc.refused:
+        return "refused"
+    attempts = doc.transcribe_attempts if doc.stage == "transcribe" else doc.attempts
+    if attempts >= MAX_ATTEMPTS:
+        return "failed"
+    return "transcribing" if doc.stage == "transcribe" else "analysing"
+
+
 def _pending_detail(doc: PendingDoc) -> ContentDetail:
-    """A fetched article still being analysed: shown at once, notes follow (two-phase)."""
+    """A fetched article still being analysed: shown at once, notes follow (two-phase). A
+    recording is shown (its player) before its transcript exists."""
+    from app.media.refusals import message
+
     return ContentDetail(
         id=doc.content_id,
         title=doc.title,
@@ -343,8 +387,10 @@ def _pending_detail(doc: PendingDoc) -> ContentDetail:
         published=doc.published,
         image=doc.image,
         domain=None,
-        paragraphs=[ParagraphOut(id=p.id, text=p.text) for p in doc.paragraphs],
-        status="analysing",
+        paragraphs=[ParagraphOut(id=p.id, text=p.text, start_s=p.start_s) for p in doc.paragraphs],
+        status=_pending_status(doc),
+        media=media_out(doc.media),
+        refusal=RefusalOut(code=doc.refused, message=message(doc.refused)) if doc.refused else None,
     )
 
 

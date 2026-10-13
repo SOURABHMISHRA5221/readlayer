@@ -16,10 +16,17 @@ from app.ingest import quota, submitted
 from app.ingest.models import ContentDoc, PendingDoc
 from app.ingest.safe_fetch import FetchError, validate_url
 from app.ingest.urls import ext_id, url_hash
+from app.media.urls import classify
 from app.privacy.redact import count_redactions, redact, redact_url
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
-from app.store.pending_repo import AnalysisBusy, AnalysisFailed, NotPending, get_pending_repo
+from app.store.pending_repo import (
+    AnalysisBusy,
+    AnalysisFailed,
+    ContentTranscribing,
+    NotPending,
+    get_pending_repo,
+)
 from app.store.reader_repo import ReaderRepo
 
 router = APIRouter()
@@ -153,6 +160,8 @@ async def post_content(
         validate_url(body.url)
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
+    if classify(body.url) is not None:  # both shapes, before any lookup or slot (plan R4)
+        return _error(422, "use_open_here", "Open it in Gloss with Read any link.")
     if isinstance(body, SubmittedRequest):
         return await _post_submitted(body, caller, settings)
     known = await is_known(url_hash(body.url))
@@ -247,6 +256,50 @@ async def analyse_content(
     return AnalyseResponse(content_id=content_id, status="ready")
 
 
+class TranscribeResponse(BaseModel):
+    content_id: str
+    status: Literal["analysing"]
+
+
+@router.post("/content/{content_id}/transcribe", response_model=TranscribeResponse)
+async def transcribe_content(
+    content_id: Annotated[str, Path(min_length=1, max_length=64, pattern=r"^[0-9a-f]+$")],
+    caller: Annotated[Caller, Depends(current_caller)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> TranscribeResponse | JSONResponse:
+    """A recording's transcript (DESIGN §21), then the client calls .../analyse as for an
+    article. Already transcribed → 200 with no model call; another request transcribing → 202;
+    a refusal → 422 with its code. The media slot was taken when it was opened."""
+    from app.media.refusals import MediaRefused, message
+    from app.media.service import TranscribeBusy, transcribe_pending
+
+    if (pending := await get_pending_repo().get(content_id)) is not None:
+        await require_readable(pending, caller.uid)
+    try:
+        await transcribe_pending(content_id, settings)
+    except NotPending:
+        return _error(404, "not_found", "content not found")
+    except TranscribeBusy:
+        return JSONResponse(
+            {"content_id": content_id, "status": "transcribing"},
+            status_code=202,
+            headers={"Retry-After": "5"},
+        )
+    except MediaRefused as exc:
+        return _error(422, exc.code, message(exc.code))
+    except AnalysisFailed:
+        return _error(
+            410, "transcribe_failed", "Gloss couldn't transcribe this. Open the original instead."
+        )
+    except TimeoutError:
+        return _error(504, "transcribe_timeout", "Transcribing took too long. Try again.")
+    except Exception as exc:
+        if isinstance(exc, INGEST_ERRORS):
+            return _ingest_error(exc)
+        raise
+    return TranscribeResponse(content_id=content_id, status="analysing")
+
+
 INGEST_ERRORS = (
     FetchError,
     llm.BudgetExceeded,
@@ -254,11 +307,19 @@ INGEST_ERRORS = (
     llm.LLMRejected,
     AnalysisBusy,
     AnalysisFailed,
+    ContentTranscribing,
     TimeoutError,
 )
 
 
 def _ingest_error(exc: Exception) -> JSONResponse:
+    if isinstance(exc, ContentTranscribing):
+        return _error(
+            409,
+            "content_transcribing",
+            "This recording is being transcribed. Try again shortly.",
+            5,
+        )
     if isinstance(exc, AnalysisBusy):
         return _error(
             409, "content_analysing", "This article is being analysed. Try again shortly.", 5

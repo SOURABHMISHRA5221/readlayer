@@ -55,7 +55,13 @@ def test_phase_one_shows_the_article_without_any_llm_call(store, fetcher, fake_l
     c = client()
     opened = c.post("/v1/recs/open", json={"url": URL})
     assert opened.status_code == 200, opened.text
-    assert opened.json() == {"content_id": CID, "new": True, "ready": False}
+    assert opened.json() == {
+        "content_id": CID,
+        "new": True,
+        "ready": False,
+        "kind": "article",
+        "stage": "analyse",
+    }
     assert fake_llm.calls == []  # no extract_demands, no linking
     assert store.docs == {}  # nothing in contents/ yet
 

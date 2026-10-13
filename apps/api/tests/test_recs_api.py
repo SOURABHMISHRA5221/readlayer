@@ -166,8 +166,10 @@ def test_open_ingests_within_the_daily_cap(env, monkeypatch):
     monkeypatch.setattr(recs_router, "fetch_and_extract", fake_fetch_and_extract(sources))
     first = client.post("/v1/recs/open", json={"url": "https://explainer.example/yield"})
     assert first.status_code == 200
-    assert first.json() == {"content_id": url_hash("https://explainer.example/yield"),
-                            "new": True, "ready": False}  # fmt: skip
+    assert first.json() == {
+        "content_id": url_hash("https://explainer.example/yield"),
+        "new": True, "ready": False, "kind": "article", "stage": "analyse",
+    }  # fmt: skip
     assert sources == ["user_ingested"]  # reader-opened pages never become corpus data
     again = client.post("/v1/recs/open", json={"url": "https://explainer.example/yield"})
     # Pending (fetched, not analysed): free, no second fetch.
