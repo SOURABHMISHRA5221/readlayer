@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Domain, OverviewNode } from "../src/lib/profileApi";
-import { clusterDots, DOT_R, miniMapNodes, TILE_H, TILE_W, topicTiles, weekLine } from "../src/lib/weekMap";
+import { clusterDots, DOT_R, miniMapNodes, RING_R, TILE_H, TILE_W, topicTiles, weekLine, type Move } from "../src/lib/weekMap";
 
 const SIX: Domain[] = ["economics", "finance", "business", "policy", "technology", "science"];
 
@@ -63,21 +63,51 @@ describe("mini-map selection", () => {
     expect(miniMapNodes(solid).map((n) => n.id)).toEqual(["law_0", "law_1", "law_2"]);
   });
 
+  it("with one place left after the risers, fills it and never asks for more", () => {
+    const risers = [0, 1, 2, 3, 4, 5, 6];
+    const crowded = { domains: ["law"] as Domain[], nodes: [
+      ...risers.map((i) => node("law", i, { rose_this_week: true })),
+      ...[7, 8, 9, 10, 11].map((i) => node("law", i)),
+      ...[12, 13, 14].map((i) => node("law", i, { ready: true })),
+    ] };
+    const picked = miniMapNodes(crowded);
+    expect(picked).toHaveLength(8);
+    expect(picked.filter((n) => n.rose_this_week)).toHaveLength(7);
+    expect(new Set(picked.map((n) => n.id)).size).toBe(8);
+    expect(picked[7]?.id).toBe("law_7"); // the last place goes to the best known idea
+  });
+
   it("is the same for the same input", () => {
     const ov = overview(SIX, { science: [2] });
     expect(miniMapNodes(ov)).toEqual(miniMapNodes(ov));
   });
 });
 
+const move = (concept_id: string, label: string, domain?: Domain): Move => ({ concept_id, label, domain });
+
 describe("topic tiles", () => {
-  it("makes one tile a topic that has ideas, in the overview's order, with its counts", () => {
+  it("makes one tile a topic that has ideas, in the overview's order", () => {
     const ov = overview(["finance", "health"], { finance: [0, 13] });
-    const tiles = topicTiles({ domains: ["finance", "sports", "health"], nodes: ov.nodes });
+    const moved = [move("finance_0", "A", "finance"), move("finance_13", "B", "finance")];
+    const tiles = topicTiles({ domains: ["finance", "sports", "health"], nodes: ov.nodes }, moved);
     expect(tiles.map((t) => t.domain)).toEqual(["finance", "health"]);
     expect(tiles[0]).toMatchObject({ rose: 2 });
     expect(tiles[0]).not.toHaveProperty("known"); // the overview caps a topic at 12: not a count to show
     expect(tiles[0]?.dots).toHaveLength(8);
     expect(tiles[0]?.dots[0]).toMatchObject({ id: "finance_0", rose: true });
+    expect(tiles[1]).toMatchObject({ rose: 0 });
+  });
+
+  // The overview keeps a topic's top 12 ideas; an idea that rose from unaware to heard of is
+  // usually not one of them. The week's numbers come from the reader's full list of moves.
+  it("counts a rise the overview doesn't carry, and rings a drawn dot the week's list names", () => {
+    const ov = overview(["finance", "health"]); // no rose_this_week flag anywhere
+    const moved = [move("finance_99", "Term premium", "finance"), move("health_2", "Insulin", "health"), move("law_1", "Tort", "law")];
+    const tiles = topicTiles(ov, moved);
+    expect(tiles.map((t) => [t.domain, t.rose])).toEqual([["finance", 1], ["health", 1]]);
+    expect(tiles[0]?.dots.some((d) => d.rose)).toBe(false); // finance_99 isn't drawn
+    expect(tiles[1]?.dots.find((d) => d.id === "health_2")).toMatchObject({ rose: true });
+    expect(weekLine(moved)).toBe("3 ideas moved up this week: Term premium, Insulin and Tort");
   });
 });
 
@@ -85,14 +115,15 @@ describe("cluster dots", () => {
   it.each([1, 2, 3, 4, 5, 6, 7, 8])("%i dots sit inside the tile and never overlap", (count) => {
     const dots = clusterDots(count);
     expect(dots).toHaveLength(count);
-    const ring = DOT_R + 2.5; // a riser's ring
     for (const d of dots) {
-      expect(d.x - ring).toBeGreaterThanOrEqual(0);
-      expect(d.x + ring).toBeLessThanOrEqual(TILE_W);
-      expect(d.y - ring).toBeGreaterThanOrEqual(0);
-      expect(d.y + ring).toBeLessThanOrEqual(TILE_H);
+      expect(d.x - RING_R).toBeGreaterThanOrEqual(0); // a riser's ring fits too
+      expect(d.x + RING_R).toBeLessThanOrEqual(TILE_W);
+      expect(d.y - RING_R).toBeGreaterThanOrEqual(0);
+      expect(d.y + RING_R).toBeLessThanOrEqual(TILE_H);
     }
-    for (const a of dots) for (const b of dots) if (a !== b) expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(2 * DOT_R);
+    expect(RING_R).toBeGreaterThan(DOT_R);
+    // Two neighbours that both rose: their rings must not cross.
+    for (const a of dots) for (const b of dots) if (a !== b) expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(2 * RING_R);
   });
 
   it("is deterministic and starts in the middle", () => {
@@ -102,9 +133,9 @@ describe("cluster dots", () => {
 });
 
 describe("the week in a line", () => {
-  const rose = (labels: string[]) => labels.map((label, i) => node("finance", i, { label, rose_this_week: true }));
+  const rose = (labels: string[]) => labels.map((label, i) => move(`c_${i}`, label, "finance"));
   it("says so when nothing moved", () => {
-    expect(weekLine([node("finance", 0)])).toBe("Nothing moved up yet this week");
+    expect(weekLine([])).toBe("Nothing moved up yet this week");
   });
   it("names one", () => {
     expect(weekLine(rose(["Repo rate"]))).toBe("1 idea moved up this week: Repo rate");

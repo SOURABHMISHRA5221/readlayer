@@ -4,9 +4,9 @@ import { domainLabel, plural } from "../../lib/format";
 import { personaParam, type PersonaKey } from "../../lib/personas";
 import { profileApi, type Overview } from "../../lib/profileApi";
 import { withParams } from "../../lib/router";
-import { DOT_R, TILE_H, TILE_W, topicTiles, weekLine, type TopicTile } from "../../lib/weekMap";
+import { DOT_R, RING_R, TILE_H, TILE_W, topicTiles, weekLine, type Move, type TopicTile } from "../../lib/weekMap";
 
-type Load = { status: "loading" } | { status: "ready"; overview: Overview } | { status: "error" };
+type Load = { status: "loading" } | { status: "ready"; overview: Overview; moved: Move[] } | { status: "error" };
 
 function tileLabel(t: TopicTile): string {
   return `${domainLabel(t.domain)}: ${t.rose ? `${plural(t.rose, "idea")} moved up this week` : "no change this week"}`;
@@ -14,23 +14,23 @@ function tileLabel(t: TopicTile): string {
 
 /**
  * "Your map this week" in the library sidebar (Wide layout, decision 45): one small cluster of
- * dots per topic from the same overview as the profile's map, this week's risers ringed, and
- * the week in a line of text. Not interactive; the link opens the full map. A lazy chunk,
- * loaded from 960px up only.
+ * dots per topic from the same overview as the profile's map, and the week in a line of text.
+ * The overview only carries a topic's top ideas, so what rose this week is read from the
+ * profile's own list (the same one its "This week" shows); neither answer alone is shown as the
+ * week. Not interactive; the link opens the full map. A lazy chunk, loaded from 961px up only.
  */
 export default function WeekPanel({ persona }: { persona: PersonaKey | null }) {
   const [load, setLoad] = useState<Load>({ status: "loading" });
   useEffect(() => {
     const ctrl = new AbortController();
     setLoad({ status: "loading" });
-    profileApi
-      .overview(persona, ctrl.signal)
-      .then((overview) => setLoad({ status: "ready", overview }))
+    Promise.all([profileApi.overview(persona, ctrl.signal), profileApi.profile(persona, ctrl.signal)])
+      .then(([overview, profile]) => setLoad({ status: "ready", overview, moved: profile.week.moved_up }))
       .catch(() => !ctrl.signal.aborted && setLoad({ status: "error" }));
     return () => ctrl.abort();
   }, [persona]);
 
-  const tiles = useMemo(() => (load.status === "ready" ? topicTiles(load.overview) : []), [load]);
+  const tiles = useMemo(() => (load.status === "ready" ? topicTiles(load.overview, load.moved) : []), [load]);
   const mapHref = `${withParams(new URL("/profile", window.location.origin), { persona: personaParam(persona) })}#kmap-title`;
 
   if (load.status === "loading") return <div className="skeleton weekmap__skeleton" role="status" aria-label="Loading your map" />; // as Sidebar's MapSkeleton
@@ -51,7 +51,7 @@ export default function WeekPanel({ persona }: { persona: PersonaKey | null }) {
               {t.dots.map((d) => (
                 <g key={d.id} className="weekmap__dot" data-band={d.band} data-ready={d.ready || undefined}>
                   <circle cx={d.x} cy={d.y} r={DOT_R} />
-                  {d.rose && <circle cx={d.x} cy={d.y} r={DOT_R + 2.5} className="weekmap__ring" />}
+                  {d.rose && <circle cx={d.x} cy={d.y} r={RING_R} className="weekmap__ring" />}
                 </g>
               ))}
             </svg>
@@ -60,10 +60,10 @@ export default function WeekPanel({ persona }: { persona: PersonaKey | null }) {
           </li>
         ))}
       </ul>
-      <p className="weekmap__line">{weekLine(load.overview.nodes)}</p>
+      <p className="weekmap__line">{weekLine(load.moved)}</p>
       <ul className="weekmap__key" aria-label="Key">
         <li>
-          <span className="weekmap__mark" aria-hidden="true" /> You know
+          <span className="weekmap__mark" aria-hidden="true" /> We think you know
         </li>
         <li>
           <span className="weekmap__mark" data-kind="ready" aria-hidden="true" /> Ready next

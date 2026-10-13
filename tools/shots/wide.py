@@ -94,6 +94,12 @@ CARD_JS = "(() => {" + HELPERS + """
   return card && rail ? { left: n(card.left), right: n(card.right), width: n(card.width), railLeft: n(rail.left),
     railWidth: n(rail.width), vw: document.documentElement.clientWidth, overProse: hit(card, prose) } : null; })()"""
 
+# Pages that only share the top bar and the container: the bar's edges against the page's.
+BAR_JS = "(() => {" + HELPERS + """
+  const main = r(q('.feedmain')), side = r(q('.side'));
+  return { vw: document.documentElement.clientWidth, bar: inner(q('.topbar__inner')), page: main && side ? [n(main.left), n(side.right)] : null,
+    rows: all('.row:not(.row--skeleton)').length, row: q('.row:not(.row--skeleton)') ? n(r(q('.row:not(.row--skeleton)')).width) : null }; })()"""
+
 # With the page scrolled: each sidebar group's box, and where its last block ends once the group
 # itself is scrolled to its end.
 STICKY_JS = "(() => {" + HELPERS + """
@@ -307,6 +313,17 @@ async def library(p, who: str, query: str) -> None:
     await p.eval("(() => { document.querySelectorAll('.side__col').forEach((e) => { e.scrollTop = 0; }); window.scrollTo(0, 0); return 1; })()")
     await p.viewport(1440)
     if who == "demo":
+        for name, path, ready in (("library-saved", f"/?tab=saved{query}", ".panel"), ("library-search", f"/?tab=topics&q=rate{query}", ".library__count"),
+                                  ("connect", "/connect", "main")):
+            await view(p, 1440, False)
+            await p.goto(W + path, wait=1.5)
+            await p.wait_for(ready, 30)
+            await asyncio.sleep(2)
+            for w, dark in ((1440, False), (1440, True), (1024, False)):
+                await view(p, w, dark)
+                got = await record(p, f"{name}-{who}", w, dark, BAR_JS, full=False)
+                if got["m"] and got["m"]["bar"] and got["m"]["page"]:
+                    edges(got["m"], f"{name}-{who}-{w}")
         await risers(p, query)
 
 
@@ -317,9 +334,10 @@ async def risers(p, query: str) -> None:
     nodes = (await p.api("", "GET", f"/v1/me/graph?view=overview&persona={persona}"))["body"]["nodes"]
     picks = [n["id"] for n in nodes if n["band"] == "heard of" and not n["ready"]][:2] or [n["id"] for n in nodes if n["ready"]][:2]
     done = [(await p.api("", "PATCH", f"/v1/me/graph/{cid}?persona={persona}", {"state": "known"}))["status"] for cid in picks]
-    after = (await p.api("", "GET", f"/v1/me/graph?view=overview&persona={persona}"))["body"]["nodes"]
-    rose = [n["label"] for n in after if n["rose_this_week"]]
-    print(f"[library risers] corrected {picks} -> {done}; risen this week: {rose}", flush=True)
+    # The week's numbers are the profile's list of moves (uncapped), not the overview's nodes.
+    moved = (await p.api("", "GET", f"/v1/me/profile?persona={persona}"))["body"]["week"]["moved_up"]
+    rose = [m["label"] for m in moved]
+    print(f"[library risers] corrected {picks} -> {done}; the profile's moves this week: {rose}", flush=True)
     check(len(rose) >= 1, "library risers: no idea counts as risen after two corrections")
     await view(p, 1440, False)
     await p.goto(f"{W}/?tab=topics{query}", wait=1.5)
@@ -330,7 +348,8 @@ async def risers(p, query: str) -> None:
         await view(p, w, dark)
         m = (await record(p, "library-risers-demo", w, dark, LIBRARY_JS, full=False))["m"]
         check(m["rings"] >= 1 and m["ups"] >= 1, f"library-risers-demo-{w}: rings {m['rings']}, '+N this week' lines {m['ups']}")
-        check(bool(m["line"]) and "moved up this week:" in m["line"], f"library-risers-demo-{w}: line {m['line']!r}")
+        want = f"{len(rose)} idea{'' if len(rose) == 1 else 's'} moved up this week:"
+        check(bool(m["line"]) and m["line"].startswith(want), f"library-risers-demo-{w}: line {m['line']!r}, the profile lists {len(rose)}")
         check(not m["small"], f"library-risers-demo-{w}: text under 13px {m['small']}")
 
 
@@ -424,6 +443,30 @@ async def reader(p, query: str, persona: str) -> None:
     await cls(p, "reader", url, ".rl-mark")
 
 
+async def seven_topics(p) -> None:
+    """A second Google reader with seven topics: the cards' last row is one short (4 + 3)."""
+    await p.reset_auth(W)
+    await p.goto(W + "/", wait=3)
+    await p.eval(f"window.__rlEmulatorSignIn('wide7-{int(time.time())}@example.com', 'Wide Seven')")
+    await asyncio.sleep(4)
+    topics = [*TOPICS, "health"]
+    setup = [(await p.api("", "POST", "/v1/me/consent", {"version": "consent-v2"}))["status"],
+             (await p.api("", "POST", "/v1/onboarding", {"field": "software", "interests": topics,
+              "comfort": {t: "some" for t in topics}, "thinks_in": ["cricket"], "country": "IN"}))["status"],
+             (await p.api("", "POST", "/v1/calibration/skip", {}))["status"]]
+    check(all(x < 300 for x in setup), f"seven-topic reader setup {setup}")
+    await view(p, 1440, False)
+    await p.goto(f"{W}/profile", wait=1.5)
+    await p.wait_for(".kmap__canvas svg, .clist", 40)
+    await asyncio.sleep(2.5)
+    for w in (1024, 1280, 1440, 1920):
+        await view(p, w, False)
+        await p.eval("window.scrollTo(0, 0); 1")
+        m = (await record(p, "profile-seven", w, False, PROFILE_JS, full=False))["m"]
+        profile_checks(w, m, f"profile-seven-{w}")
+        check(m["cards"] == 7 and m["columns"] == (7 if w == 1920 else 4), f"profile-seven-{w}: {m['cards']} cards, {m['columns']} across")
+
+
 async def google_reader(p) -> None:
     """A fresh emulator Google reader with six chosen topics and three goals (no model call:
     two habits and a concept the graph knows by name)."""
@@ -470,6 +513,9 @@ async def main() -> None:
             await google_reader(p)
             await library(p, "google", "")
             await profile(p, "google", "")
+            if not NARROW_ONLY:
+                step("seven topics")
+                await seven_topics(p)
             g = out["pages"].get("library-foryou-google-1440-light", {}).get("m") or {}
             check(g.get("goals", 0) >= 2, f"google: {g.get('goals')} goals in the sidebar")
     finally:

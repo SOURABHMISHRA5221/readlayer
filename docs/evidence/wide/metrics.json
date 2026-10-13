@@ -29,7 +29,7 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 852.4,
+      "bottom": 860.4,
       "sticky": false
      }
     ],
@@ -73,7 +73,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 809.3,
+      "bottom": 839.4,
       "sticky": false
      }
     ],
@@ -205,7 +205,7 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 852.4,
+      "bottom": 860.4,
       "sticky": false
      }
     ],
@@ -249,7 +249,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 809.3,
+      "bottom": 839.4,
       "sticky": false
      }
     ],
@@ -601,7 +601,7 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 852.4,
+      "bottom": 860.4,
       "sticky": false
      }
     ],
@@ -645,7 +645,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 809.3,
+      "bottom": 839.4,
       "sticky": false
      }
     ],
@@ -777,7 +777,7 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 852.4,
+      "bottom": 860.4,
       "sticky": false
      }
     ],
@@ -821,7 +821,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 809.3,
+      "bottom": 839.4,
       "sticky": false
      }
     ],
@@ -1164,7 +1164,7 @@
     {
      "top": 65,
      "bottom": 900,
-     "end": 573.1,
+     "end": 581.1,
      "scrolls": false,
      "sticky": true
     }
@@ -1183,11 +1183,164 @@
     {
      "top": 65,
      "bottom": 760,
-     "end": 573.1,
+     "end": 581.1,
      "scrolls": false,
      "sticky": true
     }
    ]
+  },
+  "library-saved-demo-1440-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": [
+     48,
+     1392
+    ],
+    "rows": 0,
+    "row": null
+   },
+   "r429": 0
+  },
+  "library-saved-demo-1440-dark": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": [
+     48,
+     1392
+    ],
+    "rows": 0,
+    "row": null
+   },
+   "r429": 0
+  },
+  "library-saved-demo-1024-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1024,
+    "bar": [
+     32,
+     992
+    ],
+    "page": [
+     32,
+     992
+    ],
+    "rows": 0,
+    "row": null
+   },
+   "r429": 0
+  },
+  "library-search-demo-1440-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": [
+     48,
+     1392
+    ],
+    "rows": 1,
+    "row": 752
+   },
+   "r429": 0
+  },
+  "library-search-demo-1440-dark": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": [
+     48,
+     1392
+    ],
+    "rows": 1,
+    "row": 752
+   },
+   "r429": 0
+  },
+  "library-search-demo-1024-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1024,
+    "bar": [
+     32,
+     992
+    ],
+    "page": [
+     32,
+     992
+    ],
+    "rows": 1,
+    "row": 633.9
+   },
+   "r429": 0
+  },
+  "connect-demo-1440-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": null,
+    "rows": 0,
+    "row": null
+   },
+   "r429": 0
+  },
+  "connect-demo-1440-dark": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": null,
+    "rows": 0,
+    "row": null
+   },
+   "r429": 0
+  },
+  "connect-demo-1024-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1024,
+    "bar": [
+     32,
+     992
+    ],
+    "page": null,
+    "rows": 0,
+    "row": null
+   },
+   "r429": 0
   },
   "library-risers-demo-1440-light": {
    "axe": [],
@@ -1226,7 +1379,7 @@
     "goals": 0,
     "rings": 2,
     "ups": 1,
-    "line": "2 ideas moved up this week: Fiscal deficit and Depreciation",
+    "line": "2 ideas moved up this week: Depreciation and Fiscal deficit",
     "height": 1669,
     "lede": 640,
     "small": []
@@ -1270,7 +1423,7 @@
     "goals": 0,
     "rings": 2,
     "ups": 1,
-    "line": "2 ideas moved up this week: Fiscal deficit and Depreciation",
+    "line": "2 ideas moved up this week: Depreciation and Fiscal deficit",
     "height": 1669,
     "lede": 640,
     "small": []
@@ -1305,7 +1458,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 847.8,
+      "bottom": 878,
       "sticky": false
      }
     ],
@@ -1314,7 +1467,7 @@
     "goals": 0,
     "rings": 2,
     "ups": 1,
-    "line": "2 ideas moved up this week: Fiscal deficit and Depreciation",
+    "line": "2 ideas moved up this week: Depreciation and Fiscal deficit",
     "height": 1605,
     "lede": 640,
     "small": []
@@ -1349,7 +1502,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 847.8,
+      "bottom": 878,
       "sticky": false
      }
     ],
@@ -1358,7 +1511,7 @@
     "goals": 0,
     "rings": 2,
     "ups": 1,
-    "line": "2 ideas moved up this week: Fiscal deficit and Depreciation",
+    "line": "2 ideas moved up this week: Depreciation and Fiscal deficit",
     "height": 1605,
     "lede": 640,
     "small": []
@@ -2396,7 +2549,7 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 1204.4,
+      "bottom": 1212.4,
       "sticky": false
      }
     ],
@@ -2440,7 +2593,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 1182.2,
+      "bottom": 1212.4,
       "sticky": false
      }
     ],
@@ -2572,7 +2725,7 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 1204.4,
+      "bottom": 1212.4,
       "sticky": false
      }
     ],
@@ -2616,7 +2769,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 1182.2,
+      "bottom": 1212.4,
       "sticky": false
      }
     ],
@@ -2968,7 +3121,7 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 1204.4,
+      "bottom": 1212.4,
       "sticky": false
      }
     ],
@@ -3012,7 +3165,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 1182.2,
+      "bottom": 1212.4,
       "sticky": false
      }
     ],
@@ -3144,7 +3297,7 @@
      {
       "left": 753,
       "top": 384.4,
-      "bottom": 1204.4,
+      "bottom": 1212.4,
       "sticky": false
      }
     ],
@@ -3188,7 +3341,7 @@
      {
       "left": 965.8,
       "top": 384.4,
-      "bottom": 1182.2,
+      "bottom": 1212.4,
       "sticky": false
      }
     ],
@@ -3512,7 +3665,7 @@
    },
    "r429": 0
   },
-  "library-google-cls-1440": 0.012,
+  "library-google-cls-1440": 0.013,
   "library-google-tab-order": [
    "Read any link",
    "Topics for you",
@@ -3531,7 +3684,7 @@
     {
      "top": 65,
      "bottom": 900,
-     "end": 860,
+     "end": 884,
      "scrolls": true,
      "sticky": true
     }
@@ -3550,7 +3703,7 @@
     {
      "top": 65,
      "bottom": 760,
-     "end": 720,
+     "end": 744,
      "scrolls": true,
      "sticky": true
     }
@@ -4148,6 +4301,146 @@
    "axe": [],
    "hscroll": 0,
    "m": null,
+   "r429": 0
+  },
+  "profile-seven-1024-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1024,
+    "cards": 7,
+    "columns": 4,
+    "lastRow": 3,
+    "greyCell": false,
+    "canvas": [
+     658,
+     519.5
+    ],
+    "svg": [
+     658,
+     519.5
+    ],
+    "ctm": 0.866,
+    "svgInside": true,
+    "height": 2419,
+    "level": "21px",
+    "cardRule": true,
+    "pairSide": true,
+    "weekAboveMap": true,
+    "bar": [
+     32,
+     992
+    ],
+    "page": [
+     32,
+     992
+    ]
+   },
+   "r429": 0
+  },
+  "profile-seven-1280-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1280,
+    "cards": 7,
+    "columns": 4,
+    "lastRow": 3,
+    "greyCell": false,
+    "canvas": [
+     874.8,
+     680
+    ],
+    "svg": [
+     840,
+     680
+    ],
+    "ctm": 1,
+    "svgInside": true,
+    "height": 2548,
+    "level": "22.016px",
+    "cardRule": true,
+    "pairSide": true,
+    "weekAboveMap": true,
+    "bar": [
+     48,
+     1232
+    ],
+    "page": [
+     48,
+     1232
+    ]
+   },
+   "r429": 0
+  },
+  "profile-seven-1440-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1440,
+    "cards": 7,
+    "columns": 4,
+    "lastRow": 3,
+    "greyCell": false,
+    "canvas": [
+     996.4,
+     720
+    ],
+    "svg": [
+     960,
+     720
+    ],
+    "ctm": 1,
+    "svgInside": true,
+    "height": 2596,
+    "level": "24.768px",
+    "cardRule": true,
+    "pairSide": true,
+    "weekAboveMap": true,
+    "bar": [
+     48,
+     1392
+    ],
+    "page": [
+     48,
+     1392
+    ]
+   },
+   "r429": 0
+  },
+  "profile-seven-1920-light": {
+   "axe": [],
+   "hscroll": 0,
+   "m": {
+    "vw": 1920,
+    "cards": 7,
+    "columns": 7,
+    "lastRow": 7,
+    "greyCell": false,
+    "canvas": [
+     1158,
+     780
+    ],
+    "svg": [
+     1120,
+     780
+    ],
+    "ctm": 1,
+    "svgInside": true,
+    "height": 2512,
+    "level": "26px",
+    "cardRule": true,
+    "pairSide": true,
+    "weekAboveMap": true,
+    "bar": [
+     200,
+     1720
+    ],
+    "page": [
+     200,
+     1720
+    ]
+   },
    "r429": 0
   }
  },

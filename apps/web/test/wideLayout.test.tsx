@@ -22,7 +22,9 @@ const node = (id: string, domain: string, rose = false) => ({
 });
 const OVERVIEW = { view: "overview", domains: ["finance", "policy"], nodes: [node("repo_rate", "finance", true), node("gst", "policy")], edges: [] };
 
-function stub(width: number, overview: unknown | "fail" = OVERVIEW) {
+const WEEK = { week: { moved_up: [{ concept_id: "repo_rate", label: "Repo rate", from: "heard of", to: "understands", domain: "finance" }], trend: [] } };
+
+function stub(width: number, overview: unknown | "fail" = OVERVIEW, profile: unknown | "fail" = WEEK) {
   paths = [];
   vi.stubGlobal("matchMedia", (query: string) => {
     const min = Number(/min-width:\s*(\d+)px/.exec(query)?.[1] ?? 0);
@@ -33,6 +35,9 @@ function stub(width: number, overview: unknown | "fail" = OVERVIEW) {
     paths.push(u.pathname + u.search);
     if (u.pathname === "/v1/me/graph") {
       return overview === "fail" ? new Response("{}", { status: 500 }) : new Response(JSON.stringify(overview), { status: 200 });
+    }
+    if (u.pathname === "/v1/me/profile") {
+      return profile === "fail" ? new Response("{}", { status: 500 }) : new Response(JSON.stringify(profile), { status: 200 });
     }
     return new Response(JSON.stringify(u.pathname === "/v1/me/goals" ? [] : {}), { status: 200 });
   });
@@ -110,10 +115,30 @@ describe("library sidebar on a wide screen", () => {
     expect(groups).toEqual([["Read any link", "Topics for you"], ["Your map this week", "Your goals"]]);
     expect(graphCalls()).toEqual(["/v1/me/graph?view=overview"]);
     expect(host.querySelectorAll(".weekmap__tile")).toHaveLength(2);
-    expect(host.querySelector(".weekmap__line")?.textContent).toBe("1 idea moved up this week: repo_rate");
+    expect(paths.filter((p) => p.startsWith("/v1/me/profile"))).toEqual(["/v1/me/profile"]);
+    expect(host.querySelector(".weekmap__line")?.textContent).toBe("1 idea moved up this week: Repo rate");
     const labels = [...host.querySelectorAll(".weekmap__tile svg")].map((s) => s.getAttribute("aria-label"));
     expect(labels).toEqual(["Finance: 1 idea moved up this week", "Policy: no change this week"]);
     expect(host.querySelector(".weekmap")?.textContent).not.toMatch(/\d+ ideas?(?! moved)/); // no per-topic totals
+  });
+
+  it("takes the week's numbers from the reader's own list of moves, not from the dots drawn", async () => {
+    // The overview flags nothing, but two ideas outside its top 12 rose; a third is in a topic with no tile.
+    const quietMap = { ...OVERVIEW, nodes: [node("repo_rate", "finance"), node("gst", "policy")] };
+    const moves = ["Term premium", "Duration"].map((label, i) => ({ concept_id: `x${i}`, label, from: "unaware", to: "heard of", domain: "finance" }));
+    stub(1280, quietMap, { week: { moved_up: [...moves, { concept_id: "tort", label: "Tort", from: "unaware", to: "heard of", domain: "law" }], trend: [] } });
+    await mount();
+    expect(host.querySelector(".weekmap__line")?.textContent).toBe("3 ideas moved up this week: Term premium, Duration and Tort");
+    expect([...host.querySelectorAll(".weekmap__up")].map((e) => e.textContent)).toEqual(["+2 this week"]);
+    expect(host.querySelectorAll(".weekmap__ring")).toHaveLength(0);
+    expect(host.querySelector(".weekmap__tile svg")?.getAttribute("aria-label")).toBe("Finance: 2 ideas moved up this week");
+  });
+
+  it("doesn't claim a quiet week when the week's list didn't load", async () => {
+    stub(1280, OVERVIEW, "fail");
+    await mount();
+    expect(host.querySelector(".side__block--week")?.textContent).toContain("Your map didn't load.");
+    expect(host.textContent).not.toContain("Nothing moved up");
   });
 
   it("waits for the library's first answer before asking for the map", async () => {
@@ -136,6 +161,7 @@ describe("library sidebar on a wide screen", () => {
     await mount({ persona: "trader", demo: true });
     expect(headings()).toContain("Markets trader's map this week");
     expect(graphCalls()).toEqual(["/v1/me/graph?view=overview&persona=trader"]);
+    expect(paths).toContain("/v1/me/profile?persona=trader");
     expect(host.querySelector(".weekmap__link")?.getAttribute("href")).toBe("/profile?persona=trader#kmap-title");
   });
 

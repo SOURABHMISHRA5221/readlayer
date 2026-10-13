@@ -1099,3 +1099,43 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    `make deploy-web` (his yes), live check at 1440 as a demo reader.
 4. Stop the emulator stack (`make dev-emulator`, started this evening). M9 Oct 15, freeze Oct 16.
 
+## Growth caps raised (decision 53, 2026-10-13, evening)
+
+- Sourabh: "if the three items can be done in next 10 minutes then go yes else wait". Told him
+  the extension fix is an hour or two (API change, tests, plan review, deploy, a new zip), not
+  ten minutes, and that only the cap raise is quick. His answer: **"just cap raise now"**.
+- Identity checked, then `gcloud run services update readlayer-api --update-env-vars
+  GROWTH_PER_UID_DAY=60,GROWTH_PER_DAY=300` (his yes on the prompt): revision
+  `readlayer-api-00026-wc2`, 100% of traffic, same image, 21 env vars, max instances 3.
+  Smoke: /health 200, unauthenticated profile 401, startup clean (graph
+  2026-10-10-folded-5206+g1 in 1.3 s), no warnings beyond the smoke request.
+- Also written to `apps/api/deploy.env.yaml` so the next `make deploy-api` keeps it; STATUS §5
+  first row, §7, §10 decision 53. The code defaults (25 / 100) are unchanged.
+- Not done, M9: return unused slots, grow again on reopen (his four pages stay empty), the
+  honest message.
+
+## Wide layout — milestone review round 2 (2026-10-13, evening)
+
+- milestone-reviewer on a9da102: **FIX**, 1 blocking. Every round-1 item confirmed fixed (it
+  swept the map at 16 widths and scanned the shots for the card rules). The blocker: the
+  panel's "+N this week", its line and its labels were counted from the overview's nodes, which
+  are a topic's top 12 by band then frequency, so a rise outside them was invisible and the
+  panel could say "Nothing moved up" while the profile listed moves. The harness state had only
+  shown the constructed case (two corrections land at the top of the list).
+- Fix: the week's numbers come from `GET /v1/me/profile` `week.moved_up` (uncapped); the
+  overview only draws the dots. Unit and component tests with a rise the overview doesn't
+  carry; the harness asserts the panel's count equals the profile's list.
+- Also taken: ring quota capped at the room left, rings sized so two neighbours don't cross,
+  "We think you know" in the key, the last block's margin in a sticky group, the Saved tab,
+  search and Connect in the harness (which found `role="status"` on Connect's heading, a minor
+  axe finding from M8: now a span inside it), a seven-topic reader (cards 4 + 3, 7 at 1920).- Harness on the final code: **0 failed checks**, axe 0 on 123 states. Main bundle 148.43 KB,
+  week panel 1.68 KB. Web tests 148.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 3 → until SHIP.
+2. Sourabh's answers: the two readings (reading spine, topic tiles) before the web deploy; his
+   Gmail and bank-login refusal check. The rest of the extension fix is M9's first item.
+3. Push `wide-layout`, PR `Wide layout: …` (body names the four deviations and the
+   `deploy.env.yaml` caps), green CI, merge, `make deploy-web` (his yes), live check at 1440.
+4. Stop the emulator stack (`make dev-emulator`, started this evening). M9 Oct 15, freeze Oct 16.
+

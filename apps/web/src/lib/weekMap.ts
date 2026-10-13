@@ -9,14 +9,24 @@ import type { Band, Domain, Overview, OverviewNode } from "./profileApi";
 export const TILE_W = 96;
 export const TILE_H = 64;
 export const DOT_R = 4;
+export const RING_R = DOT_R + 1.8; // the halo of an idea that rose this week
 const PER_TOPIC = 8;
 const MAX_DOTS = 24;
 const GOLDEN = 2.399963;
-const SPREAD = 10.5; // spiral step: the two closest dots end up just over a diameter apart
+const SPREAD = 11; // spiral step: the two closest dots are far enough apart for both to wear a halo
 const NAMED = 3;
 const READY_PLACES = 2; // rings kept in a tile for what the reader is ready to learn next
 
 type MapData = Pick<Overview, "domains" | "nodes">;
+
+/** An idea that moved up a level this week, from the reader's own list (`/v1/me/profile`
+ *  `week.moved_up`). The overview returns only a topic's top ideas, so the week's numbers are
+ *  never counted from its nodes: a rise from unaware to heard of is rarely among them. */
+export interface Move {
+  concept_id: string;
+  label: string;
+  domain?: Domain;
+}
 
 export interface TileDot {
   id: string;
@@ -29,8 +39,8 @@ export interface TileDot {
 
 export interface TopicTile {
   domain: Domain;
-  /** Ideas in this topic that moved up a level this week. (No total: the overview caps what it
-   *  returns per topic, so its length is not the reader's count; the profile's cards have that.) */
+  /** Ideas in this topic that moved up a level this week, from the reader's list of moves, drawn
+   *  or not. (No total of ideas: the overview caps what it returns per topic.) */
   rose: number;
   dots: TileDot[];
 }
@@ -53,8 +63,9 @@ function pick(queue: readonly OverviewNode[], count: number): OverviewNode[] {
   const known = rest.filter((n) => !n.ready);
   const ready = rest.filter((n) => n.ready);
   const room = count - risers.length;
-  const rings = Math.min(ready.length, Math.max(Math.min(READY_PLACES, Math.floor(count / 3)), room - known.length));
-  return [...risers, ...known.slice(0, room - rings), ...ready.slice(0, Math.max(0, rings))].slice(0, count);
+  const wanted = Math.max(Math.min(READY_PLACES, Math.floor(room / 3)), room - known.length);
+  const rings = Math.max(0, Math.min(room, ready.length, wanted));
+  return [...risers, ...known.slice(0, room - rings), ...ready.slice(0, rings)];
 }
 
 /**
@@ -91,27 +102,29 @@ export function clusterDots(count: number): { x: number; y: number }[] {
   });
 }
 
-/** One tile per topic that has ideas, in the overview's order. */
-export function topicTiles(overview: MapData): TopicTile[] {
-  const picked = miniMapNodes(overview);
+/** One tile per topic that has ideas, in the overview's order. The dots come from the overview;
+ *  how many ideas rose comes from `moved`, the reader's full list for the week. */
+export function topicTiles(overview: MapData, moved: readonly Move[]): TopicTile[] {
+  const movedIds = new Set(moved.map((m) => m.concept_id));
+  const nodes = overview.nodes.map((n) => (movedIds.has(n.id) && !n.rose_this_week ? { ...n, rose_this_week: true } : n));
+  const picked = miniMapNodes({ domains: overview.domains, nodes });
   return overview.domains.flatMap((domain) => {
-    const mine = overview.nodes.filter((n) => n.domain === domain);
     const shown = picked.filter((n) => n.domain === domain);
     if (!shown.length) return [];
     const at = clusterDots(shown.length);
     return [
       {
         domain,
-        rose: mine.filter((n) => n.rose_this_week).length,
+        rose: moved.filter((m) => m.domain === domain).length,
         dots: shown.map((n, i) => ({ id: n.id, x: at[i]?.x ?? 0, y: at[i]?.y ?? 0, band: n.band, ready: n.ready, rose: n.rose_this_week })),
       },
     ];
   });
 }
 
-/** The week in words, under the tiles: the same information for anyone who can't see them. */
-export function weekLine(nodes: readonly OverviewNode[]): string {
-  const rose = nodes.filter((n) => n.rose_this_week).map((n) => n.label);
+/** The week in words, under the tiles: every idea that moved up, whether or not it is drawn. */
+export function weekLine(moved: readonly Move[]): string {
+  const rose = moved.map((m) => m.label);
   if (!rose.length) return "Nothing moved up yet this week";
   const named = rose.slice(0, NAMED);
   const rest = rose.length - named.length;

@@ -1144,13 +1144,17 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   to 820px wide with a 4:3 thumbnail from 1280px. The sidebar has two groups, tools (Read any
   link, Topics for you) and the reader's own (Your map this week, Your goals): one column up to
   1439px, side by side from 1440px (the third column), DOM order equal to visual order. **Your
-  map this week** (from 961px, where the sidebar is beside the feed; a lazy chunk; one `GET /v1/me/graph?view=overview`, asked for
-  after the library's first answer): a tile per topic with a small cluster of dots (up to 8 a
+  map this week** (from 961px, where the sidebar is beside the feed; a lazy chunk; two reads, asked for
+  after the library's first answer: `GET /v1/me/graph?view=overview` for the dots and
+  `GET /v1/me/profile` for the week): a tile per topic with a small cluster of dots (up to 8 a
   topic, 24 in all: this week's risers first and haloed, then known ideas, with up to 2 outline
   rings kept for what is ready to learn next), the topic's name in text with "+N this week" when
   ideas rose, the week in one line ("3 ideas moved up this week: …"), a key and a link to the
-  full map. No per-topic total is shown: the overview caps what it returns per topic, and the
-  profile's cards carry the reader's count. It is a picture with a text equivalent, not a
+  full map. **Every number comes from the profile's `week.moved_up`**, the same uncapped list
+  its "This week" shows; the overview keeps only a topic's top 12 ideas (by band, then
+  frequency), so a rise from unaware to heard of is usually not among its nodes and nothing is
+  counted from them. No per-topic total of ideas is shown, for the same reason. If either read
+  fails the panel says the map didn't load rather than claim a quiet week. It is a picture with a text equivalent, not a
   control, and not a scaled copy of the profile's map (STATUS §4). From 1440px both groups stay
   beside the feed while it scrolls (a group taller than the window scrolls inside itself). The
   week panel and the reader's spine sit in a boundary, so a chunk that fails to load leaves the
