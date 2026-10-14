@@ -26,7 +26,7 @@ import {
   type ContentDetail,
 } from "../lib/api";
 import { clock, domainLabel, formatByline, formatDate, minutes, readingMinutes, sourceName } from "../lib/format";
-import { GROW_CAPPED, growUntilDone } from "../lib/grow";
+import { GROW_CAPPED, GROW_RUNNING, growUntilDone } from "../lib/grow";
 import { useIsDemo } from "../lib/auth";
 import { DEFAULT_DENSITY, parseDensity, personaParam, readerPersona } from "../lib/personas";
 import { navigate, withParams } from "../lib/router";
@@ -72,6 +72,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
   const [analysis, setAnalysis] = useState<Analysis>({ status: "idle" });
   const [analysedHere, setAnalysedHere] = useState<string | null>(null); // a page id
   const [capped, setCapped] = useState<string | null>(null); // a page id the caps kept off the map
+  const [growing, setGrowing] = useState<{ id: string; since: number } | null>(null); // grown now
   // The lazy transcript body is in the DOM: the annotator may attach to it.
   const [bodyReady, setBodyReady] = useState(false);
   const onBodyMount = useCallback(() => setBodyReady(true), []);
@@ -197,19 +198,25 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
         }),
     [id, persona, density, debug],
   );
-  // A page that missed concept growth grows on reopen (M9): ask once, then reload the notes.
+  // A page that missed concept growth grows on reopen (M9): ask once per page, then reload the
+  // notes if it grew or another request did. A persona or density change doesn't ask again.
   const wantsGrow = ready && !!article && (article.grow_pending === true || analysedHere === id);
+  const growMarked = ready && article?.grow_pending === true;
+  const reload = useRef(refreshNotes);
+  reload.current = refreshNotes;
   useEffect(() => {
     if (!wantsGrow) return;
     const ctrl = new AbortController();
+    if (growMarked) setGrowing({ id, since: Date.now() });
     growUntilDone(id, ctrl.signal)
-      .then((done) => {
-        if (done === "grown") void refreshNotes();
-        else if (done === "capped") setCapped(id);
+      .then(({ status, waited }) => {
+        if (status === "grown" || waited) void reload.current();
+        if (status === "capped") setCapped(id);
       })
-      .catch(() => undefined); // the page and its notes stand as they are
+      .catch(() => undefined) // the page and its notes stand as they are
+      .finally(() => setGrowing(null));
     return () => ctrl.abort();
-  }, [id, wantsGrow, refreshNotes]);
+  }, [id, wantsGrow, growMarked]);
   const media = article?.media ?? null;
   // A transcript's annotator waits for the lazy body and its paragraphs.
   const annotatorKey = article && (!media || (bodyReady && article.paragraphs.length > 0)) ? article.id : null;
@@ -361,6 +368,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
                 {analysis.message}
               </p>
             )}
+            {growing?.id === id && <PreparingNotice since={growing.since} text={GROW_RUNNING} />}
             {capped === id && notesData?.count === 0 && (
               <p className="reader__notice" role="status">
                 <Margo mood="oops" size={28} />

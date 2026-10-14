@@ -10,7 +10,7 @@ vi.mock("../src/lib/auth", () => ({
   useSession: () => ({ status: "signed_out" }),
 }));
 
-import { GROW_CAPPED } from "../src/lib/grow";
+import { GROW_CAPPED, GROW_RUNNING } from "../src/lib/grow";
 import { ReaderPage } from "../src/pages/ReaderPage";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -97,17 +97,19 @@ describe("ReaderPage grows a page that missed growth", () => {
     expect(host.textContent).not.toContain(GROW_CAPPED);
   });
 
-  it("asks again while another request is growing it", async () => {
+  it("waits while another request grows it, then reloads the notes once (it answers none)", async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     stub({ ...ARTICLE, grow_pending: true }, [
       { status: 202, body: { content_id: ID, status: "growing" } },
-      { status: 200, body: { content_id: ID, status: "grown", linked: 1 } },
+      { status: 200, body: { content_id: ID, status: "none", linked: 0 } }, // the other one grew it
     ]);
     await open();
     await settle(() => count(`POST /v1/content/${ID}/grow`) === 1);
+    expect(host.textContent).toContain(GROW_RUNNING);
     await act(async () => vi.advanceTimersByTime(5_100));
     await settle(() => count(`GET /v1/content/${ID}/annotations`) === 2);
     expect(count(`POST /v1/content/${ID}/grow`)).toBe(2);
+    expect(host.textContent).not.toContain(GROW_RUNNING);
   });
 
   it("never asks for a page that doesn't need it", async () => {
@@ -118,9 +120,10 @@ describe("ReaderPage grows a page that missed growth", () => {
     expect(count(`POST /v1/content/${ID}/grow`)).toBe(0);
   });
 
-  it("asks once after analysing the page here (growth may have been capped in phase 2)", async () => {
+  it("asks once after analysing the page here (growth may have been capped in phase 2), quietly", async () => {
     stub({ ...ARTICLE, status: "analysing" }, [{ status: 200, body: { content_id: ID, status: "none", linked: 0 } }]);
     await open();
     await settle(() => count(`POST /v1/content/${ID}/grow`) === 1);
+    expect(host.textContent).not.toContain(GROW_RUNNING); // no line for a page not marked
   });
 });
