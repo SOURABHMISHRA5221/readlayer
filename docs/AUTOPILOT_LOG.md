@@ -1680,7 +1680,27 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   demo-reader open (free) and a feed video opened both ways. Checkpoint end of Oct 14 IST met:
   Media and its follow-up merged and live.
 
+## M9 part 1 (2026-10-14, growth slots and regrow on reopen)
+
+- Sourabh: "start M9". Gold set status not given (asked; to raise again at part 3's evals).
+- Plan `docs/plans/M9.md` → plan-reviewer REVISE 13 (only a reader's own pages regrow; old-page
+  rule extension-only so seeded demo recordings never change; `grow_tried`; claim/finish
+  transactions; check order and failure classes; anonymous growth cap; catalog swap; graph
+  refresh lag; clients on every path; docs; a read-only backlog count; checkpoint; tests) →
+  applied as Round 1 → **APPROVE** (nits taken: 5 s forced-refresh floor, dropped-result log).
+- Built, tests first (a2d6db5 .. 1a4939a): phase 2 reserves exactly the labels growth tries
+  (`app/ingest/growing.py`, reserver closure in `quota`), phase 1 reserves nothing, `grow_pending`
+  / `grow_tried` on `contents/`, `claim_growth` / `finish_growth` transactions (emulator test on
+  real Firestore), `POST /v1/content/{id}/grow`, `grow_pending` on GET, forced graph refresh for a
+  page linking an unseen concept, `catalog.replace`, `ANON_GROWTH_DAILY_CAP` 150, light
+  `growth_need.py` (read path imports no LLM), web reader grow + reload + honest line,
+  extension 0.8.1 (`src/grow.ts`).
+- Production backlog, read only: 357 pages, 4 would regrow (all extension), ≤ 17 slots, ≤ $0.05.
+- Harness on the emulator, real Vertex: **PASS, $0.0072** (STATUS §26).
+- API 1,145, web 186, extension 89, annotator 60, typecheck clean, main **149.87 KB** (0.13 left).
+
 ### Next steps (resume here, in order)
-1. M9 (Oct 15): hardening and evals, plus the M2.2 follow-ups (STATUS §9). Plan first.
-2. Oct 16: seed the demo snapshots' short videos and episodes with `ingest_media.py` (dry run
-   first, CONCEPTS_URI set, counts in STATUS before writing).
+1. milestone-reviewer → SHIP → PR → CI → merge → deploy API from clean `main`, then web
+   (Sourabh's yes on each) → `make extension-zip` + release `extension-v0.8.1` (his yes) → live:
+   Sourabh reopens one of his four empty extension pages. Checkpoint: midday Oct 15 IST.
+2. M9 part 2 plan: the four M2.2 quality items (STATUS §9), before any part 3 extras.
