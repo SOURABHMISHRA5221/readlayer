@@ -1587,8 +1587,17 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   episode at two instead of four. 5R10's second remedy (lower `MEDIA_MAX_AUDIO_BYTES`) would
   refuse T02 itself at anything under 32 MB, so it waits for Sourabh. API suite 1083 passed.
 
+- **Decision (Sourabh, 2026-10-14 ~11:20 IST): "Audio and Video is just minor additional
+  support, don't make them good enough; small 10 minutes clips are good enough."** Applied:
+  `MEDIA_MAX_VIDEO_S` and `MEDIA_MAX_AUDIO_S` 600 (were 1200 / 2700), `MEDIA_MAX_AUDIO_BYTES`
+  20 MB (was 70), config defaults and `deploy.env.yaml`; `too_long` message "up to 10 minutes for
+  now". One window per recording, so the memory question closes without work (T02's 686 MB was
+  a 32 MB file; a 10-min file is ≤ 20 MB with nothing in parallel). The multi-window code stays;
+  its tests pin the old caps (`LONG_CAPS`) and a new test pins the 10-minute defaults. T01 and
+  T02 stay frozen as written and are now over the default cap (a harness run on them needs the
+  caps raised in its env). Cut from 5.7: items 3-5 (refusal sweep, pre-check count, podcast
+  shots) and the copy-hunt investigation. API suite 1084 passed.
+
 ### Next steps (resume here, in order)
-1. Sourabh: accept ~690 MB peak on the 1 GiB instance, or look for copies in the audio path
-   first (≈ 13× the file size suggests pieces, base64 and the request JSON are all held at once).
-2. 5.7 items 3-5: refusals (no model call), pre-check count, shots with the podcast → log.
-3. Step 7. Checkpoint end of Oct 14 IST (decision 27).
+1. Step 7 (the deploy decision for media; video stays off unless a short clip and a whole video
+   both answer). Checkpoint end of Oct 14 IST (decision 27).

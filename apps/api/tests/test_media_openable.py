@@ -6,13 +6,14 @@ from app.media import openable
 from app.media.openable import open_here
 from app.store.media_repo import media_day_path
 from app.store.spend_repo import today_utc
+from tests.test_media_service import LONG_CAPS
 
 VIDEO = "https://www.youtube.com/watch?v=d6fUwCBvVc0"
 EPISODE = "https://podcasts.apple.com/us/podcast/x/id1?i=2"
 
 
 def settings(**overrides) -> Settings:
-    return Settings(_env_file=None, **overrides)
+    return Settings(_env_file=None, **(LONG_CAPS | overrides))
 
 
 @pytest.fixture(autouse=True)

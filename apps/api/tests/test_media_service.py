@@ -41,8 +41,14 @@ def clock(seconds: int) -> str:
     return f"{seconds // 60:02d}:{seconds % 60:02d}"
 
 
+# The pre-cut caps: these fixtures are 16- and 22-minute recordings, so the multi-window
+# path stays tested; the 10-minute defaults have their own test in test_media_sources.py.
+LONG_CAPS = dict(media_max_video_s=1200, media_max_audio_s=2700, media_max_audio_bytes=70_000_000)
+
+
 def settings(**overrides) -> Settings:
     values = dict(
+        LONG_CAPS,
         _env_file=None,
         model_quality="vertex_ai/quality",
         llm_daily_budget_usd=8.0,

@@ -8,12 +8,13 @@ from app.config import Settings
 from app.ingest.safe_fetch import SafeFetcher
 from app.media.refusals import MediaRefused, MediaUnavailable
 from app.media.sources import apple_episode, estimated_duration_s, probe_audio, youtube_info
+from tests.test_media_service import LONG_CAPS
 
 VID = "d6fUwCBvVc0"
 
 
 def settings(**overrides) -> Settings:
-    return Settings(_env_file=None, youtube_api_key=SecretStr("k3y"), **overrides)
+    return Settings(_env_file=None, youtube_api_key=SecretStr("k3y"), **(LONG_CAPS | overrides))
 
 
 def video(**changes) -> dict:
@@ -93,12 +94,19 @@ async def test_the_cap_is_a_setting():
     assert info.duration_s == 3900
 
 
-async def test_the_default_cap_is_twenty_minutes():
-    """One whole-URL call per video, so the cap is 20 minutes (plan Round 4, R4.2)."""
-    info = await youtube_info(VID, settings(), transport([video(contentDetails__duration="PT20M")]))
-    assert info.duration_s == 1200
+def test_the_default_caps_are_ten_minutes():
+    """Media is minor support: one 10-minute window per recording (Sourabh, 2026-10-14)."""
+    s = Settings(_env_file=None)
+    assert (s.media_max_video_s, s.media_max_audio_s) == (600, 600)
+    assert s.media_max_audio_bytes == 20_000_000
+
+
+async def test_a_video_over_the_default_cap_is_too_long():
+    s = Settings(_env_file=None, youtube_api_key=SecretStr("k3y"))
+    info = await youtube_info(VID, s, transport([video(contentDetails__duration="PT10M")]))
+    assert info.duration_s == 600
     with pytest.raises(MediaRefused) as err:
-        await youtube_info(VID, settings(), transport([video(contentDetails__duration="PT20M1S")]))
+        await youtube_info(VID, s, transport([video(contentDetails__duration="PT10M1S")]))
     assert err.value.code == "too_long"
 
 
