@@ -1859,3 +1859,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. The Oct 16 items (persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`,
    media snapshots, readiness mix re-run, README refresh incl. the "recommendations only" line,
    video, deck). Oct 17: submit (gitleaks and repo public moved into decision 62).
+
+## Decision 62, plan (2026-10-14 night)
+
+- Plan `docs/plans/gloss-address.md` on branch `gloss-address`: second Hosting site (gloss →
+  gloss-reader → glossreader), CORS and Auth domains, extension 0.8.2 (session origin, Open in
+  Gloss on YouTube through `/v1/recs/open`, only the canonical watch URL sent), landing pin and
+  Connect hint (lazy chunks, main untouched), gitleaks over all branches and PR heads, repo public.
+- plan-reviewer: REVISE 9 (private docs are only `extension` ones; refusals by code; site id
+  before the build; PR heads in the scan; the email in STATUS/AUTOPILOT_LOG too; honest live-check
+  bounds; local check with no spend; Auth dry run; deploy-api ships no code) → applied → APPROVE.
+- Asked Sourabh: yes to create the site; OK that Google's sign-in screen still names readlayer;
+  OK to remove the Gmail address from tracked files and leave history.
+
+### Next steps (resume here, in order)
+1. Sourabh's answers. On yes: `make check-gcp`, `firebase hosting:sites:create` (R3), then build
+   on `gloss-address` tests first (extension, API fixture/CORS test, web links and Connect hint).
+2. gitleaks (R4) and the email scan (R5) during the build; findings to Sourabh.
+3. `gloss_youtube.py` local check → milestone-reviewer → PR → CI → merge → outward steps in the
+   plan's order (Auth dry run, deploy-api with R9 check, release 0.8.2, deploy-web, live check) →
+   repo public on Sourabh's yes.

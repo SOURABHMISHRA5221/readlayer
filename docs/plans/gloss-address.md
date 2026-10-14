@@ -10,8 +10,8 @@ Sourabh what to cut (decision 27).
 - Hosting is one site (`firebase.json` `hosting` object, `.firebaserc` default project).
   `https://gloss.web.app`, `gloss-reader`, `glossreader`, `readgloss` all answer Firebase's
   "Site Not Found" page; whether an id is free is only known when `hosting:sites:create` runs.
-- The old address is hard-coded in: `apps/api/deploy.env.yaml` `CORS_ORIGINS`, `Makefile`
-  `HOSTING`, `apps/extension/.env.production` (`VITE_WEB_BASE`, `VITE_WEB_ORIGINS`, which also
+- The old address is hard-coded in: `apps/api/deploy.env.yaml` `CORS_ORIGINS`,
+  `apps/extension/.env.production` (`VITE_WEB_BASE`, `VITE_WEB_ORIGINS`, which also
   build the manifest's `externally_connectable`), `README.md` (2 links), and six `tools/shots/*`
   scripts. Tests use `readlayer.web.app` as a dummy and need no change.
 - Web sign-in is `signInWithPopup` with `authDomain` `readlayer-sourabh-26.firebaseapp.com`; a
@@ -233,5 +233,9 @@ two new domains) and the diff; abort if any existing domain is missing from the 
 must be empty (it is today; this PR touches only tests and `deploy.env.yaml` under `apps/api`).
 If not empty, stop and list what ships.
 
-Nits taken: `Makefile` `HOSTING` is unused, so it is left alone (not edited). The Cuts list is the
+Nits taken: the `Makefile`'s unused `HOSTING` line is left alone. The Cuts list is the
 proposal put to Sourabh at the checkpoint, not applied by itself (STATUS §9).
+
+**Approved** (plan-reviewer round 2, 2026-10-14). Nits taken: R7's stub YouTube page is served at
+the real URL `https://www.youtube.com/watch?v=wajoP_5Cpw8` through a Playwright route (a localhost
+URL would make `youtubeWatchUrl` return null); `HOSTING` dropped from the Facts.
