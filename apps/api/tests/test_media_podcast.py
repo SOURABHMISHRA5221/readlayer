@@ -5,6 +5,7 @@ synthetic (32 kbps MPEG 1 at 48 kHz: 96-byte frames of 24 ms, 4,000 bytes a seco
 import pytest
 
 from app import llm
+from app.config import Settings
 from app.content import catalog
 from app.ingest import service as ingest
 from app.ingest.safe_fetch import FetchedAudio, FetchError, set_fetcher
@@ -18,7 +19,7 @@ from app.store.pending_repo import get_pending_repo
 from app.store.spend_repo import InMemorySpendStore, today_utc
 from tests.fakes import FakeLLM
 from tests.test_content_api import reply
-from tests.test_media_service import READER, clock, settings, words
+from tests.test_media_service import LONG_CAPS, READER, clock, settings, words
 from tests.test_mp3 import stream
 
 EPISODE = urls.ApplePodcast("1200361736", "1000650000001")
@@ -301,6 +302,20 @@ async def test_the_walks_length_over_the_cap_is_refused_before_any_call(env):
         await service.transcribe_pending(CID, s)
     assert err.value.code == "too_long" and env["fake"].calls == []
 
+
+
+async def test_stitched_in_ads_past_apples_length_still_transcribe(env):
+    """Under the default caps: an Indicator episode listed at 565 s downloaded at 652 s (ads
+    Apple's length leaves out). It transcribes; the 52 s tail joins window 1."""
+    defaults = {name: Settings.model_fields[name].default for name in LONG_CAPS}
+    assert defaults["media_max_audio_s"] == 720
+    s = settings(**defaults)
+    env["lookup"]["info"] = episode_info(duration_s=565)
+    env["fetcher"].data = stream(652)
+    await service.open_media(EPISODE, READER, s)
+    await service.transcribe_pending(CID, s)
+    assert env["fake"].calls == [652]
+    assert (await get_pending_repo().get(CID)).stage == "analyse"
 
 # ---------------------------------------------------------------- language, slot, fingerprint
 

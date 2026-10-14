@@ -26,9 +26,10 @@ def media_kind_on(kind: MediaKind, settings: Settings) -> bool:
 
 
 def openable(url: str, fmt: str, duration_s: int | None, settings: Settings) -> bool:
-    """Articles always; a YouTube video of known length within the cap; an Apple episode whose
-    length is unknown or within the cap (the open checks it: feed items often lack one).
-    Spotify, show pages and direct .mp3 links stay "Open original"."""
+    """Articles always; a YouTube video or an Apple episode of known length within the cap.
+    Unknown lengths stay "Open original": under the short caps most episodes run past them
+    (median 22 min in the cached links), so "Open here" would end in a refusal. Spotify, show
+    pages and direct .mp3 links stay "Open original"."""
     if fmt == "article":
         return True
     media = classify(url)
@@ -37,7 +38,7 @@ def openable(url: str, fmt: str, duration_s: int | None, settings: Settings) -> 
     if isinstance(media, YouTube):
         return duration_s is not None and 0 < duration_s <= settings.media_max_video_s
     if isinstance(media, ApplePodcast) and media.episode_id:
-        return duration_s is None or 0 < duration_s <= settings.media_max_audio_s
+        return duration_s is not None and 0 < duration_s <= settings.media_max_audio_s
     return False
 
 

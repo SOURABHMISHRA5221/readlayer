@@ -657,11 +657,23 @@ async def transcribe[T: BaseModel](
             error = exc
             log.warning(
                 "llm media output invalid",
-                extra={"task": task, "model": model, "error": str(exc)[:200]},
+                extra={"task": task, "model": model, "error": _invalid_summary(exc)},
             )
             continue
         return LLMResult(output, ledger.meta(task, model, prompt.version, fell_back=False))
-    raise LLMRejected(f"{task} on {model}: invalid output twice: {str(error)[:200]}")
+    raise LLMRejected(f"{task} on {model}: invalid output twice: {_invalid_summary(error)}")
+
+
+def _invalid_summary(exc: Exception | None) -> str:
+    """Why output was invalid, with no transcript text (logs carry no content): a pydantic
+    error quotes its input, so only locations and error types are kept."""
+    if isinstance(exc, ValidationError):
+        return "; ".join(
+            f"{'.'.join(str(part) for part in e['loc'])}: {e['type']}" for e in exc.errors()[:5]
+        )
+    if isinstance(exc, InvalidTranscript):
+        return str(exc)[:200]  # our own fixed wording
+    return type(exc).__name__
 
 
 @dataclass

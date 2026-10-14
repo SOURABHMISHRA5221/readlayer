@@ -318,3 +318,17 @@ async def test_schema_invalid_output_is_asked_again(monkeypatch, store):
     FakeLiteLLM(monkeypatch, [response(bad), response(VALID)])
     result = await run()
     assert result.output.paragraphs[0].start == "00:01"
+
+
+async def test_invalid_output_never_reaches_logs_or_errors(monkeypatch, store, caplog):
+    """Logs carry no content (CLAUDE.md): a pydantic error quotes the input, so only the
+    error's type and location are kept."""
+    spoken = "THE SPEAKER SAID THIS PRIVATE SENTENCE"
+    bad = '{"language": "en", "paragraphs": [{"text": "' + spoken + '"}]}'  # no start
+    FakeLiteLLM(monkeypatch, [response(bad), response(bad)])
+    with caplog.at_level("WARNING"), pytest.raises(llm.LLMRejected) as err:
+        await run()
+    assert spoken not in str(err.value)
+    logged = " ".join(f"{r.getMessage()} {r.__dict__}" for r in caplog.records)
+    assert "media output invalid" in logged and spoken not in logged
+    assert "paragraphs" in logged  # where it failed is kept

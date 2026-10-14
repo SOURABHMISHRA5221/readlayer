@@ -36,7 +36,7 @@ def fresh_cache():
         (EPISODE, "podcast", 1200, True),
         (EPISODE, "podcast", 2700, True),
         (EPISODE, "podcast", 2701, False),  # past MEDIA_MAX_AUDIO_S
-        (EPISODE, "podcast", None, True),  # feed items often lack a length; the open checks
+        (EPISODE, "podcast", None, False),  # unknown: most run past the cap, so "Open original"
         ("https://podcasts.apple.com/us/podcast/x/id1", "podcast", 1200, False),  # show page
         ("https://cdn.example/ep.mp3", "podcast", 1200, False),  # Apple links only (5.2)
     ],
