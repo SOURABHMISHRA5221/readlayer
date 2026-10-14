@@ -1841,8 +1841,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Note: the Claude login is now another account; GCP must still be sourabhlocalllm /
   readlayer-sourabh-26 (`make check-gcp` before any deploy).
 
+- PR #38, CI green, squash-merged (20d2e09). `make check-gcp` (sourabhlocalllm / readlayer-sourabh-26),
+  then `make deploy-web` from clean `main` on Sourabh's yes (`index-C8hhvJGX.js`). Live: axe 0,
+  no horizontal scroll, sections and stills at 1440 and 390, light and dark. The live check caught a
+  harness flaw: full-page shots re-mounted the See it in action stills (empty frames in the first
+  evidence); fixed (no visible placeholder before any shot, tiled full pages), evidence replaced.
+  **Landing refresh done.**
+- Sourabh asked whether the extension works on YouTube: no (it treats every page as an article);
+  "yes" to an "Open in Gloss" button on YouTube video pages in the same 0.8.2 as decision 62.
+
 ### Next steps (resume here, in order)
-1. Push `landing-refresh` → PR → CI → merge → `make check-gcp` → `make deploy-web` from clean
-   `main` (Sourabh's yes) → live check at 1440 and 390 (new sections, stills, axe 0).
-2. Decision 62 (gloss web address) plan → plan-reviewer → build.
-3. The Oct 16 items.
+1. Decision 62 (gloss web address) plan, with the YouTube "Open in Gloss" in extension 0.8.2 →
+   plan-reviewer → build (Auth domain, CORS, extension base, links, the landing's 0.8.1 pin;
+   deploys on Sourabh's yes).
+2. The Oct 16 items (persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`,
+   media snapshots, readiness mix re-run, README refresh incl. the "recommendations only" line,
+   video, deck). Oct 17: gitleaks, repo public, submit.

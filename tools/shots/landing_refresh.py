@@ -16,6 +16,7 @@ import json
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
@@ -25,8 +26,11 @@ AFTER, BEFORE = "http://localhost:4173", "http://localhost:4174"
 WIDTHS = (320, 390, 768, 1024, 1440, 1920)
 NEW_STILLS = ("shot-extension", "shot-popup", "shot-media")
 SCROLL_ALL = """(async () => { for (let y = 0; y < document.body.scrollHeight; y += 400) { scrollTo(0, y);
-  await new Promise(r => setTimeout(r, 100)); } scrollTo(0, 0); return true; })()"""
-STILLS_DONE = "[...document.querySelectorAll('img.lp-still')].every(i => i.complete && i.naturalWidth > 0)"
+  await new Promise(r => setTimeout(r, 250)); } scrollTo(0, 0); return true; })()"""
+# Every visible still is loaded, and none is left a placeholder (a still that never came near
+# would otherwise pass unnoticed; the popup is display:none below 768, so not visible).
+STILLS_DONE = """[...document.querySelectorAll('img.lp-still')].every(i => i.complete && i.naturalWidth > 0)
+  && ![...document.querySelectorAll('.lp-still--pending')].some(e => e.checkVisibility())"""
 HEADINGS = "[...document.querySelectorAll('h1, h2, h3, h4')].map(h => [+h.tagName[1], h.textContent.trim().slice(0, 40)])"
 NO_ALT = "[...document.querySelectorAll('img, [role=img]')].filter(e => !(e.getAttribute('alt') || e.getAttribute('aria-label') || e.closest('[aria-hidden=true]'))).map(e => e.outerHTML.slice(0, 80))"
 REQUESTED = "performance.getEntriesByType('resource').map(e => e.name.split('/').pop())"
@@ -40,6 +44,29 @@ def diff_box(a: str, b: str) -> list[int] | None:
                          capture_output=True, text=True).stderr
     boxes = re.findall(r"x1:(\d+) x2:(\d+) y1:(\d+) y2:(\d+)", out)
     return [int(v) for v in boxes[-1]] if boxes else None
+
+
+async def full_shot(p, name: str) -> str:
+    """The whole page as viewport tiles taken while scrolling, then stacked. A captureBeyondViewport
+    shot resizes the page mid-capture, which re-mounts the See it in action stills as empty
+    placeholders (the first evidence showed blank device frames)."""
+    total, vh, w = await p.eval("[document.documentElement.scrollHeight, innerHeight, innerWidth]")
+    tiles, y = [], 0
+    while y < total:
+        await p.eval(f"scrollTo(0, {y}); true")
+        await asyncio.sleep(0.5)
+        at = await p.eval("scrollY")
+        tiles.append((await p.shot(f"{name}-tile{len(tiles)}"), y - at, min(vh, total - y)))
+        y += vh
+    await p.eval("scrollTo(0, 0); true")
+    out = str(cdp.OUT / f"{name}.png")
+    inputs = [a for path, _, _ in tiles for a in ("-i", path)]
+    crops = "".join(f"[{i}]crop={w}:{keep}:0:{off}[t{i}];" for i, (_, off, keep) in enumerate(tiles))
+    stack = "".join(f"[t{i}]" for i in range(len(tiles))) + f"vstack=inputs={len(tiles)}" if len(tiles) > 1 else "[t0]null"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *inputs, "-filter_complex", crops + stack, out], check=True)
+    for path, _, _ in tiles:
+        Path(path).unlink()
+    return out
 
 
 def headings_in_order(hs) -> bool:
@@ -57,16 +84,17 @@ async def page_checks(p, base, w, dark, tag):
         await asyncio.sleep(0.25)
     await asyncio.sleep(0.5)
     name = f"{tag}-{w}-{'dark' if dark else 'light'}"
-    out = {"shot": await p.shot(name, full=True)}
+    out = {}
     if tag == "after":
+        out["stills_loaded"] = await p.eval(STILLS_DONE)
         await p.eval(cdp.AXE.read_text() + ";'axe'")
         hs = await p.eval(HEADINGS)
         out.update(axe=await p.eval(AXE_ALL),
                    hscroll=await p.eval("document.documentElement.scrollWidth - document.documentElement.clientWidth"),
-                   headings_ok=headings_in_order(hs), no_alt=await p.eval(NO_ALT),
-                   stills_loaded=await p.eval(STILLS_DONE))
+                   headings_ok=headings_in_order(hs), no_alt=await p.eval(NO_ALT))
         if w == 1440 and not dark:
             out["headings"] = hs
+    out["shot"] = await full_shot(p, name)
     return out
 
 
