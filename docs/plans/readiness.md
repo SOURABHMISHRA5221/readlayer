@@ -56,3 +56,40 @@ The two deploys only.
 
 ## Docs
 DESIGN §17.2 (the line and its rule), STATUS decision 60, §1 row, a short acceptance section.
+
+## Round 1 (plan-reviewer REVISE, 14 items; applied, these override the sections above)
+
+**V1. Signature.** `rank(candidates, reader, now, graph)` (graph passed in; call sites
+`feed_router.py` and `tests/test_feed_rank.py`). `read_first(new: Sequence[Concept], item_ids:
+frozenset[str], graph, reader, now)`; the labels tuple stays separate.
+**V2. No line without named concepts.** An item that names no graph concept gets `readiness =
+None` (no line). `readiness_level(named_count, new_count, read_first)`.
+**V3. Exact strings.** familiar: "Mostly familiar"; ready: "Ready for you"; stretch with two
+read-first: "A stretch: read up on X and Y first"; with one: "A stretch: read up on X first";
+with none (more than 4 new ideas): "A stretch: many new ideas at once".
+**V4. The map's rule.** `is_new` is the map's not-known (p < `KNOWN_P` 0.5, `reader/overview.py`).
+"Ready" = every new idea's prerequisites are known, as the map's "ready to learn"; the one
+difference, stated in DESIGN §17.2: a new idea with no prerequisites in the graph counts as ready
+here but gets no ring on the map.
+**V5. Basis said.** The line carries `title="Based on the ideas named in the title and summary"`
+(For you chunk only) and DESIGN §17.2 says the same.
+**V6. Fields.** `readiness: Literal["familiar", "ready", "stretch"] | None = None`,
+`read_first: list[str] = []`; TS union to match; absent or null → no line.
+**V7. Mix first.** Before the web work, a pure test over the committed demo snapshot fixture counts
+levels for all three personas (no network); counts in the report. If one level is ≥ 80% of the
+newcomer's rows, stop and tell Sourabh (no threshold retuning). Re-run after the Oct 16 re-seed.
+**V8. Harness.** `tools/shots/readiness.py`: writes `persona_feeds/newcomer` into the emulator from
+a committed fixture, opens For you as the demo reader; asserts zero search and zero model calls.
+**V9. Goal + readiness test.** ForYouTab render test: goal first, then readiness, in one
+`.row__why`; nothing in the meta line.
+**V10. Rank tests.** A new prerequisite also named by the item: not listed, still counted; a
+prerequisite id missing from the graph: no crash; `select` and `_out` carry both fields.
+**V11. Production writes.** The deploys; the live check makes 1 anonymous user and 1
+`rec_signals/newcomer` doc (left to the anonymous-user cleanup, said in STATUS).
+**V12. Deploys** from clean, up-to-date `main` after `make check-gcp`, API before web.
+**V13. Live evidence.** Production `/v1/feed` level counts per persona and one live shot in
+`docs/evidence/readiness/`, in the STATUS section.
+**V14. Schedule and wording.** STATUS §9 Oct 15 row with a checkpoint (not merged by end of Oct 15
+IST → ask Sourabh what to cut, decision 27) and decision 60 recorded before coding: shown as three
+levels, not a number (a number from title and summary matches would be false precision); Sourabh
+asked in one line before the web work.
