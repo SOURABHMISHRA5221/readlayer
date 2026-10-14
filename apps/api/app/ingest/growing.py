@@ -161,11 +161,13 @@ async def grow_stored(doc: ContentDoc, reserve: Reserver | None) -> Regrown:
     status, token = await store.claim_growth(doc.content_id, now, until)
     if status != "claimed" or token is None:
         return Regrown("growing" if status == "busy" else "none")
+    tried = doc.grow_tried
     try:
         # Read again under the claim: another grower may have finished since the caller's read.
         fresh = await store.get(doc.content_id)
+        tried = fresh.grow_tried if fresh is not None else tried
         if fresh is None or not needs_growth(fresh, heldout=False):
-            await store.finish_growth(doc.content_id, token, None, [], False, doc.grow_tried)
+            await store.finish_growth(doc.content_id, token, None, [], False, tried)
             return Regrown("none")
         paragraphs = {p.id: p.text for p in fresh.paragraphs}
         result = await run_growth(
@@ -173,9 +175,7 @@ async def grow_stored(doc: ContentDoc, reserve: Reserver | None) -> Regrown:
             settings.growth_timeout_s, reserve,
         )  # fmt: skip
     except BaseException:  # release the claim at once, the page still pending; then re-raise
-        await asyncio.shield(
-            store.finish_growth(doc.content_id, token, None, [], True, doc.grow_tried)
-        )
+        await asyncio.shield(store.finish_growth(doc.content_id, token, None, [], True, tried))
         raise
     demands = result.demands if result.linked else None
     if not await store.finish_growth(

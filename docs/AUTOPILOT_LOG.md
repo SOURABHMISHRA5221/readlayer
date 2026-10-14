@@ -1699,8 +1699,16 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Harness on the emulator, real Vertex: **PASS, $0.0072** (STATUS §26).
 - API 1,145, web 186, extension 89, annotator 60, typecheck clean, main **149.87 KB** (0.13 left).
 
+- milestone-reviewer round 1: **FIX** (web didn't reload after waiting on another grower and
+  re-posted /grow on a persona change; the growing line missing; harness not through the routes;
+  STATUS gaps; plus a fresh read under the claim, a cheap "none", the extension's analysedNow,
+  a budget pre-check and claim release). All applied (0bbf8e0 .. 7474185). Harness now through the
+  routes with real Auth tokens: **PASS, notes 2 → 3, $0.0138** (`docs/evidence/m9/harness.txt`).
+- Round 2: **SHIP**. API 1,148, web 186, extension 89, annotator 60; main **149.96 KB** (0.04
+  left: any further reader change must be lazy).
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer → SHIP → PR → CI → merge → deploy API from clean `main`, then web
-   (Sourabh's yes on each) → `make extension-zip` + release `extension-v0.8.1` (his yes) → live:
-   Sourabh reopens one of his four empty extension pages. Checkpoint: midday Oct 15 IST.
+1. PR → CI → merge → deploy API from clean `main`, then web (Sourabh's yes on each) →
+   `make extension-zip` + release `extension-v0.8.1` (his yes) → live: Sourabh reopens one of his
+   four empty extension pages. Checkpoint: midday Oct 15 IST.
 2. M9 part 2 plan: the four M2.2 quality items (STATUS §9), before any part 3 extras.
