@@ -19,7 +19,19 @@ export interface ContentSummary {
   image: string | null;
   domain: string | null;
   concepts_new: number;
+  /** Library rows badge videos and podcasts (media plan §G). Older APIs omit it: article. */
+  format?: RecFormat;
 }
+
+/** The recording a transcript was made from (DESIGN §21); the reader plays it from here. */
+export interface MediaInfo {
+  kind: "video" | "podcast";
+  video_id: string | null;
+  audio_url: string | null;
+  duration_s: number;
+}
+
+export type ContentStatus = "transcribing" | "analysing" | "ready" | "refused" | "failed";
 
 export interface ContentDetail {
   id: string;
@@ -32,9 +44,16 @@ export interface ContentDetail {
   published: string | null;
   image: string | null;
   domain: string | null;
-  paragraphs: { id: string; text: string }[];
-  /** "analysing": fetched, notes not ready (two-phase "Open here"). Older APIs omit it: ready. */
-  status?: "ready" | "analysing";
+  /** `start_s`: a transcript paragraph's start in the recording. */
+  paragraphs: { id: string; text: string; start_s?: number | null }[];
+  /**
+   * "analysing": fetched, notes not ready (two-phase "Open here"). "transcribing": a recording
+   * with no transcript yet (no paragraphs). "refused" (with `refusal`) and "failed" (attempts used
+   * up): the page shows the message with "Open original" and stops calling. Older APIs omit it.
+   */
+  status?: ContentStatus;
+  media?: MediaInfo | null;
+  refusal?: { code: string; message: string } | null;
 }
 
 export interface AnnotationsResponse {
@@ -86,6 +105,8 @@ export interface RecItem {
   why: string;
   triggers: { id: string; label: string }[];
   score: number;
+  /** Opens in Gloss (articles; videos within the media caps). Older APIs omit it: articles only. */
+  open_here?: boolean;
 }
 
 export interface RecsResponse {
@@ -95,6 +116,11 @@ export interface RecsResponse {
   items: RecItem[];
   pending: boolean;
   web_formats: RecFormat[];
+}
+
+/** Whether an item opens in Gloss: the server's `open_here` (R11); older APIs: articles only. */
+export function opensHere(item: { format: RecFormat; open_here?: boolean }): boolean {
+  return item.open_here ?? item.format === "article";
 }
 
 export type ApiErrorKind = "not_found" | "unauthorized" | "server" | "offline" | "pending";
@@ -228,7 +254,18 @@ export const api = {
   recEvents: (persona: PersonaKey | null, events: { id: string; type: RecEventType; item_id: string }[]) =>
     post<{ applied: number; ignored: number }>("/v1/recs/events", { persona, events }),
   openWeb: (url: string, signal?: AbortSignal) =>
-    post<{ content_id: string; new: boolean; ready?: boolean }>("/v1/recs/open", { url }, signal),
+    post<{ content_id: string; new: boolean; ready?: boolean; kind?: RecFormat }>("/v1/recs/open", { url }, signal),
+  /** A recording's transcript: 200 done (then analyse), 202 another request is on it (retry). */
+  transcribe: async (id: string, signal?: AbortSignal): Promise<"done" | "transcribing"> => {
+    const res = await request(
+      `/v1/content/${encodeURIComponent(id)}/transcribe`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+      signal,
+    );
+    if (res.status === 202) return "transcribing";
+    if (!res.ok) throw await failure(res);
+    return "done";
+  },
   /** Phase 2 of "Open here": 200 ready, 202 another request is analysing it (retry). */
   analyse: async (id: string, signal?: AbortSignal): Promise<"ready" | "analysing"> => {
     const res = await request(

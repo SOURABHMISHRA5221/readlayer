@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { api, ApiError, errorKind, type ApiErrorKind } from "../../lib/api";
+import { api, ApiError, errorKind, opensHere, type ApiErrorKind } from "../../lib/api";
 import { feedApi, type FeedItem, type FeedResponse } from "../../lib/feedApi";
 import { FEED_STALE } from "../../lib/feedStale";
 import { pendingNote, reaskDelay, snapshotNote, visibleItems, wantsCountry } from "../../lib/feedView";
@@ -149,8 +149,8 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
               context={`in ${item.topic_label}${item.format === "article" ? "" : ` · ${item.format}`}`}
               title={item.title}
               href={item.url}
-              external={item.format !== "article"}
-              onOpen={item.format === "article" ? () => openHere(item) : undefined}
+              external={!opensHere(item)}
+              onOpen={opensHere(item) ? () => openHere(item) : undefined}
               subtitle={item.snippet}
               why={item.goal ? <>Picked for your goal <b>{item.goal}</b></> : null}
               time={time(item)}

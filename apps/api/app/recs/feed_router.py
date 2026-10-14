@@ -6,9 +6,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from app.config import get_settings
 from app.context import ReaderContext, reader_context
 from app.graph.loader import get_graph
 from app.graph.taxonomy import BY_ID
+from app.media.openable import open_here
 from app.recs import feed_rank as fr
 from app.recs.feed import (
     PERSONA_COUNTRY,
@@ -52,6 +54,8 @@ class FeedItemOut(BaseModel):
     goal: str | None
     why: str
     score: float
+    # Opens in Gloss (articles; videos within the media caps) or only at the source.
+    open_here: bool = True
 
 
 class FeedResponse(BaseModel):
@@ -126,7 +130,13 @@ async def get_feed(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> Fe
     side = side_for(country)
     ranked = fr.select(fr.rank(candidates, reader, now), topics, side, LOCAL_SHARE)
     _log_mix(ranked, side, country)
-    items = [_out(r) for r in ranked]
+    settings, anonymous = get_settings(), ctx.caller.is_anonymous
+    items = [
+        i.model_copy(update={"open_here": await open_here(
+            i.url, i.format, i.duration_or_read_time, settings, anonymous
+        )})
+        for i in (_out(r) for r in ranked)
+    ]  # fmt: skip
     if items and ctx.user.may_record:  # signed-in readers: nothing recorded before consent
         await get_rec_signals().remember_served(
             ctx.uid, ctx.rec_key, {i.id: Served(i.format, "feed") for i in items}, now

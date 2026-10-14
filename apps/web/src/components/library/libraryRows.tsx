@@ -8,6 +8,7 @@ export function LibraryRow({
   item, href, saved, onSave,
 }: { item: ContentSummary; href: string; saved: boolean; onSave: () => void }) {  // prettier-ignore
   const date = formatDate(item.published);
+  const media = item.format === "video" || item.format === "podcast";
   return (
     <Row
       source={sourceName(item.site)}
@@ -15,7 +16,8 @@ export function LibraryRow({
       title={item.title}
       href={href}
       subtitle={item.description}
-      time={`${readingMinutes(item.word_count)} min read${date ? ` · ${date}` : ""}`}
+      time={media ? (date ?? "") : `${readingMinutes(item.word_count)} min read${date ? ` · ${date}` : ""}`}
+      badge={item.format === "video" ? "Video" : item.format === "podcast" ? "Podcast" : null}
       newCount={item.concepts_new}
       saved={saved}
       onSave={onSave}

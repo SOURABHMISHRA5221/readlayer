@@ -5,11 +5,13 @@ enforces the daily budget, retries transient errors, falls back, re-validates ou
 and records cost per call.
 """
 
+import asyncio
 import base64
 import json
 import logging
 import re
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -65,6 +67,11 @@ class LLMUnavailable(LLMError):
 
 class LLMRejected(LLMError):
     """The provider refused the request (400/401/403, or an unclassified error); no fallback."""
+
+
+class MediaTimeout(TimeoutError):
+    """A transcribe call timed out: charged its estimate once, never retried in the run; the
+    route answers 504 and the page's own retry is the only retry (plan Round 4, R4.2)."""
 
 
 ErrorAction = Literal["retry", "fallback", "raise"]
@@ -124,6 +131,9 @@ ROUTES: dict[str, Route] = {
     "landing_art": Route("model_image", None),
     "verify": Route("judge_model", None),  # the restatement's claims
     "verify_background": Route("judge_model", None),  # the Background
+    # Media transcripts (DESIGN §21), via transcribe(). Quality model, no fallback: the fast
+    # model dropped a third of the speech on a measured window with no error (Media plan).
+    "transcribe": Route("model_quality", None, timeout_s=90.0, reasoning_effort="low"),
 }
 
 
@@ -524,6 +534,287 @@ def image_size(data: bytes) -> tuple[str, int, int] | None:
             return "image/jpeg", width, height
         i += 2 + length
     return None
+
+
+# ---------------------------------------------------------------- media transcripts
+
+TRANSCRIBE_MAX_TOKENS = 16_000  # 20 dense minutes ≈ 7,200 (rows 7, 14); free unless used
+YOUTUBE_FPS = 0.1  # one frame every 10 s at low detail: the words were the same as at 1 fps
+
+
+@dataclass(frozen=True)
+class YouTubeClip:
+    """A public YouTube video, read by Vertex from the URL itself. No offsets = the whole
+    video, which is what the product sends: offset windows can hang (plan Round 4)."""
+
+    url: str
+    start_s: int | None = None
+    end_s: int | None = None
+
+
+@dataclass(frozen=True)
+class AudioClip:
+    """A piece of an MP3, sent inline (Vertex ignores offsets on audio)."""
+
+    data: bytes | memoryview
+    mime: str = "audio/mpeg"
+
+
+MediaClip = YouTubeClip | AudioClip
+
+
+@dataclass
+class MediaMeter:
+    """Everything billed for one recording, shared by its windows. Updated before anything is
+    raised, so a caller knows what a failed or cancelled run cost (Media plan R2)."""
+
+    cost_usd: float = 0.0
+    calls: int = 0
+
+
+class InvalidTranscript(ValueError):
+    """Output that parsed but can't be used (cut off, times outside the window, loops)."""
+
+
+async def check_media_budget(
+    needed_usd: float = 0.0, *, task: str = "transcribe", settings: Settings | None = None
+) -> None:
+    """Both guards: the day's total (LLM_DAILY_BUDGET_USD) and media's own share (R7), each
+    with `needed_usd` more spent. Raises BudgetExceeded."""
+    settings = settings or get_settings()
+    store = get_spend_store()
+    spent = await store.get_today()
+    if spent + needed_usd >= settings.llm_daily_budget_usd:
+        log.warning("llm budget exceeded", extra={"task": task, "spent_usd": spent})
+        raise BudgetExceeded(f"daily LLM budget ${settings.llm_daily_budget_usd} reached")
+    media = await store.get_media_today()
+    if media + needed_usd >= settings.media_daily_budget_usd:
+        log.warning("media budget exceeded", extra={"task": task, "media_usd": media})
+        raise BudgetExceeded(f"daily media budget ${settings.media_daily_budget_usd} reached")
+
+
+async def transcribe[T: BaseModel](
+    task: str,
+    schema: type[T],
+    clip: MediaClip,
+    *,
+    estimate_usd: float,
+    meter: MediaMeter,
+    check: Callable[[T], object] | None = None,
+    settings: Settings | None = None,
+) -> LLMResult[T]:
+    """One window of a recording on the task's model. Same budget guards, retries with backoff,
+    cost logging and spend ledger as run(), with media's own ledger share. No fallback model.
+
+    Invalid output (schema, `check` raising ValueError, or cut off at the token limit) is asked
+    again once, unchanged; a call that times out or is cancelled is charged `estimate_usd`
+    (Vertex may still bill it), and a timeout is not retried. Raises BudgetExceeded,
+    LLMUnavailable, LLMRejected or MediaTimeout.
+    """
+    settings = settings or get_settings()
+    route = ROUTES.get(task)
+    if route is None:
+        raise ValueError(f"unknown LLM task: {task}")
+    model = getattr(settings, route.primary, "")
+    if not model:
+        raise LLMUnavailable(f"{route.primary.upper()} is not configured")
+    prices = _media_prices(model, settings)  # before any call: an unpriced call never runs
+    prompt = load_prompt(task)
+    native_schema = _supports_schema(model)
+    messages: list[dict[str, Any]] = [
+        {"role": "system", "content": prompt.system},
+        {"role": "user", "content": [{"type": "text", "text": prompt.user}, _media_part(clip)]},
+    ]
+    kwargs: dict[str, Any] = {
+        "model": model,
+        "messages": messages if native_schema else _with_inline_schema(messages, schema),
+        "response_format": schema if native_schema else {"type": "json_object"},
+        "max_tokens": TRANSCRIBE_MAX_TOKENS,
+        "timeout": route.timeout_s or settings.llm_timeout_s,
+        "num_retries": 0,
+    }
+    if route.reasoning_effort and _GEMINI_3.search(model):
+        kwargs["reasoning_effort"] = route.reasoning_effort
+    if model.startswith("vertex_ai/"):
+        kwargs |= {
+            "vertex_project": settings.gcp_project,
+            "vertex_location": settings.vertex_location,
+        }
+
+    ledger = _Ledger()
+    call = _MediaCall(task, model, prompt.version, prices, estimate_usd, meter, ledger, settings)
+    error: Exception | None = None
+    for _ in range(2):  # one re-ask on invalid output
+        response = await call.run(kwargs)
+        try:
+            choice = response.choices[0]
+            if getattr(choice, "finish_reason", None) == "length":
+                raise InvalidTranscript("cut off at the output limit")
+            output = _validate(schema, choice.message.content)
+            if check is not None:
+                check(output)
+        except (ValidationError, ValueError) as exc:
+            error = exc
+            log.warning(
+                "llm media output invalid",
+                extra={"task": task, "model": model, "error": _invalid_summary(exc)},
+            )
+            continue
+        return LLMResult(output, ledger.meta(task, model, prompt.version, fell_back=False))
+    raise LLMRejected(f"{task} on {model}: invalid output twice: {_invalid_summary(error)}")
+
+
+def _invalid_summary(exc: Exception | None) -> str:
+    """Why output was invalid, with no transcript text (logs carry no content): a pydantic
+    error quotes its input, so only locations and error types are kept."""
+    if isinstance(exc, ValidationError):
+        return "; ".join(
+            f"{'.'.join(str(part) for part in e['loc'])}: {e['type']}" for e in exc.errors()[:5]
+        )
+    if isinstance(exc, InvalidTranscript):
+        return str(exc)[:200]  # our own fixed wording
+    return type(exc).__name__
+
+
+@dataclass
+class _MediaCall:
+    task: str
+    model: str
+    prompt_version: str
+    prices: tuple[float, float, float]
+    estimate_usd: float
+    meter: MediaMeter
+    ledger: "_Ledger"
+    settings: Settings
+
+    async def run(self, kwargs: dict[str, Any]) -> Any:
+        """One request with retries on transient errors; every attempt is costed."""
+        try:
+            async for attempt in AsyncRetrying(
+                retry=retry_if_exception(_media_retryable),
+                stop=stop_after_attempt(self.settings.llm_max_retries + 1),
+                wait=retry_wait,
+                reraise=True,
+            ):
+                with attempt:
+                    return await self._attempt(kwargs)
+        except LLMError:
+            raise
+        except Exception as exc:
+            if isinstance(exc, _litellm().Timeout):  # charged in _attempt; the page retries
+                raise MediaTimeout(f"{self.task} on {self.model}: timed out") from exc
+            fields = {"task": self.task, "model": self.model, "error_class": type(exc).__name__}
+            if classify_error(exc) == "raise":
+                log.error("llm media rejected", extra={**fields, "status": _status(exc)})
+                raise LLMRejected(f"{self.task} on {self.model}: {type(exc).__name__}") from exc
+            log.error("llm media unavailable", extra=fields)
+            raise LLMUnavailable(f"{self.task} on {self.model}: {type(exc).__name__}") from exc
+        raise LLMUnavailable("unreachable")
+
+    async def _attempt(self, kwargs: dict[str, Any]) -> Any:
+        await check_media_budget(task=self.task, settings=self.settings)
+        self.ledger.attempts += 1
+        start = time.perf_counter()
+        try:
+            response = await _litellm().acompletion(**kwargs)
+        except asyncio.CancelledError:
+            await asyncio.shield(self._charge(self.estimate_usd, 0, 0, start, "cancelled"))
+            raise
+        except _litellm().Timeout:
+            await self._charge(self.estimate_usd, 0, 0, start, "timeout")
+            raise
+        usage = getattr(response, "usage", None)
+        tokens_in = int(getattr(usage, "prompt_tokens", 0) or 0)
+        tokens_out = int(getattr(usage, "completion_tokens", 0) or 0)
+        audio = _audio_tokens(usage)
+        price_in, price_out, price_audio = self.prices
+        cost = (tokens_in - audio) * price_in + audio * price_audio + tokens_out * price_out
+        await self._charge(cost, tokens_in, tokens_out, start, "ok", audio_tokens=audio)
+        return response
+
+    async def _charge(
+        self,
+        cost: float,
+        tokens_in: int,
+        tokens_out: int,
+        start: float,
+        outcome: str,
+        *,
+        audio_tokens: int = 0,
+    ) -> None:
+        self.meter.cost_usd += cost
+        self.meter.calls += 1
+        self.ledger.tokens_in += tokens_in
+        self.ledger.tokens_out += tokens_out
+        self.ledger.cost_usd += cost
+        await get_spend_store().add(cost, tokens_in, tokens_out, media=True)
+        log.info(
+            "llm call",
+            extra={
+                "task": self.task,
+                "model": self.model,
+                "prompt_version": self.prompt_version,
+                "outcome": outcome,
+                "tokens_in": tokens_in,
+                "audio_tokens": audio_tokens,
+                "tokens_out": tokens_out,
+                "cost_usd": round(cost, 8),
+                "latency_ms": round((time.perf_counter() - start) * 1000, 1),
+            },
+        )
+
+
+def _media_retryable(exc: BaseException) -> bool:
+    """Transient errors are retried in the run, a timeout is not: with a 90 s call inside a
+    150 s run the retry could never finish, it only paid twice (plan Round 4, R4.2)."""
+    return classify_error(exc) == "retry" and not isinstance(exc, _litellm().Timeout)
+
+
+def _media_part(clip: MediaClip) -> dict[str, Any]:
+    if isinstance(clip, YouTubeClip):
+        metadata: dict[str, Any] = {"fps": YOUTUBE_FPS}
+        if clip.start_s is not None:
+            metadata["start_offset"] = f"{clip.start_s}s"
+        if clip.end_s is not None:
+            metadata["end_offset"] = f"{clip.end_s}s"
+        return {
+            "type": "file",
+            "file": {
+                "file_id": clip.url,
+                "format": "video/mp4",
+                "detail": "low",
+                "video_metadata": metadata,
+            },
+        }
+    uri = f"data:{clip.mime};base64," + base64.b64encode(clip.data).decode("ascii")
+    return {"type": "file", "file": {"file_data": uri, "format": clip.mime}}
+
+
+def _media_prices(model: str, settings: Settings) -> tuple[float, float, float]:
+    """(input, output, audio input) USD per token, computed by us from the token counts.
+
+    Not LiteLLM's completion_cost: when a response splits out its text tokens, LiteLLM 1.104
+    prices those alone, dropping video and audio tokens (checked 2026-10-14). Raises
+    LLMRejected when any price is unknown.
+    """
+    entry = _litellm().model_cost.get(model) or _litellm().model_cost.get(
+        model.split("/", 1)[-1], {}
+    )
+    price_in, price_out = entry.get("input_cost_per_token"), entry.get("output_cost_per_token")
+    if (price_in is None or price_out is None) and model in settings.model_price_overrides:
+        price_in, price_out = settings.model_price_overrides[model]
+    audio = entry.get("input_cost_per_audio_token")
+    if audio is None:
+        audio = settings.model_audio_price_overrides.get(model)
+    if price_in is None or price_out is None or audio is None:
+        log.error("no media price for model; call refused", extra={"model": model})
+        raise LLMRejected(f"no audio price for {model}")
+    return float(price_in), float(price_out), float(audio)
+
+
+def _audio_tokens(usage: Any) -> int:
+    details = getattr(usage, "prompt_tokens_details", None)
+    return int(_field(details, "audio_tokens") or 0) if details is not None else 0
 
 
 def _normalise(rows: list[list[float]]) -> list[list[float]]:

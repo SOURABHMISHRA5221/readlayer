@@ -58,6 +58,36 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2
     # Per-token (input, output) USD prices for models missing from LiteLLM's price map.
     model_price_overrides: dict[str, tuple[float, float]] = Field(default_factory=dict)
+    # Per-token USD price of audio input, for models whose LiteLLM entry has none (LiteLLM 1.104
+    # has none for Gemini 3.x). A media call on a model with no audio price is refused, so an
+    # unpriced recording can never reach the ledger as cheap (Media plan R6).
+    model_audio_price_overrides: dict[str, float] = Field(default_factory=dict)
+
+    # Media: YouTube videos and podcast episodes read as transcripts (decision 54, DESIGN §21).
+    media_enabled: bool = True  # kill switch: false → media URLs answer "Open original"
+    media_audio_enabled: bool = True  # podcasts only (plan R12)
+    media_video_enabled: bool = True  # YouTube only; on: whole videos ≤ 10 min answer (step 7)
+    # 10 minutes for videos, 12 for podcasts (Sourabh, 2026-10-14: media is minor support; short
+    # clips are enough; podcasts raised to 12 because Apple's length leaves out stitched-in ads).
+    # A video is one call; an episode one window up to 11 min, two (sequential) up to 12; a
+    # small file, memory well inside 1 GiB.
+    media_max_video_s: int = 600
+    media_max_audio_s: int = 720
+    media_max_audio_bytes: int = 24_000_000  # 12 min at 256 kbps is 23 MB
+    # Audio windows in flight after window 1; each holds ~3 × 20 MB of base64 and JSON (5R10).
+    # 2, not 4: T02's harness run peaked at 686 MB (idle API 277 MB) with two in flight.
+    media_audio_parallel_windows: int = Field(default=2, ge=1)
+    # New recordings per UTC day: per signed-in reader, per demo reader, all demo readers.
+    media_daily_cap: int = 5
+    anon_media_daily_cap: int = 1
+    anon_global_media_daily_cap: int = 10
+    # videos.list, Apple lookups and audio pre-checks per UTC day, everyone together (R5).
+    media_lookup_daily_cap: int = 300
+    # Media spend per UTC day inside LLM_DAILY_BUDGET_USD (Sourabh: "mark 3 dollar budget", R7).
+    media_daily_budget_usd: float = 3.0
+    # Expected transcribe cost per minute of recording, at the cautious audio price (R6): drives
+    # the budget pre-check, the per-item ceiling (2×) and a timed-out window's ledger charge.
+    media_est_usd_per_min: float = 0.006
 
     uid_hash_salt: str = ""
 

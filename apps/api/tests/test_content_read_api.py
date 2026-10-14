@@ -50,6 +50,7 @@ def test_list_and_search(client):
         "image": None,
         "domain": "finance",
         "concepts_new": 1,
+        "format": "article",
     }
     assert [i["id"] for i in client.get("/v1/content?q=DEFICIT").json()] == ["a2"]
     assert [i["id"] for i in client.get("/v1/content?q=businessline").json()] == ["a2"]

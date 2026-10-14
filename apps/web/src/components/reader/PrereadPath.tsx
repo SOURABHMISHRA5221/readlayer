@@ -7,7 +7,14 @@ import { navigate, withParams } from "../../lib/router";
 type Step = PrereadAnnotation["steps"][number] & { known?: boolean };
 
 /** "Before you read" as a path (Design pass A2/C6): known steps ticked, the key idea last. */
-export function PrereadPath({ item, persona }: { item: PrereadAnnotation; persona: PersonaKey | null }) {
+interface PrereadPathProps {
+  item: PrereadAnnotation;
+  persona: PersonaKey | null;
+  /** "Before you watch" / "Before you listen" on a transcript. */
+  heading?: string;
+}
+
+export function PrereadPath({ item, persona, heading = "Before you read" }: PrereadPathProps) {
   const [open, setOpen] = useState<string | null>(null);
   const id = useId();
   const steps = item.steps as Step[];
@@ -18,7 +25,7 @@ export function PrereadPath({ item, persona }: { item: PrereadAnnotation; person
   return (
     <section className="path" aria-labelledby={`${id}-h`}>
       <h2 id={`${id}-h`} className="path__h">
-        Before you read
+        {heading}
       </h2>
       <p className="path__sub">
         {unknown > 1

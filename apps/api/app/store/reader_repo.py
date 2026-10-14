@@ -12,6 +12,7 @@ users/{uid}/saved/{content_id} Design pass: articles the reader saved (`at`)
 users/{uid}/ingest_counts/{d}  new URLs ingested that UTC day
 users/{uid}/explain_counts/{d} explanations generated (not cached) that UTC day
 users/{uid}/growth_counts/{d}  concept-growth slots reserved that UTC day (M2.2)
+users/{uid}/media_counts/{d}   new recordings opened that UTC day (Media, decision 54)
 users/{uid}/ingested/{cid}     pages this reader brought in (M7.5): their library shows them
 users/{uid}/goals/{id}         reading goals (M7.5): habit targets, or learning target concepts
 users/{uid}/goal_resolve_counts/{d}  learning goals resolved that UTC day (M7.5 cap)
@@ -54,6 +55,7 @@ USER_SUBCOLLECTIONS = (
     "explain_counts",
     "profile_edit_counts",
     "growth_counts",
+    "media_counts",
     "ingested",
     "saved",
     "goals",

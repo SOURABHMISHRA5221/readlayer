@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { api, errorKind, ApiError, type RecEventType, type RecFormat, type RecItem } from "../lib/api";
+import { api, errorKind, ApiError, opensHere, type RecEventType, type RecFormat, type RecItem } from "../lib/api";
 import { queueRecEvent } from "../lib/recEvents";
 import { sourceMonogram, sourceName } from "../lib/format";
 import { personaParam, type PersonaKey } from "../lib/personas";
@@ -224,6 +224,7 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
 
   const [thumbFailed, setThumbFailed] = useState(false);
   const isWeb = item.kind === "web";
+  const here = isWeb && opensHere(item);
   const source = isWeb ? item.source : sourceName(item.source);
   const titleId = `rec-${item.id.replace(/[^a-z0-9]/gi, "")}`;
 
@@ -309,10 +310,10 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
                 window.scrollTo(0, 0);
               }}
             >
-              Read with notes
+              {WITH_NOTES[item.format]}
             </a>
           )}
-          {isWeb && item.format === "article" && (
+          {here && (
             <>
               <button type="button" className="btn btn--sm" onClick={openHere} disabled={opening.status === "busy"}>
                 {opening.status === "busy" ? "Opening…" : "Open here"}
@@ -323,9 +324,9 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
               </a>
             </>
           )}
-          {isWeb && item.format !== "article" && (
+          {isWeb && !here && (
             <a className="btn btn--sm" href={item.url} target="_blank" rel="noopener noreferrer" onClick={() => sendRecEvent(persona, "rec_clicked", item.id)}>
-              {item.format === "video" ? "Watch" : "Listen"} on {item.format === "video" ? "YouTube" : sourceLabel(item.source)} <External size={13} />
+              {originalLabel(item)} <External size={13} />
               <span className="visually-hidden"> (opens in a new tab)</span>
             </a>
           )}
@@ -337,7 +338,9 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
           <div className="rec__progress" role="status">
             <span className="rec__bar" aria-hidden="true" />
             <span>
-              Fetching the page. It opens as soon as it's in; your notes follow.{" "}
+              {item.format === "article"
+                ? "Fetching the page. It opens as soon as it's in; your notes follow."
+                : "Opening the video. Gloss transcribes it next; your notes follow."}{" "}
               <span className="tnum" aria-hidden="true">
                 {Math.round((Date.now() - opening.since) / 1000)} s
               </span>
@@ -352,6 +355,14 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
       </div>
     </article>
   );
+}
+
+const WITH_NOTES: Record<RecFormat, string> = { article: "Read with notes", video: "Watch with notes", podcast: "Listen with notes" };
+
+function originalLabel(item: RecItem): string {
+  if (item.format === "video") return "Watch on YouTube";
+  if (item.format === "podcast") return `Listen on ${sourceLabel(item.source)}`;
+  return "Open original";
 }
 
 function sourceLabel(host: string): string {

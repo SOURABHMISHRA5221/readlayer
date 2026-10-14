@@ -108,6 +108,7 @@
   text-wrap: balance;
 }
 .article-head__dek { margin: 0 0 var(--s6); font: 400 22px / 1.4 var(--font-read); color: var(--muted); text-wrap: pretty; }
+.article-head__note { margin: calc(-1 * var(--s3)) 0 var(--s6); font: 400 13.5px / 1.45 var(--font-ui); color: var(--muted); }
 .byline { display: flex; align-items: center; gap: var(--s3); font: 400 14px / 1.35 var(--font-ui); }
 .byline p { margin: 0; }
 .byline__mark {
@@ -188,6 +189,9 @@
   font: 400 var(--text-ui) / 1.5 var(--font-ui);
 }
 .reader__notice svg { flex: none; }
+.reader__notice--stop { flex-wrap: wrap; }
+.reader__notice--stop p { flex: 1 1 16rem; margin: 0; }
+.reader__notice-acts { display: inline-flex; gap: var(--s2); }
 
 /* "Before you read" path. */
 .path { margin: 0 0 var(--s10); font-family: var(--font-ui); }

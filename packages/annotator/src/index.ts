@@ -6,7 +6,7 @@
 
 import { indexText, resolveInText, type TextRange } from "./anchor";
 import { createAsk, type AnswerFn, type Ask } from "./ask";
-import { Card, SHEET_QUERY, type CardMode, type SidenoteBox } from "./card";
+import { Card, SHEET_QUERY, type CardLabels, type CardMode, type SidenoteBox } from "./card";
 import { MARK_CLASS, markId, unwrap, wrapRange } from "./mark";
 import { createMarker, paragraphCard, PMARK_CLASS } from "./paragraph";
 import { Signals } from "./signals";
@@ -22,6 +22,7 @@ import type {
   PromptAnnotation,
 } from "./types";
 import { removeUi } from "./ui";
+export { HOST_UI, UI_ATTR } from "./ui";
 
 export type * from "./types";
 export {
@@ -29,6 +30,7 @@ export {
   BACKGROUND_LABEL,
   CARD_LABEL,
   NO_EXPLANATION_TEXT,
+  type CardLabels,
   type SidenoteBox,
 } from "./card";
 export { normalizeWhitespace, resolveInText } from "./anchor";
@@ -38,7 +40,7 @@ export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions
 
 export { ANNOTATOR_CSS, type StyleMode } from "./styles";
 
-export const ANNOTATOR_VERSION = "0.8.0";
+export const ANNOTATOR_VERSION = "0.9.0";
 
 export interface AnnotatorOptions {
   /** Interaction and reading events (DESIGN §9); the host batches them to /v1/events. */
@@ -71,6 +73,8 @@ export interface AnnotatorOptions {
   actions?: "full" | "demo";
   /** The demo card's call to action (with `actions: "demo"`). */
   demoAction?: { label: string; onClick: () => void };
+  /** Card wording for content that isn't written by an author (a transcript's speaker). */
+  labels?: CardLabels;
   /**
    * The page's margin column, when there is one (e.g. ≥1200px): the card is then set there as
    * a sidenote, level with its line, instead of floating over the text. Null = popover.
@@ -216,6 +220,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       if (!target) return;
       loadInto(target.annotation, shift);
     },
+    labels: options.labels,
     demo: options.actions === "demo" ? options.demoAction ?? { label: "Try it on any article", onClick: () => undefined } : undefined,
   }, inline);
   card.enableShift(Boolean(options.loadShifted));

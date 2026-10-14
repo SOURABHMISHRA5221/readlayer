@@ -48,6 +48,48 @@ class StoredParagraph(BaseModel):
     id: str
     text: str
     structure: float = Field(ge=0, le=1)
+    start_s: int | None = None  # a transcript paragraph's start in the recording (DESIGN §21)
+
+
+MediaKind = Literal["youtube", "audio"]
+Stage = Literal["transcribe", "analyse"]
+
+
+class TranscriptRecord(BaseModel):
+    """How a transcript was made: shown nowhere, kept for cost and prompt-version audits."""
+
+    model: str
+    prompt_version: str
+    windows: int
+    cost_usd: float  # every billed call for this recording, failed attempts included
+    made_at: str
+    tokens_in: int = 0
+    tokens_out: int = 0
+
+
+class Media(BaseModel):
+    """A recording read as a transcript (decision 54). Content only, no uid."""
+
+    kind: MediaKind
+    video_id: str | None = None
+    audio_url: str | None = None  # the publisher's file; played from there, never re-hosted
+    duration_s: int
+    # The spoken language when the source declares it (YouTube defaultAudioLanguage); None =
+    # unknown, so window 1 runs alone first (plan R8).
+    language: str | None = None
+    transcript: TranscriptRecord | None = None
+
+
+class WindowParagraph(BaseModel):
+    start_s: int
+    text: str
+
+
+class WindowRecord(BaseModel):
+    """One transcribed window, stored as it finishes so a retry never pays for it again."""
+
+    language: str
+    paragraphs: list[WindowParagraph]
 
 
 class LLMCall(BaseModel):
@@ -80,11 +122,13 @@ class ContentDoc(BaseModel):
     demands: list[Demand]
     demands_dropped: int
     llm_calls: list[LLMCall]
+    media: Media | None = None
 
 
 class PendingParagraph(BaseModel):
     id: str
     text: str
+    start_s: int | None = None
 
 
 class PendingDoc(BaseModel):
@@ -113,3 +157,16 @@ class PendingDoc(BaseModel):
     attempts: int = 0
     lease_until: datetime | None = None
     expire_at: datetime  # Firestore TTL field: abandoned pending docs go after a day
+    # Media (decision 54): a recording starts at stage "transcribe" with no paragraphs. Its own
+    # attempt counter (any billed run counts, plan R2); a random token per lease so a run that
+    # lost its lease can't write (R1); windows stored as they finish; every billed call's cost.
+    media: Media | None = None
+    stage: Stage = "analyse"
+    refused: str | None = None  # a refusal code found while transcribing; kept until expiry
+    transcribe_attempts: int = 0
+    lease_token: str | None = None
+    windows: dict[str, WindowRecord] = Field(default_factory=dict)
+    # "<frames>:<bytes>" of the audio the saved windows came from: a retry that fetches other
+    # bytes (dynamically inserted ads) drops them and starts over (5R3).
+    audio_fingerprint: str | None = None
+    transcribe_cost_usd: float = 0.0

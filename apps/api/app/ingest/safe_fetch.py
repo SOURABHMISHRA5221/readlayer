@@ -32,6 +32,14 @@ ROBOTS_TTL_S = 3600.0
 HTML_TYPES = frozenset({"text/html", "application/xhtml+xml"})
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
 
+# Podcast audio (Media plan §B): enclosures chain measurement prefixes before the CDN.
+MAX_AUDIO_REDIRECTS = 6
+AUDIO_TIMEOUT_S = 45.0
+AUDIO_HEAD_BYTES = 64 * 1024
+AUDIO_TYPES = frozenset({"audio/mpeg", "audio/mp3"})
+AUDIO_ACCEPT = "audio/mpeg,*/*;q=0.1"
+_CONTENT_RANGE = re.compile(r"^bytes (\d+)-\d+/(\d+|\*)$")
+
 # Ranges `is_global` doesn't already exclude, or that we want named explicitly.
 _BLOCKED_NETS = [
     ipaddress.ip_network(n)
@@ -67,6 +75,7 @@ class FetchError(Exception):
 
 IPAddress = ipaddress.IPv4Address | ipaddress.IPv6Address
 Resolver = Callable[[str, int], Awaitable[list[str]]]
+BodyReader = Callable[[httpx.Response], Awaitable[bytes | bytearray]]
 
 
 @dataclass(frozen=True)
@@ -77,11 +86,28 @@ class FetchedPage:
 
 
 @dataclass(frozen=True)
+class AudioHead:
+    """The opening bytes of an audio file (or `length` bytes from `start`) and its size."""
+
+    final_url: str
+    start: int
+    total_bytes: int | None  # None when the host didn't say
+    data: bytes
+
+
+@dataclass(frozen=True)
+class FetchedAudio:
+    final_url: str
+    body: bytearray  # lives only for the transcribe request; never stored or logged
+
+
+@dataclass(frozen=True)
 class _Response:
     status: int
     content_type: str
     encoding: str | None
-    body: bytes
+    body: bytes | bytearray
+    headers: httpx.Headers = field(default_factory=httpx.Headers)
 
 
 # ---------------------------------------------------------------- URL and IP checks
@@ -162,13 +188,62 @@ class SafeFetcher:
         Raises FetchError. Scripts pass XML/JSON types for feeds and public APIs so every
         outbound fetch goes through the same guard.
         """
+        await self._check_allowed(url)
+        final_url, resp = await self._get(url, max_bytes=MAX_BODY_BYTES, types=content_types)
+        _require_ok(resp)
+        return FetchedPage(final_url, bytes(resp.body), resp.encoding)
+
+    async def audio_head(
+        self, url: str, *, start: int = 0, length: int = AUDIO_HEAD_BYTES
+    ) -> AudioHead:
+        """`length` bytes of an MP3 from `start`, by a ranged GET, and the file's total size.
+
+        A host that ignores Range answers 200 with the whole file: the stream is read up to
+        what was asked for and closed (5R2). Raises FetchError; `is_transient` sorts it.
+        """
+        await self._check_allowed(url)
+
+        async def read(response: httpx.Response) -> bytes:
+            skip = 0 if response.status_code == 206 else start
+            return await _read_window(response, skip, length)
+
+        final_url, resp = await self._get(
+            url,
+            max_bytes=length,
+            types=AUDIO_TYPES,
+            max_redirects=MAX_AUDIO_REDIRECTS,
+            headers={"Range": f"bytes={start}-{start + length - 1}", "Accept": AUDIO_ACCEPT},
+            read=read,
+        )
+        _require_ok(resp)
+        served, total = _audio_extent(resp)
+        if served is not None and served != start:
+            raise FetchError("upstream_error", "host sent a different byte range", resp.status)
+        return AudioHead(final_url, start, total, bytes(resp.body))
+
+    async def fetch_audio(
+        self, url: str, *, max_bytes: int, expected_bytes: int | None = None
+    ) -> FetchedAudio:
+        """The whole MP3, read into one buffer preallocated from `expected_bytes` (the head's
+        total) and cut off past `max_bytes`. Raises FetchError."""
+        await self._check_allowed(url)
+        final_url, resp = await self._get(
+            url,
+            max_bytes=max_bytes,
+            types=AUDIO_TYPES,
+            max_redirects=MAX_AUDIO_REDIRECTS,
+            timeout_s=AUDIO_TIMEOUT_S,
+            headers={"Accept": AUDIO_ACCEPT},
+            read=lambda response: _read_into(response, max_bytes, expected_bytes),
+        )
+        _require_ok(resp)
+        assert isinstance(resp.body, bytearray)
+        return FetchedAudio(final_url, resp.body)
+
+    async def _check_allowed(self, url: str) -> None:
         validate_url(url)
         if not await self.robots_allowed(url):
             raise FetchError("robots_disallowed", "the site's robots.txt disallows fetching")
-        final_url, resp = await self._get(url, max_bytes=MAX_BODY_BYTES, types=content_types)
-        if not 200 <= resp.status < 300:
-            raise FetchError("upstream_error", f"site returned HTTP {resp.status}", resp.status)
-        return FetchedPage(final_url, resp.body, resp.encoding)
 
     async def robots_allowed(self, url: str) -> bool:
         parsed = httpx.URL(url)
@@ -201,31 +276,42 @@ class SafeFetcher:
         return parser
 
     async def _get(
-        self, url: str, *, max_bytes: int, types: frozenset[str] | None
+        self,
+        url: str,
+        *,
+        max_bytes: int,
+        types: frozenset[str] | None,
+        max_redirects: int = MAX_REDIRECTS,
+        timeout_s: float = FETCH_TIMEOUT_S,
+        headers: dict[str, str] | None = None,
+        read: BodyReader | None = None,
     ) -> tuple[str, _Response]:
         """GET with manual redirects; every hop re-validated and pinned. Returns final URL.
 
-        `types` limits the accepted Content-Type of a 2xx response; None accepts any.
+        `types` limits the accepted Content-Type of a 2xx response; None accepts any. `read`
+        replaces the capped body read for a 2xx response; other bodies are then not read.
         """
         try:
             async with (
-                asyncio.timeout(FETCH_TIMEOUT_S),
+                asyncio.timeout(timeout_s),
                 httpx.AsyncClient(
                     transport=self.transport,
-                    timeout=FETCH_TIMEOUT_S,
+                    timeout=timeout_s,
                     follow_redirects=False,
                     trust_env=False,  # never route through an env-configured proxy
                 ) as client,
             ):
                 current = url
-                for _ in range(MAX_REDIRECTS + 1):
-                    resp, location = await self._hop(client, current, max_bytes, types)
+                for _ in range(max_redirects + 1):
+                    resp, location = await self._hop(
+                        client, current, max_bytes, types, headers or {}, read
+                    )
                     if location is None:
                         return current, resp
                     current = str(httpx.URL(current).join(location))
-                raise FetchError("too_many_redirects", f"more than {MAX_REDIRECTS} redirects")
+                raise FetchError("too_many_redirects", f"more than {max_redirects} redirects")
         except (TimeoutError, httpx.TimeoutException) as exc:
-            raise FetchError("timeout", f"fetch took longer than {FETCH_TIMEOUT_S:g}s") from exc
+            raise FetchError("timeout", f"fetch took longer than {timeout_s:g}s") from exc
         except httpx.HTTPError as exc:
             raise FetchError("upstream_error", f"fetch failed: {type(exc).__name__}") from exc
 
@@ -235,6 +321,8 @@ class SafeFetcher:
         url: str,
         max_bytes: int,
         types: frozenset[str] | None,
+        extra_headers: dict[str, str],
+        read: BodyReader | None,
     ) -> tuple[_Response, str | None]:
         parsed = validate_url(url)
         host = parsed.host.rstrip(".").lower()
@@ -247,6 +335,7 @@ class SafeFetcher:
                 "Host": parsed.netloc.decode(),
                 "User-Agent": USER_AGENT,
                 "Accept": "text/html,application/xhtml+xml;q=0.9,*/*;q=0.1",
+                **extra_headers,
             },
             extensions={"sni_hostname": host},
         )
@@ -262,9 +351,16 @@ class SafeFetcher:
             if ok and types is not None and content_type not in types:
                 wanted = "an HTML page" if types == HTML_TYPES else "/".join(sorted(types))
                 raise FetchError("not_html", f"expected {wanted}, got {content_type or '?'}")
-            body = await _read_capped(response, max_bytes)
+            if read is None:
+                body: bytes | bytearray = await _read_capped(response, max_bytes)
+            else:
+                body = await read(response) if ok else b""
             return _Response(
-                response.status_code, content_type, response.charset_encoding, body
+                response.status_code,
+                content_type,
+                response.charset_encoding,
+                body,
+                response.headers,
             ), None
         finally:
             await response.aclose()
@@ -289,6 +385,74 @@ class SafeFetcher:
             log.warning("blocked non-public address", extra={"host": host})
             raise FetchError("unsafe_url", "URL points to a private or reserved address")
         return addresses[0]
+
+
+def _require_ok(resp: _Response) -> None:
+    if not 200 <= resp.status < 300:
+        raise FetchError("upstream_error", f"site returned HTTP {resp.status}", resp.status)
+
+
+def is_transient(exc: FetchError) -> bool:
+    """Worth retrying later: a timeout, a connection failure, 5xx or 429 (5R5). Anything else
+    (wrong type, too big, robots, unsafe address, other 4xx) will fail the same way again."""
+    if exc.code == "timeout":
+        return True
+    if exc.code != "upstream_error":
+        return False
+    return exc.status is None or exc.status == 429 or exc.status >= 500
+
+
+def _audio_extent(resp: _Response) -> tuple[int | None, int | None]:
+    """(first byte served, total size) from Content-Range on a 206, Content-Length on a 200."""
+    if resp.status == 206:
+        match = _CONTENT_RANGE.match(resp.headers.get("content-range", "").strip())
+        if match is None:
+            return None, None
+        total = match.group(2)
+        return int(match.group(1)), None if total == "*" else int(total)
+    declared = resp.headers.get("content-length", "")
+    return None, int(declared) if declared.isdigit() else None
+
+
+async def _read_window(response: httpx.Response, skip: int, limit: int) -> bytes:
+    """Bytes [skip, skip + limit) of the stream; stops reading once it has them."""
+    buf = bytearray()
+    seen = 0
+    async for chunk in response.aiter_bytes():
+        begin = max(0, skip - seen)
+        seen += len(chunk)
+        if begin >= len(chunk):
+            continue
+        buf += chunk[begin : begin + limit - len(buf)]
+        if len(buf) >= limit:
+            break
+    return bytes(buf)
+
+
+async def _read_into(
+    response: httpx.Response, max_bytes: int, expected_bytes: int | None
+) -> bytearray:
+    """The whole body in one bytearray (no chunk list, so 70 MB stays ~70 MB), preallocated
+    from `expected_bytes`, else the declared Content-Length, and grown only if the body is
+    longer (5R10)."""
+    declared = response.headers.get("content-length")
+    length = int(declared) if declared and declared.isdigit() else None
+    if length is not None and length > max_bytes:
+        raise FetchError("too_large", f"audio is larger than {max_bytes // 1_000_000} MB")
+    buf = bytearray(min(expected_bytes or length or 0, max_bytes))
+    size = 0
+    async for chunk in response.aiter_bytes():
+        end = size + len(chunk)
+        if end > max_bytes:
+            raise FetchError("too_large", f"audio is larger than {max_bytes // 1_000_000} MB")
+        if end <= len(buf):
+            buf[size:end] = chunk
+        else:
+            del buf[size:]
+            buf += chunk
+        size = end
+    del buf[size:]
+    return buf
 
 
 async def _read_capped(response: httpx.Response, max_bytes: int) -> bytes:

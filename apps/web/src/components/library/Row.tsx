@@ -21,6 +21,7 @@ export interface RowProps {
   thumbnail?: ReactNode;
   busy?: boolean;
   error?: string | null;
+  badge?: string | null; // "Video" / "Podcast" on a library transcript
 }
 
 /** Provider snippets carry markdown and sponsor links ("## Big promises", "Go to https://…"):
@@ -69,6 +70,7 @@ export function Row(p: RowProps) {
         {p.subtitle && cleanSnippet(p.subtitle) && <p className="row__sub">{cleanSnippet(p.subtitle)}</p>}
         {p.why && <p className="row__why">{p.why}</p>}
         <div className="row__meta">
+          {p.badge && <span className="row__badge">{p.badge}</span>}
           <span className="tnum">{p.busy ? "Opening…" : p.time}</span>
           {p.newCount > 0 && (
             <span className="row__new">

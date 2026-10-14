@@ -23,12 +23,14 @@ cd "$ROOT/apps/api"
 SEED="$(uv run python -m scripts.seed_emulator)"
 echo "$SEED"
 BUDGET="$(echo "$SEED" | sed -n 's/^HARNESS_BUDGET_USD=//p')"
+# Media calls on a model with no audio price are refused (Media plan R6): use production's.
+AUDIO_PRICE="$(sed -n "s/^MODEL_AUDIO_PRICE_OVERRIDES: '\(.*\)'$/\1/p" deploy.env.yaml)"
 
 # The web app reaches the API through Vite's proxy; the extension (emulator build) calls it
 # directly from its own origin (M8).
 ENV=dev FIRESTORE_PROJECT=demo-readlayer FIREBASE_PROJECT=demo-readlayer \
   CORS_ORIGINS=http://localhost:5173,chrome-extension://lnfamfbeffepopbmedfenfmgljoacbmg \
-  LLM_DAILY_BUDGET_USD="$BUDGET" uv run fastapi dev app/main.py --port 8000 &
+  LLM_DAILY_BUDGET_USD="$BUDGET" MODEL_AUDIO_PRICE_OVERRIDES="$AUDIO_PRICE" uv run fastapi dev app/main.py --port 8000 &
 
 cd "$ROOT"
 VITE_USE_EMULATORS=1 pnpm --filter web dev &

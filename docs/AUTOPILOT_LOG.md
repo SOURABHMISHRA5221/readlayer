@@ -1244,3 +1244,408 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. M9 (Oct 15): plan with a cut order; first the growth and extension fix. Freeze Oct 16.
 3. Still open from M8: his Gmail and bank-login refusal check.
 
+
+## Media — measured, plan drafted (2026-10-13, late night)
+
+- Measured Gemini on Vertex on real items before fixing caps (scratch script, not committed;
+  budget check before and ledger write after each call): 15 paid calls, **$0.56** in the
+  ledger (day $0.65 of $8). Two temporary audio objects in the graph bucket, both deleted
+  (Sourabh's yes on each). Table and conclusions in `docs/plans/media.md` "Evidence".
+- What it settled: transcripts on `MODEL_QUALITY` at low thinking (the fast model dropped a
+  third of the speech on a window, twice, with no error); ten-minute windows (one call on a
+  68-min video overran the output limit and looped); about **$0.025 per 10 minutes**; podcasts
+  as MP3 pieces sent inline (links work only for small files, offsets are ignored on audio, no
+  bucket needed); LiteLLM 1.104 leaves audio tokens out of its cost, so `llm.py` must add them.
+- Cached results: 95% of videos ≤ 30 min; podcasts are mostly Apple show pages and Spotify;
+  only Apple episode links resolve to audio (15 of 19, 13 MP3). No CSP exists on the site.
+- Plan written: `docs/plans/media.md`. First plan-reviewer run was cut off by the session limit;
+  re-running.
+- Sourabh said **"yes"** to paying per recording (about $0.025 per 10 minutes, capped, inside
+  $8). Recorded in the plan's decision 1.
+- Plan-reviewer round 1: REVISE, 15 items, all applied (plan section "Round 1"). Audio has no
+  price in LiteLLM and none was found on Vertex's page, so audio is priced by an override at
+  $2.50 per 1M (cautious guess; about $0.05 per 10 minutes). Sourabh, asked to check the
+  billing SKU: **"mark 3 dollar budget"**: `MEDIA_DAILY_BUDGET_USD = 3` inside the $8, no
+  billing check. Round 2 running.
+
+- Round 2: REVISE, 5 items, all applied. Round 3: **APPROVE** (2026-10-14, just after
+  midnight IST); its two nits applied. Plan and log committed on `main` as docs.
+
+### Next steps (resume here, in order)
+1. Branch `media` from `main`. Build in the plan's order ("Schedule and cut order", reordered
+   in round 1): frozen transcript cases first (R13), then YouTube end to end, harness run on
+   the 16-minute video, web; **midday check-in with Sourabh** before podcasts; podcasts behind
+   `MEDIA_AUDIO_ENABLED`. Read the plan's Round 1 and Round 2 sections first: they override the
+   earlier ones.
+2. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
+3. M9 (Oct 15): growth and extension fix first. Freeze Oct 16.
+4. Still open from M8: Sourabh's Gmail and bank-login refusal check.
+
+## Media build, step 1 (2026-10-14)
+
+- Branch `media` from `main`. First commit: `evals/cases/media_transcripts.yaml` frozen (R13):
+  the 16-min video, the 22-min Apple episode, the 50:00–60:00 window of the 68-min video, with
+  the measured references (no transcript text kept).
+- `llm.transcribe` (task `transcribe`, `transcribe-v1` = the measured wording): quality model,
+  low thinking, 8,000 tokens, 90 s, no fallback; one unchanged re-ask on invalid output (schema,
+  the window check, or cut off at the limit); a timed-out or cancelled call is charged its
+  window's estimate; a shared `MediaMeter` carries what a failed run cost (R2). Both budgets
+  checked per call (`check_media_budget`: the $8 and the $3 media share; the ledger gains
+  `media_usd`).
+- **Pricing differs from the plan's §D wording, matches R6:** checked locally that LiteLLM 1.104's
+  `completion_cost`, given a response that splits out text tokens, prices only those and drops
+  video as well as audio. So media calls are priced by us from the token counts: (input − audio)
+  at the input price, audio at LiteLLM's audio price or `MODEL_AUDIO_PRICE_OVERRIDES`, output at
+  the output price; no audio price → refused before the call. Test pins row 11 ($0.0247 with
+  audio at the text price; $0.0509 at $2.50 per 1M).
+- `app/media/transcript.py` (pure): window plan, clock parsing, per-window check (absolute or
+  relative times, loops, > 300 words a minute, monotone), language majority, cross-window join,
+  short-paragraph merges, the 200-paragraph cap by merging, `no_speech`, `not_english`,
+  `too_long`; words-unchanged test. Media settings added to `config.py` (not yet in
+  `deploy.env.yaml`: that comes with the caps step).
+- API suite 838 passed, ruff clean.
+
+### Next steps (resume here, in order)
+1. Step 2 of the plan's schedule: `app/media/urls.py` (classify, canonical ids) and YouTube
+   `videos.list` with its refusals and the `media_lookup` counter → `app/media/service.py`
+   (stages, windows stored as they finish, lease token, refusal memory, the per-item ceiling) →
+   caps → routes (`/v1/recs/open` media branch, `/v1/content/{id}/transcribe`, GET fields) and
+   the POST /v1/content `use_open_here` guard (R4). Plan's Round 1 and 2 sections override.
+2. Then the harness run on the 16-minute video; web; midday check-in with Sourabh before podcasts.
+3. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
+
+## Media build, step 2 (2026-10-14)
+
+- **YouTube end to end in the API**, offline-tested with fakes (no paid call yet):
+  `app/media/urls.py` (classify, canonical ids), `sources.py` (`videos.list`: not public,
+  not embeddable, age-restricted, live, < 30 s, > `MEDIA_MAX_VIDEO_S`, non-English audio or
+  title), `refusals.py` (codes and reader messages), `service.py` (open: cached → remembered
+  refusal → pending → slot → lookup cap → lookup → media budget → `create_media`; transcribe:
+  budget pre-check for the missing windows, staged lease with token, window 1 alone when the
+  language is unknown, four windows at a time under the 2× ceiling (`too_costly`), each window
+  saved as it finishes, assembly, `finish_transcript`), `openable.py` (`open_here`),
+  `store/media_repo.py` (day map of refusals, demo count, `media_lookup` on the search day doc
+  without touching `calls`). `media_counts` added to `USER_SUBCOLLECTIONS`.
+- Routes: `/v1/recs/open` media branch (`kind`, `stage`; 422 per code, 429
+  `media_cap_reached`, 503 `media_unavailable` (new code: a failed lookup, not remembered) or
+  `llm_budget_exceeded`); `POST /v1/content/{id}/transcribe` (200, 202, 404, 410, 422, 503, 504);
+  GET content: `status` transcribing / analysing / ready / refused / failed, `media`, `refusal`,
+  `start_s`; library rows `format`; feed and recommendations items `open_here`; POST /v1/content
+  422 `use_open_here` for both shapes; analyse on a transcribe-stage doc 409
+  `content_transcribing`. Phase 2 copies `media` and `start_s` and lists the transcribe calls.
+- `deploy.env.yaml` gains the media lines and the $2.50 per 1M audio price.
+- Choices to flag at review: transcribe uses analyse's access rule (any signed-in reader may
+  continue a recording someone opened; the slot was taken at open). GET status "failed" now also
+  shows for an *article* whose analysis attempts are used up (was "analysing"); the web must
+  handle it in step 4. Podcasts: `open_media` answers `media_off` and `open_here` is false until
+  step 6.
+
+### Next steps (resume here, in order)
+1. Step 3, harness run on real Vertex (`make dev-emulator`): open the 16-minute video
+   (`d6fUwCBvVc0`) through Read any link; acceptance 1–3, video half (words ±10% of 1,822, last
+   start ≥ 15:00, transcribe ≤ $0.10, phase timings, two personas, a verified card), a second
+   reader free, refusals (Hindi video, 68-min video, Spotify, `MEDIA_ENABLED=false`, caps).
+   Check the emulator's spend ledger is the emulator's, and state the expected cost (≤ $0.20)
+   before running.
+2. Step 4, web: lazy `MediaReader`, click-to-load player, time buttons, follow, entry points,
+   "failed" status; then shots. Then the midday check-in with Sourabh before podcasts.
+3. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
+
+## Media build, step 3 (2026-10-14, in progress, stopped for Sourabh)
+
+- Harness up (`make dev-emulator`); seeded production spend $0.6543, harness budget $1.6543;
+  the emulator ledger is the emulator's (read back after seeding).
+- `dev_emulator.sh` now passes production's `MODEL_AUDIO_PRICE_OVERRIDES` to the local API: the
+  first transcribe was refused before any call ("no media price for model"), $0 (R6 guard works).
+- **Acceptance 1 fails on the 16-min video.** videos.list says PT16M (960 s); the measured
+  transcript ends at 15:49 (949 s). Window 1 (0–600 s): ok, 27 s, $0.049. Window 2 (600–960 s)
+  timed out at 90 s, was retried by `_MediaCall.run` (timeout counts as transient), and the retry
+  was cancelled by the 150 s run limit. Page-style retry (window 2 only): same, timeout + cancel.
+  Item spend $0.193 (two ok-less estimates per attempt, $0.036 each), no transcript; the next
+  attempt would hit the 2× ceiling ($0.192). Harness spend so far $0.19.
+- Suspect (unproven): window 2's `end_offset` is 11 s past the real end. Design gap either way:
+  a timed-out window is retried inside a run that cannot fit the retry.
+- Not run yet: analyse, second reader, personas, card, refusals. Extra test videos (Hindi, two
+  short English) need a read of production `rec_cache`; that read was blocked by the permission
+  classifier. Driver: `scripts/harness_media.py`; one-call probe: `scripts/probe_media.py`.
+- Sourabh: "yes do what u feel is correct". Probe of window 600–949 (ending at the real end, one
+  attempt): timeout at 91 s, $0.035, so ending past the end was not the cause. Production
+  `rec_cache` read blocked again by the classifier; not retried.
+- Plan Round 4 (one whole-URL call per video, 20-min cap, no in-run timeout retry, 504 on
+  timeout, max tokens 16,000) → plan-reviewer REVISE 6, REVISE 2, APPROVE. T04 frozen in
+  `7622bb7`; code in `88e932f`; API suite 934 passed, ruff clean.
+- **Re-run on a fresh emulator: the whole 16-min video in one call also timed out at 90 s**
+  ($0.096, one charge, no retry, 504 as designed). So offsets were not the cause: tonight every
+  call that reaches past minute 10 of this video hangs, while 0–600 answered in 27 s and
+  yesterday's whole-video call (row 3, default thinking) answered in 29 s. Round 4's premise is
+  unproven; its timeout handling stands on its own.
+- Real Vertex spend tonight $0.325, all in emulator ledgers (a fresh emulator re-seeds only
+  production's spend, so the harness allowance resets each restart; capped by hand at $1).
+- Stopped for Sourabh. Next (his call): one call in row 3's exact shape (default thinking,
+  ~$0.08) to test low thinking as the cause, then a second video (T04) if it still hangs; or
+  park video transcripts and move to step 4 / M9.
+- Sourabh: "go ahead and do it today". Probes (one attempt each, 180 s limit, emulator ledger):
+  whole 16-min video at **default** thinking → timeout 181 s ($0.095); T04 whole (18.6 min, low)
+  → timeout 181 s ($0.112); **first 3 min of the 16-min video → timeout 181 s ($0.018)**. Text
+  smoke on the same model: ok, 5 s, $0.001. So since about 18:23 UTC every YouTube-URL call
+  hangs, at any length, with or without offsets, at any thinking level; 0–600 answered in 27 s
+  just before. Cause is on Vertex's YouTube fetch, not our code (Google AI forum has reports of
+  YouTube-URL input on Vertex failing intermittently with 400 / 504 / timeouts).
+- Real Vertex spend tonight ≈ $0.55 (first emulator $0.229, second $0.322), emulator ledgers only.
+- T04's decision rule could not be measured; Round 4's 20-min cap and single call stay as
+  committed but unverified. Next: a $0.02 re-probe (first 3 min) later today; when it answers,
+  re-run acceptance 1–3 and T04. Until then, step 4 (web) needs no Vertex.
+- Re-probe at 19:03 UTC (first 3 min, low, offsets, 180 s limit, bare Firestore emulator
+  ledger): **OK in 27 s, $0.015**, 8 paragraphs, 375 words, starts 2..177, en. Vertex's YouTube
+  fetch answers again. Acceptance 1–3 and T04 not re-run yet (asked Sourabh: now, or step 4 first).
+
+## Media build, step 4 (2026-10-14, web; code done, shots after the step 3 re-run)
+
+- Sourabh: "go to four then check after that": step 4 first, then step 3's acceptance 1–3 and T04.
+- **Annotator 0.9.0**: `labels: {author?, card?}` option; `data-rl-ui="host"` marks a control
+  the host owns: anchors and copy skip it, `destroy` leaves it (React StrictMode mounts, destroys
+  and re-mounts the annotator in dev, which would otherwise strip the time buttons). Extension
+  untouched (still 0.8.0, not rebuilt). Test: `test/host.test.ts`.
+- **Web**: lazy `components/reader/MediaReader.tsx` (one chunk, two exports): `MediaReader`
+  (click-to-load no-cookie player, seeking over postMessage with a strict origin and source check,
+  spoken paragraph marked with `data-rl-now`, Follow along toggle paused 5 s by wheel / touch /
+  scroll keys, transcribe loop: 202 → 5 s, 504 retried once then "Try again" + "Open original",
+  422 / 410 → the API's message + "Open original") and `TranscriptBody` (a time button per
+  paragraph). `lib/media.ts` pure, chunk-only. ReaderPage: kicker "Video · 16 min · channel",
+  transcript note under the dek, stored `refused` / `failed` stop with "Open original" (also an
+  article's `failed`), "Before you watch", speaker labels on cards, the annotator waits for the
+  lazy body. Entry points use `open_here` (feed, Up next "Open here" + "Watch on YouTube"); Read
+  any link says "article or YouTube link" (podcast wording waits for step 6, so a cut of podcasts
+  needs no copy change); library rows get a Video / Podcast badge; privacy page: Videos section and
+  "videos opened" in daily counters.
+- Choices to flag at review: `allow` adds `autoplay` (the click must start playback) and
+  `fullscreen`; the disclaimer line wording is mine ("A transcript made automatically from the
+  video. It can differ from what's said; the recording is the source."); the spoken-paragraph
+  mark uses wash + ink rule, not the accent (the accent only means a note).
+- Bundle: main **149.46 KB** gzip (148.31 at `8bf7797`; budget 150, 0.54 KB left). The transcribe
+  loop moved into the media chunk to get there (149.80 before). Media chunk 2.82 KB JS + 0.85 KB
+  CSS. Step 6 must keep main-bundle changes near zero.
+- Tests: annotator 60, web 164 (+16, `test/media.test.tsx`: helpers, player messaging, ReaderPage
+  transcribing → transcript → notes, timeout retry, refusals), extension 85, API 934; typecheck clean.
+
+- Step 3 re-run, 19:21 UTC, fresh emulator (seeded production $0.6543, harness budget $1.6543):
+  open 200 free; **whole 16-min video transcribe → 504 after 91.5 s, $0.096** (one charge, no
+  in-run retry, as designed). The 3-min probe at 19:03 answered in 27 s. So short clips answer and
+  the whole video still hangs; tonight's spend so far $0.111. Stopped for Sourabh.
+- Sourabh: "test". T04 (`rrkrvAUbU9Y`, 18.6 min, a different video), 19:27 UTC, one whole-URL
+  call: **504 after 90.1 s, $0.112**. So it is not the 16-min video: whole-video YouTube-URL calls
+  on Vertex time out tonight while a 3-min clip answers. T04's decision rule still unmeasured.
+  Tonight's spend $0.223, emulator ledgers only. Stopped for Sourabh (park video transcripts or not).
+- Sourabh: "yes do what u feel is correct" → **video transcripts parked**. Step 4's web code stays.
+  Nothing is deployed, so no switch is flipped now. Only `MEDIA_ENABLED` (all media) and
+  `MEDIA_AUDIO_ENABLED` (podcasts) exist; shipping podcasts with videos off needs a
+  `MEDIA_VIDEO_ENABLED` switch (open → `media_off`, `open_here` false for videos). It goes into
+  step 6's plan round, not tonight. Before deploy: a $0.02 short-clip probe plus one whole-video
+  call; if the whole video still times out, deploy with videos off.
+
+### Next steps (resume here, in order)
+1. Midday check-in with Sourabh (asked 2026-10-14 ~01:00 IST): step 4 done, videos parked, spend
+   tonight $0.223 (emulator ledgers), production today $0.6543. Whether to start podcasts (step 6).
+2. Step 6 plan round (podcasts + `MEDIA_VIDEO_ENABLED`) → plan-reviewer → build → harness run on the
+   22-min episode. Acceptance 4 shots then use the podcast; video shots wait for a working probe.
+3. Before deploy: re-probe video (short clip, then one whole video); off unless both answer.
+4. Checkpoint end of Oct 14 IST: not merged → ask Sourabh what to cut (decision 27).
+
+## Media build, step 6 (2026-10-14, podcasts; plan round)
+
+- Check-in answered, ~01:10 IST. Sourabh: "start podcast plan".
+- Plan Round 5 written into `docs/plans/media.md`: Apple episode links only (direct `.mp3` links
+  cut), `MEDIA_VIDEO_ENABLED` switch (never remembered as a refusal), MP3 pieces cut on time only
+  so piece i = window i, a fingerprint so a retry with different dynamic ads starts over, web
+  audio player in the media chunk, harness on T02 (expected ≤ $0.35, emulator ledger).
+  Sent to plan-reviewer.
+- plan-reviewer: REVISE 12 (big ID3 tags, hosts ignoring Range, one source for pieces and
+  windows, piece ≤ 14.5 MB, transient fetch errors not remembered, semaphore released on every
+  exit, `media_off` never remembered and `apple_link_only` for `.mp3` links, web flag read from
+  `deploy.env.yaml`, video switch checked by API only, memory units, Apple field caps, tests) →
+  all applied → **APPROVE**, two nits applied.
+
+### Next steps (resume here, in order)
+1. Build step 6 per Round 5 + its review: `mp3.py` → `audio_head` / `fetch_audio` → Apple lookup →
+   switches + service audio branch → web `AudioPlayer` → suites.
+2. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
+3. Step 7. Checkpoint end of Oct 14 IST (decision 27).
+
+## Media build, step 6 (2026-10-14, podcasts; build)
+
+- Resumed after /clear: "resume at building step 6, starting with the MP3 splitter".
+- `app/media/mp3.py` (pure) + `tests/test_mp3.py` (46 tests, written first, red then green):
+  Layer III headers (MPEG 1, 2, 2.5), ID3v2 (footer flag), ID3v1 and APEv2 skipped and left out
+  of the 90% share (5R1), resync confirmed by the next header, cut-off last frame dropped,
+  < 30 s or < 90% frames → `unsupported_audio`. Frame times are integer samples / rate per run,
+  so a 660.0 s file floors to 660, not 659. `split` cuts at the first frame ≥ each window start,
+  raises `ValueError` unless the windows are `plan_windows(floor(walk.duration_s))`, refuses a
+  piece over `MAX_PIECE_BYTES = 14_500_000` (5R3, 5R4); pieces are memoryviews. Tails 59.4 /
+  59.6 / 60.0 / 60.4 s pinned. `id3v2_size` and `first_frame` ready for `audio_head`.
+- Signature note: `split(walk, windows)` takes the `Walk` (which holds the bytes) instead of
+  5R3's `split(data, windows)`, so the bytes are walked once; same rule, same assertion.
+- Local timing: a 65 MB, 45-min 192 kbps stream walks in 0.03 s; pieces 4 × 14.4 MB + 7.2 MB.
+- API suite 980 passed, 2 skipped; ruff clean.
+
+- `SafeFetcher.audio_head(url, start=0, length=64 KB)` and `fetch_audio(url, max_bytes,
+  expected_bytes)` + `tests/test_safe_fetch_audio.py` (39 tests, written first). Same per-hop
+  validation, pinned connect and robots rule as pages; 6 redirects; `Accept: audio/mpeg,*/*;q=0.1`;
+  type `audio/mpeg` / `audio/mp3` else the guard's `not_html`. Head: `Range` GET, total from
+  `Content-Range` on 206 or `Content-Length` on 200; a host ignoring Range is read to 64 KB and
+  closed (5R2, pinned: < 1 MB of a 50 MB body pulled); `start` serves 5R1's second probe (skips
+  on a 200; a 206 for another range is an error). Fetch: 45 s, one bytearray preallocated from
+  the head's total, cut off past `max_bytes`, error bodies never read (5R10).
+  `is_transient(FetchError)`: timeout, connection error, 5xx, 429 (5R5). `_get` gained
+  `max_redirects` / `timeout_s` / `headers` / `read`; page fetches unchanged (old tests pass).
+- Split of duties: `safe_fetch` stays HTTP-only. The ID3 second probe, `mp3.first_frame`, size
+  caps and FetchError → `unsupported_audio` / `MediaUnavailable("audio")` go in `sources.py`
+  beside the Apple lookup (next).
+- API suite 1019 passed, 2 skipped; ruff clean.
+
+- `sources.apple_episode(show, episode, settings)` + `probe_audio(url, settings, fetcher)` +
+  `estimated_duration_s` (30 tests added to `test_media_sources.py`, written first). Lookup
+  `itunes.apple.com/lookup?id=<show>&entity=podcastEpisode&limit=200`; show page →
+  `not_an_episode` with no request; `trackId` matched as int; `episodeUrl` https ≤ 2,048 else
+  `episode_not_found`; extension other than mp3 → `unsupported_audio`, missing falls through;
+  length 0 = unknown, < 30 s `no_speech`, over cap `too_long`; non-Latin title `not_english`;
+  title ≤ 300, show ≤ 120, artwork https only; HTTP / network / garbage → `MediaUnavailable`.
+  Probe: head through the guard; no total → `unsupported_audio`, over bytes cap → `too_long`;
+  ID3 past the head → 16 KB second probe at the tag's end (5R1, tested with a 1 MB tag, with and
+  without Range); no frame → `unsupported_audio`; transient FetchError → `MediaUnavailable`,
+  other → `unsupported_audio` (5R5). Logs carry codes and statuses only, never the URL.
+- API suite 1049 passed, 2 skipped; ruff clean.
+
+- Resumed after /clear: "resume at step 6: switches, then the service audio branch".
+- Switches (5.1, 5.2, 5R7): `MEDIA_VIDEO_ENABLED` (default true, in `deploy.env.yaml`);
+  `openable.media_kind_on(kind, settings)` = kill switch and the kind's switch, checked first in
+  `open_media`, in `openable` and at the top of `transcribe_pending` before the lease. New code
+  `apple_link_only` for direct `.mp3` links (in `MESSAGES`). `refusals.NOT_REMEMBERED` =
+  {`media_off`, `apple_link_only`}: `remember_refusal` skips them and the transcribe `refused`
+  mark leaves them out, so the old `youtube_info` missing-key path can't remember one either.
+  Show pages answer `not_an_episode` before the slot and any lookup, not remembered (URL-derived).
+- `openable`: an Apple episode is "Open here" when the audio switch is on and its length is
+  unknown or ≤ `MEDIA_MAX_AUDIO_S`; YouTube follows the video switch; `.mp3`, show pages,
+  Spotify stay "Open original".
+- `open_media` audio branch: Apple lookup and the audio probe each count one `media_lookup`;
+  no Apple length → bitrate estimate, over the cap `too_long` (remembered); then budget
+  pre-check, growth slots, `create_media` as for YouTube. `Media(kind="audio",
+  audio_url=episodeUrl, language=None)`, `url` = the canonical Apple link.
+- `transcribe_pending` (5R6): cached → switch → refused → stage → audio slot
+  (`Semaphore(1)`, `locked()` then `acquire()`, busy → `TranscribeBusy` / 202) → budget → lease
+  → run, one `try/finally` from the slot on. Free exit widened to `(BudgetExceeded,
+  MediaUnavailable)` with nothing billed (nit 2). Router: `MediaUnavailable` → 503
+  `media_unavailable`, Retry-After 60.
+- `_Run` audio: fetch through `get_fetcher().fetch_audio` (transient → `MediaUnavailable`, not
+  remembered; other → refused and remembered), walk, the walk's floor length replaces the
+  lookup's for windows, ceiling and stored media (over the cap `too_long` before any call),
+  `split(walk, plan_windows(...))`, `AudioClip(piece)`, `check_window(relative_only=True)`,
+  `MEDIA_AUDIO_PARALLEL_WINDOWS` (new, 4) after window 1 alone. Fingerprint written with every
+  audio `save_window`; a retry whose walk differs calls `drop_windows` (lease-checked, cost kept)
+  before any model call. Audio runs log fetch / walk / windows ms and `peak_rss_mb` (ru_maxrss
+  normalised for macOS / Linux).
+- Two small departures from the plan text, both deliberate: a fetch cut off as `too_large` at
+  transcribe answers `too_long` (the plan's 5R5 list said `unsupported_audio`; the head already
+  answers `too_long` for the same cause, and the message is the accurate one). And `_read_into`
+  presizes from the response's Content-Length when no head total is passed, since the transcribe
+  run doesn't carry the open's probe (5R10's intent, no new stored field).
+- Tests: `test_media_podcast.py` (21, new): open → transcribe → analyse with relative piece
+  times made absolute and `audio_url` reaching `contents/`; window 1 alone; estimate at open;
+  `.mp3` and show page before any lookup; `media_off` per switch never remembered, then on again
+  works at once; video switch leaves podcasts alone; `remember_refusal` skips switch codes;
+  transient vs permanent at open and transcribe; walk over cap; ceiling from the walk; non-English
+  after window 1; busy slot leaves lease and both counters; slot free after budget and refused
+  runs (and asserted after every test); same bytes keep saved windows, different bytes drop them.
+  Plus openable (switches, Apple with / without length, show page, `.mp3`), router (podcast 422s,
+  transcribe 503) and a presize test. Written alongside the code this time, not strictly first.
+- API suite 1083 passed, 2 skipped; ruff clean.
+
+- Web (5.5, 5R8): `AudioPlayer` in the `MediaReader` chunk: `<audio controls preload="none">`
+  from `audio_url`, no referrer attribute (R10), `timeupdate` marks the spoken paragraph, a time
+  button sets `currentTime` and plays, `error` → "This episode's audio couldn't be played here."
+  with Open original (the transcript stays). The shared behaviour (time-button delegation,
+  marking, Follow and its 5 s pause) moved out of `VideoPlayer` into one hook both players use;
+  the video tests pass unchanged. Bar link reads "Open in Apple Podcasts". Read any link copy
+  follows `VITE_MEDIA_VIDEO` (default on). `make deploy-web` reads `MEDIA_VIDEO_ENABLED` from
+  `apps/api/deploy.env.yaml` with `sed -E` (the BRE `\|` form printed nothing on macOS; caught
+  before use) and fails if it is missing. Privacy page gains "Podcasts" with R10's wording.
+- Tests: audio no preload / no YouTube / no referrer attribute; seek + play; `timeupdate` marks;
+  error state; podcast ReaderPage (kicker "Podcast · 22 min · …", audio usable while
+  transcribing, transcript after); placeholder and hint under both flag values. Web 171 passed,
+  typecheck clean, main bundle 149.47 KB (was 149.46; budget 150), media chunk 3.12 KB.
+
+- Harness on T02 (5.7 item 1-2; `harness_media podcast`, the video `main` now takes a case with
+  the frozen thresholds). Stated before running: ≤ $0.35. Emulator ledger, real Vertex:
+  open 4.3 s ($0); transcribe 55.3 s, 3 windows, **$0.1100** (≤ $0.14); analyse 22.0 s, $0.011;
+  explain $0.0079. **Run total $0.1289.** Transcript 55 paragraphs, **4,085 words** (≥ 3,600; the
+  fast model's whole-file reference was 4,081), last start 1,310 s (≥ 1,260), non-decreasing,
+  inside 1,347 s. Second reader: no model call, no slot. Personas newcomer 3 / trader 4 notes.
+  "windfall tax" → `verified`. Server phases: fetch 7.1 s, walk 53 ms, windows 48.2 s.
+- **Miss: peak RSS 686 MB (target ≤ 600).** An idle API on the same emulator is 277 MB, so the
+  run added ~410 MB for a 32 MB file with two windows in flight (window 1 alone, then 2 and 3).
+  5R10's first remedy applied: `MEDIA_AUDIO_PARALLEL_WINDOWS` 4 → 2 (config default and
+  `deploy.env.yaml`). It does not change this run (only two were in flight) but caps a 45-min
+  episode at two instead of four. 5R10's second remedy (lower `MEDIA_MAX_AUDIO_BYTES`) would
+  refuse T02 itself at anything under 32 MB, so it waits for Sourabh. API suite 1083 passed.
+
+- **Decision (Sourabh, 2026-10-14 ~11:20 IST): "Audio and Video is just minor additional
+  support, don't make them good enough; small 10 minutes clips are good enough."** Applied:
+  `MEDIA_MAX_VIDEO_S` and `MEDIA_MAX_AUDIO_S` 600 (were 1200 / 2700), `MEDIA_MAX_AUDIO_BYTES`
+  20 MB (was 70), config defaults and `deploy.env.yaml`; `too_long` message "up to 10 minutes for
+  now". One window per recording, so the memory question closes without work (T02's 686 MB was
+  a 32 MB file; a 10-min file is ≤ 20 MB with nothing in parallel). The multi-window code stays;
+  its tests pin the old caps (`LONG_CAPS`) and a new test pins the 10-minute defaults. T01 and
+  T02 stay frozen as written and are now over the default cap (a harness run on them needs the
+  caps raised in its env). Cut from 5.7: items 3-5 (refusal sweep, pre-check count, podcast
+  shots) and the copy-hunt investigation. API suite 1084 passed.
+
+## Media build, step 7 (2026-10-14, the video deploy decision)
+
+- Video re-probe (`scripts.probe_media`, fresh emulator, harness budget $1.00, production spend
+  today $0), 05:55 UTC. Production route settings (quality model, low thinking, 90 s timeout).
+  - Short clip, T01 0:00-3:00 with offsets: **OK 10.4 s, $0.0153**, 382 words.
+  - Whole video, no offsets, under the new 10-min cap: Kurzgesagt "The Egg" (`h6fcK_fRYaI`,
+    486 s; picked by me, Sourabh had none; lookup passes every `youtube_info` check):
+    **OK 50.6 s, $0.0467**, 900 words, last start 7:15. The first answer failed a
+    `check_window` check and the in-call re-ask passed (reason not captured: my output filter
+    dropped it). Second run, full log kept: **OK 45.4 s, $0.0264, first try**, 898 words,
+    last start 7:20.
+  - Session probe spend $0.0884, emulator ledger only.
+- **Decision: video ships on** (`MEDIA_VIDEO_ENABLED: "true"` stays; the web flag follows).
+  The whole-URL hang was on 16-19 min videos; under the 10-min cap one call answers in
+  45-51 s, inside the 90 s timeout. Watch item: one first-try check failure in two runs.
+
+- `scripts/ingest_media.py` built (3a8f93f): `open_media(media, None, ...)` = no reader (no
+  daily slot, no growth slots), `look_up(..., day=None)` for a dry run that counts and writes
+  nothing, ≤ 6 per run, target database printed first. 7 tests. Dry run on the emulator: "The
+  Egg" one window 0-486 s, est. $0.049; T02 `too_long`. Real run on the emulator: stored, 899
+  words, 24.7 s with analysis, media spend $0.042.
+- Docs (9137c26): DESIGN §21 plus pointers in §3, §4, §8, §10, §11.2, §11.4, §11.5, §16.6,
+  §17.4; CLAUDE.md layout and the `transcribe` cost line; stale config comment fixed.
+- Video reader check (`tools/shots/media.py`, cut-down acceptance 4): 0 failed checks, axe 0 at
+  every impact, 24/24 paragraphs match, "Play from 1:30" → player at 90 s. "The Egg" has 0
+  notes for the newcomer (outside the graph's domains): live check and seeding need an
+  economics or news video.
+- STATUS (ab0c6d6): header, milestone row, 6 deviations, 4 known issues (Vertex YouTube fetch
+  intermittent: the fallback is `MEDIA_VIDEO_ENABLED=false`), costs, §24. Suites: API 1091,
+  web 171, annotator 60, extension 85, typecheck clean, main 149.47 KB.
+
+- Live-check picks, dry-run then rehearsed on the emulator: The Economist "How does raising
+  interest rates control inflation?" (`R8VBRCs2jTU`, 494 s) and The Indicator "How the rich make
+  money by losing money" (Apple `id1320118593?i=1000791671873`). The episode, listed 565 s,
+  downloads at 652 s (stitched-in ads) and was refused `too_long` at no cost.
+  **Sourabh: "raise to 12"** → `MEDIA_MAX_AUDIO_S` 720, bytes 24 MB, message "videos up to 10
+  minutes, podcasts up to 12" (efba893). Then 1,755 words, $0.054.
+- **Bug found and fixed:** both economics recordings showed 0 notes: `ingest_media.py` ran
+  analysis with the empty default graph (only API startup loads it), so no demand linked.
+  `load_serving_graph` now shared by startup and the script; the script refuses without a graph.
+  Re-seeded T05: 8 notes for the newcomer.
+- milestone-reviewer round 1: **FIX** (4 blocking, 8 more). All blocking and items 5-10 applied
+  (b6b01b2 .. c41fc8a): ad-padded episode test, privacy copy, filler-words note, STATUS §5/6/8/9,
+  known-length rule for "Open here", no transcript text in invalid-output logs, DESIGN §8, T05
+  and T06 frozen. API 1,095, web 171, main 149.48 KB.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 2 → SHIP → PR → CI green → merge.
+2. Deploy API from `main`, then web (Sourabh's yes on each; web flag matches the API).
+3. Live check (acceptance 6) on T05 and T06 as a Google reader, then a demo reader (free).
+   Checkpoint end of Oct 14 IST (decision 27).

@@ -55,3 +55,17 @@ export function domainLabel(domain: string | null): string | null {
 export function plural(n: number, one: string, many = `${one}s`): string {
   return `${formatCount(n)} ${n === 1 ? one : many}`;
 }
+
+/** 760 → "12:40", 3725 → "1:02:05". */
+export function clock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const ss = String(s % 60).padStart(2, "0");
+  return h ? `${h}:${String(m).padStart(2, "0")}:${ss}` : `${m}:${ss}`;
+}
+
+/** "16 min": the header's length, rounded, at least one minute. */
+export function minutes(seconds: number): string {
+  return `${Math.max(1, Math.round(seconds / 60))} min`;
+}

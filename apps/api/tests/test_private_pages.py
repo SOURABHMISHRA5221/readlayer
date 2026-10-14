@@ -79,7 +79,7 @@ def test_open_records_the_page_on_the_pending_branch_too(env, monkeypatch):  # n
     a, b = reader("ra"), reader("rb")
     assert a.post("/v1/recs/open", json={"url": URL}).json()["new"] is True
     assert b.post("/v1/recs/open", json={"url": URL}).json() == {
-        "content_id": CID, "new": False, "ready": False,
+        "content_id": CID, "new": False, "ready": False, "kind": "article", "stage": "analyse",
     }  # fmt: skip
     repo = ReaderRepo(get_doc_store())
     import asyncio

@@ -32,3 +32,19 @@ async def load_graph(uri: str) -> ConceptGraph:
         raise ValueError(f"concept graph {uri} has prerequisite cycles")
     log.info("concept graph loaded", extra={"version": graph.version, "concepts": len(graph)})
     return graph
+
+
+async def load_serving_graph(uri: str) -> int:
+    """The graph as the API serves it: the file, then concepts grown online since it was
+    written (M2.2). Sets the process-wide graph; returns the number of grown concepts. Used by
+    API startup and by scripts that analyse content, which link nothing without it."""
+    set_graph(await load_graph(uri))
+    if not uri:
+        return 0
+    from app.graph.refresh import get_refresher
+
+    try:
+        return await get_refresher().load_startup()
+    except Exception as exc:  # serve the file graph rather than fail to start
+        log.warning("grown concepts not loaded", extra={"error_class": type(exc).__name__})
+        return 0
