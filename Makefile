@@ -57,7 +57,7 @@ smoke:
 	$(API) uv run python -m scripts.smoke_llm
 
 check-gcp:
-	@test -n "$(ACCOUNT)" || { echo "ACCOUNT unset: create .gcp.local.mk (see CLAUDE.local.md)"; exit 1; }
+	@test -n "$(ACCOUNT)" || { echo "ACCOUNT unset: create .gcp.local.mk with ACCOUNT := <your gcloud account> (README, Getting started)"; exit 1; }
 	@actual="$$(gcloud config list --format='value(core.account,core.project)' | tr '\t' ' ')"; \
 	if [ "$$actual" != "$(ACCOUNT) $(PROJECT)" ]; then \
 		echo "gcloud identity mismatch: got '$$actual', want '$(ACCOUNT) $(PROJECT)'"; exit 1; \

@@ -1971,3 +1971,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. The Oct 16 items: persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`,
    media snapshots, readiness mix re-run, README refresh (incl. the "recommendations only" line),
    video, deck. Main bundle has ≈ 0.07 KB left: anything touching main must be lazy.
+
+## README refresh (2026-10-14 night, pulled from Oct 16)
+
+- Sourabh asked the effort, then "Do it today"; Team placeholder kept ("Keep it placeholder").
+- Plan `docs/plans/readme-refresh.md`: plan-reviewer REVISE 9 → REVISE 1 → APPROVE.
+- README rewritten: current stills from the landing (alts minus device-frame words), features as
+  live, How Gen AI with every runtime route, safety evals row, dated counts (decision-57 numbers
+  untouched), privacy sentence covering the reader's own redacted words, limits as enforced, a
+  Status checklist, `.gcp.local.mk` for outsiders (Makefile message names the README). Fact checks
+  caught my own errors before review: DESIGN §14 does not cover long recordings (claim removed),
+  the feed refresh is Scheduler → API (not a job), with growth linking meets both targets.
+- Checks: every link, image and anchor resolves; the account name nowhere; GitHub markdown API
+  renders 7 tables and 13 images.
+- milestone-reviewer: FIX 7 (linking headline, outsider Getting started, dated a11y, graph
+  sources, link_confirm wording, cost row, STATUS leftovers) → applied (774034a) → **SHIP**.
+  Next: push, PR, check the stills render on GitHub from the branch, CI, merge.
