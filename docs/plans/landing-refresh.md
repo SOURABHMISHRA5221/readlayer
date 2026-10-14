@@ -182,3 +182,8 @@ The Oct 16 re-seed may change the lines; the still is not re-shot after the free
 
 **R8. A pinned release link.** The section and the footer link
 `${REPO_URL}/releases/tag/extension-v0.8.1`; the render test expects that href.
+
+**Approved** (plan-reviewer round 2, 2026-10-14). Nits taken: the precheck treats a missing
+`needs_growth` as false; the acceptance log records that the demo newcomer actually gets the
+`c_intellectual_property_rights` note on the Fireship doc (if not, pick another of its marked
+concepts the newcomer gets, and log it).

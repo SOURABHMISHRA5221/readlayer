@@ -1769,10 +1769,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 
 - Sourabh: update the landing for the features since its freeze; list agreed (extension, media in
   Gloss, For you readiness): "list sounds good lets go". Plan `docs/plans/landing-refresh.md` on
-  branch `landing-refresh`; plan-reviewer round 1 running.
+  branch `landing-refresh`; plan-reviewer REVISE 8 → **APPROVE** (nits taken). Not built yet.
 
 ### Next steps (resume here, in order)
-1. Landing refresh (branch `landing-refresh`): plan-reviewer until APPROVE → build (Oct 15) →
+1. Landing refresh (branch `landing-refresh`, plan approved): build Oct 15 per the plan's Round 1
+   section (tests first: formats split R1, caps R2, render test R3/R4/R8; then precheck, captures, harness) →
    milestone-reviewer → PR → CI → merge → deploy web (Sourabh's yes) → live check.
 2. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first);
    then update the README precision row's "(Sourabh's audit pending)".
