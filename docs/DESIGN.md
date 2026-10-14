@@ -1294,12 +1294,17 @@ made automatically, and the player is the source.
   `ready`, `refused {code, message}` or `failed`.
 
 ### 21.4 Reading (`apps/web`, the lazy `MediaReader` chunk)
-YouTube is click to load on the no-cookie domain; audio is `<audio preload="none">`. Each
+YouTube is click to load, on `www.youtube.com` (decision 55: the no-cookie player can't see a
+signed-in viewer's YouTube session and was answered "Sign in to confirm you're not a bot"); audio
+is `<audio preload="none">`. Each
 paragraph has a time button that seeks and plays; the spoken paragraph is marked and followed
 unless the reader scrolled in the last 5 s. Under the title: "A transcript made automatically from
 the video. It can contain errors, and filler words are often left out; the recording is the
 source." Cards say "What the speaker is saying". Feed and Up
 next rows get `open_here` from the server (`openable`): a video or Apple episode **of known length**
 within its cap (an unknown length stays "Open original": most episodes from search run past the
-cap); for demo readers it turns off once the shared demo cap is used. The privacy page says what YouTube and podcast hosts
+cap); for demo readers it turns off once the shared demo cap is used. A For you row for a recording
+that opens here offers both **"Open in Gloss"** and the original ("Watch on YouTube", "Listen on
+Apple Podcasts"); a long or unknown-length one stays original-only (decision 55). Up next names
+the original the same way beside "Open here". The privacy page says what YouTube and podcast hosts
 see (R10).
