@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { api, ApiError, errorKind, opensHere, type ApiErrorKind } from "../../lib/api";
 import { feedApi, type FeedItem, type FeedResponse } from "../../lib/feedApi";
@@ -6,6 +6,7 @@ import { FEED_STALE } from "../../lib/feedStale";
 import { pendingNote, reaskDelay, snapshotNote, visibleItems, wantsCountry } from "../../lib/feedView";
 import { formatDate } from "../../lib/format";
 import { personaParam, type PersonaKey } from "../../lib/personas";
+import { READINESS_BASIS, readinessLine } from "../../lib/readiness";
 import { originalLabel } from "../../lib/recLabels";
 import { navigate, withParams } from "../../lib/router";
 import { External } from "../Icons";
@@ -21,6 +22,19 @@ function time(item: FeedItem): string {
   const s = item.duration_or_read_time;
   if (!s) return item.format === "article" ? "Article" : item.format === "video" ? "Video" : "Podcast";
   return `${Math.max(1, Math.round(s / 60))} min ${VERB[item.format]}`;
+}
+
+/** The goal line (if any), then readiness from the reader's map (decision 60). */
+function why(item: FeedItem): ReactNode {
+  const ready = readinessLine(item);
+  const line = ready && <span title={READINESS_BASIS}>{ready}</span>;
+  if (!item.goal) return line;
+  return (
+    <>
+      Picked for your goal <b>{item.goal}</b>
+      {line && <> · {line}</>}
+    </>
+  );
 }
 
 /** For you (M7.5 feed) as rows: lazy chunk of the library page (Design pass C5). */
@@ -155,7 +169,7 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
               external={!opensHere(item)}
               onOpen={opensHere(item) ? () => openHere(item) : undefined}
               subtitle={item.snippet}
-              why={item.goal ? <>Picked for your goal <b>{item.goal}</b></> : null}
+              why={why(item)}
               time={time(item)}
               newCount={item.new_concepts.length}
               goal={null}
