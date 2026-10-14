@@ -51,6 +51,14 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
     ],
   },
   {
+    id: "pv-podcasts",
+    title: "Podcasts",
+    items: [
+      "An episode's audio streams straight from its publisher and nothing is requested until you press play. Then the publisher, and any measurement services its episode link passes through, see your IP address and browser, and your browser tells them you came from Gloss's site (its address, not the page).",
+      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and readable only by the readers who opened the episode.",
+    ],
+  },
+  {
     id: "pv-extension",
     title: "The Gloss extension",
     items: [

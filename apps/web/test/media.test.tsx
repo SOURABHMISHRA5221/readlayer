@@ -22,11 +22,14 @@ import {
   shouldFollow,
   YOUTUBE_ORIGIN,
 } from "../src/lib/media";
+import { ReadAnyLink } from "../src/components/ReadAnyLink";
 import { ReaderPage } from "../src/pages/ReaderPage";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 const MEDIA: MediaInfo = { kind: "video", video_id: "d6fUwCBvVc0", audio_url: null, duration_s: 960 };
+const EPISODE: MediaInfo = { kind: "podcast", video_id: null, audio_url: "https://traffic.example.fm/ep/rates.mp3", duration_s: 1320 };
+const APPLE_URL = "https://podcasts.apple.com/us/podcast/rates/id1234567890?i=1000700000000";
 const PARAGRAPHS: ContentDetail["paragraphs"] = [
   { id: "p0", text: "Interest rates set the price of money.", start_s: 2 },
   { id: "p1", text: "The yield curve shows rates by maturity.", start_s: 95 },
@@ -176,6 +179,86 @@ describe("MediaReader", () => {
   });
 });
 
+describe("AudioPlayer", () => {
+  let play: ReturnType<typeof vi.fn>;
+  async function mountEpisode() {
+    play = vi.fn(async () => undefined);
+    vi.spyOn(HTMLMediaElement.prototype, "play").mockImplementation(play as unknown as () => Promise<void>);
+    const article = createRef<HTMLElement>();
+    await render(
+      <>
+        <MediaReader contentId="ep1" transcribing={false} onTranscribed={() => undefined} media={EPISODE} title="Rates, explained" url={APPLE_URL} paragraphs={PARAGRAPHS} article={article} />
+        <TranscriptBody ref={article} paragraphs={PARAGRAPHS} onMount={() => undefined} />
+      </>,
+    );
+    return article;
+  }
+  const audio = () => host.querySelector("audio")!;
+  const now = (article: React.RefObject<HTMLElement | null>) => article.current!.querySelector("[data-rl-now]")?.getAttribute("data-rl-paragraph");
+
+  it("streams from the publisher only on play: no preload, no YouTube, no referrer attribute", async () => {
+    await mountEpisode();
+    expect(audio().getAttribute("src")).toBe(EPISODE.audio_url);
+    expect(audio().getAttribute("preload")).toBe("none");
+    expect(audio().hasAttribute("controls")).toBe(true);
+    expect(audio().hasAttribute("referrerpolicy")).toBe(false);
+    expect(host.querySelector("iframe, .mplayer__facade")).toBeNull();
+    expect(host.querySelector<HTMLAnchorElement>(".mplayer__original")?.href).toBe(APPLE_URL);
+    expect(play).not.toHaveBeenCalled();
+  });
+
+  it("a time button seeks the audio and plays it", async () => {
+    const article = await mountEpisode();
+    await act(async () => host.querySelector<HTMLButtonElement>('button[aria-label="Play from 12:40"]')!.click());
+    expect(audio().currentTime).toBe(760);
+    expect(play).toHaveBeenCalledTimes(1);
+    expect(now(article)).toBe("p2");
+  });
+
+  it("marks the spoken paragraph as the audio plays", async () => {
+    const article = await mountEpisode();
+    const tick = async (t: number) => {
+      audio().currentTime = t;
+      await act(async () => audio().dispatchEvent(new Event("timeupdate")));
+    };
+    await tick(1);
+    expect(now(article)).toBeUndefined();
+    await tick(100);
+    expect(now(article)).toBe("p1");
+    await tick(761);
+    expect(now(article)).toBe("p2");
+  });
+
+  it("audio that won't play says so and offers the original; the transcript stays", async () => {
+    const article = await mountEpisode();
+    await act(async () => audio().dispatchEvent(new Event("error")));
+    expect(host.querySelector("audio")).toBeNull();
+    const stop = host.querySelector(".reader__notice--stop")!;
+    expect(stop.textContent).toContain("This episode's audio couldn't be played here.");
+    expect(stop.querySelector("a")?.getAttribute("href")).toBe(APPLE_URL);
+    expect(article.current!.querySelectorAll("p")).toHaveLength(3);
+  });
+});
+
+describe("Read any link copy", () => {
+  afterEach(() => vi.unstubAllEnvs());
+  const placeholder = () => host.querySelector("input")!.getAttribute("placeholder");
+
+  it("names YouTube when the video switch is on (the default)", async () => {
+    await render(<ReadAnyLink persona={null} />);
+    expect(placeholder()).toBe("Paste an article, YouTube or podcast link");
+    expect(host.textContent).toContain("Videos and podcasts get a transcript.");
+  });
+
+  it("leaves YouTube out when the build has it off", async () => {
+    vi.stubEnv("VITE_MEDIA_VIDEO", "false");
+    await render(<ReadAnyLink persona={null} />);
+    expect(placeholder()).toBe("Paste an article or podcast link");
+    expect(host.textContent).toContain("Podcasts get a transcript.");
+    expect(host.textContent).not.toContain("Videos");
+  });
+});
+
 describe("ReaderPage with a recording", () => {
   const ID = "abc123";
   const base = {
@@ -251,6 +334,21 @@ describe("ReaderPage with a recording", () => {
     expect(host.querySelector(".prose--transcript")?.textContent).toContain("When it inverts, markets worry.");
     expect(document.querySelector(".rl-card__says .rl-card__section-label")?.textContent).toBe("What the speaker is saying");
     expect(host.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it("a podcast: the kicker, the audio bar while transcribing, then the transcript", async () => {
+    const episode = { ...base, site: "Planet Money", url: APPLE_URL, media: EPISODE };
+    stub(
+      [{ status: 200, body: { ...episode, paragraphs: [], status: "transcribing" } }, { status: 200, body: { ...episode, paragraphs: PARAGRAPHS, status: "analysing" } }],
+      [{ status: 200, body: { content_id: ID, status: "analysing" } }],
+    );
+    await open();
+    expect(host.querySelector(".article-head__kicker")?.textContent).toBe("Podcast · 22 min · Planet Money");
+    expect(host.querySelector("audio")?.getAttribute("src")).toBe(EPISODE.audio_url); // usable while transcribing
+    await settle(() => calls.includes(`GET /v1/content/${ID}/annotations`));
+    expect(transcribeCalls()).toBe(1);
+    expect(host.querySelectorAll(".prose--transcript p")).toHaveLength(3);
+    expect(host.querySelector(".mplayer__original")?.textContent).toContain("Open in Apple Podcasts");
   });
 
   it("a second timeout stops with Try again and Open original", async () => {

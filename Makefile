@@ -133,9 +133,14 @@ deploy-api: deploy-guard
 		--env-vars-file apps/api/deploy.env.yaml \
 		--set-secrets $(SECRETS)
 
+# The link box copy follows the API's video switch (media plan 5R8): read from the same file the
+# API deploys with, passed to the build (process env beats .env files in Vite), never stored.
 deploy-web: deploy-guard
 	test -f apps/web/.env.local -a -f apps/web/.env.production.local || $(MAKE) web-config
-	pnpm --filter web build
+	@video="$$(sed -En 's/^MEDIA_VIDEO_ENABLED: *"?(true|false)"? *$$/\1/p' apps/api/deploy.env.yaml)"; \
+	test -n "$$video" || { echo "MEDIA_VIDEO_ENABLED missing from apps/api/deploy.env.yaml"; exit 1; }; \
+	echo "web build: VITE_MEDIA_VIDEO=$$video"; \
+	VITE_MEDIA_VIDEO="$$video" pnpm --filter web build
 	pnpm exec firebase deploy --only hosting --project $(PROJECT)
 
 # Deny-all Firestore rules (DESIGN §11.4).

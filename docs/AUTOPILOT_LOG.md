@@ -1559,9 +1559,20 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   transcribe 503) and a presize test. Written alongside the code this time, not strictly first.
 - API suite 1083 passed, 2 skipped; ruff clean.
 
+- Web (5.5, 5R8): `AudioPlayer` in the `MediaReader` chunk: `<audio controls preload="none">`
+  from `audio_url`, no referrer attribute (R10), `timeupdate` marks the spoken paragraph, a time
+  button sets `currentTime` and plays, `error` → "This episode's audio couldn't be played here."
+  with Open original (the transcript stays). The shared behaviour (time-button delegation,
+  marking, Follow and its 5 s pause) moved out of `VideoPlayer` into one hook both players use;
+  the video tests pass unchanged. Bar link reads "Open in Apple Podcasts". Read any link copy
+  follows `VITE_MEDIA_VIDEO` (default on). `make deploy-web` reads `MEDIA_VIDEO_ENABLED` from
+  `apps/api/deploy.env.yaml` with `sed -E` (the BRE `\|` form printed nothing on macOS; caught
+  before use) and fails if it is missing. Privacy page gains "Podcasts" with R10's wording.
+- Tests: audio no preload / no YouTube / no referrer attribute; seek + play; `timeupdate` marks;
+  error state; podcast ReaderPage (kicker "Podcast · 22 min · …", audio usable while
+  transcribing, transcript after); placeholder and hint under both flag values. Web 171 passed,
+  typecheck clean, main bundle 149.47 KB (was 149.46; budget 150), media chunk 3.12 KB.
+
 ### Next steps (resume here, in order)
-1. Web: `AudioPlayer` in the `MediaReader` chunk (5.5), `VITE_MEDIA_VIDEO` placeholder copy,
-   `deploy-web` reading the flag from `deploy.env.yaml` (5R8), privacy page "Podcasts" section;
-   web tests, typecheck, bundle (main ≤ 150 KB).
-2. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
-3. Step 7. Checkpoint end of Oct 14 IST (decision 27).
+1. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
+2. Step 7. Checkpoint end of Oct 14 IST (decision 27).

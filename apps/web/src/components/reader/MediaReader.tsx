@@ -35,6 +35,7 @@ const TRANSCRIBE_WINDOW_MS = 300_000;
 const TRANSCRIBE_RETRY_MS = 5000;
 const TRANSCRIBE_FAILED = "Gloss couldn't transcribe this. Open the original instead.";
 const TRANSCRIBE_OFFLINE = "Couldn't reach Gloss. Check your connection and try again.";
+const AUDIO_FAILED = "This episode's audio couldn't be played here.";
 
 // `retry` offers "Try again": a timeout, a busy service, the budget, or offline.
 type Transcription =
@@ -63,6 +64,7 @@ export default function MediaReader(props: MediaReaderProps) {
   return (
     <>
       {props.media.kind === "video" && props.media.video_id && <VideoPlayer {...props} videoId={props.media.video_id} />}
+      {props.media.kind === "podcast" && props.media.audio_url && <AudioPlayer {...props} audioUrl={props.media.audio_url} />}
       {transcription.state.status === "running" && (
         <PreparingNotice since={transcription.state.since} text="Gloss is listening to this. About a minute." />
       )}
@@ -123,15 +125,20 @@ function transcribeFailure(e: unknown): Transcription {
   return { status: "failed", message: e.detail ?? TRANSCRIBE_FAILED, retry };
 }
 
-function VideoPlayer({ title, url, paragraphs, article, videoId }: MediaReaderProps & { videoId: string }) {
-  const [start, setStart] = useState<number | null>(null); // null: the facade, no iframe yet
+type PlayerProps = Pick<MediaReaderProps, "title" | "url" | "paragraphs" | "article">;
+
+/**
+ * What both players share: the time buttons (by delegation, as they live inside the annotator's
+ * root), marking the spoken paragraph, Follow, and its 5 s pause after the reader scrolls. The
+ * player supplies `play(s)`, called after a time button marks its paragraph.
+ */
+function useTranscriptSync({ paragraphs, article }: PlayerProps, bar: RefObject<HTMLElement | null>, play: (s: number) => void) {
   const [follow, setFollow] = useState(true);
-  const frame = useRef<HTMLIFrameElement>(null);
-  const bar = useRef<HTMLDivElement>(null);
-  const heard = useRef(false);
   const manualAt = useRef(0);
   const followRef = useRef(follow);
   followRef.current = follow;
+  const playRef = useRef(play);
+  playRef.current = play;
   const startsRef = useRef<number[]>([]);
   startsRef.current = paragraphs.map((p) => p.start_s ?? 0);
   const nowRef = useRef(-1);
@@ -149,46 +156,21 @@ function VideoPlayer({ title, url, paragraphs, article, videoId }: MediaReaderPr
       el.setAttribute(NOW_ATTR, "");
       if (shouldFollow(followRef.current, manualAt.current, Date.now())) keepInView(el, bar.current);
     },
-    [article],
+    [article, bar],
   );
 
-  const seek = useCallback(
-    (s: number) => {
-      mark(s);
-      const win = frame.current?.contentWindow;
-      if (!win) {
-        setStart(s); // first play: the iframe loads at this time and starts playing
-        return;
-      }
-      win.postMessage(seekTo(s), YOUTUBE_ORIGIN);
-      win.postMessage(PLAY, YOUTUBE_ORIGIN);
-    },
-    [mark],
-  );
-
-  // Time buttons, by delegation: they are rendered inside the annotator's root.
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       const target = e.target instanceof Element ? e.target.closest<HTMLElement>(`[${SEEK_ATTR}]`) : null;
       if (!target || !article.current?.contains(target)) return;
       const s = Number(target.getAttribute(SEEK_ATTR));
-      if (Number.isFinite(s)) seek(s);
+      if (!Number.isFinite(s)) return;
+      mark(s);
+      playRef.current(s);
     };
     document.addEventListener("click", onClick);
     return () => document.removeEventListener("click", onClick);
-  }, [article, seek]);
-
-  // The player's time, from our own iframe only.
-  useEffect(() => {
-    const onMessage = (e: MessageEvent) => {
-      const t = currentTimeOf(e, frame.current?.contentWindow ?? null);
-      if (t === null) return;
-      heard.current = true;
-      mark(t);
-    };
-    window.addEventListener("message", onMessage);
-    return () => window.removeEventListener("message", onMessage);
-  }, [mark]);
+  }, [article, mark]);
 
   // A wheel, touch or scroll key means the reader is looking elsewhere: Follow waits 5 s.
   useEffect(() => {
@@ -207,6 +189,53 @@ function VideoPlayer({ title, url, paragraphs, article, videoId }: MediaReaderPr
       window.removeEventListener("keydown", onKey);
     };
   }, []);
+
+  const toggle = (
+    <button type="button" className="filter mplayer__follow" aria-pressed={follow} onClick={() => setFollow((f) => !f)}>
+      Follow along
+    </button>
+  );
+  return { mark, toggle };
+}
+
+function OriginalLink({ url, label }: { url: string; label: string }) {
+  return (
+    <a className="mplayer__original" href={url} target="_blank" rel="noopener noreferrer">
+      {label} <External size={13} />
+      <span className="visually-hidden"> (opens in a new tab)</span>
+    </a>
+  );
+}
+
+function VideoPlayer(props: PlayerProps & { videoId: string }) {
+  const { title, url, videoId } = props;
+  const [start, setStart] = useState<number | null>(null); // null: the facade, no iframe yet
+  const frame = useRef<HTMLIFrameElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
+  const heard = useRef(false);
+
+  const play = useCallback((s: number) => {
+    const win = frame.current?.contentWindow;
+    if (!win) {
+      setStart(s); // first play: the iframe loads at this time and starts playing
+      return;
+    }
+    win.postMessage(seekTo(s), YOUTUBE_ORIGIN);
+    win.postMessage(PLAY, YOUTUBE_ORIGIN);
+  }, []);
+  const { mark, toggle } = useTranscriptSync(props, bar, play);
+
+  // The player's time, from our own iframe only.
+  useEffect(() => {
+    const onMessage = (e: MessageEvent) => {
+      const t = currentTimeOf(e, frame.current?.contentWindow ?? null);
+      if (t === null) return;
+      heard.current = true;
+      mark(t);
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [mark]);
 
   const onFrameLoad = () => {
     heard.current = false;
@@ -243,13 +272,49 @@ function VideoPlayer({ title, url, paragraphs, article, videoId }: MediaReaderPr
         )}
       </div>
       <div className="mplayer__bar">
-        <button type="button" className="filter mplayer__follow" aria-pressed={follow} onClick={() => setFollow((f) => !f)}>
-          Follow along
-        </button>
-        <a className="mplayer__original" href={url} target="_blank" rel="noopener noreferrer">
-          Open on YouTube <External size={13} />
-          <span className="visually-hidden"> (opens in a new tab)</span>
-        </a>
+        {toggle}
+        <OriginalLink url={url} label="Open on YouTube" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The episode streams from the publisher (Round 5, 5.5; R10): `preload="none"`, so nothing is
+ * requested until play. No referrer attribute: `<audio>` has none, the site's policy applies.
+ */
+function AudioPlayer(props: PlayerProps & { audioUrl: string }) {
+  const { title, url, audioUrl } = props;
+  const [failed, setFailed] = useState(false);
+  const audio = useRef<HTMLAudioElement>(null);
+  const bar = useRef<HTMLDivElement>(null);
+
+  const play = useCallback((s: number) => {
+    const el = audio.current;
+    if (!el) return;
+    el.currentTime = s;
+    // A failed load shows the error state through the element's error event; a rejection here
+    // is that same failure, or a pause that interrupted play, so it needs nothing more.
+    el.play()?.catch(() => undefined);
+  }, []);
+  const { mark, toggle } = useTranscriptSync(props, bar, play);
+
+  if (failed) return <StopNotice message={AUDIO_FAILED} url={url} />;
+  return (
+    <div className="mplayer mplayer--audio" ref={bar}>
+      <div className="mplayer__bar">
+        <audio
+          ref={audio}
+          className="mplayer__audio"
+          controls
+          preload="none"
+          src={audioUrl}
+          aria-label={`Episode: ${title}`}
+          onTimeUpdate={(e) => mark(e.currentTarget.currentTime)}
+          onError={() => setFailed(true)}
+        />
+        {toggle}
+        <OriginalLink url={url} label="Open in Apple Podcasts" />
       </div>
     </div>
   );
