@@ -1,0 +1,5 @@
+# The extension manifest's "key" is the RSA public key (SubjectPublicKeyInfo, 2048-bit) that fixes
+# the extension id (lnfamfbeffepopbmedfenfmgljoacbmg). Public by design: Chrome ships it in every
+# installed manifest. Not a secret; the private half was never in this repo (decision 62, R4).
+189fe7f87ea1e762b7ce960b86abdcf0f5cd2959:apps/extension/manifest.base.json:generic-api-key:6
+64f649d9677d1dd1253672963f66c3d0d3d5d832:apps/extension/manifest.base.json:generic-api-key:6
