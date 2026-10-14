@@ -23,7 +23,13 @@ export interface FeedItem {
   score: number;
   /** Opens in Gloss (articles; videos within the media caps). Older APIs omit it: articles only. */
   open_here?: boolean;
+  /** From the reader's own map (decision 60); null or absent (older APIs): no line. */
+  readiness?: Readiness | null;
+  /** New prerequisites to read up on first, most basic first, at most 2. */
+  read_first?: string[];
 }
+
+export type Readiness = "familiar" | "ready" | "stretch";
 
 export interface FeedResponse {
   topics: string[];

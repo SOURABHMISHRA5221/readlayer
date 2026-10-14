@@ -103,14 +103,14 @@ def test_rank_counts_new_ideas_boosts_goals_and_explains_why():
     goal = fr.FeedCandidate(result("Insulin resistance explained"), "sports",
                             fr.named_concepts(GRAPH, "Insulin resistance"))  # fmt: skip
     goals = {"c_insulin_resistance": "Insulin resistance"}
-    out = fr.rank([known_only, fresh, goal], reader(goal_targets=goals), NOW)
+    out = fr.rank([known_only, fresh, goal], reader(goal_targets=goals), NOW, GRAPH)
     ranked = {r.candidate.result.title: r for r in out}
     assert ranked["Inflation news"].new_concepts == ()  # b = −2: known at θ 0
     assert ranked["Offside and VAR"].new_concepts == ("Offside", "Video assistant referee")
     assert ranked["Offside and VAR"].why == "Sports · 2 ideas new to you"
     g = ranked["Insulin resistance explained"]
     assert g.goal_label == "Insulin resistance" and "helps your goal: Insulin resistance" in g.why
-    plain = fr.rank([goal], reader(), NOW)[0]
+    plain = fr.rank([goal], reader(), NOW, GRAPH)[0]
     assert (
         g.score == round(plain.score * fr.GOAL_BOOST, 4) or abs(g.score - plain.score * 1.3) < 1e-3
     )
@@ -122,7 +122,7 @@ def test_select_applies_format_quotas_per_topic_and_the_cap():
                               fr.named_concepts(GRAPH, "Offside"))
              for t in ("sports", "health") for fmt in ("article", "video", "podcast")
              for i in range(5)]  # fmt: skip
-    picked = fr.select(fr.rank(cands, reader(interest={"sports": 1.0, "health": 0.5}), NOW),
+    picked = fr.select(fr.rank(cands, reader(interest={"sports": 1.0, "health": 0.5}), NOW, GRAPH),
                        ["sports", "health"])  # fmt: skip
     for t in ("sports", "health"):
         mine = [p.candidate.result.format for p in picked if p.candidate.topic == t]

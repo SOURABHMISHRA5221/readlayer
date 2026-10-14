@@ -172,6 +172,23 @@ def test_demo_readers_get_the_snapshot_with_no_search(env):
     assert provider.queries == []
 
 
+def test_the_route_carries_readiness_for_a_demo_snapshot(env):
+    """Decision 60: an item naming a map idea gets a level; one naming none gets no line."""
+    now = datetime.now(UTC).isoformat()
+    named = WebResult(url="https://www.bbc.co.uk/sport/articles/offside-rule-explained",
+                      title="The offside rule explained", source="BBC", format="article",
+                      published_at=now)  # fmt: skip
+    snap = _snapshot(now)
+    snap = feed_mod.Snapshot(snap.persona, now, snap.topics, (*snap.items, ("economics", named)))
+    asyncio.run(feed_mod.SnapshotRepo(get_doc_store()).put(snap))
+    body = TestClient(app, headers=auth("demo3", anonymous=True)).get(
+        "/v1/feed?persona=newcomer").json()  # fmt: skip
+    items = {i["title"]: i for i in body["items"]}
+    assert items["The offside rule explained"]["readiness"] == "ready"  # new, no prerequisites
+    assert items["Technology latest news today"]["readiness"] is None  # names no idea
+    assert all(i["read_first"] == [] for i in items.values())
+
+
 def test_a_missing_snapshot_is_an_empty_state(env):
     provider, _ = env
     body = TestClient(app, headers=auth("demo2", anonymous=True)).get(
