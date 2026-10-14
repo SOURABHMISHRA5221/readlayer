@@ -18,15 +18,18 @@ Sourabh what to cut (decision 27).
   popup from another origin works once that origin is an Auth authorized domain. The OAuth
   redirect stays on the old `firebaseapp.com` handler, so **no OAuth client change**; the Google
   account chooser keeps saying "continue to readlayer-sourabh-26.firebaseapp.com" (see Open).
-- Private docs (pasted links, recordings) are readable only by the reader who brought them in
-  (`content/access.py`). Sign-in state is per origin. So the extension must open the web reader
-  on the origin its session came from, or the reader sees another session (or none) and a 404.
+- Only extension-read pages are private (`content/access.py` `PRIVATE_SOURCES = {"extension"}`);
+  pasted links and recordings open for any reader by id. Sign-in state is per origin, so the
+  extension still opens the web reader on the origin its session came from: the reader lands as
+  the same uid that opened the video (it joins that uid's library, `?persona=` applies to that
+  anonymous user), not as another session or a signed-out landing (R1).
 - The web's Connect page shows "The extension isn't installed in this browser yet" when the
   extension doesn't list the page's origin, which is what 0.8.1 will do on the new address.
 - Web main bundle 149.88 KB gzip, budget 150.00 KB: **this plan changes nothing in main**
   (landing links and the Connect page are lazy chunks). Measured before and after anyway.
 - gitleaks is not installed. Tracked files hold no secrets found by a quick email/name scan, but
-  the `Makefile` holds the project's dedicated Google account email (`ACCOUNT`), in history too.
+  the project's dedicated Google account email is in the `Makefile` (`ACCOUNT`), STATUS and
+  AUTOPILOT_LOG, and in history (R5).
   Every commit on every branch has a GitHub noreply author and committer address. No employer name in the tree.
 
 ## What changes
@@ -41,7 +44,7 @@ Sourabh what to cut (decision 27).
 keeps serving the same build: 0.8.1 installs, judge links and README history keep working.
 No redirect between them.
 
-**B. Origins.** `Makefile` `HOSTING` and `deploy.env.yaml` `CORS_ORIGINS` gain
+**B. Origins.** `deploy.env.yaml` `CORS_ORIGINS` gains
 `https://<gloss>.web.app,https://<gloss>.firebaseapp.com` (old ones kept). Auth authorized
 domains gain `<gloss>.web.app` and `<gloss>.firebaseapp.com` (Identity Toolkit admin v2
 `projects/readlayer-sourabh-26/config`, PATCH with `updateMask=authorizedDomains`, after a GET
@@ -171,3 +174,64 @@ the landing pin moving with the release, gitleaks before public.
 2. The `Makefile` names the project's Google account email, and history has it. It isn't a
    secret, but going public publishes it. Default: replace it in the tree with a value read from
    a gitignored file, no history rewrite.
+
+## Round 1 (plan-reviewer REVISE, 9 items; applied, these override the sections above)
+
+**R1. Why the session origin.** Facts corrected (only `extension` docs are private). `webOrigin`
+stays for: same uid on the web as the one that opened the video, the video in that uid's library,
+`?persona=` for that anonymous user. No test or DESIGN text claims a 404 from another origin.
+
+**R2. Refusals in the popup by code.** `/v1/recs/open` refusals are `{error, message}` (`_error`
+in `ingest/router.py`), surfaced by `call()` as `ApiReply.message`, and end with "Use “Open
+original”…", meaningless in the popup. The worker maps `error` to popup copy: `too_long` ("This
+video is over 10 minutes; Gloss opens videos up to 10."), `media_off` ("Gloss isn't opening
+videos right now."), `media_cap_reached` and the daily-budget code ("Gloss has opened its share
+of videos for today. Try again tomorrow."), `media_unavailable` and anything else ("Gloss
+couldn't open this video. Try again, or paste the link in Gloss."). Exact codes read from
+`media/refusals.py` and the router at build time; one `background.test.ts` case each. Demo
+persona: `session.persona ?? "newcomer"`. The `onboarded()` gate of `readTab` applies to
+`open-video` too (same "Finish setting up" view).
+
+**R3. Site id known before the build.** Outward step 2 moves first: on Sourabh's yes, after
+`make check-gcp`, `firebase hosting:sites:create` (gloss → gloss-reader → glossreader) runs before
+any code, so the real id is in `.firebaserc`, `.env.production`, `deploy.env.yaml` and README
+inside the PR. Anything found after merge goes in a follow-up PR with CI green, never a direct
+commit to `main`.
+
+**R4. Scan everything that goes public.** Before scanning: `git fetch origin
+'+refs/pull/*/head:refs/remotes/origin/pr/*'` (local, read only; 37 PR heads, 8 not reachable
+from any branch). Then `gitleaks git --log-opts="--all" --redact`; the log records the number of
+commits scanned and that it equals `git rev-list --all --count`.
+
+**R5. The email, everywhere.** Open 2's default covers every tracked file (Makefile, STATUS,
+AUTOPILOT_LOG): replaced by a value from a gitignored file (Makefile) or "the project's Google
+account" (docs). History keeps it unless Sourabh asks for a rewrite; said plainly to him. F3 also
+checks PR and issue titles and bodies (public with the repo); the reviewer's check found it in
+none of the 37 PRs, re-run at F3 time and recorded.
+
+**R6. Live-check bounds, honest.** The reader page calls `/content/{id}/recommendations`, which
+can search (Tavily / YouTube) for stale concept caches within the anonymous allowance
+(`anonymous_allowance_left()`). Bound: searches ≤ `WEB_TRIGGERS` × formats for that one page,
+within the anonymous allowance. Generations: the precheck (`landing_media_precheck` style, read
+only) names the persona (newcomer) and the note whose explanation is cached and verified, both
+parts, on the Fireship doc; the check opens only that note; afterwards the API revision logs show
+0 `explain` generations in the check window (logged).
+
+**R7. Local check, no spend.** Script `tools/shots/gloss_youtube.py` (from `m8_live.py`): the
+emulator build of 0.8.2, a Playwright route fulfils `POST /v1/recs/open` with a fixed
+`{content_id}` and a stub YouTube watch page is served locally; asserts the popup shows Open in
+Gloss, the request body is exactly the canonical URL, a tab opens at `<web>/read/<id>`, and no
+`/transcribe` or `/analyse` request is made (the `/read` tab's API calls are routed to 404 stubs).
+On a stub article page, "Read this page" is unchanged.
+
+**R8. Auth domains dry run.** Before the PATCH: print the GET list, the exact body (GET list + the
+two new domains) and the diff; abort if any existing domain is missing from the body
+(`updateMask=authorizedDomains` replaces the list). Print the GET again after.
+
+**R9. The API deploy ships no code.** Before `make deploy-api`:
+`git diff 615d676 main -- apps/api/app apps/api/pyproject.toml apps/api/uv.lock apps/api/Dockerfile`
+must be empty (it is today; this PR touches only tests and `deploy.env.yaml` under `apps/api`).
+If not empty, stop and list what ships.
+
+Nits taken: `Makefile` `HOSTING` is unused, so it is left alone (not edited). The Cuts list is the
+proposal put to Sourabh at the checkpoint, not applied by itself (STATUS §9).
