@@ -96,8 +96,11 @@ function expectReleaseLink(a: HTMLAnchorElement | null) {
 }
 
 describe("Gloss in your browser (B, R3/R4/R8)", () => {
-  it("links the pinned 0.8.1 release", () => {
-    expect(EXTENSION_RELEASE_URL).toMatch(/\/releases\/tag\/extension-v0\.8\.1$/);
+  it("links the pinned 0.8.2 release (decision 62) and names that version", async () => {
+    expect(EXTENSION_RELEASE_URL).toMatch(/\/releases\/tag\/extension-v0\.8\.2$/);
+    const { host, done } = await render(<GlossInBrowser />);
+    expect(host.querySelector(".lp-ext__get")!.textContent).toBe("Get the extension (v0.8.2)");
+    await done();
   });
 
   it("renders its heading, the access and privacy claims, four install steps and the release link", async () => {

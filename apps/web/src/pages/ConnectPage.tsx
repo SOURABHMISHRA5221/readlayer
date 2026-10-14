@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { TopBar } from "../components/TopBar";
+import { EXTENSION_RELEASE_URL } from "../landing/links";
 import { extensionCredentials } from "../lib/auth";
 import {
   connectExtension,
@@ -33,6 +34,23 @@ const INSTALL = [
   "Choose “Load unpacked” and pick the extension's dist folder.",
   "Pin Gloss to the toolbar, then come back here and press Check again.",
 ];
+
+/** Where Gloss 0.8.1 can still connect: it lists only the old address (decision 62). */
+const OLD_HOST = "readlayer-sourabh-26.web.app";
+
+/** On any other address, a reader with 0.8.1 sees "not installed": say why, and where 0.8.2 is. */
+export function OlderExtensionHint({ hostname }: { hostname: string }) {
+  if (hostname === OLD_HOST) return null;
+  return (
+    <p className="connect__note">
+      Installed Gloss 0.8.1 earlier? It connects only from {OLD_HOST}.{" "}
+      <a href={EXTENSION_RELEASE_URL} target="_blank" rel="noreferrer">
+        Get 0.8.2
+      </a>{" "}
+      to connect here.
+    </p>
+  );
+}
 
 export default function ConnectPage({ url, isDemo }: { url: URL; isDemo: boolean }) {
   const persona = isDemo ? readerPersona(url, isDemo) ?? DEFAULT_PERSONA : null;
@@ -95,6 +113,7 @@ export default function ConnectPage({ url, isDemo }: { url: URL; isDemo: boolean
               <button type="button" className="btn btn--primary" onClick={check}>
                 Check again
               </button>
+              <OlderExtensionHint hostname={window.location.hostname} />
             </>
           )}
           {view === "disconnected" && (

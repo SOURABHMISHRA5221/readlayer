@@ -7,7 +7,7 @@ const POPUP = { width: 300, height: 188 };
 /**
  * "Gloss in your browser" (decision 61 B): the Chrome extension on a real page, what it can and
  * can't see (README's words, checked against `extension/src/redact.ts` and `refuse.ts`), and the
- * README's install steps for the pinned 0.8.1 release. No Web Store or other-browser claim.
+ * README's install steps for the pinned 0.8.2 release. No Web Store or other-browser claim.
  */
 export function GlossInBrowser() {
   return (
@@ -36,7 +36,7 @@ export function GlossInBrowser() {
           <li>Open a news article, click Gloss in the toolbar, then Read this page.</li>
         </ol>
         <a className="btn btn--primary lp-ext__get" href={EXTENSION_RELEASE_URL} target="_blank" rel="noreferrer">
-          Get the extension (v0.8.1)
+          Get the extension (v0.8.2)
         </a>
       </div>
       <figure className="lp-split__figure lp-ext__figure">
