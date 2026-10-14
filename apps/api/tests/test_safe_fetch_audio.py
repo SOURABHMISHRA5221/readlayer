@@ -248,6 +248,21 @@ async def test_fetch_audio_when_the_expected_size_is_wrong(expected):
     assert len(got.body) == 3 * MB and got.body == b"A" * (3 * MB)
 
 
+@pytest.mark.parametrize("declared", [1 * MB, 3 * MB, 5 * MB])
+async def test_the_declared_length_presizes_the_buffer_when_no_total_is_given(declared):
+    # The transcribe run has no head total; Content-Length presizes instead. A host that
+    # declares the wrong length still yields exactly the body.
+    class Resp:
+        headers = {"content-length": str(declared)}
+
+        async def aiter_bytes(self):
+            for _ in range(3):
+                yield b"A" * MB
+
+    got = await sf._read_into(Resp(), 70 * MB, None)  # type: ignore[arg-type]
+    assert isinstance(got, bytearray) and got == b"A" * (3 * MB)
+
+
 async def test_fetch_audio_cut_off_mid_stream():
     body = Body(8 * MB)
     f, _ = audio_fetcher({(HOST, "/ep.mp3"): mp3_response(200, body=body)})

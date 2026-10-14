@@ -8,8 +8,11 @@ article pipeline's phase 2, unchanged). A recording is shared content: `pending_
 
 import asyncio
 import logging
+import math
+import resource
+import sys
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 
 from app import llm
@@ -27,9 +30,17 @@ from app.ingest.models import (
     WindowParagraph,
     WindowRecord,
 )
-from app.media import urls
-from app.media.refusals import MediaCapReached, MediaRefused
-from app.media.sources import MediaInfo, youtube_info
+from app.ingest.safe_fetch import FetchError, get_fetcher, is_transient
+from app.media import mp3, urls
+from app.media.openable import media_kind, media_kind_on
+from app.media.refusals import NOT_REMEMBERED, MediaCapReached, MediaRefused, MediaUnavailable
+from app.media.sources import (
+    MediaInfo,
+    apple_episode,
+    estimated_duration_s,
+    probe_audio,
+    youtube_info,
+)
 from app.media.transcript import (
     TimedParagraph,
     TranscriptRefused,
@@ -40,6 +51,7 @@ from app.media.transcript import (
     check_window,
     is_english,
     plan_for,
+    plan_windows,
 )
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
@@ -52,13 +64,19 @@ log = logging.getLogger("app.media")
 
 TRANSCRIBE_TIMEOUT_S = 150.0
 LEASE = timedelta(seconds=TRANSCRIBE_TIMEOUT_S + 30)  # always outlives the run (R1)
-PARALLEL_WINDOWS = 4
+PARALLEL_WINDOWS = 4  # YouTube; audio uses MEDIA_AUDIO_PARALLEL_WINDOWS
 CEILING_FACTOR = 2  # per item, across all attempts: 2 × the expected cost (R2)
 COUNTER = "media_counts"
 
 
+# One audio run per instance: its bytes and in-flight windows take hundreds of MB (R9). Tried
+# without waiting (2.3): a taken slot is answered 202 like a busy lease.
+_AUDIO_SLOT = asyncio.Semaphore(1)
+
+
 class TranscribeBusy(Exception):
-    """Another request is transcribing this recording (202: the page asks again shortly)."""
+    """Another request is transcribing this recording, or another podcast on this instance
+    (202: the page asks again shortly)."""
 
 
 @dataclass(frozen=True)
@@ -73,9 +91,14 @@ class Opened:
 
 async def open_media(media: urls.Media, caller: Caller, settings: Settings) -> Opened:
     """POST /v1/recs/open for a recording. Raises MediaRefused, MediaCapReached,
-    MediaUnavailable or llm.BudgetExceeded; a refusal is remembered for the day."""
-    if not settings.media_enabled or not isinstance(media, urls.YouTube):
-        raise MediaRefused("media_off")  # podcasts arrive with the plan's step 6
+    MediaUnavailable or llm.BudgetExceeded; a refusal about the recording is remembered for
+    the day. Switches, direct .mp3 links and show pages are answered before any I/O."""
+    if not media_kind_on(media_kind(media), settings):
+        raise MediaRefused("media_off")
+    if isinstance(media, urls.AudioFile):
+        raise MediaRefused("apple_link_only")  # no title or show without a lookup (5.2)
+    if isinstance(media, urls.ApplePodcast) and media.episode_id is None:
+        raise MediaRefused("not_an_episode")
     content_id = urls.content_id(media)
     cached = await get_content_store().get(content_id)
     if cached is not None and cached.media is not None:
@@ -94,9 +117,7 @@ async def open_media(media: urls.Media, caller: Caller, settings: Settings) -> O
     if not await _reserve_slot(caller, settings, day):
         raise MediaCapReached("reader")
     try:
-        if not await days.reserve_lookup(day, settings.media_lookup_daily_cap):
-            raise MediaCapReached("lookup")
-        info = await youtube_info(media.video_id, settings)
+        info = await _look_up(media, settings, day)
         await llm.check_media_budget(_estimate(info.duration_s, settings), settings=settings)
         slots = await quota.reserve_growth(caller, settings)
         stored = await get_pending_repo().create_media(
@@ -115,14 +136,53 @@ async def open_media(media: urls.Media, caller: Caller, settings: Settings) -> O
         raise
     log.info(
         "media opened",
-        extra={"content_id": content_id, "kind": "youtube", "duration_s": info.duration_s},
+        extra={
+            "content_id": content_id,
+            "kind": media_kind(media),
+            "duration_s": info.duration_s,
+        },
     )
     return Opened(content_id, new=True, stage=stored.stage)
 
 
+async def _look_up(
+    media: urls.YouTube | urls.ApplePodcast, settings: Settings, day: str
+) -> MediaInfo:
+    """videos.list, or Apple's lookup then the audio head: each counts one `media_lookup`."""
+    days = get_media_day_repo()
+    if not await days.reserve_lookup(day, settings.media_lookup_daily_cap):
+        raise MediaCapReached("lookup")
+    if isinstance(media, urls.YouTube):
+        return await youtube_info(media.video_id, settings)
+    info = await apple_episode(media.show_id, media.episode_id, settings)
+    assert info.audio_url is not None
+    if not await days.reserve_lookup(day, settings.media_lookup_daily_cap):
+        raise MediaCapReached("lookup")
+    probe = await probe_audio(info.audio_url, settings, get_fetcher())
+    if info.duration_s:
+        return info
+    duration = estimated_duration_s(probe)  # Apple gave no length; the walk measures it
+    if duration > settings.media_max_audio_s:
+        raise MediaRefused("too_long")
+    return replace(info, duration_s=duration)
+
+
 def _pending_doc(
-    content_id: str, media: urls.YouTube, info: MediaInfo, grow_slots: int, now: datetime
+    content_id: str,
+    media: urls.YouTube | urls.ApplePodcast,
+    info: MediaInfo,
+    grow_slots: int,
+    now: datetime,
 ) -> PendingDoc:
+    if isinstance(media, urls.YouTube):
+        recording = Media(
+            kind="youtube",
+            video_id=media.video_id,
+            duration_s=info.duration_s,
+            language=info.language,
+        )
+    else:  # language never declared: window 1 runs alone first (R8)
+        recording = Media(kind="audio", audio_url=info.audio_url, duration_s=info.duration_s)
     return PendingDoc(
         content_id=content_id,
         url=media.canonical,
@@ -136,12 +196,7 @@ def _pending_doc(
         paragraphs=[],
         grow_slots=grow_slots,
         expire_at=now + PENDING_TTL,
-        media=Media(
-            kind="youtube",
-            video_id=media.video_id,
-            duration_s=info.duration_s,
-            language=info.language,
-        ),
+        media=recording,
         stage="transcribe",
     )
 
@@ -173,19 +228,38 @@ def _estimate(seconds: float, settings: Settings) -> float:
 
 async def transcribe_pending(content_id: str, settings: Settings) -> None:
     """POST /v1/content/{id}/transcribe: returns once the transcript is stored (or already
-    was). Raises NotPending, MediaRefused, TranscribeBusy, AnalysisFailed (attempts used up),
-    llm.BudgetExceeded, TimeoutError or a model error."""
+    was). Raises NotPending, MediaRefused, TranscribeBusy, MediaUnavailable, AnalysisFailed
+    (attempts used up), llm.BudgetExceeded, TimeoutError or a model error.
+
+    Order (5R6): cached → switch → refused → audio slot (no wait) → budget → lease → run; the
+    slot is released on every exit after it is taken."""
     cached = await get_content_store().get(content_id)
     if cached is not None and cached.media is not None:
         return
-    repo = get_pending_repo()
-    pending = await repo.get(content_id)
+    pending = await get_pending_repo().get(content_id)
     if pending is None or pending.media is None:
         raise NotPending(content_id)
+    if not media_kind_on(pending.media.kind, settings):
+        raise MediaRefused("media_off")  # before the lease: no mark, no attempt, no day entry
     if pending.refused:
         raise MediaRefused(pending.refused)
     if pending.stage == "analyse":
         return
+    if pending.media.kind != "audio":
+        await _transcribe_leased(pending, settings)
+        return
+    if _AUDIO_SLOT.locked():
+        raise TranscribeBusy(content_id)
+    await _AUDIO_SLOT.acquire()  # no await between the check and this: never waits
+    try:
+        await _transcribe_leased(pending, settings)
+    finally:
+        _AUDIO_SLOT.release()
+
+
+async def _transcribe_leased(pending: PendingDoc, settings: Settings) -> None:
+    assert pending.media is not None
+    content_id, repo = pending.content_id, get_pending_repo()
     remaining = [
         w
         for w in plan_for(pending.media.kind, pending.media.duration_s)
@@ -210,8 +284,9 @@ async def transcribe_pending(content_id: str, settings: Settings) -> None:
         async with asyncio.timeout(TRANSCRIBE_TIMEOUT_S):
             await run.go()
     except MediaRefused as exc:
+        refused = None if exc.code in NOT_REMEMBERED else exc.code
         await repo.release_transcribe(
-            content_id, token, failed=run.billed, cost_usd=run.take_cost(), refused=exc.code
+            content_id, token, failed=run.billed, cost_usd=run.take_cost(), refused=refused
         )
         await get_media_day_repo().remember_refusal(content_id, exc.code, today_utc())
         log.info("media refused", extra={"content_id": content_id, "code": exc.code})
@@ -222,7 +297,7 @@ async def transcribe_pending(content_id: str, settings: Settings) -> None:
         )
         raise
     except Exception as exc:
-        free = isinstance(exc, llm.BudgetExceeded) and not run.billed
+        free = isinstance(exc, (llm.BudgetExceeded, MediaUnavailable)) and not run.billed
         await repo.release_transcribe(content_id, token, failed=not free, cost_usd=run.take_cost())
         log.warning(
             "media transcribe failed",
@@ -237,7 +312,8 @@ async def transcribe_pending(content_id: str, settings: Settings) -> None:
 
 @dataclass
 class _Run:
-    """One transcribe run under the lease: windows, their costs and the ceiling."""
+    """One transcribe run under the lease: windows, their costs and the ceiling. For audio,
+    the episode's bytes, walked and cut into one piece per window, live only for the run."""
 
     pending: PendingDoc
     settings: Settings
@@ -246,6 +322,10 @@ class _Run:
     inflight: float = 0.0  # estimates of windows sent and not yet answered
     tokens_in: int = 0
     tokens_out: int = 0
+    duration_s: int = 0  # the lookup's, or for audio the walk's exact length (5R3)
+    pieces: dict[int, mp3.Piece] = field(default_factory=dict)
+    fingerprint: str | None = None
+    timings_ms: dict[str, int] = field(default_factory=dict)
 
     @property
     def billed(self) -> bool:
@@ -258,9 +338,14 @@ class _Run:
 
     async def go(self) -> None:
         media = self.pending.media
-        assert media is not None and media.kind == "youtube" and media.video_id
+        assert media is not None
         started = time.perf_counter()
-        windows = plan_for(media.kind, media.duration_s)
+        if media.kind == "audio":
+            windows = await self._prepare_audio(media)
+        else:
+            assert media.video_id
+            self.duration_s = media.duration_s
+            windows = plan_for(media.kind, media.duration_s)
         done: dict[int, WindowText] = {
             int(k): WindowText(
                 rec.language, tuple(TimedParagraph(p.start_s, p.text) for p in rec.paragraphs)
@@ -272,7 +357,12 @@ class _Run:
             done[0] = await self._window(todo.pop(0))  # unknown language: window 1 alone (R8)
         if media.language is None and 0 in done and not is_english(done[0].language):
             raise MediaRefused("not_english")
-        limit = asyncio.Semaphore(PARALLEL_WINDOWS)
+        parallel = (
+            self.settings.media_audio_parallel_windows
+            if media.kind == "audio"
+            else PARALLEL_WINDOWS
+        )
+        limit = asyncio.Semaphore(parallel)
 
         async def bounded(w: Window) -> None:
             async with limit:
@@ -286,13 +376,50 @@ class _Run:
                 task.cancel()
             await asyncio.gather(*tasks, return_exceptions=True)
             raise
+        self.timings_ms["windows"] = _ms_since(started) - sum(self.timings_ms.values())
         await self._finish(media, windows, done, started)
+
+    async def _prepare_audio(self, media: Media) -> list[Window]:
+        """Fetch, walk and cut the episode before any model call. The walk's length replaces
+        the lookup's for the windows, the ceiling and the stored media (5R3); bytes that differ
+        from the saved windows' drop them (dynamic ads)."""
+        assert media.audio_url
+        started = time.perf_counter()
+        data = await _fetch_audio(media.audio_url, self.settings)
+        self.timings_ms["fetch"] = _ms_since(started)
+        started = time.perf_counter()
+        walked = mp3.walk(data)
+        self.duration_s = math.floor(walked.duration_s)
+        if self.duration_s > self.settings.media_max_audio_s:
+            raise MediaRefused("too_long")
+        windows = plan_windows(self.duration_s)
+        self.pieces = {p.index: p for p in mp3.split(walked, windows)}
+        self.fingerprint = walked.fingerprint
+        self.timings_ms["walk"] = _ms_since(started)
+        if self.pending.windows and self.pending.audio_fingerprint != self.fingerprint:
+            await get_pending_repo().drop_windows(
+                self.pending.content_id, self.pending.lease_token or ""
+            )
+            log.info("media audio changed", extra={"content_id": self.pending.content_id})
+            self.pending = self.pending.model_copy(
+                update={"windows": {}, "audio_fingerprint": None}
+            )
+        return windows
+
+    def _clip(self, window: Window) -> llm.MediaClip:
+        media = self.pending.media
+        assert media is not None
+        if media.kind == "audio":
+            return llm.AudioClip(self.pieces[window.index].data)
+        assert media.video_id
+        return llm.YouTubeClip(urls.YouTube(media.video_id).canonical)  # whole video (R4.3)
 
     async def _window(self, window: Window) -> WindowText:
         media = self.pending.media
-        assert media is not None and media.video_id
+        assert media is not None
+        relative = media.kind == "audio"  # a piece's clock starts at its own zero
         estimate = _estimate(window.length_s, self.settings)
-        ceiling = CEILING_FACTOR * _estimate(media.duration_s, self.settings)
+        ceiling = CEILING_FACTOR * _estimate(self.duration_s, self.settings)
         spent = self.pending.transcribe_cost_usd + self.meter.cost_usd
         if spent + self.inflight + estimate > ceiling:
             raise MediaRefused("too_costly")
@@ -301,15 +428,15 @@ class _Run:
             result = await llm.transcribe(
                 "transcribe",
                 TranscriptWindow,
-                llm.YouTubeClip(urls.YouTube(media.video_id).canonical),  # whole video (R4.3)
+                self._clip(window),
                 estimate_usd=estimate,
                 meter=self.meter,
-                check=lambda out: check_window(out, window, relative_only=False),
+                check=lambda out: check_window(out, window, relative_only=relative),
                 settings=self.settings,
             )
         finally:
             self.inflight -= estimate
-        text = check_window(result.output, window, relative_only=False)
+        text = check_window(result.output, window, relative_only=relative)
         self.tokens_in += result.meta.tokens_in
         self.tokens_out += result.meta.tokens_out
         record = WindowRecord(
@@ -318,7 +445,7 @@ class _Run:
         )
         await get_pending_repo().save_window(
             self.pending.content_id, self.pending.lease_token or "", window.index, record,
-            self.take_cost(),
+            self.take_cost(), fingerprint=self.fingerprint,
         )  # fmt: skip
         return text
 
@@ -346,16 +473,43 @@ class _Run:
         )
         await get_pending_repo().finish_transcript(
             self.pending.content_id, self.pending.lease_token or "", paragraphs,
-            media.model_copy(update={"transcript": record}), self.take_cost(),
+            media.model_copy(update={"transcript": record, "duration_s": self.duration_s}),
+            self.take_cost(),
         )  # fmt: skip
-        log.info(
-            "media transcribed",
-            extra={
-                "content_id": self.pending.content_id,
-                "windows": len(windows),
-                "paragraphs": len(paragraphs),
-                "words": sum(len(p.text.split()) for p in paragraphs),
-                "cost_usd": round(cost, 6),
-                "transcribe_ms": round((time.perf_counter() - started) * 1000),
-            },
-        )
+        extra = {
+            "content_id": self.pending.content_id,
+            "kind": media.kind,
+            "windows": len(windows),
+            "paragraphs": len(paragraphs),
+            "words": sum(len(p.text.split()) for p in paragraphs),
+            "cost_usd": round(cost, 6),
+            "transcribe_ms": _ms_since(started),
+        }
+        if media.kind == "audio":  # phase timings and peak memory, once per run (R9, 5R10)
+            extra |= {f"{k}_ms": v for k, v in self.timings_ms.items()}
+            extra["peak_rss_mb"] = _peak_rss_mb()
+        log.info("media transcribed", extra=extra)
+
+
+async def _fetch_audio(url: str, settings: Settings) -> bytearray:
+    """The episode through the SSRF guard. A timeout, connection error, 5xx or 429 is
+    MediaUnavailable (not remembered, 5R5); anything else is a refusal remembered for the day."""
+    try:
+        fetched = await get_fetcher().fetch_audio(url, max_bytes=settings.media_max_audio_bytes)
+    except FetchError as exc:
+        log.warning("audio fetch failed", extra={"error_code": exc.code, "status": exc.status})
+        if is_transient(exc):
+            raise MediaUnavailable("audio") from None
+        raise MediaRefused("too_long" if exc.code == "too_large" else "unsupported_audio") from None
+    return fetched.body
+
+
+def _ms_since(started: float) -> int:
+    return round((time.perf_counter() - started) * 1000)
+
+
+def _peak_rss_mb() -> int:
+    """This process's peak RSS: ru_maxrss is bytes on macOS, KB on Linux (5R10). Local runs
+    measure the laptop, not Cloud Run."""
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return round(peak / (1 << 20) if sys.platform == "darwin" else peak / 1024)

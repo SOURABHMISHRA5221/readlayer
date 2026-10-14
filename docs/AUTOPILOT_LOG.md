@@ -1515,10 +1515,53 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   other → `unsupported_audio` (5R5). Logs carry codes and statuses only, never the URL.
 - API suite 1049 passed, 2 skipped; ruff clean.
 
+- Resumed after /clear: "resume at step 6: switches, then the service audio branch".
+- Switches (5.1, 5.2, 5R7): `MEDIA_VIDEO_ENABLED` (default true, in `deploy.env.yaml`);
+  `openable.media_kind_on(kind, settings)` = kill switch and the kind's switch, checked first in
+  `open_media`, in `openable` and at the top of `transcribe_pending` before the lease. New code
+  `apple_link_only` for direct `.mp3` links (in `MESSAGES`). `refusals.NOT_REMEMBERED` =
+  {`media_off`, `apple_link_only`}: `remember_refusal` skips them and the transcribe `refused`
+  mark leaves them out, so the old `youtube_info` missing-key path can't remember one either.
+  Show pages answer `not_an_episode` before the slot and any lookup, not remembered (URL-derived).
+- `openable`: an Apple episode is "Open here" when the audio switch is on and its length is
+  unknown or ≤ `MEDIA_MAX_AUDIO_S`; YouTube follows the video switch; `.mp3`, show pages,
+  Spotify stay "Open original".
+- `open_media` audio branch: Apple lookup and the audio probe each count one `media_lookup`;
+  no Apple length → bitrate estimate, over the cap `too_long` (remembered); then budget
+  pre-check, growth slots, `create_media` as for YouTube. `Media(kind="audio",
+  audio_url=episodeUrl, language=None)`, `url` = the canonical Apple link.
+- `transcribe_pending` (5R6): cached → switch → refused → stage → audio slot
+  (`Semaphore(1)`, `locked()` then `acquire()`, busy → `TranscribeBusy` / 202) → budget → lease
+  → run, one `try/finally` from the slot on. Free exit widened to `(BudgetExceeded,
+  MediaUnavailable)` with nothing billed (nit 2). Router: `MediaUnavailable` → 503
+  `media_unavailable`, Retry-After 60.
+- `_Run` audio: fetch through `get_fetcher().fetch_audio` (transient → `MediaUnavailable`, not
+  remembered; other → refused and remembered), walk, the walk's floor length replaces the
+  lookup's for windows, ceiling and stored media (over the cap `too_long` before any call),
+  `split(walk, plan_windows(...))`, `AudioClip(piece)`, `check_window(relative_only=True)`,
+  `MEDIA_AUDIO_PARALLEL_WINDOWS` (new, 4) after window 1 alone. Fingerprint written with every
+  audio `save_window`; a retry whose walk differs calls `drop_windows` (lease-checked, cost kept)
+  before any model call. Audio runs log fetch / walk / windows ms and `peak_rss_mb` (ru_maxrss
+  normalised for macOS / Linux).
+- Two small departures from the plan text, both deliberate: a fetch cut off as `too_large` at
+  transcribe answers `too_long` (the plan's 5R5 list said `unsupported_audio`; the head already
+  answers `too_long` for the same cause, and the message is the accurate one). And `_read_into`
+  presizes from the response's Content-Length when no head total is passed, since the transcribe
+  run doesn't carry the open's probe (5R10's intent, no new stored field).
+- Tests: `test_media_podcast.py` (21, new): open → transcribe → analyse with relative piece
+  times made absolute and `audio_url` reaching `contents/`; window 1 alone; estimate at open;
+  `.mp3` and show page before any lookup; `media_off` per switch never remembered, then on again
+  works at once; video switch leaves podcasts alone; `remember_refusal` skips switch codes;
+  transient vs permanent at open and transcribe; walk over cap; ceiling from the walk; non-English
+  after window 1; busy slot leaves lease and both counters; slot free after budget and refused
+  runs (and asserted after every test); same bytes keep saved windows, different bytes drop them.
+  Plus openable (switches, Apple with / without length, show page, `.mp3`), router (podcast 422s,
+  transcribe 503) and a presize test. Written alongside the code this time, not strictly first.
+- API suite 1083 passed, 2 skipped; ruff clean.
+
 ### Next steps (resume here, in order)
-1. Switches (`MEDIA_VIDEO_ENABLED`, `media_kind_on`, `apple_link_only`, `media_off` never
-   remembered: 5.1, 5.2, 5R7) → service audio branch of `open_media` (counts, budget pre-check,
-   `create_media`) and `transcribe_pending` / `_Run` (semaphore, fetch, walk, split,
-   fingerprint: 5.4, 5R3, 5R5, 5R6, 5R10) → `openable` → router → web `AudioPlayer` → suites.
+1. Web: `AudioPlayer` in the `MediaReader` chunk (5.5), `VITE_MEDIA_VIDEO` placeholder copy,
+   `deploy-web` reading the flag from `deploy.env.yaml` (5R8), privacy page "Podcasts" section;
+   web tests, typecheck, bundle (main ≤ 150 KB).
 2. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
 3. Step 7. Checkpoint end of Oct 14 IST (decision 27).

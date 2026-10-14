@@ -8,6 +8,7 @@ from app.store.media_repo import media_day_path
 from app.store.spend_repo import today_utc
 
 VIDEO = "https://www.youtube.com/watch?v=d6fUwCBvVc0"
+EPISODE = "https://podcasts.apple.com/us/podcast/x/id1?i=2"
 
 
 def settings(**overrides) -> Settings:
@@ -31,7 +32,12 @@ def fresh_cache():
         (VIDEO, "video", None, False),  # unknown length
         ("https://vimeo.com/123", "video", 600, False),
         ("https://open.spotify.com/episode/x", "podcast", 1200, False),
-        ("https://podcasts.apple.com/us/podcast/x/id1?i=2", "podcast", 1200, False),  # step 6
+        (EPISODE, "podcast", 1200, True),
+        (EPISODE, "podcast", 2700, True),
+        (EPISODE, "podcast", 2701, False),  # past MEDIA_MAX_AUDIO_S
+        (EPISODE, "podcast", None, True),  # feed items often lack a length; the open checks
+        ("https://podcasts.apple.com/us/podcast/x/id1", "podcast", 1200, False),  # show page
+        ("https://cdn.example/ep.mp3", "podcast", 1200, False),  # Apple links only (5.2)
     ],
 )
 async def test_open_here_for_signed_in_readers(url, fmt, duration, expected):
@@ -41,6 +47,18 @@ async def test_open_here_for_signed_in_readers(url, fmt, duration, expected):
 async def test_media_off_leaves_only_articles():
     s = settings(media_enabled=False)
     assert await open_here(VIDEO, "video", 600, s, anonymous=False) is False
+    assert await open_here(EPISODE, "podcast", 600, s, anonymous=False) is False
+    assert await open_here("https://news.example/a", "article", None, s, anonymous=False)
+
+
+@pytest.mark.parametrize(
+    ("switch", "video", "episode"),
+    [("media_video_enabled", False, True), ("media_audio_enabled", True, False)],
+)
+async def test_each_kind_has_its_own_switch(switch, video, episode):
+    s = settings(**{switch: False})
+    assert await open_here(VIDEO, "video", 600, s, anonymous=False) is video
+    assert await open_here(EPISODE, "podcast", 600, s, anonymous=False) is episode
     assert await open_here("https://news.example/a", "article", None, s, anonymous=False)
 
 

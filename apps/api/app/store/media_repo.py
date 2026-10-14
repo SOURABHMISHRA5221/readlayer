@@ -8,6 +8,7 @@ ops/search/days/{day}  `media_lookup`: videos.list calls, Apple lookups and audi
                        counted apart from `calls` and `youtube` so search caps are untouched.
 """
 
+from app.media.refusals import NOT_REMEMBERED
 from app.store.docstore import DocStore, Txn, get_doc_store
 
 
@@ -32,6 +33,10 @@ class MediaDayRepo:
         return str(code) if code else None
 
     async def remember_refusal(self, content_id: str, code: str, day: str) -> None:
+        """A switch or build answer (`media_off`, `apple_link_only`) is skipped (5R7)."""
+        if code in NOT_REMEMBERED:
+            return
+
         async def body(t: Txn) -> None:
             path = media_day_path(day)
             doc = await t.get(path) or {}

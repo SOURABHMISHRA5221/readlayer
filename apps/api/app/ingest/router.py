@@ -270,7 +270,7 @@ async def transcribe_content(
     """A recording's transcript (DESIGN §21), then the client calls .../analyse as for an
     article. Already transcribed → 200 with no model call; another request transcribing → 202;
     a refusal → 422 with its code. The media slot was taken when it was opened."""
-    from app.media.refusals import MediaRefused, message
+    from app.media.refusals import MediaRefused, MediaUnavailable, message
     from app.media.service import TranscribeBusy, transcribe_pending
 
     if (pending := await get_pending_repo().get(content_id)) is not None:
@@ -287,6 +287,8 @@ async def transcribe_content(
         )
     except MediaRefused as exc:
         return _error(422, exc.code, message(exc.code))
+    except MediaUnavailable:  # the episode's host timed out or failed: not remembered (5R5)
+        return _error(503, "media_unavailable", message("media_unavailable"), retry_after=60)
     except AnalysisFailed:
         return _error(
             410, "transcribe_failed", "Gloss couldn't transcribe this. Open the original instead."

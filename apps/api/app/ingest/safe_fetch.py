@@ -433,11 +433,13 @@ async def _read_into(
     response: httpx.Response, max_bytes: int, expected_bytes: int | None
 ) -> bytearray:
     """The whole body in one bytearray (no chunk list, so 70 MB stays ~70 MB), preallocated
-    from `expected_bytes` and grown only if the body is longer (5R10)."""
+    from `expected_bytes`, else the declared Content-Length, and grown only if the body is
+    longer (5R10)."""
     declared = response.headers.get("content-length")
-    if declared and declared.isdigit() and int(declared) > max_bytes:
+    length = int(declared) if declared and declared.isdigit() else None
+    if length is not None and length > max_bytes:
         raise FetchError("too_large", f"audio is larger than {max_bytes // 1_000_000} MB")
-    buf = bytearray(min(expected_bytes or 0, max_bytes))
+    buf = bytearray(min(expected_bytes or length or 0, max_bytes))
     size = 0
     async for chunk in response.aiter_bytes():
         end = size + len(chunk)

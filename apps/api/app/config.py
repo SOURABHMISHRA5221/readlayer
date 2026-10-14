@@ -66,9 +66,12 @@ class Settings(BaseSettings):
     # Media: YouTube videos and podcast episodes read as transcripts (decision 54, DESIGN §21).
     media_enabled: bool = True  # kill switch: false → media URLs answer "Open original"
     media_audio_enabled: bool = True  # podcasts only (plan R12)
+    media_video_enabled: bool = True  # YouTube only; parked while whole videos time out (5.1)
     media_max_video_s: int = 1200  # 90% of cached videos; one whole-URL call (plan Round 4)
     media_max_audio_s: int = 2700  # 12 of 15 resolved Apple episodes
     media_max_audio_bytes: int = 70_000_000  # 45 min at 192 kbps is 65 MB
+    # Audio windows in flight after window 1; each holds ~3 × 20 MB of base64 and JSON (5R10).
+    media_audio_parallel_windows: int = Field(default=4, ge=1)
     # New recordings per UTC day: per signed-in reader, per demo reader, all demo readers.
     media_daily_cap: int = 5
     anon_media_daily_cap: int = 1

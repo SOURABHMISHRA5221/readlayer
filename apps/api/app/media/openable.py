@@ -4,7 +4,8 @@ plan §F, R7). Decided at serve time, so stored demo snapshots need no rewrite."
 import time
 
 from app.config import Settings
-from app.media.urls import YouTube, classify
+from app.ingest.models import MediaKind
+from app.media.urls import ApplePodcast, Media, YouTube, classify
 from app.store.media_repo import get_media_day_repo
 from app.store.spend_repo import today_utc
 
@@ -12,15 +13,32 @@ ANON_CACHE_S = 60.0
 _anon_full: tuple[float, str, bool] | None = None  # (checked at, UTC day, cap used up)
 
 
+def media_kind(media: Media) -> MediaKind:
+    return "youtube" if isinstance(media, YouTube) else "audio"
+
+
+def media_kind_on(kind: MediaKind, settings: Settings) -> bool:
+    """The kill switch and the kind's own switch (5.1). Read on every open, transcribe and
+    serve, never stored: turning a switch back on works at once."""
+    if not settings.media_enabled:
+        return False
+    return settings.media_video_enabled if kind == "youtube" else settings.media_audio_enabled
+
+
 def openable(url: str, fmt: str, duration_s: int | None, settings: Settings) -> bool:
-    """Articles always; a YouTube video of known length within the cap; nothing else yet
-    (Spotify, show pages and other audio stay "Open original")."""
+    """Articles always; a YouTube video of known length within the cap; an Apple episode whose
+    length is unknown or within the cap (the open checks it: feed items often lack one).
+    Spotify, show pages and direct .mp3 links stay "Open original"."""
     if fmt == "article":
         return True
-    if not settings.media_enabled or duration_s is None:
-        return False
     media = classify(url)
-    return isinstance(media, YouTube) and 0 < duration_s <= settings.media_max_video_s
+    if media is None or not media_kind_on(media_kind(media), settings):
+        return False
+    if isinstance(media, YouTube):
+        return duration_s is not None and 0 < duration_s <= settings.media_max_video_s
+    if isinstance(media, ApplePodcast) and media.episode_id:
+        return duration_s is None or 0 < duration_s <= settings.media_max_audio_s
+    return False
 
 
 async def anonymous_media_full(settings: Settings) -> bool:

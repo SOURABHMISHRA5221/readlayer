@@ -150,3 +150,26 @@ def test_transcribe_of_an_unknown_id_is_404(env):
 def test_post_content_sends_recordings_to_read_any_link(env, body):
     resp = client().post("/v1/content", json=body)
     assert resp.status_code == 422 and resp.json()["error"] == "use_open_here"
+
+
+@pytest.mark.parametrize(
+    ("url", "code"),
+    [
+        ("https://cdn.example/show/episode.mp3", "apple_link_only"),
+        ("https://podcasts.apple.com/us/podcast/a-show/id1200361736", "not_an_episode"),
+    ],
+)
+def test_podcast_links_refused_before_any_lookup_are_422(env, url, code):
+    resp = client().post("/v1/recs/open", json={"url": url})
+    assert resp.status_code == 422 and resp.json()["error"] == code
+    assert "Open original" in resp.json()["message"]
+
+
+def test_an_unreachable_episode_on_transcribe_is_503_and_retryable(env, monkeypatch):
+    async def unavailable(content_id, settings):
+        raise MediaUnavailable("audio")
+
+    monkeypatch.setattr(service, "transcribe_pending", unavailable)
+    resp = client().post(f"/v1/content/{CID}/transcribe")
+    assert resp.status_code == 503 and resp.json()["error"] == "media_unavailable"
+    assert resp.headers["Retry-After"] == "60"

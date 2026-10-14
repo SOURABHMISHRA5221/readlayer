@@ -166,4 +166,7 @@ class PendingDoc(BaseModel):
     transcribe_attempts: int = 0
     lease_token: str | None = None
     windows: dict[str, WindowRecord] = Field(default_factory=dict)
+    # "<frames>:<bytes>" of the audio the saved windows came from: a retry that fetches other
+    # bytes (dynamically inserted ads) drops them and starts over (5R3).
+    audio_fingerprint: str | None = None
     transcribe_cost_usd: float = 0.0

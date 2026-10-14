@@ -4,6 +4,7 @@ OPEN_ORIGINAL = "Use “Open original” to watch or listen on the publisher's s
 
 MESSAGES: dict[str, str] = {
     "media_off": "Videos and podcasts can't be opened in Gloss right now.",
+    "apple_link_only": "Gloss opens podcast episodes from their Apple Podcasts link.",
     "not_public": "This video isn't public, so Gloss can't read it.",
     "not_embeddable": "This video can't be played outside YouTube.",
     "live": "Live streams can't be read in Gloss.",
@@ -17,6 +18,9 @@ MESSAGES: dict[str, str] = {
     "media_unavailable": "Gloss couldn't look this recording up just now.",
 }
 REFUSAL_CODES = frozenset(MESSAGES)
+# Answers about this build or its switches, not the recording: never remembered, so turning a
+# switch back on works at once (5R7).
+NOT_REMEMBERED = frozenset({"media_off", "apple_link_only"})
 
 
 def message(code: str) -> str:

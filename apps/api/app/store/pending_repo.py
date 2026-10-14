@@ -109,14 +109,26 @@ class PendingRepo:
         return await self._store.run(body)
 
     async def save_window(
-        self, content_id: str, token: str, index: int, record: WindowRecord, cost_usd: float
-    ) -> None:
-        """One finished window and what it cost. Raises LeaseLost (the cost is still added)."""
+        self, content_id: str, token: str, index: int, record: WindowRecord, cost_usd: float,
+        fingerprint: str | None = None,
+    ) -> None:  # fmt: skip
+        """One finished window and what it cost; an audio window also writes the fingerprint
+        of the bytes it came from. Raises LeaseLost (the cost is still added)."""
 
         def update(doc: PendingDoc) -> dict[str, Any]:
-            return {"windows": {**doc.windows, str(index): record}}
+            changes: dict[str, Any] = {"windows": {**doc.windows, str(index): record}}
+            return changes | ({"audio_fingerprint": fingerprint} if fingerprint else {})
 
         await self._media_write(content_id, token, cost_usd, update)
+
+    async def drop_windows(self, content_id: str, token: str) -> None:
+        """Forget the saved windows (their cost stays counted): the audio changed (5R3).
+        Raises LeaseLost."""
+
+        def update(_doc: PendingDoc) -> dict[str, Any]:
+            return {"windows": {}, "audio_fingerprint": None}
+
+        await self._media_write(content_id, token, 0.0, update)
 
     async def finish_transcript(
         self, content_id: str, token: str, paragraphs: list[PendingParagraph], media: Media,
@@ -134,6 +146,7 @@ class PendingRepo:
                 "lease_until": None,
                 "lease_token": None,
                 "windows": {},
+                "audio_fingerprint": None,
             }
 
         return await self._media_write(content_id, token, cost_usd, update)
