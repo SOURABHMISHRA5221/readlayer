@@ -1,52 +1,26 @@
+import json
+from pathlib import Path
+
 import pytest
 
 from app.ingest.urls import url_hash
 from app.media.urls import ApplePodcast, AudioFile, YouTube, classify, content_id, kind
 
-VID = "d6fUwCBvVc0"
+# Shared with the extension's Open in Gloss (apps/extension/test/youtube.test.ts, decision 62).
+YOUTUBE = json.loads((Path(__file__).parent / "fixtures" / "youtube_urls.json").read_text())
+VID = YOUTUBE["video_id"]
 
 
-@pytest.mark.parametrize(
-    "url",
-    [
-        f"https://www.youtube.com/watch?v={VID}",
-        f"https://youtube.com/watch?v={VID}&t=42s",
-        f"https://m.youtube.com/watch?feature=share&v={VID}",
-        f"http://www.youtube.com/watch?v={VID}",
-        f"https://youtu.be/{VID}",
-        f"https://youtu.be/{VID}?si=abc",
-        f"https://www.youtube.com/shorts/{VID}",
-        f"https://www.youtube.com/embed/{VID}",
-        f"  https://WWW.YouTube.com/watch?v={VID}  ",
-    ],
-)
+@pytest.mark.parametrize("url", YOUTUBE["videos"])
 def test_every_youtube_form_maps_to_one_video(url):
     media = classify(url)
     assert media == YouTube(VID)
-    assert media.canonical == f"https://www.youtube.com/watch?v={VID}"
-    assert content_id(media) == url_hash(f"https://www.youtube.com/watch?v={VID}")
+    assert media.canonical == YOUTUBE["canonical"]
+    assert content_id(media) == url_hash(YOUTUBE["canonical"])
     assert kind(media) == "video"
 
 
-@pytest.mark.parametrize(
-    "url",
-    [
-        "https://music.youtube.com/watch?v=d6fUwCBvVc0",  # not in scope
-        "https://www.youtube.com/watch?v=short",  # not 11 characters
-        "https://www.youtube.com/watch?v=d6fUwCBvVc0&v=xFPILM4UUSg",  # two ids
-        "https://www.youtube.com/@channel",
-        "https://www.youtube.com/playlist?list=PL123",
-        "https://youtu.be/",
-        "https://youtube.com.evil.example/watch?v=d6fUwCBvVc0",  # look-alike hosts
-        "https://evilyoutube.com/watch?v=d6fUwCBvVc0",
-        "https://youtu.be.evil.example/d6fUwCBvVc0",
-        "https://user:pw@www.youtube.com/watch?v=d6fUwCBvVc0",
-        "ftp://www.youtube.com/watch?v=d6fUwCBvVc0",
-        "javascript:alert(1)//www.youtube.com/watch?v=d6fUwCBvVc0",
-        "https://www.bbc.co.uk/news/articles/c1",
-        "not a url",
-    ],
-)
+@pytest.mark.parametrize("url", YOUTUBE["not_videos"])
 def test_other_links_are_not_videos(url):
     assert not isinstance(classify(url), YouTube)
 

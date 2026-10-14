@@ -288,8 +288,8 @@ redeployed; the old address is never affected.
 **R14. `.gcp.local.mk` gitignored, done.** `.gitignore` lists it; `git check-ignore` passed before
 the file was written; `make check-gcp` passes with it and fails with "ACCOUNT unset…" without it.
 
-**R15. The name, not just the address.** The check is `git grep -n -i sourabhlocalllm` returning
-nothing: done (Makefile, STATUS §-identity line, both AUTOPILOT_LOG lines rewritten).
+**R15. The name, not just the address.** The check is `git grep -i` for the account's local part
+(from CLAUDE.local.md, typed only on the command line) returning nothing: done (Makefile, STATUS §-identity line, both AUTOPILOT_LOG lines rewritten).
 
 Optional taken: if the consent screen wants brand verification to rename it, the rename is
 skipped (the chooser then names glossreader.web.app, which meets acceptance 3) and what the screen
