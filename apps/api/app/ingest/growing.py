@@ -52,6 +52,9 @@ async def run_growth(
         return GrowthResult(demands, [], False, list(tried))
     if budget_s <= 0:
         return GrowthResult(demands, [], True, list(tried))
+    if await llm.get_spend_store().get_today() >= get_settings().llm_daily_budget_usd:
+        # The calls would be refused: keep the reader's slots and the page pending.
+        return GrowthResult(demands, [], True, list(tried), budget_refused=True)
     granted = await take(want)
     if granted <= 0:
         return GrowthResult(demands, [], True, list(tried))
@@ -158,10 +161,22 @@ async def grow_stored(doc: ContentDoc, reserve: Reserver | None) -> Regrown:
     status, token = await store.claim_growth(doc.content_id, now, until)
     if status != "claimed" or token is None:
         return Regrown("growing" if status == "busy" else "none")
-    paragraphs = {p.id: p.text for p in doc.paragraphs}
-    result = await run_growth(
-        doc.content_id, doc.demands, paragraphs, doc.grow_tried, settings.growth_timeout_s, reserve
-    )
+    try:
+        # Read again under the claim: another grower may have finished since the caller's read.
+        fresh = await store.get(doc.content_id)
+        if fresh is None or not needs_growth(fresh, heldout=False):
+            await store.finish_growth(doc.content_id, token, None, [], False, doc.grow_tried)
+            return Regrown("none")
+        paragraphs = {p.id: p.text for p in fresh.paragraphs}
+        result = await run_growth(
+            fresh.content_id, fresh.demands, paragraphs, fresh.grow_tried,
+            settings.growth_timeout_s, reserve,
+        )  # fmt: skip
+    except BaseException:  # release the claim at once, the page still pending; then re-raise
+        await asyncio.shield(
+            store.finish_growth(doc.content_id, token, None, [], True, doc.grow_tried)
+        )
+        raise
     demands = result.demands if result.linked else None
     if not await store.finish_growth(
         doc.content_id, token, demands, result.calls, result.pending, result.tried

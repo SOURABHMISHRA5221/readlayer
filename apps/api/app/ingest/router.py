@@ -12,6 +12,8 @@ from app.auth import Caller, current_caller
 from app.config import Settings, get_settings
 from app.content import catalog
 from app.content.access import require_readable
+from app.graph.growth_need import needs_growth
+from app.graph.heldout import is_heldout
 from app.ingest import quota, submitted
 from app.ingest.models import ContentDoc, PendingDoc
 from app.ingest.safe_fetch import FetchError, validate_url
@@ -274,6 +276,8 @@ async def grow_content(
     if doc is None:
         return _error(404, "not_found", "content not found")
     await require_readable(doc, caller.uid)
+    if not needs_growth(doc, heldout=is_heldout(content_id)):  # before the heavy import
+        return GrowResponse(content_id=content_id, status="none")
     from app.ingest.growing import grow_stored
 
     done = await grow_stored(doc, quota.growth_reserver(caller, settings))

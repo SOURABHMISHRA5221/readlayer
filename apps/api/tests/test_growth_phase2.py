@@ -147,3 +147,22 @@ async def test_off_or_heldout_never_grows(env, monkeypatch, case):
     got = await run(_pending(url, slots=0), demands("Offside"), reserve)
     assert reserve.asked == [] and grower.calls == [] and got.pending is False
     assert case != "heldout" or _pending(url).content_id in heldout_ids()
+
+
+async def test_over_the_daily_budget_reserves_nothing(env, monkeypatch):
+    """Review round 1, item 8: once the $8 guard trips, a reopen must not burn the reader's
+    slots on calls that would be refused anyway."""
+    from app import llm as llm_module
+    from app.store.spend_repo import InMemorySpendStore
+
+    spend = InMemorySpendStore()
+    await spend.add(9.0, 0, 0)
+    llm_module.set_spend_store(spend)
+    try:
+        grower, reserve = Grower(), Reserver()
+        monkeypatch.setattr("app.graph.grow.grow", grower)
+        got = await run(_pending(slots=0), demands("Offside"), reserve)
+        assert reserve.asked == [] and grower.calls == []
+        assert got.pending is True and got.budget_refused is True
+    finally:
+        llm_module.set_spend_store(None)

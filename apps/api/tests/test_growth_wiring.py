@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from app import config
+from app import config, llm
 from app.auth import Caller
 from app.content import catalog
 from app.graph import refresh
@@ -21,6 +21,7 @@ from app.ingest.urls import url_hash
 from app.store.content_repo import InMemoryContentStore, set_content_store
 from app.store.docstore import InMemoryDocStore, set_doc_store
 from app.store.growth_repo import GrowthRepo
+from app.store.spend_repo import InMemorySpendStore
 from scripts.ingest_corpus import parse_corpus
 from tests.fakes import pending_doc
 from tests.test_scorer import doc as content_doc
@@ -43,9 +44,11 @@ def env(monkeypatch):
     set_graph(ConceptGraph(ConceptGraphFile(version="f1", concepts=[concept("c_goal", "Goal")])))
     refresh.reset()
     catalog.reset()
+    llm.set_spend_store(InMemorySpendStore())  # growth checks the day's spend before reserving
     monkeypatch.setenv("GROWTH_ENABLED", "true")
     config.get_settings.cache_clear()
     yield store, content
+    llm.set_spend_store(None)
     set_graph(previous)
     set_doc_store(None)
     set_content_store(None)

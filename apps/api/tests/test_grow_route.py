@@ -19,7 +19,7 @@ from app.store.content_repo import InMemoryContentStore, set_content_store
 from app.store.docstore import get_doc_store
 from app.store.pending_repo import get_pending_repo
 from app.store.reader_repo import ReaderRepo
-from app.store.spend_repo import today_utc
+from app.store.spend_repo import InMemorySpendStore, today_utc
 from tests.fakes import auth
 from tests.test_growth_phase2 import demands
 from tests.test_growth_reopen import page
@@ -36,9 +36,11 @@ def env(monkeypatch, docs):
     set_graph(ConceptGraph(ConceptGraphFile(version="f1", concepts=[concept("c_goal", "Goal")])))
     refresh.reset()
     catalog.reset()
+    llm.set_spend_store(InMemorySpendStore())  # growth checks the day's spend before reserving
     monkeypatch.setenv("GROWTH_ENABLED", "true")
     config.get_settings.cache_clear()
     yield store
+    llm.set_spend_store(None)
     set_graph(previous)
     set_content_store(None)
     catalog.reset()
@@ -235,3 +237,36 @@ def test_the_url_path_on_a_pending_url_reserves_for_its_caller(env, monkeypatch)
     c = TestClient(app, headers=auth("reader"), raise_server_exceptions=False)
     c.post("/v1/content", json={"url": url})
     assert asked == ["reader"]
+
+
+def test_a_page_grown_between_the_read_and_the_claim_is_left_alone(env, monkeypatch):
+    """Review item 5: the doc is read again after the claim; no slots for labels already done."""
+    grower = Grower()
+    monkeypatch.setattr("app.graph.grow.grow", grower)
+    doc = store_page(env, grow_pending=True)
+    env.docs[CID] = doc.model_copy(update={"grow_pending": False})  # another grower finished
+    from app.auth import Caller
+    from app.ingest import quota
+    from app.ingest.growing import grow_stored
+
+    reserve = quota.growth_reserver(Caller("reader", False), config.get_settings())
+    done = asyncio.run(grow_stored(doc, reserve))
+    assert done.status == "none" and grower.calls == [] and env.docs[CID].grow_token is None
+
+
+def test_a_failure_before_growth_releases_the_claim(env, monkeypatch):
+    from app.ingest import quota
+
+    def reserver(caller, settings):
+        async def broken(want):
+            raise RuntimeError("firestore down")
+
+        return broken
+
+    monkeypatch.setattr(quota, "growth_reserver", reserver)
+    store_page(env, grow_pending=True)
+    asyncio.run(own("reader"))
+    c = TestClient(app, headers=auth("reader"), raise_server_exceptions=False)
+    assert c.post(f"/v1/content/{CID}/grow").status_code == 500
+    assert env.docs[CID].grow_token is None and env.docs[CID].growing_until is None
+    assert env.docs[CID].grow_pending is True
