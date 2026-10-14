@@ -1759,10 +1759,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   from new chunk hashes). Harness `tools/shots/readiness.py`: axe 0, no horizontal scroll, lines
   match the API at 1440/390 light/dark, zero search and model calls. STATUS §29.
 
-- milestone-reviewer: FIX (resume steps, the Oct 16 mix re-run, a route test) → applied.
+- milestone-reviewer: FIX (resume steps, the Oct 16 mix re-run, a route test) → applied → **SHIP**.
 
 ### Next steps (resume here, in order)
-1. Readiness (branch `readiness`): milestone-reviewer until SHIP → PR → CI green → merge →
+1. Readiness (branch `readiness`, reviewer SHIP): PR → CI green → merge →
    `make check-gcp` → `make deploy-api`, then `make deploy-web` from clean, up-to-date `main`
    (Sourabh's yes on each) → live check: production `/v1/feed` level counts per persona, one live
    shot in `docs/evidence/readiness/`, then End demo and confirm the anonymous Auth user and
