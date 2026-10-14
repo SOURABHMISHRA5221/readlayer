@@ -3,6 +3,7 @@
  * copy quotes. Since decision 54 short videos and podcasts open in Gloss with notes; longer ones
  * open where they play. The caps equal production's MEDIA_MAX_VIDEO_S / MEDIA_MAX_AUDIO_S (a
  * vitest reads `apps/api/deploy.env.yaml`). The hero's chips are `formats.ts`, kept in step.
+ * Every entry gets notes (a vitest checks), so the list shows "With notes" on each.
  */
 export const VIDEO_CAP_MIN = 10;
 export const PODCAST_CAP_MIN = 12;

@@ -30,7 +30,7 @@ export function GlossInBrowser() {
             Download <code>gloss-extension.zip</code> from the release and unzip it.
           </li>
           <li>
-            In <code>chrome://extensions</code>, turn on Developer mode, choose Load unpacked and pick the folder.
+            In <code>chrome://extensions</code>, turn on Developer mode, choose Load unpacked and pick the folder; then pin Gloss from the puzzle-piece menu.
           </li>
           <li>In Gloss, open your account menu, choose Use Gloss on any site, then Connect (a demo session works).</li>
           <li>Open a news article, click Gloss in the toolbar, then Read this page.</li>

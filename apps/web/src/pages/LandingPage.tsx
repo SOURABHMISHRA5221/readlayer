@@ -353,9 +353,7 @@ function Formats() {
         {FORMATS.map((f) => (
           <li key={f.what} className="lp-formats__item">
             <span className="lp-formats__what">{f.what}</span>
-            <span className={`lp-formats__how${f.notes ? " lp-formats__how--notes" : ""}`}>
-              {f.notes ? "With notes" : "No notes"}
-            </span>
+            <span className="lp-formats__how lp-formats__how--notes">With notes</span>
             <span className="lp-formats__detail">{f.detail}</span>
           </li>
         ))}

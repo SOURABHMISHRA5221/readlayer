@@ -1,6 +1,6 @@
 {
  "after 320 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-320-light.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-320-light.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -8,7 +8,7 @@
   "stills_loaded": true
  },
  "after 320 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-320-dark.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-320-dark.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -16,7 +16,7 @@
   "stills_loaded": true
  },
  "after 390 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-390-light.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-390-light.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -24,7 +24,7 @@
   "stills_loaded": true
  },
  "after 390 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-390-dark.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-390-dark.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -32,7 +32,7 @@
   "stills_loaded": true
  },
  "after 768 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-768-light.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-768-light.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -40,7 +40,7 @@
   "stills_loaded": true
  },
  "after 768 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-768-dark.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-768-dark.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -48,7 +48,7 @@
   "stills_loaded": true
  },
  "after 1024 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-1024-light.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1024-light.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -56,7 +56,7 @@
   "stills_loaded": true
  },
  "after 1024 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-1024-dark.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1024-dark.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -64,7 +64,7 @@
   "stills_loaded": true
  },
  "after 1440 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-1440-light.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1440-light.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -146,7 +146,7 @@
   ]
  },
  "after 1440 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-1440-dark.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1440-dark.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -154,7 +154,7 @@
   "stills_loaded": true
  },
  "after 1920 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-1920-light.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1920-light.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -162,7 +162,7 @@
   "stills_loaded": true
  },
  "after 1920 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/after-1920-dark.png",
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1920-dark.png",
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
@@ -170,16 +170,16 @@
   "stills_loaded": true
  },
  "before 390 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/before-390-light.png"
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-390-light.png"
  },
  "before 390 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/before-390-dark.png"
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-390-dark.png"
  },
  "before 1440 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/before-1440-light.png"
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-1440-light.png"
  },
  "before 1440 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh3/before-1440-dark.png"
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-1440-dark.png"
  },
  "first view 1440x900": {
   "diff_box": [

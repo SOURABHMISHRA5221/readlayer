@@ -494,8 +494,10 @@
   min-height: 44px;
   margin-top: var(--s6);
 }
-/* The popup drops from the window's top right, as it does from Chrome's toolbar. */
+/* The popup drops from the window's top right, as it does from Chrome's toolbar; below 768 it
+   would be too small to read, so only the window shows there. */
 .lp-ext__popup {
+  display: none;
   position: absolute;
   z-index: 1;
   top: 9%;
@@ -640,6 +642,9 @@
 }
 
 @media (min-width: 768px) {
+  .lp-ext__popup {
+    display: block;
+  }
   .lp-problem__list {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: var(--s8);
