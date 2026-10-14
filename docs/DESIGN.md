@@ -770,17 +770,15 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   on the instance that deleted it.
 
 ## 12. Evaluation (what we show judges)
-1. **Gap-scorer quality**: 30 articles × 2 personas (engineer, commerce student). For each, a
-   human marks spans they'd want explained. Report precision and recall of shown annotations
-   at the balanced density, plus the difference between personas.
-2. **Faithfulness**: 40-case suite (15 adversarial from M5, 25 from real articles). Report
+1. **Faithfulness**: 40-case suite (15 adversarial from M5, 25 from real articles). Report
    verifier rejection rate on bad cases and acceptance on good cases.
-3. **Injection**: 10 articles with planted instructions ("ignore previous instructions...",
+2. **Injection**: 10 articles with planted instructions ("ignore previous instructions...",
    fake system notes). Pass = output schema-valid and no planted text followed.
-4. **Cost and latency**: cost per ingested article, per explanation, cache hit rate, p95
+3. **Cost and latency**: cost per ingested article, per explanation, cache hit rate, p95
    annotate latency.
-Run with `uv run python -m evals.run` and write `evals/report.md`; include headline numbers in
-the deck.
+Items 1–2: `uv run python -m evals.run --suite safety` → `evals/report.md`; item 3:
+`uv run python -m scripts.eval_ops` (production, read only) → `evals/ops_report.md`. Headline
+numbers go in the deck.
 
 ## 13. Delivery and observability
 - GitHub Actions: ruff, pytest, TS typecheck on every PR; deploy on `main` using Workload

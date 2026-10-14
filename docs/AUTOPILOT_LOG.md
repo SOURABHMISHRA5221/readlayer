@@ -1731,8 +1731,21 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   applied → FIX (one count) → applied. PR #35, CI green, squash-merged (ec5422b). API deployed on
   Sourabh's yes: revision `readlayer-api-00029-9lp` (health ok).
 
+## M9 part 3 (2026-10-14, ops evals, scope, hardening)
+
+- Sourabh, on the evals: report cost, cache rate and latency (decision 58). On CI deploy and a
+  spend panel: "Hand deploy, don't want spend metrics" (decision 59).
+- Plan part 3 → plan-reviewer REVISE 14 → REVISE 1 → **APPROVE**.
+- `scripts/eval_ops.py` (read only, field masks, Cloud Logging 7 days) → `evals/ops_report.md`:
+  annotate request p95 478 ms (GET only, after review round 1; 287 ms had counted CORS preflights), explanation cache 70%, spend to date $22.64. Safety report links it.
+- Live: max 3 / min 0; no user-managed SA keys; dashboard `readlayer-api` created on his yes.
+- Docs: DESIGN §12 to the submission's scope, README roadmap and the precision label ("judged by
+  the build agent"), BUILD_PLAN pointer, STATUS decisions 58–59, two §4 deviations, §28.
+  API 1,172.
+
 ### Next steps (resume here, in order)
-1. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first).
-2. M9 part 3 plan: evals (gold set status unknown: ask), hardening (WIF CI, monitoring dashboard,
-   rate limits), demo seeding prep (incl. `ingest_media.py` for the snapshots' short recordings).
-   Freeze Oct 16.
+1. milestone-reviewer → SHIP → PR → CI → merge (docs, scripts, dashboard JSON: no deploy).
+2. Sourabh: audit the 30 precision verdicts.
+3. Oct 16 plan: seeding (persona templates, demo pre-ingest, `seed_demo_feed`, `warm_demo
+   --shifts`, `ingest_media.py` for the snapshots' short recordings, dry runs and counts first),
+   README refresh (287 ms, precision label), video, deck. Oct 17: gitleaks, repo public, submit.
