@@ -1879,3 +1879,29 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 3. `gloss_youtube.py` local check → milestone-reviewer → PR → CI → merge → outward steps in the
    plan's order (Auth dry run, deploy-api with R9 check, release 0.8.2, deploy-web, live check) →
    repo public on Sourabh's yes.
+
+## Decision 62, build (2026-10-14 night)
+
+- Sourabh: "Yes on 1, No on 2, 3 yes" (create the site; Google's sign-in must not say readlayer;
+  the account's address out of tracked files, history kept). Plan rounds 2–4 (R10–R15) → APPROVE.
+- Site: `gloss`, `gloss-reader` reserved elsewhere; **`glossreader` created** after `make check-gcp`.
+- gitleaks over all branches and the 37 PR heads: only the extension's public key (allow-listed);
+  cross-check through `gitleaks stdin` agrees. No email in PRs or the issue. Address out of the tree.
+- Built tests first: shared YouTube fixture (API + extension), CORS/hosting consistency test,
+  extension 0.8.2 (session origin, Open in Gloss, refusals without "Open original"), web per-host
+  `authDomain` (main 149.88 → 149.93 KB), landing pin 0.8.2, Connect hint for 0.8.1, README,
+  `tools/shots/live_site.py`. All suites green (STATUS §31).
+- `tools/shots/gloss_youtube.py`: all pass with no web server and the API answered in the browser.
+  A dev API (`fastapi dev`, started ~2.5 h earlier, not by this session) was on port 8000; left
+  alone, the check never reaches it.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on `gloss-address` → fix until SHIP → `make extension-zip` (production build;
+   dist currently holds the emulator build) → PR → CI → merge.
+2. Outward, each on Sourabh's yes, `make check-gcp` first: Auth domains dry run then PATCH (R8) →
+   Sourabh's Cloud console step (OAuth client: origin and redirect URI for glossreader.web.app;
+   brand name, skip if it needs verification) → R9 diff check then `make deploy-api` → release
+   `extension-v0.8.2` with the zip → `make deploy-web` from clean `main` → R13 init.json check →
+   live check (R6 bounds, one demo reader deleted; Sourabh's Google sign-in on glossreader).
+3. Repo public on Sourabh's yes → signed-out checks of the GitHub link, release page and zip.
+4. The Oct 16 items (unchanged).
