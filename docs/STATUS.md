@@ -1,6 +1,6 @@
 # ReadLayer — project status and handoff
 
-Last updated: 2026-10-14 (IST): **Media (decision 54) built and harness-accepted on branch `media` (§24): YouTube videos and Apple Podcasts episodes up to 10 minutes, video on after a passing re-probe; next milestone-reviewer, PR, deploy API then web (Sourabh's yes on each).** Earlier, 2026-10-13: **API revision 00026 (settings only, 2026-10-13): growth caps 60 per reader and 300 a day (decision 53).** **M8-local merged (#30) and live** (API revision 00025, web
+Last updated: 2026-10-14 (IST): **Media (decision 54) built and harness-accepted on branch `media` (§24): YouTube videos up to 10 minutes and Apple Podcasts episodes up to 12, video on after a passing re-probe; milestone review round 1 FIX applied; next review round 2, PR, deploy API then web (Sourabh's yes on each).** Earlier, 2026-10-13: **API revision 00026 (settings only, 2026-10-13): growth caps 60 per reader and 300 a day (decision 53).** **M8-local merged (#30) and live** (API revision 00025, web
 deployed; live check passed, §22): the Gloss extension, unpacked, activeTab only. Open: Sourabh's
 manual Gmail and bank-login refusal check (§9); the extension zip is released (`extension-v0.8.0`). **Decision 50** merged (#28, #29) and
 live (API revision 00024; scheduled runs confirmed, §21). Before that: Decision 48 (#27),
@@ -42,7 +42,7 @@ Hackathon: Google Cloud AI Builder Cup. **Team lock Oct 11. Deadline Oct 18; we 
 | For you from top outlets (decision 50) | merged, live: API 00024, web deployed, Scheduler twice daily, demo feeds re-seeded | #28, #29 | Outlet registry and twice-daily collection, 60/40 local/global by the reader's country, restricted search fallback, Refresh. Plan `docs/plans/d50.md`; §21 |
 | M8-local | **merged #30 and live** (2026-10-12): API revision `readlayer-api-00025-cf4`, web deployed; harness-accepted and live-checked (§22). Release `extension-v0.8.0` (zip). Open: Sourabh's manual Gmail and bank-login refusal check | #30 | The Gloss extension, unpacked: activeTab only, client redaction, Presidio backstop, own `ext:` ids readable only by their submitters, Connect page, onboarding gate. Plan `docs/plans/M8.md` (amended 2026-10-12) |
 | Wide layout | **merged #31 and live** (2026-10-13; web only, bundle `index-D-bYE-YM.js`) | #31 | Decision 45: one 1280/1520px container for the top bar, library and profile; wider rows; sidebar in two groups with "Your map this week" (topic tiles) and a third column from 1440px, both groups staying beside the feed; topic cards 4–7 across with even rows; the map laid out at its box's size beside the inspector; profile sections in pairs; the reader's left reading spine from 1280px. Web only, plus decision 53's two lines in `deploy.env.yaml` on the same branch |
-| Media | **built and harness-accepted** (2026-10-14, branch `media`, §24); not merged or deployed | — | Decision 54: YouTube videos and Apple Podcasts episodes (≤ 10 min) open in Gloss: player, transcript with time buttons, notes as for an article (DESIGN §21) |
+| Media | **built and harness-accepted** (2026-10-14, branch `media`, §24); not merged or deployed | — | Decision 54: YouTube videos (≤ 10 min) and Apple Podcasts episodes (≤ 12 min) open in Gloss: player, transcript with time buttons, notes as for an article (DESIGN §21) |
 | M9 | not started | — | Hardening and evals |
 
 **PR #9 (`m6-slice`, squash-merged) had four parts, all local-only (nothing deployed):**
@@ -146,9 +146,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Media: `transcribe` runs on MODEL_QUALITY, not MODEL_FAST | FAST dropped a third of the speech on a measured window, twice, with no error (plan "Evidence"). Recorded in CLAUDE.md and DESIGN §10, §21 | Keep |
 | Media: YouTube is one whole-URL call, no offset windows; videos capped at 10 minutes, podcasts at 12 (plan said 30 / 45) | Vertex offset windows hung on 5 of 5 tries; whole-URL calls on 16–19 min videos timed out at 90 s; Sourabh, 2026-10-14: "small 10 minutes clips are good enough", then podcasts "raise to 12" (Apple's length leaves out stitched-in ads: an Indicator episode listed at 565 s downloaded at 652 s and was refused at 10 min) | Keep for the hackathon |
 | Media: podcasts by Apple episode link only; direct `.mp3` links, show pages, Spotify and M4A answer "Open original" | No title or show without a lookup; only Apple episode links resolved to audio in the cached links (15 of 19) | Keep |
-| Media: audio sent as inline MP3 pieces, not through a bucket; audio fetch limits differ from §11.2's page limits (6 redirects, 20 MB, 45 s, audio types) | Links worked only for small files and offsets are ignored on audio (plan "Evidence"); no new bucket or IAM | Keep |
+| Media: audio sent as inline MP3 pieces, not through a bucket; audio fetch limits differ from §11.2's page limits (6 redirects, 24 MB, 45 s, audio types) | Links worked only for small files and offsets are ignored on audio (plan "Evidence"); no new bucket or IAM | Keep |
 | Media: audio priced by `MODEL_AUDIO_PRICE_OVERRIDES` ($2.50 per 1M), not checked against the bill | LiteLLM has no audio price; Sourabh: "mark 3 dollar budget" (a $3 media budget bounds any under-count) | Check the bill after the hackathon |
 | Media: no CSP change | The site has no CSP to change | — |
+| Media: feed and Up next offer "Open here" on an Apple episode only when its length is known and within the cap (plan 5.3 also opened unknown lengths) | Search results usually lack a length and episodes run a median 22 min, so most "Open here" clicks would end in `too_long` (milestone review, item 5) | Keep while the caps are short |
 | `link_confirm` runs on MODEL_QUALITY, not MODEL_FAST (CLAUDE.md prefers FAST) | FAST measured 89% precision, QUALITY 97% against the 95% target (M2). Recorded in CLAUDE.md and DESIGN §2/§10 | Keep |
 | Spans only for graph-linked demands (the paragraph noisy-OR does count unlinked terms and context references) | The card needs a label and definition until explanations exist | M5 |
 | `slowdown` (−0.02 on an unannotated paragraph) isn't computed | Needs dwell medians per reader; `annotation_dismissed` and paragraph-only `text_searched` are emitted since M6 | Post-hackathon unless M9 has room |
@@ -284,9 +285,12 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | Calibration picks the most frequent concepts per domain, which occasionally surfaces a term like "Expiry days"; fine for a quick check, revisit with the gold set |
 | Low | Firestore emulator fails contended transactions faster than production (three prefetched explanations reserving one daily counter); a jittered retry now wraps every transaction (no production occurrence in 7 days of logs) |
 | Medium | **Vertex's YouTube fetch is intermittent.** On 2026-10-13 from ~18:23 UTC every YouTube-URL call hung for ~40 min (any length, offsets or not, any thinking level) while text calls answered; it recovered by itself. A hang costs the window's estimate and answers 504 ("Try again"); the 2× ceiling bounds an item. If it recurs during judging: `MEDIA_VIDEO_ENABLED=false` (a settings-only deploy plus `make deploy-web`) |
+| Low | Media: a whole-video call took 21–68 s for an 8-min video (four runs) against the 90 s timeout; a 10-min video may time out on a slow day (504, "Try again", charged once) |
+| Low | Media: a demo reader may open 1 new recording a day, but `open_here` only turns off once all demo readers together use 10; a judge's second uncached recording answers 429 with "Open original". Seeded recordings are free, so seed the demo snapshots' short videos and episodes on Oct 16 (`ingest_media.py`, ≤ 6 a run) |
+| Low | Media: a refused open refunds the reader's slot, so one demo reader pasting refused links can use the shared 300 lookups a day; the per-minute rate limit makes that take tens of minutes |
 | Low | Media: one whole-video call in three failed a transcript check on its first answer and passed on the in-call re-ask (step 7 probe; reason not captured). Costs double for that item |
 | Low | Media: podcast hosts may stitch different ads per download; a retry whose bytes differ starts the transcript over (cost stays counted). Hosts that refuse ranged GETs or our user agent get "Open original" |
-| Low | Media: the frozen transcript cases T01, T02 and T04 are over the 10-minute cap; a harness run on them needs the caps raised in its env. `scripts/probe_media.py` still runs them |
+| Low | Media: the frozen transcript cases T01, T02 and T04 are over the caps (a harness run on them needs the caps raised in its env); T05 and T06 (frozen 2026-10-14) are inside them |
 | Low | StarletteDeprecationWarning (httpx TestClient) in pytest output |
 
 ---
@@ -317,6 +321,13 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | INGEST_DAILY_CAP | new URLs per reader per day | default 20 | default | — |
 | FEED_SEARCH_DAILY_CAP | For you search calls per day, all readers (inside the global search caps) | default 60 | default | — |
 | GOAL_RESOLVE_DAILY_CAP | learning-goal resolutions per signed-in reader per day | default 10 | default | — |
+| MEDIA_ENABLED, MEDIA_AUDIO_ENABLED, MEDIA_VIDEO_ENABLED | media switches (all, podcasts, videos; DESIGN §21) | defaults true | `deploy.env.yaml` | — |
+| MEDIA_MAX_VIDEO_S, MEDIA_MAX_AUDIO_S, MEDIA_MAX_AUDIO_BYTES | length and size caps (600 s, 720 s, 24 MB) | defaults | `deploy.env.yaml` | — |
+| MEDIA_AUDIO_PARALLEL_WINDOWS | audio windows in flight after window 1 (2) | default | `deploy.env.yaml` | — |
+| MEDIA_DAILY_CAP, ANON_MEDIA_DAILY_CAP, ANON_GLOBAL_MEDIA_DAILY_CAP, MEDIA_LOOKUP_DAILY_CAP | new recordings per reader (5), per demo reader (1), all demo readers (10); lookups for everyone (300) | defaults | `deploy.env.yaml` | — |
+| MEDIA_DAILY_BUDGET_USD, MEDIA_EST_USD_PER_MIN | media budget inside the $8 ($3); estimate per minute ($0.006) | defaults | `deploy.env.yaml` | — |
+| MODEL_AUDIO_PRICE_OVERRIDES | audio token price per model ($2.50 per 1M for the quality model); a media call on a model without one is refused | empty (the emulator script passes production's) | `deploy.env.yaml` | — |
+| VITE_MEDIA_VIDEO | web copy for videos on or off | default on | `make deploy-web` reads `MEDIA_VIDEO_ENABLED` from `deploy.env.yaml` | — |
 | DEV_AUTH_BYPASS | curl/scripts only: a request **without** an Authorization header acts as an anonymous dev uid | opt-in; `make dev` no longer sets it | **must never be set**; refused at startup (verified live, §11) and re-checked per request | — |
 | K_SERVICE | set by Cloud Run; used to refuse the bypass | — | automatic | — |
 | CLOUDSDK_CONFIG, GOOGLE_APPLICATION_CREDENTIALS | isolated gcloud config + project ADC | Makefile exports, `.claude/settings.local.json` | — | — |
@@ -431,7 +442,7 @@ plus a handful of explanations (≈ $0.01 in all).
 `landing-art-v1`, 5 images, **$0.34** (Sourabh approved up to 6 images / $0.60); two 429s,
 unbilled. Details in DESIGN §20.1.
 
-**Media (2026-10-13 and 14):** measuring before the plan, 15 calls, **$0.56** in the production ledger (audio then priced at the text rate, so possibly low by up to ~$0.40). Build, real Vertex money in **emulator ledgers only** (the production $8 guard never saw it): the night of the video hangs ≈ **$0.77** (≈ $0.55 to 19:00 UTC, then $0.223); T02 harness **$0.129**; step 7 probes **$0.088** and the seeded video **$0.042** plus its analysis. ≈ $1.03 outside the production ledger in all.
+**Media (2026-10-13 and 14):** measuring before the plan, 15 calls, **$0.56** in the production ledger (audio then priced at the text rate, so possibly low by up to ~$0.40). Build, real Vertex money in **emulator ledgers only** (the production $8 guard never saw it): the night of the video hangs ≈ **$0.77** (≈ $0.55 to 19:00 UTC, then $0.223); T02 harness **$0.129**; step 7 probes **$0.088**, "The Egg" **$0.042**, T05 twice **$0.083**, T06 **$0.054**, plus their analyses (a few cents). ≈ $1.17 outside the production ledger in all.
 
 **Wide layout (2026-10-13, emulator harness):** harness LLM **$0.026** on the first night and about the same on each later stack (3 explanations per stack: restate, explain and two verifiers; the rest cached); no production spend. **Growth caps (decision 53, 2026-10-13):** up to 300 growth slots a day; ≈ $0.3 a day if all 60 articles grew at the mean of the 14 paid growth runs logged in production from 2026-10-10 to 13 UTC ($0.0050; range $0.0024 to $0.0127; $0.070 for 50 concepts), ≈ $0.8 at the dearest; the hard stop is `LLM_DAILY_BUDGET_USD` = 8; counted in the daily ledger.
 
@@ -482,6 +493,10 @@ unbilled. Details in DESIGN §20.1.
   300 a day for the service in production (code defaults 25 and 100). There is no separate
   ceiling for anonymous readers on growth slots, and slots reserved for a fetch that then fails
   are not returned (§5). Growth stops for the day at a cap; the article still ingests.
+- **Media (DESIGN §21):** a $3 daily media budget inside the $8 guard; 5 new recordings per
+  reader a day, 1 per demo reader, 10 for all demo readers, 300 lookups for everyone; each item
+  stops at 2× its estimate across all attempts; switches `MEDIA_ENABLED`, `MEDIA_AUDIO_ENABLED`,
+  `MEDIA_VIDEO_ENABLED` answer "Open original" at once and are never remembered as refusals.
 - **Claude Code permissions:** destructive and billing gcloud commands denied; deploys, IAM,
   secrets and `git push` ask first (`.claude/settings.json`).
 
@@ -514,7 +529,9 @@ its note; then a Google reader's live topics and a "helps your goal" line) → *
 (paste a non-business article; it opens in seconds and concepts grow) → profile: **reading
 goals** (a habit and "understand X" with progress) and the knowledge map's goal view. Design
 pass additions: a note's "Say it simpler" (warmed), "What this article changed" with an Undo,
-and the all-topics map with ready-to-learn rings.
+and the all-topics map with ready-to-learn rings. Media (decision 54, seeded on Oct 16): open a
+short video from For you → its notes → a time button jumps the player to that paragraph; two
+personas on the same video get different notes.
 
 **If late:** stop and ask Sourabh what to cut (decision 27). The old cut order (edit-by-prompt →
 knowledge-map graph → M2.2 online growth → extension popup extras) is no longer applied
@@ -1056,12 +1073,14 @@ for both and 20 MB, then podcasts 12 minutes and 24 MB ("raise to 12", same day,
 |---|---|
 | 1. Video transcript (plan: T01, 16 min) | **Failed on the original plan**: offset windows hung (5 of 5), then the whole 16-min URL and T04 (18.6 min) timed out at 90 s; at the same time a 3-min clip answered. Video parked overnight |
 | 1′. Video under the 10-min cap (step 7) | 3-min clip of T01: OK 10.4 s, $0.015. Whole video "The Egg" (`h6fcK_fRYaI`, 486 s, no offsets, production route): **OK** three times: 50.6 s $0.047 (first answer failed a check, re-ask passed), 45.4 s $0.026, and through `ingest_media.py` open → transcribe → analyse in 24.7 s, $0.042 media. 898–900 words, last start 7:15–7:20, en. No reference transcript (the story is ≈ 1,000 words with music at the end). **Decision: video ships on** |
-| 1″. Podcast (T02, 22 min, run before the cap) | 4,085 words (≥ 3,600), last start 1,310 s (≥ 1,260), non-decreasing; transcribe 55.3 s, **$0.110** (5.7's ≤ $0.14; the original ≤ $0.09 assumed the text price); analyse 22.0 s (≤ 100 s); personas newcomer 3 / trader 4 notes; "windfall tax" card `verified`. **Peak RSS 686 MB, over the 600 MB target**: closed by the cap (a 10-min file is ≤ 20 MB in one window) |
-| 1‴. Notes on a video | **Not shown**: "The Egg" gets 0 notes for the newcomer (a story, outside the graph's domains). The live check and Oct 16 seeding should use a short economics or news video |
+| 1″. Podcast (T02, 22 min, run before the cap) | 4,085 words (≥ 3,600), last start 1,310 s (≥ 1,260), non-decreasing; transcribe 55.3 s, **$0.110** (5.7's ≤ $0.14; the original ≤ $0.09 assumed the text price); analyse 22.0 s (≤ 100 s); personas newcomer 3 / trader 4 notes; "windfall tax" card `verified`. **Peak RSS 686 MB, over the 600 MB target** (a 32 MB file, two windows in flight): closed by the caps (≤ 24 MB; one window up to 11 min, two sequential to 12) |
+| 1‴. Economics recordings under the caps (rehearsal for the live check) | The Economist, "How does raising interest rates control inflation?" (T05, 494 s): 1,193 words twice, transcribe 21.8 s and 67.9 s, $0.041 each, **8 notes for the newcomer** (central bank, Federal Reserve, floating rate, mortgages, retail inflation). Planet Money's The Indicator, "How the rich make money by losing money" (T06): Apple 565 s, **download 652 s** (stitched-in ads) → refused `too_long` under 10 min at no cost, which led to the 12-minute podcast cap; then 1,755 words, 29.9 s, $0.054. "The Egg" (a story) gets 0 notes: outside the graph's domains. Two personas on one video: not checked |
+| Found on the way, fixed | `ingest_media.py` analysed with an **empty concept graph** (only API startup loads it), so every demand stayed unlinked and a seeded recording showed 0 notes for good. Startup's loading moved into `load_serving_graph`, the script calls it and refuses to run without a graph (2 tests); the video re-seeded with 5,206 concepts and got its notes |
 | 2. A second reader | T02: no model call, no slot. Video: covered offline (`test_ingest_media.py`, `test_media_service.py`) |
 | 3. Refusals | Not run on the harness (cut, see above; the video sweep never ran while video was parked). Covered offline: router and service tests for every code; `ingest_media.py --dry-run` on T02 answers `too_long` with no call |
-| 4. Playback shots (cut down: one video) | `tools/shots/media.py` as a demo reader at 1440 and 390 (light, dark) and 1024: **axe 0 at every impact level, no horizontal scroll, player click-to-load on every load, 0 failed checks.** Transcript words equal the API's (24 of 24 paragraphs). "Play from 1:30" loads the player at 90 s. Following the playing paragraph needs YouTube to play headless: not checked. No podcast shots (cut) |
-| 5. Suites | API **1,091 passed**, 2 skipped; ruff clean. Typecheck clean; annotator 60, extension 85, web 171. Main bundle **149.47 KB** gzip (budget 150); media chunk 3.12 KB |
+| 4. Playback shots (cut down) | `tools/shots/media.py` as a demo reader at 1440 and 390 (light, dark) and 1024, on T05 (`docs/evidence/media/`, `metrics-video-800617bb.json`): **axe 0 at every impact level, no horizontal scroll, player click-to-load on every load, 0 failed checks**, 9 marks; transcript words equal the API's (21 of 21); "Play from 1:23" loads the player at 83 s and marks that paragraph. The same on T06 (podcast, not kept as evidence): axe 0, no scroll, 32 of 32 paragraphs. Follow-while-playing and audio seeking need media to play headless: not checked |
+| 5. Suites | API **1,095 passed**, 2 skipped; ruff clean. Typecheck clean; annotator 60, extension 85, web 171. Main bundle **149.48 KB** gzip (budget 150); media chunk 3.12 KB |
 | 6. Live | After both deploys (pending) |
 | Added in step 7 | `scripts/ingest_media.py <url>... [--dry-run]` (R12, 2.4): `open_media` with no reader (no daily slot, no growth slots; lookup cap, budget and checks apply), `user_ingested`; dry run counts no lookup and writes nothing; ≤ 6 per run; prints the target database first. 7 tests |
+| Review round 1 (milestone-reviewer **FIX**, 4 blocking, 8 more) | Applied: (1) the 12-minute podcast cap committed with a service test (listed 565 s, walk 652 s → transcribes) and every "10 minutes" / "one call" line corrected; (2) privacy copy says a transcript is *listed* only for its openers and readable by link, as §17.4 has it; (3) the transcript note again says filler words are often left out (plan decision 2); (4) STATUS §6, §8, §9 and §5 entries. Also taken: (5) episodes need a known length for "Open here"; (6) invalid transcribe output logs field locations and error types only, never text (test); (7) DESIGN §8 rows; (10) T05 and T06 frozen; (9), (11) in §5. (8) evidence re-run on the final script. (12) noted: local `main` has the plan-docs commit `4229975`, not pushed |
 | Written alongside, not first | Step 6 and step 7 tests were written with the code, not strictly before it |
