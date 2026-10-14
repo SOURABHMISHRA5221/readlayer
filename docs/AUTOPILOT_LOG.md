@@ -1711,8 +1711,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   docs commit, the media live check, is inside the merge). Deployed on Sourabh's yes: API revision
   `readlayer-api-00028-7zs` (health ok), web (`index-CnGx2rP7.js`); release `extension-v0.8.1`.
 
+- **Live, Sourabh:** extension 0.8.1 on his empty pages: "Great extention worked". M9 part 1 done.
+
 ### Next steps (resume here, in order)
-1. Live: Sourabh loads extension 0.8.1 and reopens one of his four empty extension pages (notes
-   should appear; ≤ 5 slots, ≈ $0.01 each). Record in STATUS §26.
-2. M9 part 2 plan: the four M2.2 quality items (STATUS §9), before any part 3 extras.
-   Checkpoint: midday Oct 15 IST (part 1 is merged and live, so it is met).
+1. M9 part 2 plan: the four M2.2 quality items (STATUS §9) → plan-reviewer → build.
