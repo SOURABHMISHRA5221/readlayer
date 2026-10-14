@@ -1644,8 +1644,24 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   known-length rule for "Open here", no transcript text in invalid-output logs, DESIGN §8, T05
   and T06 frozen. API 1,095, web 171, main 149.48 KB.
 
+- Round 2: **SHIP**. Shots retaken with the final note text (the script now paces page loads
+  under the demo's 60 requests a minute). PR #32, CI green, squash-merged (5844e98). Local
+  `main` reset to `origin/main` (its one unpushed commit, the plan docs, is inside the merge).
+- **Deployed:** API revision `readlayer-api-00027-q2s` (health ok), then web
+  (`VITE_MEDIA_VIDEO=true`, main 149.48 KB), on Sourabh's yes at each prompt.
+- **Live, Sourabh (Google reader):** a Fireship video (5:56) opened in Gloss: transcript and 2
+  notes, "loved it". The player showed YouTube's "Sign in to confirm you're not a bot".
+  Embed test (local page, iframe like Gloss, T05): headless signed out → both `youtube-nocookie`
+  and `youtube.com` show the check; Sourabh's signed-in Chrome → no-cookie shows it,
+  **`youtube.com` plays**. Sourabh: switch to it.
+- **Sourabh:** feed videos should offer Gloss or YouTube; "keep long ones as YouTube only".
+- Plan `docs/plans/media-followup.md` (web only, branch `media-followup`) → plan-reviewer.
+
+## Media follow-up (2026-10-14)
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer round 2 → SHIP → PR → CI green → merge.
-2. Deploy API from `main`, then web (Sourabh's yes on each; web flag matches the API).
-3. Live check (acceptance 6) on T05 and T06 as a Google reader, then a demo reader (free).
+1. plan-reviewer loop to APPROVE → build A (player on youtube.com) and B (feed choice), tests
+   first → shots → milestone-reviewer → PR → merge → `make deploy-web` (Sourabh's yes).
+2. Live: Sourabh plays a video in Gloss and opens a feed video both ways. The Planet Money
+   episode (T06) live check is still open.
    Checkpoint end of Oct 14 IST (decision 27).
