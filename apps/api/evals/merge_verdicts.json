@@ -1,0 +1,371 @@
+{
+ "note": "Blind verdicts by the implementing agent, written before any model answer was seen (M9 part 2, R3). Same-page pairs of production grown concepts with label cosine >= 0.85, added_at <= 2026-10-14T09:24:55Z. 'same' = the two labels name one concept.",
+ "pairs": [
+  {
+   "a": "PFAS",
+   "b": "PFOS",
+   "cosine": 0.971,
+   "verdict": "different"
+  },
+  {
+   "a": "Phase 1 environmental site assessment",
+   "b": "Phase 2 environmental site assessment",
+   "cosine": 0.96,
+   "verdict": "different"
+  },
+  {
+   "a": "FORM GST REG-01",
+   "b": "FORM GST REG-14",
+   "cosine": 0.958,
+   "verdict": "different"
+  },
+  {
+   "a": "Edge (graph theory)",
+   "b": "Node (graph theory)",
+   "cosine": 0.94,
+   "verdict": "different"
+  },
+  {
+   "a": "Linear algebra",
+   "b": "System of linear equations",
+   "cosine": 0.929,
+   "verdict": "different"
+  },
+  {
+   "a": "Calendar phishing",
+   "b": "Phishing",
+   "cosine": 0.925,
+   "verdict": "different"
+  },
+  {
+   "a": "Tax-aware investing",
+   "b": "Tax-loss harvesting",
+   "cosine": 0.925,
+   "verdict": "different"
+  },
+  {
+   "a": "Tax liability",
+   "b": "Tax loophole",
+   "cosine": 0.914,
+   "verdict": "different"
+  },
+  {
+   "a": "Education Minister",
+   "b": "Interior Minister",
+   "cosine": 0.913,
+   "verdict": "different"
+  },
+  {
+   "a": "Flagship smartphone",
+   "b": "Qualcomm Snapdragon 8 Elite",
+   "cosine": 0.908,
+   "verdict": "different"
+  },
+  {
+   "a": "Contempt of court",
+   "b": "Rule of law",
+   "cosine": 0.899,
+   "verdict": "different"
+  },
+  {
+   "a": "Forever chemicals",
+   "b": "PFAS",
+   "cosine": 0.899,
+   "verdict": "same"
+  },
+  {
+   "a": "Tax loophole",
+   "b": "Tax-loss harvesting",
+   "cosine": 0.899,
+   "verdict": "different"
+  },
+  {
+   "a": "Knowledge graph",
+   "b": "Node (graph theory)",
+   "cosine": 0.899,
+   "verdict": "different"
+  },
+  {
+   "a": "Edge (graph theory)",
+   "b": "Knowledge graph",
+   "cosine": 0.899,
+   "verdict": "different"
+  },
+  {
+   "a": "Decompiler",
+   "b": "Reverse engineering",
+   "cosine": 0.898,
+   "verdict": "different"
+  },
+  {
+   "a": "Knowledge graph",
+   "b": "Ontology (information science)",
+   "cosine": 0.897,
+   "verdict": "different"
+  },
+  {
+   "a": "Automatic GST registration",
+   "b": "FORM GST REG-01",
+   "cosine": 0.897,
+   "verdict": "different"
+  },
+  {
+   "a": "Antisemitism",
+   "b": "Zionism",
+   "cosine": 0.895,
+   "verdict": "different"
+  },
+  {
+   "a": "Anoxygenic photosynthesis",
+   "b": "Bacteriorhodopsin",
+   "cosine": 0.895,
+   "verdict": "different"
+  },
+  {
+   "a": "CPU architecture",
+   "b": "Processor register",
+   "cosine": 0.892,
+   "verdict": "different"
+  },
+  {
+   "a": "Forever chemicals",
+   "b": "PFOS",
+   "cosine": 0.891,
+   "verdict": "different"
+  },
+  {
+   "a": "Tax liability",
+   "b": "Tax-loss harvesting",
+   "cosine": 0.891,
+   "verdict": "different"
+  },
+  {
+   "a": "Executive Magistrate",
+   "b": "Rule of law",
+   "cosine": 0.889,
+   "verdict": "different"
+  },
+  {
+   "a": "Assembly language",
+   "b": "Decompiler",
+   "cosine": 0.885,
+   "verdict": "different"
+  },
+  {
+   "a": "Automatic GST registration",
+   "b": "FORM GST REG-14",
+   "cosine": 0.883,
+   "verdict": "different"
+  },
+  {
+   "a": "Programmable Power Supply",
+   "b": "USB Power Delivery",
+   "cosine": 0.881,
+   "verdict": "different"
+  },
+  {
+   "a": "Contempt of court",
+   "b": "Executive Magistrate",
+   "cosine": 0.881,
+   "verdict": "different"
+  },
+  {
+   "a": "Tax-aware investing",
+   "b": "Tax liability",
+   "cosine": 0.879,
+   "verdict": "different"
+  },
+  {
+   "a": "Alarm photosynthesis",
+   "b": "Anoxygenic photosynthesis",
+   "cosine": 0.877,
+   "verdict": "different"
+  },
+  {
+   "a": "Franchise T20 leagues",
+   "b": "Twenty20 centuries",
+   "cosine": 0.877,
+   "verdict": "different"
+  },
+  {
+   "a": "Battery penetration test",
+   "b": "Hot-box test",
+   "cosine": 0.876,
+   "verdict": "different"
+  },
+  {
+   "a": "Assembler",
+   "b": "Processor register",
+   "cosine": 0.875,
+   "verdict": "different"
+  },
+  {
+   "a": "Tax-aware investing",
+   "b": "Tax loophole",
+   "cosine": 0.875,
+   "verdict": "different"
+  },
+  {
+   "a": "Twenty20 centuries",
+   "b": "White-ball cricket",
+   "cosine": 0.873,
+   "verdict": "different"
+  },
+  {
+   "a": "Preventive detention",
+   "b": "Rule of law",
+   "cosine": 0.871,
+   "verdict": "different"
+  },
+  {
+   "a": "Antisemitism",
+   "b": "Apartheid",
+   "cosine": 0.87,
+   "verdict": "different"
+  },
+  {
+   "a": "Assembler",
+   "b": "CPU architecture",
+   "cosine": 0.869,
+   "verdict": "different"
+  },
+  {
+   "a": "Humanoid robot",
+   "b": "Wearable technology",
+   "cosine": 0.868,
+   "verdict": "different"
+  },
+  {
+   "a": "PFAS",
+   "b": "Phase 1 environmental site assessment",
+   "cosine": 0.866,
+   "verdict": "different"
+  },
+  {
+   "a": "First Information Report",
+   "b": "Seizure memo",
+   "cosine": 0.866,
+   "verdict": "different"
+  },
+  {
+   "a": "eSIM",
+   "b": "Wearable technology",
+   "cosine": 0.865,
+   "verdict": "different"
+  },
+  {
+   "a": "Circle Inspector and Sub-Inspector",
+   "b": "Watch and Ward",
+   "cosine": 0.865,
+   "verdict": "different"
+  },
+  {
+   "a": "Knowledge graph",
+   "b": "Natural language processing",
+   "cosine": 0.865,
+   "verdict": "different"
+  },
+  {
+   "a": "Battery penetration test",
+   "b": "Silicon-carbon battery",
+   "cosine": 0.865,
+   "verdict": "different"
+  },
+  {
+   "a": "Apple A18",
+   "b": "Flagship smartphone",
+   "cosine": 0.864,
+   "verdict": "different"
+  },
+  {
+   "a": "Blasphemy",
+   "b": "Capital punishment",
+   "cosine": 0.863,
+   "verdict": "different"
+  },
+  {
+   "a": "Node (graph theory)",
+   "b": "Ontology (information science)",
+   "cosine": 0.863,
+   "verdict": "different"
+  },
+  {
+   "a": "Alarm photosynthesis",
+   "b": "C2 photorespiratory carbon pump",
+   "cosine": 0.859,
+   "verdict": "different"
+  },
+  {
+   "a": "PFAS",
+   "b": "Phase 2 environmental site assessment",
+   "cosine": 0.859,
+   "verdict": "different"
+  },
+  {
+   "a": "Payment service provider",
+   "b": "Peer-to-peer transaction",
+   "cosine": 0.858,
+   "verdict": "different"
+  },
+  {
+   "a": "Apple A18",
+   "b": "Qualcomm Snapdragon 8 Elite",
+   "cosine": 0.858,
+   "verdict": "different"
+  },
+  {
+   "a": "Chief Election Commissioner",
+   "b": "Executive Magistrate",
+   "cosine": 0.857,
+   "verdict": "different"
+  },
+  {
+   "a": "FORM GST REG-01",
+   "b": "Permanent Account Number",
+   "cosine": 0.857,
+   "verdict": "different"
+  },
+  {
+   "a": "Edge (graph theory)",
+   "b": "Ontology (information science)",
+   "cosine": 0.855,
+   "verdict": "different"
+  },
+  {
+   "a": "Assembly language",
+   "b": "Reverse engineering",
+   "cosine": 0.854,
+   "verdict": "different"
+  },
+  {
+   "a": "Strike rate",
+   "b": "White-ball cricket",
+   "cosine": 0.854,
+   "verdict": "different"
+  },
+  {
+   "a": "Action spectrum",
+   "b": "Bacteriorhodopsin",
+   "cosine": 0.853,
+   "verdict": "different"
+  },
+  {
+   "a": "Executive Magistrate",
+   "b": "Preventive detention",
+   "cosine": 0.852,
+   "verdict": "different"
+  },
+  {
+   "a": "Natural language processing",
+   "b": "Ontology (information science)",
+   "cosine": 0.851,
+   "verdict": "different"
+  },
+  {
+   "a": "BSS section",
+   "b": "Segmentation fault",
+   "cosine": 0.85,
+   "verdict": "different"
+  }
+ ]
+}
