@@ -17,6 +17,7 @@ from app.graph.models import ConceptGraphFile
 from app.main import app
 from app.store.content_repo import InMemoryContentStore, set_content_store
 from app.store.docstore import get_doc_store
+from app.store.pending_repo import get_pending_repo
 from app.store.reader_repo import ReaderRepo
 from app.store.spend_repo import today_utc
 from tests.fakes import auth
@@ -209,3 +210,28 @@ def test_notes_pick_up_a_concept_grown_elsewhere_a_moment_ago(env, monkeypatch):
     refresh.get_refresher().last_check = time.monotonic() - refresh.SOON_S - 1
     TestClient(app, headers=auth("reader")).get(f"/v1/content/{CID}/annotations")
     assert get_graph().get("c_offside") is not None
+
+
+def test_the_url_path_on_a_pending_url_reserves_for_its_caller(env, monkeypatch):
+    """G13: before M9 a URL already fetched (pending) was analysed with 0 slots."""
+    from app.ingest import quota
+    from app.ingest import router as ingest_router
+    from tests.fakes import pending_doc
+
+    url = "https://news.test/pending"
+    pending = pending_doc(url)
+    asyncio.run(get_pending_repo().create(pending))
+    asked: list[str] = []
+
+    def reserver(caller, settings):
+        asked.append(caller.uid)
+        return None
+
+    async def ingest(u, source="fetch", reserve=None):
+        raise RuntimeError("stop here")  # the reserver was built for this caller
+
+    monkeypatch.setattr(quota, "growth_reserver", reserver)
+    monkeypatch.setattr(ingest_router, "ingest_url", ingest)
+    c = TestClient(app, headers=auth("reader"), raise_server_exceptions=False)
+    c.post("/v1/content", json={"url": url})
+    assert asked == ["reader"]
