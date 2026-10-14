@@ -274,3 +274,29 @@ Every `<gloss>` above is `glossreader`. `/__/auth/handler` already answers 200 t
 `check-gcp` fails with "ACCOUNT unset: create .gcp.local.mk (see CLAUDE.local.md)" when it's
 missing. STATUS and AUTOPILOT_LOG say "the project's Google account" instead. A `git grep` for
 the address returns nothing before the PR. History keeps it (Sourabh's choice).
+
+## Round 3 (plan-reviewer REVISE 3 on round 2; applied, these override the sections above)
+
+**R13. The new site's Firebase config before sign-in.** `https://glossreader.web.app/__/firebase/init.json`
+answers 404 today (the default site: 200). Right after the web deploy and before Sourabh tries
+Google sign-in there: `curl` it; it must be 200 with `projectId` `readlayer-sourabh-26` and the
+build's `apiKey`. If not: link the site to the `readlayer-web` web app (Hosting console or the
+Firebase REST call, on Sourabh's yes) and check again. Fallback if Google sign-in still fails on
+glossreader: a follow-up PR (CI green) makes that host use the built `authDomain` again, web
+redeployed; the old address is never affected.
+
+**R14. `.gcp.local.mk` gitignored, done.** `.gitignore` lists it; `git check-ignore` passed before
+the file was written; `make check-gcp` passes with it and fails with "ACCOUNT unset…" without it.
+
+**R15. The name, not just the address.** The check is `git grep -n -i sourabhlocalllm` returning
+nothing: done (Makefile, STATUS §-identity line, both AUTOPILOT_LOG lines rewritten).
+
+Optional taken: if the consent screen wants brand verification to rename it, the rename is
+skipped (the chooser then names glossreader.web.app, which meets acceptance 3) and what the screen
+said is recorded. The host → `authDomain` choice is a pure `authDomainFor(hostname, built,
+emulator)` in `lib/sites.ts`, unit-tested without importing `auth.ts`.
+
+R4/R5 results (2026-10-14): 37 PR heads fetched; `gitleaks git --log-opts=--all` scanned 446 of
+448 commits (the other two carry no diff of their own); 2 findings, both the extension manifest's
+public RSA key (allow-listed in `.gitleaksignore` with the reason), rescan clean. No email address
+in the 37 PR titles and bodies or the 1 issue.

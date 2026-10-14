@@ -348,7 +348,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | K_SERVICE | set by Cloud Run; used to refuse the bypass | — | automatic | — |
 | CLOUDSDK_CONFIG, GOOGLE_APPLICATION_CREDENTIALS | isolated gcloud config + project ADC | Makefile exports, `.claude/settings.local.json` | — | — |
 
-Identity: only `sourabhlocalllm@gmail.com` on `readlayer-sourabh-26` (see `CLAUDE.local.md`);
+Identity: only the project's Google account (`.gcp.local.mk`) on `readlayer-sourabh-26` (see `CLAUDE.local.md`);
 `make check-gcp` before any cloud command. No service-account JSON keys anywhere.
 
 ---

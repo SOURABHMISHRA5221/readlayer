@@ -1838,10 +1838,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   cost, the README line to fix Oct 16) → applied, plus install step "pin Gloss", popup hidden below
   768, dead branch removed; harness re-run all pass (b69717c). Round 2 (after a rate-limit pause and
   Sourabh's re-login): **SHIP**. Sourabh on the sponsor line in the feed still: "keep it".
-- Note: the Claude login is now another account; GCP must still be sourabhlocalllm /
+- Note: the Claude login is now another account; GCP must still be the project's Google account /
   readlayer-sourabh-26 (`make check-gcp` before any deploy).
 
-- PR #38, CI green, squash-merged (20d2e09). `make check-gcp` (sourabhlocalllm / readlayer-sourabh-26),
+- PR #38, CI green, squash-merged (20d2e09). `make check-gcp` (the project's account / readlayer-sourabh-26),
   then `make deploy-web` from clean `main` on Sourabh's yes (`index-C8hhvJGX.js`). Live: axe 0,
   no horizontal scroll, sections and stills at 1440 and 390, light and dark. The live check caught a
   harness flaw: full-page shots re-mounted the See it in action stills (empty frames in the first
