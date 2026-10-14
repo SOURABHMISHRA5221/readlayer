@@ -1,0 +1,239 @@
+{
+ "note": "Cross-domain prerequisite proposals from the replay (M9 part 2, R8), judged right/wrong by the implementing agent with the model's confidences hidden; borderline counts as wrong. Committed before the confidences were joined.",
+ "edges": [
+  {
+   "concept_id": "c_apple_a18",
+   "concept": "Apple A18",
+   "prereq_id": "c_semiconductors",
+   "prereq": "Semiconductors",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_battery_penetration_test",
+   "concept": "Battery penetration test",
+   "prereq_id": "c_lithium_ion_battery",
+   "prereq": "Lithium-ion battery",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_blasphemy",
+   "concept": "Blasphemy",
+   "prereq_id": "c_belief",
+   "prereq": "Belief",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_c2_photorespiratory_carbon_pump",
+   "concept": "C2 photorespiratory carbon pump",
+   "prereq_id": "c_carbon_cycle",
+   "prereq": "Carbon cycle",
+   "verdict": "wrong",
+   "reason": "carbon cycle is ecosystem-scale, not what the pump builds on (borderline)"
+  },
+  {
+   "concept_id": "c_chief_election_commissioner",
+   "concept": "Chief Election Commissioner",
+   "prereq_id": "c_elected_office",
+   "prereq": "Elected office",
+   "verdict": "wrong",
+   "reason": "the Chief Election Commissioner is appointed, not elected"
+  },
+  {
+   "concept_id": "c_circle_inspector_and_sub_inspector",
+   "concept": "Circle Inspector and Sub-Inspector",
+   "prereq_id": "c_administration",
+   "prereq": "Administration",
+   "verdict": "wrong",
+   "reason": "a generic business 'Administration' concept (borderline)"
+  },
+  {
+   "concept_id": "c_contempt_of_court",
+   "concept": "Contempt of court",
+   "prereq_id": "c_supreme_court",
+   "prereq": "Supreme court",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_education_minister",
+   "concept": "Education Minister",
+   "prereq_id": "c_elected_office",
+   "prereq": "Elected office",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_education_minister",
+   "concept": "Education Minister",
+   "prereq_id": "c_administration",
+   "prereq": "Administration",
+   "verdict": "wrong",
+   "reason": "a generic business 'Administration' concept (borderline)"
+  },
+  {
+   "concept_id": "c_executive_magistrate",
+   "concept": "Executive Magistrate",
+   "prereq_id": "c_administration",
+   "prereq": "Administration",
+   "verdict": "wrong",
+   "reason": "a generic business 'Administration' concept (borderline)"
+  },
+  {
+   "concept_id": "c_forever_chemicals",
+   "concept": "Forever chemicals",
+   "prereq_id": "c_chemistry",
+   "prereq": "Chemistry",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_franchise_t20_leagues",
+   "concept": "Franchise T20 leagues",
+   "prereq_id": "c_twenty20",
+   "prereq": "Twenty20",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_franchise_t20_leagues",
+   "concept": "Franchise T20 leagues",
+   "prereq_id": "c_franchise",
+   "prereq": "Franchise",
+   "verdict": "wrong",
+   "reason": "a business franchise, not a sports franchise (borderline)"
+  },
+  {
+   "concept_id": "c_honeymoon_period_politics",
+   "concept": "Honeymoon period (politics)",
+   "prereq_id": "c_electoral_cycle",
+   "prereq": "Electoral cycle",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_humanoid_robot",
+   "concept": "Humanoid robot",
+   "prereq_id": "c_ai",
+   "prereq": "AI",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_lethal_injection",
+   "concept": "Lethal injection",
+   "prereq_id": "c_injection",
+   "prereq": "Injection",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_natural_language_processing",
+   "concept": "Natural language processing",
+   "prereq_id": "c_ai",
+   "prereq": "AI",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_permanent_account_number",
+   "concept": "Permanent Account Number",
+   "prereq_id": "c_financial_account",
+   "prereq": "Financial account",
+   "verdict": "wrong",
+   "reason": "PAN is a tax identifier, not a financial account"
+  },
+  {
+   "concept_id": "c_phase_1_environmental_site_assessment",
+   "concept": "Phase 1 environmental site assessment",
+   "prereq_id": "c_environmental_science",
+   "prereq": "Environmental science",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_phase_2_environmental_site_assessment",
+   "concept": "Phase 2 environmental site assessment",
+   "prereq_id": "c_environmental_science",
+   "prereq": "Environmental science",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_pregabalin",
+   "concept": "Pregabalin",
+   "prereq_id": "c_active_pharmaceutical_ingredient",
+   "prereq": "Active pharmaceutical ingredient",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_programmable_power_supply",
+   "concept": "Programmable Power Supply",
+   "prereq_id": "c_electric_current",
+   "prereq": "Electric current",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_proper_officer",
+   "concept": "Proper officer",
+   "prereq_id": "c_administration",
+   "prereq": "Administration",
+   "verdict": "wrong",
+   "reason": "a generic business 'Administration' concept (borderline)"
+  },
+  {
+   "concept_id": "c_qualcomm_snapdragon_8_elite",
+   "concept": "Qualcomm Snapdragon 8 Elite",
+   "prereq_id": "c_semiconductors",
+   "prereq": "Semiconductors",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_seizure_memo",
+   "concept": "Seizure memo",
+   "prereq_id": "c_seizure",
+   "prereq": "Seizure",
+   "verdict": "wrong",
+   "reason": "the medical sense of 'seizure', not the legal one"
+  },
+  {
+   "concept_id": "c_silicon_carbon_battery",
+   "concept": "Silicon-carbon battery",
+   "prereq_id": "c_lithium_ion_battery",
+   "prereq": "Lithium-ion battery",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_tax_loss_harvesting",
+   "concept": "Tax-loss harvesting",
+   "prereq_id": "c_tax_liability",
+   "prereq": "Tax liability",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_twenty20_centuries",
+   "concept": "Twenty20 centuries",
+   "prereq_id": "c_twenty20",
+   "prereq": "Twenty20",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_usb_power_delivery",
+   "concept": "USB Power Delivery",
+   "prereq_id": "c_electric_power",
+   "prereq": "Electric power",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_wearable_technology",
+   "concept": "Wearable technology",
+   "prereq_id": "c_human_body",
+   "prereq": "Human body",
+   "verdict": "wrong",
+   "reason": "wearing a device on the body doesn't need 'Human body' (borderline)"
+  },
+  {
+   "concept_id": "c_white_ball_cricket",
+   "concept": "White-ball cricket",
+   "prereq_id": "c_twenty20",
+   "prereq": "Twenty20",
+   "verdict": "right"
+  },
+  {
+   "concept_id": "c_zionism",
+   "concept": "Zionism",
+   "prereq_id": "c_diaspora",
+   "prereq": "Diaspora",
+   "verdict": "right"
+  }
+ ]
+}

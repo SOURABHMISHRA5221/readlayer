@@ -108,7 +108,16 @@ personas stay curated on the original four.
   `POST /v1/content/{id}/grow` (§8), which grows only labels not tried before (`grow_tried`) under
   a claim on the page (one grower across instances). Only a reader's own pages (`NOT_CORPUS`)
   ever regrow; pages stored before M9 count only if they are extension pages never grown and not
-  recordings, so library articles and seeded demo recordings never change under a judge. Growth has its own timeout
+  recordings, so library articles and seeded demo recordings never change under a judge.
+  **Same-page duplicates (M9 part 2, decision 57):** growth's one `link_merge` call also asks
+  whether picks of the same batch name one concept (label cosine ≥ `BATCH_NEAR` = 0.85, each
+  pick's 5 nearest); "same" answers group picks (union-find), a group with a member that is a
+  graph concept links there, otherwise its most salient pick is defined, the rest link to it and
+  their labels become its aliases ("Forever chemicals" / "PFAS"). Measured: 61 real same-page
+  pairs, 0 false merges, 0 missed (`apps/api/evals/merge_replay.md`). **Prerequisites:** no
+  confidence or same-domain rule (neither separated wrong cross-domain edges from right ones,
+  `apps/api/evals/prereq_replay.md`); edges judged wrong are dropped where the API builds its
+  graph (`app/graph/prereq_fixes.py`, no data rewrite). Growth has its own timeout
   inside phase 2 and never fails the ingest; held-out URLs never grow. Concepts are stored
   create-if-absent in Firestore `graph_growth/` (no user data), merged at startup and polled
   every 60 s by each instance (server timestamps, 120 s overlap window), and folded into

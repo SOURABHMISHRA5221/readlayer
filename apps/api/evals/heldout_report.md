@@ -254,3 +254,53 @@ Correct: "transition away from fossil fuels" → Energy transition (×2), "equit
 "regional mayors" → Metro mayors, "amalgamation" → Merger, "SMEs" → MSME, "national care service" → National
 social care service. Wrong: "tax and spend" → Fiscal policy (a broader field), "net profit" → Consolidated net
 profit (a narrower concept), "molybdenum" → Element (a generic category; a seeded chemistry concept).
+
+## Number 3, fresh sample from production growth (M9 part 2, 2026-10-14)
+
+**27/30 = 90% (target ≥ 90%).** Population: the 78 concepts grown live in production from
+22 readers' and library pages, Oct 10–14 (`added_at` ≤ 2026-10-14 09:24:55 UTC), all after the
+decision 36 tightening; none was in the two M2.2 samples. A seeded random 30
+(`evals/grown_sample.json`: population ids, seed 1015, committed before judging). Same four
+criteria as M2.2 §E.5: (1) a real, established term; (2) a correct definition; (3) the right
+domain; (4) it matches the mention, and a duplicate of another grown concept fails.
+
+**Disclosure.** The verdicts are by the implementing agent, the same one that wrote the M9 part 2
+fixes; it saw all 78 concepts while gathering that evidence, so the sample is independent of tuning
+but not of the judge. Sourabh is asked to audit these 30. The source sentences are kept out of this
+public repo (some come from readers' own pages); only the fields below are published.
+
+All three samples: 87% (M2.2 first, 26/30), 97% (after tightening, 29/30, overlapping the first),
+**90% (fresh, 27/30)**.
+
+| # | concept | domain | kind | source | verdict | reason |
+|---|---|---|---|---|---|---|
+| 1 | Blasphemy | law | idea | extension | pass | real term, correct definition, right domain, matches the mention |
+| 2 | Lethal injection | law | method | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 3 | Silicon-carbon battery | technology | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 4 | Tax-aware investing | finance | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 5 | Phishing | technology | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 6 | Humanoid robot | technology | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 7 | Programmable Power Supply | technology | jargon | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 8 | Linear algebra | science | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 9 | Seizure memo | law | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 10 | Adjournment motion | politics | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 11 | BSS section | technology | jargon | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 12 | Pregabalin | health | condition | extension | pass | pass; kind 'condition' is wrong (a drug), kind is not one of the four criteria |
+| 13 | Special Intensive Revision | politics | policy | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 14 | System of linear equations | science | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 15 | Node (graph theory) | technology | idea | extension | pass | real term, correct definition, right domain, matches the mention |
+| 16 | Natural language processing | technology | idea | extension | pass | real term, correct definition, right domain, matches the mention |
+| 17 | No-cost EMI | finance | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 18 | PFAS | environment | idea | fetch | FAIL | fails criterion 4: a duplicate of 'Forever chemicals' grown from the same page (R9: duplicates fail) |
+| 19 | Watch and Ward | politics | entity_type | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 20 | Peer-to-peer transaction | finance | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 21 | Rule of law | law | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 22 | Circle Inspector and Sub-Inspector | law | role | user_ingested | FAIL | fails criterion 1: two police ranks fused into one invented label |
+| 23 | Alarm photosynthesis | science | idea | user_ingested | FAIL | fails criterion 2: definition too vague (it never says CO2 comes from calcium oxalate crystals) |
+| 24 | Qualcomm Snapdragon 8 Elite | technology | jargon | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 25 | Tax-loss harvesting | finance | method | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 26 | Education Minister | politics | role | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 27 | Knowledge graph | technology | idea | extension | pass | real term, correct definition, right domain, matches the mention |
+| 28 | Assembler | technology | method | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 29 | Antisemitism | society | idea | user_ingested | pass | real term, correct definition, right domain, matches the mention |
+| 30 | Calendar phishing | technology | jargon | user_ingested | pass | real term, correct definition, right domain, matches the mention |

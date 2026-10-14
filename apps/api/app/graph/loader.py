@@ -4,6 +4,7 @@ import logging
 
 from app.graph.graph import ConceptGraph
 from app.graph.models import ConceptGraphFile
+from app.graph.prereq_fixes import without_known_wrong
 from app.store.blob_repo import read_bytes
 
 log = logging.getLogger("app.graph")
@@ -27,7 +28,9 @@ async def load_graph(uri: str) -> ConceptGraph:
     if not uri:
         log.warning("CONCEPTS_URI not set; running without a concept graph")
         return ConceptGraph.empty()
-    graph = ConceptGraph(ConceptGraphFile.model_validate_json(await read_bytes(uri)))
+    file = ConceptGraphFile.model_validate_json(await read_bytes(uri))
+    file = file.model_copy(update={"concepts": without_known_wrong(file.concepts)})
+    graph = ConceptGraph(file)
     if not graph.is_acyclic():
         raise ValueError(f"concept graph {uri} has prerequisite cycles")
     log.info("concept graph loaded", extra={"version": graph.version, "concepts": len(graph)})

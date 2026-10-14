@@ -23,6 +23,7 @@ from app.content import catalog
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph, set_graph
 from app.graph.models import Concept
+from app.graph.prereq_fixes import without_known_wrong
 from app.store.content_repo import get_content_store
 from app.store.growth_repo import GrownConcept, get_growth_repo
 
@@ -45,7 +46,7 @@ class Refresher:
     def apply(self, concepts: list[Concept]) -> ConceptGraph:
         """Add concepts (grown here or picked up) to the process graph, copy-on-write."""
         graph = get_graph()
-        fresh = [c for c in concepts if graph.get(c.id) is None]
+        fresh = without_known_wrong([c for c in concepts if graph.get(c.id) is None])
         if not fresh:
             return graph
         if self.base_version is None:

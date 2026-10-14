@@ -1713,5 +1713,21 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 
 - **Live, Sourabh:** extension 0.8.1 on his empty pages: "Great extention worked". M9 part 1 done.
 
+## M9 part 2 (2026-10-14, the four M2.2 quality items)
+
+- Evidence (production `graph_growth`, read only): 78 live-grown concepts; same-page cosines can't
+  separate duplicates (PFAS / PFOS 0.971 vs Forever chemicals / PFAS 0.899); 93 prereq edges, ~4
+  wrong, all lexical collisions; README already states the frozen-graph misses.
+- Plan part 2 → plan-reviewer REVISE 14 → REVISE 3 → **APPROVE**. Production prune dropped (stored
+  edges have no confidence; PFOS is folded into `concepts.json`) in favour of a write-free filter.
+- Merge replay: 61 pairs, blind verdicts first, **0 false merges, 0 missed**. Prereq replay
+  ($0.0198): blind verdicts first, 10 of 32 cross-domain wrong, **no confidence cut separates
+  them** → `CROSS_DOMAIN_MIN` not added; item 2 not met by either named method, told Sourabh.
+- Built: union-find merge in growth's one `link_merge` call with aliases; `prereq_fixes.py` (8
+  edges) at graph load and refresh. Fresh precision **27/30 = 90%** (Sourabh asked to audit).
+  Synonym harness on the BBC PFAS article: **PASS, $0.0124**. API 1,162.
+
 ### Next steps (resume here, in order)
-1. M9 part 2 plan: the four M2.2 quality items (STATUS §9) → plan-reviewer → build.
+1. milestone-reviewer → SHIP → PR → CI → merge → deploy API from clean `main` (Sourabh's yes).
+2. Sourabh: audit the 30 precision verdicts (evals/heldout_report.md).
+3. M9 part 3 plan: evals (gold set status still unknown), hardening, demo. Oct 16 freeze.

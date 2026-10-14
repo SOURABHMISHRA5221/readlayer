@@ -179,7 +179,7 @@ Measured results so far. Each number comes from [docs/STATUS.md](docs/STATUS.md)
 |---|---|
 | Concept graph | 5,206 concepts in 14 domains (the business core plus politics, law, technology, science, health, environment, sports, culture, education, society), seeded from Wikipedia glossaries and grown online from new articles; no cycles |
 | Library | 310 articles, each ingested once and shared by every reader |
-| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60% missed); with online growth, as in production, 89% / 66% ([report](apps/api/evals/heldout_report.md)) |
+| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60% missed); with online growth, as in production, 89% / 66%. Grown concepts judged correct: 87% (first sample), 97% (after tightening, overlapping the first), 90% on a fresh sample of 30 grown live ([report](apps/api/evals/heldout_report.md)) |
 | Readers see different notes | Trader and policy student get identical underlines on **8 of 310** articles (mean overlap 0.15) |
 | Scoring latency, p95 | **0.19 ms** for a 1,200-word article (local test); about 1 ms on Cloud Run; budget 150 ms |
 | Annotations endpoint, p95 on Cloud Run | **99 ms** server-side, including the Firestore read; 121 ms measured from a client in India |

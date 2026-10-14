@@ -1,0 +1,11 @@
+# scripts/harness_m9_merge.py, 2026-10-14, emulator harness, real Vertex
+# url: https://www.bbc.co.uk/news/articles/cq8r6nzp4230o (a library page, publisher text not reproduced)
+graph: 5209 → 5204 concepts (the article's five taken out)
+grown links: {'PFAS': 'c_forever_chemicals', 'Forever chemicals': 'c_forever_chemicals', 'Phase 1 environmental site assessment': 'c_phase_1_environmental_site_assessment', 'Phase 2 environmental site assessment': 'c_phase_2_environmental_site_assessment', 'PFOS': 'c_pfos'}
+  c_pfos: 'PFOS' aliases=[]
+  c_forever_chemicals: 'Forever chemicals' aliases=['PFAS']
+  c_phase_2_environmental_site_assessment: 'Phase 2 environmental site assessment' aliases=[]
+  c_phase_1_environmental_site_assessment: 'Phase 1 environmental site assessment' aliases=[]
+forever chemicals → c_forever_chemicals, PFAS → c_forever_chemicals, PFOS → c_pfos, phases → c_phase_1_environmental_site_assessment / c_phase_2_environmental_site_assessment
+run spend $0.0124 (emulator ledger)
+PASS
