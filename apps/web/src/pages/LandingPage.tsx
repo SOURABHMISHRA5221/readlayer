@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 import { ThemeToggle } from "../components/ThemeToggle";
-import { Wordmark } from "../components/Wordmark";
 import { DEFAULT_DEMO_PERSONA } from "../landing/demoPersonas";
 import { demoNotes, noteCount, type DemoNote } from "../landing/demoData";
 import { paragraph } from "../landing/demoParagraph.json";
@@ -12,9 +11,12 @@ import focus from "../landing/clipFocus.json";
 import { DeviceFrame, SeeItInAction } from "../landing/DeviceFrame";
 import { ProblemArt } from "../landing/ProblemArt";
 import { MargoHero } from "../landing/MargoHero";
-import { FORMATS } from "../landing/formats";
+import { GlossInBrowser } from "../landing/Extension";
+import { Footer } from "../landing/Footer";
+import { FORMATS } from "../landing/formatsFull";
 import { MiniDemo } from "../landing/MiniDemo";
 import { REPO_URL } from "../landing/links";
+import { WatchAndListen } from "../landing/WatchListen";
 import { signInError, signInWithGoogle, startDemo } from "../lib/auth";
 import { personaParam, type PersonaKey } from "../lib/personas";
 import { matchRoute, navigate, rememberReturn, withParams } from "../lib/router";
@@ -88,6 +90,8 @@ export default function LandingPage({ url }: { url: URL }) {
         footer={<Footer />}
       >
         <SeeItInAction />
+        <GlossInBrowser />
+        <WatchAndListen />
         <Problem />
         <Solution />
         <HowItWorks />
@@ -247,7 +251,7 @@ const STEPS: { title: string; body: string; clip: { name: string; label: string;
   },
   {
     title: "Your map grows",
-    body: "What you learn fills in, so the notes thin out as you read more.",
+    body: "What you learn fills in, so the notes thin out as you read more. For you then tells you which picks you're ready for.",
     clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 1440, height: 900 },
   },
 ];
@@ -349,36 +353,13 @@ function Formats() {
         {FORMATS.map((f) => (
           <li key={f.what} className="lp-formats__item">
             <span className="lp-formats__what">{f.what}</span>
-            <span className={`lp-formats__how${f.how === "With notes" ? " lp-formats__how--notes" : ""}`}>{f.how}</span>
+            <span className={`lp-formats__how${f.notes ? " lp-formats__how--notes" : ""}`}>
+              {f.notes ? "With notes" : "No notes"}
+            </span>
+            <span className="lp-formats__detail">{f.detail}</span>
           </li>
         ))}
       </ul>
     </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="lp-footer">
-      <Wordmark />
-      <p className="lp-footer__built">Built on Gemini and Google Cloud</p>
-      <p className="lp-footer__built">Illustrations made with Google's image model.</p>
-      <nav className="lp-footer__links" aria-label="About Gloss">
-        <a href="#how-it-works">How it works</a>
-        <a href={REPO_URL} target="_blank" rel="noreferrer">
-          GitHub
-        </a>
-        <a
-          href="/privacy"
-          onClick={(e) => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-            e.preventDefault();
-            navigate("/privacy");
-          }}
-        >
-          Privacy
-        </a>
-      </nav>
-    </footer>
   );
 }

@@ -278,21 +278,13 @@
   background: var(--accent-wash);
   color: var(--ink);
 }
-.lp-chip--notes::before,
-.lp-chip__dot {
+.lp-chip--notes::before {
   content: "";
   display: inline-block;
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-}
-.lp-readwith__legend {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font: 400 12.5px / 1.4 var(--font-ui);
-  color: var(--muted);
 }
 
 /* The open note at its natural height (decision 46b: "What the author is saying" in full):
