@@ -26,6 +26,8 @@ describe("Connect page hint for Gloss 0.8.1 (decision 62)", () => {
     expect(html).toContain("/releases/tag/extension-v0.8.2");
   });
   it("on the old address, says nothing (0.8.1 connects there)", () => {
-    expect(renderToStaticMarkup(<OlderExtensionHint hostname="readlayer-sourabh-26.web.app" />)).toBe("");
+    for (const host of ["readlayer-sourabh-26.web.app", "readlayer-sourabh-26.firebaseapp.com"]) {
+      expect(renderToStaticMarkup(<OlderExtensionHint hostname={host} />)).toBe("");
+    }
   });
 });

@@ -26,7 +26,7 @@
     "video": false,
     "article": true,
     "focused": "read",
-    "button": "Open in Gloss",
+    "button": "Read this page",
     "hint": "Opens this video in Gloss with a transcript and notes. Up to 10 minutes."
   },
   "model routes requested": [],

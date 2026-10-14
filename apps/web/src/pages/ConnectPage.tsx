@@ -35,12 +35,13 @@ const INSTALL = [
   "Pin Gloss to the toolbar, then come back here and press Check again.",
 ];
 
-/** Where Gloss 0.8.1 can still connect: it lists only the old address (decision 62). */
+/** Where Gloss 0.8.1 can still connect: only the old site (decision 62), on either domain. */
 const OLD_HOST = "readlayer-sourabh-26.web.app";
+const OLD_SITE = "readlayer-sourabh-26.";
 
 /** On any other address, a reader with 0.8.1 sees "not installed": say why, and where 0.8.2 is. */
 export function OlderExtensionHint({ hostname }: { hostname: string }) {
-  if (hostname === OLD_HOST) return null;
+  if (hostname.startsWith(OLD_SITE)) return null;
   return (
     <p className="connect__note">
       Installed Gloss 0.8.1 earlier? It connects only from {OLD_HOST}.{" "}

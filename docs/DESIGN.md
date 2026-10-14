@@ -1383,5 +1383,7 @@ see (R10).
   "Read this page". The worker re-reads the tab's URL, sends only
   `https://www.youtube.com/watch?v=<id>` to `POST /v1/recs/open` (as Read any link does), and opens
   `/read/<id>` (plus `?persona=` for a demo persona other than the default) in a new tab.
-  Refusals show the API's words without its "Open original" sentence. No new permission:
+  Refusals show the API's words without its "Open original" sentence. Privacy: the video is a
+  `user_ingested` doc like a pasted link (only `extension` docs are private), so anyone with its
+  id can read it; only the reader's `ingested` entry is theirs. README and the privacy page say so. No new permission:
   `activeTab` gives the tab's URL once the reader clicks the toolbar button.

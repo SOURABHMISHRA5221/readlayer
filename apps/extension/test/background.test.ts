@@ -267,6 +267,37 @@ describe("openVideo (Open in Gloss on YouTube, decision 62)", () => {
   });
 });
 
+describe("the worker's message listener (who may ask for what)", () => {
+  type Listener = (message: unknown, sender: chrome.runtime.MessageSender, reply: (r: unknown) => void) => boolean;
+  const listener = () => chromeFake.runtime.onMessage.addListener.mock.calls[0]![0] as Listener;
+  const popup = { id: "ext", url: "chrome-extension://ext/popup.html" };
+
+  beforeEach(() => {
+    tabUrl = "https://www.youtube.com/watch?v=wajoP_5Cpw8";
+  });
+
+  it.each([
+    ["a content script", { id: "ext", url: "https://www.youtube.com/watch?v=wajoP_5Cpw8", tab: { id: 1 } }],
+    ["another extension page", { id: "ext", url: "chrome-extension://ext/other.html" }],
+    ["another extension", { id: "other", url: "chrome-extension://other/popup.html" }],
+  ])("open-video from %s is ignored: no request, no tab", async (_who, sender) => {
+    const reply = vi.fn();
+    expect(listener()({ type: "open-video", tabId: 1 }, sender as chrome.runtime.MessageSender, reply)).toBe(false);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(reply).not.toHaveBeenCalled();
+    expect(calls).toEqual([]);
+    expect(opened).toEqual([]);
+  });
+
+  it("open-video from the popup opens the video", async () => {
+    const result = await new Promise((resolve) => {
+      expect(listener()({ type: "open-video", tabId: 1 }, popup as chrome.runtime.MessageSender, resolve)).toBe(true);
+    });
+    expect(result).toEqual({ ok: true });
+    expect(opened).toEqual(["https://glossreader.web.app/read/abc"]);
+  });
+});
+
 describe("status", () => {
   it("names the web address the popup links to", async () => {
     connect("anonymous", { webOrigin: "https://readlayer.web.app" });

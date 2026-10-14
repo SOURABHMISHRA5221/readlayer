@@ -1909,3 +1909,16 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   `localhost, readlayer-sourabh-26.firebaseapp.com, readlayer-sourabh-26.web.app`; added
   `glossreader.web.app, glossreader.firebaseapp.com`; removed none. PATCH ok; read back matches.
   Next: Sourabh's Cloud console step (OAuth origin and redirect URI), then deploy-api on his yes.
+- milestone-reviewer round 1: **FIX** (4 blocking: §31 Auth row, init.json/site link before the
+  web deploy, videos called private in README and the privacy page, no listener test; 5 more) →
+  all applied (STATUS §31 review row, plan R16). Local check re-run: all pass, refusal still shot.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 2 → SHIP → PR → CI → merge.
+2. Outward, each on Sourabh's yes, `make check-gcp` first: Sourabh's Cloud console step (OAuth
+   origin and redirect URI for glossreader.web.app; brand name) → link `glossreader` to the
+   `readlayer-web` app, `init.json` 200 (R16) → R9 diff check, `make deploy-api`, CORS preflight
+   from both origins → `make extension-zip` from merged `main`, release `extension-v0.8.2` →
+   `make deploy-web` from clean `main` → live check (R6 bounds; Sourabh's Google sign-in on
+   glossreader) → gitleaks over all history again → repo public → signed-out link checks.
+3. The Oct 16 items (unchanged).

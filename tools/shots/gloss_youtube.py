@@ -47,7 +47,8 @@ SESSION_JS = """chrome.storage.session.set({session: {
 POPUP_JS = """({video: !document.getElementById('video-actions').hidden,
   article: !document.getElementById('article-actions').hidden,
   focused: document.activeElement && document.activeElement.id,
-  button: document.getElementById('open-video').textContent,
+  button: [...document.querySelectorAll('#article-actions button, #video-actions button')]
+    .find(b => b.closest('[hidden]') === null)?.textContent,
   hint: document.getElementById('video-hint').textContent})"""
 
 
@@ -104,7 +105,8 @@ def port_open(port: int) -> bool:
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
-async def press(h: Harness, shot: str | None = None) -> tuple[dict, str]:
+async def press(h: Harness, shot: str | None = None, after: str | None = None) -> tuple[dict, str]:
+    """`shot` before the click; `after` once the popup shows its message (a refusal)."""
     pop = await h.popup()
     view = await pop.eval(POPUP_JS)
     if shot:
@@ -121,6 +123,8 @@ async def press(h: Harness, shot: str | None = None) -> tuple[dict, str]:
         except websockets.exceptions.ConnectionClosed:
             # Chrome closes a popup when the tab it opens takes focus: the success path.
             return view, POPUP_CLOSED
+        if after:
+            print(f"[{after}]", await pop.shot(after))
     await h.close(pop)
     return view, message
 
@@ -182,7 +186,7 @@ async def main() -> None:
         step("youtube: a refusal")
         api_reply.update(status=422, body={"error": "too_long", "message": TOO_LONG})
         worker.seen.clear()
-        _, refused = await press(h, "popup-youtube-too-long")
+        _, refused = await press(h, after="popup-youtube-too-long")
         record("refusal message", refused)
         if refused != TOO_LONG.split(" Use “Open original”")[0]:
             failures.append(f"refusal shown as {refused!r}")

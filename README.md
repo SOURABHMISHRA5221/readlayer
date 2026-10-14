@@ -270,7 +270,7 @@ Gloss also runs on any news page through a Chrome extension. It isn't on the Chr
 4. In the web app, open your account menu → **Use Gloss on any site** and press **Connect** (a demo session connects as its sample reader).
 5. Open a news article and click Gloss in the toolbar, then **Read this page** (or press Alt+Shift+R). On a YouTube video, the same button is **Open in Gloss**: the video opens in the web app with a transcript and notes (videos up to 10 minutes).
 
-The extension sends only the article's title and paragraphs (on YouTube, only the video's link, with any playlist, time or tracking parameters removed), after removing emails, phone numbers, card numbers, Aadhaar and PAN numbers in your browser. A page you bring in is visible only to you.
+The extension sends only the article's title and paragraphs (on YouTube, only the video's link, with any playlist, time or tracking parameters removed), after removing emails, phone numbers, card numbers, Aadhaar and PAN numbers in your browser. An article page you bring in is visible only to you. A YouTube video opened from the extension is stored like any video pasted into Gloss: anyone with its link can read it, and only the entry in your library is yours.
 
 ## Repository structure
 

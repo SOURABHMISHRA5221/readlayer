@@ -306,3 +306,13 @@ in the 37 PR titles and bodies or the 1 issue.
 
 **Approved** (plan-reviewer round 4, 2026-10-14, at e65ef9a). Its nit (the extension test asserts
 `not_videos` map to null, from the same JSON keys) is how `youtube.test.ts` is written.
+
+## Round 5 (milestone-reviewer FIX on the build; overrides R13's timing)
+
+**R16. Link the site and check `init.json` before the web deploy.** `/__/firebase/init.json` depends
+on the Hosting site being linked to a web app, not on a deploy, and the auth handler needs it. So
+after Sourabh's console step and before `make deploy-web`, on his yes: link `glossreader` to the
+`readlayer-web` app (Hosting API site `appId`), then `curl` `https://glossreader.web.app/__/firebase/init.json`:
+200, `projectId` `readlayer-sourabh-26`, the build's `apiKey`. Only then deploy. Fallback unchanged.
+The zip is built from merged `main` at release time, so it matches the tag; gitleaks re-runs over
+all history after the merge, before the repo goes public.
