@@ -90,8 +90,9 @@ Concept graph: 5,206 seeded, 5,281 served on Oct 14 (STATUS §29).
 
 **R5. The privacy sentence, true.** "Models get article and concept content and, for profile edits,
 goals and onboarding, the reader's own words with emails, phone and card numbers removed first;
-never user ids, emails or reading history. Search providers get topic labels and fixed phrases
-only." Checked against DESIGN §11.3 and the redaction tests.
+never user ids, emails or reading history. Search providers get concept and topic labels (and fixed
+phrases), never anything the reader typed." Checked against DESIGN §11 (free-text exception,
+decision 42: onboarding text never reaches search, a log or a stored document) and §11.3.
 
 **R6. Limits as enforced.** "Built and evaluated on English; videos and podcasts must be English
 (others are refused)". Extension: "loaded unpacked in Chrome, not on the Chrome Web Store; other
