@@ -1759,10 +1759,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   from new chunk hashes). Harness `tools/shots/readiness.py`: axe 0, no horizontal scroll, lines
   match the API at 1440/390 light/dark, zero search and model calls. STATUS §29.
 
+- milestone-reviewer: FIX (resume steps, the Oct 16 mix re-run, a route test) → applied.
+
 ### Next steps (resume here, in order)
-1. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first);
+1. Readiness (branch `readiness`): milestone-reviewer until SHIP → PR → CI green → merge →
+   `make check-gcp` → `make deploy-api`, then `make deploy-web` from clean, up-to-date `main`
+   (Sourabh's yes on each) → live check: production `/v1/feed` level counts per persona, one live
+   shot in `docs/evidence/readiness/`, then End demo and confirm the anonymous Auth user and
+   `users/{uid}` (with `rec_signals/newcomer`) are deleted; record in STATUS §29.
+2. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first);
    then update the README precision row's "(Sourabh's audit pending)".
-2. Oct 16 plan (plan-reviewer first): persona templates re-seed, demo pre-ingest, `seed_demo_feed`,
+3. Oct 16 plan (plan-reviewer first): persona templates re-seed, demo pre-ingest, `seed_demo_feed`,
    `warm_demo --shifts`, `ingest_media.py` for the snapshots' short recordings (dry runs and counts
-   first; not the BBC PFAS article), README refresh, video, deck (87/97/90 labelled as judged by
+   first; not the BBC PFAS article), re-run `scripts/readiness_mix.py` after the re-seed (stop
+   rule: one level ≥ 80% of the newcomer's rows → tell Sourabh) and read the stretch lines before
+   the video (e.g. "Economic stocks and flows" on a stock-market video), README refresh, video, deck (87/97/90 labelled as judged by
    the build agent). Oct 17: gitleaks over history, repo public, submit.
