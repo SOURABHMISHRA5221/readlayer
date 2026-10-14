@@ -54,6 +54,9 @@ class FeedItemOut(BaseModel):
     goal: str | None
     why: str
     score: float
+    # From the reader's own map (decision 60): None when the item names no graph concept.
+    readiness: fr.Readiness | None = None
+    read_first: list[str] = []
     # Opens in Gloss (articles; videos within the media caps) or only at the source.
     open_here: bool = True
 
@@ -128,7 +131,7 @@ async def get_feed(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> Fe
         goal_targets=await goal_targets(ctx),
     )
     side = side_for(country)
-    ranked = fr.select(fr.rank(candidates, reader, now), topics, side, LOCAL_SHARE)
+    ranked = fr.select(fr.rank(candidates, reader, now, graph), topics, side, LOCAL_SHARE)
     _log_mix(ranked, side, country)
     settings, anonymous = get_settings(), ctx.caller.is_anonymous
     items = [
@@ -185,4 +188,6 @@ def _out(r: fr.RankedItem) -> FeedItemOut:
         goal=r.goal_label,
         why=r.why,
         score=r.score,
+        readiness=r.readiness,
+        read_first=list(r.read_first),
     )

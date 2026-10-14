@@ -9,6 +9,13 @@ score = interest(topic) × format_affinity(format) × readiness × goal_boost ×
   than 4 → 0.8^(k−4) (too much at once);
 - goal_boost: 1.3 when the item names a learning-goal target concept;
 - freshness: `rank.freshness`.
+
+Readiness shown to the reader (decision 60, DESIGN §17.2), separate from the ranking factor and
+never changing the score: "familiar" (the item names only known ideas), "ready" (new ideas whose
+graph prerequisites the reader knows: the map's own "ready to learn" rule, `KNOWN_P`), "stretch"
+(more than READY_MAX new ideas, or a new idea with a prerequisite that is itself new: up to
+READ_FIRST_MAX of those, most basic first), or None when the item names no graph concept. Based on
+the ideas named in the title and summary only.
 """
 
 import re
@@ -16,6 +23,7 @@ from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
+from typing import Literal
 from urllib.parse import urlsplit
 
 from app.graph.graph import ConceptGraph
@@ -27,6 +35,7 @@ from app.recs.models import PODCAST_DOMAINS, Format, WebResult
 from app.recs.rank import FormatPrior, FormatStats, format_affinity, freshness
 
 READY_MIN, READY_MAX = 1, 4
+READ_FIRST_MAX = 2
 NOTHING_NEW = 0.6
 TOO_MUCH_DECAY = 0.8
 GOAL_BOOST = 1.3
@@ -54,6 +63,9 @@ class FeedCandidate:
     concepts: tuple[Concept, ...] = ()
 
 
+Readiness = Literal["familiar", "ready", "stretch"]
+
+
 @dataclass(frozen=True)
 class RankedItem:
     candidate: FeedCandidate
@@ -61,6 +73,8 @@ class RankedItem:
     new_concepts: tuple[str, ...]  # labels new to this reader
     goal_label: str | None
     why: str
+    readiness: Readiness | None = None  # shown to the reader, not part of the score
+    read_first: tuple[str, ...] = ()  # prerequisites new to the reader, most basic first
 
 
 @dataclass(frozen=True)
@@ -209,6 +223,34 @@ def is_new(concept: Concept, reader: ReaderState, now: datetime) -> bool:
     return p < 0.5
 
 
+def read_first(
+    new: Sequence[Concept],
+    item_ids: frozenset[str],
+    graph: ConceptGraph,
+    reader: ReaderState,
+    now: datetime,
+) -> tuple[str, ...]:
+    """Prerequisites of the item's new ideas that are new to the reader too and that the item
+    doesn't name itself; deduped, most basic first, at most READ_FIRST_MAX."""
+    found: dict[str, Concept] = {}
+    for c in new:
+        for pre in graph.prerequisites(c.id):
+            if pre.id not in item_ids and pre.id not in found and is_new(pre, reader, now):
+                found[pre.id] = pre
+    ordered = sorted(found.values(), key=lambda p: (p.base_difficulty, p.label))
+    return tuple(p.label for p in ordered[:READ_FIRST_MAX])
+
+
+def readiness_level(named: int, new: int, first: Sequence[str]) -> Readiness | None:
+    if not named:
+        return None  # nothing named: we know nothing about this item
+    if not new:
+        return "familiar"
+    if first or new > READY_MAX:
+        return "stretch"
+    return "ready"
+
+
 def why(topic: str, new: Sequence[str], goal: str | None) -> str:
     parts = [BY_ID[topic].label]
     if new:
@@ -219,12 +261,14 @@ def why(topic: str, new: Sequence[str], goal: str | None) -> str:
 
 
 def rank(
-    candidates: Sequence[FeedCandidate], reader: FeedReader, now: datetime
+    candidates: Sequence[FeedCandidate], reader: FeedReader, now: datetime, graph: ConceptGraph
 ) -> list[RankedItem]:
     top = max((reader.interest.get(c.topic, 0.0) for c in candidates), default=0.0) or 1.0
     out = []
     for c in candidates:
-        new = tuple(x.label for x in c.concepts if is_new(x, reader.state, now))
+        fresh = [x for x in c.concepts if is_new(x, reader.state, now)]
+        new = tuple(x.label for x in fresh)
+        first = read_first(fresh, frozenset(x.id for x in c.concepts), graph, reader.state, now)
         goal = next((reader.goal_targets[x.id] for x in c.concepts if x.id in reader.goal_targets),
                     None)  # fmt: skip
         interest = (reader.interest.get(c.topic, 0.0) or top) / top
@@ -239,7 +283,8 @@ def rank(
             * (GOAL_BOOST if goal else 1.0)
             * freshness(c.result.published_at, now)
         )
-        out.append(RankedItem(c, round(score, 4), new, goal, why(c.topic, new, goal)))
+        level = readiness_level(len(c.concepts), len(new), first)
+        out.append(RankedItem(c, round(score, 4), new, goal, why(c.topic, new, goal), level, first))
     return out
 
 
