@@ -46,12 +46,12 @@ Every article, video and podcast is made once, for an imagined average reader. R
 
 ## See it
 
-![The same four paragraphs about UK mortgages, as three readers see them. The newcomer has four underlines: English Housing Survey, "tracks", standard variable rates and fixed-rate. The markets trader has one: English Housing Survey. The policy student has three: "tracks", standard variable rates and fixed-rate.](docs/images/personas.png)
+![The same Economic Times paragraph about a 25 bps rate hike, read as three demo readers. Software engineer: bps and tighter policy are marked, and the note on Basis points starts from zero with a software analogy. Cricket fan: tighter policy is marked and bps is a quiet refresher; the note on Monetary tightening skips the basics, lists Monetary policy and Central bank as what it builds on, and uses a cricket analogy. Policy student: only bps is marked, and its note skips the basics with a law analogy. Each note ends with What the author is saying, in italics.](docs/images/personas.png)
 
-<sub>The same passage of a live article for the three demo readers (captured before the rename to Gloss). The newcomer gets four notes; the markets trader, strong in finance, gets one; the policy student gets the three mortgage terms but not the government survey. Measured on Oct 5 across the 310 corpus articles, the trader and the policy student got identical underlines on only 8.</sub>
+<sub>One real paragraph from The Economic Times, with real notes from the pipeline (verified, from the landing's demo), read as the three demo readers, each named for the field its analogies come from. The software engineer gets two new terms, and the note on basis points starts from zero. The cricket fan (the markets-trader reader) already knows basis points, so that's only a quiet refresher, and its note is on monetary tightening. The policy student gets basis points alone, pitched as "heard of". Measured on Oct 5 across the 310 corpus articles, the trader and the policy student got identical underlines on only 8.</sub>
 
 <div align="center">
-  <img src="docs/images/demo.gif" alt="Animated: switching the reader from Newcomer to Markets trader to Policy student. Underlines fade out and re-ink for each reader, the margin rail updates, and finally the card for &quot;Tracker mortgage&quot; opens." width="800">
+  <img src="docs/images/demo.gif" alt="Animated: the same paragraph switching between Software engineer, Cricket fan and Policy student. The marked words and the open note change for each reader, along with the analogy in its Background." width="800">
 </div>
 
 ## Features

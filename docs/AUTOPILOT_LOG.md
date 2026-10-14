@@ -1987,3 +1987,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - milestone-reviewer: FIX 7 (linking headline, outsider Getting started, dated a11y, graph
   sources, link_confirm wording, cost row, STATUS leftovers) → applied (774034a) → **SHIP**.
   Next: push, PR, check the stills render on GitHub from the branch, CI, merge.
+- PR #41 merged (45a1396). Sourabh then flagged the README's two pre-rename pictures: replaced by
+  captures of the landing's demo card (real verified notes, three readers) via
+  `tools/shots/readme_personas.py` (public landing only, no sign-in, no writes); GIF fades through
+  white (no doubled text). milestone-reviewer SHIP.
+- Sourabh asked to protect `main` with himself as reviewer; GitHub can't let him approve his own
+  PRs (they're opened as him), options explained; he said "ignore branch protection". Dropped.
