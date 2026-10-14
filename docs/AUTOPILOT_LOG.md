@@ -1927,3 +1927,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   commits (194552a, 527d569); both were in the branch, and the merged tree equals the branch tip's
   tree, so local `main` was moved to `origin/main` (`reset --keep`), nothing lost.
   Next: Sourabh's Cloud console step, then R16 (site link, `init.json`) on his yes.
+- Sourabh: Cloud console step done (OAuth origin and redirect URI for glossreader.web.app); brand
+  name skipped ("2 ignore"). On his "yes": `glossreader` linked to `readlayer-web`
+  (`1:751104670850:web:2141c630eb7895c129089b`; neither site had an `appId` before; the default
+  site serves `init.json` without one). `init.json` on glossreader still 404 after 10 tries over
+  ~2.5 min; the site has no release yet ("Site Not Found"), so it most likely appears with the
+  first deploy. R9 diff 615d676..origin/main over the API code: empty (env only: CORS).
