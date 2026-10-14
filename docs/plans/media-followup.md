@@ -74,3 +74,58 @@ None beyond the web deploy.
 - YouTube may still challenge signed-in viewers on some networks; "Open on YouTube" remains.
 - Readers signed in to YouTube are now identifiable to YouTube when they press play (the privacy
   page says so).
+
+## Round 1 (plan-reviewer REVISE, 7 items; all applied, these override the sections above)
+
+**F1. Bundle.** `ForYouTab` is a lazy chunk (`LibraryPage.tsx` lazy-loads it); only `Row` (via
+`libraryRows.tsx`) and `UpNext` are in main, with 0.52 KB of headroom. So `Row` gains a generic
+`actions?: ReactNode` slot rendered in the meta line before the time (no `choice` prop); the two
+controls are built in `ForYouTab` and land in its chunk. STATUS §25 records main and ForYouTab
+chunk sizes before and after.
+
+**F2. Accessibility.** The button: visible "Open in Gloss", `aria-label={`Open in Gloss: ${title}`}`,
+`disabled` while that row is opening (no second `openWeb` or `rec_clicked`). The link: visible
+`originalLabel`, then visually hidden `: {title}` and " (opens in a new tab)" (the visible label
+starts the name, WCAG 2.5.3). CSS in `src/styles/library.css` beside `.row__meta`: existing
+focus-ring token; 44 px targets under `@media (pointer: coarse)` only.
+
+**F3. Player tests (`test/media.test.tsx`).** The assertion that a message from
+`https://www.youtube.com` is ignored is **removed** (it is now the accepted origin). The URL and
+iframe tests compare with the literal `"https://www.youtube.com"`, not the constant, and are
+renamed (no "no-cookie"). Rejected origins: `https://www.youtube-nocookie.com`,
+`https://youtube.com`, `https://m.youtube.com`, `https://www.youtube.com.evil.example`. The
+iframe's `referrerpolicy` is asserted `strict-origin`.
+
+**F4. Feed tests.** `Row`: the `actions` slot renders where expected and nothing without it.
+`ForYouTab` (or a small exported `MediaChoice` component in its chunk): "Open in Gloss" calls
+`openWeb` once and is disabled while busy; both accessible names include the title; the link
+sends `rec_clicked` exactly once and opens the URL in a new tab; an `open_here` podcast from
+`podcasts.apple.com` shows "Listen on Apple Podcasts"; an `open_here: false` video shows neither
+control and its title links to YouTube in a new tab; an article row is unchanged.
+
+**F5. Evidence that proves the claims.** `tools/shots/media.py`: also asserts
+`new URL(iframe.src).origin === "https://www.youtube.com"`. New `tools/shots/media_followup.py`:
+a demo reader's For you tab with `/v1/feed` answered over CDP (`Fetch.requestPaused`) from a
+committed fixture (`tools/shots/fixtures/feed_media.json`: one `open_here: true` video, one
+`open_here: false` video, one article); no search, no LLM. At 1440 and 390, light and dark: axe 0
+at every impact, no horizontal scroll; keyboard: Tab reaches "Open in Gloss" with a visible focus
+ring, then the YouTube link; the long video row has neither control. Shots into
+`docs/evidence/media-followup/`.
+
+**F6. Docs.** DESIGN §21.4: the player on `www.youtube.com` (click to load stays), and media rows
+within the caps offer "Open in Gloss" and the original; long or unknown-length ones stay
+original-only. STATUS: decision **55** in §10 (2026-10-14, Sourabh's words: the second embed
+"the second one", feed "keep long ones as YouTube only"), overriding plan R10 and BUILD_PLAN's
+"privacy-enhanced domain" line; §1 row; §25 acceptance. Stale comments fixed: `embedUrl`'s
+"no-cookie domain" and `RowProps.onOpen`'s "Read here for web articles".
+
+**F7. Privacy page, stated as it is.** Videos section keeps the thumbnail sentence, then: the
+player loads only when you press play, from YouTube; YouTube is told the player is on Gloss's
+site; once you press play YouTube may set cookies, and if you're signed in to YouTube in this
+browser it can link the view to your account, as with any embedded video. A web test asserts the
+Videos section no longer says "no-cookie".
+
+**Nits taken:** `originalLabel` derives the podcast app from `new URL(item.url).hostname`, not
+`source`. The player's link stays "Open on YouTube" (it sits under a YouTube player); the feed
+says "Watch on YouTube", as Up next's long-video button already does. Up next keeps "Open here"
+(unchanged, not in scope).
