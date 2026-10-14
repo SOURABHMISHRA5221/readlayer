@@ -84,3 +84,42 @@
     # MEDIA_MAX_VIDEO_S = 1000 instead of 1200 (T01 is 960 s by videos.list).
     latency_max_s: 60
     tokens_out_max: 7000
+
+# Added 2026-10-14 (milestone review, item 10): the first cases inside the shipped caps (videos 10
+# minutes, podcasts 12). Nothing above edited. References are the quality model at low thinking,
+# `transcribe-v1`, emulator runs of 2026-10-14 (docs/AUTOPILOT_LOG.md, step 7). Freeze these
+# before any change to the transcribe prompt; report before and after on them in its PR.
+- id: T05
+  note: 8-minute explainer video, one whole-URL call (the live-check video)
+  kind: youtube
+  url: https://www.youtube.com/watch?v=R8VBRCs2jTU
+  duration_s: 494
+  reference:
+    model: quality, low thinking, whole URL, fps 0.1, low detail (two runs, same word count)
+    words: 1193
+    paragraphs: 21
+    first_start: "0:00"
+    last_start: "7:41"
+  expect:
+    language: en
+    words_min: 1074    # reference - 10%
+    words_max: 1312    # reference + 10%
+    last_start_min_s: 420
+    times_non_decreasing: true
+
+- id: T06
+  note: Apple episode listed at 9:25 that downloads at 10:52 with stitched-in ads; one MP3 piece
+  kind: apple_podcast
+  url: https://podcasts.apple.com/us/podcast/id1320118593?i=1000791671873
+  duration_s: 652    # the frame walk; Apple says 565 (ads vary by download, so this can change)
+  reference:
+    model: quality, low thinking, one inline MP3 piece
+    words: 1755
+    paragraphs: 32
+    first_start: "0:00"
+    last_start: "10:35"
+  expect:
+    language: en
+    words_min: 1580    # reference - 10%
+    last_start_min_s: 540   # the ads around the episode vary per download
+    times_non_decreasing: true
