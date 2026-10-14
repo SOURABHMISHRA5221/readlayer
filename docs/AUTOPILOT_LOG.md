@@ -1838,11 +1838,88 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   cost, the README line to fix Oct 16) → applied, plus install step "pin Gloss", popup hidden below
   768, dead branch removed; harness re-run all pass (b69717c). Round 2 (after a rate-limit pause and
   Sourabh's re-login): **SHIP**. Sourabh on the sponsor line in the feed still: "keep it".
-- Note: the Claude login is now another account; GCP must still be sourabhlocalllm /
+- Note: the Claude login is now another account; GCP must still be the project's Google account /
   readlayer-sourabh-26 (`make check-gcp` before any deploy).
 
+- PR #38, CI green, squash-merged (20d2e09). `make check-gcp` (the project's account / readlayer-sourabh-26),
+  then `make deploy-web` from clean `main` on Sourabh's yes (`index-C8hhvJGX.js`). Live: axe 0,
+  no horizontal scroll, sections and stills at 1440 and 390, light and dark. The live check caught a
+  harness flaw: full-page shots re-mounted the See it in action stills (empty frames in the first
+  evidence); fixed (no visible placeholder before any shot, tiled full pages), evidence replaced.
+  **Landing refresh done.**
+- Sourabh asked whether the extension works on YouTube: no (it treats every page as an article);
+  "yes" to an "Open in Gloss" button on YouTube video pages in the same 0.8.2 as decision 62.
+
 ### Next steps (resume here, in order)
-1. Push `landing-refresh` → PR → CI → merge → `make check-gcp` → `make deploy-web` from clean
-   `main` (Sourabh's yes) → live check at 1440 and 390 (new sections, stills, axe 0).
-2. Decision 62 (gloss web address) plan → plan-reviewer → build.
-3. The Oct 16 items.
+1. Decision 62 (gloss web address) plan, with the YouTube "Open in Gloss" in extension 0.8.2 →
+   plan-reviewer → build (Auth domain, CORS, extension base, links, the landing's 0.8.1 pin;
+   deploys on Sourabh's yes). Also in it (Sourabh: "lets add Repo go live to in this"): gitleaks over
+   the full history → fix or rotate anything found → repo public on Sourabh's yes → check the
+   landing's release and GitHub links live.
+2. The Oct 16 items (persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`,
+   media snapshots, readiness mix re-run, README refresh incl. the "recommendations only" line,
+   video, deck). Oct 17: submit (gitleaks and repo public moved into decision 62).
+
+## Decision 62, plan (2026-10-14 night)
+
+- Plan `docs/plans/gloss-address.md` on branch `gloss-address`: second Hosting site (gloss →
+  gloss-reader → glossreader), CORS and Auth domains, extension 0.8.2 (session origin, Open in
+  Gloss on YouTube through `/v1/recs/open`, only the canonical watch URL sent), landing pin and
+  Connect hint (lazy chunks, main untouched), gitleaks over all branches and PR heads, repo public.
+- plan-reviewer: REVISE 9 (private docs are only `extension` ones; refusals by code; site id
+  before the build; PR heads in the scan; the email in STATUS/AUTOPILOT_LOG too; honest live-check
+  bounds; local check with no spend; Auth dry run; deploy-api ships no code) → applied → APPROVE.
+- Asked Sourabh: yes to create the site; OK that Google's sign-in screen still names readlayer;
+  OK to remove the Gmail address from tracked files and leave history.
+
+### Next steps (resume here, in order)
+1. Sourabh's answers. On yes: `make check-gcp`, `firebase hosting:sites:create` (R3), then build
+   on `gloss-address` tests first (extension, API fixture/CORS test, web links and Connect hint).
+2. gitleaks (R4) and the email scan (R5) during the build; findings to Sourabh.
+3. `gloss_youtube.py` local check → milestone-reviewer → PR → CI → merge → outward steps in the
+   plan's order (Auth dry run, deploy-api with R9 check, release 0.8.2, deploy-web, live check) →
+   repo public on Sourabh's yes.
+
+## Decision 62, build (2026-10-14 night)
+
+- Sourabh: "Yes on 1, No on 2, 3 yes" (create the site; Google's sign-in must not say readlayer;
+  the account's address out of tracked files, history kept). Plan rounds 2–4 (R10–R15) → APPROVE.
+- Site: `gloss`, `gloss-reader` reserved elsewhere; **`glossreader` created** after `make check-gcp`.
+- gitleaks over all branches and the 37 PR heads: only the extension's public key (allow-listed);
+  cross-check through `gitleaks stdin` agrees. No email in PRs or the issue. Address out of the tree.
+- Built tests first: shared YouTube fixture (API + extension), CORS/hosting consistency test,
+  extension 0.8.2 (session origin, Open in Gloss, refusals without "Open original"), web per-host
+  `authDomain` (main 149.88 → 149.93 KB), landing pin 0.8.2, Connect hint for 0.8.1, README,
+  `tools/shots/live_site.py`. All suites green (STATUS §31).
+- `tools/shots/gloss_youtube.py`: all pass with no web server and the API answered in the browser.
+  A dev API (`fastapi dev`, started ~2.5 h earlier, not by this session) was on port 8000; left
+  alone, the check never reaches it.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on `gloss-address` → fix until SHIP → `make extension-zip` (production build;
+   dist currently holds the emulator build) → PR → CI → merge.
+2. Outward, each on Sourabh's yes, `make check-gcp` first: Auth domains dry run then PATCH (R8) →
+   Sourabh's Cloud console step (OAuth client: origin and redirect URI for glossreader.web.app;
+   brand name, skip if it needs verification) → R9 diff check then `make deploy-api` → release
+   `extension-v0.8.2` with the zip → `make deploy-web` from clean `main` → R13 init.json check →
+   live check (R6 bounds, one demo reader deleted; Sourabh's Google sign-in on glossreader).
+3. Repo public on Sourabh's yes → signed-out checks of the GitHub link, release page and zip.
+4. The Oct 16 items (unchanged).
+- Sourabh: "yes" to the Auth authorized domains change. `make check-gcp` ok; dry run (R8): before
+  `localhost, readlayer-sourabh-26.firebaseapp.com, readlayer-sourabh-26.web.app`; added
+  `glossreader.web.app, glossreader.firebaseapp.com`; removed none. PATCH ok; read back matches.
+  Next: Sourabh's Cloud console step (OAuth origin and redirect URI), then deploy-api on his yes.
+- milestone-reviewer round 1: **FIX** (4 blocking: §31 Auth row, init.json/site link before the
+  web deploy, videos called private in README and the privacy page, no listener test; 5 more) →
+  all applied (STATUS §31 review row, plan R16). Local check re-run: all pass, refusal still shot.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 2 → SHIP → PR → CI → merge.
+2. Outward, each on Sourabh's yes, `make check-gcp` first: Sourabh's Cloud console step (OAuth
+   origin and redirect URI for glossreader.web.app; brand name) → link `glossreader` to the
+   `readlayer-web` app, `init.json` 200 (R16) → R9 diff check, `make deploy-api`, CORS preflight
+   from both origins → `make extension-zip` from merged `main`, release `extension-v0.8.2` →
+   `make deploy-web` from clean `main` → live check (R6 bounds; Sourabh's Google sign-in on
+   glossreader) → gitleaks over all history again → repo public → signed-out link checks.
+3. The Oct 16 items (unchanged).
+- milestone-reviewer round 2: **SHIP** (2e7fac1). Next: PR → CI → merge (push on Sourabh's yes).

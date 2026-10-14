@@ -13,8 +13,14 @@
       </header>
 
       <section id="connected" hidden>
-        <button id="read" class="btn btn--primary" type="button">Read this page</button>
-        <p class="popup__hint">Notes for what you're likely to miss. Nothing runs until you press this.</p>
+        <div id="article-actions">
+          <button id="read" class="btn btn--primary" type="button">Read this page</button>
+          <p class="popup__hint">Notes for what you're likely to miss. Nothing runs until you press this.</p>
+        </div>
+        <div id="video-actions" hidden>
+          <button id="open-video" class="btn btn--primary" type="button">Open in Gloss</button>
+          <p id="video-hint" class="popup__hint"></p>
+        </div>
 
         <div id="persona-row" class="field" hidden>
           <label for="persona">Reading as</label>

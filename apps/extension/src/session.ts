@@ -17,6 +17,9 @@ export interface Session {
   apiKey: string; // the web app's Firebase web API key (public), for securetoken
   persona: PersonaKey | null;
   density: Density;
+  /** The web origin whose Connect page made this session (decision 62); the web reader and the
+   *  popup's links open there, where the same reader is signed in. Absent in 0.8.1 sessions. */
+  webOrigin?: string;
 }
 
 const KEY = "session";

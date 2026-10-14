@@ -14,6 +14,7 @@ import {
 import { useSyncExternalStore } from "react";
 
 import { disconnectExtension } from "./extension";
+import { authDomainFor } from "./sites";
 
 /**
  * Firebase Auth: Google sign-in, or Anonymous sign-in for the demo (personas). The web config
@@ -26,7 +27,7 @@ const config = useEmulators
   ? { apiKey: "demo-key", authDomain: "localhost", projectId: "demo-readlayer", appId: "demo" }
   : {
       apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string | undefined,
-      authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined,
+      authDomain: authDomainFor(globalThis.location?.hostname ?? "", import.meta.env.VITE_FIREBASE_AUTH_DOMAIN as string | undefined),
       projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID as string | undefined,
       appId: import.meta.env.VITE_FIREBASE_APP_ID as string | undefined,
     };

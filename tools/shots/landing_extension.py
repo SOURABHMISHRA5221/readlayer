@@ -33,7 +33,7 @@ from readiness_live import UID_JS, gone  # noqa: E402
 from landing_media import shot_feed, shot_media  # noqa: E402
 from stills import DPR, encode_still, png_size  # noqa: E402
 
-LIVE_WEB = "https://readlayer-sourabh-26.web.app"
+from live_site import WEB as LIVE_WEB  # noqa: E402
 LIVE_API = "https://readlayer-api-d2sfihz3za-el.a.run.app"
 PAGE = "https://en.wikipedia.org/wiki/Term_structure_of_interest_rates"
 YIELD_CURVE = "4a4a18915e77e0ae677f2f5c50e87b97"  # the stored doc m8_live's run reused

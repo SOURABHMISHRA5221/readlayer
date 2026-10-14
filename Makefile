@@ -1,7 +1,9 @@
 # ReadLayer task runner. Cloud targets verify the gcloud identity first (see CLAUDE.local.md).
 
 PROJECT  := readlayer-sourabh-26
-ACCOUNT  := sourabhlocalllm@gmail.com
+# The project's Google account, kept out of git: `.gcp.local.mk` (gitignored) holds
+# `ACCOUNT := <address>` (the value is in CLAUDE.local.md).
+-include .gcp.local.mk
 REGION   := asia-south1
 SERVICE  := readlayer-api
 SA       := $(SERVICE)@$(PROJECT).iam.gserviceaccount.com
@@ -55,6 +57,7 @@ smoke:
 	$(API) uv run python -m scripts.smoke_llm
 
 check-gcp:
+	@test -n "$(ACCOUNT)" || { echo "ACCOUNT unset: create .gcp.local.mk (see CLAUDE.local.md)"; exit 1; }
 	@actual="$$(gcloud config list --format='value(core.account,core.project)' | tr '\t' ' ')"; \
 	if [ "$$actual" != "$(ACCOUNT) $(PROJECT)" ]; then \
 		echo "gcloud identity mismatch: got '$$actual', want '$(ACCOUNT) $(PROJECT)'"; exit 1; \

@@ -43,3 +43,5 @@ docs/evidence/m8/publisher/
 
 # Private eval inputs: readers' page sentences, raw replay output (M9 part 2, R11)
 apps/api/evals/local/
+# The project's Google account for `make check-gcp` (decision 62, R12)
+.gcp.local.mk

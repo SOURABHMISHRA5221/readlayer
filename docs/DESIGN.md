@@ -1266,7 +1266,7 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   access words (no access until clicked; never mail, banking, sign-in or private pages, or a page
   with a password or card field; emails, phone, card, Aadhaar and PAN numbers removed on the
   device); the README's four install steps; a link to the pinned release
-  `releases/tag/extension-v0.8.1`. No Web Store or other-browser claim. *Watch and listen*
+  `releases/tag/extension-v0.8.2` (0.8.1 until decision 62; the still stays the 0.8.1 popup, which looks the same on an article). No Web Store or other-browser claim. *Watch and listen*
   (paper): the caps, Read any link, time buttons, the reader's own caveat that the transcript is
   made automatically; a laptop still of the Fireship video with the Decompiler note open.
 - **See it in action:** the feed still re-recorded with readiness lines ("Ready for you", "A
@@ -1364,3 +1364,26 @@ that opens here offers both **"Open in Gloss"** and the original ("Watch on YouT
 Apple Podcasts"); a long or unknown-length one stays original-only (decision 55). Up next names
 the original the same way beside "Open here". The privacy page says what YouTube and podcast hosts
 see (R10).
+
+## 22. Web addresses and Open in Gloss (decision 62, plan `docs/plans/gloss-address.md`)
+- **Two addresses, one build.** `https://glossreader.web.app` (the name readers see) and the
+  earlier `https://readlayer-sourabh-26.web.app` are two Firebase Hosting sites in the same
+  project (`firebase.json` targets `gloss` and `app`, identical config); `make deploy-web` deploys
+  both. CORS allows both sites on both domains and the extension, nothing else (a test reads
+  `.firebaserc` and `deploy.env.yaml`). Sign-in state is per address.
+- **Sign-in names Gloss.** On `glossreader.web.app` the Firebase `authDomain` is that host, so the
+  popup runs through its own `/__/auth/handler` and Google's chooser names it (`lib/sites.ts`
+  `authDomainFor`); every other host keeps the built `authDomain`.
+- **Extension 0.8.2.** Web base `glossreader.web.app`; it accepts Connect from both sites. The
+  session remembers the origin it was connected from (`webOrigin`, only if allowed), and the
+  popup's links, the overlay's links and Open in Gloss use it, so the reader lands where they are
+  signed in. 0.8.1 lists only the old address; the Connect page there says so and links 0.8.2.
+- **Open in Gloss on YouTube.** On a YouTube video page (the links the API's `media/urls.py`
+  accepts; one shared fixture tests both) the popup's main button is "Open in Gloss" instead of
+  "Read this page". The worker re-reads the tab's URL, sends only
+  `https://www.youtube.com/watch?v=<id>` to `POST /v1/recs/open` (as Read any link does), and opens
+  `/read/<id>` (plus `?persona=` for a demo persona other than the default) in a new tab.
+  Refusals show the API's words without its "Open original" sentence. Privacy: the video is a
+  `user_ingested` doc like a pasted link (only `extension` docs are private), so anyone with its
+  id can read it; only the reader's `ingested` entry is theirs. README and the privacy page say so. No new permission:
+  `activeTab` gives the tab's URL once the reader clicks the toolbar button.

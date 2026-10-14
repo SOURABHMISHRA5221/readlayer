@@ -1,0 +1,4 @@
+live 1440 light {"axe": [], "hscroll": 0, "headings_ok": true, "no_alt": [], "stills_loaded": true}
+live 1440 dark {"axe": [], "hscroll": 0, "headings_ok": true, "no_alt": [], "stills_loaded": true}
+live 390 light {"axe": [], "hscroll": 0, "headings_ok": true, "no_alt": [], "stills_loaded": true}
+live 390 dark {"axe": [], "hscroll": 0, "headings_ok": true, "no_alt": [], "stills_loaded": true}

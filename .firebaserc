@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "readlayer-sourabh-26"
+  },
+  "targets": {
+    "readlayer-sourabh-26": {
+      "hosting": {
+        "app": [
+          "readlayer-sourabh-26"
+        ],
+        "gloss": [
+          "glossreader"
+        ]
+      }
+    }
   }
 }

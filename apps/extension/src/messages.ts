@@ -33,15 +33,23 @@ export interface Status {
   density: Density;
   /** Google readers: onboarding finished (null when unknown, e.g. offline). */
   onboarded: boolean | null;
+  /** The web app address the popup links to (the session's origin, else the built one). */
+  web: string;
 }
 
 export type ReadResult =
   | { ok: true; already: boolean }
   | { ok: false; reason: "signed_out" | "onboarding" | "refused" | "no_article" | "error"; message: string };
 
+/** Open in Gloss on a YouTube video page (decision 62). */
+export type VideoResult =
+  | { ok: true }
+  | { ok: false; reason: "signed_out" | "onboarding" | "not_video" | "refused" | "error"; message: string };
+
 export type PopupMessage =
   | { type: "status" }
   | { type: "read"; tabId: number }
+  | { type: "open-video"; tabId: number }
   | { type: "settings"; persona?: PersonaKey; density?: Density };
 
 /** One API step the content script asks the worker to make (the worker holds the token). */

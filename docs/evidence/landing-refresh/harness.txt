@@ -1,75 +1,74 @@
 {
  "after 320 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-320-light.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-320-light.png"
  },
  "after 320 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-320-dark.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-320-dark.png"
  },
  "after 390 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-390-light.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-390-light.png"
  },
  "after 390 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-390-dark.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-390-dark.png"
  },
  "after 768 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-768-light.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-768-light.png"
  },
  "after 768 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-768-dark.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-768-dark.png"
  },
  "after 1024 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1024-light.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-1024-light.png"
  },
  "after 1024 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1024-dark.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-1024-dark.png"
  },
  "after 1440 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1440-light.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true,
   "headings": [
    [
     1,
@@ -143,43 +142,44 @@
     2,
     "Your next article, explained for you."
    ]
-  ]
+  ],
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-1440-light.png"
  },
  "after 1440 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1440-dark.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-1440-dark.png"
  },
  "after 1920 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1920-light.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-1920-light.png"
  },
  "after 1920 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1920-dark.png",
+  "stills_loaded": true,
   "axe": [],
   "hscroll": 0,
   "headings_ok": true,
   "no_alt": [],
-  "stills_loaded": true
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/after-1920-dark.png"
  },
  "before 390 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-390-light.png"
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/before-390-light.png"
  },
  "before 390 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-390-dark.png"
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/before-390-dark.png"
  },
  "before 1440 light": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-1440-light.png"
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/before-1440-light.png"
  },
  "before 1440 dark": {
-  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-1440-dark.png"
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh5/before-1440-dark.png"
  },
  "first view 1440x900": {
   "diff_box": [
