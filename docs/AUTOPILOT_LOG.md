@@ -1743,9 +1743,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   the build agent"), BUILD_PLAN pointer, STATUS decisions 58–59, two §4 deviations, §28.
   API 1,172.
 
+- milestone-reviewer: FIX (annotate p95 counted CORS preflights: 287 → 478 ms GET-only; 24/25 not
+  25/25; windows; README figures) → applied → **SHIP**, nits applied. PR #36, CI green, merged.
+  **M9 complete.**
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer → SHIP → PR → CI → merge (docs, scripts, dashboard JSON: no deploy).
-2. Sourabh: audit the 30 precision verdicts.
-3. Oct 16 plan: seeding (persona templates, demo pre-ingest, `seed_demo_feed`, `warm_demo
-   --shifts`, `ingest_media.py` for the snapshots' short recordings, dry runs and counts first),
-   README refresh (287 ms, precision label), video, deck. Oct 17: gitleaks, repo public, submit.
+1. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first);
+   then update the README precision row's "(Sourabh's audit pending)".
+2. Oct 16 plan (plan-reviewer first): persona templates re-seed, demo pre-ingest, `seed_demo_feed`,
+   `warm_demo --shifts`, `ingest_media.py` for the snapshots' short recordings (dry runs and counts
+   first; not the BBC PFAS article), README refresh, video, deck (87/97/90 labelled as judged by
+   the build agent). Oct 17: gitleaks over history, repo public, submit.
