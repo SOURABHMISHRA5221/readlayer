@@ -2,7 +2,7 @@ import { DeviceFrame, Still } from "./DeviceFrame";
 import { EXTENSION_RELEASE_URL } from "./links";
 
 /** The production extension's popup at 1x (`tools/shots/landing_extension.py`). */
-const POPUP = { width: 300, height: 198 };
+const POPUP = { width: 300, height: 188 };
 
 /**
  * "Gloss in your browser" (decision 61 B): the Chrome extension on a real page, what it can and
@@ -45,14 +45,14 @@ export function GlossInBrowser() {
             name="shot-extension"
             width={1440}
             height={900}
-            alt="Wikipedia's Yield curve article in Chrome with the Gloss extension: the ideas a newcomer would miss are underlined, and the note on Yield curve is open."
+            alt="Wikipedia's Yield curve article in Chrome with the Gloss extension: terms a newcomer would miss are underlined, and the note on Term structure of interest rates is open, its Background using a software analogy."
           />
         </DeviceFrame>
         <div className="lp-ext__popup">
           <Still
             name="shot-popup"
             {...POPUP}
-            alt="The Gloss extension's popup, with its Read this page button and nothing read yet."
+            alt="The Gloss extension's popup for a demo newcomer: a Read this page button, and the line Nothing runs until you press this."
           />
         </div>
       </figure>

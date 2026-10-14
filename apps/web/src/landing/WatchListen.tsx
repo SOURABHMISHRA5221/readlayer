@@ -31,7 +31,7 @@ export function WatchAndListen() {
             name="shot-media"
             width={1440}
             height={900}
-            alt="A short Fireship video open in Gloss: the player, the transcript with a time button on each paragraph, and a note open on a term in the transcript."
+            alt="A short Fireship video open in Gloss: the player, the transcript with a time button on each paragraph, and the note on Decompiler open beside the highlighted word decompile."
           />
         </DeviceFrame>
       </figure>

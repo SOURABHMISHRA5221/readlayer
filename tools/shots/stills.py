@@ -32,9 +32,11 @@ def encode_still(png: Path, name: str, css_w: int) -> dict:
     sizes = {}
     for scale, suffix in ((1, ""), (2, "@2x")):
         w = css_w * scale
-        for q in (80, 72, 64, 56, 48, 40):  # text-heavy pages (Wikipedia) need the low end
+        # Lossy first; a text-heavy page (Wikipedia) stays crisper near-lossless than at a low q.
+        steps = [["-q", str(q)] for q in (80, 72, 64, 56)] + [["-near_lossless", "40", "-z", "9"], ["-q", "40"]]
+        for step in steps:
             webp = OUT / f"{name}{suffix}.webp"
-            run("cwebp", "-quiet", "-q", str(q), "-resize", str(w), "0", str(png), "-o", str(webp))
+            run("cwebp", "-quiet", *step, "-resize", str(w), "0", str(png), "-o", str(webp))
             if webp.stat().st_size <= STILL_MAX[scale]:
                 break
         for crf in (34, 40, 46, 52):
