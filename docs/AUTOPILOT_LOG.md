@@ -1984,3 +1984,6 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   the feed refresh is Scheduler → API (not a job), with growth linking meets both targets.
 - Checks: every link, image and anchor resolves; the account name nowhere; GitHub markdown API
   renders 7 tables and 13 images.
+- milestone-reviewer: FIX 7 (linking headline, outsider Getting started, dated a11y, graph
+  sources, link_confirm wording, cost row, STATUS leftovers) → applied (774034a) → **SHIP**.
+  Next: push, PR, check the stills render on GitHub from the branch, CI, merge.
