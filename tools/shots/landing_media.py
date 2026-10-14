@@ -126,6 +126,8 @@ async def shot_feed(p, tmp: Path, report):
     await p.goto(f"{WEB}/for-you?persona=newcomer", wait=3)
     await wait_js(p, "document.querySelectorAll('article.row').length >= 4", 40)
     await wait_js(p, "!!document.querySelector('.row__why')", 20)
+    # The week panel loads its own chunk: shoot once it has filled in, never its skeleton.
+    await wait_js(p, "[...document.querySelectorAll('a')].some(a => a.textContent.trim() === 'Open your map')", 30)
     await asyncio.sleep(1.5)  # thumbnails
     lines = await p.eval(VISIBLE_WHY_JS)
     report["shot-feed lines"] = lines
@@ -164,13 +166,22 @@ async def shot_media(p, tmp: Path, report):
         raise SystemExit(f"shot-media: not the stored recording: {opened}")
     await p.goto(f"{WEB}/read/{FIRESHIP}?persona=newcomer", wait=2)
     await wait_js(p, "document.querySelectorAll('.rl-mark').length > 0", 40)
-    await p.eval(f"""(() => {{ const m = [...document.querySelectorAll('.rl-mark[tabindex]')]
-      .find(m => m.textContent.trim() === {json.dumps(MEDIA_MARK)}); m.scrollIntoView({{block: 'center'}}); return 1; }})()""")
+    # From the top of the page (title, player, then the transcript), so the marked word isn't
+    # under the player, which sticks once the page scrolls; nudged up only if below the fold.
+    await p.eval(f"""(() => {{ scrollTo(0, 0); const m = [...document.querySelectorAll('.rl-mark[tabindex]')]
+      .find(m => m.textContent.trim() === {json.dumps(MEDIA_MARK)}); const r = m.getBoundingClientRect();
+      if (r.bottom > innerHeight - 80) scrollBy(0, r.bottom - innerHeight + 200); return 1; }})()""")
     await asyncio.sleep(1.2)
     await click_mark(p, MEDIA_MARK)
     await wait_js(p, READY, 60)
     await asyncio.sleep(0.8)
     report["shot-media note"] = await p.eval("document.querySelector('.rl-card:not([hidden]) .rl-card__title')?.textContent")
+    report["shot-media mark"] = await p.eval(f"""(() => {{ const m = [...document.querySelectorAll('.rl-mark[tabindex]')]
+      .find(m => m.textContent.trim() === {json.dumps(MEDIA_MARK)}); const r = m.getBoundingClientRect();
+      return {{top: r.top, bottom: r.bottom, hit: document.elementFromPoint(r.left + 2, r.top + r.height / 2) === m
+        || m.contains(document.elementFromPoint(r.left + 2, r.top + r.height / 2))}}; }})()""")
+    if not report["shot-media mark"]["hit"]:
+        raise SystemExit(f"shot-media: the marked word is covered: {report['shot-media mark']}")
     report["shot-media"] = encode_still(await capture(p, tmp / "media.png"), "shot-media", FULL_W)
 
 
@@ -427,4 +438,5 @@ async def main():
             print(json.dumps(report, indent=2))
 
 
-asyncio.run(main())
+if __name__ == "__main__":  # landing_extension.py imports the web stills
+    asyncio.run(main())

@@ -32,12 +32,12 @@ def encode_still(png: Path, name: str, css_w: int) -> dict:
     sizes = {}
     for scale, suffix in ((1, ""), (2, "@2x")):
         w = css_w * scale
-        for q in (80, 72, 64, 56):
+        for q in (80, 72, 64, 56, 48, 40):  # text-heavy pages (Wikipedia) need the low end
             webp = OUT / f"{name}{suffix}.webp"
             run("cwebp", "-quiet", "-q", str(q), "-resize", str(w), "0", str(png), "-o", str(webp))
             if webp.stat().st_size <= STILL_MAX[scale]:
                 break
-        for crf in (34, 40, 46):
+        for crf in (34, 40, 46, 52):
             avif = OUT / f"{name}{suffix}.avif"
             run("ffmpeg", "-y", "-i", str(png), "-vf", f"scale={w}:-2,format=yuv420p", "-c:v", "libsvtav1",
                 "-crf", str(crf), "-frames:v", "1", str(avif))

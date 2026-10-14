@@ -4,7 +4,10 @@ of interest rates" (it redirects to "Yield curve", a stored corpus doc, so the p
 
     cd apps/api && uv run python -m scripts.landing_media_precheck --refresh c_decompiler c_term_structure_of_interest_rates
     pnpm --filter extension build
-    uv run --project apps/api python tools/shots/landing_extension.py --confirmed
+    uv run --project apps/api python tools/shots/landing_extension.py --confirmed [--web-stills]
+
+`--web-stills` also re-takes landing_media.py's shot-feed and shot-media as this same reader, so a
+re-take costs no extra demo reader (the plan's count is two in all).
 
 Kept from m8_live.py: load the built extension, demo sign-in, Connect, open the page, the popup
 (shot before Read this page is pressed), Read this page, open one note, the window shot, DELETE
@@ -19,7 +22,6 @@ ingest-counter increments (the page is reused and doesn't need growth).
 
 import asyncio
 import json
-import shutil
 import sys
 import tempfile
 import urllib.request
@@ -28,6 +30,7 @@ from pathlib import Path
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import m8  # noqa: E402
 from readiness_live import UID_JS, gone  # noqa: E402
+from landing_media import shot_feed, shot_media  # noqa: E402
 from stills import DPR, encode_still, png_size  # noqa: E402
 
 LIVE_WEB = "https://readlayer-sourabh-26.web.app"
@@ -114,8 +117,25 @@ async def shoot(h: m8.Harness, tmp: Path, report: dict) -> None:
         await asyncio.sleep(0.5)
     report["card"] = card
     await asyncio.sleep(0.8)
-    report["shot-extension"] = encode_still(await capture(h.p, tmp / "window.png"), "shot-extension", 1440)
-    report["shot-popup"] = encode_still(popup_png, "shot-popup", POPUP_W)
+    await capture(h.p, tmp / "window.png")  # encoded after cleanup (encode() below)
+
+
+def encode(tmp: Path, report: dict) -> None:
+    """After the reader is gone: each still on its own, so one over its size cap costs no other;
+    the PNGs stay in `tmp` for a re-encode without a new capture."""
+    for png, name, css_w in (("window.png", "shot-extension", 1440), ("popup.png", "shot-popup", POPUP_W)):
+        if (tmp / png).exists():
+            try:
+                report[name] = encode_still(tmp / png, name, css_w)
+            except SystemExit as e:
+                report[name] = f"FAILED: {e}"
+
+
+async def safely(report: dict, name: str, shot) -> None:
+    try:
+        await shot
+    except SystemExit as e:
+        report[name] = f"FAILED: {e}"
 
 
 async def main() -> None:
@@ -123,7 +143,7 @@ async def main() -> None:
         raise SystemExit("Run the --refresh precheck (apps/api) and `pnpm --filter extension build` first, then pass --confirmed.")
     built_for_production()
     m8.W, m8.API, m8.RULES = LIVE_WEB, LIVE_API, "MAP nothing.invalid 127.0.0.1"
-    tmp = Path(tempfile.mkdtemp(prefix="gloss-ext-"))
+    tmp = Path(tempfile.mkdtemp(prefix="gloss-ext-", dir=m8.cdp.OUT if m8.cdp.OUT.exists() else None))
     report: dict = {}
     uid = None
     m8.launch(scale=DPR)
@@ -133,7 +153,10 @@ async def main() -> None:
         uid = await h.p.eval(UID_JS % json.dumps(await h.p.token()))
         report["uid"] = uid
         report["connect"] = await m8.connect(h)
-        await shoot(h, tmp, report)
+        await safely(report, "extension", shoot(h, tmp, report))
+        if "--web-stills" in sys.argv:  # re-takes of shot-feed / shot-media, same reader (R7 count)
+            await safely(report, "shot-feed", shot_feed(h.p, tmp, report))
+            await safely(report, "shot-media", shot_media(h.p, tmp, report))
     finally:
         try:
             if uid:
@@ -143,7 +166,8 @@ async def main() -> None:
             import subprocess
 
             subprocess.run(["pkill", "-f", f"remote-debugging-port={m8.PORT}"], check=False)
-            shutil.rmtree(tmp, ignore_errors=True)
+            encode(tmp, report)
+            report["pngs kept in"] = str(tmp)
             if uid:
                 await asyncio.sleep(3)
                 report["deleted"] = gone(uid)
