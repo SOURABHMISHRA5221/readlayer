@@ -1833,3 +1833,16 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. Decision 62 (gloss web address) plan → plan-reviewer → build (Auth domain, CORS, extension
    0.8.2, links; deploys on Sourabh's yes).
 3. The Oct 16 items (persona re-seed and the rest, unchanged from the earlier Next steps).
+
+- milestone-reviewer round 1: **FIX** (4 STATUS items: stale bundle line, three new risks, capture
+  cost, the README line to fix Oct 16) → applied, plus install step "pin Gloss", popup hidden below
+  768, dead branch removed; harness re-run all pass (b69717c). Round 2 (after a rate-limit pause and
+  Sourabh's re-login): **SHIP**. Sourabh on the sponsor line in the feed still: "keep it".
+- Note: the Claude login is now another account; GCP must still be sourabhlocalllm /
+  readlayer-sourabh-26 (`make check-gcp` before any deploy).
+
+### Next steps (resume here, in order)
+1. Push `landing-refresh` → PR → CI → merge → `make check-gcp` → `make deploy-web` from clean
+   `main` (Sourabh's yes) → live check at 1440 and 390 (new sections, stills, axe 0).
+2. Decision 62 (gloss web address) plan → plan-reviewer → build.
+3. The Oct 16 items.
