@@ -2,7 +2,7 @@
 
 import pytest
 
-from app.graph import growth
+from app.graph import growth, growth_need
 from app.ingest.models import ContentDoc, LLMCall, Media
 from tests.test_growth import TEXT, demand
 
@@ -31,7 +31,7 @@ def test_pick_skips_labels_already_tried():
     ]
     got = growth.pick(ds, {"p0": TEXT}, limit=5, exclude=frozenset({"false nine"}))
     assert [p.label for p in got] == ["Offside", "Pressing"]
-    assert growth.untried_count(ds, frozenset({"false nine", "offside"}), limit=5) == 1
+    assert growth_need.untried_count(ds, frozenset({"false nine", "offside"}), limit=5) == 1
 
 
 @pytest.mark.parametrize(
@@ -56,7 +56,7 @@ def test_pick_skips_labels_already_tried():
     ],
 )
 def test_needs_growth(doc, heldout, expected):
-    assert growth.needs_growth(doc, heldout=heldout) is expected
+    assert growth_need.needs_growth(doc, heldout=heldout) is expected
 
 
 def test_a_stored_page_reads_without_the_new_fields():

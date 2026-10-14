@@ -253,6 +253,37 @@ async def analyse_content(
     return AnalyseResponse(content_id=content_id, status="ready")
 
 
+class GrowResponse(BaseModel):
+    content_id: str
+    status: Literal["none", "capped", "grown", "growing"]
+    linked: int = 0
+
+
+@router.post("/content/{content_id}/grow", response_model=GrowResponse)
+async def grow_content(
+    content_id: Annotated[str, Path(min_length=1, max_length=64, pattern=r"^[0-9a-f]+$")],
+    caller: Annotated[Caller, Depends(current_caller)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> GrowResponse | JSONResponse:
+    """A reader's stored page that missed concept growth (the caps ran out, M9 part 1): grow it
+    now with this reader's slots, so its ideas join the map and its notes appear. "none" (no
+    model call): nothing to grow; "capped": no slots left today; "grown": `linked` demands now
+    link; 202 "growing": another request is on it. Never part of the scoring path. Extension
+    pages: their submitters only."""
+    doc = await get_content_store().get(content_id)
+    if doc is None:
+        return _error(404, "not_found", "content not found")
+    await require_readable(doc, caller.uid)
+    from app.ingest.growing import grow_stored
+
+    done = await grow_stored(doc, quota.growth_reserver(caller, settings))
+    if done.status == "budget":
+        return _ingest_error(llm.BudgetExceeded("daily LLM budget reached"))
+    if done.status == "growing":
+        return JSONResponse({"content_id": content_id, "status": "growing"}, status_code=202)
+    return GrowResponse(content_id=content_id, status=done.status, linked=done.linked)
+
+
 class TranscribeResponse(BaseModel):
     content_id: str
     status: Literal["analysing"]

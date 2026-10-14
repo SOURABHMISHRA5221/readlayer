@@ -10,16 +10,21 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from app import llm
 from app.config import get_settings
 from app.graph.build import normalize_label
-from app.graph.growth import pick, untried_count
+from app.graph.growth import pick
+from app.graph.growth_need import untried_count
 from app.graph.loader import get_graph
-from app.ingest.models import Demand, LLMCall
+from app.ingest.models import ContentDoc, Demand, LLMCall
 from app.ingest.quota import Reserver
 
 log = logging.getLogger("app.ingest")
+
+CLAIM_MARGIN_S = 30  # a claim outlives the growth timeout, so a live grower never loses it
 
 
 @dataclass(frozen=True)
@@ -30,6 +35,7 @@ class GrowthResult:
     tried: list[str]  # normalised labels tried on this page, never tried again
     budget_refused: bool = False
     linked: int = field(default=0)  # demands this run linked
+    granted: int = 0  # slots the caps gave this run
 
 
 async def run_growth(
@@ -64,11 +70,16 @@ async def run_growth(
     except (llm.BudgetExceeded, llm.LLMUnavailable) as exc:  # nothing billed; worth another try
         _skipped(content_id, exc, started, budget_s)
         return GrowthResult(
-            demands, [], True, list(tried), budget_refused=isinstance(exc, llm.BudgetExceeded)
+            demands,
+            [],
+            True,
+            list(tried),
+            budget_refused=isinstance(exc, llm.BudgetExceeded),
+            granted=granted,
         )
     except Exception as exc:  # model output, the timeout: billed, so these labels are done
         _skipped(content_id, exc, started, budget_s)
-        return GrowthResult(demands, [], False, [*tried, *labels])
+        return GrowthResult(demands, [], False, [*tried, *labels], granted=granted)
     get_refresher().apply(outcome.added)
     log.info(
         "concept growth",
@@ -95,6 +106,7 @@ async def run_growth(
         granted < want,
         [*tried, *labels],
         linked=len(outcome.links),
+        granted=granted,
     )
 
 
@@ -120,3 +132,51 @@ def llm_call(m: llm.CallMeta) -> LLMCall:
         cost_usd=m.cost_usd,
         fell_back=m.fell_back,
     )
+
+
+@dataclass(frozen=True)
+class Regrown:
+    status: Literal["none", "capped", "grown", "growing", "budget"]
+    linked: int = 0
+
+
+async def grow_stored(doc: ContentDoc, reserve: Reserver | None) -> Regrown:
+    """POST /v1/content/{id}/grow (M9 part 1, G4–G7): grow a reader's stored page that missed
+    growth. No model call unless `needs_growth`; one grower per page across instances; a run
+    that outlived its claim writes nothing. The page's text never changes, only demand links."""
+    from app.content import catalog
+    from app.graph.growth_need import needs_growth
+    from app.graph.heldout import is_heldout
+    from app.store.content_repo import get_content_store
+
+    settings = get_settings()
+    if reserve is None or not needs_growth(doc, heldout=is_heldout(doc.content_id)):
+        return Regrown("none")
+    store = get_content_store()
+    now = datetime.now(UTC)
+    until = now + timedelta(seconds=settings.growth_timeout_s + CLAIM_MARGIN_S)
+    status, token = await store.claim_growth(doc.content_id, now, until)
+    if status != "claimed" or token is None:
+        return Regrown("growing" if status == "busy" else "none")
+    paragraphs = {p.id: p.text for p in doc.paragraphs}
+    result = await run_growth(
+        doc.content_id, doc.demands, paragraphs, doc.grow_tried, settings.growth_timeout_s, reserve
+    )
+    demands = result.demands if result.linked else None
+    if not await store.finish_growth(
+        doc.content_id, token, demands, result.calls, result.pending, result.tried
+    ):
+        log.warning(
+            "concept growth result dropped: claim lost",
+            extra={
+                "content_id": doc.content_id,
+                "cost_usd": round(sum(c.cost_usd for c in result.calls), 6),
+            },
+        )
+        return Regrown("none")
+    if result.budget_refused:
+        return Regrown("budget")
+    if result.linked and (fresh := await store.get(doc.content_id)) is not None:
+        catalog.replace(fresh)
+        return Regrown("grown", result.linked)
+    return Regrown("capped" if result.pending and not result.granted else "none")
