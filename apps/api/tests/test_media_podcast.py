@@ -303,7 +303,6 @@ async def test_the_walks_length_over_the_cap_is_refused_before_any_call(env):
     assert err.value.code == "too_long" and env["fake"].calls == []
 
 
-
 async def test_stitched_in_ads_past_apples_length_still_transcribe(env):
     """Under the default caps: an Indicator episode listed at 565 s downloaded at 652 s (ads
     Apple's length leaves out). It transcribes; the 52 s tail joins window 1."""
@@ -316,6 +315,7 @@ async def test_stitched_in_ads_past_apples_length_still_transcribe(env):
     await service.transcribe_pending(CID, s)
     assert env["fake"].calls == [652]
     assert (await get_pending_repo().get(CID)).stage == "analyse"
+
 
 # ---------------------------------------------------------------- language, slot, fingerprint
 
