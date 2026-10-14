@@ -20,6 +20,7 @@ W = "http://localhost:5173"
 SIZES = ((1440, False), (1440, True), (1024, False), (390, False), (390, True))
 PERSONA = "newcomer"
 SEEK_INDEX = 4  # a paragraph well into the recording
+PAUSE_S = 10  # between page loads: a demo reader has 60 requests a minute, a load uses ~10
 
 INIT_JS = """window.__rl429 = 0; (() => { const f = window.fetch; window.fetch = async (...a) => {
   const r = await f(...a); if (r.status === 429) window.__rl429++; return r; }; })();"""
@@ -51,6 +52,7 @@ async def sweep(p, url: str, kind: str) -> None:
         name = f"{kind}-{width}-{'dark' if dark else 'light'}"
         await p.viewport(width, dark=dark)
         await theme(p, dark)
+        await asyncio.sleep(PAUSE_S)
         await p.goto(url, wait=1.5)
         check(await p.wait_for(".tstamp", 40), f"{name}: no transcript")
         await p.wait_for(".rl-mark", 30)
@@ -76,6 +78,8 @@ async def words_and_seek(p, url: str, content_id: str, kind: str) -> None:
     await p.wait_for(".rl-mark", 40)
     await asyncio.sleep(1.5)
     api = (await p.api("", "GET", f"/v1/content/{content_id}?persona={PERSONA}"))["body"]
+    if "paragraphs" not in api:
+        raise SystemExit(f"GET content answered without paragraphs: {str(api)[:200]}")
     paras = api["paragraphs"]
     dom = dict(await p.eval(PARAGRAPHS_JS))
     wrong = [x["id"] for x in paras if dom.get(x["id"]) != x["text"]]
@@ -109,8 +113,8 @@ async def main(content_id: str, kind: str) -> None:
         await p.eval("document.querySelector('.lp-nav__cta').click(); 1")
         await asyncio.sleep(4)
         url = f"{W}/read/{content_id}?persona={PERSONA}"
+        await words_and_seek(p, url, content_id, kind)  # first: a demo reader has 60 requests a minute
         await sweep(p, url, kind)
-        await words_and_seek(p, url, content_id, kind)
         throttled = await p.eval("window.__rl429")
         check(throttled == 0, f"{throttled} responses were 429")
     finally:

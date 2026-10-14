@@ -1,4 +1,14 @@
 {
+ "paragraphs": {
+  "api": 21,
+  "dom": 21,
+  "different": []
+ },
+ "seek": {
+  "button": "Play from 1:23",
+  "paragraph_start_s": 83,
+  "iframe_start_s": 83
+ },
  "video-1440-light": {
   "axe": [],
   "stamps": 21,
@@ -38,15 +48,5 @@
   "facade": true,
   "audio": false,
   "hscroll": 0
- },
- "paragraphs": {
-  "api": 21,
-  "dom": 21,
-  "different": []
- },
- "seek": {
-  "button": "Play from 1:23",
-  "paragraph_start_s": 83,
-  "iframe_start_s": 83
  }
 }
