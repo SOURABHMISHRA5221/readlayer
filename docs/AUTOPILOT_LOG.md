@@ -1707,8 +1707,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Round 2: **SHIP**. API 1,148, web 186, extension 89, annotator 60; main **149.96 KB** (0.04
   left: any further reader change must be lazy).
 
+- PR #34, CI green, squash-merged (ed138ac); local `main` reset to `origin/main` (its one unpushed
+  docs commit, the media live check, is inside the merge). Deployed on Sourabh's yes: API revision
+  `readlayer-api-00028-7zs` (health ok), web (`index-CnGx2rP7.js`); release `extension-v0.8.1`.
+
 ### Next steps (resume here, in order)
-1. PR → CI → merge → deploy API from clean `main`, then web (Sourabh's yes on each) →
-   `make extension-zip` + release `extension-v0.8.1` (his yes) → live: Sourabh reopens one of his
-   four empty extension pages. Checkpoint: midday Oct 15 IST.
+1. Live: Sourabh loads extension 0.8.1 and reopens one of his four empty extension pages (notes
+   should appear; ≤ 5 slots, ≈ $0.01 each). Record in STATUS §26.
 2. M9 part 2 plan: the four M2.2 quality items (STATUS §9), before any part 3 extras.
+   Checkpoint: midday Oct 15 IST (part 1 is merged and live, so it is met).
