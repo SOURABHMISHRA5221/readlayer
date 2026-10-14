@@ -20,6 +20,12 @@ KNOWN_WRONG_PREREQS: frozenset[tuple[str, str]] = frozenset({
     ("c_c2_photorespiratory_carbon_pump", "c_carbon_cycle"),
     ("c_franchise_t20_leagues", "c_franchise"),  # a business franchise
     ("c_wearable_technology", "c_human_body"),
+    # Judged wrong in the replay but not stored on 2026-10-14 (listed so they never come back):
+    ("c_executive_magistrate", "c_administration"),
+    ("c_proper_officer", "c_administration"),
+    ("c_circle_inspector_and_sub_inspector", "c_administration"),
+    ("c_chief_election_commissioner", "c_elected_office"),  # the CEC is appointed
+    ("c_permanent_account_number", "c_financial_account"),  # a tax identifier
 })  # fmt: skip
 
 

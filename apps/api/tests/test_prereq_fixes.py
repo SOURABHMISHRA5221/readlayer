@@ -20,13 +20,18 @@ LABELS = {
     "c_c2_photorespiratory_carbon_pump": "C2 photorespiratory carbon pump",
     "c_carbon_cycle": "Carbon cycle", "c_franchise_t20_leagues": "Franchise T20 leagues",
     "c_franchise": "Franchise", "c_wearable_technology": "Wearable technology",
-    "c_human_body": "Human body",
+    "c_human_body": "Human body", "c_executive_magistrate": "Executive Magistrate",
+    "c_proper_officer": "Proper officer",
+    "c_circle_inspector_and_sub_inspector": "Circle Inspector and Sub-Inspector",
+    "c_chief_election_commissioner": "Chief Election Commissioner",
+    "c_elected_office": "Elected office", "c_permanent_account_number": "Permanent Account Number",
+    "c_financial_account": "Financial account",
 }  # fmt: skip
 
 
 def test_every_listed_id_is_the_slug_of_its_production_label():
     ids = {i for edge in KNOWN_WRONG_PREREQS for i in edge}
-    assert ids == set(LABELS) and len(KNOWN_WRONG_PREREQS) == 8
+    assert ids == set(LABELS) and len(KNOWN_WRONG_PREREQS) == 13
     for cid, label in LABELS.items():
         assert slug_ids([label])[0] == cid, (cid, label)
 

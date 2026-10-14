@@ -5,6 +5,8 @@ Every cross-domain edge was judged right or wrong with the confidences hidden (b
 
 **CROSS_DOMAIN_MIN = 0.7**: of 22 right cross-domain edges 0 dropped; of 10 wrong, 0 dropped and 10 kept. Chosen and measured on the same set (in-sample).
 
+*The next three paragraphs and the cut table were added by hand after `report` ran (re-running it would drop them).*
+
 **No cut separates them.** The model gives coarse confidences (0.7–0.9) and wrong edges sit as high as right ones (Seizure memo → Seizure at 0.90). Every possible cut:
 
 | keep confidence ≥ | right kept | wrong dropped |
@@ -50,3 +52,13 @@ So `CROSS_DOMAIN_MIN` is **not added** (the only cut keeping ≥ 90% of right ed
 | Natural language processing | AI | 0.70 | right | yes |
 | Phase 2 environmental site assessment | Environmental science | 0.70 | right | yes |
 | USB Power Delivery | Electric power | 0.70 | right | yes |
+
+*Added by hand.* **Which wrong edges are stored** (production `graph_growth`, read 2026-10-14 before the
+replay): stored — Seizure memo → Seizure, C2 photorespiratory carbon pump → Carbon cycle, Franchise T20
+leagues → Franchise, Wearable technology → Human body, Education Minister → Administration; not stored
+(the replay proposed them, production has other prerequisites) — Executive Magistrate → Administration
+(stored: Jurisdiction), Proper officer → Administration (none), Circle Inspector and Sub-Inspector →
+Administration (none), Chief Election Commissioner → Elected office (none), Permanent Account Number →
+Financial account (stored: KYC). All ten are in `app/graph/prereq_fixes.py`, with the four from the
+plan's evidence (13 pairs, one overlapping). **Measured rate for new growth:** 10 of 32 cross-domain
+proposals wrong (31%), at confidences up to 0.90; same-domain proposals were not judged.
