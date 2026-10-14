@@ -1598,6 +1598,25 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   caps raised in its env). Cut from 5.7: items 3-5 (refusal sweep, pre-check count, podcast
   shots) and the copy-hunt investigation. API suite 1084 passed.
 
+## Media build, step 7 (2026-10-14, the video deploy decision)
+
+- Video re-probe (`scripts.probe_media`, fresh emulator, harness budget $1.00, production spend
+  today $0), 05:55 UTC. Production route settings (quality model, low thinking, 90 s timeout).
+  - Short clip, T01 0:00-3:00 with offsets: **OK 10.4 s, $0.0153**, 382 words.
+  - Whole video, no offsets, under the new 10-min cap: Kurzgesagt "The Egg" (`h6fcK_fRYaI`,
+    486 s; picked by me, Sourabh had none; lookup passes every `youtube_info` check):
+    **OK 50.6 s, $0.0467**, 900 words, last start 7:15. The first answer failed a
+    `check_window` check and the in-call re-ask passed (reason not captured: my output filter
+    dropped it). Second run, full log kept: **OK 45.4 s, $0.0264, first try**, 898 words,
+    last start 7:20.
+  - Session probe spend $0.0884, emulator ledger only.
+- **Decision: video ships on** (`MEDIA_VIDEO_ENABLED: "true"` stays; the web flag follows).
+  The whole-URL hang was on 16-19 min videos; under the 10-min cap one call answers in
+  45-51 s, inside the 90 s timeout. Watch item: one first-try check failure in two runs.
+
 ### Next steps (resume here, in order)
-1. Step 7 (the deploy decision for media; video stays off unless a short clip and a whole video
-   both answer). Checkpoint end of Oct 14 IST (decision 27).
+1. `scripts/ingest_media.py <url>... [--dry-run]` (R12, 2.4: source `user_ingested`) with tests.
+2. milestone-reviewer → fix until SHIP → PR → CI green → merge.
+3. Deploy API from `main`, then web (Sourabh's yes on each; web flag matches the API), then the
+   live check (acceptance 6) on one ≤10-min video and one ≤10-min podcast episode.
+   Checkpoint end of Oct 14 IST (decision 27).
