@@ -11,10 +11,10 @@ export const GROW_CAPPED =
 const RETRY_MS = 5_000;
 const WINDOW_MS = 60_000; // the server's growth timeout plus its claim margin
 
-/** The API marks the page (`grow_pending`), or this script just analysed it: growth may have been
- *  short of slots in that analysis, and the server answers "none" cheaply when it wasn't. */
-export function shouldGrow(detail: { grow_pending?: boolean }, analysedNow: boolean): boolean {
-  return detail.grow_pending === true || analysedNow;
+/** The API marks the page (`grow_pending`). The detail is read after any analysis here, so it
+ *  already says whether that analysis was short of growth slots. */
+export function shouldGrow(detail: { grow_pending?: boolean }): boolean {
+  return detail.grow_pending === true;
 }
 
 /** POST .../grow until it settles (202: another request is growing it). Errors end it quietly:

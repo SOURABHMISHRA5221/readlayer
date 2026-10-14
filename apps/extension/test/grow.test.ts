@@ -8,11 +8,10 @@ import type { ApiReply } from "../src/messages";
 const reply = (status: number, body: unknown): ApiReply => ({ ok: true, status, data: body });
 
 describe("shouldGrow", () => {
-  it("asks for a page the API says missed growth, or one analysed just now", () => {
-    expect(shouldGrow({ grow_pending: true }, false)).toBe(true);
-    expect(shouldGrow({ grow_pending: false }, true)).toBe(true);
-    expect(shouldGrow({ grow_pending: false }, false)).toBe(false);
-    expect(shouldGrow({}, false)).toBe(false); // an older API
+  it("asks only for a page the API says missed growth", () => {
+    expect(shouldGrow({ grow_pending: true })).toBe(true);
+    expect(shouldGrow({ grow_pending: false })).toBe(false);
+    expect(shouldGrow({})).toBe(false); // an older API
   });
 });
 

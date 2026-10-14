@@ -101,7 +101,7 @@ async function start({ webBase }: { webBase: string }): Promise<void> {
     return;
   }
   let grown: GrowStatus | null = null;
-  if (detail.ok && shouldGrow(detail.data, analysing)) {
+  if (detail.ok && shouldGrow(detail.data)) {
     showToast("Adding this page's ideas to your map…", { busy: true });
     grown = await growUntilDone(id, (op) => api(op));
   }
