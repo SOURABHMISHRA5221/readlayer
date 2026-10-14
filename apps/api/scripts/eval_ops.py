@@ -159,6 +159,10 @@ def report(data: Mapping) -> str:
         lines.append(f"| {name} | {hits} | {misses} | {rate} | {source} |")
     lines += [
         "",
+        "Open here and Read any link check for a stored page before they ingest, so reuse of "
+        "stored pages shows in the second row; the third row counts only ingest calls that "
+        "found the page already stored.",
+        "",
         f"Web search: {data['search_calls'][0]} provider calls ({data['search_calls'][1]}; "
         "cache misses, no hit counter exists).",
         "",
@@ -179,7 +183,10 @@ def report(data: Mapping) -> str:
         "|---|---|",
     ]
     for name, vals in data["rolling"].items():
-        shown = ", ".join(f"{k.replace('_ms', '')} {v:.1f} ms" for k, v in vals.items())
+        shown = ", ".join(
+            f"last {v:.0f} requests" if k == "window" else f"{k.replace('_ms', '')} {v:.1f} ms"
+            for k, v in vals.items()
+        )
         lines.append(f"| {name} | {shown or 'none logged'} |")
     total = sum(data["spend"].values())
     recent = sorted(data["spend"].items())[-14:]
@@ -306,7 +313,7 @@ def collect(db, logs=_logs) -> dict:  # noqa: ANN001 (a Firestore client or a fa
             **{k: (v, explain_source) for k, v in sorted(lat.items())},
         },
         "rolling": {
-            "annotation scoring (in-process, last 200)": latest(scoring, ["p95_ms"]),
+            "annotation scoring (in-process)": latest(scoring, ["p95_ms", "window"]),
             "explanation (in-process windows)": with_samples(
                 latest(
                     rolling,

@@ -1,6 +1,6 @@
 # Cost, cache and latency (M9 part 3)
 
-Generated 2026-10-14 10:58 UTC by `scripts/eval_ops.py` from production, read only: Firestore (field masks) and Cloud Logging. Costs cover everything stored to date; cache and latency cover the last 7 days of logs (2026-10-08 to 2026-10-14). Aggregates only. Minimum instances is 0, so request latencies include cold starts.
+Generated 2026-10-14 11:01 UTC by `scripts/eval_ops.py` from production, read only: Firestore (field masks) and Cloud Logging. Costs cover everything stored to date; cache and latency cover the last 7 days of logs (2026-10-08 to 2026-10-14). Aggregates only. Minimum instances is 0, so request latencies include cold starts.
 
 ## Cost per article (model calls stored with each page)
 
@@ -33,6 +33,8 @@ The restatement is made once per span and shared by every reader; the Background
 | pages opened (Open here, Read any link) | 3 | 25 | 11% | `rec opened` log lines: already stored vs fetched new |
 | pages ingested (every ingest path) | 0 | 35 | 0% | `content cache hit` / `content ingested` log lines |
 
+Open here and Read any link check for a stored page before they ingest, so reuse of stored pages shows in the second row; the third row counts only ingest calls that found the page already stored.
+
 Web search: 412 provider calls (2026-10-08 to 2026-10-14; cache misses, no hit counter exists).
 
 ## Latency
@@ -47,7 +49,7 @@ Latest values the API logs from its own rolling windows (in-process, per instanc
 
 | window | values |
 |---|---|
-| annotation scoring (in-process, last 200) | p95 1.6 ms |
+| annotation scoring (in-process) | p95 1.6 ms, last 50 requests |
 | explanation (in-process windows) | cached_p50 62.1 ms, cached_p95 114.0 ms |
 
 ## Model spend on the project ledger
