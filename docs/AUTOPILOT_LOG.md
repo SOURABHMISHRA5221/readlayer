@@ -1727,7 +1727,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   edges) at graph load and refresh. Fresh precision **27/30 = 90%** (Sourabh asked to audit).
   Synonym harness on the BBC PFAS article: **PASS, $0.0124**. API 1,162.
 
+- milestone-reviewer: FIX (5 unstored wrong edges not filtered, STATUS stale, two R14 tests) →
+  applied → FIX (one count) → applied. PR #35, CI green, squash-merged (ec5422b). API deployed on
+  Sourabh's yes: revision `readlayer-api-00029-9lp` (health ok).
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer → SHIP → PR → CI → merge → deploy API from clean `main` (Sourabh's yes).
-2. Sourabh: audit the 30 precision verdicts (evals/heldout_report.md).
-3. M9 part 3 plan: evals (gold set status still unknown), hardening, demo. Oct 16 freeze.
+1. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first).
+2. M9 part 3 plan: evals (gold set status unknown: ask), hardening (WIF CI, monitoring dashboard,
+   rate limits), demo seeding prep (incl. `ingest_media.py` for the snapshots' short recordings).
+   Freeze Oct 16.
