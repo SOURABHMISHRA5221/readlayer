@@ -48,8 +48,7 @@ deploy, no production writes. Branch `readme-refresh` from `main` (540bc80).
 7. **Architecture**: `media` box in the API, the extension as a second client; Repository
    structure updated.
 8. **Getting started**: `.gcp.local.mk` for `ACCOUNT`.
-9. **Team**: ask Sourabh for names and links; until he answers, the section is removed rather
-   than left as a placeholder (it returns when he gives the details).
+9. **Team**: unchanged, placeholder kept (Sourabh, 2026-10-14: "Keep it placeholder").
 
 ## Checks
 - Every number in the README appears in STATUS, an eval report or `deploy.env.yaml` (a reviewer
