@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     growth_per_article: int = 5
     growth_per_uid_day: int = 25  # per reader, Google or anonymous (decision 35)
     growth_per_day: int = 100  # all readers together
+    anon_growth_daily_cap: int = 150  # all anonymous readers together (M9 G6: 30 URLs × 5)
     growth_refresh_s: float = 60.0  # how often an instance looks for concepts grown elsewhere
     # Inside phase 2, bounded by the time phase 2 has left (minus 5 s). 30 s, not the plan's 20 s:
     # a harness ingest needed 20.0 s for 4 concepts (five batched calls incl. MODEL_QUALITY).

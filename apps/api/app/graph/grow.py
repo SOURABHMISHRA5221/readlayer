@@ -1,8 +1,9 @@
 """Online concept growth at ingest (M2.2 plan §C.2): the calls and the store.
 
-Given an analysed article's demands and a number of growth slots (reserved in phase 1 within the
-caps), it grows at most that many verified concepts for still-unlinked concept/term demands:
-1. pick the unlinked demands (one per label, most salient first);
+Given an analysed article's demands and a number of growth slots (reserved when growth runs, for
+exactly the labels it will try: app/ingest/growing.py, M9), it grows at most that many verified
+concepts for still-unlinked concept/term demands:
+1. pick the unlinked demands (one per label, most salient first, skipping labels already tried);
 2. embed their labels; a near graph concept (≥ DEDUPE_THRESHOLD) goes to one batched link_merge,
    and a "same" answer links the demand to it (named organisations never absorb another label);
 3. the rest go to one batched concept_define (v3) with their sentence; only verified concepts
@@ -70,9 +71,11 @@ async def grow(
     repo: GrowthRepo,
     runner: enrich.Runner = llm.run_with_meta,
     embed: Embed = _embed,
+    *,
+    exclude: frozenset[str] = frozenset(),
 ) -> GrowthOutcome:
     out = GrowthOutcome()
-    picks = pick(demands, paragraphs, slots)
+    picks = pick(demands, paragraphs, slots, exclude)
     if not picks or not len(graph):
         return out
     vectors = dict(

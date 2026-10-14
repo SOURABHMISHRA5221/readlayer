@@ -30,6 +30,7 @@ log = logging.getLogger("app.graph.refresh")
 
 OVERLAP = timedelta(seconds=120)
 UNRESOLVED_TTL_S = 24 * 3600.0
+SOON_S = 5.0  # a page links a concept grown elsewhere a moment ago (M9 G8)
 
 
 class Refresher:
@@ -72,11 +73,15 @@ class Refresher:
         self.last_check = time.monotonic()
         return len(rows)
 
-    async def maybe_refresh(self) -> None:
-        if time.monotonic() - self.last_check < get_settings().growth_refresh_s:
+    async def maybe_refresh(self, soon: bool = False) -> None:
+        """At most once per GROWTH_REFRESH_S; `soon` (a page links a concept not loaded here
+        yet) shortens that to SOON_S, so an id that never appears costs a read every few
+        seconds at most."""
+        interval = SOON_S if soon else get_settings().growth_refresh_s
+        if time.monotonic() - self.last_check < interval:
             return
         async with self._lock:
-            if time.monotonic() - self.last_check < get_settings().growth_refresh_s:
+            if time.monotonic() - self.last_check < interval:
                 return
             self.last_check = time.monotonic()
             try:

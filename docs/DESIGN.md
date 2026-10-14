@@ -96,10 +96,19 @@ personas stay curated on the original four.
   everyday word, prerequisites existing ids only, acyclic): one batched `link_merge` against near
   graph concepts, one batched `concept_define`, one batched `link_confirm` (MODEL_QUALITY: would
   the new definition explain the mention in its sentence? drops wrong senses and generic words;
-  ≈ $0.004 and up to ~30 s more per growing article), one batched `concept_prereqs`. Slots are reserved
-  when the article is first fetched, for any reader within the ingest caps (demo readers too):
-  ≤ 5 per article, 25 per reader and 100 per day for the service by default; production runs
-  60 per reader and 300 per day since decision 53 (2026-10-13, `deploy.env.yaml`). Growth has its own timeout
+  ≈ $0.004 and up to ~30 s more per growing article), one batched `concept_prereqs`. Slots are
+  reserved **when growth runs, in phase 2, for exactly the labels it will try** (M9 part 1,
+  decision 56; one define call per label, merged or rejected labels cost too), from the reader
+  whose request runs phase 2, through a closure: no uid on shared content, nothing reserved before
+  a fetch succeeds, nothing to refund. ≤ 5 per article, 25 per reader and 100 per day for the
+  service by default; production runs 60 per reader and 300 per day since decision 53
+  (2026-10-13, `deploy.env.yaml`), and all anonymous readers share 150 a day
+  (`ANON_GROWTH_DAILY_CAP`). Scripts and the corpus pass no reserver and never grow. When the caps
+  cut growth short the page is stored with `grow_pending: true`; a reader's reopen then calls
+  `POST /v1/content/{id}/grow` (§8), which grows only labels not tried before (`grow_tried`) under
+  a claim on the page (one grower across instances). Only a reader's own pages (`NOT_CORPUS`)
+  ever regrow; pages stored before M9 count only if they are extension pages never grown and not
+  recordings, so library articles and seeded demo recordings never change under a judge. Growth has its own timeout
   inside phase 2 and never fails the ingest; held-out URLs never grow. Concepts are stored
   create-if-absent in Firestore `graph_growth/` (no user data), merged at startup and polled
   every 60 s by each instance (server timestamps, 120 s overlap window), and folded into
@@ -178,6 +187,10 @@ personas stay curated on the original four.
   request from the reader page, so the article shows in seconds; POST /v1/content and the scripts
   run both back to back through the same pending doc and lease. A URL that is pending counts as
   known everywhere: no second fetch and no second ingest slot.
+- **Growth on a stored page (M9, §2).** `contents/` carries `grow_pending` (true when the caps cut
+  growth short; absent on pages stored before M9), `grow_tried` (normalised labels already tried)
+  and, while a reopen grows it, `grow_token` and `growing_until` (a random token, no reader data).
+  A stored page's text never changes; its demand links can, by growth on reopen.
 - **Media (§21).** A video or podcast's pending doc starts at `stage: "transcribe"` with a
   `media` block and no paragraphs; transcription fills the paragraphs (each with `start_s`) and
   moves it to `"analyse"`. `contents/` then carries `media` (`kind`, `video_id` or `audio_url`,
@@ -495,8 +508,9 @@ subject to pause). The next open regenerates.
 |---|---|---|
 | POST | /v1/content | `{url}` (server fetches via safe_fetch) or `{url, title, paragraphs[], defer?}` (extension, already extracted and redacted) → `{content_id, title, paragraphs, status, pii_found_before_backstop?}`; ingests if new. Requires auth and the per-user daily cap. Extension text (M8): the fetch path's doc for the URL is returned if one exists, else the reader's own earlier extension doc for it (free, no new analysis), else a new doc under `ext:` id = hash(normalised URL + hash of the cleaned, redacted text) so client text never answers the fetch path and nobody is served text they didn't submit. `defer: true` returns `status: "analysing"` after phase 1 (then POST …/analyse, as "Open here"). Every path records the page in the reader's `ingested`. Errors: 409 `onboarding_required` (a Google reader who hasn't finished onboarding), 422 `personal_data` (Presidio backstop, §11.3). `pii_found_before_backstop` = placeholders the server's redactor added (0 when the client did its job) |
 | GET | /v1/content?q=&persona=&density= | library list: `{id, title, site, word_count, description, author, published, image, domain, concepts_new}`; `domain` = graph domain with the most linked salience; `concepts_new` = span annotations this reader would get; `format: article \| video \| podcast` (§21) |
-| GET | /v1/content/{id} | article for rendering: metadata + `paragraphs[{id, text}]` + `status: ready \| analysing` (a pending article, §3; annotations and recommendations answer 409 until it is ready). A recording (§21) adds `media {kind, video_id \| audio_url, duration_s}`, `start_s` per paragraph, and `status: transcribing` (no paragraphs yet), `refused {code, message}` or `failed` |
+| GET | /v1/content/{id} | article for rendering: metadata + `paragraphs[{id, text}]` + `status: ready \| analysing` (a pending article, §3; annotations and recommendations answer 409 until it is ready). A recording (§21) adds `media {kind, video_id \| audio_url, duration_s}`, `start_s` per paragraph, and `status: transcribing` (no paragraphs yet), `refused {code, message}` or `failed`. `grow_pending: true` → the client calls POST …/grow once, then reloads the notes (M9) |
 | POST | /v1/content/{id}/analyse | phase 2 of "Open here" (§3): 200 `{status: ready}` (no LLM call if already analysed), 202 `{status: analysing}` while another request holds the lease, 410 after 3 failed analyses, 504 on the 120 s timeout; no ingest slot (taken in phase 1) |
+| POST | /v1/content/{id}/grow | a reader's stored page that missed concept growth (M9, §2): 200 `{status: none}` (no model call: nothing to grow), `{status: capped}` (no slots left today), `{status: grown, linked}`; 202 `{status: growing}` while another request holds the claim; 503 on the budget. Access as …/analyse (extension pages: their submitters). Never in the scoring path; the client then reloads the notes |
 | POST | /v1/content/{id}/transcribe | a recording's transcript (§21.3): 200 `{status: analysing}` once stored (no model call if it already is), 202 while another request or podcast holds it, 410 after 3 failed attempts, 422 with the refusal code, 503 on a budget or an unavailable source, 504 on the timeout. Then …/analyse as for an article |
 | GET | /v1/content/{id}/recommendations?prefer= | Up next (§16): up to 6 items, `pending` while web lookups run; each item carries `open_here` (§21.4) |
 | POST | /v1/recs/events | `{events: [{id, type: rec_shown\|rec_clicked\|rec_dismissed\|rec_completed, item_id}]}` → `{applied, ignored}`; idempotent by event id |
@@ -729,6 +743,7 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   (`GOAL_RESOLVE_DAILY_CAP`, §18), 120 requests/min overall, 30 event batches/min. The For you
   feed's searches have their own shared cap, `FEED_SEARCH_DAILY_CAP` (60/day, §17), inside the
   global search caps.
+  Concept growth (§2): slots taken when growth runs; all anonymous readers share 150 a day.
   Videos and podcasts (§21.1): 5 new recordings/day per uid (1 per demo reader, 10 for all demo
   readers together), 300 lookups/day for everyone, and a $3 media budget inside the $8 guard.
   Per-minute limits are in memory per instance (≤ 3 instances); daily caps are in Firestore,

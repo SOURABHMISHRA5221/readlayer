@@ -1,0 +1,8 @@
+# scripts/harness_m9_growth.py, 2026-10-14, emulator harness, real Vertex
+# url: https://en.wikipedia.org/wiki/Rabi_crop  bad url: https://en.wikipedia.org/wiki/M9_harness_no_such_page_rr
+1. opened df60f8a36b759584023770732ac8f7d7 by Read any link: grow_pending=True, notes=2, slots=0
+2. grow: 200 {'content_id': 'df60f8a36b759584023770732ac8f7d7', 'status': 'grown', 'linked': 3}; notes 2 -> 3; slots=5; grow_pending=False
+3. reader B: 200 {'content_id': 'df60f8a36b759584023770732ac8f7d7', 'status': 'none', 'linked': 0}, slots=0
+4. bad fetch: 502 upstream_error, slots=0
+run spend $0.0138 (emulator ledger)
+PASS

@@ -1675,9 +1675,40 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Round 2: **SHIP**. PR #33, CI green, squash-merged (78d8bde). `make deploy-web` on Sourabh's
   yes: live `index-DDFEeB7H.js` (149.61 KB), media chunk names only `https://www.youtube.com`.
 
+- **Live check, Sourabh:** T05 and T06 opened by Read any link as a Google reader: "They both
+  worked"; the Fireship video now plays in Gloss ("loved it"). Not confirmed separately: the
+  demo-reader open (free) and a feed video opened both ways. Checkpoint end of Oct 14 IST met:
+  Media and its follow-up merged and live.
+
+## M9 part 1 (2026-10-14, growth slots and regrow on reopen)
+
+- Sourabh: "start M9". Gold set status not given (asked; to raise again at part 3's evals).
+- Plan `docs/plans/M9.md` → plan-reviewer REVISE 13 (only a reader's own pages regrow; old-page
+  rule extension-only so seeded demo recordings never change; `grow_tried`; claim/finish
+  transactions; check order and failure classes; anonymous growth cap; catalog swap; graph
+  refresh lag; clients on every path; docs; a read-only backlog count; checkpoint; tests) →
+  applied as Round 1 → **APPROVE** (nits taken: 5 s forced-refresh floor, dropped-result log).
+- Built, tests first (a2d6db5 .. 1a4939a): phase 2 reserves exactly the labels growth tries
+  (`app/ingest/growing.py`, reserver closure in `quota`), phase 1 reserves nothing, `grow_pending`
+  / `grow_tried` on `contents/`, `claim_growth` / `finish_growth` transactions (emulator test on
+  real Firestore), `POST /v1/content/{id}/grow`, `grow_pending` on GET, forced graph refresh for a
+  page linking an unseen concept, `catalog.replace`, `ANON_GROWTH_DAILY_CAP` 150, light
+  `growth_need.py` (read path imports no LLM), web reader grow + reload + honest line,
+  extension 0.8.1 (`src/grow.ts`).
+- Production backlog, read only: 357 pages, 4 would regrow (all extension), ≤ 17 slots, ≤ $0.05.
+- Harness on the emulator, real Vertex: **PASS, $0.0072** (STATUS §26).
+- API 1,145, web 186, extension 89, annotator 60, typecheck clean, main **149.87 KB** (0.13 left).
+
+- milestone-reviewer round 1: **FIX** (web didn't reload after waiting on another grower and
+  re-posted /grow on a persona change; the growing line missing; harness not through the routes;
+  STATUS gaps; plus a fresh read under the claim, a cheap "none", the extension's analysedNow,
+  a budget pre-check and claim release). All applied (0bbf8e0 .. 7474185). Harness now through the
+  routes with real Auth tokens: **PASS, notes 2 → 3, $0.0138** (`docs/evidence/m9/harness.txt`).
+- Round 2: **SHIP**. API 1,148, web 186, extension 89, annotator 60; main **149.96 KB** (0.04
+  left: any further reader change must be lazy).
+
 ### Next steps (resume here, in order)
-1. Live check (Sourabh): play a video in Gloss signed in to YouTube; open a feed video both ways;
-   T05 and T06 live, then a demo reader (free). Record in STATUS §24/§25.
-2. Checkpoint end of Oct 14 IST (decision 27): Media and its follow-up are merged and live.
-3. M9 (Oct 15). Oct 16: seed the demo snapshots' short videos and episodes with
-   `ingest_media.py` (dry run first, CONCEPTS_URI set, counts in STATUS before writing).
+1. PR → CI → merge → deploy API from clean `main`, then web (Sourabh's yes on each) →
+   `make extension-zip` + release `extension-v0.8.1` (his yes) → live: Sourabh reopens one of his
+   four empty extension pages. Checkpoint: midday Oct 15 IST.
+2. M9 part 2 plan: the four M2.2 quality items (STATUS §9), before any part 3 extras.

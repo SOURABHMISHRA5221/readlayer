@@ -48,6 +48,7 @@ export type PopupMessage =
 export type ApiOp =
   | { op: "submit"; url: string; title: string; paragraphs: string[] }
   | { op: "analyse"; id: string }
+  | { op: "grow"; id: string }
   | { op: "detail"; id: string }
   | { op: "annotations"; id: string; refresh?: boolean }
   | { op: "explain"; id: string; target: { demand_id: string } | { paragraph_id: string } }

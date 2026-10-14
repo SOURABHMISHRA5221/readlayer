@@ -14,7 +14,8 @@ import networkx as nx
 from app.graph.build import KEEP_KINDS, SINGLE_DOC_MIN_SPEC, Prereq, difficulty, normalize_label
 from app.graph.enrich import ConceptInfo
 from app.graph.graph import ConceptGraph
-from app.graph.linking import EMBED_TYPES, phrase, sentence_around
+from app.graph.growth_need import untried_groups
+from app.graph.linking import phrase, sentence_around
 from app.graph.models import DOMAINS, Concept
 from app.ingest.models import Demand
 
@@ -42,12 +43,15 @@ class GrowthPick:
     phrase: str = ""  # the mention as the linker shows it: "exact (label)"
 
 
-def pick(demands: Sequence[Demand], paragraphs: dict[str, str], limit: int) -> list[GrowthPick]:
-    """Unlinked concept/term demands, one per normalised label, most salient first."""
-    groups: dict[str, list[Demand]] = {}
-    for d in demands:
-        if d.type in EMBED_TYPES and d.target_id is None and normalize_label(d.label):
-            groups.setdefault(normalize_label(d.label), []).append(d)
+def pick(
+    demands: Sequence[Demand],
+    paragraphs: dict[str, str],
+    limit: int,
+    exclude: frozenset[str] = frozenset(),
+) -> list[GrowthPick]:
+    """Unlinked concept/term demands, one per normalised label, most salient first; labels in
+    `exclude` (already tried on this page, M9) are skipped."""
+    groups = untried_groups(demands, exclude)
     picks = []
     for members in groups.values():
         top = max(members, key=lambda d: (d.salience, d.id))

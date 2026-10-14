@@ -143,3 +143,36 @@ def test_rules_deny_all_client_access(live):
     assert httpx.get(f"{base}/contents/x").status_code == 403
     write = httpx.patch(f"{base}/{probe}", json={"fields": {"x": {"stringValue": "y"}}})
     assert write.status_code == 403
+
+
+async def test_growth_claim_and_finish_are_transactions_on_the_content_doc():
+    """M9 G4 on real Firestore: one claim at a time, a stale finish drops, text untouched."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.ingest.models import Anchor, ContentDoc, Demand
+    from app.store.content_repo import FirestoreContentStore
+
+    store = FirestoreContentStore(PROJECT)
+    cid = f"m9-claim-{uuid.uuid4().hex[:8]}"
+    anchor = Anchor(exact="offside", prefix="", suffix="", start=0, end=7)
+    before = ContentDoc(
+        content_id=cid, url="https://x.example/a", final_url="https://x.example/a", title="T",
+        site="x.example", source="extension", fetched_at="2026-10-15T00:00:00+00:00",
+        paragraphs=[], demands_dropped=0, llm_calls=[], grow_pending=True,
+        demands=[Demand(id="d1", paragraph_id="p0", type="concept", label="Offside",
+                        salience=0.9, explained_in_text=False, zipf=3.0, anchor=anchor)],
+    )  # fmt: skip
+    await store.put(before)
+    now = datetime.now(UTC)
+    status, token = await store.claim_growth(cid, now, now + timedelta(seconds=60))
+    assert status == "claimed" and token
+    assert await store.claim_growth(cid, now, now + timedelta(seconds=60)) == ("busy", None)
+    linked = [d.model_copy(update={"target_id": "c_x"}) for d in before.demands]
+    assert await store.finish_growth(cid, "stale", linked, [], False, []) is False
+    assert await store.finish_growth(cid, token, linked, [], False, ["false nine"]) is True
+    after = await store.get(cid)
+    assert after.demands == linked and after.grow_pending is False and after.grow_token is None
+    assert after.paragraphs == before.paragraphs
+    later = now + timedelta(seconds=120)
+    assert (await store.claim_growth(cid, later, later + timedelta(seconds=60)))[0] == "claimed"
+    assert await store.claim_growth("m9-absent-doc", now, now) == ("absent", None)

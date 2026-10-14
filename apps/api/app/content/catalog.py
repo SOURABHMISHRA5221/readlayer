@@ -1,6 +1,7 @@
 """Every stored doc, loaded once per process and shared by the library list and the
-recommender (dev slice: ~300 docs). Content is immutable once ingested, so a new ingest just
-appends; `reset()` drops everything (tests, or after a backfill)."""
+recommender (dev slice: ~300 docs). A new ingest appends; a page whose demand links changed by
+growth on reopen (M9) is swapped with `replace` on the instance that grew it (other instances
+keep the old links until restart); `reset()` drops everything (tests, or after a backfill)."""
 
 import asyncio
 
@@ -35,6 +36,14 @@ def add(doc: ContentDoc) -> None:
     """Record a freshly ingested doc without reloading the store."""
     global _version
     if _docs is not None and doc.content_id not in _docs:
+        _docs[doc.content_id] = doc
+        _version += 1
+
+
+def replace(doc: ContentDoc) -> None:
+    """Swap in a stored page whose demand links changed (M9 /grow); derived caches rekey."""
+    global _version
+    if _docs is not None:
         _docs[doc.content_id] = doc
         _version += 1
 

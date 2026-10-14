@@ -123,6 +123,14 @@ class ContentDoc(BaseModel):
     demands_dropped: int
     llm_calls: list[LLMCall]
     media: Media | None = None
+    # Concept growth on a stored page (M9 part 1, DESIGN §2): `grow_pending` true when the caps cut
+    # growth short (None: stored before M9; see growth.needs_growth), `grow_tried` the normalised
+    # labels already tried (never tried again). A reopen grows it under a claim: `grow_token` and
+    # `growing_until` (a random token, no reader data).
+    grow_pending: bool | None = None
+    grow_tried: list[str] = Field(default_factory=list)
+    grow_token: str | None = None
+    growing_until: datetime | None = None
 
 
 class PendingParagraph(BaseModel):

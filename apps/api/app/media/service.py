@@ -18,7 +18,6 @@ from datetime import UTC, datetime, timedelta
 from app import llm
 from app.auth import Caller
 from app.config import Settings
-from app.ingest import quota
 from app.ingest.extract import build_paragraphs
 from app.ingest.models import (
     USER_INGESTED,
@@ -121,9 +120,8 @@ async def open_media(media: urls.Media, caller: Caller | None, settings: Setting
     try:
         info = await look_up(media, settings, day)
         await llm.check_media_budget(estimate_usd(info.duration_s, settings), settings=settings)
-        slots = 0 if caller is None else await quota.reserve_growth(caller, settings)
-        stored = await get_pending_repo().create_media(
-            _pending_doc(content_id, media, info, slots, now), now
+        stored = await get_pending_repo().create_media(  # growth slots: at …/analyse (M9)
+            _pending_doc(content_id, media, info, now), now
         )
     except MediaRefused as exc:
         await _refund_slot(caller, day)
@@ -178,7 +176,6 @@ def _pending_doc(
     content_id: str,
     media: urls.YouTube | urls.ApplePodcast,
     info: MediaInfo,
-    grow_slots: int,
     now: datetime,
 ) -> PendingDoc:
     if isinstance(media, urls.YouTube):
@@ -201,7 +198,6 @@ def _pending_doc(
         published=info.published,
         image=info.image,
         paragraphs=[],
-        grow_slots=grow_slots,
         expire_at=now + PENDING_TTL,
         media=recording,
         stage="transcribe",

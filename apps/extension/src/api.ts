@@ -60,6 +60,8 @@ export async function run(op: ApiOp): Promise<ApiReply> {
       });  // prettier-ignore
     case "analyse":
       return call("POST", `/v1/content/${enc(op.id)}/analyse`, {});
+    case "grow":
+      return call("POST", `/v1/content/${enc(op.id)}/grow`, {});
     case "detail":
       return call("GET", `/v1/content/${enc(op.id)}`);
     case "annotations":

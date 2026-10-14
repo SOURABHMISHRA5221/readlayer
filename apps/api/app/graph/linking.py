@@ -21,12 +21,12 @@ from app import llm
 from app.graph import jurisdiction
 from app.graph.enrich import LinkQuestion, confirm_links
 from app.graph.graph import ConceptGraph
+from app.graph.growth_need import EMBED_TYPES
 from app.ingest.models import Demand
 
 log = logging.getLogger("app.graph.linking")
 
 LinkMethod = Literal["alias", "confirmed", "unlinked"]
-EMBED_TYPES = frozenset({"concept", "term"})
 CANDIDATES = 5
 SENTENCE_MAX_CHARS = 300
 _SENTENCE_END = re.compile(r"[.!?][\"'”’)]?\s+")

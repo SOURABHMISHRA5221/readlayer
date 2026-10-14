@@ -20,6 +20,8 @@ from app.content import catalog
 from app.content.access import require_readable
 from app.content.summary import article_domain
 from app.context import ReaderContext, hidden_ids, reader_context
+from app.graph.growth_need import needs_growth
+from app.graph.heldout import is_heldout
 from app.graph.loader import get_graph
 from app.ingest.models import ContentDoc, Media, PendingDoc
 from app.reader.model import Band
@@ -93,6 +95,9 @@ class ContentDetail(BaseModel):
     status: Literal["transcribing", "analysing", "ready", "refused", "failed"]
     media: MediaOut | None = None
     refusal: RefusalOut | None = None
+    # A reader's stored page that missed concept growth: the client calls POST .../grow once,
+    # then reloads the notes (M9 part 1).
+    grow_pending: bool = False
 
 
 class AnchorOut(BaseModel):
@@ -199,13 +204,19 @@ def reset_catalog() -> None:
     _index = None
 
 
-async def refresh_growth() -> None:
+async def refresh_growth(doc: ContentDoc | None = None) -> None:
     """Pick up concepts grown on other instances (at most once per GROWTH_REFRESH_S; a
-    Firestore query, never an LLM call). Off while growth is off."""
+    Firestore query, never an LLM call). Off while growth is off. With `doc`: when it links a
+    concept this instance hasn't loaded (grown elsewhere a moment ago, M9 G8), refresh now,
+    at most once every few seconds, so the reader's reload after POST .../grow sees its notes."""
     if get_settings().growth_enabled:
         from app.graph.refresh import get_refresher
 
-        await get_refresher().maybe_refresh()
+        graph = get_graph()
+        unseen = doc is not None and any(
+            d.target_id is not None and graph.get(d.target_id) is None for d in doc.demands
+        )
+        await get_refresher().maybe_refresh(soon=unseen)
 
 
 async def _catalog_index() -> tuple[dict[str, ContentDoc], dict[str, ExplainerRef]]:
@@ -350,6 +361,7 @@ async def get_content(
         paragraphs=[ParagraphOut(id=p.id, text=p.text, start_s=p.start_s) for p in doc.paragraphs],
         status="ready",
         media=media_out(doc.media),
+        grow_pending=needs_growth(doc, heldout=is_heldout(doc.content_id)),
     )
 
 
@@ -413,6 +425,7 @@ async def get_annotations(
     page view: no new prompt (one per article view, DESIGN §6.5) and nothing recorded."""
     await refresh_growth()
     doc = await doc_or_error(content_id, ctx)
+    await refresh_growth(doc)
     density = density or ctx.density
     now = datetime.now(UTC)
     result = await score_for(ctx, doc, density, now)

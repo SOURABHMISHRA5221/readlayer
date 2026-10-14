@@ -56,3 +56,17 @@ async def test_growth_counts_are_exported_and_deleted_with_the_reader():
     }
     await readers.delete("u1")
     assert not any(p.startswith("users/u1") for p in store.docs)
+
+
+async def test_anonymous_readers_share_one_growth_cap():
+    """M9 G6: /grow spends slots with no ingest slot, so demo readers share 150 a day."""
+    store = InMemoryDocStore()
+    repo, day = GrowthRepo(store), "2026-10-15"
+    assert await repo.reserve_slots("a1", day, 5, uid_cap=60, day_cap=300, anon_cap=7) == 5
+    assert await repo.reserve_slots("a2", day, 5, uid_cap=60, day_cap=300, anon_cap=7) == 2
+    assert await repo.reserve_slots("a3", day, 5, uid_cap=60, day_cap=300, anon_cap=7) == 0
+    assert store.docs[f"ops/growth/anon_days/{day}"]["count"] == 7
+    assert (
+        await repo.reserve_slots("g1", day, 5, uid_cap=60, day_cap=300) == 5
+    )  # Google: no anon cap
+    assert store.docs[f"ops/growth/days/{day}"]["count"] == 12
