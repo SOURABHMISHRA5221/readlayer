@@ -69,7 +69,8 @@ class Settings(BaseSettings):
     media_video_enabled: bool = True  # YouTube only; on: whole videos ≤ 10 min answer (step 7)
     # 10 minutes for videos, 12 for podcasts (Sourabh, 2026-10-14: media is minor support; short
     # clips are enough; podcasts raised to 12 because Apple's length leaves out stitched-in ads).
-    # One window per recording: no parallel calls, a small file, memory well inside 1 GiB.
+    # A video is one call; an episode one window up to 11 min, two (sequential) up to 12; a
+    # small file, memory well inside 1 GiB.
     media_max_video_s: int = 600
     media_max_audio_s: int = 720
     media_max_audio_bytes: int = 24_000_000  # 12 min at 256 kbps is 23 MB

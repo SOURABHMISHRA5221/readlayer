@@ -494,11 +494,11 @@ subject to pause). The next open regenerates.
 | method | path | purpose |
 |---|---|---|
 | POST | /v1/content | `{url}` (server fetches via safe_fetch) or `{url, title, paragraphs[], defer?}` (extension, already extracted and redacted) → `{content_id, title, paragraphs, status, pii_found_before_backstop?}`; ingests if new. Requires auth and the per-user daily cap. Extension text (M8): the fetch path's doc for the URL is returned if one exists, else the reader's own earlier extension doc for it (free, no new analysis), else a new doc under `ext:` id = hash(normalised URL + hash of the cleaned, redacted text) so client text never answers the fetch path and nobody is served text they didn't submit. `defer: true` returns `status: "analysing"` after phase 1 (then POST …/analyse, as "Open here"). Every path records the page in the reader's `ingested`. Errors: 409 `onboarding_required` (a Google reader who hasn't finished onboarding), 422 `personal_data` (Presidio backstop, §11.3). `pii_found_before_backstop` = placeholders the server's redactor added (0 when the client did its job) |
-| GET | /v1/content?q=&persona=&density= | library list: `{id, title, site, word_count, description, author, published, image, domain, concepts_new}`; `domain` = graph domain with the most linked salience; `concepts_new` = span annotations this reader would get |
-| GET | /v1/content/{id} | article for rendering: metadata + `paragraphs[{id, text}]` + `status: ready \| analysing` (a pending article, §3; annotations and recommendations answer 409 until it is ready) |
+| GET | /v1/content?q=&persona=&density= | library list: `{id, title, site, word_count, description, author, published, image, domain, concepts_new}`; `domain` = graph domain with the most linked salience; `concepts_new` = span annotations this reader would get; `format: article \| video \| podcast` (§21) |
+| GET | /v1/content/{id} | article for rendering: metadata + `paragraphs[{id, text}]` + `status: ready \| analysing` (a pending article, §3; annotations and recommendations answer 409 until it is ready). A recording (§21) adds `media {kind, video_id \| audio_url, duration_s}`, `start_s` per paragraph, and `status: transcribing` (no paragraphs yet), `refused {code, message}` or `failed` |
 | POST | /v1/content/{id}/analyse | phase 2 of "Open here" (§3): 200 `{status: ready}` (no LLM call if already analysed), 202 `{status: analysing}` while another request holds the lease, 410 after 3 failed analyses, 504 on the 120 s timeout; no ingest slot (taken in phase 1) |
 | POST | /v1/content/{id}/transcribe | a recording's transcript (§21.3): 200 `{status: analysing}` once stored (no model call if it already is), 202 while another request or podcast holds it, 410 after 3 failed attempts, 422 with the refusal code, 503 on a budget or an unavailable source, 504 on the timeout. Then …/analyse as for an article |
-| GET | /v1/content/{id}/recommendations?prefer= | Up next (§16): up to 6 items, `pending` while web lookups run |
+| GET | /v1/content/{id}/recommendations?prefer= | Up next (§16): up to 6 items, `pending` while web lookups run; each item carries `open_here` (§21.4) |
 | POST | /v1/recs/events | `{events: [{id, type: rec_shown\|rec_clicked\|rec_dismissed\|rec_completed, item_id}]}` → `{applied, ignored}`; idempotent by event id |
 | POST | /v1/recs/open | `{url}` → `{content_id, new, ready}`: phase 1 of ingesting a web recommendation via safe_fetch as `user_ingested` (§3), within the per-user daily cap (429 past it); `ready: false` until POST .../analyse completes. A YouTube or Apple Podcasts episode URL opens a recording instead (§21.2): `kind`, `stage: "transcribe"`, 422 with a refusal code, 429 `media_cap_reached`. POST /v1/content answers a media URL 422 `use_open_here` |
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
@@ -529,7 +529,7 @@ subject to pause). The next open regenerates.
 | POST | /v1/onboarding/know | `{concept_id, known}`: an offered term only (404), once (409), ≤ 9, 409 after finish |
 | POST | /v1/onboarding/finish | onboarding done; the offered/answered/pick lists are cleared |
 | GET | /v1/me/profile/edits | the last 10 applied/undone edits (expired pending ones are deleted) |
-| GET | /v1/feed?persona= | For you (§17): `{topics, items[{id, topic, topic_label, format, title, url, source, snippet, thumbnail, duration_or_read_time, published_at, new_concepts, goal, why, score}], pending, snapshot, prepared_at, country}`; demo readers get their persona's pre-seeded snapshot (`snapshot: true`) and trigger no search |
+| GET | /v1/feed?persona= | For you (§17): `{topics, items[{id, topic, topic_label, format, title, url, source, snippet, thumbnail, duration_or_read_time, published_at, new_concepts, goal, why, score}], pending, snapshot, prepared_at, country}`; demo readers get their persona's pre-seeded snapshot (`snapshot: true`) and trigger no search; items carry `open_here` (§21.4) |
 | POST | /v1/internal/feeds/collect | Outlet collection (§17.1a). Outside the Firebase router: only a Google ID token with `iss` accounts.google.com, `aud` = `FEED_JOB_AUDIENCE`, `email_verified`, `email` = `FEED_JOB_SA_EMAIL`; either setting empty → 403 |
 | GET | /v1/me/goals | the caller's reading goals with progress (§18); signed-in readers only (403 for demo readers) |
 | POST | /v1/me/goals | `{type: habit, metric: articles\|minutes, per_week}` or `{type: learning, text}` (≤ 120 chars, resolved, never stored) → the goal with progress; needs consent; ≤ 5 goals (409), 422 `goal_not_found`, 429 past `GOAL_RESOLVE_DAILY_CAP` |
@@ -1236,9 +1236,9 @@ made automatically, and the player is the source.
 - **Length:** videos 10 minutes (`MEDIA_MAX_VIDEO_S` 600; Sourabh, 2026-10-14: "small 10
   minutes clips are good enough"), podcasts 12 (`MEDIA_MAX_AUDIO_S` 720, Sourabh the same day:
   Apple's length leaves out stitched-in ads; an episode listed at 9:25 downloaded at 10:52),
-  `MEDIA_MAX_AUDIO_BYTES` 24 MB. The
-  code handles longer recordings (several audio windows, two in parallel); the caps keep the
-  demo to one model call per recording.
+  `MEDIA_MAX_AUDIO_BYTES` 24 MB. A video is always one call; an episode is one call up to 11
+  minutes (a tail under a minute joins window 1) and two sequential calls from 11 to 12. The code
+  handles longer recordings (several audio windows, two in parallel) if the caps are raised.
 - **Switches:** `MEDIA_ENABLED` (all media), `MEDIA_AUDIO_ENABLED`, `MEDIA_VIDEO_ENABLED`. A
   switched-off kind answers `media_off` before any I/O and is never remembered as a refusal, so
   turning it back on works at once. A transcript already stored stays readable. The web's copy
@@ -1296,6 +1296,10 @@ made automatically, and the player is the source.
 ### 21.4 Reading (`apps/web`, the lazy `MediaReader` chunk)
 YouTube is click to load on the no-cookie domain; audio is `<audio preload="none">`. Each
 paragraph has a time button that seeks and plays; the spoken paragraph is marked and followed
-unless the reader scrolled in the last 5 s. Cards say "What the speaker is saying". Feed and Up
-next rows get `open_here` from the server. The privacy page says what YouTube and podcast hosts
+unless the reader scrolled in the last 5 s. Under the title: "A transcript made automatically from
+the video. It can contain errors, and filler words are often left out; the recording is the
+source." Cards say "What the speaker is saying". Feed and Up
+next rows get `open_here` from the server (`openable`): a video or Apple episode **of known length**
+within its cap (an unknown length stays "Open original": most episodes from search run past the
+cap); for demo readers it turns off once the shared demo cap is used. The privacy page says what YouTube and podcast hosts
 see (R10).
