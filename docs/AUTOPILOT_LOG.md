@@ -1933,3 +1933,13 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   site serves `init.json` without one). `init.json` on glossreader still 404 after 10 tries over
   ~2.5 min; the site has no release yet ("Site Not Found"), so it most likely appears with the
   first deploy. R9 diff 615d676..origin/main over the API code: empty (env only: CORS).
+- Sourabh: "yes" to the API deploy and a 1-hour preview. `make deploy-api` from clean `main`
+  (9c5ad52; deploy guard clear): revision **`readlayer-api-00031-84x`**, `/health` 200. CORS
+  preflight on `/v1/recs/open`: allowed for glossreader (both domains), the old site and the
+  extension; none for `https://evil.example`.
+- Preview: web built from `main` (`index-B0WvjYHJ.js`, 149.93 KB), `hosting:channel:deploy
+  initcheck --only gloss --expires 1h`. Its `/__/firebase/init.json`: **200**, `projectId`
+  readlayer-sourabh-26, `apiKey` equal to the build's, `appId` readlayer-web. So `init.json` comes
+  with a release on a linked site (R16 met in substance; the live site gets it at the web deploy).
+  Next, on Sourabh's yes: `make extension-zip` from `main`, release `extension-v0.8.2`, then
+  `make deploy-web`, then the live check.
