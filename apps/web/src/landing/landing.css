@@ -685,6 +685,10 @@
 }
 
 @media (min-width: 1024px) {
+  /* Titles wrap to one or two lines; two lines' room keeps the "With notes" pills level. */
+  .lp-formats__what {
+    min-height: 2.6em;
+  }
   .lp-split {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     gap: clamp(40px, 5vw, 80px);

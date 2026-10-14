@@ -1,0 +1,3 @@
+decision 46 checks: all pass
+axe (every impact level): 0 everywhere
+keyboard: {"toggle_focus": true, "arrow_changes_persona": "Software engineer \u2192 Cricket fan", "mark_focus": true, "enter_shows_its_note": "bps \u2192 Basis points", "mark_expanded": true, "focus_stays_on_mark": true, "pass": true}

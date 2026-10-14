@@ -1,0 +1,262 @@
+{
+  "shot-media": {
+    "title": "Every app on Earth is now open source... whether it likes it or not",
+    "source": "user_ingested",
+    "spans": 2,
+    "opened": [
+      {
+        "concept": "c_decompiler",
+        "mark": "decompile",
+        "p": "p1",
+        "cached": true
+      }
+    ],
+    "marked": [
+      [
+        "c_decompiler",
+        "decompile"
+      ],
+      [
+        "c_assembly_language",
+        "assembly"
+      ]
+    ]
+  },
+  "shot-extension": {
+    "title": "Yield curve - Wikipedia",
+    "source": "fetch",
+    "spans": 49,
+    "opened": [
+      {
+        "concept": "c_term_structure_of_interest_rates",
+        "mark": "term structure of interest rates",
+        "p": "p3",
+        "cached": false
+      },
+      {
+        "concept": "c_ornsteinuhlenbeck_process",
+        "mark": "Ornstein\u2013Uhlenbeck process",
+        "p": "p37",
+        "cached": true
+      },
+      {
+        "concept": "c_lagrange_polynomial",
+        "mark": "Lagrange polynomials",
+        "p": "p47",
+        "cached": true
+      },
+      {
+        "concept": "c_nelson_siegel_svensson_model",
+        "mark": "Svensson family",
+        "p": "p48",
+        "cached": true
+      }
+    ],
+    "marked": [
+      [
+        "c_ornsteinuhlenbeck_process",
+        "Ornstein\u2013Uhlenbeck process"
+      ],
+      [
+        "c_lagrange_polynomial",
+        "Lagrange polynomials"
+      ],
+      [
+        "c_nelson_siegel_svensson_model",
+        "Svensson family"
+      ],
+      [
+        "c_coxingersollross_model",
+        "Cox\u2013Ingersoll\u2013Ross model"
+      ],
+      [
+        "c_discount_function",
+        "discount factor function"
+      ],
+      [
+        "c_spline_mathematics",
+        "splines"
+      ],
+      [
+        "c_term_structure_of_interest_rates",
+        "term structure of interest rates"
+      ],
+      [
+        "c_overnight_indexed_swap",
+        "overnight indexed swap curves"
+      ],
+      [
+        "c_liquidity_premium",
+        "liquidity spread"
+      ],
+      [
+        "c_expectations_hypothesis",
+        "expectations theory"
+      ],
+      [
+        "c_implied_interest_rate",
+        "futures rates"
+      ],
+      [
+        "c_arbitrage_pricing_theory",
+        "arbitrage pricing theory"
+      ],
+      [
+        "c_interest_rate_future",
+        "interest rate futures"
+      ],
+      [
+        "c_nonparametric_statistics",
+        "non-parametric"
+      ],
+      [
+        "c_segmented_market_hypothesis",
+        "Segmented Market theory"
+      ],
+      [
+        "c_libor_curve",
+        "LIBOR curve"
+      ],
+      [
+        "c_parametric_statistics",
+        "parametric models"
+      ],
+      [
+        "c_duration_bond",
+        "duration"
+      ],
+      [
+        "c_term_premium",
+        "term premia"
+      ],
+      [
+        "c_national_bureau_of_economic_research",
+        "NBER"
+      ],
+      [
+        "c_bretton_woods_system",
+        "Bretton Woods system"
+      ],
+      [
+        "c_libor",
+        "LIBOR"
+      ],
+      [
+        "c_flattening_yield_curve",
+        "flattening the yield curve"
+      ],
+      [
+        "c_yield_curve_inversion",
+        "inversion"
+      ],
+      [
+        "c_least_squares",
+        "least squares regression"
+      ],
+      [
+        "c_floating_exchange_rate",
+        "floating exchange rates"
+      ],
+      [
+        "c_interest_rate_swap",
+        "interest rate swap curves"
+      ],
+      [
+        "c_federal_funds_rate",
+        "federal funds rate"
+      ],
+      [
+        "c_coupon",
+        "coupon's yield"
+      ],
+      [
+        "c_ted_spread",
+        "TED spread"
+      ],
+      [
+        "c_forward_curve",
+        "implied forward curves"
+      ],
+      [
+        "c_interpolation",
+        "interpolation scheme"
+      ],
+      [
+        "c_st_louis_fed_financial_stress_index",
+        "Financial Stress Index"
+      ],
+      [
+        "c_bond_price_volatility",
+        "volatility"
+      ],
+      [
+        "c_interbank_lending",
+        "interbank funding"
+      ],
+      [
+        "c_spot_interest_rate",
+        "spot rates"
+      ],
+      [
+        "c_non_linear_optimization",
+        "non-linear optimisation"
+      ],
+      [
+        "c_wholesale_funding",
+        "wholesale funding"
+      ],
+      [
+        "c_us_treasury_bonds",
+        "Treasury rates"
+      ],
+      [
+        "c_fixed_income",
+        "debt securities"
+      ],
+      [
+        "c_inflation_expectations",
+        "anticipated inflation"
+      ],
+      [
+        "c_deflation",
+        "deflation"
+      ],
+      [
+        "c_latent_variable",
+        "latent dynamic factors"
+      ],
+      [
+        "c_denomination",
+        "denominated"
+      ],
+      [
+        "c_credit_crunch",
+        "credit crunch"
+      ],
+      [
+        "c_regression_analysis",
+        "regression technique"
+      ],
+      [
+        "c_interest_rate_risk",
+        "interest rate risk"
+      ],
+      [
+        "c_flight_to_quality",
+        "flight to quality"
+      ],
+      [
+        "c_total_return",
+        "total return"
+      ]
+    ]
+  },
+  "shot-feed": {
+    "items": 29,
+    "prepared_at": "2026-10-11T18:27:32+00:00"
+  }
+}
+
+explanations to generate if run: 1 (≈ $0.005 each) ['shot-extension c_term_structure_of_interest_rates']
+web searches if run (Up next cache misses): 0 []
+production writes if run: 2 anonymous Auth users with users/{uid} (ingested, rec_signals), each deleted by DELETE /v1/me; 0 contents/, 0 ext:, 0 graph_growth/, 0 ingest-counter increments; 1 explanation generations; 0 searches
