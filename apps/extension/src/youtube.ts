@@ -4,6 +4,10 @@
  * keeps only the video id: no playlist, time, `si` or other parameter ever leaves the browser.
  */
 
+/** The API's video cap (`MEDIA_MAX_VIDEO_S` 600 in apps/api/deploy.env.yaml; a test checks). */
+export const VIDEO_MAX_MINUTES = 10;
+export const VIDEO_HINT = `Opens this video in Gloss with a transcript and notes. Up to ${VIDEO_MAX_MINUTES} minutes.`;
+
 const HOSTS = new Set(["youtube.com", "www.youtube.com", "m.youtube.com"]);
 const SHORT_HOST = "youtu.be";
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;

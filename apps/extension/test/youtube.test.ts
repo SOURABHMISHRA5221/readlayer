@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { youtubeWatchUrl } from "../src/youtube";
+import { VIDEO_HINT, VIDEO_MAX_MINUTES, youtubeWatchUrl } from "../src/youtube";
 
 // The API's own cases (apps/api/tests/test_media_urls.py reads the same file), so Open in Gloss
 // offers exactly the links the API opens as a video (decision 62).
@@ -20,5 +20,14 @@ describe("youtubeWatchUrl", () => {
   });
   it("is null for no URL (a tab without one)", () => {
     expect(youtubeWatchUrl(undefined)).toBeNull();
+  });
+});
+
+describe("the popup's video hint", () => {
+  it("states the API's production video cap", () => {
+    const env = readFileSync(resolve(__dirname, "../../api/deploy.env.yaml"), "utf8");
+    const seconds = Number(/^MEDIA_MAX_VIDEO_S:\s*"?(\d+)"?\s*$/m.exec(env)?.[1]);
+    expect(VIDEO_MAX_MINUTES * 60).toBe(seconds);
+    expect(VIDEO_HINT).toContain(`Up to ${VIDEO_MAX_MINUTES} minutes`);
   });
 });

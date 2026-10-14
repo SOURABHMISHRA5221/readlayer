@@ -12,10 +12,12 @@ import type {
   PopupMessage,
   ReadResult,
   Status,
+  VideoResult,
 } from "./messages";
 import { REFUSAL_TEXT, refusalForUrl } from "./refuse";
-import { claims, clear, load, save } from "./session";
+import { claims, clear, load, save, type Session } from "./session";
 import TOKENS_CSS from "./tokens.css?raw";
+import { youtubeWatchUrl } from "./youtube";
 
 /**
  * Service worker (M8 §C2): the only part that holds the token or calls the API. Nothing runs on
@@ -31,6 +33,47 @@ const fail = (reason: Exclude<ReadResult, { ok: true }>["reason"], message: stri
 async function onboarded(): Promise<boolean | null> {
   const profile = await call<{ onboarding: { done: boolean } }>("GET", "/v1/me/profile");
   return profile.ok ? profile.data.onboarding.done : null;
+}
+
+/** Where the web app is for this reader: the origin they connected from, if it is one of ours. */
+export function webBase(session: Session | null): string {
+  const origin = session?.webOrigin;
+  return origin && WEB_ORIGINS.includes(origin) ? origin : WEB_BASE;
+}
+
+const VIDEO_FAILED = "Gloss couldn't open this video. Try again, or paste the link in Gloss.";
+
+/** The API's refusal without its "Use “Open original”…" sentence: the reader is already there. */
+const withoutOpenOriginal = (message: string) =>
+  message
+    .split(/(?<=\.)\s+/)
+    .filter((sentence) => !sentence.includes("Open original"))
+    .join(" ");
+
+/**
+ * Open in Gloss (decision 62): the tab's own URL (never one from the popup) as its canonical
+ * watch URL, opened through POST /v1/recs/open as Read any link does, then the web reader in a
+ * new tab on the reader's web origin. Nothing but that URL is sent.
+ */
+export async function openVideo(tabId: number): Promise<VideoResult> {
+  const session = await load();
+  if (!session) return { ok: false, reason: "signed_out", message: "Connect Gloss from the web app first." };
+  const watch = youtubeWatchUrl((await chrome.tabs.get(tabId)).url);
+  if (!watch) return { ok: false, reason: "not_video", message: "This isn't a YouTube video page." };
+  const { anonymous } = claims(session.idToken);
+  if (!anonymous && (await onboarded()) === false) {
+    return { ok: false, reason: "onboarding", message: "Finish setting up Gloss in the web app first." };
+  }
+  const reply = await call<{ content_id: string }>("POST", "/v1/recs/open", { url: watch });
+  if (!reply.ok) {
+    const refused = reply.status >= 400 && reply.status < 500;
+    const message = refused ? withoutOpenOriginal(reply.message) : "";
+    return { ok: false, reason: refused ? "refused" : "error", message: message || VIDEO_FAILED };
+  }
+  const persona = anonymous ? session.persona : null;
+  const query = persona && persona !== "newcomer" ? `?persona=${encodeURIComponent(persona)}` : "";
+  await chrome.tabs.create({ url: `${webBase(session)}/read/${encodeURIComponent(reply.data.content_id)}${query}` });
+  return { ok: true };
 }
 
 export async function readTab(tabId: number): Promise<ReadResult> {
@@ -56,15 +99,15 @@ export async function readTab(tabId: number): Promise<ReadResult> {
   await chrome.scripting.executeScript({
     target,
     func: (webBase: string) => void globalThis.__readlayer!.start({ webBase }),
-    args: [WEB_BASE],
+    args: [webBase(session)],
   });
   return { ok: true, already: false };
 }
 
-async function status(): Promise<Status> {
+export async function status(): Promise<Status> {
   const session = await load();
   if (!session) {
-    return { connected: false, demo: false, name: null, persona: null, density: "balanced", onboarded: null };
+    return { connected: false, demo: false, name: null, persona: null, density: "balanced", onboarded: null, web: WEB_BASE };
   }
   const { anonymous, name } = claims(session.idToken);
   return {
@@ -74,6 +117,7 @@ async function status(): Promise<Status> {
     persona: anonymous ? session.persona ?? "newcomer" : null,
     density: session.density,
     onboarded: anonymous ? true : await onboarded(),
+    web: webBase(session),
   };
 }
 
@@ -98,6 +142,9 @@ chrome.runtime.onMessage.addListener((message: PopupMessage | ContentMessage, se
   else if (fromPopup(sender)) {
     if (message.type === "status") work = status();
     else if (message.type === "read") work = readTab(message.tabId).catch(() => fail("error", "Gloss couldn't read this page."));
+    else if (message.type === "open-video") {
+      work = openVideo(message.tabId).catch((): VideoResult => ({ ok: false, reason: "error", message: VIDEO_FAILED }));
+    }
     else if (message.type === "settings") work = settings(message.persona, message.density);
   }
   if (!work) return false;
@@ -127,6 +174,7 @@ export async function onExternal(message: ExternalMessage, origin: string | unde
       apiKey: message.apiKey,
       persona,
       density: previous?.density ?? "balanced",
+      webOrigin: origin,
     });
     return { ok: true };
   }
