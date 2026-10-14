@@ -14,6 +14,7 @@ import type { ApiOp, ApiReply, ReaderEvent } from "./messages";
 import { redact, redactUrl } from "./redact";
 import { refusal, type Refusal } from "./refuse";
 import { tagParagraphs, type ServerParagraph } from "./tag";
+import { finalToast, type GrowStatus, growUntilDone, shouldGrow } from "./grow";
 import { showToast } from "./toast";
 
 /**
@@ -87,16 +88,22 @@ async function start({ webBase }: { webBase: string }): Promise<void> {
     return;
   }
   const id = submitted.data.content_id;
-  if (submitted.data.status === "analysing" && !(await analysed(id))) {
+  const analysing = submitted.data.status === "analysing";
+  if (analysing && !(await analysed(id))) {
     document.documentElement.removeAttribute(MOUNTED_ATTR);
     return;
   }
-  const detail = await api<{ paragraphs: ServerParagraph[] }>({ op: "detail", id });
+  const detail = await api<{ paragraphs: ServerParagraph[]; grow_pending?: boolean }>({ op: "detail", id });
   const tagged = detail.ok ? tagParagraphs(document, detail.data.paragraphs) : null;
   if (!tagged) {
     document.documentElement.removeAttribute(MOUNTED_ATTR); // a later click may try again
     showToast("Gloss couldn't place notes on this page.");
     return;
+  }
+  let grown: GrowStatus | null = null;
+  if (detail.ok && shouldGrow(detail.data, analysing)) {
+    showToast("Adding this page's ideas to your map…", { busy: true });
+    grown = await growUntilDone(id, (op) => api(op));
   }
   const notes = await loadNotes(id);
   if (!notes) {
@@ -109,9 +116,7 @@ async function start({ webBase }: { webBase: string }): Promise<void> {
   const { resolved } = await overlay.show(notes);
   const preread = notes.find((a): a is PrereadAnnotation => a.kind === "preread");
   if (preread) overlay.preread(preread, tagged.elements.values().next().value!);
-  showToast(resolved ? `Notes are ready: ${resolved} on this page.` : "Nothing new for you on this page.", {
-    hideAfterMs: 4_000,
-  });
+  showToast(finalToast(resolved, grown), { hideAfterMs: grown === "capped" && !resolved ? 8_000 : 4_000 });
 }
 
 /** Light or dark, from the article's own background (the first opaque one up the tree). */
