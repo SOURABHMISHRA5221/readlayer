@@ -1923,3 +1923,51 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    glossreader) → gitleaks over all history again → repo public → signed-out link checks.
 3. The Oct 16 items (unchanged).
 - milestone-reviewer round 2: **SHIP** (2e7fac1). Next: PR → CI → merge (push on Sourabh's yes).
+- PR #39, CI green (api, typescript), squash-merged (9c5ad52). Local `main` had two unpushed log
+  commits (194552a, 527d569); both were in the branch, and the merged tree equals the branch tip's
+  tree, so local `main` was moved to `origin/main` (`reset --keep`), nothing lost.
+  Next: Sourabh's Cloud console step, then R16 (site link, `init.json`) on his yes.
+- Sourabh: Cloud console step done (OAuth origin and redirect URI for glossreader.web.app); brand
+  name skipped ("2 ignore"). On his "yes": `glossreader` linked to `readlayer-web`
+  (`1:751104670850:web:2141c630eb7895c129089b`; neither site had an `appId` before; the default
+  site serves `init.json` without one). `init.json` on glossreader still 404 after 10 tries over
+  ~2.5 min; the site has no release yet ("Site Not Found"), so it most likely appears with the
+  first deploy. R9 diff 615d676..origin/main over the API code: empty (env only: CORS).
+- Sourabh: "yes" to the API deploy and a 1-hour preview. `make deploy-api` from clean `main`
+  (9c5ad52; deploy guard clear): revision **`readlayer-api-00031-84x`**, `/health` 200. CORS
+  preflight on `/v1/recs/open`: allowed for glossreader (both domains), the old site and the
+  extension; none for `https://evil.example`.
+- Preview: web built from `main` (`index-B0WvjYHJ.js`, 149.93 KB), `hosting:channel:deploy
+  initcheck --only gloss --expires 1h`. Its `/__/firebase/init.json`: **200**, `projectId`
+  readlayer-sourabh-26, `apiKey` equal to the build's, `appId` readlayer-web. So `init.json` comes
+  with a release on a linked site (R16 met in substance; the live site gets it at the web deploy).
+  Next, on Sourabh's yes: `make extension-zip` from `main`, release `extension-v0.8.2`, then
+  `make deploy-web`, then the live check.
+- Sourabh: "yes" to the release and the web deploy. `extension-v0.8.2` published (zip from
+  `main`); `make deploy-web` to both sites (`index-B0WvjYHJ.js`); glossreader `init.json` 200.
+- Live check `tools/shots/gloss_live.py`: landing axe 0 at 1440 and 390; 1 demo reader, Connect on
+  glossreader with 0.8.2, Open in Gloss on the Fireship video opened `/read/93053af2…`; reader
+  deleted and confirmed gone. My `grep -v '^    '` on the printed JSON dropped its nested lines
+  (nothing saved), so I did not rerun with a second reader: the API request log for the window
+  gives the reader page's calls (all 200; 2 explain cache hits, $0; no llm, no web search). The
+  script now writes `docs/evidence/gloss-address/live.json`; `--axe-only` re-ran the landing check.
+- gitleaks after the merge: 464 of 466 commits clean; stdin cross-check 7 findings, all the public
+  key (first pass compared redacted values, a false alarm; re-run unredacted, raw report deleted).
+
+### Next steps (resume here, in order)
+1. Sourabh signs in with Google on https://glossreader.web.app (acceptance 3); fallback R13 if it fails.
+2. Repo public on his yes (`gh repo edit --visibility public --accept-visibility-change-consequences`),
+   then signed out: the landing's GitHub link, `releases/tag/extension-v0.8.2` and its zip → 200.
+   Then drop the private-repo comment in `landing/links.ts` (lazy chunk; next web deploy).
+3. PR for this branch (`gloss-address-live`: log, STATUS, `gloss_live.py`).
+4. The Oct 16 items (unchanged).
+- Sourabh: "able to logged in" (Google sign-in on glossreader) and "make repo public". Repo
+  PUBLIC; signed out: repo page, release 0.8.2, latest → 0.8.2, zip (54,259 B) all 200; README on
+  GitHub names glossreader. links.ts private-repo comment removed (a comment: no deploy needed).
+  **Decision 62 done.**
+
+### Next steps (resume here, in order)
+1. PR for `gloss-address-live` (log, STATUS, `gloss_live.py`, links.ts comment) → CI → merge.
+2. The Oct 16 items: persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`,
+   media snapshots, readiness mix re-run, README refresh (incl. the "recommendations only" line),
+   video, deck. Main bundle has ≈ 0.07 KB left: anything touching main must be lazy.
