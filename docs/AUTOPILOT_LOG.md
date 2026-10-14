@@ -1629,9 +1629,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   intermittent: the fallback is `MEDIA_VIDEO_ENABLED=false`), costs, §24. Suites: API 1091,
   web 171, annotator 60, extension 85, typecheck clean, main 149.47 KB.
 
+- Live-check picks, dry-run then rehearsed on the emulator: The Economist "How does raising
+  interest rates control inflation?" (`R8VBRCs2jTU`, 494 s) and The Indicator "How the rich make
+  money by losing money" (Apple `id1320118593?i=1000791671873`). The episode, listed 565 s,
+  downloads at 652 s (stitched-in ads) and was refused `too_long` at no cost.
+  **Sourabh: "raise to 12"** → `MEDIA_MAX_AUDIO_S` 720, bytes 24 MB, message "videos up to 10
+  minutes, podcasts up to 12" (efba893). Then 1,755 words, $0.054.
+- **Bug found and fixed:** both economics recordings showed 0 notes: `ingest_media.py` ran
+  analysis with the empty default graph (only API startup loads it), so no demand linked.
+  `load_serving_graph` now shared by startup and the script; the script refuses without a graph.
+  Re-seeded T05: 8 notes for the newcomer.
+- milestone-reviewer round 1: **FIX** (4 blocking, 8 more). All blocking and items 5-10 applied
+  (b6b01b2 .. c41fc8a): ad-padded episode test, privacy copy, filler-words note, STATUS §5/6/8/9,
+  known-length rule for "Open here", no transcript text in invalid-output logs, DESIGN §8, T05
+  and T06 frozen. API 1,095, web 171, main 149.48 KB.
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer on branch `media` → fix until SHIP → PR → CI green → merge.
+1. milestone-reviewer round 2 → SHIP → PR → CI green → merge.
 2. Deploy API from `main`, then web (Sourabh's yes on each; web flag matches the API).
-3. Live check (acceptance 6): one ≤ 10-min economics or news video and one ≤ 10-min Apple
-   episode (to pick; dry-run them first), as a Google reader, then a demo reader (free).
+3. Live check (acceptance 6) on T05 and T06 as a Google reader, then a demo reader (free).
    Checkpoint end of Oct 14 IST (decision 27).
