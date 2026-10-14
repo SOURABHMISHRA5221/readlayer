@@ -1675,9 +1675,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - Round 2: **SHIP**. PR #33, CI green, squash-merged (78d8bde). `make deploy-web` on Sourabh's
   yes: live `index-DDFEeB7H.js` (149.61 KB), media chunk names only `https://www.youtube.com`.
 
+- **Live check, Sourabh:** T05 and T06 opened by Read any link as a Google reader: "They both
+  worked"; the Fireship video now plays in Gloss ("loved it"). Not confirmed separately: the
+  demo-reader open (free) and a feed video opened both ways. Checkpoint end of Oct 14 IST met:
+  Media and its follow-up merged and live.
+
 ### Next steps (resume here, in order)
-1. Live check (Sourabh): play a video in Gloss signed in to YouTube; open a feed video both ways;
-   T05 and T06 live, then a demo reader (free). Record in STATUS §24/§25.
-2. Checkpoint end of Oct 14 IST (decision 27): Media and its follow-up are merged and live.
-3. M9 (Oct 15). Oct 16: seed the demo snapshots' short videos and episodes with
-   `ingest_media.py` (dry run first, CONCEPTS_URI set, counts in STATUS before writing).
+1. M9 (Oct 15): hardening and evals, plus the M2.2 follow-ups (STATUS §9). Plan first.
+2. Oct 16: seed the demo snapshots' short videos and episodes with `ingest_media.py` (dry run
+   first, CONCEPTS_URI set, counts in STATUS before writing).
