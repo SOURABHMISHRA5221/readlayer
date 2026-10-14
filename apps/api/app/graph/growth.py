@@ -41,6 +41,7 @@ class GrowthPick:
     salience: float
     demand_ids: tuple[str, ...]  # every demand in the article with this label
     phrase: str = ""  # the mention as the linker shows it: "exact (label)"
+    merged_labels: tuple[str, ...] = ()  # same-page picks merged into this one (M9 part 2)
 
 
 def pick(

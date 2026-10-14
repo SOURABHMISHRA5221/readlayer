@@ -4,8 +4,12 @@ Given an analysed article's demands and a number of growth slots (reserved when 
 exactly the labels it will try: app/ingest/growing.py, M9), it grows at most that many verified
 concepts for still-unlinked concept/term demands:
 1. pick the unlinked demands (one per label, most salient first, skipping labels already tried);
-2. embed their labels; a near graph concept (≥ DEDUPE_THRESHOLD) goes to one batched link_merge,
-   and a "same" answer links the demand to it (named organisations never absorb another label);
+2. embed their labels; one batched link_merge asks about each pick's near graph concept
+   (≥ DEDUPE_THRESHOLD) and about picks of this batch near each other (≥ BATCH_NEAR, top 5:
+   "Forever chemicals" / "PFAS", M9 part 2). "Same" answers group picks (union-find): a group with
+   a member that is a graph concept links there; otherwise its most salient pick is defined, the
+   others' mentions link to it and their labels become its aliases (named organisations never
+   absorb another label);
 3. the rest go to one batched concept_define (v3) with their sentence; only verified concepts
    are kept (taxonomy domain, kept kind, specialization ≥ 2);
 4. one batched concept_prereqs over the 20 nearest and 20 most basic same-domain concepts,
@@ -18,14 +22,15 @@ schema-validated, so injected instructions can't produce anything outside the sc
 """
 
 from collections.abc import Awaitable, Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
+import numpy as np
 from wordfreq import zipf_frequency
 
 from app import llm
 from app.config import get_settings
 from app.graph import enrich
-from app.graph.build import normalize_label, slug_ids
+from app.graph.build import candidate_pairs, normalize_label, slug_ids
 from app.graph.graph import ConceptGraph
 from app.graph.growth import (
     GrowthPick,
@@ -42,6 +47,12 @@ from app.ingest.models import Demand
 from app.store.growth_repo import GrowthRepo
 
 Embed = Callable[[list[str]], Awaitable[list[list[float]]]]
+
+# Picks of one batch at least this near are asked whether they name one concept (M9 part 2):
+# below the one same-page duplicate measured (0.899); the model keeps the 60 distinct pairs
+# above 0.85 apart (evals/merge_replay.md). The build's top-k rule bounds the pairs.
+BATCH_NEAR = 0.85
+BATCH_TOP_K = 5
 
 
 @dataclass
@@ -81,7 +92,7 @@ async def grow(
     vectors = dict(
         zip([p.label for p in picks], await embed([p.label for p in picks]), strict=True)
     )
-    rest = await _merge_known(graph, picks, vectors, runner, out)
+    rest = await _merge(graph, picks, vectors, runner, out)
     if not rest:
         return out
     entries = [enrich.Entry(p.label, snippets=(p.sentence,)) for p in rest]
@@ -96,7 +107,10 @@ async def grow(
             continue
         cid = unique_id(slug_ids([p.label])[0], taken)
         taken.add(cid)
-        candidates.append((p, make_concept(cid, p.label, info, zipf, vectors[p.label])))
+        concept = make_concept(cid, p.label, info, zipf, vectors[p.label])
+        if p.merged_labels:  # the next article's "PFAS" finds it by name (graph.lookup)
+            concept = concept.model_copy(update={"aliases": list(p.merged_labels)})
+        candidates.append((p, concept))
     candidates = await _confirm(candidates, runner, out)
     if not candidates:
         return out
@@ -151,29 +165,70 @@ async def _confirm(
     return kept
 
 
-async def _merge_known(
+async def _merge(
     graph: ConceptGraph,
     picks: list[GrowthPick],
     vectors: dict[str, list[float]],
     runner: enrich.Runner,
     out: GrowthOutcome,
 ) -> list[GrowthPick]:
-    """Link picks that turn out to be an existing concept; return the rest."""
+    """One link_merge call for both questions: is a pick an existing concept, and do picks of this
+    batch name one concept. Returns the picks still to define, each carrying its group."""
     threshold = get_settings().dedupe_threshold
-    asked: list[tuple[GrowthPick, Concept]] = []
-    for p in picks:
+    to_graph: list[tuple[int, Concept]] = []
+    for i, p in enumerate(picks):
         concept, score = graph.nearest(vectors[p.label], 1)[0]
         if score >= threshold and not merge_refused(concept, p.label):
-            asked.append((p, concept))
-    if not asked:
+            to_graph.append((i, concept))
+    within = _batch_pairs(picks, vectors)
+    if not to_graph and not within:
         return picks
-    pairs = [(enrich.Entry(p.label), enrich.Entry(c.label, tuple(c.aliases[:5]))) for p, c in asked]
+    pairs = [
+        (enrich.Entry(picks[i].label), enrich.Entry(c.label, tuple(c.aliases[:5])))
+        for i, c in to_graph
+    ] + [(enrich.Entry(picks[i].label), enrich.Entry(picks[j].label)) for i, j in within]
     answers = await enrich.check_merges(pairs, runner, out.calls)
-    merged = set()
-    for k, (p, concept) in enumerate(asked):
+    target = {i: c for k, (i, c) in enumerate(to_graph) if answers.get(k)}
+    parent = list(range(len(picks)))
+
+    def root(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    for k, (i, j) in enumerate(within, start=len(to_graph)):
         if answers.get(k):
-            merged.add(p.label)
-            out.merged += 1
-            for did in p.demand_ids:
-                out.links[did] = concept.id
-    return [p for p in picks if p.label not in merged]
+            parent[root(i)] = root(j)
+    groups: dict[int, list[int]] = {}
+    for i in range(len(picks)):
+        groups.setdefault(root(i), []).append(i)
+    rest: list[GrowthPick] = []
+    for members in groups.values():
+        members.sort(key=lambda i: (-picks[i].salience, picks[i].label))
+        in_graph = [i for i in members if i in target]
+        if in_graph:  # the most salient member that is a graph concept decides
+            concept = target[in_graph[0]]
+            for i in members:
+                for did in picks[i].demand_ids:
+                    out.links[did] = concept.id
+            out.merged += len(members)
+            continue
+        lead, others = picks[members[0]], [picks[i] for i in members[1:]]
+        if others:
+            out.merged += len(others)
+            lead = replace(
+                lead,
+                demand_ids=lead.demand_ids + tuple(d for p in others for d in p.demand_ids),
+                merged_labels=tuple(p.label for p in others),
+            )
+        rest.append(lead)
+    return sorted(rest, key=lambda p: (-p.salience, p.label))
+
+
+def _batch_pairs(picks: list[GrowthPick], vectors: dict[str, list[float]]) -> list[tuple[int, int]]:
+    if len(picks) < 2:
+        return []
+    m = np.array([vectors[p.label] for p in picks], dtype=float)
+    m /= np.linalg.norm(m, axis=1, keepdims=True)
+    return [(i, j) for i, j, _ in candidate_pairs(m, BATCH_NEAR, top_k=BATCH_TOP_K)]
