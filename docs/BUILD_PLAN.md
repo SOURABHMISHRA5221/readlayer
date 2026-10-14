@@ -643,17 +643,16 @@ Oct 17 submit.
    anything it finds, then make the GitHub repo public (the landing links to it).
 
 **Prompt**
-> Build the quality evals per docs/DESIGN.md §12.1 and §12.4: load `evals/gold/*.json` (spans a
-> human marked per persona), compute annotation precision/recall per persona at balanced density,
-> cost per article and per explanation, cache hit rate and p95 latency; write `evals/report.md`.
+> (Decisions 58–59, 2026-10-14, override parts of this prompt: see `docs/plans/M9.md` part 3.)
+> Build the evals per docs/DESIGN.md §12: cost per article and per explanation, cache hit rate
+> and p95 latency (`scripts/eval_ops.py` → `evals/ops_report.md`).
 > Set Cloud Run max instances 3 and finish rate limits. Switch CI deploy to Workload Identity
 > Federation. Create a Cloud Monitoring dashboard (requests, errors, p95, daily LLM spend).
 > Re-seed the persona templates (`scripts/seed_personas.py`, built in M4) against the final
 > graph, pre-ingest the demo articles, and refresh README.md (merged in #12) with the eval
 > results.
 
-**You do by hand:** label the gold set (30 articles × 2 personas, split with your teammate,
-start this on Oct 12); record the 3-minute video (same article, two personas side by side; the
+**You do by hand:** record the 3-minute video (same article, two personas side by side; the
 verifier catching a bad explanation; the graph page showing learning); build the PDF deck with
 the eval numbers; set Cloud Run min instances to 1 for Oct 19 – Nov 6; submit on Oct 17.
 Load the unpacked extension for the video (Developer mode).

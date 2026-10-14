@@ -179,7 +179,7 @@ Measured results so far. Each number comes from [docs/STATUS.md](docs/STATUS.md)
 |---|---|
 | Concept graph | 5,206 concepts in 14 domains (the business core plus politics, law, technology, science, health, environment, sports, culture, education, society), seeded from Wikipedia glossaries and grown online from new articles; no cycles |
 | Library | 310 articles, each ingested once and shared by every reader |
-| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60% missed); with online growth, as in production, 89% / 66%. Grown concepts judged correct: 87% (first sample), 97% (after tightening, overlapping the first), 90% on a fresh sample of 30 grown live ([report](apps/api/evals/heldout_report.md)) |
+| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60% missed); with online growth, as in production, 89% / 66%. Grown concepts judged correct by the build agent (Sourabh's audit pending): 87% (first sample), 97% (after tightening, overlapping the first), 90% on a fresh sample of 30 grown live ([report](apps/api/evals/heldout_report.md)) |
 | Readers see different notes | Trader and policy student get identical underlines on **8 of 310** articles (mean overlap 0.15) |
 | Scoring latency, p95 | **0.19 ms** for a 1,200-word article (local test); about 1 ms on Cloud Run; budget 150 ms |
 | Annotations endpoint, p95 on Cloud Run | **99 ms** server-side, including the Firestore read; 121 ms measured from a client in India |
@@ -322,7 +322,7 @@ Today a card shows the concept's definition and its prerequisites.
 - **M2.2:** open domains and online concept growth (done); frozen-graph linking on unseen articles stays below target, see the held-out report.
 - **M7:** onboarding and the reading profile page. Readers will see and correct their graph there; the API for it exists. This is also where the reader's own analogy domain is set.
 - **M8 (done):** the Gloss Chrome extension, live; see "Install the extension locally".
-- **M9:** quality evals on a hand-labelled gold set.
+- **M9:** growth slots taken when used, quality fixes to online growth, cost / cache / latency report, monitoring dashboard.
 
 **Beyond the hackathon.** Videos and podcasts appear today as recommendations only; annotating them is outside the hackathon scope ([DESIGN §14](docs/DESIGN.md#14-out-of-scope-for-the-hackathon)).
 
@@ -337,7 +337,7 @@ Today a card shows the concept's definition and its prerequisites.
 - [x] M2.2: 14 domains, glossary seeding, online concept growth, jurisdiction-aware linking (frozen-graph targets missed and reported)
 - [ ] M7: onboarding, calibration and the reading profile page
 - [x] M8: Chrome extension with client-side redaction
-- [ ] M9: quality evals on a hand-labelled gold set, hardening, demo video
+- [ ] M9: growth and quality fixes, cost / cache / latency report, hardening, demo video
 
 ## Team
 
