@@ -2,7 +2,7 @@ import { DeviceFrame, Still } from "./DeviceFrame";
 import { EXTENSION_RELEASE_URL } from "./links";
 
 /** The production extension's popup at 1x (`tools/shots/landing_extension.py`). */
-const POPUP = { width: 300, height: 359 };
+const POPUP = { width: 300, height: 198 };
 
 /**
  * "Gloss in your browser" (decision 61 B): the Chrome extension on a real page, what it can and

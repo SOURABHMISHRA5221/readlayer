@@ -501,7 +501,7 @@
   top: 9%;
   right: 4%;
   width: clamp(96px, 26%, 260px);
-  aspect-ratio: 300 / 359;
+  aspect-ratio: 300 / 198;
   overflow: hidden;
   border: 1px solid var(--hairline);
   border-radius: 10px;
