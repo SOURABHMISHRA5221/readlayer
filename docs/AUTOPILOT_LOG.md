@@ -1943,3 +1943,21 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   with a release on a linked site (R16 met in substance; the live site gets it at the web deploy).
   Next, on Sourabh's yes: `make extension-zip` from `main`, release `extension-v0.8.2`, then
   `make deploy-web`, then the live check.
+- Sourabh: "yes" to the release and the web deploy. `extension-v0.8.2` published (zip from
+  `main`); `make deploy-web` to both sites (`index-B0WvjYHJ.js`); glossreader `init.json` 200.
+- Live check `tools/shots/gloss_live.py`: landing axe 0 at 1440 and 390; 1 demo reader, Connect on
+  glossreader with 0.8.2, Open in Gloss on the Fireship video opened `/read/93053af2…`; reader
+  deleted and confirmed gone. My `grep -v '^    '` on the printed JSON dropped its nested lines
+  (nothing saved), so I did not rerun with a second reader: the API request log for the window
+  gives the reader page's calls (all 200; 2 explain cache hits, $0; no llm, no web search). The
+  script now writes `docs/evidence/gloss-address/live.json`; `--axe-only` re-ran the landing check.
+- gitleaks after the merge: 464 of 466 commits clean; stdin cross-check 7 findings, all the public
+  key (first pass compared redacted values, a false alarm; re-run unredacted, raw report deleted).
+
+### Next steps (resume here, in order)
+1. Sourabh signs in with Google on https://glossreader.web.app (acceptance 3); fallback R13 if it fails.
+2. Repo public on his yes (`gh repo edit --visibility public --accept-visibility-change-consequences`),
+   then signed out: the landing's GitHub link, `releases/tag/extension-v0.8.2` and its zip → 200.
+   Then drop the private-repo comment in `landing/links.ts` (lazy chunk; next web deploy).
+3. PR for this branch (`gloss-address-live`: log, STATUS, `gloss_live.py`).
+4. The Oct 16 items (unchanged).
