@@ -87,6 +87,7 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
   const waiting = pendingNote(feed.pending, attempt);
 
   const openHere = async (item: FeedItem) => {
+    if (opening) return; // one open at a time: the title and "Open in Gloss" both land here
     sendRecEvent(persona, "rec_clicked", item.id);
     setOpening(item.id);
     try {

@@ -1659,9 +1659,20 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 
 ## Media follow-up (2026-10-14)
 
+- plan-reviewer: REVISE 7 (bundle: ForYouTab is lazy, so a Row `actions` slot; accessible
+  names and disabled while opening; player tests on literal origins; feed tests; a fixture-driven
+  For you shot; docs and decision 55; privacy wording) → applied as plan Round 1 → **APPROVE**.
+- Built (tests first): afa20cd player on `www.youtube.com` + privacy page (and test);
+  9607228 `lib/recLabels.ts`, Row `actions` slot, `MediaChoice` in ForYouTab, Up next names the
+  original. Web 180, typecheck clean, main **149.61 KB** (149.48), ForYouTab 2.29 KB (2.09).
+- Shots (78fd5de): `tools/shots/media_followup.py` (For you from a fixture, 1440/390 light and
+  dark: axe 0, no scroll, rows right, Tab reaches both controls with a ring) and `media.py`
+  (player origin `https://www.youtube.com`): 0 failed checks. Docs: DESIGN §21.4, decision 55,
+  STATUS §1/§4/§5/§25, Media marked merged and live.
+- milestone-reviewer round 1: **FIX** (stale STATUS §9 and this resume point; plus a second open
+  from the title while busy, duplicate shots, missing suite counts). All applied.
+
 ### Next steps (resume here, in order)
-1. plan-reviewer loop to APPROVE → build A (player on youtube.com) and B (feed choice), tests
-   first → shots → milestone-reviewer → PR → merge → `make deploy-web` (Sourabh's yes).
-2. Live: Sourabh plays a video in Gloss and opens a feed video both ways. The Planet Money
-   episode (T06) live check is still open.
-   Checkpoint end of Oct 14 IST (decision 27).
+1. milestone-reviewer round 2 → SHIP → PR → CI green → merge → `make deploy-web` (Sourabh's yes).
+2. Live: Sourabh plays a video in Gloss signed in to YouTube and opens a feed video both ways;
+   T05 and T06 live, then a demo reader (free). Checkpoint end of Oct 14 IST (decision 27).

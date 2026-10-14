@@ -109,8 +109,6 @@ async def main() -> None:
             check(not long_.get("gloss") and not long_.get("original") and long_.get("titleTarget") == "_blank",
                   f"{name}: long video row {long_}")
             check(not article.get("gloss") and not article.get("original"), f"{name}: article row {article}")
-            await p.eval(f"document.querySelector('.row__gloss').scrollIntoView({{block: 'center'}}); 1")
-            await p.shot(f"{name}-row", full=False)
             await keyboard(p, name)
     finally:
         cdp.OUT.mkdir(parents=True, exist_ok=True)

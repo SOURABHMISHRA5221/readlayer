@@ -122,6 +122,10 @@ describe("For you media rows", () => {
     await settle();
     expect(opens).toBe(1);
     expect(events.filter(([t]) => t === "rec_clicked")).toEqual([["rec_clicked", SHORT.id]]);
+    await act(async () => row(SHORT.title).querySelector<HTMLAnchorElement>(".row__title a")!.click());
+    await settle();
+    expect(opens).toBe(1); // the title doesn't open it a second time either
+    expect(events.filter(([t]) => t === "rec_clicked")).toHaveLength(1);
   });
 
   it("count a click on the original once", async () => {
