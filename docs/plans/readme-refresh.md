@@ -83,7 +83,7 @@ linking numbers and dated measurements only. Library: 323 library pages analysed
 Concept graph: 5,206 seeded, 5,281 served on Oct 14 (STATUS §29).
 
 **R4. How Gen AI complete.** Add `restate` (MODEL_QUALITY, its own task since explain-v4),
-`profile_edit` (MODEL_FAST, Gemma fallback: edit-by-prompt, Describe yourself, onboarding text),
+`profile_edit` (MODEL_FAST, Gemma fallback: edit-by-prompt and Describe yourself only; the `link_confirm` and `embed` rows also say they match the reader's redacted onboarding pieces and goal phrases, one piece per call, DESIGN §11.4 and §18),
 `concept_jurisdiction` in the graph row, `transcribe` (MODEL_QUALITY), and `landing_art`
 (MODEL_IMAGE) named as offline, one-off (landing illustrations), never at runtime. The judge for
 `verify` / `verify_background` is MODEL_JUDGE, unset in production, so Gemini 3.8 Flash.
@@ -113,3 +113,6 @@ behaviour change).
 verify-background-v1), judge Gemini 3.8 Flash: adversarial 15/15 rejected, good 24/25 accepted
 (G21 rejected), injection 10/10 safe, Background suite 3/3 rejected and 2/2 accepted, non-business
 6/7 (outside the M5 targets). Link `apps/api/evals/report.md`.
+
+**Round 2** (plan-reviewer REVISE 1): R4's `profile_edit` row corrected (onboarding text and goals
+go through `embed` and `link_confirm` as redacted pieces, not `profile_edit`). Applied above.
