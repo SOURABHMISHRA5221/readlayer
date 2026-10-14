@@ -1761,12 +1761,19 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 
 - milestone-reviewer: FIX (resume steps, the Oct 16 mix re-run, a route test) → applied → **SHIP**.
 
+- PR #37, CI green, merged (615d676). On Sourabh's yes: API `readlayer-api-00030-4xb`, web
+  deployed. Live: level counts per persona match the mix; End demo deleted the reader (Auth user
+  and `users/{uid}` gone). **Readiness done.**
+
+## Landing refresh (2026-10-14, decision 61)
+
+- Sourabh: update the landing for the features since its freeze; list agreed (extension, media in
+  Gloss, For you readiness): "list sounds good lets go". Plan `docs/plans/landing-refresh.md` on
+  branch `landing-refresh`; plan-reviewer round 1 running.
+
 ### Next steps (resume here, in order)
-1. Readiness (branch `readiness`, reviewer SHIP): PR → CI green → merge →
-   `make check-gcp` → `make deploy-api`, then `make deploy-web` from clean, up-to-date `main`
-   (Sourabh's yes on each) → live check: production `/v1/feed` level counts per persona, one live
-   shot in `docs/evidence/readiness/`, then End demo and confirm the anonymous Auth user and
-   `users/{uid}` (with `rec_signals/newcomer`) are deleted; record in STATUS §29.
+1. Landing refresh (branch `landing-refresh`): plan-reviewer until APPROVE → build (Oct 15) →
+   milestone-reviewer → PR → CI → merge → deploy web (Sourabh's yes) → live check.
 2. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first);
    then update the README precision row's "(Sourabh's audit pending)".
 3. Oct 16 plan (plan-reviewer first): persona templates re-seed, demo pre-ingest, `seed_demo_feed`,

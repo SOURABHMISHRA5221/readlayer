@@ -1,0 +1,104 @@
+{
+ "newcomer": {
+  "status": 200,
+  "rows": 11,
+  "levels": {
+   "ready": 7,
+   "stretch": 4
+  },
+  "stretch_lines": [
+   [
+    "Has Inequality Ever Been Worse?",
+    [
+     "Income distribution"
+    ]
+   ],
+   [
+    "AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova In Focus | Stock Market Today",
+    [
+     "Economic stocks and flows"
+    ]
+   ],
+   [
+    "Gaming out the Fed's next move: The investment committee weighs in",
+    [
+     "Capital goods",
+     "National accounts"
+    ]
+   ],
+   [
+    "Guardrails, safe architecture key to unlocking AI gains for enterprises: Airtel Business CEO",
+    [
+     "Supply and demand"
+    ]
+   ]
+  ]
+ },
+ "trader": {
+  "status": 200,
+  "rows": 11,
+  "levels": {
+   "ready": 4,
+   "stretch": 2,
+   "familiar": 5
+  },
+  "stretch_lines": [
+   [
+    "Nvidia's paid lunches vs Google's free buffets: Are stock perks the new Big Tech benefit?",
+    [
+     "Economic stocks and flows"
+    ]
+   ],
+   [
+    "AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova In Focus | Stock Market Today",
+    [
+     "Economic stocks and flows"
+    ]
+   ]
+  ]
+ },
+ "policy_student": {
+  "status": 200,
+  "rows": 11,
+  "levels": {
+   "stretch": 2,
+   "ready": 5,
+   "familiar": 2,
+   "no line": 2
+  },
+  "stretch_lines": [
+   [
+    "Protest at a designated protest spot is not disturbing the peace, says Ashutosh Ranka",
+    [
+     "Cash markets",
+     "Priority date"
+    ]
+   ],
+   [
+    "Trump announces partial ceasefire in Ukraine war as Zelenskyy says deal is \u2018news to me\u2019",
+    [
+     "Options"
+    ]
+   ]
+  ]
+ },
+ "on_screen": [
+  "Ready for you",
+  "A stretch: read up on Income distribution first",
+  "A stretch: read up on Economic stocks and flows first",
+  "A stretch: read up on Capital goods and National accounts first",
+  "Ready for you",
+  "Ready for you",
+  "A stretch: read up on Supply and demand first",
+  "Ready for you",
+  "Ready for you",
+  "Ready for you",
+  "Ready for you"
+ ],
+ "end_demo_clicked": true,
+ "deleted": {
+  "auth_user_gone": true,
+  "users_doc_gone": true,
+  "subcollections": []
+ }
+}
