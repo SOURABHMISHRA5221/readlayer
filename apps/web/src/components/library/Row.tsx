@@ -9,7 +9,7 @@ export interface RowProps {
   title: string;
   href: string;
   external?: boolean; // opens the original in a new tab
-  onOpen?: () => void; // "Read here" for web articles
+  onOpen?: () => void; // the title opens in Gloss: a web article, or a recording within the caps
   subtitle?: string | null;
   why?: ReactNode;
   time: string;
@@ -22,6 +22,7 @@ export interface RowProps {
   busy?: boolean;
   error?: string | null;
   badge?: string | null; // "Video" / "Podcast" on a library transcript
+  actions?: ReactNode; // extra controls before the time, e.g. "Open in Gloss" and the original
 }
 
 /** Provider snippets carry markdown and sponsor links ("## Big promises", "Go to https://…"):
@@ -71,6 +72,7 @@ export function Row(p: RowProps) {
         {p.why && <p className="row__why">{p.why}</p>}
         <div className="row__meta">
           {p.badge && <span className="row__badge">{p.badge}</span>}
+          {p.actions && <span className="row__choice">{p.actions}</span>}
           <span className="tnum">{p.busy ? "Opening…" : p.time}</span>
           {p.newCount > 0 && (
             <span className="row__new">
