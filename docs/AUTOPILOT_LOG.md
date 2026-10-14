@@ -1922,3 +1922,4 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    `make deploy-web` from clean `main` → live check (R6 bounds; Sourabh's Google sign-in on
    glossreader) → gitleaks over all history again → repo public → signed-out link checks.
 3. The Oct 16 items (unchanged).
+- milestone-reviewer round 2: **SHIP** (2e7fac1). Next: PR → CI → merge (push on Sourabh's yes).
