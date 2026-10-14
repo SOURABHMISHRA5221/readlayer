@@ -13,3 +13,30 @@ def test_merge_report_counts_false_merges_and_misses():
     out = report(rows, 0.0123)
     assert "**4 pairs: false merges 1 (1 at cosine ≥ 0.899), missed duplicates 1.**" in out
     assert out.count("**disagree**") == 2 and "$0.0123" in out
+
+
+def test_a_concept_is_never_its_own_prerequisite_candidate():
+    from types import SimpleNamespace
+
+    from scripts.replay_prereqs import pool_without
+
+    pool = [SimpleNamespace(id="c_pfos"), SimpleNamespace(id="c_chemistry")]
+    assert [c.id for c in pool_without(pool, "c_pfos")] == ["c_chemistry"]
+
+
+def test_the_cut_drops_every_wrong_edge_and_keeps_90_percent_of_the_right():
+    from scripts.replay_prereqs import Edge, choose
+
+    right = [Edge(f"c{i}", "p", 0.6 + i / 100, True) for i in range(10)]
+    wrong = [Edge("PFOS", "PHOSITA", 0.55, False)]
+    t, n = choose(right + wrong)
+    assert t == 0.6 and n["dropped_wrong"] == 1 and n["dropped_right"] == 0
+
+
+def test_when_no_cut_does_both_it_keeps_90_percent_of_the_right():
+    from scripts.replay_prereqs import Edge, choose
+
+    right = [Edge(f"c{i}", "p", 0.5 + i / 100, True) for i in range(10)]
+    wrong = [Edge("x", "y", 0.95, False)]  # more confident than every right edge
+    t, n = choose(right + wrong)
+    assert n["kept_wrong"] == 1 and n["dropped_right"] <= 1
