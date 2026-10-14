@@ -407,7 +407,7 @@ function ArticleHeader({ article }: { article: ContentDetail }) {
       {article.description && <p className="article-head__dek">{article.description}</p>}
       {media && (
         <p className="article-head__note">
-          A transcript made automatically from the {media.kind === "video" ? "video" : "episode"}. It can differ from what's said; the recording is the source.
+          A transcript made automatically from the {media.kind === "video" ? "video" : "episode"}. It can contain errors, and filler words are often left out; the recording is the source.
         </p>
       )}
       <div className="byline">

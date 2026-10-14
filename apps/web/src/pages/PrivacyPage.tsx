@@ -47,7 +47,7 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
     title: "Videos",
     items: [
       "A video's page shows its thumbnail from YouTube, so YouTube sees your IP address, browser and the video's id. The player loads only when you press play, from YouTube's no-cookie domain; after that YouTube gets what any embedded video sends and may store data in your browser.",
-      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and readable only by the readers who opened the video.",
+      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and listed only for the readers who opened the video; like the video itself, anyone with its link can read it.",
     ],
   },
   {
@@ -55,7 +55,7 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
     title: "Podcasts",
     items: [
       "An episode's audio streams straight from its publisher and nothing is requested until you press play. Then the publisher, and any measurement services its episode link passes through, see your IP address and browser, and your browser tells them you came from Gloss's site (its address, not the page).",
-      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and readable only by the readers who opened the episode.",
+      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and listed only for the readers who opened the episode; like the episode itself, anyone with its link can read it.",
     ],
   },
   {
