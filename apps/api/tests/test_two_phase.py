@@ -204,13 +204,19 @@ def test_phase_one_failure_refunds_the_slot(store, monkeypatch):
         sf.set_fetcher(None)
 
 
-def test_analyse_by_another_reader_charges_no_growth_slots(store, fake_llm, monkeypatch):
+def test_the_reader_whose_request_runs_phase_2_holds_the_growth_slots(store, fake_llm, monkeypatch):
+    """M9 part 1: growth slots are taken in phase 2, from the reader whose request runs it (the
+    pending doc names nobody), and only for what growth tries."""
     from app.ingest import quota
 
-    async def never(*a, **k):
-        raise AssertionError("phase 2 must not reserve growth slots")
+    reservers: list[str] = []
 
-    monkeypatch.setattr(quota, "reserve_growth", never)
+    def reserver(caller, settings):
+        reservers.append(caller.uid)
+        return None  # growth off here: nothing reserved
+
+    monkeypatch.setattr(quota, "growth_reserver", reserver)
     asyncio.run(_pending())
     resp = client("someone-else", anonymous=True).post(f"/v1/content/{CID}/analyse")
     assert resp.status_code == 200 and resp.json()["status"] == "ready"
+    assert reservers == ["someone-else"]

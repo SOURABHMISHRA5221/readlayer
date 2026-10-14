@@ -7,8 +7,9 @@ them into concepts.json later (scripts/fold_growth.py). Docs are created only if
 instances growing the same slug never overwrite each other.
 
 Growth slots per UTC day are counted per reader (`users/{uid}/growth_counts/{day}`, a user
-subcollection covered by export and delete) and for the whole service (`ops/growth/days/{day}`),
-reserved together in one transaction when the article is first fetched (phase 1).
+subcollection covered by export and delete), for the whole service (`ops/growth/days/{day}`) and for
+all anonymous readers together (`ops/growth/anon_days/{day}`), reserved together in one transaction
+when growth is about to run: exactly the labels it will try (M9 part 1, DESIGN §2).
 """
 
 from dataclasses import dataclass
@@ -24,6 +25,10 @@ COLLECTION = "graph_growth"
 
 def day_path(day: str) -> str:
     return f"ops/growth/days/{day}"
+
+
+def anon_day_path(day: str) -> str:
+    return f"ops/growth/anon_days/{day}"
 
 
 @dataclass(frozen=True)
@@ -69,19 +74,25 @@ class GrowthRepo:
         )
         return [_grown(doc) for _, doc in rows]
 
-    async def reserve_slots(self, uid: str, day: str, want: int, uid_cap: int, day_cap: int) -> int:
-        """Grant up to `want` growth slots within the reader's and the service's daily caps;
+    async def reserve_slots(
+        self, uid: str, day: str, want: int, uid_cap: int, day_cap: int, anon_cap: int | None = None
+    ) -> int:
+        """Grant up to `want` growth slots within the reader's and the service's daily caps, and,
+        for an anonymous reader (`anon_cap` set), the cap all anonymous readers share (M9 G6);
         returns how many were granted (0 = none, nothing written)."""
 
         async def body(t: Txn) -> int:
             mine_path, all_path = sub_path(uid, "growth_counts", day), day_path(day)
-            reads = await t.get_all([mine_path, all_path])
-            mine = int((reads[mine_path] or {}).get("count", 0))
-            total = int((reads[all_path] or {}).get("count", 0))
-            granted = max(0, min(want, uid_cap - mine, day_cap - total))
+            paths = [mine_path, all_path] + ([anon_day_path(day)] if anon_cap is not None else [])
+            reads = await t.get_all(paths)
+            counts = {p: int((reads[p] or {}).get("count", 0)) for p in paths}
+            room = [uid_cap - counts[mine_path], day_cap - counts[all_path]]
+            if anon_cap is not None:
+                room.append(anon_cap - counts[anon_day_path(day)])
+            granted = max(0, min(want, *room))
             if granted:
-                t.set(mine_path, {"count": mine + granted, "day": day})
-                t.set(all_path, {"count": total + granted, "day": day})
+                for p in paths:
+                    t.set(p, {"count": counts[p] + granted, "day": day})
             return granted
 
         return await self._store.run(body)

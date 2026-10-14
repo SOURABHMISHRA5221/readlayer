@@ -6,6 +6,8 @@ Anonymous readers have a smaller per-uid cap plus one shared cap across all anon
 (`ops/ingest/days/{day}`), so minting new anonymous accounts doesn't multiply the allowance.
 """
 
+from collections.abc import Awaitable, Callable
+
 from fastapi.responses import JSONResponse
 
 from app.auth import Caller
@@ -13,6 +15,8 @@ from app.config import Settings
 from app.store.docstore import get_doc_store
 from app.store.reader_repo import ReaderRepo
 from app.store.spend_repo import today_utc
+
+Reserver = Callable[[int], Awaitable[int]]  # want → granted (M9: slots taken when used)
 
 
 def _global_path(caller: Caller, day: str) -> str | None:
@@ -34,21 +38,29 @@ async def reserve(caller: Caller, settings: Settings) -> bool:
     )
 
 
-async def reserve_growth(caller: Caller, settings: Settings) -> int:
-    """Concept-growth slots for a new article (M2.2, decision 35: any reader within the caps):
-    up to GROWTH_PER_ARTICLE within the reader's and the service's daily growth caps. 0 when
-    growth is off. Reserved with the ingest slot, never refunded (bounded, simple)."""
+def growth_reserver(caller: Caller, settings: Settings) -> Reserver | None:
+    """Concept-growth slots for this caller (M9 part 1): phase 2 and /grow call it with the number
+    of labels growth will try, once they know it, and get what the caps allow (at most one
+    article's worth). None when growth is off. The pending and content docs never learn who
+    reserved: the uid stays in this closure."""
     if not settings.growth_enabled:
-        return 0
+        return None
     from app.store.growth_repo import GrowthRepo
 
-    return await GrowthRepo(get_doc_store()).reserve_slots(
-        caller.uid,
-        today_utc(),
-        settings.growth_per_article,
-        settings.growth_per_uid_day,
-        settings.growth_per_day,
-    )
+    async def reserve(want: int) -> int:
+        want = min(want, settings.growth_per_article)
+        if want <= 0:
+            return 0
+        return await GrowthRepo(get_doc_store()).reserve_slots(
+            caller.uid,
+            today_utc(),
+            want,
+            settings.growth_per_uid_day,
+            settings.growth_per_day,
+            settings.anon_growth_daily_cap if caller.is_anonymous else None,
+        )
+
+    return reserve
 
 
 async def refund(caller: Caller) -> None:

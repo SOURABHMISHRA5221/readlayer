@@ -88,13 +88,15 @@ def _error(status: int, code: str, message: str, retry_after: int | None = None)
 
 
 async def ingest_url(
-    url: str, source: Literal["fetch", "user_ingested"] = "fetch", grow_slots: int = 0
+    url: str,
+    source: Literal["fetch", "user_ingested"] = "fetch",
+    reserve: quota.Reserver | None = None,
 ) -> ContentDoc:
     """The ingestion pipeline (spaCy, trafilatura, wordfreq, LiteLLM) loads on the first new
     article, so read-only requests and cold starts never import it."""
     from app.ingest import service
 
-    return await service.ingest_url(url, source=source, grow_slots=grow_slots)
+    return await service.ingest_url(url, source=source, reserve=reserve)
 
 
 def clean_submitted(paragraphs: list[str]) -> list[str]:
@@ -109,26 +111,22 @@ async def pii_refuses(paragraphs: list[str]) -> bool:
     return (await service.pii_check(paragraphs)).refuse
 
 
-async def store_submitted(
-    content_id: str, url: str, title: str, texts: list[str], grow_slots: int = 0
-) -> PendingDoc:
+async def store_submitted(content_id: str, url: str, title: str, texts: list[str]) -> PendingDoc:
     from app.ingest import service
 
-    return await service.store_submitted(content_id, url, title, texts, grow_slots)
+    return await service.store_submitted(content_id, url, title, texts)
 
 
-async def fetch_and_extract(
-    url: str, source: Literal["fetch", "user_ingested"], grow_slots: int = 0
-) -> PendingDoc:
+async def fetch_and_extract(url: str, source: Literal["fetch", "user_ingested"]) -> PendingDoc:
     from app.ingest import service
 
-    return await service.fetch_and_extract(url, source, grow_slots)
+    return await service.fetch_and_extract(url, source)
 
 
-async def analyse_pending(content_id: str) -> ContentDoc:
+async def analyse_pending(content_id: str, reserve: quota.Reserver | None = None) -> ContentDoc:
     from app.ingest import service
 
-    return await service.analyse_pending(content_id)
+    return await service.analyse_pending(content_id, reserve)
 
 
 async def is_known(content_id: str) -> bool:
@@ -167,9 +165,8 @@ async def post_content(
     known = await is_known(url_hash(body.url))
     if not known and not await quota.reserve(caller, settings):
         return quota.cap_reached(caller, settings, "Articles already in the library stay free.")
-    try:
-        slots = 0 if known else await quota.reserve_growth(caller, settings)
-        doc = await ingest_url(body.url, grow_slots=slots)
+    try:  # growth slots are taken in phase 2, for what it tries (M9), even for a pending URL
+        doc = await ingest_url(body.url, reserve=quota.growth_reserver(caller, settings))
     except Exception as exc:
         if not known:
             await quota.refund(caller)
@@ -205,8 +202,7 @@ async def _post_submitted(
                         caller, settings, "Articles already in the library stay free."
                     )
                 try:
-                    slots = await quota.reserve_growth(caller, settings)
-                    doc = await store_submitted(content_id, url, title, texts, slots)
+                    doc = await store_submitted(content_id, url, title, texts)
                 except Exception:
                     await quota.refund(caller)
                     raise
@@ -215,7 +211,7 @@ async def _post_submitted(
             caller.uid, doc.content_id, datetime.now(UTC).isoformat()
         )
         if isinstance(doc, PendingDoc) and not body.defer:
-            doc = await analyse_pending(doc.content_id)
+            doc = await analyse_pending(doc.content_id, quota.growth_reserver(caller, settings))
     except Exception as exc:
         if isinstance(exc, INGEST_ERRORS):
             return _ingest_error(exc)
@@ -235,6 +231,7 @@ class AnalyseResponse(BaseModel):
 async def analyse_content(
     content_id: Annotated[str, Path(min_length=1, max_length=64, pattern=r"^[0-9a-f]+$")],
     caller: Annotated[Caller, Depends(current_caller)],
+    settings: Annotated[Settings, Depends(get_settings)],
 ) -> AnalyseResponse | JSONResponse:
     """Phase 2 of "Open here": demand extraction and linking for a fetched article. Already
     analysed → ready, no LLM call. Another request analysing it → 202. The ingest slot was taken
@@ -243,7 +240,7 @@ async def analyse_content(
     if (pending := await get_pending_repo().get(content_id)) is not None:
         await require_readable(pending, caller.uid)
     try:
-        doc = await analyse_pending(content_id)
+        doc = await analyse_pending(content_id, quota.growth_reserver(caller, settings))
     except NotPending:
         return _error(404, "not_found", "content not found")
     except AnalysisBusy:

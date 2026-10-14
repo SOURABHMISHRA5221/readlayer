@@ -16,7 +16,7 @@ from app.graph.enrich import ConceptInfo
 from app.graph.graph import ConceptGraph
 from app.graph.linking import EMBED_TYPES, phrase, sentence_around
 from app.graph.models import DOMAINS, Concept
-from app.ingest.models import Demand
+from app.ingest.models import NOT_CORPUS, ContentDoc, Demand
 
 # Kinds whose concepts never absorb a differently-labelled candidate (mirrors never_merge_kind
 # in data/graph_overrides.yaml, which isn't shipped with the API; a test keeps them equal).
@@ -33,6 +33,38 @@ def everyday_word(label: str, zipf: float) -> bool:
     return " " not in label.strip() and zipf >= EVERYDAY_ZIPF
 
 
+# Calls that only growth makes: a stored page that has one was grown (M9, old-page rule).
+GROWTH_TASKS = frozenset({"concept_define", "link_merge", "concept_prereqs"})
+
+
+def _untried_groups(demands: Sequence[Demand], exclude: frozenset[str]) -> dict[str, list[Demand]]:
+    groups: dict[str, list[Demand]] = {}
+    for d in demands:
+        key = normalize_label(d.label)
+        if d.type in EMBED_TYPES and d.target_id is None and key and key not in exclude:
+            groups.setdefault(key, []).append(d)
+    return groups
+
+
+def untried_count(demands: Sequence[Demand], tried: frozenset[str], limit: int) -> int:
+    """How many labels growth would try on this page now (what phase 2 and /grow reserve)."""
+    return min(len(_untried_groups(demands, tried)), max(0, limit))
+
+
+def needs_growth(doc: ContentDoc, *, heldout: bool) -> bool:
+    """A stored page a reader's reopen should grow (M9 part 1, G1–G3). Only a reader's own pages
+    (NOT_CORPUS), never held out, with an untried label. Pages stored before M9 (no flag): an
+    extension page that was never grown and isn't a recording."""
+    if heldout or doc.source not in NOT_CORPUS:
+        return False
+    if not untried_count(doc.demands, frozenset(doc.grow_tried), 1):
+        return False
+    if doc.grow_pending is not None:
+        return doc.grow_pending
+    grown = any(c.task in GROWTH_TASKS for c in doc.llm_calls)
+    return doc.source == "extension" and doc.media is None and not grown
+
+
 @dataclass(frozen=True)
 class GrowthPick:
     label: str
@@ -42,12 +74,15 @@ class GrowthPick:
     phrase: str = ""  # the mention as the linker shows it: "exact (label)"
 
 
-def pick(demands: Sequence[Demand], paragraphs: dict[str, str], limit: int) -> list[GrowthPick]:
-    """Unlinked concept/term demands, one per normalised label, most salient first."""
-    groups: dict[str, list[Demand]] = {}
-    for d in demands:
-        if d.type in EMBED_TYPES and d.target_id is None and normalize_label(d.label):
-            groups.setdefault(normalize_label(d.label), []).append(d)
+def pick(
+    demands: Sequence[Demand],
+    paragraphs: dict[str, str],
+    limit: int,
+    exclude: frozenset[str] = frozenset(),
+) -> list[GrowthPick]:
+    """Unlinked concept/term demands, one per normalised label, most salient first; labels in
+    `exclude` (already tried on this page, M9) are skipped."""
+    groups = _untried_groups(demands, exclude)
     picks = []
     for members in groups.values():
         top = max(members, key=lambda d: (d.salience, d.id))

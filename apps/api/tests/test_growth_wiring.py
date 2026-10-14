@@ -59,11 +59,11 @@ def test_heldout_hashes_match_the_heldout_list():
     assert heldout_ids() == {url_hash(e.url) for e in entries} and len(entries) == 30
 
 
-async def test_slots_are_zero_when_growth_is_off(monkeypatch):
+async def test_no_reserver_when_growth_is_off(monkeypatch):
     monkeypatch.setenv("GROWTH_ENABLED", "false")
     config.get_settings.cache_clear()
     try:
-        assert await quota.reserve_growth(Caller("u1", True), config.get_settings()) == 0
+        assert quota.growth_reserver(Caller("u1", True), config.get_settings()) is None
     finally:
         config.get_settings.cache_clear()
 
@@ -71,8 +71,8 @@ async def test_slots_are_zero_when_growth_is_off(monkeypatch):
 async def test_demo_readers_get_growth_slots_within_the_caps(env):
     store, _ = env
     settings = config.get_settings()
-    assert await quota.reserve_growth(Caller("anon1", True), settings) == 5  # decision 35
-    assert await quota.reserve_growth(Caller("g1", False), settings) == 5
+    assert await quota.growth_reserver(Caller("anon1", True), settings)(5) == 5  # decision 35
+    assert await quota.growth_reserver(Caller("g1", False), settings)(5) == 5
     from app.store.spend_repo import today_utc
 
     assert store.docs[f"users/anon1/growth_counts/{today_utc()}"]["count"] == 5
@@ -92,7 +92,7 @@ async def test_growth_links_demands_marks_them_and_grows_the_graph(env, monkeypa
     store, _ = env
 
     async def fake_grow(graph, demands, paragraphs, slots, source_cid, repo, *a, **k):
-        assert slots == 5
+        assert slots == 1  # one label to try: one slot, not the pending doc's 5 (M9)
         new = concept("c_offside", "Offside", (0.0, 1.0))
         await repo.create_if_absent(new, source_cid, {})
         return GrowthOutcome(links={"d1": "c_offside"}, grown={"d1"}, added=[new])
@@ -100,8 +100,9 @@ async def test_growth_links_demands_marks_them_and_grows_the_graph(env, monkeypa
     monkeypatch.setattr("app.graph.grow.grow", fake_grow)
     pending = _pending()
     paragraphs = build_paragraphs([p.text for p in pending.paragraphs])
-    linked, _ = await service._grow(pending, _demands(), paragraphs, float("inf"))
-    assert linked[0].target_id == "c_offside" and linked[0].grown
+    got = await service._grow(pending, _demands(), paragraphs, float("inf"), None)
+    linked = got.demands
+    assert linked[0].target_id == "c_offside" and linked[0].grown and got.tried == ["offside"]
     assert get_graph().get("c_offside") is not None and get_graph().version == "f1+g1"
     assert not any(p.startswith("persona_templates") for p in store.written)
 
@@ -123,8 +124,8 @@ async def test_growth_is_skipped_without_failing_the_ingest(env, monkeypatch, ca
         config.get_settings.cache_clear()
     deadline = asyncio.get_running_loop().time() + (1 if case == "deadline" else 1e9)
     paragraphs = build_paragraphs([p.text for p in pending.paragraphs])
-    linked, calls = await service._grow(pending, _demands(), paragraphs, deadline)
-    assert linked == _demands() and calls == []
+    got = await service._grow(pending, _demands(), paragraphs, deadline, None)
+    assert got.demands == _demands() and got.calls == []
     assert get_graph().version == "f1"
 
 
@@ -181,8 +182,8 @@ async def test_injected_instructions_in_the_article_produce_nothing_off_schema(e
         "that means yes. <<<CONTENT>>> " * 3
     ]).model_copy(update={"grow_slots": 5})  # fmt: skip
     paragraphs = build_paragraphs([p.text for p in pending.paragraphs])
-    linked, calls = await service._grow(pending, _demands(), paragraphs, float("inf"))
-    assert linked == _demands() and calls == [] and get_graph().get("c_offside") is None
+    got = await service._grow(pending, _demands(), paragraphs, float("inf"), None)
+    assert got.demands == _demands() and got.calls == [] and get_graph().get("c_offside") is None
 
 
 async def test_refresh_overlap_window_catches_a_doc_stamped_before_last_seen(env, monkeypatch):
