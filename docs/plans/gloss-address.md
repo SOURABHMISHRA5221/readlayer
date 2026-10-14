@@ -239,3 +239,38 @@ proposal put to Sourabh at the checkpoint, not applied by itself (STATUS §9).
 **Approved** (plan-reviewer round 2, 2026-10-14). Nits taken: R7's stub YouTube page is served at
 the real URL `https://www.youtube.com/watch?v=wajoP_5Cpw8` through a Playwright route (a localhost
 URL would make `youtubeWatchUrl` return null); `HOSTING` dropped from the Facts.
+
+## Round 2 (Sourabh's answers, 2026-10-14; these override the sections above)
+
+Sourabh: "Yes on 1, No on 2, 3 yes".
+
+**R10. Site created: `glossreader`.** `gloss` and `gloss-reader` are reserved by other projects
+(Hosting API 400). `hosting:sites:create glossreader` succeeded: `https://glossreader.web.app`.
+Every `<gloss>` above is `glossreader`. `/__/auth/handler` already answers 200 there.
+
+**R11. Sign-in names Gloss, not readlayer (Open 1 answered "no": change it).**
+- Web: on `glossreader.web.app` the Firebase `authDomain` is that host (same origin as the app),
+  else the built `VITE_FIREBASE_AUTH_DOMAIN` as today. One `GLOSS_HOST` constant in a new tiny
+  `lib/sites.ts` (also used by the Connect page hint, lazy), read in `lib/auth.ts`. This is the
+  one main-bundle change: **gate main ≤ 150.00 KB gzip**, measured before and after; if over,
+  something else in main pays for it (named in the PR) or Sourabh is asked. `glossreader.firebaseapp.com`
+  keeps the old `authDomain` (no redirect URI for it). Same-origin `authDomain` also takes the
+  popup off the cross-site iframe that browsers' storage partitioning can break.
+- Sourabh, by hand in the Cloud console, **before the web deploy** (a web deploy without it gives
+  `redirect_uri_mismatch` on the new address): APIs & Services → Credentials → the OAuth client
+  "Web client (auto created by Google Service)": add Authorized JavaScript origin
+  `https://glossreader.web.app` and redirect URI `https://glossreader.web.app/__/auth/handler`;
+  nothing removed. Branding (OAuth consent screen): if the app name says readlayer, set it to
+  "Gloss" (shown on both addresses). The CLI can't read the brand (IAP OAuth Admin API is off and
+  being shut down), so he reports what it said.
+- Unit test: `authDomain` for `glossreader.web.app`, `readlayer-sourabh-26.web.app`,
+  `glossreader.firebaseapp.com` and the emulator.
+- Acceptance 3 gains: Sourabh signs in with Google on `glossreader.web.app`; the account chooser
+  names glossreader.web.app or Gloss, not readlayer; sign-in on the old address still works.
+- Outward order: the console step goes between the Auth domains PATCH (3) and the API deploy (4).
+
+**R12. The Gmail address leaves tracked files (Open 2 answered "yes"), history kept.** `Makefile`:
+`ACCOUNT` comes from `-include .gcp.local.mk` (gitignored, written once from CLAUDE.local.md);
+`check-gcp` fails with "ACCOUNT unset: create .gcp.local.mk (see CLAUDE.local.md)" when it's
+missing. STATUS and AUTOPILOT_LOG say "the project's Google account" instead. A `git grep` for
+the address returns nothing before the PR. History keeps it (Sourabh's choice).
