@@ -93,3 +93,15 @@ prerequisite id missing from the graph: no crash; `select` and `_out` carry both
 IST → ask Sourabh what to cut, decision 27) and decision 60 recorded before coding: shown as three
 levels, not a number (a number from title and summary matches would be false precision); Sourabh
 asked in one line before the web work.
+
+## Round 2 (plan-reviewer REVISE, 2 items; applied)
+
+**W1 (V7).** The mix is measured by a read-only script, `scripts/readiness_mix.py`: after `make
+check-gcp`, it reads the 3 production `persona_feeds/{persona}` docs, the 3 `persona_templates`
+and the served graph from Cloud Storage, runs `snapshot_candidates`, `rank` and `select` in memory
+and prints level counts per persona; it writes nothing. Run before the web work and again after
+the Oct 16 re-seed. Stop rule unchanged (one level ≥ 80% of the newcomer's rows → tell Sourabh,
+no retuning). A small handmade fixture test stays for correctness only. Production: reads only.
+**W2 (V11).** The live check ends with "End demo" (delete on request); the STATUS section records
+that the anonymous Auth user and `users/{uid}` (with `rec_signals/newcomer`) are gone. Expected:
+1 anonymous user, its `users/{uid}` and `rec_signals/newcomer` written, then all deleted.
