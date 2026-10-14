@@ -1815,3 +1815,21 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 2. Harness `tools/shots/landing_refresh.py` (local build, before/after, axe all impacts, widths,
    first view, LCP) → milestone-reviewer → PR → CI → merge → deploy web (Sourabh's yes) → live check.
 3. Decision 62 (gloss domain) plan, then the Oct 16 items from the previous Next steps.
+
+- Sourabh: "yes" to a third demo reader. Run 3 (`landing_extension.py --web-stills`): 0
+  generations, deleted and confirmed gone; feed and media stills good; extension window 2x WebP
+  still over 250 KB, re-encoded offline from the kept PNG (near-lossless, 241.7 KB); popup cropped
+  above a cut control (300×188). Alt texts match the stills (681c490).
+- Harnesses on local previews (before = `main` worktree; it needed `.env.local` copied, else the
+  "Sign-in isn't set up" page): `landing_refresh.py` all pass, `landing.py` all pass; Lighthouse
+  LCP 2,552 ms before and after. Format pills levelled (two-line title room ≥ 1024). Main 149.88 KB
+  (149.97 before, same build setup: my earlier "hash noise" guess was wrong). STATUS §30, DESIGN
+  §20.2, decision 62 recorded.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on `landing-refresh` → fix until SHIP → PR → CI → merge → `make check-gcp` →
+   `make deploy-web` from clean `main` (Sourabh's yes) → live check at 1440 and 390 (new sections,
+   stills load, axe 0).
+2. Decision 62 (gloss web address) plan → plan-reviewer → build (Auth domain, CORS, extension
+   0.8.2, links; deploys on Sourabh's yes).
+3. The Oct 16 items (persona re-seed and the rest, unchanged from the earlier Next steps).
