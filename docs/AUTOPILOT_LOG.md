@@ -1737,7 +1737,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   spend panel: "Hand deploy, don't want spend metrics" (decision 59).
 - Plan part 3 → plan-reviewer REVISE 14 → REVISE 1 → **APPROVE**.
 - `scripts/eval_ops.py` (read only, field masks, Cloud Logging 7 days) → `evals/ops_report.md`:
-  annotate request p95 287 ms, explanation cache 70%, spend to date $22.64. Safety report links it.
+  annotate request p95 478 ms (GET only, after review round 1; 287 ms had counted CORS preflights), explanation cache 70%, spend to date $22.64. Safety report links it.
 - Live: max 3 / min 0; no user-managed SA keys; dashboard `readlayer-api` created on his yes.
 - Docs: DESIGN §12 to the submission's scope, README roadmap and the precision label ("judged by
   the build agent"), BUILD_PLAN pointer, STATUS decisions 58–59, two §4 deviations, §28.

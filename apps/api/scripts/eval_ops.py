@@ -110,12 +110,13 @@ def report(data: Mapping) -> str:
         "# Cost, cache and latency (M9 part 3)",
         "",
         f"Generated {data['generated']} by `scripts/eval_ops.py` from production, read only: "
-        f"Firestore (field masks) and Cloud Logging for the last {LOG_DAYS} days "
-        f"({data['window']}). Aggregates only. Minimum instances is 0, so latencies include "
-        "cold starts.",
+        "Firestore (field masks) and Cloud Logging. Costs cover everything stored to date; "
+        f"cache and latency cover the last {LOG_DAYS} days of logs ({data['window']}). "
+        "Aggregates only. Minimum instances is 0, so request latencies include cold starts.",
         "",
         "## Cost per article (model calls stored with each page)",
         "",
+        f"All {data['pages_total']} pages stored to date. "
         "Analysis: demand extraction and linking (growth's confirm step shares the linker's "
         "`link_confirm` task, so it counts here). Growth: concept_define, link_merge, "
         "concept_prereqs. Transcript: a recording's transcription, once.",
@@ -123,15 +124,20 @@ def report(data: Mapping) -> str:
         "| pages | n | analysis median / mean / p90 | growth median / mean | transcript mean |",
         "|---|---|---|---|---|",
     ]
+    names = {"fetch": "library (corpus)", "user_ingested": "opened by readers",
+             "extension": "extension", "media": "videos and podcasts"}  # fmt: skip
     for group, c in sorted(data["articles"].items()):
         a, g = summary(c["analysis"]), summary(c["growth"])
         t = summary(c["transcript"])
         tr = money(t["mean"]) if t["n"] else "—"
         cost = f"{money(a['median'])} / {money(a['mean'])} / {money(a['p90'])}"
         lines.append(
-            f"| {group} | {a['n']} | {cost} | {money(g['median'])} / {money(g['mean'])} | {tr} |"
+            f"| {names.get(group, group)} | {a['n']} | {cost} | "
+            f"{money(g['median'])} / {money(g['mean'])} | {tr} |"
         )
     lines += ["", "## Cost per explanation part (current prompt versions)", "",
+              f"Every cache entry on the current prompt versions, of {data['explain_total']} "
+              "cache entries read.", "",
               "| part | n | median | mean |", "|---|---|---|---|"]  # fmt: skip
     for part, xs in sorted(data["explain"].items()):
         s = summary(xs)
@@ -153,8 +159,8 @@ def report(data: Mapping) -> str:
         lines.append(f"| {name} | {hits} | {misses} | {rate} | {source} |")
     lines += [
         "",
-        f"Web search: {data['search_calls']} provider calls over the window (cache misses; no "
-        "hit counter exists).",
+        f"Web search: {data['search_calls'][0]} provider calls ({data['search_calls'][1]}; "
+        "cache misses, no hit counter exists).",
         "",
         "## Latency",
         "",
@@ -164,6 +170,17 @@ def report(data: Mapping) -> str:
     for name, (xs, source) in data["latency"].items():
         lines.append(f"| {name} | {len(xs)} | {percentile(xs, 0.5):.0f} ms | "
                      f"{percentile(xs, 0.95):.0f} ms | {source} |")  # fmt: skip
+    lines += [
+        "",
+        "Latest values the API logs from its own rolling windows (in-process, per "
+        "instance; not request latency):",
+        "",
+        "| window | values |",
+        "|---|---|",
+    ]
+    for name, vals in data["rolling"].items():
+        shown = ", ".join(f"{k.replace('_ms', '')} {v:.1f} ms" for k, v in vals.items())
+        lines.append(f"| {name} | {shown or 'none logged'} |")
     total = sum(data["spend"].values())
     recent = sorted(data["spend"].items())[-14:]
     lines += [
@@ -193,6 +210,29 @@ def _logs(log_filter: str) -> list[dict]:
     return json.loads(out.stdout or "[]")
 
 
+def in_window(days: Mapping[str, Mapping], start: str) -> tuple[list[str], str]:
+    """Day docs dated on or after the window start (ledger days can be missing), and their range."""
+    picked = sorted(d for d in days if d >= start)
+    return picked, (f"{picked[0]} to {picked[-1]}" if picked else "no days")
+
+
+def latest(entries: list[dict], fields: Iterable[str]) -> dict[str, float]:
+    """The newest log entry's numeric fields (the rolling windows the API logs itself)."""
+    if not entries:
+        return {}
+    p = max(entries, key=lambda e: e.get("timestamp", "")).get("jsonPayload") or {}
+    return {f: float(p[f]) for f in fields if isinstance(p.get(f), (int, float))}
+
+
+def with_samples(fields: Mapping[str, float]) -> dict[str, float]:
+    """Drop a class whose rolling window was empty (its percentiles read 0), and the counts."""
+    empty = {k[: -len("_n")] for k, v in fields.items() if k.endswith("_n") and not v}
+    return {
+        k: v for k, v in fields.items()
+        if not k.endswith("_n") and not any(k.startswith(e + "_") for e in empty)
+    }  # fmt: skip
+
+
 def collect(db, logs=_logs) -> dict:  # noqa: ANN001 (a Firestore client or a fake)
     contents = [s.to_dict() for s in db.collection("contents").select(CONTENT_FIELDS).stream()]
     explanations = [
@@ -207,51 +247,77 @@ def collect(db, logs=_logs) -> dict:  # noqa: ANN001 (a Firestore client or a fa
     }
     run = f'resource.type="cloud_run_revision" AND resource.labels.service_name="{SERVICE}"'
     explain_lines = logs(f'{run} AND jsonPayload.message="explain"')
-    annotate = logs(f'{run} AND httpRequest.requestUrl:"/annotations" AND httpRequest.status=200')
+    # GET only: the browser's CORS preflight (OPTIONS) hits the same path and answers in ms.
+    annotate = logs(
+        f'{run} AND httpRequest.requestUrl:"/annotations" AND httpRequest.status=200 '
+        'AND httpRequest.requestMethod="GET"'
+    )
     opened = logs(f'{run} AND jsonPayload.message="rec opened"')
-    reused = sum(1 for e in opened if (e.get("jsonPayload") or {}).get("new") is False)
-    fresh = sum(1 for e in opened if (e.get("jsonPayload") or {}).get("new") is True)
+    cache_hit = logs(f'{run} AND jsonPayload.message="content cache hit"')
+    ingested = logs(f'{run} AND jsonPayload.message="content ingested"')
+    scoring = logs(f'{run} AND jsonPayload.message="annotation scoring latency"')
+    rolling = logs(f'{run} AND jsonPayload.message="explanation latency"')
     stamps = sorted(
         e.get("timestamp", "") for e in [*explain_lines, *annotate] if e.get("timestamp")
     )
-    window_days = sorted(explain_days)[-LOG_DAYS:]
-    hits = sum(int(explain_days[d].get("hits", 0)) for d in window_days)
-    generated = sum(int(explain_days[d].get("generated", 0)) for d in window_days)
+    start = stamps[0][:10] if stamps else datetime.now(UTC).strftime("%Y-%m-%d")
+    explain_in, explain_range = in_window(explain_days, start)
+    search_in, search_range = in_window(search_days, start)
+    hits = sum(int(explain_days[d].get("hits", 0)) for d in explain_in)
+    generated = sum(int(explain_days[d].get("generated", 0)) for d in explain_in)
+    reused = sum(1 for e in opened if (e.get("jsonPayload") or {}).get("new") is False)
+    fresh = sum(1 for e in opened if (e.get("jsonPayload") or {}).get("new") is True)
     lat = defaultdict(list)
     for e in explain_lines:
         p = e.get("jsonPayload") or {}
-        if isinstance(p.get("latency_ms"), (int, float)):
-            lat["explain, " + ("cached" if p.get("cache") == "hit" else "generated")].append(
-                float(p["latency_ms"])
-            )
+        if not isinstance(p.get("latency_ms"), (int, float)) or p.get("reason") == "capped":
+            continue  # capped requests answer at once with no explanation
+        kind = "cached" if p.get("cache") == "hit" else "generated"
+        lat[f"explanation request, {kind}"].append(float(p["latency_ms"]))
     annotate_ms = [
         s * 1000
         for e in annotate
         if (s := seconds((e.get("httpRequest") or {}).get("latency"))) is not None
     ]
+    explain_source = "`explain` log line `latency_ms`, capped requests left out"
     return {
         "generated": datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
         "window": f"{stamps[0][:10]} to {stamps[-1][:10]}" if stamps else "no log entries",
         "articles": article_costs(contents),
+        "pages_total": len(contents),
         "explain": explain_costs(explanations, current),
+        "explain_total": len(explanations),
         "caches": {
-            "explanations": (hits, generated, f"`ops/explain/days`, last {len(window_days)} days"),
+            "explanations": (hits, generated, f"`ops/explain/days`, {explain_range}"),
             "pages opened (Open here, Read any link)": (
                 reused,
                 fresh,
                 "`rec opened` log lines: already stored vs fetched new",
             ),
-        },  # fmt: skip
-        "search_calls": sum(
-            int(search_days[d].get("calls", 0)) for d in sorted(search_days)[-LOG_DAYS:]
-        ),
-        "latency": {
-            "annotations route (request)": (
-                annotate_ms,
-                "Cloud Run request logs, `/annotations`, 200",
+            "pages ingested (every ingest path)": (
+                len(cache_hit),
+                len(ingested),
+                "`content cache hit` / `content ingested` log lines",
             ),
-            **{k: (v, "`explain` log line `latency_ms`") for k, v in sorted(lat.items())},
         },  # fmt: skip
+        "search_calls": (sum(int(search_days[d].get("calls", 0)) for d in search_in), search_range),
+        "latency": {
+            "annotations route, GET (request)": (annotate_ms, "Cloud Run request logs, 200, GET"),
+            **{k: (v, explain_source) for k, v in sorted(lat.items())},
+        },
+        "rolling": {
+            "annotation scoring (in-process, last 200)": latest(scoring, ["p95_ms"]),
+            "explanation (in-process windows)": with_samples(
+                latest(
+                    rolling,
+                    [
+                        f"{k}_{f}"
+                        for k in ("cached", "generated")
+                        for f in ("p50_ms", "p95_ms", "n")
+                    ],
+                )
+            ),  # fmt: skip
+        },
         "spend": {d: float(v.get("cost_usd", 0.0)) for d, v in spend_days.items()},
     }
 

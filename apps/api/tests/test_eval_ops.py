@@ -105,6 +105,15 @@ def test_collect_reads_only_and_the_report_publishes_no_ids():
     }  # fmt: skip
 
     def logs(query):
+        if "/annotations" in query:
+            assert 'requestMethod="GET"' in query  # no CORS preflight (OPTIONS) in the p95
+        if 'message="explain"' in query:
+            return [
+                {"timestamp": "2026-10-14T01:00:00Z",
+                 "jsonPayload": {"cache": "hit", "latency_ms": 40}},
+                {"timestamp": "2026-10-14T01:01:00Z",
+                 "jsonPayload": {"cache": "miss", "reason": "capped", "latency_ms": 3}},
+            ]  # fmt: skip
         if "explain" in query:
             return [
                 {
@@ -126,6 +135,8 @@ def test_collect_reads_only_and_the_report_publishes_no_ids():
 
     out = eval_ops.report(eval_ops.collect(ReadOnlyClient(data), logs))
     assert "Total to date: $2.0000 over 2 days" in out and "75%" in out and "120 ms" in out
+    assert "explanation request, generated" not in out  # the capped request is left out
+    assert "library (corpus)" in out and "12 provider calls (2026-10-14 to 2026-10-14" in out
     assert not PRIVATE.search(out)
 
 
@@ -140,3 +151,9 @@ def test_the_script_never_loads_the_llm_module():
 )
 def test_the_committed_report_publishes_no_ids():
     assert not PRIVATE.search((API / "evals" / "ops_report.md").read_text())
+
+
+def test_an_empty_rolling_window_is_not_shown_as_zero():
+    got = eval_ops.with_samples({"cached_p95_ms": 114.0, "cached_n": 40,
+                                 "generated_p95_ms": 0.0, "generated_n": 0})  # fmt: skip
+    assert got == {"cached_p95_ms": 114.0}

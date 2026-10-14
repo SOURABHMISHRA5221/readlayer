@@ -1,19 +1,21 @@
 # Cost, cache and latency (M9 part 3)
 
-Generated 2026-10-14 10:46 UTC by `scripts/eval_ops.py` from production, read only: Firestore (field masks) and Cloud Logging for the last 7 days (2026-10-08 to 2026-10-14). Aggregates only. Minimum instances is 0, so latencies include cold starts.
+Generated 2026-10-14 10:58 UTC by `scripts/eval_ops.py` from production, read only: Firestore (field masks) and Cloud Logging. Costs cover everything stored to date; cache and latency cover the last 7 days of logs (2026-10-08 to 2026-10-14). Aggregates only. Minimum instances is 0, so request latencies include cold starts.
 
 ## Cost per article (model calls stored with each page)
 
-Analysis: demand extraction and linking (growth's confirm step shares the linker's `link_confirm` task, so it counts here). Growth: concept_define, link_merge, concept_prereqs. Transcript: a recording's transcription, once.
+All 361 pages stored to date. Analysis: demand extraction and linking (growth's confirm step shares the linker's `link_confirm` task, so it counts here). Growth: concept_define, link_merge, concept_prereqs. Transcript: a recording's transcription, once.
 
 | pages | n | analysis median / mean / p90 | growth median / mean | transcript mean |
 |---|---|---|---|---|
 | extension | 9 | $0.0035 / $0.0050 / $0.0118 | $0.0000 / $0.0011 | — |
-| fetch | 323 | $0.0045 / $0.0084 / $0.0239 | $0.0000 / $0.0000 | — |
-| media | 4 | $0.0075 / $0.0086 / $0.0128 | $0.0031 / $0.0031 | $0.0333 |
-| user_ingested | 25 | $0.0047 / $0.0080 / $0.0142 | $0.0014 / $0.0014 | — |
+| library (corpus) | 323 | $0.0045 / $0.0084 / $0.0239 | $0.0000 / $0.0000 | — |
+| videos and podcasts | 4 | $0.0075 / $0.0086 / $0.0128 | $0.0031 / $0.0031 | $0.0333 |
+| opened by readers | 25 | $0.0047 / $0.0080 / $0.0142 | $0.0014 / $0.0014 | — |
 
 ## Cost per explanation part (current prompt versions)
+
+Every cache entry on the current prompt versions, of 324 cache entries read.
 
 | part | n | median | mean |
 |---|---|---|---|
@@ -27,18 +29,26 @@ The restatement is made once per span and shared by every reader; the Background
 
 | cache | hits | generated / ingested | hit rate | source |
 |---|---|---|---|---|
-| explanations | 468 | 203 | 70% | `ops/explain/days`, last 6 days |
+| explanations | 468 | 203 | 70% | `ops/explain/days`, 2026-10-09 to 2026-10-14 |
 | pages opened (Open here, Read any link) | 3 | 25 | 11% | `rec opened` log lines: already stored vs fetched new |
+| pages ingested (every ingest path) | 0 | 35 | 0% | `content cache hit` / `content ingested` log lines |
 
-Web search: 412 provider calls over the window (cache misses; no hit counter exists).
+Web search: 412 provider calls (2026-10-08 to 2026-10-14; cache misses, no hit counter exists).
 
 ## Latency
 
 | what | n | p50 | p95 | source |
 |---|---|---|---|---|
-| annotations route (request) | 314 | 73 ms | 287 ms | Cloud Run request logs, `/annotations`, 200 |
-| explain, cached | 290 | 47 ms | 127 ms | `explain` log line `latency_ms` |
-| explain, generated | 156 | 9862 ms | 30330 ms | `explain` log line `latency_ms` |
+| annotations route, GET (request) | 213 | 98 ms | 478 ms | Cloud Run request logs, 200, GET |
+| explanation request, cached | 290 | 47 ms | 127 ms | `explain` log line `latency_ms`, capped requests left out |
+| explanation request, generated | 156 | 9862 ms | 30330 ms | `explain` log line `latency_ms`, capped requests left out |
+
+Latest values the API logs from its own rolling windows (in-process, per instance; not request latency):
+
+| window | values |
+|---|---|
+| annotation scoring (in-process, last 200) | p95 1.6 ms |
+| explanation (in-process windows) | cached_p50 62.1 ms, cached_p95 114.0 ms |
 
 ## Model spend on the project ledger
 

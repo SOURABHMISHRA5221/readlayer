@@ -181,11 +181,11 @@ Measured results so far. Each number comes from [docs/STATUS.md](docs/STATUS.md)
 | Library | 310 articles, each ingested once and shared by every reader |
 | Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60% missed); with online growth, as in production, 89% / 66%. Grown concepts judged correct by the build agent (Sourabh's audit pending): 87% (first sample), 97% (after tightening, overlapping the first), 90% on a fresh sample of 30 grown live ([report](apps/api/evals/heldout_report.md)) |
 | Readers see different notes | Trader and policy student get identical underlines on **8 of 310** articles (mean overlap 0.15) |
-| Scoring latency, p95 | **0.19 ms** for a 1,200-word article (local test); about 1 ms on Cloud Run; budget 150 ms |
-| Annotations endpoint, p95 on Cloud Run | **99 ms** server-side, including the Firestore read; 121 ms measured from a client in India |
+| Scoring latency, p95 | **0.19 ms** for a 1,200-word article (local test); 1.6 ms on Cloud Run (the API's own rolling window, Oct 14); budget 150 ms |
+| Annotations endpoint, p95 on Cloud Run | **478 ms** (median 98 ms) over 213 requests, Oct 8–14, from the request logs; includes cold starts, since the service scales to zero ([ops report](apps/api/evals/ops_report.md)) |
 | Accessibility | Lighthouse accessibility **100** on the reader, layout shift 0 |
-| Model cost per new article | About **$0.017**, measured on one new article (Wikipedia "Liquidity trap") |
-| Total model spend to date | About $10.70, nearly all of it ingesting the library and building the concept graph; page views cost nothing in model calls |
+| Model cost per new article | Median **$0.0045** to analyse a library article (361 pages to date), plus about $0.0014 when it grows new concepts; explanation parts about $0.004 each, and 70% of explanation requests are served from the cache ([ops report](apps/api/evals/ops_report.md)) |
+| Total model spend to date | **$22.64** on the project ledger (Oct 4–14), most of it building the library and concept graph and running evals; page views cost nothing in model calls |
 
 ## Responsible AI and privacy
 
