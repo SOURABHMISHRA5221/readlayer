@@ -1853,7 +1853,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 ### Next steps (resume here, in order)
 1. Decision 62 (gloss web address) plan, with the YouTube "Open in Gloss" in extension 0.8.2 →
    plan-reviewer → build (Auth domain, CORS, extension base, links, the landing's 0.8.1 pin;
-   deploys on Sourabh's yes).
+   deploys on Sourabh's yes). Also in it (Sourabh: "lets add Repo go live to in this"): gitleaks over
+   the full history → fix or rotate anything found → repo public on Sourabh's yes → check the
+   landing's release and GitHub links live.
 2. The Oct 16 items (persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`,
    media snapshots, readiness mix re-run, README refresh incl. the "recommendations only" line,
-   video, deck). Oct 17: gitleaks, repo public, submit.
+   video, deck). Oct 17: submit (gitleaks and repo public moved into decision 62).
