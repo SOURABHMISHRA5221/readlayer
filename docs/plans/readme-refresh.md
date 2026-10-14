@@ -24,7 +24,7 @@ deploy, no production writes. Branch `readme-refresh` from `main` (540bc80).
 - Getting started says the Makefile names our `ACCOUNT` at the top; since decision 62 (R12) it
   comes from a gitignored `.gcp.local.mk`.
 - Screenshots and the hero image predate the design pass (the hero caption says so).
-- Team is a placeholder table.
+- Team is a placeholder table (kept on Sourabh's answer, item 9).
 
 ## Changes
 1. **Hero and screenshots** use the landing's current stills, referenced in place from
@@ -63,3 +63,52 @@ deploy, no production writes. Branch `readme-refresh` from `main` (540bc80).
 ## Acceptance
 Plan-reviewer APPROVE → edit → checks above → milestone-reviewer SHIP → PR → CI → merge. Nothing
 to deploy.
+
+## Round 1 (plan-reviewer REVISE 9; applied, these override the sections above)
+
+**R1. Alt texts true to the raw stills.** The device frames are CSS (`DeviceFrame.tsx`); the stills
+are bare windows. From the landing's alts drop "on a monitor" (`shot-feed`), "on a laptop"
+(`shot-reader`), "in Chrome" (`shot-extension`); the rest verbatim. `shot-phone` (390×844) in an
+`<img width="…">`. An HTML comment beside the image block says the paths track the landing stills,
+so a rename there reruns the link check. The feed still's "prepared in advance … 11 Oct" line is
+accepted (a retake needs a demo reader; not after the freeze).
+
+**R2. Install steps match the landing** (`landing/Extension.tsx`, STATUS §9 Oct 16): four steps,
+pinning inside step 2 (puzzle-piece menu); the build-it-yourself route and Open in Gloss on YouTube
+as notes after the steps.
+
+**R3. Counts dated or refreshed; decision 57 untouched.** Item 5's "unchanged" covers the decision-57
+linking numbers and dated measurements only. Library: 323 library pages analysed (ops report); the
+"8 of 310" overlap labelled as the Oct 5 measurement on the 310 corpus articles (STATUS §12).
+Concept graph: 5,206 seeded, 5,281 served on Oct 14 (STATUS §29).
+
+**R4. How Gen AI complete.** Add `restate` (MODEL_QUALITY, its own task since explain-v4),
+`profile_edit` (MODEL_FAST, Gemma fallback: edit-by-prompt, Describe yourself, onboarding text),
+`concept_jurisdiction` in the graph row, `transcribe` (MODEL_QUALITY), and `landing_art`
+(MODEL_IMAGE) named as offline, one-off (landing illustrations), never at runtime. The judge for
+`verify` / `verify_background` is MODEL_JUDGE, unset in production, so Gemini 3.8 Flash.
+
+**R5. The privacy sentence, true.** "Models get article and concept content and, for profile edits,
+goals and onboarding, the reader's own words with emails, phone and card numbers removed first;
+never user ids, emails or reading history. Search providers get topic labels and fixed phrases
+only." Checked against DESIGN §11.3 and the redaction tests.
+
+**R6. Limits as enforced.** "Built and evaluated on English; videos and podcasts must be English
+(others are refused)". Extension: "loaded unpacked in Chrome, not on the Chrome Web Store; other
+Chromium browsers untested". Media: transcripts are made automatically and can contain errors; the
+recording is the source (`WatchListen.tsx`). Caps the README states, from `config.py` defaults (not
+overridden in `deploy.env.yaml`) and `deploy.env.yaml`: new links 20 a day per reader, 3 per demo
+reader; videos and podcasts 5 a day per reader, 1 per demo reader; videos ≤ 10 min, podcasts ≤ 12;
+LLM budget $8 a day. Shared demo caps mentioned without numbers.
+
+**R7. Sources for numbers** add `apps/api/app/config.py` and DESIGN §11.5.
+
+**R8. Getting started for outsiders:** edit `PROJECT` and `REGION` in the Makefile and create
+`.gcp.local.mk` with `ACCOUNT := you@example.com` (gitignored); the Makefile's error message is
+changed to name the README section as well as CLAUDE.local.md (a one-line Makefile text change; no
+behaviour change).
+
+**R9. Safety evals row:** run of Oct 10 on the live prompts (restate-v2, explain-v5, verify-v2,
+verify-background-v1), judge Gemini 3.8 Flash: adversarial 15/15 rejected, good 24/25 accepted
+(G21 rejected), injection 10/10 safe, Background suite 3/3 rejected and 2/2 accepted, non-business
+6/7 (outside the M5 targets). Link `apps/api/evals/report.md`.
