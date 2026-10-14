@@ -40,3 +40,13 @@ def test_when_no_cut_does_both_it_keeps_90_percent_of_the_right():
     wrong = [Edge("x", "y", 0.95, False)]  # more confident than every right edge
     t, n = choose(right + wrong)
     assert n["kept_wrong"] == 1 and n["dropped_right"] <= 1
+
+
+def test_the_grown_sample_is_fixed_by_its_ids_and_seed():
+    from scripts.sample_grown import sample
+
+    ids = [f"c_{i}" for i in range(78)]
+    first = sample(ids, 1015)
+    assert len(first) == 30 and len(set(first)) == 30
+    assert sample(list(reversed(ids)), 1015) == first  # order of the input doesn't matter
+    assert sample(ids, 1016) != first

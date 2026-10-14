@@ -1,0 +1,326 @@
+{
+ "cutoff": "2026-10-14T09:24:55.3Z",
+ "seed": 1015,
+ "population": [
+  "c_action_spectrum",
+  "c_adjournment_motion",
+  "c_alarm_photosynthesis",
+  "c_anoxygenic_photosynthesis",
+  "c_antisemitism",
+  "c_apartheid",
+  "c_apple_a18",
+  "c_assembler",
+  "c_assembly_language",
+  "c_automatic_gst_registration",
+  "c_bacteriorhodopsin",
+  "c_battery_penetration_test",
+  "c_black_flag_demonstration",
+  "c_blasphemy",
+  "c_bss_section",
+  "c_c2_photorespiratory_carbon_pump",
+  "c_calendar_phishing",
+  "c_capital_punishment",
+  "c_chief_election_commissioner",
+  "c_circle_inspector_and_sub_inspector",
+  "c_contempt_of_court",
+  "c_cpu_architecture",
+  "c_decompiler",
+  "c_edge_graph_theory",
+  "c_education_minister",
+  "c_esim",
+  "c_executive_magistrate",
+  "c_first_information_report",
+  "c_flagship_smartphone",
+  "c_forever_chemicals",
+  "c_form_gst_reg_01",
+  "c_form_gst_reg_14",
+  "c_franchise_t20_leagues",
+  "c_honeymoon_period_politics",
+  "c_hot_box_test",
+  "c_humanoid_robot",
+  "c_interior_minister",
+  "c_knowledge_graph",
+  "c_lethal_injection",
+  "c_linear_algebra",
+  "c_natural_language_processing",
+  "c_no_cost_emi",
+  "c_node_graph_theory",
+  "c_ontology_information_science",
+  "c_payment_service_provider",
+  "c_peer_to_peer_transaction",
+  "c_permanent_account_number",
+  "c_pfas",
+  "c_pfos",
+  "c_phase_1_environmental_site_assessment",
+  "c_phase_2_environmental_site_assessment",
+  "c_phishing",
+  "c_pregabalin",
+  "c_preventive_detention",
+  "c_processor_register",
+  "c_programmable_power_supply",
+  "c_proper_officer",
+  "c_qualcomm_snapdragon_8_elite",
+  "c_reverse_engineering",
+  "c_rule_of_law",
+  "c_segmentation_fault",
+  "c_seizure_memo",
+  "c_silicon_carbon_battery",
+  "c_special_intensive_revision",
+  "c_strike_rate",
+  "c_superforecaster",
+  "c_system_of_linear_equations",
+  "c_tax_aware_investing",
+  "c_tax_liability",
+  "c_tax_loophole",
+  "c_tax_loss_harvesting",
+  "c_twenty20_centuries",
+  "c_two_state_solution",
+  "c_usb_power_delivery",
+  "c_watch_and_ward",
+  "c_wearable_technology",
+  "c_white_ball_cricket",
+  "c_zionism"
+ ],
+ "sample": [
+  {
+   "id": "c_blasphemy",
+   "label": "Blasphemy",
+   "definition": "Blasphemy is the act or offense of speaking sacrilegiously about God or sacred things, which is treated as a crime in some jurisdictions.",
+   "domain": "law",
+   "kind": "idea",
+   "source_type": "extension"
+  },
+  {
+   "id": "c_lethal_injection",
+   "label": "Lethal injection",
+   "definition": "Lethal injection is a method of capital punishment where a fatal dose of drugs is administered to cause death.",
+   "domain": "law",
+   "kind": "method",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_silicon_carbon_battery",
+   "label": "Silicon-carbon battery",
+   "definition": "A type of rechargeable battery that incorporates silicon in the anode to increase energy storage capacity compared to traditional graphite anodes.",
+   "domain": "technology",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_tax_aware_investing",
+   "label": "Tax-aware investing",
+   "definition": "Tax-aware investing is an investment strategy that seeks to maximize after-tax returns by minimizing the impact of taxes on investment gains.",
+   "domain": "finance",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_phishing",
+   "label": "Phishing",
+   "definition": "A fraudulent attempt by cybercriminals to steal sensitive information such as login credentials or financial details by masquerading as a trustworthy entity.",
+   "domain": "technology",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_humanoid_robot",
+   "label": "Humanoid robot",
+   "definition": "A robot built with a body structure resembling that of a human, typically featuring a head, torso, two arms, and two legs.",
+   "domain": "technology",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_programmable_power_supply",
+   "label": "Programmable Power Supply",
+   "definition": "A charging protocol that allows power supplies to dynamically adjust voltage and current in real time to optimize charging efficiency and reduce heat.",
+   "domain": "technology",
+   "kind": "jargon",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_linear_algebra",
+   "label": "Linear algebra",
+   "definition": "A branch of mathematics concerning vector spaces and linear mappings between these spaces. It involves the study of lines, planes, and subspaces.",
+   "domain": "science",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_seizure_memo",
+   "label": "Seizure memo",
+   "definition": "A formal written record prepared by law enforcement officials listing items, documents, or property confiscated during a search or detention. It serves as an official inventory and receipt for the seized belongings.",
+   "domain": "law",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_adjournment_motion",
+   "label": "Adjournment motion",
+   "definition": "An adjournment motion is a parliamentary procedure used to debate an urgent matter of public importance by temporarily halting normal legislative business.",
+   "domain": "politics",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_bss_section",
+   "label": "BSS section",
+   "definition": "The BSS section is a portion of an object file or executable memory that contains statically allocated variables which are initialized to zero or uninitialized before program execution.",
+   "domain": "technology",
+   "kind": "jargon",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_pregabalin",
+   "label": "Pregabalin",
+   "definition": "Pregabalin is a prescription medication commonly used to treat epilepsy, neuropathic pain, and generalized anxiety disorder.",
+   "domain": "health",
+   "kind": "condition",
+   "source_type": "extension"
+  },
+  {
+   "id": "c_special_intensive_revision",
+   "label": "Special Intensive Revision",
+   "definition": "An administrative process undertaken by election authorities to thoroughly verify, update, and correct electoral rolls by adding eligible voters and removing ineligible or duplicate entries.",
+   "domain": "politics",
+   "kind": "policy",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_system_of_linear_equations",
+   "label": "System of linear equations",
+   "definition": "A collection of one or more linear equations involving the same variables. Finding a solution means assigning values to the variables that satisfy all equations simultaneously.",
+   "domain": "science",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_node_graph_theory",
+   "label": "Node (graph theory)",
+   "definition": "A node is a fundamental point or object in a network or graph that can represent an entity, concept, or piece of data.",
+   "domain": "technology",
+   "kind": "idea",
+   "source_type": "extension"
+  },
+  {
+   "id": "c_natural_language_processing",
+   "label": "Natural language processing",
+   "definition": "Natural language processing is a branch of artificial intelligence that enables computers to understand, interpret, and manipulate human language.",
+   "domain": "technology",
+   "kind": "idea",
+   "source_type": "extension"
+  },
+  {
+   "id": "c_no_cost_emi",
+   "label": "No-cost EMI",
+   "definition": "A financing option that allows consumers to pay for products in monthly installments without incurring any interest charges.",
+   "domain": "finance",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_pfas",
+   "label": "PFAS",
+   "definition": "PFAS are a large group of synthetic chemicals used in various industrial and consumer products that do not easily break down in the environment.",
+   "domain": "environment",
+   "kind": "idea",
+   "source_type": "fetch"
+  },
+  {
+   "id": "c_watch_and_ward",
+   "label": "Watch and Ward",
+   "definition": "Watch and Ward refers to the security personnel responsible for maintaining order, safety, and protocol within a legislative building or parliament.",
+   "domain": "politics",
+   "kind": "entity_type",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_peer_to_peer_transaction",
+   "label": "Peer-to-peer transaction",
+   "definition": "A peer-to-peer transaction is a direct financial transfer of funds between two individuals, typically executed using a digital application or online platform without a traditional intermediary.",
+   "domain": "finance",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_rule_of_law",
+   "label": "Rule of law",
+   "definition": "The legal principle that all individuals and institutions are accountable to publicly promulgated laws that are equally enforced and independently adjudicated.",
+   "domain": "law",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_circle_inspector_and_sub_inspector",
+   "label": "Circle Inspector and Sub-Inspector",
+   "definition": "Circle Inspector and Sub-Inspector are ranks within police forces, typically responsible for overseeing local police stations and investigating criminal cases.",
+   "domain": "law",
+   "kind": "role",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_alarm_photosynthesis",
+   "label": "Alarm photosynthesis",
+   "definition": "A specialized physiological response in certain plants where photosynthetic processes are rapidly altered under sudden environmental stress.",
+   "domain": "science",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_qualcomm_snapdragon_8_elite",
+   "label": "Qualcomm Snapdragon 8 Elite",
+   "definition": "A high-performance mobile processor chip designed by Qualcomm to power premium smartphones and mobile computing devices.",
+   "domain": "technology",
+   "kind": "jargon",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_tax_loss_harvesting",
+   "label": "Tax-loss harvesting",
+   "definition": "Tax-loss harvesting is the practice of selling investments at a loss to offset capital gains tax liability from profitable investments.",
+   "domain": "finance",
+   "kind": "method",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_education_minister",
+   "label": "Education Minister",
+   "definition": "A cabinet position held by the government official responsible for overseeing a country's school system and educational policy.",
+   "domain": "politics",
+   "kind": "role",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_knowledge_graph",
+   "label": "Knowledge graph",
+   "definition": "A knowledge graph is a structured representation of information that connects real-world entities and illustrates the relationships between them.",
+   "domain": "technology",
+   "kind": "idea",
+   "source_type": "extension"
+  },
+  {
+   "id": "c_assembler",
+   "label": "Assembler",
+   "definition": "An assembler is a software tool that translates human-readable assembly language instructions into machine code that a computer's processor can directly execute.",
+   "domain": "technology",
+   "kind": "method",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_antisemitism",
+   "label": "Antisemitism",
+   "definition": "Antisemitism is hostility, prejudice, or discrimination directed against Jewish people as a religious, ethnic, or racial group.",
+   "domain": "society",
+   "kind": "idea",
+   "source_type": "user_ingested"
+  },
+  {
+   "id": "c_calendar_phishing",
+   "label": "Calendar phishing",
+   "definition": "A form of cyberattack where fraudulent meeting invitations are sent to users' digital calendars to trick them into clicking malicious links.",
+   "domain": "technology",
+   "kind": "jargon",
+   "source_type": "user_ingested"
+  }
+ ]
+}
