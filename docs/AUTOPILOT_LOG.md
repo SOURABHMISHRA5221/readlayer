@@ -1672,7 +1672,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - milestone-reviewer round 1: **FIX** (stale STATUS §9 and this resume point; plus a second open
   from the title while busy, duplicate shots, missing suite counts). All applied.
 
+- Round 2: **SHIP**. PR #33, CI green, squash-merged (78d8bde). `make deploy-web` on Sourabh's
+  yes: live `index-DDFEeB7H.js` (149.61 KB), media chunk names only `https://www.youtube.com`.
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer round 2 → SHIP → PR → CI green → merge → `make deploy-web` (Sourabh's yes).
-2. Live: Sourabh plays a video in Gloss signed in to YouTube and opens a feed video both ways;
-   T05 and T06 live, then a demo reader (free). Checkpoint end of Oct 14 IST (decision 27).
+1. Live check (Sourabh): play a video in Gloss signed in to YouTube; open a feed video both ways;
+   T05 and T06 live, then a demo reader (free). Record in STATUS §24/§25.
+2. Checkpoint end of Oct 14 IST (decision 27): Media and its follow-up are merged and live.
+3. M9 (Oct 15). Oct 16: seed the demo snapshots' short videos and episodes with
+   `ingest_media.py` (dry run first, CONCEPTS_URI set, counts in STATUS before writing).
