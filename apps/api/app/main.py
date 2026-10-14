@@ -14,7 +14,7 @@ from app.auth import get_auth_admin
 from app.config import get_settings
 from app.content.router import router as read_router
 from app.explain.router import router as explain_router
-from app.graph.loader import get_graph, load_graph, set_graph
+from app.graph.loader import get_graph, load_serving_graph
 from app.ingest.router import router as content_router
 from app.log import configure_logging, request_id_var
 from app.me.goals import router as goals_router
@@ -36,15 +36,7 @@ log = logging.getLogger("app.http")
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     start = time.perf_counter()
-    set_graph(await load_graph(settings.concepts_uri))
-    grown = 0
-    if settings.concepts_uri:  # concepts grown online since the file was written (M2.2)
-        from app.graph.refresh import get_refresher
-
-        try:
-            grown = await get_refresher().load_startup()
-        except Exception as exc:  # serve the file graph rather than fail to start
-            log.warning("grown concepts not loaded", extra={"error_class": type(exc).__name__})
+    grown = await load_serving_graph(settings.concepts_uri)
     graph_ms = (time.perf_counter() - start) * 1000
     get_auth_admin()
     log.info(

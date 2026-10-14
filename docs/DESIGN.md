@@ -1233,8 +1233,10 @@ made automatically, and the player is the source.
 - **Links:** YouTube watch, `youtu.be`, shorts and embed links; Apple Podcasts **episode** links
   (`?i=`). A show page answers `not_an_episode`, a direct `.mp3` link `apple_link_only`,
   Spotify and M4A episodes "Open original". English only.
-- **Length:** 10 minutes for both (`MEDIA_MAX_VIDEO_S`, `MEDIA_MAX_AUDIO_S` = 600; Sourabh,
-  2026-10-14: "small 10 minutes clips are good enough"), `MEDIA_MAX_AUDIO_BYTES` 20 MB. The
+- **Length:** videos 10 minutes (`MEDIA_MAX_VIDEO_S` 600; Sourabh, 2026-10-14: "small 10
+  minutes clips are good enough"), podcasts 12 (`MEDIA_MAX_AUDIO_S` 720, Sourabh the same day:
+  Apple's length leaves out stitched-in ads; an episode listed at 9:25 downloaded at 10:52),
+  `MEDIA_MAX_AUDIO_BYTES` 24 MB. The
   code handles longer recordings (several audio windows, two in parallel); the caps keep the
   demo to one model call per recording.
 - **Switches:** `MEDIA_ENABLED` (all media), `MEDIA_AUDIO_ENABLED`, `MEDIA_VIDEO_ENABLED`. A

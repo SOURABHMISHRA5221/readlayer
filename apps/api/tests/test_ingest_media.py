@@ -2,6 +2,9 @@
 
 import argparse
 
+import pytest
+
+from app.graph.loader import get_graph, set_graph
 from app.media import service
 from app.media.refusals import MediaRefused
 from app.store.content_repo import get_content_store
@@ -11,10 +14,28 @@ from app.store.spend_repo import today_utc
 from scripts import ingest_media
 from tests import test_media_service as media
 from tests.test_media_service import CID, VIDEO, info, settings
+from tests.test_scorer import GRAPH
 
 env = media.env  # the service tests' fixture: fake lookup, transcribe and analysis
 
 URL = VIDEO.canonical
+URI = "gs://test/concepts.json"
+
+
+@pytest.fixture
+def graph(monkeypatch):
+    """A real run loads the graph as API startup does (load_serving_graph); here, the scorer's."""
+    loaded: list[str] = []
+
+    async def load(uri):
+        loaded.append(uri)
+        set_graph(GRAPH)
+        return 0
+
+    previous = get_graph()
+    monkeypatch.setattr(ingest_media, "load_serving_graph", load)
+    yield loaded
+    set_graph(previous)
 
 
 def reader_docs(docs) -> list[str]:
@@ -60,9 +81,11 @@ async def test_dry_run_refuses_what_the_api_refuses(env, docs, capsys):
     assert docs.docs == {}
 
 
-async def test_a_real_run_stores_the_transcript_for_every_reader(env, docs, capsys):
-    code = await ingest_media.main(argparse.Namespace(urls=[URL], dry_run=False), settings())
+async def test_a_real_run_stores_the_transcript_for_every_reader(env, docs, capsys, graph):
+    s = settings(concepts_uri=URI)
+    code = await ingest_media.main(argparse.Namespace(urls=[URL], dry_run=False), s)
     assert code == 0
+    assert graph == [URI]  # the served graph, so demands link (none linked without it)
     doc = await get_content_store().get(CID)
     assert doc.media.kind == "youtube" and doc.source == "user_ingested"
     assert env["fake"].windows == [(0, 949)]
@@ -77,3 +100,22 @@ async def test_more_than_the_cap_is_refused_before_anything_runs(env, docs):
     urls = [URL] * (ingest_media.MAX_RECORDINGS + 1)
     assert await ingest_media.main(argparse.Namespace(urls=urls, dry_run=True), settings()) == 2
     assert env["lookups"] == []
+
+
+async def test_a_real_run_refuses_without_a_concept_graph(env, docs, capsys):
+    """Analysis with no graph links nothing, so the recording would show no notes, for good."""
+    code = await ingest_media.main(argparse.Namespace(urls=[URL], dry_run=False), settings())
+    assert code == 2
+    assert "CONCEPTS_URI" in capsys.readouterr().out
+    assert env["lookups"] == [] and env["fake"].windows == [] and docs.docs == {}
+
+
+async def test_a_real_run_refuses_when_the_graph_loads_empty(env, docs, capsys, monkeypatch):
+    async def empty(uri):
+        set_graph(GRAPH.__class__.empty())
+        return 0
+
+    monkeypatch.setattr(ingest_media, "load_serving_graph", empty)
+    s = settings(concepts_uri=URI)
+    assert await ingest_media.main(argparse.Namespace(urls=[URL], dry_run=False), s) == 2
+    assert env["lookups"] == [] and docs.docs == {}

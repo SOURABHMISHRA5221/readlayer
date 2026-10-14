@@ -103,7 +103,7 @@ apps/api/scripts/    corpus ingestion, concept-graph build, demo persona seeding
   (entity linking) uses `MODEL_QUALITY`, which met the 95% precision target where `MODEL_FAST`
   did not (M2: 97% vs 89%).
 - `transcribe` uses `MODEL_QUALITY` too: `MODEL_FAST` dropped a third of the speech on a measured
-  window. Recordings are capped at 10 minutes and have their own $3 daily budget (DESIGN §21).
+  window. Videos are capped at 10 minutes, podcasts at 12, with their own $3 daily budget (DESIGN §21).
 - `llm.py` refuses calls once the daily spend estimate passes `LLM_DAILY_BUDGET_USD` (default 8).
 - Never deploy GPU endpoints or self-host open models; use managed, pay-per-token models only.
 

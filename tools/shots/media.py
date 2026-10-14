@@ -4,7 +4,7 @@
 the transcript's words against the API, and one time button. Emulators only; the video must be
 stored first (`scripts/ingest_media.py <url>` against the emulator).
 
-    SHOTS_OUT=docs/evidence/media uv run --project apps/api python tools/shots/media.py <content_id>
+    SHOTS_OUT=docs/evidence/media uv run --project apps/api python tools/shots/media.py <content_id> [video|podcast]
 
 Exits non-zero on any failed check or 429.
 """
@@ -29,6 +29,7 @@ PARAGRAPHS_JS = """(() => [...document.querySelectorAll('p[data-rl-paragraph]')]
   c.querySelectorAll('[data-rl-ui]').forEach((e) => e.remove()); return [p.dataset.rlParagraph, c.textContent]; }))()"""
 PAGE_JS = """(() => ({ stamps: document.querySelectorAll('.tstamp').length,
   marks: document.querySelectorAll('.rl-mark').length, facade: !!document.querySelector('.mplayer__facade'),
+  audio: !!document.querySelector('.mplayer__audio'),
   hscroll: document.documentElement.scrollWidth - document.documentElement.clientWidth }))()"""
 
 failures: list[str] = []
@@ -45,9 +46,9 @@ async def theme(p, dark: bool) -> None:
     await p.eval(f"localStorage.setItem('readlayer:theme', '{'dark' if dark else 'light'}'); 1")
 
 
-async def sweep(p, url: str) -> None:
+async def sweep(p, url: str, kind: str) -> None:
     for width, dark in SIZES:
-        name = f"video-{width}-{'dark' if dark else 'light'}"
+        name = f"{kind}-{width}-{'dark' if dark else 'light'}"
         await p.viewport(width, dark=dark)
         await theme(p, dark)
         await p.goto(url, wait=1.5)
@@ -62,10 +63,13 @@ async def sweep(p, url: str) -> None:
         print(f"[{name}] axe={axe} {json.dumps(page)} {shot}", flush=True)
         check(not axe, f"{name}: axe {axe}")
         check(page["hscroll"] == 0, f"{name}: horizontal scroll {page['hscroll']}")
-        check(page["facade"], f"{name}: the player loaded before any click (should be click to load)")
+        if kind == "video":
+            check(page["facade"], f"{name}: the player loaded before any click (should be click to load)")
+        else:
+            check(page["audio"], f"{name}: no audio player")
 
 
-async def words_and_seek(p, url: str, content_id: str) -> None:
+async def words_and_seek(p, url: str, content_id: str, kind: str) -> None:
     await p.viewport(1440)
     await theme(p, False)
     await p.goto(url, wait=1.5)
@@ -78,6 +82,8 @@ async def words_and_seek(p, url: str, content_id: str) -> None:
     out["paragraphs"] = {"api": len(paras), "dom": len(dom), "different": wrong}
     print(f"[paragraphs] api={len(paras)} dom={len(dom)} different={wrong}", flush=True)
     check(not wrong and len(paras) == len(dom), f"transcript text differs from the API: {wrong}")
+    if kind != "video":
+        return  # audio seeking needs the publisher's file to play headless: not checked here
 
     want = paras[SEEK_INDEX]["start_s"]
     clicked = await p.eval(f"""(() => {{ const b = document.querySelectorAll('.tstamp')[{SEEK_INDEX}];
@@ -88,10 +94,10 @@ async def words_and_seek(p, url: str, content_id: str) -> None:
     out["seek"] = {"button": clicked, "paragraph_start_s": want, "iframe_start_s": start}
     print(f"[seek] {clicked!r}: paragraph starts {want} s, player loads at {start} s", flush=True)
     check(start is not None and abs(start - want) <= 2, f"seek: player at {start} s, paragraph {want} s")
-    await p.shot("video-1440-light-after-seek", full=False)
+    await p.shot(f"{kind}-1440-light-after-seek", full=False)
 
 
-async def main(content_id: str) -> None:
+async def main(content_id: str, kind: str) -> None:
     cdp.launch()
     p, ws = await cdp.open_page()
     try:
@@ -103,13 +109,13 @@ async def main(content_id: str) -> None:
         await p.eval("document.querySelector('.lp-nav__cta').click(); 1")
         await asyncio.sleep(4)
         url = f"{W}/read/{content_id}?persona={PERSONA}"
-        await sweep(p, url)
-        await words_and_seek(p, url, content_id)
+        await sweep(p, url, kind)
+        await words_and_seek(p, url, content_id, kind)
         throttled = await p.eval("window.__rl429")
         check(throttled == 0, f"{throttled} responses were 429")
     finally:
         cdp.OUT.mkdir(parents=True, exist_ok=True)
-        (cdp.OUT / "metrics.json").write_text(json.dumps(out, indent=1))
+        (cdp.OUT / f"metrics-{kind}-{content_id[:8]}.json").write_text(json.dumps(out, indent=1))
         await ws.close()
         cdp.stop()
     print(f"\n{len(failures)} failed checks" + ("" if not failures else ":\n" + "\n".join(failures)))
@@ -118,4 +124,4 @@ async def main(content_id: str) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main(sys.argv[1]))
+    asyncio.run(main(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else "video"))

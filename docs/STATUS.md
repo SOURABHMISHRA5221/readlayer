@@ -144,7 +144,7 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Deviation | Why | Resolve in |
 |---|---|---|
 | Media: `transcribe` runs on MODEL_QUALITY, not MODEL_FAST | FAST dropped a third of the speech on a measured window, twice, with no error (plan "Evidence"). Recorded in CLAUDE.md and DESIGN §10, §21 | Keep |
-| Media: YouTube is one whole-URL call, no offset windows; recordings capped at 10 minutes (plan said 30 / 45) | Vertex offset windows hung on 5 of 5 tries; whole-URL calls on 16–19 min videos timed out at 90 s; Sourabh, 2026-10-14: "small 10 minutes clips are good enough" | Keep for the hackathon |
+| Media: YouTube is one whole-URL call, no offset windows; videos capped at 10 minutes, podcasts at 12 (plan said 30 / 45) | Vertex offset windows hung on 5 of 5 tries; whole-URL calls on 16–19 min videos timed out at 90 s; Sourabh, 2026-10-14: "small 10 minutes clips are good enough", then podcasts "raise to 12" (Apple's length leaves out stitched-in ads: an Indicator episode listed at 565 s downloaded at 652 s and was refused at 10 min) | Keep for the hackathon |
 | Media: podcasts by Apple episode link only; direct `.mp3` links, show pages, Spotify and M4A answer "Open original" | No title or show without a lookup; only Apple episode links resolved to audio in the cached links (15 of 19) | Keep |
 | Media: audio sent as inline MP3 pieces, not through a bucket; audio fetch limits differ from §11.2's page limits (6 redirects, 20 MB, 45 s, audio types) | Links worked only for small files and offsets are ignored on audio (plan "Evidence"); no new bucket or IAM | Keep |
 | Media: audio priced by `MODEL_AUDIO_PRICE_OVERRIDES` ($2.50 per 1M), not checked against the bill | LiteLLM has no audio price; Sourabh: "mark 3 dollar budget" (a $3 media budget bounds any under-count) | Check the bill after the hackathon |
@@ -1050,7 +1050,7 @@ Plan `docs/plans/media.md` (rounds 1–5, each to APPROVE). Branch `media`. DESI
 `docs/AUTOPILOT_LOG.md` (Media sections), `docs/evidence/media/` (shots and `metrics.json`).
 **Scope cut by Sourabh, 2026-10-14 ~11:20 IST:** "Audio and Video is just minor additional
 support, don't make them good enough; small 10 minutes clips are good enough." Caps 10 minutes
-for both and 20 MB; 5.7 items 3–5 (refusal sweep, pre-check count, podcast shots) cut.
+for both and 20 MB, then podcasts 12 minutes and 24 MB ("raise to 12", same day, for stitched-in ads); 5.7 items 3–5 (refusal sweep, pre-check count, podcast shots) cut.
 
 | Check | Result |
 |---|---|

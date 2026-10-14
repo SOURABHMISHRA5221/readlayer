@@ -20,6 +20,7 @@ import time
 
 from app import llm
 from app.config import Settings, get_settings
+from app.graph.loader import get_graph, load_serving_graph
 from app.ingest.service import analyse_pending
 from app.media import urls
 from app.media.openable import media_kind, media_kind_on
@@ -120,12 +121,28 @@ async def ingest(url: str, settings: Settings) -> bool:
     return doc is not None
 
 
+async def graph_ready(settings: Settings) -> bool:
+    """Analysis links demands against the in-memory graph, which only API startup loads. Without
+    it every demand stays unlinked and the stored recording shows no notes, for good."""
+    if not settings.concepts_uri:
+        print("CONCEPTS_URI is not set: analysis would link nothing. Set it as the API has it.")
+        return False
+    grown = await load_serving_graph(settings.concepts_uri)
+    if not len(get_graph()):
+        print(f"the concept graph at {settings.concepts_uri} loaded empty")
+        return False
+    print(f"graph: {len(get_graph())} concepts ({grown} grown online)")
+    return True
+
+
 async def main(args: argparse.Namespace, settings: Settings | None = None) -> int:
     settings = settings or get_settings()
     if len(args.urls) > MAX_RECORDINGS:
         print(f"at most {MAX_RECORDINGS} recordings per run, got {len(args.urls)}")
         return 2
     print(f"target: {target(settings)}{'  (dry run, no writes)' if args.dry_run else ''}")
+    if not args.dry_run and not await graph_ready(settings):
+        return 2
     failed = 0
     for url in args.urls:
         print(url)

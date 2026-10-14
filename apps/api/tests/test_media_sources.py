@@ -6,7 +6,7 @@ from pydantic import SecretStr
 
 from app.config import Settings
 from app.ingest.safe_fetch import SafeFetcher
-from app.media.refusals import MediaRefused, MediaUnavailable
+from app.media.refusals import MediaRefused, MediaUnavailable, message
 from app.media.sources import apple_episode, estimated_duration_s, probe_audio, youtube_info
 from tests.test_media_service import LONG_CAPS
 
@@ -94,11 +94,14 @@ async def test_the_cap_is_a_setting():
     assert info.duration_s == 3900
 
 
-def test_the_default_caps_are_ten_minutes():
-    """Media is minor support: one 10-minute window per recording (Sourabh, 2026-10-14)."""
+def test_the_default_caps_are_ten_minutes_and_twelve_for_podcasts():
+    """Media is minor support: short recordings only (Sourabh, 2026-10-14). Podcasts get 12
+    minutes because Apple's length leaves out stitched-in ads (an Indicator episode listed at
+    565 s downloaded at 652 s); 12 min at 256 kbps is 23 MB."""
     s = Settings(_env_file=None)
-    assert (s.media_max_video_s, s.media_max_audio_s) == (600, 600)
-    assert s.media_max_audio_bytes == 20_000_000
+    assert (s.media_max_video_s, s.media_max_audio_s) == (600, 720)
+    assert s.media_max_audio_bytes == 24_000_000
+    assert "videos up to 10 minutes, podcasts up to 12" in message("too_long")
 
 
 async def test_a_video_over_the_default_cap_is_too_long():

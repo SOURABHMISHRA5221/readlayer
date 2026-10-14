@@ -67,11 +67,12 @@ class Settings(BaseSettings):
     media_enabled: bool = True  # kill switch: false → media URLs answer "Open original"
     media_audio_enabled: bool = True  # podcasts only (plan R12)
     media_video_enabled: bool = True  # YouTube only; on: whole videos ≤ 10 min answer (step 7)
-    # 10 minutes for both (Sourabh, 2026-10-14: media is minor support; short clips are enough).
+    # 10 minutes for videos, 12 for podcasts (Sourabh, 2026-10-14: media is minor support; short
+    # clips are enough; podcasts raised to 12 because Apple's length leaves out stitched-in ads).
     # One window per recording: no parallel calls, a small file, memory well inside 1 GiB.
     media_max_video_s: int = 600
-    media_max_audio_s: int = 600
-    media_max_audio_bytes: int = 20_000_000  # 10 min at 256 kbps is 19.2 MB
+    media_max_audio_s: int = 720
+    media_max_audio_bytes: int = 24_000_000  # 12 min at 256 kbps is 23 MB
     # Audio windows in flight after window 1; each holds ~3 × 20 MB of base64 and JSON (5R10).
     # 2, not 4: T02's harness run peaked at 686 MB (idle API 277 MB) with two in flight.
     media_audio_parallel_windows: int = Field(default=2, ge=1)
