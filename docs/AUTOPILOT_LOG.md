@@ -1961,3 +1961,13 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    Then drop the private-repo comment in `landing/links.ts` (lazy chunk; next web deploy).
 3. PR for this branch (`gloss-address-live`: log, STATUS, `gloss_live.py`).
 4. The Oct 16 items (unchanged).
+- Sourabh: "able to logged in" (Google sign-in on glossreader) and "make repo public". Repo
+  PUBLIC; signed out: repo page, release 0.8.2, latest → 0.8.2, zip (54,259 B) all 200; README on
+  GitHub names glossreader. links.ts private-repo comment removed (a comment: no deploy needed).
+  **Decision 62 done.**
+
+### Next steps (resume here, in order)
+1. PR for `gloss-address-live` (log, STATUS, `gloss_live.py`, links.ts comment) → CI → merge.
+2. The Oct 16 items: persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`,
+   media snapshots, readiness mix re-run, README refresh (incl. the "recommendations only" line),
+   video, deck. Main bundle has ≈ 0.07 KB left: anything touching main must be lazy.
