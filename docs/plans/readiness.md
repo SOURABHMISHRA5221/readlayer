@@ -52,7 +52,8 @@ line. The "N ideas new to you" count in the meta line is unchanged.
    live: a demo reader sees the lines.
 
 ## Production writes
-The two deploys only.
+The two deploys; the live check's demo user (written, then deleted by End demo: W2); the mix
+script reads only (W1).
 
 ## Docs
 DESIGN §17.2 (the line and its rule), STATUS decision 60, §1 row, a short acceptance section.
@@ -85,7 +86,7 @@ a committed fixture, opens For you as the demo reader; asserts zero search and z
 **V10. Rank tests.** A new prerequisite also named by the item: not listed, still counted; a
 prerequisite id missing from the graph: no crash; `select` and `_out` carry both fields.
 **V11. Production writes.** The deploys; the live check makes 1 anonymous user and 1
-`rec_signals/newcomer` doc (left to the anonymous-user cleanup, said in STATUS).
+`rec_signals/newcomer` doc (deleted by End demo: W2).
 **V12. Deploys** from clean, up-to-date `main` after `make check-gcp`, API before web.
 **V13. Live evidence.** Production `/v1/feed` level counts per persona and one live shot in
 `docs/evidence/readiness/`, in the STATUS section.
@@ -105,3 +106,5 @@ no retuning). A small handmade fixture test stays for correctness only. Producti
 **W2 (V11).** The live check ends with "End demo" (delete on request); the STATUS section records
 that the anonymous Auth user and `users/{uid}` (with `rec_signals/newcomer`) are gone. Expected:
 1 anonymous user, its `users/{uid}` and `rec_signals/newcomer` written, then all deleted.
+
+**Nit taken:** the mix script prints each persona template's `graph_version` beside the served graph's.
