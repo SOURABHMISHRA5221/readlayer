@@ -89,10 +89,12 @@ class Opened:
 # ---------------------------------------------------------------- open
 
 
-async def open_media(media: urls.Media, caller: Caller, settings: Settings) -> Opened:
+async def open_media(media: urls.Media, caller: Caller | None, settings: Settings) -> Opened:
     """POST /v1/recs/open for a recording. Raises MediaRefused, MediaCapReached,
     MediaUnavailable or llm.BudgetExceeded; a refusal about the recording is remembered for
-    the day. Switches, direct .mp3 links and show pages are answered before any I/O."""
+    the day. Switches, direct .mp3 links and show pages are answered before any I/O.
+    caller None is `scripts/ingest_media.py` (plan 2.4): no reader's daily slot, no growth
+    slots; the lookup cap, budget and every check still apply."""
     if not media_kind_on(media_kind(media), settings):
         raise MediaRefused("media_off")
     if isinstance(media, urls.AudioFile):
@@ -114,12 +116,12 @@ async def open_media(media: urls.Media, caller: Caller, settings: Settings) -> O
             raise MediaRefused(pending.refused)
         return Opened(content_id, new=False, stage=pending.stage)
 
-    if not await _reserve_slot(caller, settings, day):
+    if caller is not None and not await _reserve_slot(caller, settings, day):
         raise MediaCapReached("reader")
     try:
-        info = await _look_up(media, settings, day)
-        await llm.check_media_budget(_estimate(info.duration_s, settings), settings=settings)
-        slots = await quota.reserve_growth(caller, settings)
+        info = await look_up(media, settings, day)
+        await llm.check_media_budget(estimate_usd(info.duration_s, settings), settings=settings)
+        slots = 0 if caller is None else await quota.reserve_growth(caller, settings)
         stored = await get_pending_repo().create_media(
             _pending_doc(content_id, media, info, slots, now), now
         )
@@ -145,19 +147,24 @@ async def open_media(media: urls.Media, caller: Caller, settings: Settings) -> O
     return Opened(content_id, new=True, stage=stored.stage)
 
 
-async def _look_up(
-    media: urls.YouTube | urls.ApplePodcast, settings: Settings, day: str
+async def look_up(
+    media: urls.YouTube | urls.ApplePodcast, settings: Settings, day: str | None
 ) -> MediaInfo:
-    """videos.list, or Apple's lookup then the audio head: each counts one `media_lookup`."""
-    days = get_media_day_repo()
-    if not await days.reserve_lookup(day, settings.media_lookup_daily_cap):
-        raise MediaCapReached("lookup")
+    """videos.list, or Apple's lookup then the audio head: each counts one `media_lookup` on
+    `day`. day None (`ingest_media.py --dry-run`) counts nothing and writes nothing."""
+
+    async def reserve() -> None:
+        if day is not None and not await get_media_day_repo().reserve_lookup(
+            day, settings.media_lookup_daily_cap
+        ):
+            raise MediaCapReached("lookup")
+
+    await reserve()
     if isinstance(media, urls.YouTube):
         return await youtube_info(media.video_id, settings)
     info = await apple_episode(media.show_id, media.episode_id, settings)
     assert info.audio_url is not None
-    if not await days.reserve_lookup(day, settings.media_lookup_daily_cap):
-        raise MediaCapReached("lookup")
+    await reserve()
     probe = await probe_audio(info.audio_url, settings, get_fetcher())
     if info.duration_s:
         return info
@@ -213,13 +220,15 @@ async def _reserve_slot(caller: Caller, settings: Settings, day: str) -> bool:
     )  # fmt: skip
 
 
-async def _refund_slot(caller: Caller, day: str) -> None:
+async def _refund_slot(caller: Caller | None, day: str) -> None:
+    if caller is None:
+        return
     await ReaderRepo(get_doc_store()).refund_daily(
         COUNTER, caller.uid, day, _global_path(caller, day)
     )
 
 
-def _estimate(seconds: float, settings: Settings) -> float:
+def estimate_usd(seconds: float, settings: Settings) -> float:
     return seconds / 60 * settings.media_est_usd_per_min
 
 
@@ -266,7 +275,7 @@ async def _transcribe_leased(pending: PendingDoc, settings: Settings) -> None:
         if str(w.index) not in pending.windows
     ]
     await llm.check_media_budget(
-        sum(_estimate(w.length_s, settings) for w in remaining), settings=settings
+        sum(estimate_usd(w.length_s, settings) for w in remaining), settings=settings
     )  # nothing is spent on a recording that can't finish today
     status, leased = await repo.acquire(content_id, datetime.now(UTC), LEASE, stage="transcribe")
     if status == "missing" or leased is None:
@@ -418,8 +427,8 @@ class _Run:
         media = self.pending.media
         assert media is not None
         relative = media.kind == "audio"  # a piece's clock starts at its own zero
-        estimate = _estimate(window.length_s, self.settings)
-        ceiling = CEILING_FACTOR * _estimate(self.duration_s, self.settings)
+        estimate = estimate_usd(window.length_s, self.settings)
+        ceiling = CEILING_FACTOR * estimate_usd(self.duration_s, self.settings)
         spent = self.pending.transcribe_cost_usd + self.meter.cost_usd
         if spent + self.inflight + estimate > ceiling:
             raise MediaRefused("too_costly")
