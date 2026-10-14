@@ -1783,3 +1783,35 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    rule: one level ≥ 80% of the newcomer's rows → tell Sourabh) and read the stretch lines before
    the video (e.g. "Economic stocks and flows" on a stock-market video), README refresh, video, deck (87/97/90 labelled as judged by
    the build agent). Oct 17: gitleaks over history, repo public, submit.
+
+## Landing refresh, build (2026-10-14 evening)
+
+- Code (a36f563): formats split (R1), caps read from `deploy.env.yaml` and `config.py` plus
+  `MEDIA_VIDEO_ENABLED` pinned true (R2), Gloss in your browser (R3/R4, pinned 0.8.1 link R8),
+  Watch and listen, footer link, step 4 clause. Tests first (red, then green). Main **149.97 →
+  149.87 KB** gzip (the legend's removal paid for the fifth chip); landing chunk 7.68 → 8.88 KB.
+  Web 199, extension 89, annotator 60, typecheck clean.
+- Precheck `--refresh`: the old graph load missed grown concepts (Fireship showed 0 notes); now
+  the serving graph. The extension prefetches its top 3 notes on load (`PREFETCH_TOP`), not in the
+  plan: checked too (all cached). The newcomer gets neither plan concept (plan nit): **c_decompiler**
+  on Fireship (cached), **c_term_structure_of_interest_rates** on Yield curve (1 generation, ≈ $0.005,
+  within the cap of 2). 0 searches, 0 growth, doc reused.
+- Reader 1 (`landing_media.py --only=shot-feed,shot-media`): deleted, confirmed gone. Feed lines on
+  screen: "Ready for you", "A stretch: read up on Income distribution first" (R6 ok), but the week
+  panel was still a skeleton; media still: the note open, the marked word under the sticky player.
+- Reader 2 (`landing_extension.py --web-stills`): reused doc 4a4a18…, calls only GET content /
+  annotations, POST content, POST explain (no grow, no analyse); note ready; deleted, confirmed
+  gone. **shot-extension 2x over 250 KB** at the lowest quality then allowed, so nothing was saved
+  and the web re-takes didn't run. Fixed (5723812): PNGs kept, encode after cleanup, lower steps.
+- The plan's count (2 demo readers) is used up: a third run needs Sourabh's yes (0 generations now).
+- Sourabh: a "gloss" web address instead of readlayer: "lets push new domain for tomorrow"
+  (decision 62, to plan Oct 15/16: a second Hosting site such as gloss-reader.web.app, Auth
+  authorized domain, API CORS, extension web base → 0.8.2, links; keep the old address).
+
+### Next steps (resume here, in order)
+1. With Sourabh's yes: one more run, `landing_extension.py --confirmed --web-stills` (third demo
+   reader, 0 generations) → check stills → popup height in `Extension.tsx` from the capture (600×396
+   at 2x, so 300×198) → alt texts match the stills.
+2. Harness `tools/shots/landing_refresh.py` (local build, before/after, axe all impacts, widths,
+   first view, LCP) → milestone-reviewer → PR → CI → merge → deploy web (Sourabh's yes) → live check.
+3. Decision 62 (gloss domain) plan, then the Oct 16 items from the previous Next steps.
