@@ -1,0 +1,146 @@
+{
+ "foryou-1440-light": {
+  "axe": [],
+  "hscroll": 0,
+  "rows": {
+   "How does raising interest rates control inflation?": {
+    "title": "How does raising interest rates control inflation?",
+    "gloss": "Open in Gloss: How does raising interest rates control inflation?",
+    "original": "Watch on YouTube: How does raising interest rates control inflation? (opens in a new tab)",
+    "titleTarget": ""
+   },
+   "A sixteen-minute economics lecture": {
+    "title": "A sixteen-minute economics lecture",
+    "gloss": null,
+    "original": null,
+    "titleTarget": "_blank"
+   },
+   "Why bond yields matter for mortgages": {
+    "title": "Why bond yields matter for mortgages",
+    "gloss": null,
+    "original": null,
+    "titleTarget": ""
+   }
+  }
+ },
+ "foryou-1440-light-keyboard": {
+  "gloss": {
+   "cls": "row__gloss",
+   "label": "Open in Gloss: How does raising interest rates control inflation?",
+   "ring": true
+  },
+  "next": {
+   "cls": "row__original",
+   "label": "Watch on YouTube: How does raising interest rates control in",
+   "ring": true
+  }
+ },
+ "foryou-1440-dark": {
+  "axe": [],
+  "hscroll": 0,
+  "rows": {
+   "How does raising interest rates control inflation?": {
+    "title": "How does raising interest rates control inflation?",
+    "gloss": "Open in Gloss: How does raising interest rates control inflation?",
+    "original": "Watch on YouTube: How does raising interest rates control inflation? (opens in a new tab)",
+    "titleTarget": ""
+   },
+   "A sixteen-minute economics lecture": {
+    "title": "A sixteen-minute economics lecture",
+    "gloss": null,
+    "original": null,
+    "titleTarget": "_blank"
+   },
+   "Why bond yields matter for mortgages": {
+    "title": "Why bond yields matter for mortgages",
+    "gloss": null,
+    "original": null,
+    "titleTarget": ""
+   }
+  }
+ },
+ "foryou-1440-dark-keyboard": {
+  "gloss": {
+   "cls": "row__gloss",
+   "label": "Open in Gloss: How does raising interest rates control inflation?",
+   "ring": true
+  },
+  "next": {
+   "cls": "row__original",
+   "label": "Watch on YouTube: How does raising interest rates control in",
+   "ring": true
+  }
+ },
+ "foryou-390-light": {
+  "axe": [],
+  "hscroll": 0,
+  "rows": {
+   "How does raising interest rates control inflation?": {
+    "title": "How does raising interest rates control inflation?",
+    "gloss": "Open in Gloss: How does raising interest rates control inflation?",
+    "original": "Watch on YouTube: How does raising interest rates control inflation? (opens in a new tab)",
+    "titleTarget": ""
+   },
+   "A sixteen-minute economics lecture": {
+    "title": "A sixteen-minute economics lecture",
+    "gloss": null,
+    "original": null,
+    "titleTarget": "_blank"
+   },
+   "Why bond yields matter for mortgages": {
+    "title": "Why bond yields matter for mortgages",
+    "gloss": null,
+    "original": null,
+    "titleTarget": ""
+   }
+  }
+ },
+ "foryou-390-light-keyboard": {
+  "gloss": {
+   "cls": "row__gloss",
+   "label": "Open in Gloss: How does raising interest rates control inflation?",
+   "ring": true
+  },
+  "next": {
+   "cls": "row__original",
+   "label": "Watch on YouTube: How does raising interest rates control in",
+   "ring": true
+  }
+ },
+ "foryou-390-dark": {
+  "axe": [],
+  "hscroll": 0,
+  "rows": {
+   "How does raising interest rates control inflation?": {
+    "title": "How does raising interest rates control inflation?",
+    "gloss": "Open in Gloss: How does raising interest rates control inflation?",
+    "original": "Watch on YouTube: How does raising interest rates control inflation? (opens in a new tab)",
+    "titleTarget": ""
+   },
+   "A sixteen-minute economics lecture": {
+    "title": "A sixteen-minute economics lecture",
+    "gloss": null,
+    "original": null,
+    "titleTarget": "_blank"
+   },
+   "Why bond yields matter for mortgages": {
+    "title": "Why bond yields matter for mortgages",
+    "gloss": null,
+    "original": null,
+    "titleTarget": ""
+   }
+  }
+ },
+ "foryou-390-dark-keyboard": {
+  "gloss": {
+   "cls": "row__gloss",
+   "label": "Open in Gloss: How does raising interest rates control inflation?",
+   "ring": true
+  },
+  "next": {
+   "cls": "row__original",
+   "label": "Watch on YouTube: How does raising interest rates control in",
+   "ring": true
+  }
+ }
+}

@@ -1,0 +1,23 @@
+{
+  "topics": ["economics"],
+  "items": [
+    {"id": "fx-short", "topic": "economics", "topic_label": "Economics", "format": "video",
+     "title": "How does raising interest rates control inflation?", "url": "https://www.youtube.com/watch?v=R8VBRCs2jTU",
+     "source": "The Economist", "snippet": "Why central banks raise rates, and what it does to prices.",
+     "thumbnail": "https://i.ytimg.com/vi/R8VBRCs2jTU/hqdefault.jpg", "duration_or_read_time": 494,
+     "published_at": "2022-06-09T00:00:00Z", "new_concepts": ["central bank", "inflation target"], "goal": null,
+     "why": "", "score": 1.0, "open_here": true},
+    {"id": "fx-long", "topic": "economics", "topic_label": "Economics", "format": "video",
+     "title": "A sixteen-minute economics lecture", "url": "https://www.youtube.com/watch?v=d6fUwCBvVc0",
+     "source": "Econ Lectures", "snippet": "A longer lecture: it opens on YouTube only.",
+     "thumbnail": "https://i.ytimg.com/vi/d6fUwCBvVc0/hqdefault.jpg", "duration_or_read_time": 960,
+     "published_at": "2026-10-01T00:00:00Z", "new_concepts": [], "goal": null, "why": "", "score": 0.9,
+     "open_here": false},
+    {"id": "fx-article", "topic": "economics", "topic_label": "Economics", "format": "article",
+     "title": "Why bond yields matter for mortgages", "url": "https://news.example/bonds",
+     "source": "news.example", "snippet": "An article row, unchanged by the media follow-up.",
+     "thumbnail": null, "duration_or_read_time": 300, "published_at": "2026-10-12T00:00:00Z",
+     "new_concepts": ["bond yield"], "goal": null, "why": "", "score": 0.8, "open_here": true}
+  ],
+  "pending": false, "snapshot": false, "prepared_at": null, "country": "IN"
+}
