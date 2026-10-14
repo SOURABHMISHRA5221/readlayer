@@ -5,7 +5,7 @@ docs/plans/landing-onboarding.md), so the pictures show what the product gives e
     uv run --project apps/api python tools/shots/readme_personas.py
 
 Writes three 2x PNG stills to a temp dir, then composes with ffmpeg into docs/images/:
-personas.png (three panels side by side) and demo.gif (switching readers, ≤ 3 MB).
+three-readers.png (three panels side by side) and three-readers.gif (switching readers, ≤ 3 MB).
 """
 
 import asyncio
@@ -79,7 +79,7 @@ def compose(shots: list[Path], tmp: Path) -> None:
     inputs = [a for s in shots for a in ("-i", str(s))]
     pads = ";".join(f"[{i}:v]scale={panel_w}:-2,pad={panel_w + (24 if i < 2 else 0)}:{tallest}:0:0:white[p{i}]"
                     for i in range(3))
-    ffmpeg(*inputs, "-filter_complex", f"{pads};[p0][p1][p2]hstack=inputs=3", "-frames:v", "1", str(OUT / "personas.png"))
+    ffmpeg(*inputs, "-filter_complex", f"{pads};[p0][p1][p2]hstack=inputs=3", "-frames:v", "1", str(OUT / "three-readers.png"))
     # The GIF: each reader held 2.4 s with a 0.4 s cross-fade, 800 px wide, one shared palette.
     width = 800
     while True:
@@ -96,10 +96,10 @@ def compose(shots: list[Path], tmp: Path) -> None:
         ffmpeg(*[a for c in clips + [clips[0]] for a in ("-i", str(c))], "-filter_complex", fade, "-map", "[v]", str(loop))
         palette = tmp / "palette.png"
         ffmpeg("-i", str(loop), "-vf", "palettegen=max_colors=128:stats_mode=diff", str(palette))
-        gif = OUT / "demo.gif"
+        gif = OUT / "three-readers.gif"
         ffmpeg("-i", str(loop), "-i", str(palette), "-lavfi", "paletteuse=dither=bayer:bayer_scale=4", "-loop", "0", str(gif))
         size = gif.stat().st_size
-        print(f"[demo.gif] {width} px wide, {size:,} bytes")
+        print(f"[three-readers.gif] {width} px wide, {size:,} bytes")
         if size <= GIF_MAX or width <= 560:
             break
         width -= 80
