@@ -296,7 +296,10 @@ skipped (the chooser then names glossreader.web.app, which meets acceptance 3) a
 said is recorded. The host → `authDomain` choice is a pure `authDomainFor(hostname, built,
 emulator)` in `lib/sites.ts`, unit-tested without importing `auth.ts`.
 
-R4/R5 results (2026-10-14): 37 PR heads fetched; `gitleaks git --log-opts=--all` scanned 446 of
-448 commits (the other two carry no diff of their own); 2 findings, both the extension manifest's
-public RSA key (allow-listed in `.gitleaksignore` with the reason), rescan clean. No email address
+R4/R5 results (2026-10-14): 37 PR heads fetched; `gitleaks git --log-opts=--all` reports 448 of
+450 commits scanned (one gap is the only merge; the other gitleaks' count doesn't explain: no
+stash, no binary-only commit, the root commit scans clean on its own); 2 findings, both the
+extension manifest's public RSA key (allow-listed in `.gitleaksignore` with the reason), rescan
+clean. Cross-check covering every commit: `git log --all -p -m | gitleaks stdin` (451 commit
+entries, merges with -m): 5 findings, all the same public key, nothing else. No email address
 in the 37 PR titles and bodies or the 1 issue.
