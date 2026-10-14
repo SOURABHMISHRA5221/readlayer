@@ -1,0 +1,52 @@
+{
+ "video-1440-light": {
+  "axe": [],
+  "stamps": 24,
+  "marks": 0,
+  "facade": true,
+  "kicker": null,
+  "hscroll": 0
+ },
+ "video-1440-dark": {
+  "axe": [],
+  "stamps": 24,
+  "marks": 0,
+  "facade": true,
+  "kicker": null,
+  "hscroll": 0
+ },
+ "video-1024-light": {
+  "axe": [],
+  "stamps": 24,
+  "marks": 0,
+  "facade": true,
+  "kicker": null,
+  "hscroll": 0
+ },
+ "video-390-light": {
+  "axe": [],
+  "stamps": 24,
+  "marks": 0,
+  "facade": true,
+  "kicker": null,
+  "hscroll": 0
+ },
+ "video-390-dark": {
+  "axe": [],
+  "stamps": 24,
+  "marks": 0,
+  "facade": true,
+  "kicker": null,
+  "hscroll": 0
+ },
+ "paragraphs": {
+  "api": 24,
+  "dom": 24,
+  "different": []
+ },
+ "seek": {
+  "button": "Play from 1:30",
+  "paragraph_start_s": 90,
+  "iframe_start_s": 90
+ }
+}

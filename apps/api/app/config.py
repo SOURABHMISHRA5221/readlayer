@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     # Media: YouTube videos and podcast episodes read as transcripts (decision 54, DESIGN §21).
     media_enabled: bool = True  # kill switch: false → media URLs answer "Open original"
     media_audio_enabled: bool = True  # podcasts only (plan R12)
-    media_video_enabled: bool = True  # YouTube only; parked while whole videos time out (5.1)
+    media_video_enabled: bool = True  # YouTube only; on: whole videos ≤ 10 min answer (step 7)
     # 10 minutes for both (Sourabh, 2026-10-14: media is minor support; short clips are enough).
     # One window per recording: no parallel calls, a small file, memory well inside 1 GiB.
     media_max_video_s: int = 600
