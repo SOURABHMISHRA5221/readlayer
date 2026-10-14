@@ -89,9 +89,9 @@ def compose(shots: list[Path], tmp: Path) -> None:
             clip = tmp / f"hold-{i}.mp4"
             ffmpeg("-loop", "1", "-t", "2.8", "-i", str(s), "-vf", f"scale={width}:-2,pad={width}:{gif_h}:0:0:white,fps=12,format=yuv420p", str(clip))
             clips.append(clip)
-        fade = (f"[0:v][1:v]xfade=transition=fade:duration=0.4:offset=2.4[a];"
-                f"[a][2:v]xfade=transition=fade:duration=0.4:offset=4.8[b];"
-                f"[b][0:v]xfade=transition=fade:duration=0.4:offset=7.2[v]")
+        fade = (f"[0:v][1:v]xfade=transition=fadewhite:duration=0.4:offset=2.4[a];"
+                f"[a][2:v]xfade=transition=fadewhite:duration=0.4:offset=4.8[b];"
+                f"[b][0:v]xfade=transition=fadewhite:duration=0.4:offset=7.2[v]")
         loop = tmp / "loop.mp4"
         ffmpeg(*[a for c in clips + [clips[0]] for a in ("-i", str(c))], "-filter_complex", fade, "-map", "[v]", str(loop))
         palette = tmp / "palette.png"
