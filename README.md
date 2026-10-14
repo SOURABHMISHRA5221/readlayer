@@ -63,12 +63,12 @@ Every article, video and podcast is made once, for an imagined average reader. R
 | **Paragraph notes and pre-read** | A paragraph that assumes a lot gets a marker with a short explainer; a page that leans on ideas the reader lacks opens with a pre-read of what to know first. "Know this?" prompts check a single term. |
 | **Reader knowledge graph** | Each reader has a graph of what they know: Beta-distributed confidence per concept, ability per domain, and forgetting with a 90-day half-life. "Knew this" removes a note on the next load and nudges related concepts; "This is wrong" removes a bad explanation for everyone. |
 | **Onboarding and reading profile** | Two short screens: your field and the topics you follow (in your own words too, if you like), then real articles to like or skip, each with one "Know this?" term. The profile shows your knowledge map, which you can correct in plain words ("I know options trading well"; you see the change before it applies), plus reading goals and a weekly view. |
-| **For you, with readiness** | A feed picked for your topics from top outlets, refreshed twice a day, with a line per pick from your own map: "Mostly familiar", "Ready for you", or "A stretch: read up on X first". |
+| **For you, with readiness** | A feed picked for your topics from top outlets, refreshed twice a day (demo readers see a prepared snapshot), with a line per pick from your own map: "Mostly familiar", "Ready for you", or "A stretch: read up on X first". |
 | **Read any link, any format** | Paste an article, a YouTube video (up to 10 minutes) or an Apple Podcasts episode (up to 12): it opens with notes. Videos and podcasts get a transcript with a time button on each paragraph. Longer ones open where they play. |
 | **Up next** | What to read, watch or listen to next: library articles (the same story elsewhere, primers for a weak prerequisite, deeper reads), plus web articles and podcasts (Tavily) and videos (YouTube Data API). |
 | **Chrome extension** | The same notes on any news page, at your click only; on a YouTube video it opens the video in Gloss. See [Install the extension](#install-the-extension). |
 | **Privacy and data rights** | No user identifiers or reading history ever reach a model or a search provider. Export everything we hold, or delete it along with the account, from the account menu. |
-| **Accessibility** | Keyboard-reachable notes with ARIA roles and a focus trap, a sheet on phones, light and dark themes, and a Lighthouse accessibility score of 100 on the reader. |
+| **Accessibility** | Keyboard-reachable notes with ARIA roles and a focus trap, a sheet on phones, light and dark themes, and axe finds no serious or critical issues on the library, reader and profile (after the redesign, Oct 11). |
 
 ## Screenshots
 
@@ -189,7 +189,7 @@ Every model call goes through one module, [`app/llm.py`](apps/api/app/llm.py), b
 | Task | Model | Why |
 |---|---|---|
 | `extract_demands`: what each paragraph assumes the reader knows | Gemini 3.5 Flash-Lite, Gemma 4 fallback | Runs once per new page; the fast tier keeps a new article at about half a cent of model cost |
-| `link_confirm`: is this mention really that concept? | Gemini 3.8 Flash | Measured 97% precision against the 95% target; the fast tier reached 89%. Also matches the reader's onboarding words and goal phrases, as redacted pieces, one piece per call |
+| `link_confirm`: is this mention really that concept? | Gemini 3.8 Flash | Met the 95% precision target on the M2 alias set, where the fast tier reached 89%; falls back to Gemini 3.5 Flash-Lite. Also matches the reader's onboarding words and goal phrases, as redacted pieces, one piece per call |
 | `link_merge`, `concept_define`, `concept_prereqs`, `concept_wikidata`, `concept_jurisdiction` | Gemini 3.5 Flash-Lite, Gemma 4 fallback | Building and growing the concept graph |
 | `embed`: concept and mention vectors | Gemini embedding 001, 256 dimensions | Nearest-concept candidates for linking; also the reader's redacted onboarding pieces and goal phrases, one piece per request |
 | `explain` (Background) and `restate` (What the author is saying) | Gemini 3.8 Flash, Gemini 3.5 Flash-Lite fallback | User-visible prose deserves the stronger model |
@@ -208,14 +208,14 @@ Each number comes from [docs/STATUS.md](docs/STATUS.md) or a report in [`apps/ap
 | What | Result |
 |---|---|
 | Faithfulness and safety ([report](apps/api/evals/report.md)) | Run of Oct 10 on the live prompts (restate-v2, explain-v5, verify-v2, verify-background-v1), judge Gemini 3.8 Flash: **15/15** adversarial notes rejected (dropped hedges, dropped attribution, changed numbers, flipped negations, opinion as fact); **24/25** good notes accepted (one rejected); **10/10** prompt-injection cases safe; Background suite 3/3 rejected and 2/2 accepted; non-business notes 6/7 (outside the targets) |
-| Concept graph | 5,206 concepts seeded in 14 domains (the business core plus politics, law, technology, science, health, environment, sports, culture, education, society) from Wikipedia glossaries; **5,281** served on Oct 14 after growing online from new pages; no cycles |
+| Concept graph | **5,206** concepts in 14 domains (the business core plus politics, law, technology, science, health, environment, sports, culture, education, society): 3,327 from the article corpus plus 1,874 from Wikipedia glossaries, merged; **5,281** served on Oct 14 after growing online from new pages; no cycles |
 | Library | **323** library pages analysed, each ingested once and shared by every reader ([ops report](apps/api/evals/ops_report.md)) |
-| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60% missed); with online growth, as in production, 89% / 66%. Grown concepts judged correct by the build agent (Sourabh's audit pending): 87% (first sample), 97% (after tightening, overlapping the first), 90% on a fresh sample of 30 grown live ([report](apps/api/evals/heldout_report.md)) |
+| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60%, set for the frozen graph: missed); with online growth, as in production, 89% / 66%, which includes concepts grown from the measured articles themselves, so never the headline. Grown concepts judged correct by the build agent (Sourabh's audit pending): 87% (first sample), 97% (after tightening, overlapping the first), 90% on a fresh sample of 30 grown live ([report](apps/api/evals/heldout_report.md)) |
 | Readers see different notes | Measured Oct 5 on the 310 corpus articles: the trader and the policy student get identical underlines on **8 of 310** (mean overlap 0.15) |
 | Scoring latency, p95 | **0.19 ms** for a 1,200-word article (local test); 1.6 ms on Cloud Run (the API's own rolling window, Oct 14); budget 150 ms |
 | Annotations endpoint, p95 on Cloud Run | **478 ms** (median 98 ms) over 213 requests, Oct 8–14, from the request logs; includes cold starts, since the service scales to zero ([ops report](apps/api/evals/ops_report.md)) |
-| Accessibility | Lighthouse accessibility **100** on the reader, layout shift 0 |
-| Model cost per new article | Median **$0.0045** to analyse a library article (361 pages to date), plus about $0.0014 when it grows new concepts; explanation parts about $0.004 each, and 70% of explanation requests are served from the cache ([ops report](apps/api/evals/ops_report.md)) |
+| Accessibility | After the redesign (Oct 11): axe **0** serious or critical issues on the library, reader and profile, no horizontal scroll at 390 px; the landing scores Lighthouse accessibility **100** with axe 0 at every impact level |
+| Model cost per new article | Median **$0.0045** to analyse a library article (323 library pages; 361 stored in all); pages readers bring in add a median of about $0.0014 for growing new concepts; explanation parts about $0.004 each, and 70% of explanation requests are served from the cache ([ops report](apps/api/evals/ops_report.md)) |
 | Total model spend to date | **$22.64** on the project ledger (Oct 4–14), most of it building the library and concept graph and running evals; page views cost nothing in model calls |
 
 ## Responsible AI and privacy
@@ -223,7 +223,7 @@ Each number comes from [docs/STATUS.md](docs/STATUS.md) or a report in [`apps/ap
 - **The author's words are never changed.** Notes are an overlay anchored to exact quotes in the text; nothing is rewritten or summarised, and each note is labelled as an explanation, not the author's words.
 - **Every explanation is verified.** It must pass deterministic checks (numbers, hedges, attribution and negations preserved) and a Gemini entailment judge before it is shown or cached; otherwise the note falls back to the plain definition. A reader's "This is wrong" removes it from the cache.
 - **Page text is untrusted.** It goes to models inside delimiters, models get no tools, and every response is validated against a schema.
-- **No personal data in prompts or searches.** Models get page and concept content and, for profile edits, goals and onboarding, the reader's own words with emails, phone and card numbers removed first; never user ids, emails or reading history. Search providers get concept and topic labels (and fixed phrases), never anything the reader typed. This is covered by tests. Logs carry a pseudonymous hash instead of a user id.
+- **No personal data in prompts or searches.** Models get page and concept content and, for profile edits, goals and onboarding, the reader's own words with emails, phone and card numbers removed first; never user ids, emails or reading history. Search providers get concept and topic labels (and fixed phrases), never anything the reader typed; a pasted video or podcast link is looked up by its id. This is covered by tests. Logs carry a pseudonymous hash instead of a user id.
 - **Transcripts** are made from the public recording only, with nothing about the reader. They are made automatically and can contain errors; the recording is the source.
 - **Your data, your call.** Export everything we hold as JSON, or delete it together with the account. Raw interaction events expire after 90 days, and Firestore rules deny all direct client access.
 - **Safe fetching.** Every user-supplied URL goes through `safe_fetch`. It allows only http and https on ports 80 and 443, rejects private, loopback, link-local and metadata addresses and re-checks them after every redirect, enforces a 10-second timeout and a 3 MB cap, and respects robots.txt.
@@ -240,7 +240,7 @@ Each number comes from [docs/STATUS.md](docs/STATUS.md) or a report in [`apps/ap
 - A Google Cloud project with Vertex AI, Firestore (Native mode), Cloud Storage, Secret Manager and Firebase enabled
 - Firebase Auth with the Google and Anonymous providers turned on
 
-The Makefile names our project and region at the top (`PROJECT`, `REGION`); change them for your own. Your gcloud account goes in a gitignored file, `.gcp.local.mk`, containing one line: `ACCOUNT := you@example.com`. Cloud targets check the active gcloud identity against both before doing anything.
+The Makefile names our project and region at the top (`PROJECT`, `REGION`); change them for your own. Your gcloud account goes in a gitignored file, `.gcp.local.mk`, containing one line: `ACCOUNT := you@example.com`. The Makefile keeps its own gcloud config folder (`CLOUDSDK_CONFIG=~/.config/gcloud-readlayer`) and reads credentials from it, so sign in there; cloud targets check that identity and project before doing anything. `make web-config` expects a Firebase web app named `readlayer-web` and `make test-emulator` a Java 21 path; override either on the command line (`make web-config WEB_APP=my-app`, `make test-emulator JAVA21=/path/to/jdk21`).
 
 ```bash
 git clone https://github.com/SOURABHMISHRA5221/readlayer.git
@@ -249,6 +249,9 @@ pnpm install
 (cd apps/api && uv sync)
 
 echo 'ACCOUNT := you@example.com' > .gcp.local.mk   # your gcloud account
+export CLOUDSDK_CONFIG=$HOME/.config/gcloud-readlayer   # the folder the Makefile uses
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
 gcloud auth application-default login
 cp apps/api/.env.example apps/api/.env             # then fill in the values
 make web-config                                     # writes the web app's Firebase config
@@ -260,9 +263,10 @@ make dev                                            # API on :8000, web on :5173
 | Group | Variables |
 |---|---|
 | Runtime | `ENV`, `LOG_LEVEL`, `GCP_PROJECT`, `VERTEX_LOCATION`, `CORS_ORIGINS` |
-| Models | `MODEL_FAST`, `MODEL_QUALITY`, `MODEL_FALLBACK`, `MODEL_EMBED`, `EMBED_DIM`, `MODEL_PRICE_OVERRIDES` |
+| Models | `MODEL_FAST`, `MODEL_QUALITY`, `MODEL_FALLBACK`, `MODEL_JUDGE`, `MODEL_EMBED`, `EMBED_DIM`, `MODEL_PRICE_OVERRIDES` |
 | Concept graph | `CONCEPTS_URI`, `LINK_THRESHOLD`, `DEDUPE_THRESHOLD` |
 | Guardrails | `LLM_DAILY_BUDGET_USD`, `LLM_TIMEOUT_S`, `LLM_MAX_RETRIES`, `INGEST_DAILY_CAP`, `ANON_INGEST_DAILY_CAP`, `ANON_GLOBAL_INGEST_DAILY_CAP`, `ANON_SEARCH_DAILY_CAP`, `SEARCH_DAILY_CAP`, `YOUTUBE_SEARCH_DAILY_CAP` |
+| Growth and media (defaults in [`app/config.py`](apps/api/app/config.py); growth is off locally) | `GROWTH_ENABLED`, `MEDIA_ENABLED`, `MEDIA_VIDEO_ENABLED`, `MEDIA_AUDIO_ENABLED`, `MEDIA_MAX_VIDEO_S`, `MEDIA_MAX_AUDIO_S`, `MEDIA_DAILY_CAP` |
 | Secrets (Secret Manager in production) | `UID_HASH_SALT`, `TAVILY_API_KEY`, `YOUTUBE_API_KEY` |
 | Web app (written by `make web-config`) | `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, `VITE_API_BASE` |
 | Extension (committed, public: `apps/extension/.env.production`, `.env.emulator`) | `VITE_API_BASE`, `VITE_WEB_BASE`, `VITE_WEB_ORIGINS`, `VITE_USE_EMULATORS` |
@@ -332,14 +336,14 @@ readlayer/
 - [x] M5: two-part explanations, faithfulness verifier, safety evals
 - [x] M6: annotator, library, reader, Up next; paragraph notes, pre-read, "Know this?", "This is wrong"
 - [x] M7 and M7.5: onboarding and calibration, the reading profile with its knowledge map, For you, Read any link, reading goals
-- [x] Design pass, landing and onboarding: the Gloss name and look
+- [x] Design pass, landing and onboarding: the Gloss name and look; wide layouts
 - [x] M8: Chrome extension with on-device redaction; Open in Gloss on YouTube (0.8.2)
 - [x] Media: short YouTube videos and Apple Podcasts episodes with transcripts and notes
 - [x] M9: growth and quality fixes, cost / cache / latency report, monitoring dashboard, hardening
 - [x] Readiness lines on For you
 - [ ] Demo video and deck
 
-**Limits, honestly.** Built and evaluated on English; videos and podcasts must be English (others are refused). Videos are capped at 10 minutes and podcast episodes at 12; longer ones open where they play. Linking on unseen articles misses its targets with the graph frozen; with online growth, as in production, it meets both (see Evaluation). The grown-concept precision figures were judged by the build agent and await a human audit.
+**Limits, honestly.** Built and evaluated on English; videos and podcasts must be English (others are refused). Videos are capped at 10 minutes and podcast episodes at 12; longer ones open where they play. Linking on unseen articles missed its targets, which were set for the frozen graph (64% and 13% against 75% and 60%); with online growth, as in production, it reaches 89% and 66%, but that figure includes concepts grown from the measured articles themselves, so it is not the headline (see Evaluation). The grown-concept precision figures were judged by the build agent and await a human audit.
 
 ## Team
 
