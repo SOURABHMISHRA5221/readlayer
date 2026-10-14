@@ -18,7 +18,7 @@ import urllib.request
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import m8  # noqa: E402
 
-LIVE_WEB = "https://readlayer-sourabh-26.web.app"
+from live_site import WEB as LIVE_WEB  # noqa: E402
 LIVE_API = "https://readlayer-api-d2sfihz3za-el.a.run.app"
 # Default: the plan's page. It redirects to Wikipedia's "Yield curve", already a corpus doc, so
 # that run reuses the fetch doc; pass a page that is really new to exercise a new `ext:` ingest.

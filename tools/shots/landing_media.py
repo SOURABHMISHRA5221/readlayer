@@ -29,7 +29,7 @@ import cdp  # noqa: E402
 from readiness_live import UID_JS, gone  # noqa: E402
 from stills import DPR, OUT, encode_still, png_width, run  # noqa: E402,F401
 
-WEB = "https://readlayer-sourabh-26.web.app"
+from live_site import WEB  # noqa: E402
 API = "https://readlayer-api-751104670850.asia-south1.run.app"  # the same service as readiness_live's URL
 CID = "2332418841faa08d5f5e157c2d038d1d"
 

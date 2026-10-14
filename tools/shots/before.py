@@ -7,7 +7,7 @@ import sys
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
 
-WEB = "https://readlayer-sourabh-26.web.app"
+from live_site import WEB  # noqa: E402
 API = "https://readlayer-api-751104670850.asia-south1.run.app"
 SIZES = ((1440, False), (1440, True), (390, False), (390, True))
 

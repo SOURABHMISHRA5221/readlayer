@@ -17,7 +17,7 @@ from collections import Counter
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp
 
-W = "https://readlayer-sourabh-26.web.app"
+from live_site import WEB as W  # noqa: E402
 API = "https://readlayer-api-d2sfihz3za-el.a.run.app"
 PROJECT = "readlayer-sourabh-26"
 UID_JS = "JSON.parse(atob(%s.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).user_id"

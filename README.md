@@ -15,7 +15,7 @@
 [![Cloud Run](https://img.shields.io/badge/Cloud%20Run-asia--south1-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2f6f61)](LICENSE)
 
-[**Live demo**](https://readlayer-sourabh-26.web.app) · [How it works](#how-it-works) · [Architecture](#architecture) · [Evaluation](#evaluation)
+[**Live demo**](https://glossreader.web.app) · [How it works](#how-it-works) · [Architecture](#architecture) · [Evaluation](#evaluation)
 
 </div>
 
@@ -264,13 +264,13 @@ make test-emulator    # export and delete against the Firestore and Auth emulato
 
 Gloss also runs on any news page through a Chrome extension. It isn't on the Chrome Web Store; you load it unpacked. It asks for `activeTab`, `scripting` and `storage` only: no access to any site until you click it, and it never reads mail, banking or private pages, or a page with a password or card field.
 
-1. Get it: download `gloss-extension.zip` from the [latest release](https://github.com/SOURABHMISHRA5221/readlayer/releases/latest) and unzip it, or build it yourself with `pnpm install && pnpm --filter extension build` (writes `apps/extension/dist`; no cloud access needed: the build settings in `apps/extension/.env.production` are public, and the web app hands the extension its sign-in when you connect).
+1. Get it: download `gloss-extension.zip` from the [latest release](https://github.com/SOURABHMISHRA5221/readlayer/releases/latest) (0.8.2 or later; 0.8.1 connects only from the earlier address) and unzip it, or build it yourself with `pnpm install && pnpm --filter extension build` (writes `apps/extension/dist`; no cloud access needed: the build settings in `apps/extension/.env.production` are public, and the web app hands the extension its sign-in when you connect).
 2. Open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked** and pick the unzipped folder (or `apps/extension/dist`).
 3. Pin Gloss to the toolbar.
 4. In the web app, open your account menu → **Use Gloss on any site** and press **Connect** (a demo session connects as its sample reader).
-5. Open a news article and click Gloss in the toolbar, then **Read this page** (or press Alt+Shift+R).
+5. Open a news article and click Gloss in the toolbar, then **Read this page** (or press Alt+Shift+R). On a YouTube video, the same button is **Open in Gloss**: the video opens in the web app with a transcript and notes (videos up to 10 minutes).
 
-The extension sends only the article's title and paragraphs, after removing emails, phone numbers, card numbers, Aadhaar and PAN numbers in your browser. A page you bring in is visible only to you.
+The extension sends only the article's title and paragraphs (on YouTube, only the video's link, with any playlist, time or tracking parameters removed), after removing emails, phone numbers, card numbers, Aadhaar and PAN numbers in your browser. A page you bring in is visible only to you.
 
 ## Repository structure
 
@@ -303,7 +303,7 @@ readlayer/
 
 ## Where we are
 
-**Built and live (M0–M4).** These are running at [readlayer-sourabh-26.web.app](https://readlayer-sourabh-26.web.app):
+**Built and live (M0–M4).** These are running at [glossreader.web.app](https://glossreader.web.app) (the earlier address, readlayer-sourabh-26.web.app, serves the same app):
 - safe ingestion and the concept graph (5,206 concepts in 14 domains, growing online);
 - the reader knowledge model, with Google and demo sign-in, export and delete;
 - the deterministic gap scorer, and three seeded demo personas that learn from "Knew this";
