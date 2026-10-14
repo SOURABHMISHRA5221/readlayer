@@ -303,3 +303,6 @@ extension manifest's public RSA key (allow-listed in `.gitleaksignore` with the 
 clean. Cross-check covering every commit: `git log --all -p -m | gitleaks stdin` (451 commit
 entries, merges with -m): 5 findings, all the same public key, nothing else. No email address
 in the 37 PR titles and bodies or the 1 issue.
+
+**Approved** (plan-reviewer round 4, 2026-10-14, at e65ef9a). Its nit (the extension test asserts
+`not_videos` map to null, from the same JSON keys) is how `youtube.test.ts` is written.
