@@ -1644,8 +1644,35 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   known-length rule for "Open here", no transcript text in invalid-output logs, DESIGN §8, T05
   and T06 frozen. API 1,095, web 171, main 149.48 KB.
 
+- Round 2: **SHIP**. Shots retaken with the final note text (the script now paces page loads
+  under the demo's 60 requests a minute). PR #32, CI green, squash-merged (5844e98). Local
+  `main` reset to `origin/main` (its one unpushed commit, the plan docs, is inside the merge).
+- **Deployed:** API revision `readlayer-api-00027-q2s` (health ok), then web
+  (`VITE_MEDIA_VIDEO=true`, main 149.48 KB), on Sourabh's yes at each prompt.
+- **Live, Sourabh (Google reader):** a Fireship video (5:56) opened in Gloss: transcript and 2
+  notes, "loved it". The player showed YouTube's "Sign in to confirm you're not a bot".
+  Embed test (local page, iframe like Gloss, T05): headless signed out → both `youtube-nocookie`
+  and `youtube.com` show the check; Sourabh's signed-in Chrome → no-cookie shows it,
+  **`youtube.com` plays**. Sourabh: switch to it.
+- **Sourabh:** feed videos should offer Gloss or YouTube; "keep long ones as YouTube only".
+- Plan `docs/plans/media-followup.md` (web only, branch `media-followup`) → plan-reviewer.
+
+## Media follow-up (2026-10-14)
+
+- plan-reviewer: REVISE 7 (bundle: ForYouTab is lazy, so a Row `actions` slot; accessible
+  names and disabled while opening; player tests on literal origins; feed tests; a fixture-driven
+  For you shot; docs and decision 55; privacy wording) → applied as plan Round 1 → **APPROVE**.
+- Built (tests first): afa20cd player on `www.youtube.com` + privacy page (and test);
+  9607228 `lib/recLabels.ts`, Row `actions` slot, `MediaChoice` in ForYouTab, Up next names the
+  original. Web 180, typecheck clean, main **149.61 KB** (149.48), ForYouTab 2.29 KB (2.09).
+- Shots (78fd5de): `tools/shots/media_followup.py` (For you from a fixture, 1440/390 light and
+  dark: axe 0, no scroll, rows right, Tab reaches both controls with a ring) and `media.py`
+  (player origin `https://www.youtube.com`): 0 failed checks. Docs: DESIGN §21.4, decision 55,
+  STATUS §1/§4/§5/§25, Media marked merged and live.
+- milestone-reviewer round 1: **FIX** (stale STATUS §9 and this resume point; plus a second open
+  from the title while busy, duplicate shots, missing suite counts). All applied.
+
 ### Next steps (resume here, in order)
-1. milestone-reviewer round 2 → SHIP → PR → CI green → merge.
-2. Deploy API from `main`, then web (Sourabh's yes on each; web flag matches the API).
-3. Live check (acceptance 6) on T05 and T06 as a Google reader, then a demo reader (free).
-   Checkpoint end of Oct 14 IST (decision 27).
+1. milestone-reviewer round 2 → SHIP → PR → CI green → merge → `make deploy-web` (Sourabh's yes).
+2. Live: Sourabh plays a video in Gloss signed in to YouTube and opens a feed video both ways;
+   T05 and T06 live, then a demo reader (free). Checkpoint end of Oct 14 IST (decision 27).

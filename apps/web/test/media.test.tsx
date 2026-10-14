@@ -53,9 +53,9 @@ describe("lib/media", () => {
     expect(clock(3725)).toBe("1:02:05");
   });
 
-  it("builds the no-cookie embed with the JS API and a start time", () => {
+  it("builds the youtube.com embed with the JS API and a start time", () => {
     const u = new URL(embedUrl("abc_DEF-123", "https://gloss.example", 95.7));
-    expect(u.origin).toBe(YOUTUBE_ORIGIN);
+    expect(u.origin).toBe("https://www.youtube.com"); // decision 55: the no-cookie player is challenged
     expect(u.pathname).toBe("/embed/abc_DEF-123");
     expect(u.searchParams.get("enablejsapi")).toBe("1");
     expect(u.searchParams.get("origin")).toBe("https://gloss.example");
@@ -72,7 +72,10 @@ describe("lib/media", () => {
     const player = {};
     const info = JSON.stringify({ event: "infoDelivery", info: { currentTime: 96.2 } });
     expect(currentTimeOf({ origin: YOUTUBE_ORIGIN, source: player as Window, data: info }, player)).toBe(96.2);
-    expect(currentTimeOf({ origin: "https://www.youtube.com", source: player as Window, data: info }, player)).toBeNull();
+    expect(YOUTUBE_ORIGIN).toBe("https://www.youtube.com");
+    for (const origin of ["https://www.youtube-nocookie.com", "https://youtube.com", "https://m.youtube.com", "https://www.youtube.com.evil.example"]) {
+      expect(currentTimeOf({ origin, source: player as Window, data: info }, player)).toBeNull();
+    }
     expect(currentTimeOf({ origin: YOUTUBE_ORIGIN, source: {} as Window, data: info }, player)).toBeNull();
     expect(currentTimeOf({ origin: YOUTUBE_ORIGIN, source: player as Window, data: "not json" }, player)).toBeNull();
     const noTime = JSON.stringify({ event: "infoDelivery", info: { volume: 50 } });
@@ -125,14 +128,15 @@ describe("MediaReader", () => {
   const iframe = () => host.querySelector("iframe");
   const timeButton = (label: string) => host.querySelector<HTMLButtonElement>(`button[aria-label="Play from ${label}"]`)!;
 
-  it("loads no player until play is pressed, then the no-cookie embed", async () => {
+  it("loads no player until play is pressed, then the youtube.com embed", async () => {
     await mountReader();
     expect(iframe()).toBeNull();
     const thumb = host.querySelector<HTMLImageElement>(".mplayer__facade img")!;
     expect(thumb.getAttribute("referrerpolicy")).toBe("no-referrer");
     await act(async () => host.querySelector<HTMLButtonElement>(".mplayer__facade")!.click());
     const src = new URL(iframe()!.src);
-    expect(src.origin).toBe(YOUTUBE_ORIGIN);
+    expect(src.origin).toBe("https://www.youtube.com");
+    expect(iframe()!.getAttribute("referrerpolicy")).toBe("strict-origin");
     expect(src.searchParams.get("start")).toBe("0");
   });
 

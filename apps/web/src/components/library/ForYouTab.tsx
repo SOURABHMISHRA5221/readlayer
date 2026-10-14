@@ -6,7 +6,9 @@ import { FEED_STALE } from "../../lib/feedStale";
 import { pendingNote, reaskDelay, snapshotNote, visibleItems, wantsCountry } from "../../lib/feedView";
 import { formatDate } from "../../lib/format";
 import { personaParam, type PersonaKey } from "../../lib/personas";
+import { originalLabel } from "../../lib/recLabels";
 import { navigate, withParams } from "../../lib/router";
+import { External } from "../Icons";
 import { ERROR_COPY, StateView } from "../StateView";
 import { sendRecEvent } from "../UpNext";
 import { Row } from "./Row";
@@ -85,6 +87,7 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
   const waiting = pendingNote(feed.pending, attempt);
 
   const openHere = async (item: FeedItem) => {
+    if (opening) return; // one open at a time: the title and "Open in Gloss" both land here
     sendRecEvent(persona, "rec_clicked", item.id);
     setOpening(item.id);
     try {
@@ -160,6 +163,16 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
               onLess={() => less(item)}
               busy={opening === item.id}
               error={errors[item.id]}
+              actions={
+                item.format !== "article" && opensHere(item) ? (
+                  <MediaChoice
+                    item={item}
+                    busy={opening === item.id}
+                    onGloss={() => openHere(item)}
+                    onOriginal={() => sendRecEvent(persona, "rec_clicked", item.id)}
+                  />
+                ) : null
+              }
               thumbnail={
                 item.thumbnail ? (
                   <img src={item.thumbnail} alt="" loading="lazy" referrerPolicy="no-referrer" width={120} height={120}
@@ -178,4 +191,28 @@ export default function ForYouTab({ persona }: { persona: PersonaKey | null }) {
 function ShownOnce({ persona, id }: { persona: PersonaKey | null; id: string }) {
   useEffect(() => sendRecEvent(persona, "rec_shown", id), [persona, id]);
   return null;
+}
+
+interface MediaChoiceProps {
+  item: FeedItem;
+  busy: boolean;
+  onGloss: () => void;
+  onOriginal: () => void;
+}
+
+/** A video or episode within the caps: open it in Gloss or where it plays (decision 55). Long or
+ *  unknown-length recordings have no choice; their title opens the original. */
+function MediaChoice({ item, busy, onGloss, onOriginal }: MediaChoiceProps) {
+  return (
+    <>
+      <button type="button" className="row__gloss" aria-label={`Open in Gloss: ${item.title}`} disabled={busy} onClick={onGloss}>
+        Open in Gloss
+      </button>
+      <a className="row__original" href={item.url} target="_blank" rel="noopener noreferrer" onClick={onOriginal}>
+        {originalLabel(item)}
+        <span className="visually-hidden">: {item.title} (opens in a new tab)</span>
+        <External size={13} />
+      </a>
+    </>
+  );
 }

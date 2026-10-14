@@ -95,7 +95,9 @@ async def words_and_seek(p, url: str, content_id: str, kind: str) -> None:
     await asyncio.sleep(1.5)
     src = await p.eval("(document.querySelector('.mplayer iframe') || {}).src || null")
     start = int(src.split("start=")[1].split("&")[0]) if src and "start=" in src else None
-    out["seek"] = {"button": clicked, "paragraph_start_s": want, "iframe_start_s": start}
+    origin = await p.eval("(() => { const f = document.querySelector('.mplayer iframe'); return f ? new URL(f.src).origin : null; })()")
+    check(origin == "https://www.youtube.com", f"seek: player origin {origin} (decision 55: www.youtube.com)")
+    out["seek"] = {"button": clicked, "paragraph_start_s": want, "iframe_start_s": start, "origin": origin}
     print(f"[seek] {clicked!r}: paragraph starts {want} s, player loads at {start} s", flush=True)
     check(start is not None and abs(start - want) <= 2, f"seek: player at {start} s, paragraph {want} s")
     await p.shot(f"{kind}-1440-light-after-seek", full=False)

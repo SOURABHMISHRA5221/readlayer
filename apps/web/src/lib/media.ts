@@ -5,7 +5,9 @@
 
 export { clock } from "./format";
 
-export const YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com";
+// youtube.com, not the no-cookie domain (decision 55): the no-cookie player can't see a
+// signed-in viewer's session and was answered "Sign in to confirm you're not a bot".
+export const YOUTUBE_ORIGIN = "https://www.youtube.com";
 // Follow pauses for this long after the reader scrolls on their own.
 export const FOLLOW_PAUSE_MS = 5000;
 
@@ -22,7 +24,7 @@ export function paragraphAt(starts: readonly number[], t: number): number {
   return lo;
 }
 
-/** The click-to-load embed (R10): no-cookie domain, JS API on for seeking, starts playing. */
+/** The click-to-load embed (R10, decision 55): youtube.com, JS API on for seeking, starts playing. */
 export function embedUrl(videoId: string, origin: string, startS: number): string {
   const q = new URLSearchParams({
     enablejsapi: "1",

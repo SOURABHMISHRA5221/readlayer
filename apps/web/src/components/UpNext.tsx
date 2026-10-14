@@ -4,6 +4,7 @@ import { api, errorKind, ApiError, opensHere, type RecEventType, type RecFormat,
 import { queueRecEvent } from "../lib/recEvents";
 import { sourceMonogram, sourceName } from "../lib/format";
 import { personaParam, type PersonaKey } from "../lib/personas";
+import { originalLabel } from "../lib/recLabels";
 import { navigate, withParams } from "../lib/router";
 import { ArticleIcon, Close, External, HeadphonesIcon, PlayIcon } from "./Icons";
 
@@ -319,7 +320,7 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
                 {opening.status === "busy" ? "Opening…" : "Open here"}
               </button>
               <a className="rec__original" href={item.url} target="_blank" rel="noopener noreferrer" onClick={() => sendRecEvent(persona, "rec_clicked", item.id)}>
-                Open original <External size={13} />
+                {originalLabel(item)} <External size={13} />
                 <span className="visually-hidden"> (opens in a new tab)</span>
               </a>
             </>
@@ -358,18 +359,6 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
 }
 
 const WITH_NOTES: Record<RecFormat, string> = { article: "Read with notes", video: "Watch with notes", podcast: "Listen with notes" };
-
-function originalLabel(item: RecItem): string {
-  if (item.format === "video") return "Watch on YouTube";
-  if (item.format === "podcast") return `Listen on ${sourceLabel(item.source)}`;
-  return "Open original";
-}
-
-function sourceLabel(host: string): string {
-  if (host.includes("spotify")) return "Spotify";
-  if (host.includes("apple")) return "Apple Podcasts";
-  return host;
-}
 
 function UpNextSkeleton() {
   return (

@@ -46,7 +46,8 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
     id: "pv-videos",
     title: "Videos",
     items: [
-      "A video's page shows its thumbnail from YouTube, so YouTube sees your IP address, browser and the video's id. The player loads only when you press play, from YouTube's no-cookie domain; after that YouTube gets what any embedded video sends and may store data in your browser.",
+      "A video's page shows its thumbnail from YouTube, so YouTube sees your IP address, browser and the video's id.",
+      "The player loads only when you press play, from YouTube, and YouTube is told it is playing on Gloss's site. From then on YouTube gets what any embedded video sends and may set cookies; if you are signed in to YouTube in this browser, it can link the view to your account.",
       "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and listed only for the readers who opened the video; like the video itself, anyone with its link can read it.",
     ],
   },
