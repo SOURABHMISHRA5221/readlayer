@@ -3,3 +3,6 @@
  * repository is private today, so this link only works for visitors once it is made public.
  */
 export const REPO_URL = "https://github.com/SOURABHMISHRA5221/readlayer";
+
+/** The extension build the landing describes (decision 61 R8): pinned, not `latest`. */
+export const EXTENSION_RELEASE_URL = `${REPO_URL}/releases/tag/extension-v0.8.1`;

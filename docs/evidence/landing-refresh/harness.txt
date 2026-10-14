@@ -1,0 +1,207 @@
+{
+ "after 320 light": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-320-light.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 320 dark": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-320-dark.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 390 light": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-390-light.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 390 dark": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-390-dark.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 768 light": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-768-light.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 768 dark": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-768-dark.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 1024 light": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1024-light.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 1024 dark": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1024-dark.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 1440 light": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1440-light.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true,
+  "headings": [
+   [
+    1,
+    "Read anything. Understand all of it."
+   ],
+   [
+    2,
+    "See it in action"
+   ],
+   [
+    2,
+    "Gloss in your browser"
+   ],
+   [
+    3,
+    "Install it in four steps"
+   ],
+   [
+    2,
+    "Watch and listen"
+   ],
+   [
+    2,
+    "Everyone reads past something."
+   ],
+   [
+    3,
+    "Jargon and references"
+   ],
+   [
+    3,
+    "Looking things up breaks the flow"
+   ],
+   [
+    3,
+    "Summaries replace the author"
+   ],
+   [
+    2,
+    "Gloss reads with you."
+   ],
+   [
+    2,
+    "How it works"
+   ],
+   [
+    3,
+    "Margo learns what you know"
+   ],
+   [
+    3,
+    "Finds what you'd miss"
+   ],
+   [
+    3,
+    "Explains it your way"
+   ],
+   [
+    3,
+    "Your map grows"
+   ],
+   [
+    2,
+    "Checked before you see it."
+   ],
+   [
+    2,
+    "What you can read"
+   ],
+   [
+    2,
+    "Your next article, explained for you."
+   ]
+  ]
+ },
+ "after 1440 dark": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1440-dark.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 1920 light": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1920-light.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "after 1920 dark": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/after-1920-dark.png",
+  "axe": [],
+  "hscroll": 0,
+  "headings_ok": true,
+  "no_alt": [],
+  "stills_loaded": true
+ },
+ "before 390 light": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-390-light.png"
+ },
+ "before 390 dark": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-390-dark.png"
+ },
+ "before 1440 light": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-1440-light.png"
+ },
+ "before 1440 dark": {
+  "shot": "/private/tmp/claude-502/-Users-sourabhmishra-code-readlayer/f1efb63c-de5e-4f64-bdf1-9571bbff54af/scratchpad/refresh4/before-1440-dark.png"
+ },
+ "first view 1440x900": {
+  "diff_box": [
+   80,
+   623,
+   760,
+   812
+  ],
+  "chips": [
+   80,
+   759.5625,
+   684,
+   812.640625
+  ],
+  "only_chips_changed": true,
+  "new_stills_before_scroll": []
+ },
+ "first view 390x844": {
+  "diff_box": null,
+  "chips": null,
+  "only_chips_changed": true,
+  "new_stills_before_scroll": []
+ }
+}
+landing refresh checks: all pass

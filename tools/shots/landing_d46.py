@@ -167,7 +167,7 @@ def media_budgets() -> dict:
         poster = (MEDIA / f"{name}-poster.webp").stat().st_size
         out[f"{name} files"] = check(len(sizes) == 4 and max(sizes.values()) <= LOOP_MAX and poster <= POSTER_MAX,
                                      largest=max(sizes.values(), default=None), poster=poster, files=len(sizes))
-    for still in ("shot-reader", "shot-feed", "shot-phone"):
+    for still in ("shot-reader", "shot-feed", "shot-phone", "shot-media", "shot-extension", "shot-popup"):  # + decision 61
         sizes = {f.name: f.stat().st_size for f in MEDIA.glob(f"{still}*")}
         ok = len(sizes) == 4 and all(v <= STILL_MAX["@2x" if "@2x" in k else ""] for k, v in sizes.items())
         out[f"{still} files"] = check(ok, sizes=sizes)

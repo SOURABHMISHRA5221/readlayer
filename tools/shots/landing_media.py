@@ -3,6 +3,9 @@
     cd apps/api && uv run python -m scripts.landing_media_precheck      # read-only; run first
     uv run --project apps/api python tools/shots/landing_media.py --confirmed --stills --clips
 
+Decision 61 (landing refresh): `--refresh` precheck first, then
+    uv run --project apps/api python tools/shots/landing_media.py --confirmed --stills --only=shot-feed,shot-media
+
 As one temporary anonymous demo reader on the live site (deleted at the end with DELETE /v1/me,
 which also deletes the Auth user): the full-window stills for "See it in action" (the reader with
 the "bps" note, the For you feed, the phone sheet) and the four How it works loops. Writes
@@ -23,11 +26,12 @@ from pathlib import Path
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
+from readiness_live import UID_JS, gone  # noqa: E402
+from stills import DPR, OUT, encode_still, png_width, run  # noqa: E402,F401
 
 WEB = "https://readlayer-sourabh-26.web.app"
-API = "https://readlayer-api-751104670850.asia-south1.run.app"
+API = "https://readlayer-api-751104670850.asia-south1.run.app"  # the same service as readiness_live's URL
 CID = "2332418841faa08d5f5e157c2d038d1d"
-OUT = Path(__file__).resolve().parents[2] / "apps/web/public/landing"
 
 READY = "!!document.querySelector('.rl-card:not([hidden]) .rl-card__explain[data-state=ready]')"
 
@@ -71,21 +75,16 @@ async def open_reader(p, persona, wait_marks=True):
         await wait_js(p, "document.querySelectorAll('.rl-mark').length > 0", 40)
 
 
-def run(*args):
-    subprocess.run(args, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-
 # Decision 46e: device frames with HD full-window captures. Every still and loop is the whole
 # Gloss window at a 1440×900 viewport and deviceScaleFactor 2 (2880×1800 frames), light theme, no
 # crop; the phone still is 390×844 at DPR 2. Never upscaled: 2x files are native, 1x files are
 # downscales. Loops ≤ 600 KB (2x, else the 1x encode ships as the large file too), a 1x encode
 # for small screens, posters ≤ 120 KB. Each loop's area of action (fractions of the frame) goes to
 # apps/web/src/landing/clipFocus.json for the tile's gentle zoom.
-FULL_W, FULL_H, DPR = 1440, 900, 2
+FULL_W, FULL_H = 1440, 900
 PHONE_W, PHONE_H = 390, 844
 LOOP_MAX = 600_000
 POSTER_MAX = 120_000
-STILL_MAX = {1: 120_000, 2: 250_000}
 FOCUS_FILE = Path(__file__).resolve().parents[2] / "apps/web/src/landing/clipFocus.json"
 
 
@@ -103,38 +102,7 @@ async def capture(p, path: Path) -> Path:
     return path
 
 
-def png_width(path: Path) -> int:
-    out = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width",
-                          "-of", "csv=p=0", str(path)], check=True, capture_output=True, text=True)
-    return int(out.stdout.strip())
-
-
-def encode_still(png: Path, name: str, css_w: int) -> dict:
-    """1x (downscaled) and 2x (native) AVIF + WebP within STILL_MAX; refuses an upscale."""
-    if png_width(png) < css_w * DPR:
-        raise SystemExit(f"{name}: capture narrower than {css_w * DPR}px, would need an upscale")
-    sizes = {}
-    for scale, suffix in ((1, ""), (2, "@2x")):
-        w = css_w * scale
-        for q in (80, 72, 64, 56):
-            webp = OUT / f"{name}{suffix}.webp"
-            run("cwebp", "-quiet", "-q", str(q), "-resize", str(w), "0", str(png), "-o", str(webp))
-            if webp.stat().st_size <= STILL_MAX[scale]:
-                break
-        for crf in (34, 40, 46):
-            avif = OUT / f"{name}{suffix}.avif"
-            run("ffmpeg", "-y", "-i", str(png), "-vf", f"scale={w}:-2,format=yuv420p", "-c:v", "libsvtav1",
-                "-crf", str(crf), "-frames:v", "1", str(avif))
-            if avif.stat().st_size <= STILL_MAX[scale]:
-                break
-        sizes[f"{scale}x"] = {"webp": webp.stat().st_size, "avif": avif.stat().st_size}
-        if max(sizes[f"{scale}x"].values()) > STILL_MAX[scale]:
-            raise SystemExit(f"{name} {scale}x over {STILL_MAX[scale]} bytes: {sizes[f'{scale}x']}")
-    return sizes
-
-
-async def stills(p, tmp: Path, report):
-    """See it in action: the reader with the bps note open, the For you feed, the phone sheet."""
+async def shot_reader(p, tmp: Path, report):
     await view(p)
     await light(p)
     await open_reader(p, "newcomer")
@@ -144,18 +112,87 @@ async def stills(p, tmp: Path, report):
     await asyncio.sleep(0.8)
     report["shot-reader"] = encode_still(await capture(p, tmp / "reader.png"), "shot-reader", FULL_W)
 
+
+# Decision 61 R6: the feed still never shows a readiness line known to be wrong.
+WRONG_LINES = ("Economic stocks and flows", "Supply and demand")
+VISIBLE_WHY_JS = """[...document.querySelectorAll('.row__why')].filter(e => { const r = e.getBoundingClientRect();
+  return r.bottom > 0 && r.top < innerHeight; }).map(e => e.textContent)"""
+
+
+async def shot_feed(p, tmp: Path, report):
+    """For you, top of the page, as the newcomer at 1440×900 light (R6)."""
+    await view(p)
+    await light(p)
     await p.goto(f"{WEB}/for-you?persona=newcomer", wait=3)
     await wait_js(p, "document.querySelectorAll('article.row').length >= 4", 40)
+    await wait_js(p, "!!document.querySelector('.row__why')", 20)
+    # The week panel loads its own chunk: shoot once it has filled in, never its skeleton.
+    await wait_js(p, "[...document.querySelectorAll('a')].some(a => a.textContent.trim() === 'Open your map')", 30)
     await asyncio.sleep(1.5)  # thumbnails
+    lines = await p.eval(VISIBLE_WHY_JS)
+    report["shot-feed lines"] = lines
+    wrong = [line for line in lines if any(w in line for w in WRONG_LINES)]
+    if wrong:
+        raise SystemExit(f"shot-feed: a known-wrong readiness line is visible: {wrong}")
     report["shot-feed"] = encode_still(await capture(p, tmp / "feed.png"), "shot-feed", FULL_W)
 
+
+async def shot_phone(p, tmp: Path, report):
     await view(p, PHONE_W, PHONE_H, mobile=True)
+    await light(p)
     await open_reader(p, "newcomer")
     await center(p, '[data-rl-paragraph="p5"]')
     await click_mark(p, "bps")
     await wait_js(p, READY)
     await asyncio.sleep(0.8)
     report["shot-phone"] = encode_still(await capture(p, tmp / "phone.png"), "shot-phone", PHONE_W)
+
+
+# Decision 61 R7: the Fireship video, stored in production, opened through Read any link (a stored
+# recording returns before any slot, lookup, transcript or budget check); the precheck's note.
+FIRESHIP_URL = "https://www.youtube.com/watch?v=wajoP_5Cpw8"
+FIRESHIP = "93053af2e368625142213283d9abe557"
+MEDIA_MARK = "decompile"  # c_decompiler: the newcomer doesn't get c_intellectual_property_rights
+
+
+async def shot_media(p, tmp: Path, report):
+    await view(p)
+    await light(p)
+    await p.goto(f"{WEB}/?persona=newcomer", wait=2)
+    opened = await p.api(API, "POST", "/v1/recs/open", {"url": FIRESHIP_URL})
+    report["shot-media open"] = opened
+    body = opened["body"] or {}
+    if opened["status"] != 200 or body.get("content_id") != FIRESHIP or body.get("new"):
+        raise SystemExit(f"shot-media: not the stored recording: {opened}")
+    await p.goto(f"{WEB}/read/{FIRESHIP}?persona=newcomer", wait=2)
+    await wait_js(p, "document.querySelectorAll('.rl-mark').length > 0", 40)
+    # From the top of the page (title, player, then the transcript), so the marked word isn't
+    # under the player, which sticks once the page scrolls; nudged up only if below the fold.
+    await p.eval(f"""(() => {{ scrollTo(0, 0); const m = [...document.querySelectorAll('.rl-mark[tabindex]')]
+      .find(m => m.textContent.trim() === {json.dumps(MEDIA_MARK)}); const r = m.getBoundingClientRect();
+      if (r.bottom > innerHeight - 80) scrollBy(0, r.bottom - innerHeight + 200); return 1; }})()""")
+    await asyncio.sleep(1.2)
+    await click_mark(p, MEDIA_MARK)
+    await wait_js(p, READY, 60)
+    await asyncio.sleep(0.8)
+    report["shot-media note"] = await p.eval("document.querySelector('.rl-card:not([hidden]) .rl-card__title')?.textContent")
+    report["shot-media mark"] = await p.eval(f"""(() => {{ const m = [...document.querySelectorAll('.rl-mark[tabindex]')]
+      .find(m => m.textContent.trim() === {json.dumps(MEDIA_MARK)}); const r = m.getBoundingClientRect();
+      return {{top: r.top, bottom: r.bottom, hit: document.elementFromPoint(r.left + 2, r.top + r.height / 2) === m
+        || m.contains(document.elementFromPoint(r.left + 2, r.top + r.height / 2))}}; }})()""")
+    if not report["shot-media mark"]["hit"]:
+        raise SystemExit(f"shot-media: the marked word is covered: {report['shot-media mark']}")
+    report["shot-media"] = encode_still(await capture(p, tmp / "media.png"), "shot-media", FULL_W)
+
+
+STILLS = (("shot-reader", shot_reader), ("shot-feed", shot_feed), ("shot-phone", shot_phone), ("shot-media", shot_media))
+
+
+async def stills(p, tmp: Path, report, only=None):
+    """See it in action and Watch and listen: each still unless `--only` names a subset."""
+    for name, shoot in STILLS:
+        if only is None or name in only:
+            await shoot(p, tmp, report)
 
 
 async def record(p, seconds_before, action, seconds_after):
@@ -370,29 +407,36 @@ async def main():
     tmp = Path(tempfile.mkdtemp(prefix="gloss-media-"))
     cdp.launch(scale=2)
     p, ws = await cdp.open_page()
-    report = {}
+    report, uid = {}, None
     try:
         await p.viewport(1440)
         await cdp.Page.reset_auth(p, WEB)
         await p.goto(WEB + "/", wait=4)
-        # The live front door: the landing's demo CTA after the Landing milestone ships, the
-        # persona picker before it.
-        if not await p.click_text("button", "Newcomer", 5):
-            raise SystemExit("no Newcomer button on the live front door")
+        # The live front door is the landing: its "Try the demo" starts an anonymous newcomer.
+        await p.wait_for(".lp-nav__cta", 30)
+        await p.eval("document.querySelector('.lp-nav__cta').click(); 1")
+        await asyncio.sleep(6)
+        uid = await p.eval(UID_JS % json.dumps(await p.token()))
+        report["uid"] = uid
         if want_stills:
-            await stills(p, tmp, report)
+            await stills(p, tmp, report, only)
         if want_clips:
             await clips(p, report, only)
     finally:
         try:
             await p.send("Emulation.setDeviceMetricsOverride", width=1440, height=900, deviceScaleFactor=1, mobile=False)
+            await p.goto(WEB + "/", wait=2)
             d = await p.api(API, "DELETE", "/v1/me")
             report["cleanup"] = d["status"]
         finally:
-            print(json.dumps(report, indent=2))
             await ws.close()
             cdp.stop()
             shutil.rmtree(tmp, ignore_errors=True)
+            if uid:  # read only: the Auth user and users/{uid} are gone (decision 61 R7)
+                await asyncio.sleep(3)
+                report["deleted"] = gone(uid)
+            print(json.dumps(report, indent=2))
 
 
-asyncio.run(main())
+if __name__ == "__main__":  # landing_extension.py imports the web stills
+    asyncio.run(main())

@@ -72,7 +72,7 @@ export function SeeItInAction() {
                 name="shot-feed"
                 width={1440}
                 height={900}
-                alt="The Gloss For you feed on a monitor: articles, videos and podcasts picked for a software engineer learning economics, each with the new ideas it teaches."
+                alt="The Gloss For you feed on a monitor, picked for a software engineer learning economics: a six-minute video marked Ready for you with Open in Gloss, and one marked A stretch: read up on Income distribution first."
               />
             </DeviceFrame>
             <DeviceFrame kind="laptop">

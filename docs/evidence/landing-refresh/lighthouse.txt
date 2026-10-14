@@ -1,0 +1,7 @@
+Lighthouse 12.8.2, mobile, local vite preview, 3 runs each (decision 47 method)
+before 1 perf 95 LCP ms 2552 CLS 0
+before 2 perf 95 LCP ms 2552 CLS 0
+before 3 perf 95 LCP ms 2552 CLS 0
+after 1 perf 95 LCP ms 2552 CLS 0
+after 2 perf 95 LCP ms 2552 CLS 0
+after 3 perf 95 LCP ms 2552 CLS 0

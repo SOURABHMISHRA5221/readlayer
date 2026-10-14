@@ -9,7 +9,7 @@ import note from "./demoNoteStatic.json";
 import evals from "./evals.json";
 import { paragraph, site } from "./demoParagraph.json";
 import { DEFAULT_DEMO_PERSONA, DEMO_PERSONAS } from "./demoPersonas";
-import { FORMATS } from "./formats";
+import { CHIPS } from "./formats";
 import { MargoHero, PERSONA_MOOD } from "./MargoHero";
 
 /**
@@ -133,22 +133,19 @@ function Proof({ where }: { where: "wide" | "narrow" }) {
   );
 }
 
-/** "Read with Gloss:" (decision 46c): the formats as chips, honest about which get notes. */
+/** "Read with Gloss:" (decision 46c, 61): the formats as chips, honest about which get notes. */
 function ReadWith() {
   return (
     <div className="lp-readwith">
       <span className="lp-readwith__label">Read with Gloss:</span>
       <ul className="lp-readwith__chips">
-        {FORMATS.map((f) => (
-          <li key={f.what} className={`lp-chip${f.how === "With notes" ? " lp-chip--notes" : ""}`}>
-            {f.short}
-            <span className="visually-hidden">, {f.how.toLowerCase()}</span>
+        {CHIPS.map((c) => (
+          <li key={c.label} className={`lp-chip${c.notes ? " lp-chip--notes" : ""}`}>
+            {c.label}
+            {c.notes && <span className="visually-hidden">, with notes</span>}
           </li>
         ))}
       </ul>
-      <span className="lp-readwith__legend" aria-hidden="true">
-        <span className="lp-chip__dot" /> with notes · others in your feed
-      </span>
     </div>
   );
 }

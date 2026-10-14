@@ -141,11 +141,14 @@ def serve_fixtures() -> None:
     threading.Thread(target=server.serve_forever, daemon=True).start()
 
 
-def launch() -> None:
+def launch(scale: int = 1) -> None:
+    """`scale` 2 forces device scale 2, so the popup (which takes no metrics override) is captured
+    at 2x too (decision 61 landing stills)."""
     subprocess.run(["pkill", "-f", f"remote-debugging-port={PORT}"], check=False)
     shutil.rmtree(PROFILE, ignore_errors=True)
+    extra = [f"--force-device-scale-factor={scale}"] if scale != 1 else []
     subprocess.Popen([CFT, "--headless=new", f"--remote-debugging-port={PORT}", f"--user-data-dir={PROFILE}",
-                      "--no-first-run", "--window-size=1440,900", "--enable-unsafe-extension-debugging",
+                      "--no-first-run", "--window-size=1440,900", *extra, "--enable-unsafe-extension-debugging",
                       f"--load-extension={EXT_DIR}", f"--disable-extensions-except={EXT_DIR}",
                       f"--host-resolver-rules={RULES}", "about:blank"],
                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

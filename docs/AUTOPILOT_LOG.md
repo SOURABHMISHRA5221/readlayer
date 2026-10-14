@@ -1769,10 +1769,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 
 - Sourabh: update the landing for the features since its freeze; list agreed (extension, media in
   Gloss, For you readiness): "list sounds good lets go". Plan `docs/plans/landing-refresh.md` on
-  branch `landing-refresh`; plan-reviewer round 1 running.
+  branch `landing-refresh`; plan-reviewer REVISE 8 → **APPROVE** (nits taken). Not built yet.
 
 ### Next steps (resume here, in order)
-1. Landing refresh (branch `landing-refresh`): plan-reviewer until APPROVE → build (Oct 15) →
+1. Landing refresh (branch `landing-refresh`, plan approved): build Oct 15 per the plan's Round 1
+   section (tests first: formats split R1, caps R2, render test R3/R4/R8; then precheck, captures, harness) →
    milestone-reviewer → PR → CI → merge → deploy web (Sourabh's yes) → live check.
 2. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first);
    then update the README precision row's "(Sourabh's audit pending)".
@@ -1782,3 +1783,66 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    rule: one level ≥ 80% of the newcomer's rows → tell Sourabh) and read the stretch lines before
    the video (e.g. "Economic stocks and flows" on a stock-market video), README refresh, video, deck (87/97/90 labelled as judged by
    the build agent). Oct 17: gitleaks over history, repo public, submit.
+
+## Landing refresh, build (2026-10-14 evening)
+
+- Code (a36f563): formats split (R1), caps read from `deploy.env.yaml` and `config.py` plus
+  `MEDIA_VIDEO_ENABLED` pinned true (R2), Gloss in your browser (R3/R4, pinned 0.8.1 link R8),
+  Watch and listen, footer link, step 4 clause. Tests first (red, then green). Main **149.97 →
+  149.87 KB** gzip (the legend's removal paid for the fifth chip); landing chunk 7.68 → 8.88 KB.
+  Web 199, extension 89, annotator 60, typecheck clean.
+- Precheck `--refresh`: the old graph load missed grown concepts (Fireship showed 0 notes); now
+  the serving graph. The extension prefetches its top 3 notes on load (`PREFETCH_TOP`), not in the
+  plan: checked too (all cached). The newcomer gets neither plan concept (plan nit): **c_decompiler**
+  on Fireship (cached), **c_term_structure_of_interest_rates** on Yield curve (1 generation, ≈ $0.005,
+  within the cap of 2). 0 searches, 0 growth, doc reused.
+- Reader 1 (`landing_media.py --only=shot-feed,shot-media`): deleted, confirmed gone. Feed lines on
+  screen: "Ready for you", "A stretch: read up on Income distribution first" (R6 ok), but the week
+  panel was still a skeleton; media still: the note open, the marked word under the sticky player.
+- Reader 2 (`landing_extension.py --web-stills`): reused doc 4a4a18…, calls only GET content /
+  annotations, POST content, POST explain (no grow, no analyse); note ready; deleted, confirmed
+  gone. **shot-extension 2x over 250 KB** at the lowest quality then allowed, so nothing was saved
+  and the web re-takes didn't run. Fixed (5723812): PNGs kept, encode after cleanup, lower steps.
+- The plan's count (2 demo readers) is used up: a third run needs Sourabh's yes (0 generations now).
+- Sourabh: a "gloss" web address instead of readlayer: "lets push new domain for tomorrow"
+  (decision 62, to plan Oct 15/16: a second Hosting site such as gloss-reader.web.app, Auth
+  authorized domain, API CORS, extension web base → 0.8.2, links; keep the old address).
+
+### Next steps (resume here, in order)
+1. With Sourabh's yes: one more run, `landing_extension.py --confirmed --web-stills` (third demo
+   reader, 0 generations) → check stills → popup height in `Extension.tsx` from the capture (600×396
+   at 2x, so 300×198) → alt texts match the stills.
+2. Harness `tools/shots/landing_refresh.py` (local build, before/after, axe all impacts, widths,
+   first view, LCP) → milestone-reviewer → PR → CI → merge → deploy web (Sourabh's yes) → live check.
+3. Decision 62 (gloss domain) plan, then the Oct 16 items from the previous Next steps.
+
+- Sourabh: "yes" to a third demo reader. Run 3 (`landing_extension.py --web-stills`): 0
+  generations, deleted and confirmed gone; feed and media stills good; extension window 2x WebP
+  still over 250 KB, re-encoded offline from the kept PNG (near-lossless, 241.7 KB); popup cropped
+  above a cut control (300×188). Alt texts match the stills (681c490).
+- Harnesses on local previews (before = `main` worktree; it needed `.env.local` copied, else the
+  "Sign-in isn't set up" page): `landing_refresh.py` all pass, `landing.py` all pass; Lighthouse
+  LCP 2,552 ms before and after. Format pills levelled (two-line title room ≥ 1024). Main 149.88 KB
+  (149.97 before, same build setup: my earlier "hash noise" guess was wrong). STATUS §30, DESIGN
+  §20.2, decision 62 recorded.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on `landing-refresh` → fix until SHIP → PR → CI → merge → `make check-gcp` →
+   `make deploy-web` from clean `main` (Sourabh's yes) → live check at 1440 and 390 (new sections,
+   stills load, axe 0).
+2. Decision 62 (gloss web address) plan → plan-reviewer → build (Auth domain, CORS, extension
+   0.8.2, links; deploys on Sourabh's yes).
+3. The Oct 16 items (persona re-seed and the rest, unchanged from the earlier Next steps).
+
+- milestone-reviewer round 1: **FIX** (4 STATUS items: stale bundle line, three new risks, capture
+  cost, the README line to fix Oct 16) → applied, plus install step "pin Gloss", popup hidden below
+  768, dead branch removed; harness re-run all pass (b69717c). Round 2 (after a rate-limit pause and
+  Sourabh's re-login): **SHIP**. Sourabh on the sponsor line in the feed still: "keep it".
+- Note: the Claude login is now another account; GCP must still be sourabhlocalllm /
+  readlayer-sourabh-26 (`make check-gcp` before any deploy).
+
+### Next steps (resume here, in order)
+1. Push `landing-refresh` → PR → CI → merge → `make check-gcp` → `make deploy-web` from clean
+   `main` (Sourabh's yes) → live check at 1440 and 390 (new sections, stills, axe 0).
+2. Decision 62 (gloss web address) plan → plan-reviewer → build.
+3. The Oct 16 items.

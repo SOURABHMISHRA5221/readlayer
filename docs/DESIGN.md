@@ -1252,6 +1252,31 @@ URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/des
   6.3:1 on the light wash, 8.0:1 on the dark wash (≥ 3:1 for graphics).
 - Footer credit: "Illustrations made with Google's image model."
 
+### 20.2 Landing refresh (decision 61, plan `docs/plans/landing-refresh.md`)
+- **Formats, honest:** every format gets notes (articles, any link, YouTube videos up to 10
+  minutes, Apple Podcasts episodes up to 12, news pages in Chrome through the extension); longer
+  recordings open where they play. One full list in `landing/formatsFull.ts` (landing chunk) with
+  the caps as constants that a vitest checks against `apps/api/deploy.env.yaml` and
+  `app/config.py`, and with `MEDIA_VIDEO_ENABLED` true; the hero's chips (`landing/formats.ts`,
+  main bundle: "Articles", "Any link", "Short videos", "Podcasts", "Chrome extension") are a
+  projection of it, also tested. The "others in your feed" legend is gone.
+- **Sections after See it in action** (landing chunk, paper / wash bands kept alternating):
+  *Gloss in your browser* (wash band): a laptop still of the production extension 0.8.1 on
+  Wikipedia's Yield curve article with a note open and the popup over its top right; the README's
+  access words (no access until clicked; never mail, banking, sign-in or private pages, or a page
+  with a password or card field; emails, phone, card, Aadhaar and PAN numbers removed on the
+  device); the README's four install steps; a link to the pinned release
+  `releases/tag/extension-v0.8.1`. No Web Store or other-browser claim. *Watch and listen*
+  (paper): the caps, Read any link, time buttons, the reader's own caveat that the transcript is
+  made automatically; a laptop still of the Fireship video with the Decompiler note open.
+- **See it in action:** the feed still re-recorded with readiness lines ("Ready for you", "A
+  stretch: read up on Income distribution first") and "Open in Gloss". **How it works** step 4
+  adds that For you tells you which picks you're ready for. **Footer:** "Get the extension".
+- **Stills:** AVIF + WebP at 1x and 2x through `Still` (lazy, explicit size), ≤ 120 KB at 1x and
+  ≤ 250 KB at 2x; a text-heavy page falls back to near-lossless WebP (`tools/shots/stills.py`).
+  Captured on production by `tools/shots/landing_media.py` and `landing_extension.py` after the
+  read-only `landing_media_precheck --refresh`.
+
 
 ## 21. Media: videos and podcasts (decision 54, plan `docs/plans/media.md`)
 
