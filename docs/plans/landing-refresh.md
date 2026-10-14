@@ -119,3 +119,66 @@ Oct 15, after readiness is live. Checkpoint shared with readiness: **not merged 
 IST → ask Sourabh what to cut** (decision 27). Cut order if time runs short: F, then the re-recorded
 feed still (D), then the extension still (B keeps its copy and steps, with the popup still from
 `docs/evidence/m8/popup-google-bbc.png` re-encoded), never A (the current page is wrong).
+
+## Round 1 (plan-reviewer REVISE, 8 items; applied, these override the sections above)
+
+**R1. Split the formats list.** `landing/formats.ts` keeps only the hero's chip list (label and
+with-notes flag), imported by `HeroStatic` (main bundle). The full list (what, how, caps, the
+extension entry) moves to `landing/formatsFull.ts`, imported only by the landing chunk. A test
+asserts the chip list is a projection of the full list (same order, same keys). Gate: **main ≤
+150.00 KB gzip measured with the split in place**; if over, the chips keep their current four
+texts and only the false legend goes (bytes measured both ways).
+
+**R2. Caps from production config.** The web test reads `apps/api/deploy.env.yaml`
+(`MEDIA_MAX_VIDEO_S: "600"`, `MEDIA_MAX_AUDIO_S: "720"`) and asserts 600/60 = 10 and 720/60 = 12
+against the full list's caps; it also checks `app/config.py`'s defaults (`media_max_video_s`,
+`media_max_audio_s`) agree.
+
+**R3. Install steps as the README and the 0.8.1 release say (README "Install the extension
+locally").** (1) Download `gloss-extension.zip` and unzip it. (2) In chrome://extensions turn on
+Developer mode, Load unpacked, pick the folder. (3) In Gloss: account menu → "Use Gloss on any
+site" → Connect (a demo session works). (4) Open a news article, click Gloss, "Read this page".
+The render test checks these four steps.
+
+**R4. No overclaim.** The format entry is "News pages in Chrome" (chip "Chrome extension"). The
+access line reuses the README's words: "no access to any site until you click it"; it never reads
+mail, banking, sign-in or private pages, or a page with a password or card field; emails, phone,
+card, Aadhaar and PAN numbers are removed on your device before the text is sent.
+
+**R5. Readiness precondition.** Met: readiness merged (#37) and live (API 00030, web deployed,
+live-checked 2026-10-14, STATUS §29) before any capture.
+
+**R6. The feed still shows no known-wrong line.** `shot-feed`: newcomer, light, 1440×900, top of
+For you (the first three rows, as the live shot `docs/evidence/readiness/live-foryou-1440-light.png`:
+"Ready for you", "A stretch: read up on Income distribution first", and the third row's title only).
+The script logs every `.row__why` inside the viewport; acceptance: none of "Economic stocks and
+flows", "Supply and demand" (on the AI-guardrails interview) or any other line Sourabh or the
+review marks wrong is visible; if one is, scroll or crop so it isn't, else don't keep the still.
+The Oct 16 re-seed may change the lines; the still is not re-shot after the freeze.
+
+**R7. One recording, named notes, a complete precheck.**
+- Recording: the Fireship video "Every app on Earth is now open source…" (YouTube `wajoP_5Cpw8`,
+  356 s), production doc `93053af2e368625142213283d9abe557` (stored, `needs_growth` unset). T05 is
+  not stored in production, so it is not used. Opened by the demo reader through Read any link
+  (`POST /v1/recs/open`): a stored recording returns early in `media/service.py` `open_media`
+  (no slot, no lookup, no transcript, no budget check); the open records `ingested` under
+  `users/{uid}`, deleted with the reader.
+- Notes opened (each must be cached and verified, both parts, or the precheck lists it as a
+  generation): media still: (newcomer, `c_intellectual_property_rights`, 0) on the Fireship doc;
+  extension still: (newcomer, `c_yield_curve`, 0) on the Yield curve doc.
+- Extension page: m8_live's default Wikipedia "Term structure of interest rates", which redirects
+  to "Yield curve"; the precheck asserts `url_hash(<final Yield curve URL>)` is a stored doc (the
+  first branch of `ingest/submitted.py` `reusable`), so **0 `ext:` docs, 0 ingest-counter
+  increments**; and `needs_growth` is false on both docs, so **0 `graph_growth/` docs** and no
+  `/grow` spend. The precheck refuses to proceed if any of these fails.
+- `landing_extension.py` keeps from `m8_live.py` only: load the built extension, demo sign-in,
+  Connect, open the page, Read this page, open one note, the window and popup shots, DELETE
+  /v1/me. Dropped: the forced token refresh, the negative read, the library check.
+- **Production writes, at most:** 2 anonymous demo readers with their `users/{uid}` (incl.
+  `ingested`, `rec_signals`), all deleted by DELETE /v1/me and confirmed read-only (Auth user and
+  `users/{uid}` gone, as `readiness_live.py` does); 0 `contents/`, 0 `ext:`, 0 `graph_growth/`, 0
+  ingest-counter increments; ≤ 2 explanation generations (≈ $0.01) only if the precheck lists them;
+  0 searches.
+
+**R8. A pinned release link.** The section and the footer link
+`${REPO_URL}/releases/tag/extension-v0.8.1`; the render test expects that href.
