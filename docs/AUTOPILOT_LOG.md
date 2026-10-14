@@ -1614,9 +1614,24 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   The whole-URL hang was on 16-19 min videos; under the 10-min cap one call answers in
   45-51 s, inside the 90 s timeout. Watch item: one first-try check failure in two runs.
 
+- `scripts/ingest_media.py` built (3a8f93f): `open_media(media, None, ...)` = no reader (no
+  daily slot, no growth slots), `look_up(..., day=None)` for a dry run that counts and writes
+  nothing, ≤ 6 per run, target database printed first. 7 tests. Dry run on the emulator: "The
+  Egg" one window 0-486 s, est. $0.049; T02 `too_long`. Real run on the emulator: stored, 899
+  words, 24.7 s with analysis, media spend $0.042.
+- Docs (9137c26): DESIGN §21 plus pointers in §3, §4, §8, §10, §11.2, §11.4, §11.5, §16.6,
+  §17.4; CLAUDE.md layout and the `transcribe` cost line; stale config comment fixed.
+- Video reader check (`tools/shots/media.py`, cut-down acceptance 4): 0 failed checks, axe 0 at
+  every impact, 24/24 paragraphs match, "Play from 1:30" → player at 90 s. "The Egg" has 0
+  notes for the newcomer (outside the graph's domains): live check and seeding need an
+  economics or news video.
+- STATUS (ab0c6d6): header, milestone row, 6 deviations, 4 known issues (Vertex YouTube fetch
+  intermittent: the fallback is `MEDIA_VIDEO_ENABLED=false`), costs, §24. Suites: API 1091,
+  web 171, annotator 60, extension 85, typecheck clean, main 149.47 KB.
+
 ### Next steps (resume here, in order)
-1. `scripts/ingest_media.py <url>... [--dry-run]` (R12, 2.4: source `user_ingested`) with tests.
-2. milestone-reviewer → fix until SHIP → PR → CI green → merge.
-3. Deploy API from `main`, then web (Sourabh's yes on each; web flag matches the API), then the
-   live check (acceptance 6) on one ≤10-min video and one ≤10-min podcast episode.
+1. milestone-reviewer on branch `media` → fix until SHIP → PR → CI green → merge.
+2. Deploy API from `main`, then web (Sourabh's yes on each; web flag matches the API).
+3. Live check (acceptance 6): one ≤ 10-min economics or news video and one ≤ 10-min Apple
+   episode (to pick; dry-run them first), as a Google reader, then a demo reader (free).
    Checkpoint end of Oct 14 IST (decision 27).
