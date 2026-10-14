@@ -1,0 +1,58 @@
+# Readiness score on For you (decision 60, 2026-10-14)
+
+Sourabh: "Add readiness Score" (after a list of knowledge-map features; this is the one sized at
+≤ 1 day before the Oct 16 freeze). Branch `readiness` from `main` at b41dbf7.
+
+## What the reader sees
+Each For you row gets one line under the title, from the reader's own map:
+- **"Mostly familiar"**: the item names no idea new to this reader;
+- **"Ready for you"**: 1–4 new ideas and the reader already has their groundwork;
+- **"A stretch: read up on X and Y first"**: more than 4 new ideas, or a new idea with a
+  prerequisite that is itself new to the reader (X, Y: up to two such prerequisites, the most
+  basic first).
+A goal line ("Picked for your goal …") stays and comes first; readiness follows on the same
+line. The "N ideas new to you" count in the meta line is unchanged.
+
+## API (pure, `app/recs/feed_rank.py`; no I/O, no LLM; DESIGN §17.2)
+- `read_first(new, item_ids, graph, reader, now) -> tuple[str, ...]`: for each new concept, its
+  graph prerequisites that are themselves new to the reader (`is_new`) and not among the item's
+  own concepts; deduped; ordered by `base_difficulty` then label; at most `READ_FIRST_MAX` = 2.
+- `readiness_level(new_count, read_first) -> "familiar" | "ready" | "stretch"`: 0 → familiar;
+  any read-first or new_count > `READY_MAX` (4) → stretch; else ready.
+- `RankedItem` gains `readiness` and `read_first`; `rank` computes them with the `new` list it
+  already has. **Ranking scores are unchanged** (the existing `readiness()` factor stays as is).
+- `FeedItemOut` gains `readiness` (default "ready" for older clients) and `read_first`
+  (list[str], default empty). Demo snapshots are re-ranked against the served graph at request
+  time (`snapshot_candidates` → `rank`), so they get both with no stored change.
+- Up next and library rows are not touched (Up next and the library's Topics rows are in the
+  web main bundle, which has 0.04 KB left).
+
+## Web (`ForYouTab`, its lazy chunk only)
+- `lib/feedApi.ts`: `readiness?` and `read_first?` on `FeedItem`.
+- A pure helper `readinessLine(item)` in a chunk-only module (`lib/readiness.ts`, imported only by
+  ForYouTab) returns the text; ForYouTab passes it through Row's existing `why` slot after the
+  goal line. No new CSS in main; if a class is needed it goes in the For you chunk's CSS.
+- Bundle: main must not change (149.96 KB); ForYouTab chunk measured before and after.
+
+## Tests (first)
+- API: `read_first` (prerequisite new → listed; known → not; the item's own concept → not;
+  dedupe; cap 2; most basic first; a concept with no prerequisites); `readiness_level` (0, 1, 4,
+  5, read-first present); `rank` carries both and the score is identical to before (a test pins a
+  score from the current code); the feed route returns both; a demo snapshot gets them.
+- Web: `readinessLine` for each level, with and without read-first, with a goal; ForYouTab renders
+  the line in the row; an older API (fields absent) shows nothing new.
+
+## Acceptance
+1. Suites (API pytest + ruff, `pnpm -r typecheck`, `pnpm -r test`); main bundle unchanged.
+2. Emulator harness, no model call: the demo reader's For you (newcomer persona, a live snapshot
+   feed from the emulator) at 1440 and 390, light and dark: every row has a readiness line; axe 0;
+   no horizontal scroll; at least one row of two different levels, or the report says which
+   levels the snapshot produced. Shots in `docs/evidence/readiness/`.
+3. milestone-reviewer SHIP → PR → CI → merge → deploy API, then web (Sourabh's yes on each) →
+   live: a demo reader sees the lines.
+
+## Production writes
+The two deploys only.
+
+## Docs
+DESIGN §17.2 (the line and its rule), STATUS decision 60, §1 row, a short acceptance section.
