@@ -1573,6 +1573,22 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   transcribing, transcript after); placeholder and hint under both flag values. Web 171 passed,
   typecheck clean, main bundle 149.47 KB (was 149.46; budget 150), media chunk 3.12 KB.
 
+- Harness on T02 (5.7 item 1-2; `harness_media podcast`, the video `main` now takes a case with
+  the frozen thresholds). Stated before running: ≤ $0.35. Emulator ledger, real Vertex:
+  open 4.3 s ($0); transcribe 55.3 s, 3 windows, **$0.1100** (≤ $0.14); analyse 22.0 s, $0.011;
+  explain $0.0079. **Run total $0.1289.** Transcript 55 paragraphs, **4,085 words** (≥ 3,600; the
+  fast model's whole-file reference was 4,081), last start 1,310 s (≥ 1,260), non-decreasing,
+  inside 1,347 s. Second reader: no model call, no slot. Personas newcomer 3 / trader 4 notes.
+  "windfall tax" → `verified`. Server phases: fetch 7.1 s, walk 53 ms, windows 48.2 s.
+- **Miss: peak RSS 686 MB (target ≤ 600).** An idle API on the same emulator is 277 MB, so the
+  run added ~410 MB for a 32 MB file with two windows in flight (window 1 alone, then 2 and 3).
+  5R10's first remedy applied: `MEDIA_AUDIO_PARALLEL_WINDOWS` 4 → 2 (config default and
+  `deploy.env.yaml`). It does not change this run (only two were in flight) but caps a 45-min
+  episode at two instead of four. 5R10's second remedy (lower `MEDIA_MAX_AUDIO_BYTES`) would
+  refuse T02 itself at anything under 32 MB, so it waits for Sourabh. API suite 1083 passed.
+
 ### Next steps (resume here, in order)
-1. Harness on T02 (5.7, ≤ $0.35, emulator ledger; state the cost before running) → shots → log.
-2. Step 7. Checkpoint end of Oct 14 IST (decision 27).
+1. Sourabh: accept ~690 MB peak on the 1 GiB instance, or look for copies in the audio path
+   first (≈ 13× the file size suggests pieces, base64 and the request JSON are all held at once).
+2. 5.7 items 3-5: refusals (no model call), pre-check count, shots with the podcast → log.
+3. Step 7. Checkpoint end of Oct 14 IST (decision 27).

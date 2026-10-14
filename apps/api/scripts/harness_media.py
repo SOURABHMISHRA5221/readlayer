@@ -1,7 +1,8 @@
-"""Media step 3: emulator harness run on real Vertex (plan acceptance 1-3, video half).
+"""Media emulator harness on real Vertex: step 3 (video, acceptance 1-3) and step 6 (podcast, 5.7).
 
 Run from apps/api with the harness up (make dev-emulator):
     uv run python -m scripts.harness_media main
+    uv run python -m scripts.harness_media podcast
     uv run python -m scripts.harness_media refuse <url> [--api URL] [--anon]
     uv run python -m scripts.harness_media hindi <url>
     uv run python -m scripts.harness_media anoncap <url1> <url2> [--api URL]
@@ -18,6 +19,7 @@ import os
 import time
 import urllib.parse
 import uuid
+from dataclasses import dataclass
 from typing import Any
 
 os.environ["FIRESTORE_EMULATOR_HOST"] = "127.0.0.1:8085"
@@ -29,10 +31,30 @@ from app.store.spend_repo import today_utc  # noqa: E402
 
 API = "http://127.0.0.1:8000"
 AUTH = "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1"
-VIDEO = "https://www.youtube.com/watch?v=d6fUwCBvVc0"
-REF_WORDS, LAST_START_MIN, DURATION_S = 1822, 900, 949
-TRANSCRIBE_MAX_USD = 0.10
 PERSONAS = ("newcomer", "trader")
+
+
+@dataclass(frozen=True)
+class Case:
+    """A frozen case's thresholds (evals/cases/media_transcripts.yaml) and its transcribe cap."""
+
+    url: str
+    duration_s: int
+    words_min: int
+    words_max: int | None
+    last_start_min_s: int
+    transcribe_max_usd: float
+
+
+VIDEO = "https://www.youtube.com/watch?v=d6fUwCBvVc0"
+# T01: reference 1,822 words ± 10%.
+T01 = Case(VIDEO, 949, 1640, 2004, 900, 0.10)
+# T02 (plan Round 5, 5.7): ≤ 23 windows-worth at $0.006 a minute ≈ $0.14.
+T02 = Case(
+    "https://podcasts.apple.com/ie/podcast/a-gas-tax-holiday-is-performative-nonsense"
+    "/id1523898793?i=1000770325688",
+    1347, 3600, None, 1260, 0.14,
+)  # fmt: skip
 
 _db: firestore.AsyncClient | None = None
 
@@ -106,21 +128,22 @@ async def analyse(client: httpx.AsyncClient, api: str, cid: str) -> tuple[int, f
         await asyncio.sleep(5)
 
 
-def transcript_checks(doc: dict[str, Any]) -> bool:
+def transcript_checks(doc: dict[str, Any], case: Case) -> bool:
     paras = doc["paragraphs"]
     words = sum(len(p["text"].split()) for p in paras)
     starts = [p["start_s"] for p in paras]
-    ok_words = abs(words - REF_WORDS) <= REF_WORDS * 0.10
-    ok_last = starts[-1] >= LAST_START_MIN
+    ok_words = words >= case.words_min and (case.words_max is None or words <= case.words_max)
+    ok_last = starts[-1] >= case.last_start_min_s
     ok_order = all(a <= b for a, b in zip(starts, starts[1:], strict=False))
-    ok_inside = all(0 <= s <= DURATION_S for s in starts)
-    print(f"  transcript: {len(paras)} paragraphs, {words} words (ref {REF_WORDS}, ±10%: "
-          f"{ok_words}); last start {starts[-1]} s (≥ {LAST_START_MIN}: {ok_last}); "
-          f"non-decreasing {ok_order}; inside duration {ok_inside}")  # fmt: skip
+    ok_inside = all(0 <= s <= case.duration_s for s in starts)
+    print(f"  transcript: {len(paras)} paragraphs, {words} words ({case.words_min}–"
+          f"{case.words_max or '∞'}: {ok_words}); last start {starts[-1]} s "
+          f"(≥ {case.last_start_min_s}: {ok_last}); non-decreasing {ok_order}; "
+          f"inside {case.duration_s} s {ok_inside}")  # fmt: skip
     return ok_words and ok_last and ok_order and ok_inside
 
 
-async def main_run(api: str) -> None:
+async def main_run(api: str, case: Case) -> None:
     results: dict[str, bool] = {}
     a, uid_a = await reader(google=True)
     print(f"[A] Google reader {uid_a}")
@@ -128,7 +151,7 @@ async def main_run(api: str) -> None:
     print(f"  ledger before: ${spend0:.4f} (media ${media0:.4f})")
 
     t = time.perf_counter()
-    code, body = await open_(a, api, VIDEO)
+    code, body = await open_(a, api, case.url)
     t_open = time.perf_counter() - t
     print(f"  open {code} {body} {t_open:.1f} s")
     cid = body["content_id"]
@@ -138,9 +161,10 @@ async def main_run(api: str) -> None:
     code, tbody, t_tr = await transcribe(a, api, cid)
     spend2, media2 = await ledger()
     tr_cost = media2 - media1
+    cap = case.transcribe_max_usd
     print(f"  transcribe {code} {tbody} {t_tr:.1f} s, ledger +${spend2 - spend1:.4f} "
-          f"(media +${tr_cost:.4f}; ≤ $0.10: {tr_cost <= TRANSCRIBE_MAX_USD})")  # fmt: skip
-    results["transcribe ≤ $0.10"] = code == 200 and tr_cost <= TRANSCRIBE_MAX_USD
+          f"(media +${tr_cost:.4f}; ≤ ${cap:.2f}: {tr_cost <= cap})")  # fmt: skip
+    results[f"transcribe ≤ ${cap:.2f}"] = code == 200 and tr_cost <= cap
     if code != 200:
         print("  STOP: transcribe failed")
         return
@@ -154,13 +178,13 @@ async def main_run(api: str) -> None:
 
     doc = (await a.get(f"{api}/v1/content/{cid}")).json()
     print(f"  GET status {doc['status']} media {doc['media']}")
-    results["transcript"] = doc["status"] == "ready" and transcript_checks(doc)
+    results["transcript"] = doc["status"] == "ready" and transcript_checks(doc, case)
     print(f"  slot used by A: {await slot_count(uid_a)}")
 
     # Acceptance 2: a second reader (demo) opens the same URL: no model call, no slot.
     b, uid_b = await reader(google=False)
     before = await ledger()
-    code, body = await open_(b, api, VIDEO)
+    code, body = await open_(b, api, case.url)
     after = await ledger()
     free = after == before and await slot_count(uid_b) == 0
     print(f"[B] demo reader {uid_b}: open {code} {body}; ledger unchanged and no slot: {free}")
@@ -266,13 +290,15 @@ async def costly(api: str, url: str) -> None:
 
 def cli() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("cmd", choices=["main", "refuse", "hindi", "anoncap", "costly", "t04"])
+    cmds = ["main", "podcast", "refuse", "hindi", "anoncap", "costly", "t04"]
+    p.add_argument("cmd", choices=cmds)
     p.add_argument("urls", nargs="*")
     p.add_argument("--api", default=API)
     p.add_argument("--anon", action="store_true")
     a = p.parse_args()
     run = {
-        "main": lambda: main_run(a.api),
+        "main": lambda: main_run(a.api, T01),
+        "podcast": lambda: main_run(a.api, T02),
         "refuse": lambda: refuse(a.api, a.urls[0], a.anon),
         "hindi": lambda: hindi(a.api, a.urls[0]),
         "anoncap": lambda: anoncap(a.api, a.urls[0], a.urls[1]),
