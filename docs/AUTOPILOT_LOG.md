@@ -1905,3 +1905,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    live check (R6 bounds, one demo reader deleted; Sourabh's Google sign-in on glossreader).
 3. Repo public on Sourabh's yes → signed-out checks of the GitHub link, release page and zip.
 4. The Oct 16 items (unchanged).
+- Sourabh: "yes" to the Auth authorized domains change. `make check-gcp` ok; dry run (R8): before
+  `localhost, readlayer-sourabh-26.firebaseapp.com, readlayer-sourabh-26.web.app`; added
+  `glossreader.web.app, glossreader.firebaseapp.com`; removed none. PATCH ok; read back matches.
+  Next: Sourabh's Cloud console step (OAuth origin and redirect URI), then deploy-api on his yes.
