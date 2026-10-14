@@ -1923,3 +1923,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    glossreader) → gitleaks over all history again → repo public → signed-out link checks.
 3. The Oct 16 items (unchanged).
 - milestone-reviewer round 2: **SHIP** (2e7fac1). Next: PR → CI → merge (push on Sourabh's yes).
+- PR #39, CI green (api, typescript), squash-merged (9c5ad52). Local `main` had two unpushed log
+  commits (194552a, 527d569); both were in the branch, and the merged tree equals the branch tip's
+  tree, so local `main` was moved to `origin/main` (`reset --keep`), nothing lost.
+  Next: Sourabh's Cloud console step, then R16 (site link, `init.json`) on his yes.
