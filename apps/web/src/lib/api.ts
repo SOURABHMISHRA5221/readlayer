@@ -54,7 +54,11 @@ export interface ContentDetail {
   status?: ContentStatus;
   media?: MediaInfo | null;
   refusal?: { code: string; message: string } | null;
+  /** A reader's stored page that missed concept growth: POST .../grow once, then reload notes. */
+  grow_pending?: boolean;
 }
+
+export type GrowStatus = "none" | "capped" | "grown" | "growing";
 
 export interface AnnotationsResponse {
   content_id: string;
@@ -276,6 +280,17 @@ export const api = {
     if (res.status === 202) return "analysing";
     if (!res.ok) throw await failure(res);
     return "ready";
+  },
+  /** Grow a page that missed concept growth (M9): 202 means another request is on it. */
+  grow: async (id: string, signal?: AbortSignal): Promise<GrowStatus> => {
+    const res = await request(
+      `/v1/content/${encodeURIComponent(id)}/grow`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" },
+      signal,
+    );
+    if (res.status === 202) return "growing";
+    if (!res.ok) throw await failure(res);
+    return ((await res.json()) as { status: GrowStatus }).status;
   },
   /** Current bands for the recap (Design pass A4). */
   bands: (conceptIds: string[], persona: PersonaKey | null) =>
