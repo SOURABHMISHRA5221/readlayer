@@ -1,0 +1,1156 @@
+{
+ "fields": {
+  "topics": {
+   "arrayValue": {
+    "values": [
+     {
+      "stringValue": "technology"
+     },
+     {
+      "stringValue": "economics"
+     }
+    ]
+   }
+  },
+  "prepared_at": {
+   "stringValue": "2026-10-11T18:27:32+00:00"
+  },
+  "items": {
+   "arrayValue": {
+    "values": [
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.livemint.com/technology/gadgets/tiny-cooler-on-your-phone-oneplus-is-making-it-happen-with-ice-card-mini-here-s-how-the-pocketable-accessory-works-11791715511279.html"
+           },
+           "published_at": {
+            "stringValue": "2026-10-11T10:51:27+00:00"
+           },
+           "source": {
+            "stringValue": "Mint"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://www.livemint.com/lm-img/img/2026/10/11/1600x900/logo/OnePlus_Ice_Card_Mini_1791715624980_fmCg_1791715632330_lALh_cbb64789-f0b9-471d-80eb-ae2b81865279_H3Ba.jpg"
+           },
+           "snippet": {
+            "stringValue": "OnePlus\u2019s Ice Card Mini is a compact magnetic cooler designed to reduce phone heat during gaming. Weighing 50 grams, it attaches to a phone\u2019s back, runs on USB-C and offers two cooling modes."
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "Tiny cooler on your phone? OnePlus is making it happen with Ice Card Mini; here\u2019s how the pocketable accessory works"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.theguardian.com/australia-news/2026/oct/12/donations-lobbyists-how-datacentres-play-the-political-game-in-australia"
+           },
+           "published_at": {
+            "stringValue": "2026-10-11T14:00:27+00:00"
+           },
+           "source": {
+            "stringValue": "The Guardian"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://i.guim.co.uk/img/media/9cffdd1522b2660eb6278cc9da3e34878eda3f47/688_0_6880_5504/master/6880.jpg?width=140&quality=85&auto=format&fit=max&s=7f420f451fb3c4ce0c55250c11766a15"
+           },
+           "snippet": {
+            "stringValue": "As governments face community backlash for fast-tracking developments, big tech\u2019s financial contributions face renewed scrutiny Get our new political email , free app or daily news podcast On 14 June 2025, Anthony Albanese stood inside an enormous sphere of glass and steel,\u2026"
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "Donations to major parties and an ex-premier as a lobbyist: how datacentres play the political game in Australia"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.livemint.com/technology/guardrails-safe-architecture-key-to-unlocking-ai-gains-for-enterprises-airtel-business-ceo-11791708289040.html"
+           },
+           "published_at": {
+            "stringValue": "2026-10-11T08:44:48+00:00"
+           },
+           "source": {
+            "stringValue": "Mint"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://www.livemint.com/lm-img/img/2024/12/18/1600x900/logo/tech4_1734536476058_1734536482186.png"
+           },
+           "snippet": {
+            "stringValue": "Guardrails, safe architecture key to unlocking AI gains for enterprises: Airtel Business CEO"
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "Guardrails, safe architecture key to unlocking AI gains for enterprises: Airtel Business CEO"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.livemint.com/technology/most-trustworthy-ai-system-demands-least-inherent-model-trust-says-microsoft-ceo-satya-nadella-11791687133324.html"
+           },
+           "published_at": {
+            "stringValue": "2026-10-11T02:52:12+00:00"
+           },
+           "source": {
+            "stringValue": "Mint"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://www.livemint.com/lm-img/img/2024/12/18/1600x900/logo/tech1_1734536428801_1734536438047.jpg"
+           },
+           "snippet": {
+            "stringValue": "The most trustworthy Super Intelligence system will not be the one powered by the model users trust the most, but rather the system that allows people to trust the model the least, Microsoft Chief Executive Officer Satya Nadella stated in a post on X."
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "Most trustworthy AI system demands least inherent model trust, says Microsoft CEO Satya Nadella"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.theguardian.com/commentisfree/2026/oct/11/ai-annihilation-advanced-nuclear-weapons"
+           },
+           "published_at": {
+            "stringValue": "2026-10-11T09:00:22+00:00"
+           },
+           "source": {
+            "stringValue": "The Guardian"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://i.guim.co.uk/img/media/603ece70d9015d3f39bcf155098c10c864112098/192_528_1858_1487/master/1858.jpg?width=140&quality=85&auto=format&fit=max&s=d07bf9a67f3cf7241663c6ada77c859f"
+           },
+           "snippet": {
+            "stringValue": "This is no scoffing matter. The accelerating proliferation of advanced nuclear weapons is bringing \u2018end times\u2019 closer by the day Humankind has fearfully and sometimes joyfully anticipated the end of the world ever since it began. The Bible\u2019s Book of Revelation speaks of \u201cend\u2026"
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "Fixated on AI, the world has forgotten what is staring it in the face: nuclear annihilation | Simon Tisdall"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.thehindu.com/news/cities/Delhi/net-shutdown-adds-to-massive-disruption-in-capital/article71569427.ece"
+           },
+           "published_at": {
+            "stringValue": "2026-10-10T19:26:13+00:00"
+           },
+           "source": {
+            "stringValue": "The Hindu"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://th-i.thgim.com/public/incoming/ycc5rj/article71569513.ece/alternates/LANDSCAPE_1200/CJP%20PROTEST%2013.JPG"
+           },
+           "snippet": {
+            "stringValue": "The mobile internet shutdown was among the largest web blackouts in the national capital\u2019s history"
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "Net shutdown adds to massive disruption in capital"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=X14xq3f6VTg"
+           },
+           "published_at": {
+            "stringValue": "2026-10-08T20:28:53Z"
+           },
+           "source": {
+            "stringValue": "Investor's Business Daily"
+           },
+           "duration_or_read_time": {
+            "integerValue": "1194"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/X14xq3f6VTg/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "Justin Nielsen and Ed Carson walk through Thursday's market action and discuss key stocks to watch in Stock Market Today."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova In Focus | Stock Market Today"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=HxYYYEb2p8g"
+           },
+           "published_at": {
+            "stringValue": "2026-10-07T17:00:23Z"
+           },
+           "source": {
+            "stringValue": "The Hindu"
+           },
+           "duration_or_read_time": {
+            "integerValue": "392"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/HxYYYEb2p8g/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "What is optogenetics, and how does it allow scientists to control brain cells with light? This explainer traces the Nobel-winning ..."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "Optogenetics: The Nobel-winning technology transforming neuroscience"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=hw7lczdv6jg"
+           },
+           "published_at": {
+            "stringValue": "2026-09-27T15:00:10Z"
+           },
+           "source": {
+            "stringValue": "BBC News"
+           },
+           "duration_or_read_time": {
+            "integerValue": "345"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/hw7lczdv6jg/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "Are these the gadgets of the future? BBC Tech Now's Andrew Rogers has the highlights from IFA Berlin, one of the world's biggest ..."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "Gadgets of the future? | BBC News"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=w8s54xcuuDI"
+           },
+           "published_at": {
+            "stringValue": "2026-10-07T06:00:30Z"
+           },
+           "source": {
+            "stringValue": "Sky News"
+           },
+           "duration_or_read_time": {
+            "integerValue": "552"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/w8s54xcuuDI/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "Sky News technology correspondent Rowland Manthorpe examines in detail what happened during the Hugging Face OpenAI ..."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "The Hugging Face story is even scarier than we thought"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=q10HND9IAcE"
+           },
+           "published_at": {
+            "stringValue": "2026-10-09T14:51:05Z"
+           },
+           "source": {
+            "stringValue": "Tech Bhari"
+           },
+           "duration_or_read_time": {
+            "integerValue": "357"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/q10HND9IAcE/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari Friends, if you are planning to buy a new car next ..."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://open.spotify.com/show/6RBb4pGRgOFTmtCDSfTWvu"
+           },
+           "published_at": {
+            "stringValue": "Tue, 22 Sep 2026 02:00:00 GMT"
+           },
+           "source": {
+            "stringValue": "open.spotify.com"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://i.scdn.co/image/ab6765630000bdcfba5322376082c0b46ac90a9a"
+           },
+           "snippet": {
+            "stringValue": "On this episode of the Technology Podcast, host Nate Schutta is joined by Thoughtworks colleague and Data and AI Lead Lorisa Perdoci and Lauren Hartman, Cloud Solution Architect at Microsoft, to discuss everything from data products to data agents. They also explore Microsoft\u2026"
+           },
+           "format": {
+            "stringValue": "podcast"
+           },
+           "title": {
+            "stringValue": "Thoughtworks Technology Podcast | Podcast on Spotify"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://podcasts.apple.com/us/podcast/technology-now/id1532418028"
+           },
+           "published_at": {
+            "stringValue": "Fri, 17 Feb 2023 00:00:00 GMT"
+           },
+           "source": {
+            "stringValue": "podcasts.apple.com"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts211/v4/81/d6/8e/81d68e9e-fe06-5ee1-aca2-691e848392db/mza_968002274744705808.jpg/1200x1200bf-60.jpg"
+           },
+           "snippet": {
+            "stringValue": "a front-line view of where enterprise technology is headed. Technology Now is HPE\u2019s flagship, award winning, podcast that brings enterprise innovation to life - featuring real conversations with leaders, customers, and experts on how AI, cloud, and networking are shaping the\u2026"
+           },
+           "format": {
+            "stringValue": "podcast"
+           },
+           "title": {
+            "stringValue": "Technology Now - Podcast - Apple Podcasts"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://podcasts.apple.com/us/podcast/big-technology-podcast/id1522960417"
+           },
+           "published_at": {
+            "stringValue": "Wed, 07 Oct 2026 05:00:00 GMT"
+           },
+           "source": {
+            "stringValue": "podcasts.apple.com"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/c3/30/67/c330676b-2402-432b-0505-12490dc3ccc1/mza_4262545472677654397.jpeg/1200x1200bf-60.jpg"
+           },
+           "snippet": {
+            "stringValue": "Paul Kedrosky is an investor, analyst, and writer who studies technology, markets, and the forces shaping the global economy. Kedrosky joins Big Technology Podcast to discuss why he believes the historic surge in AI infrastructure spending has created a bubble that could soon\u2026"
+           },
+           "format": {
+            "stringValue": "podcast"
+           },
+           "title": {
+            "stringValue": "Big Technology Podcast - Podcast - Apple Podcasts"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://podcasts.apple.com/us/podcast/learning-through-technology/id1713365771"
+           },
+           "published_at": {
+            "stringValue": "Thu, 09 Oct 2025 00:00:00 GMT"
+           },
+           "source": {
+            "stringValue": "podcasts.apple.com"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts221/v4/f6/30/1a/f6301aee-7d60-47ae-1371-015c5d7d9b06/mza_10197033655366025517.jpg/1200x1200bf-60.jpg"
+           },
+           "snippet": {
+            "stringValue": "\"Learning through Technology\" is a standout podcast in the educational technology sphere. It brings together diverse experts to share practical insights on using technology in K-12 education. The podcast excels in presenting real-world applications and challenges, making it\u2026"
+           },
+           "format": {
+            "stringValue": "podcast"
+           },
+           "title": {
+            "stringValue": "Learning Through Technology - Podcast - Apple Podcasts"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://open.spotify.com/show/4ln6H9peIXhq19yv3CdOvE"
+           },
+           "published_at": {
+            "nullValue": null
+           },
+           "source": {
+            "stringValue": "open.spotify.com"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://i.scdn.co/image/ab6765630000bdcf2e6687de77ab36a184efed58"
+           },
+           "snippet": {
+            "stringValue": "Big Technology Podcast M.G. Siegler is the author of Spyglass. Siegler joins Big Technology to discuss the escalating battle to build the dominant personal AI assistant. Tune in to hear why he thinks Meta\u2019s Muse is surprisingly strong and what will ultimately determine who\u2026"
+           },
+           "format": {
+            "stringValue": "podcast"
+           },
+           "title": {
+            "stringValue": "Big Technology Podcast | Podcast on Spotify"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://podcasts.apple.com/us/podcast/ted-tech/id470624027"
+           },
+           "published_at": {
+            "nullValue": null
+           },
+           "source": {
+            "stringValue": "podcasts.apple.com"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts126/v4/d9/32/32/d932328a-a21d-999c-690c-f05d680778b2/mza_13752174967843677920.jpg/1200x1200bf-60.jpg"
+           },
+           "snippet": {
+            "stringValue": "From the construction of virtual realities to the internet of things to the watches on our wrists\u2014technology's influence is everywhere. Its role in our lives is evolving fast, and we're faced with riveting questions and tough challenges that sit at the intersection of\u2026"
+           },
+           "format": {
+            "stringValue": "podcast"
+           },
+           "title": {
+            "stringValue": "TED Tech - Podcast - Apple Podcasts"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://open.spotify.com/show/3DugvTFpGLOhle28qyw0JR"
+           },
+           "published_at": {
+            "nullValue": null
+           },
+           "source": {
+            "stringValue": "open.spotify.com"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://i.scdn.co/image/ab6765630000bdcfd8b187028ddc9173caa1eeb6"
+           },
+           "snippet": {
+            "stringValue": "of technology and talent solutions. Click \u2060here\u2060 to learn more about our services.The music on Tech Talks is created by London artist \u2060Lemzi\u2060. [...] global provider of technology and talent solutions. Click here to learn more about our services.The music on Tech Talks is\u2026"
+           },
+           "format": {
+            "stringValue": "podcast"
+           },
+           "title": {
+            "stringValue": "Tech Talks | Podcast on Spotify"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "technology"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://podcasts.apple.com/us/podcast/behind-the-tech-with-kevin-scott/id1381008946"
+           },
+           "published_at": {
+            "nullValue": null
+           },
+           "source": {
+            "stringValue": "podcasts.apple.com"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts125/v4/50/70/f4/5070f4b9-b645-b577-e7b8-e0eadac11b4c/mza_7839688395297578703.png/1200x1200bf-60.jpg"
+           },
+           "snippet": {
+            "stringValue": "# Behind The Tech with Kevin Scott 4.9 (97) Technology Behind the Tech invites listeners to geek out with an amazing line-up of tech heroes, inventors and innovators. Microsoft CTO Kevin Scott takes tech enthusiasts behind-the-scenes to meet AI experts, computer scientists,\u2026"
+           },
+           "format": {
+            "stringValue": "podcast"
+           },
+           "title": {
+            "stringValue": "Behind The Tech with Kevin Scott - Podcast - Apple Podcasts"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.livemint.com/economy/india-retail-inflation-food-prices-imf-world-economic-outlook-india-gdp-growth-trade-deficit-india-us-trade-crude-oil-11791656012135.html"
+           },
+           "published_at": {
+            "stringValue": "2026-10-11T05:30:29+00:00"
+           },
+           "source": {
+            "stringValue": "Mint"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://www.livemint.com/lm-img/img/2026/10/11/1600x900/logo/PTI08-24-2026-000433A-0_1791695636732_41Dk_1791695661128_4RZe_6be0fa6f-49f7-4699-9b61-8211e25fbbd0_FsuL.jpg"
+           },
+           "snippet": {
+            "stringValue": "A look at the key economic developments, data releases and market events that could shape the week ahead."
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "The week ahead in numbers: Inflation pressures, IMF\u2019s growth forecasts, crude output"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.theguardian.com/us-news/2026/oct/11/trump-russia-diesel-deal-putin-little-impact-prices"
+           },
+           "published_at": {
+            "stringValue": "2026-10-11T15:56:25+00:00"
+           },
+           "source": {
+            "stringValue": "The Guardian"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://i.guim.co.uk/img/media/491db428125131d2e20360201b2421799f58759d/48_0_6428_5143/master/6428.jpg?width=140&quality=85&auto=format&fit=max&s=b2b42082c6cd5d08a7ef84b8a1fb100c"
+           },
+           "snippet": {
+            "stringValue": "Analysts say fuel will take weeks to ship and quantity is too small to affect prices, while full deal is unlikely to be met given damage to Russian refineries Trump announces partial ceasefire but Zelenskyy says deal is \u2018news to me\u2019 Donald Trump\u2019s deal with Vladimir Putin to\u2026"
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "Trump\u2019s deal with Putin will have little impact on US diesel prices, experts say"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.livemint.com/economy/upi-mdr-charges-govt-withdraw-proposed-payment-fee-gtri-think-tank-why-raise-prices-small-business-merchants-weak-demand-11791656189614.html"
+           },
+           "published_at": {
+            "stringValue": "2026-10-10T18:36:26+00:00"
+           },
+           "source": {
+            "stringValue": "Mint"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://www.livemint.com/lm-img/img/2026/10/10/1600x900/logo/Gemini_Generated_Image_ghum8kghum8kghum_1784258639_1791657298128_uMSp_1791657298547_csrB_e088e675-eca5-4bb7-864c-3521a4dbc09c_zsxp.png"
+           },
+           "snippet": {
+            "stringValue": "GTRI urged the government to withdraw a proposed 0.4% fee on UPI merchant transactions above \u20b92,000, warning it could raise prices, squeeze small businesses and weaken demand. Here's what it has recommended\u2026"
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "Economic think tank says govt should withdraw proposed UPI charges. Here's why"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.thehindu.com/business/Economy/ai-data-centre-boom-puts-indias-power-grid-under-pressure-drives-up-upgrade-costs/article71555736.ece"
+           },
+           "published_at": {
+            "stringValue": "2026-10-10T13:41:55+00:00"
+           },
+           "source": {
+            "stringValue": "The Hindu"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://th-i.thgim.com/public/incoming/bawro1/article71568376.ece/alternates/LANDSCAPE_1200/IMG_BL_-_POWER_GRIDS_2_1_4TCG9SLI.jpg"
+           },
+           "snippet": {
+            "stringValue": "Electricity officials around India are grappling with the many ways Artificial Intelligence infrastructure is reshaping power transmission dynamics."
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "AI data-centre boom puts India\u2019s power grid under pressure, drives up upgrade costs"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.theguardian.com/business/2026/oct/11/trump-ai-economy-reagan"
+           },
+           "published_at": {
+            "stringValue": "2026-10-11T11:00:25+00:00"
+           },
+           "source": {
+            "stringValue": "The Guardian"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://i.guim.co.uk/img/media/c01cee88362c0355e50eac343016f771811f0cd2/355_0_3701_2960/master/3701.jpg?width=140&quality=85&auto=format&fit=max&s=e91cdb1d17c082730c24e5fb4321d833"
+           },
+           "snippet": {
+            "stringValue": "\u2018Even if AI supercharged the economy, its impact on the government\u2019s finances would be muted\u2019 Back through political history to the age of Ronald Reagan , Republicans have repeatedly promised the US public that tax cuts would pay for themselves, firing up economic growth and\u2026"
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "US\u2019s Reagan-era economic promises return as Trump\u2019s AI-fueled growth fantasy"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.livemint.com/economy/rbi-may-hike-repo-rate-by-75-100-bps-in-current-cycle-as-inflation-persists-sbi-capital-flags-december-hike-risk-11791633850738.html"
+           },
+           "published_at": {
+            "stringValue": "2026-10-10T13:07:17+00:00"
+           },
+           "source": {
+            "stringValue": "Mint"
+           },
+           "duration_or_read_time": {
+            "nullValue": null
+           },
+           "thumbnail": {
+            "stringValue": "https://www.livemint.com/lm-img/img/2026/10/10/1600x900/logo/repo_rate_1791637575830_e0HK_1791637575981_s6jK_001b6bc1-aa50-4541-9401-f0e66b5c0c2d_Q1xn.png"
+           },
+           "snippet": {
+            "stringValue": "SBI Capital said gradual rate increases remain the most likely scenario, although a larger hike in December 2026 cannot be ruled out"
+           },
+           "format": {
+            "stringValue": "article"
+           },
+           "title": {
+            "stringValue": "RBI may hike repo rate by 75-100 bps in current cycle as inflation persists- SBI Capital flags December hike risk"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=G2b0JOgLpeg"
+           },
+           "published_at": {
+            "stringValue": "2026-09-21T15:30:49Z"
+           },
+           "source": {
+            "stringValue": "Economics Explained"
+           },
+           "duration_or_read_time": {
+            "integerValue": "1184"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/G2b0JOgLpeg/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "Go to https://surfshark.com/economics or use code ECONOMICS at checkout to get 4 extra months of Surfshark! 10350+ read ..."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "Has Inequality Ever Been Worse?"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=Y4ZuQiO_XPg"
+           },
+           "published_at": {
+            "stringValue": "2026-09-12T14:10:28Z"
+           },
+           "source": {
+            "stringValue": "Bloomberg Television"
+           },
+           "duration_or_read_time": {
+            "integerValue": "543"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/Y4ZuQiO_XPg/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "Joining Bloomberg This Weekend, Bloomberg Economics Chief Economist Tom Orlik says higher interest rates may be the new ..."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "Higher Interest Rates May Be the New Normal"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=ftmjbupBphY"
+           },
+           "published_at": {
+            "stringValue": "2026-10-07T19:00:38Z"
+           },
+           "source": {
+            "stringValue": "The Economic Ninja"
+           },
+           "duration_or_read_time": {
+            "integerValue": "274"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/ftmjbupBphY/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "The new channels name is \" Economic News Ninja \" You can sign up for my free newsletter here: ..."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "Brandon Biggs Economic Crash Dream Explained"
+           }
+          }
+         }
+        }
+       }
+      }
+     },
+     {
+      "mapValue": {
+       "fields": {
+        "topic": {
+         "stringValue": "economics"
+        },
+        "result": {
+         "mapValue": {
+          "fields": {
+           "url": {
+            "stringValue": "https://www.youtube.com/watch?v=8OS9TSk8oY4"
+           },
+           "published_at": {
+            "stringValue": "2026-09-14T16:59:21Z"
+           },
+           "source": {
+            "stringValue": "CNBC Television"
+           },
+           "duration_or_read_time": {
+            "integerValue": "290"
+           },
+           "thumbnail": {
+            "stringValue": "https://i.ytimg.com/vi/8OS9TSk8oY4/mqdefault.jpg"
+           },
+           "snippet": {
+            "stringValue": "The Investment Committee reveal what they're expecting out of the Fed Rate Decision on Wednesday and what it will mean for the ..."
+           },
+           "format": {
+            "stringValue": "video"
+           },
+           "title": {
+            "stringValue": "Gaming out the Fed's next move: The investment committee weighs in"
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    ]
+   }
+  }
+ }
+}

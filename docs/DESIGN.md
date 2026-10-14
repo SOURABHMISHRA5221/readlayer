@@ -1106,6 +1106,15 @@ score = interest(topic) × format_affinity(format) × readiness × goal_boost ×
   to you · helps your goal: Insulin resistance").
 - Feed impressions use the Up next signal store with relation `feed`; feed dismissals never
   touch relation dismissals.
+- Readiness line (decision 60, For you only): from the same named concepts and the reader's own
+  map, one line under the title. "Mostly familiar": none is new; "Ready for you": 1–4 new and every
+  new idea's graph prerequisites are known (the map's rule, p_know ≥ 0.5); "A stretch: read up on X
+  and Y first": a new idea has a prerequisite that is itself new and not named by the item (up to
+  2, most basic first by `base_difficulty`), or "A stretch: many new ideas at once" for more than 4
+  new. An item that names no concept gets no line. A new idea with no prerequisites in the graph
+  counts as ready here but gets no ring on the map. The line says its basis on hover ("Based on the
+  ideas named in the title and summary"); it is three levels, not a number, because a number from
+  title and summary matches would be false precision. Scores are unchanged.
 
 ### 17.3 Demo snapshots (decision 38)
 Demo readers never trigger a search. `scripts/seed_demo_feed.py` reads the collected outlet

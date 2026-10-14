@@ -1,0 +1,328 @@
+{
+ "api": {
+  "rows": 11,
+  "levels": {
+   "ready": 7,
+   "stretch": 4
+  },
+  "named_none": []
+ },
+ "foryou-1440-light": {
+  "axe": [],
+  "hscroll": 0,
+  "levels": {
+   "ready": 7,
+   "stretch": 4
+  },
+  "rows": [
+   {
+    "title": "New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Open in GlossWatch on YouTube: New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari (opens in a new tab)6 min watch1 idea new to you"
+   },
+   {
+    "title": "Has Inequality Ever Been Worse?",
+    "line": "A stretch: read up on Income distribution first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "20 min watch2 ideas new to you"
+   },
+   {
+    "title": "AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova In Focus | Stock Market Today",
+    "line": "A stretch: read up on Economic stocks and flows first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "20 min watch1 idea new to you"
+   },
+   {
+    "title": "Gaming out the Fed's next move: The investment committee weighs in",
+    "line": "A stretch: read up on Capital goods and National accounts first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Open in GlossWatch on YouTube: Gaming out the Fed's next move: The investment committee weighs in (opens in a new tab)5 min watch1 idea new to you"
+   },
+   {
+    "title": "Donations to major parties and an ex-premier as a lobbyist: how datacentres play the political game in Australia",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "US\u2019s Reagan-era economic promises return as Trump\u2019s AI-fueled growth fantasy",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Guardrails, safe architecture key to unlocking AI gains for enterprises: Airtel Business CEO",
+    "line": "A stretch: read up on Supply and demand first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "The week ahead in numbers: Inflation pressures, IMF\u2019s growth forecasts, crude output",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article2 ideas new to you"
+   },
+   {
+    "title": "Net shutdown adds to massive disruption in capital",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Economic think tank says govt should withdraw proposed UPI charges. Here's why",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Thoughtworks Technology Podcast | Podcast on Spotify",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Podcast1 idea new to you"
+   }
+  ]
+ },
+ "foryou-1440-dark": {
+  "axe": [],
+  "hscroll": 0,
+  "levels": {
+   "ready": 7,
+   "stretch": 4
+  },
+  "rows": [
+   {
+    "title": "New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Open in GlossWatch on YouTube: New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari (opens in a new tab)6 min watch1 idea new to you"
+   },
+   {
+    "title": "Has Inequality Ever Been Worse?",
+    "line": "A stretch: read up on Income distribution first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "20 min watch2 ideas new to you"
+   },
+   {
+    "title": "AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova In Focus | Stock Market Today",
+    "line": "A stretch: read up on Economic stocks and flows first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "20 min watch1 idea new to you"
+   },
+   {
+    "title": "Gaming out the Fed's next move: The investment committee weighs in",
+    "line": "A stretch: read up on Capital goods and National accounts first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Open in GlossWatch on YouTube: Gaming out the Fed's next move: The investment committee weighs in (opens in a new tab)5 min watch1 idea new to you"
+   },
+   {
+    "title": "Donations to major parties and an ex-premier as a lobbyist: how datacentres play the political game in Australia",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "US\u2019s Reagan-era economic promises return as Trump\u2019s AI-fueled growth fantasy",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Guardrails, safe architecture key to unlocking AI gains for enterprises: Airtel Business CEO",
+    "line": "A stretch: read up on Supply and demand first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "The week ahead in numbers: Inflation pressures, IMF\u2019s growth forecasts, crude output",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article2 ideas new to you"
+   },
+   {
+    "title": "Net shutdown adds to massive disruption in capital",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Economic think tank says govt should withdraw proposed UPI charges. Here's why",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Thoughtworks Technology Podcast | Podcast on Spotify",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Podcast1 idea new to you"
+   }
+  ]
+ },
+ "foryou-390-light": {
+  "axe": [],
+  "hscroll": 0,
+  "levels": {
+   "ready": 7,
+   "stretch": 4
+  },
+  "rows": [
+   {
+    "title": "New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Open in GlossWatch on YouTube: New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari (opens in a new tab)6 min watch1 idea new to you"
+   },
+   {
+    "title": "Has Inequality Ever Been Worse?",
+    "line": "A stretch: read up on Income distribution first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "20 min watch2 ideas new to you"
+   },
+   {
+    "title": "AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova In Focus | Stock Market Today",
+    "line": "A stretch: read up on Economic stocks and flows first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "20 min watch1 idea new to you"
+   },
+   {
+    "title": "Gaming out the Fed's next move: The investment committee weighs in",
+    "line": "A stretch: read up on Capital goods and National accounts first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Open in GlossWatch on YouTube: Gaming out the Fed's next move: The investment committee weighs in (opens in a new tab)5 min watch1 idea new to you"
+   },
+   {
+    "title": "Thoughtworks Technology Podcast | Podcast on Spotify",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Podcast1 idea new to you"
+   },
+   {
+    "title": "US\u2019s Reagan-era economic promises return as Trump\u2019s AI-fueled growth fantasy",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Donations to major parties and an ex-premier as a lobbyist: how datacentres play the political game in Australia",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "The week ahead in numbers: Inflation pressures, IMF\u2019s growth forecasts, crude output",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article2 ideas new to you"
+   },
+   {
+    "title": "Guardrails, safe architecture key to unlocking AI gains for enterprises: Airtel Business CEO",
+    "line": "A stretch: read up on Supply and demand first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Economic think tank says govt should withdraw proposed UPI charges. Here's why",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Net shutdown adds to massive disruption in capital",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   }
+  ]
+ },
+ "foryou-390-dark": {
+  "axe": [],
+  "hscroll": 0,
+  "levels": {
+   "ready": 7,
+   "stretch": 4
+  },
+  "rows": [
+   {
+    "title": "New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Open in GlossWatch on YouTube: New Cars Will Get Expensive From 2027? CAFE 3 Rules Explained | Tech Bhari (opens in a new tab)6 min watch1 idea new to you"
+   },
+   {
+    "title": "Has Inequality Ever Been Worse?",
+    "line": "A stretch: read up on Income distribution first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "20 min watch2 ideas new to you"
+   },
+   {
+    "title": "AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, GE Vernova In Focus | Stock Market Today",
+    "line": "A stretch: read up on Economic stocks and flows first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "20 min watch1 idea new to you"
+   },
+   {
+    "title": "Gaming out the Fed's next move: The investment committee weighs in",
+    "line": "A stretch: read up on Capital goods and National accounts first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Open in GlossWatch on YouTube: Gaming out the Fed's next move: The investment committee weighs in (opens in a new tab)5 min watch1 idea new to you"
+   },
+   {
+    "title": "Thoughtworks Technology Podcast | Podcast on Spotify",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Podcast1 idea new to you"
+   },
+   {
+    "title": "US\u2019s Reagan-era economic promises return as Trump\u2019s AI-fueled growth fantasy",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Donations to major parties and an ex-premier as a lobbyist: how datacentres play the political game in Australia",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "The week ahead in numbers: Inflation pressures, IMF\u2019s growth forecasts, crude output",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article2 ideas new to you"
+   },
+   {
+    "title": "Guardrails, safe architecture key to unlocking AI gains for enterprises: Airtel Business CEO",
+    "line": "A stretch: read up on Supply and demand first",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Economic think tank says govt should withdraw proposed UPI charges. Here's why",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   },
+   {
+    "title": "Net shutdown adds to massive disruption in capital",
+    "line": "Ready for you",
+    "basis": "Based on the ideas named in the title and summary",
+    "meta": "Article1 idea new to you"
+   }
+  ]
+ },
+ "levels_seen": [
+  "ready",
+  "stretch"
+ ],
+ "calls": {
+  "before": {
+   "search": "0",
+   "spend": "161"
+  },
+  "after": {
+   "search": "0",
+   "spend": "161"
+  }
+ }
+}

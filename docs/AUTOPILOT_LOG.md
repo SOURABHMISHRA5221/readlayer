@@ -1747,6 +1747,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   25/25; windows; README figures) → applied → **SHIP**, nits applied. PR #36, CI green, merged.
   **M9 complete.**
 
+## Readiness on For you (2026-10-14, decision 60)
+
+- Sourabh: "Add readiness Score". Plan `docs/plans/readiness.md` → plan-reviewer REVISE 14 →
+  REVISE 2 → **APPROVE**. Asked "three levels instead of a number?": "yes".
+- API: `read_first` / `readiness_level` in `feed_rank.py`, both fields on the feed items; scores
+  unchanged (pinned). Mix on production, read only: newcomer ready 7 / stretch 4 of 11 (stop rule
+  not hit); trader familiar 5 / ready 4 / stretch 2; policy student familiar 2 / ready 5 / stretch 2
+  / no line 2.
+- Web: the line in For you rows (ForYouTab chunk 2.30 → 2.48 KB; main code unchanged, 149.97 KB
+  from new chunk hashes). Harness `tools/shots/readiness.py`: axe 0, no horizontal scroll, lines
+  match the API at 1440/390 light/dark, zero search and model calls. STATUS §29.
+
 ### Next steps (resume here, in order)
 1. Sourabh: audit the 30 precision verdicts (`apps/api/evals/heldout_report.md`, row 12 first);
    then update the README precision row's "(Sourabh's audit pending)".
