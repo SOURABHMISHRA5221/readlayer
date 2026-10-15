@@ -107,12 +107,6 @@ def _exact(graph: ConceptGraph, text: str, demand: Demand) -> Concept | None:
     return concept
 
 
-def exact_target(graph: ConceptGraph, demand: Demand) -> str | None:
-    """Any exact label/alias match: the rule before decision 66 (`relink_senses` scopes with it)."""
-    concept = graph.lookup(demand.label) or graph.lookup(demand.anchor.exact)
-    return concept.id if concept else None
-
-
 def alias_target(graph: ConceptGraph, demand: Demand) -> str | None:
     """An exact label/alias match, except a one-word key that reaches a sense-labelled name
     unless the demand itself names that sense (decision 66)."""

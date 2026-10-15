@@ -49,6 +49,16 @@ def test_scope_is_bare_sense_keys_only():
     assert rs.in_scope(doc(PIP.demands, source="user_ingested"), GRAPH, heldout=False) == []
 
 
+def test_a_link_the_current_rules_would_not_make_is_in_scope():
+    """The live PIP case: labelled right, but the concept was grown after the link was made, so
+    the bare anchor "Pip" took the finance sense; today the label resolves to the benefit."""
+    stale = Demand(id="d9", paragraph_id="p0", type="concept",
+                   label="Personal Independence Payment", target_id="c_pip_finance",
+                   anchor=Anchor(exact="Pip", prefix="", suffix="", start=0, end=3),
+                   salience=0.9, explained_in_text=False, zipf=3.0)  # fmt: skip
+    assert [d.id for d in rs.in_scope(doc([stale]), GRAPH, heldout=False)] == ["d9"]
+
+
 def test_the_estimate_refuses_before_any_call():
     assert rs.estimate(5) <= rs.MAX_USD
     with pytest.raises(SystemExit):

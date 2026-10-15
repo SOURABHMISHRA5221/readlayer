@@ -6,8 +6,9 @@
     uv run python -m scripts.relink_senses --revert [--delete-cache]  # put the old links back
 
 Docs: warm_demo's DEMO_ARTICLES and the article rows of the demo feeds' first pages, corpus only,
-held-out excluded. A demand is in scope when the old rule linked it exactly (`exact_target`) and
-decision 66's rule refuses it (`alias_target` is None); grown demands stay. The dry run re-links
+held-out excluded. A demand is in scope when its link is an exact match of its label or anchor
+that today's `alias_target` would not make (decision 66's sense rule, or a label that now resolves
+to a concept grown after the link); grown demands stay. The dry run re-links
 those demands with the ingest linker (embeddings + link_confirm, ledgered, ≤ MAX_USD), prints
 every old → new, the persona diff and the cache entries to retire, and saves it all to STATE.
 `--write` / `--revert` touch only the saved docs, each in one transaction that updates only
@@ -27,7 +28,7 @@ from typing import Literal
 
 from app.explain.inputs import paragraph_inputs, span_inputs
 from app.graph.graph import ConceptGraph
-from app.graph.linking import alias_target, exact_target
+from app.graph.linking import alias_target
 from app.ingest.models import ContentDoc, Demand, is_corpus
 from app.reader.state import ReaderState
 from app.store.content_repo import ContentStore, Relinked
@@ -54,7 +55,15 @@ class Entry:
         return {i: (new if use == "new" else old) for i, (old, new) in self.changes.items()}
 
 
+def _exactly(graph: ConceptGraph, d: Demand) -> bool:
+    """The demand's current target is an exact match of its label or of its anchor alone."""
+    return any((c := graph.lookup(t)) is not None and c.id == d.target_id
+               for t in (d.label, d.anchor.exact))  # fmt: skip
+
+
 def in_scope(doc: ContentDoc, graph: ConceptGraph, heldout: bool) -> list[Demand]:
+    """Exact-match links that today's rules (`alias_target`, decision 66) would not make: a one-
+    word sense key, or a bare anchor whose label now resolves to another concept (grown since)."""
     if heldout or not is_corpus(doc):
         return []
     return [
@@ -62,8 +71,8 @@ def in_scope(doc: ContentDoc, graph: ConceptGraph, heldout: bool) -> list[Demand
         for d in doc.demands
         if not d.grown
         and d.target_id is not None
-        and exact_target(graph, d) == d.target_id
-        and alias_target(graph, d) is None
+        and _exactly(graph, d)
+        and alias_target(graph, d) != d.target_id
     ]
 
 
