@@ -31,13 +31,19 @@ def serve(dist: str, port: int) -> subprocess.Popen:
     )
 
 
-async def view(p: cdp.Page, url: str, width: int, dark: bool = False, wait: float = 3.5) -> None:
+async def view(p: cdp.Page, url: str, width: int, dark: bool = False, wait: float = 3.5, motion: bool = False) -> None:
+    """The app's theme comes from localStorage `readlayer:theme` (theme-init.js), not the media query."""
     await p.send("Emulation.setDeviceMetricsOverride", width=width, height=900 if width > 600 else 844,
                  deviceScaleFactor=1, mobile=width < 640)
     await p.send("Emulation.setEmulatedMedia", features=[
-        {"name": "prefers-color-scheme", "value": "dark" if dark else "light"},
-        {"name": "prefers-reduced-motion", "value": "reduce"}])
+        {"name": "prefers-reduced-motion", "value": "no-preference" if motion else "reduce"}])
+    await p.goto(url, wait=1.0)
+    theme = "dark" if dark else "light"
+    await p.eval(f"localStorage.setItem('readlayer:theme', '{theme}'); 1")
     await p.goto(url, wait=wait)
+    actual = await p.eval("document.documentElement.dataset.theme || 'light'")
+    if actual != theme:
+        raise SystemExit(f"theme is {actual}, wanted {theme}")
 
 
 async def shot_bytes(p: cdp.Page) -> bytes:
@@ -68,7 +74,7 @@ async def main() -> None:
             report[f"/ first view identical at {width}"] = same
         # /v2: audits at each width and theme.
         base = f"http://localhost:{PORTS['after']}/v2"
-        for width in (1440, 390):
+        for width in (1440, 390, 360):
             for dark in (False, True):
                 await view(p, base, width, dark)
                 await p.eval("window.scrollTo(0, document.body.scrollHeight); 1")
@@ -77,7 +83,19 @@ async def main() -> None:
                 key = f"/v2 {width} {'dark' if dark else 'light'}"
                 report[key] = await p.audit()
                 report[key]["robots"] = await p.eval("document.querySelector('meta[name=robots]')?.content || null")
+                report[key]["theme"] = await p.eval("document.documentElement.dataset.theme")
+                # Every bar item on one line: no taller than its 44 px row.
+                report[key]["bar items taller than 44px"] = await p.eval("""[...document.querySelectorAll('.lp-nav > *')]
+                  .filter(e => e.getBoundingClientRect().height > 46).map(e => e.textContent.trim())""")
                 (OUT / f"v2-{width}-{'dark' if dark else 'light'}.png").write_bytes(await shot_bytes(p))
+        # Motion on: choosing 2 min animates the lines that stay (the 300 ms FLIP).
+        await view(p, base, 1440, motion=True)
+        # React applies the click a moment later; read inside the 300 ms reflow.
+        report["reflow animations on 2 min (motion on)"] = await p.eval("""(async () => {
+          [...document.querySelectorAll('.lp2-controls button')].find(b => b.textContent === '2 min').click();
+          await new Promise(r => setTimeout(r, 60));
+          return [...document.querySelectorAll('.lp2-shape__item')].flatMap(e => e.getAnimations())
+            .map(a => a.effect.getKeyframes()[0].transform || 'fade'); })()""")
         # The demo: Full → 2 min, then tap the second line; its clause is marked.
         await view(p, base, 1440)
         await p.eval("""(() => { [...document.querySelectorAll('.lp2-controls button')]
@@ -93,6 +111,7 @@ async def main() -> None:
         r = await p.send("Page.captureScreenshot", format="png", captureBeyondViewport=True,
                          clip={"x": rect["x"], "y": rect["y"], "width": rect["w"], "height": rect["h"], "scale": 1})
         (OUT / "v2-demo-2min-tap.png").write_bytes(base64.b64decode(r["data"]))
+        await p.eval("localStorage.removeItem('readlayer:theme'); 1")
     finally:
         await ws.close()
         cdp.stop()
