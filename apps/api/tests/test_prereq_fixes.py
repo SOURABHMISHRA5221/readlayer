@@ -26,12 +26,14 @@ LABELS = {
     "c_chief_election_commissioner": "Chief Election Commissioner",
     "c_elected_office": "Elected office", "c_permanent_account_number": "Permanent Account Number",
     "c_financial_account": "Financial account",
+    # Decision 66, read from production 2026-10-15 (graph_growth and the graph file):
+    "c_modding_tool": "Modding tool", "c_utility": "Utility",
 }  # fmt: skip
 
 
 def test_every_listed_id_is_the_slug_of_its_production_label():
     ids = {i for edge in KNOWN_WRONG_PREREQS for i in edge}
-    assert ids == set(LABELS) and len(KNOWN_WRONG_PREREQS) == 13
+    assert ids == set(LABELS) and len(KNOWN_WRONG_PREREQS) == 14
     for cid, label in LABELS.items():
         assert slug_ids([label])[0] == cid, (cid, label)
 

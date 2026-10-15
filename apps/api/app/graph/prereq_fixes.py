@@ -26,6 +26,8 @@ KNOWN_WRONG_PREREQS: frozenset[tuple[str, str]] = frozenset({
     ("c_circle_inspector_and_sub_inspector", "c_administration"),
     ("c_chief_election_commissioner", "c_elected_office"),  # the CEC is appointed
     ("c_permanent_account_number", "c_financial_account"),  # a tax identifier
+    # Decision 66: a grown tech concept given the patent-law Utility (seen on a GTA 6 feed row).
+    ("c_modding_tool", "c_utility"),
 })  # fmt: skip
 
 

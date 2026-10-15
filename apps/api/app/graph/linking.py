@@ -19,9 +19,11 @@ from typing import Literal
 
 from app import llm
 from app.graph import jurisdiction
+from app.graph.build import normalize_label
 from app.graph.enrich import LinkQuestion, confirm_links
 from app.graph.graph import ConceptGraph
 from app.graph.growth_need import EMBED_TYPES
+from app.graph.models import Concept
 from app.ingest.models import Demand
 
 log = logging.getLogger("app.graph.linking")
@@ -66,8 +68,46 @@ def query_text(demand: Demand, paragraph_text: str) -> str:
     return f"{demand.label} — {sentence}"
 
 
+_TRAILING_PAREN = re.compile(r" \(([^()]*)\)$")
+_SENSE_RUN = re.compile(r"[a-z]{3,}")
+
+
+def sense_of(name: str) -> str | None:
+    """The sense in a trailing " (x)" that names one: after a final "s" is dropped, x holds a run
+    of 3+ lower-case letters ("Pip (finance)", "Duration (bond)"), unlike an acronym ("(OMO)",
+    "(OEMs)", "(RoDTEP)", "(M1, M2, M3)") or no trailing parenthesis ("401(k)")."""
+    m = _TRAILING_PAREN.search(name)
+    if m is None:
+        return None
+    inner = m.group(1).strip()
+    return inner if _SENSE_RUN.search(inner.removesuffix("s")) else None
+
+
+def _sense_key(concept: Concept, key: str) -> str | None:
+    """The sense a one-word key reaches this concept through, if any (decision 66): its label or
+    an alias that normalises to the key and names a sense."""
+    if " " in key:
+        return None
+    for name in (concept.label, *concept.aliases):
+        if normalize_label(name) == key and (sense := sense_of(name)):
+            return sense
+    return None
+
+
+def _exact(graph: ConceptGraph, text: str, demand: Demand) -> Concept | None:
+    concept = graph.lookup(text)
+    if concept is None:
+        return None
+    sense = _sense_key(concept, normalize_label(text))
+    if sense and f"({sense.casefold()})" not in f"{demand.label} {demand.anchor.exact}".casefold():
+        return None  # "Pip" alone is not "Pip (finance)": the model decides (embedding + confirm)
+    return concept
+
+
 def alias_target(graph: ConceptGraph, demand: Demand) -> str | None:
-    concept = graph.lookup(demand.label) or graph.lookup(demand.anchor.exact)
+    """An exact label/alias match, except a one-word key that reaches a sense-labelled name
+    unless the demand itself names that sense (decision 66)."""
+    concept = _exact(graph, demand.label, demand) or _exact(graph, demand.anchor.exact, demand)
     return concept.id if concept else None
 
 
