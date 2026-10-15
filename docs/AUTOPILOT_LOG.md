@@ -2056,8 +2056,20 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   `/stage/` piece. Article notes unaffected (linking looks up model-extracted demands only).
   Plan `docs/plans/feed-quality.md` (F1–F5) → plan-reviewer.
 
+- Feed-quality plan: plan-reviewer REVISE 8 (stored outlet lists not re-filtered, caps labels
+  matching lower-case words, relevance not measured, media's `mostly_latin` caller…) → APPROVE.
+- Built test first (32 red → green): F1 stopword aliases out of the index, F2 single words only
+  as caps acronyms or own-domain plain labels, F3 `is_latin_title`, F4 YouTube declared language,
+  F5 non-news sections at collection and read time. API 1,200 passed, ruff clean.
+- `scripts/feed_quality.py` before (main worktree) / after: junk-concept rows 23 → 0 of 32,
+  read-first rows 10 → 5 (all sensible), relevance floor held; one trader video drops (accepted).
+  DESIGN §17.1/§17.1a/§17.2/media, STATUS §5/§10/§33 updated.
+
 ### Next steps (resume here, in order)
-0. Feed-quality fix: plan-reviewer → tests first → build → measure → milestone-reviewer → PR →
+0. milestone-reviewer → PR → CI → merge → `make deploy-api` (Sourabh's yes) → live check
+   (`GET /v1/feed` per persona: no junk rows, none of the four wrong lines). Then the Oct 16 plan
+   resumes on UTC Oct 16 from S2 (re-seed on the fixed code). Ask Sourabh the new submit date.
+000. (superseded) Feed-quality fix: plan-reviewer → tests first → build → measure → milestone-reviewer → PR →
    deploy-api (Sourabh's yes). Then the Oct 16 plan resumes on UTC Oct 16 from S2 (re-seed).
 00. (done) Sourabh's answer on the feed rows (keep, drop named items from `persona_feeds`, or re-run).
 1. S2 demo feed re-seed (outlet freshness → dry run → real, same UTC day), then S4, S5, S6

@@ -1036,11 +1036,13 @@ is ready to learn. No LLM anywhere on this path.
   cached in `rec_cache` under `feed:<domain>:<day>`. Results pass the blocklist, a page-shape
   check (an article URL must not be a section, tag or home page: a ≥ 3-word slug or a date/id
   in the path; podcast chart and genre pages are dropped), the 14-day article filter (when a
-  date is given), an English-only check (≥ 70% of title letters in Latin script; YouTube's
-  language setting is only a hint) and a relevance gate: the title or snippet names the topic (its label, the first
-  4 letters of a long label such as "tech", or a word of the domain's taxonomy scope line such
-  as "AI" or "inflation"), or a graph concept of that domain (sports news rarely says "sport",
-  but it names a penalty).
+  date is given), an English-only check (at most one title letter outside Latin script, decision
+  64; YouTube's language setting is only a hint, and a video whose `defaultAudioLanguage`, else
+  `defaultLanguage`, is declared and not English is dropped by the provider) and a relevance
+  gate: the title or snippet names the topic (its label, the first 4 letters of a long label such
+  as "tech", or a word of the domain's taxonomy scope line such as "AI" or "inflation"), or a graph
+  concept of that domain as §17.2 names them (sports news rarely says "sport", but it names a
+  penalty kick; a single word counts only as the concept's own label or a caps acronym).
 - **Caps.** `FEED_SEARCH_DAILY_CAP` (60 calls/day) is reserved under the same lock as the global
   and YouTube caps; past any of them nothing is called and cached results are served.
 - **In-request only.** Missing searches run inside the request with a 6 s limit (Cloud Run
@@ -1069,8 +1071,11 @@ outlets' own section feeds**; the search above is only a restricted fallback.
   `POST /v1/internal/feeds/collect` at 06:00 and 18:00 IST. Every feed is fetched once through
   `safe_fetch` (feed content types, 3 MiB cap, robots.txt) and parsed from those bytes
   (`feedparser` never gets a URL). Kept: the outlet's own article hosts, https, no live/video/
-  audio/hub path, dated within 3 days, mostly Latin title; URLs canonicalised (tracking query and
-  fragment dropped). One doc per topic, `rec_cache/outlets:<topic>` = `{outlet: {items ≤ 20
+  audio/hub path, dated within 3 days, a Latin-script title (§17.1), and a section that fits the
+  topic: `stage`, `film`, `music`, `books`, `travel` and the like only for culture, `sport` only
+  for sports (decision 64: the Guardian's world feed carried a theatre piece into politics); URLs
+  canonicalised (tracking query and fragment dropped). Section and script are checked again when
+  stored lists are read (`fits_topic`), since a list keeps earlier items for days. One doc per topic, `rec_cache/outlets:<topic>` = `{outlet: {items ≤ 20
   newest, fetched_at}}`, merged per outlet: an outlet that failed keeps its list, and the 3-day
   filter is re-applied to every list each run. 14 writes a run; no reader data, no LLM, no search
   API. A newest run older than 36 h is logged by the feed.
@@ -1096,9 +1101,14 @@ score = interest(topic) × format_affinity(format) × readiness × goal_boost ×
 ```
 - interest: stored domain interest, normalised so the top topic is 1.0.
 - format_affinity and freshness: as Up next (§16.4), sharing its per-reader format model.
-- readiness: concepts the item names (exact label/alias match over 1–4-word n-grams of title and
-  snippet) that are new to this reader (p_know < 0.5): 1–4 new → 1.0, none → 0.6, more than 4 →
-  0.8^(k−4).
+- readiness: concepts the item names (`named_concepts`: exact label/alias match over 1–4-word
+  n-grams of title and snippet, longest first) that are new to this reader (p_know < 0.5): 1–4
+  new → 1.0, none → 0.6, more than 4 → 0.8^(k−4). A **single word** names a concept only when
+  unambiguous (decision 64): a caps-only name (RBI, M&A, EBITDAR) needs the word in caps, in any
+  domain; otherwise only the plain label counts (no alias: "stocks" ≠ Stock variable; no
+  disambiguated label: "basis" ≠ Basis (finance)), and only in the item's own domain or when both
+  are in the business group. The alias index never holds a one-word stopword alias ("to", "it",
+  "AT": §2's lookup, `ALIAS_STOPWORDS`).
 - goal_boost: 1.3 when the item names a learning-goal target (§18).
 - Selection: per topic up to 3 articles (mixed local/global, §17.1a), 2 videos, 1 podcast (one
   per URL; a URL under two topics belongs to the earlier), then the topics' picks interleaved by
@@ -1315,7 +1325,8 @@ made automatically, and the player is the source.
    → growth slots → `pending_contents/{id}` with `stage: "transcribe"`, the `media` block, no
    paragraphs, `source: user_ingested`. A refusal refunds the slot and is remembered for the day.
 - **YouTube lookup:** `videos.list` (1 quota unit): public, embeddable, not age-restricted, not
-  live, 30 s to the cap, English by `defaultAudioLanguage` when set and ≥ 70% Latin title.
+  live, 30 s to the cap, English by `defaultAudioLanguage` when set and a Latin-script title
+  (at most one letter outside Latin script, §17.1).
 - **Apple lookup:** `itunes.apple.com/lookup` with our own digits (latest 200 episodes), the
   episode's `episodeUrl`, MP3 only, length within the cap; then `audio_head`, a 64 KB ranged GET
   through safe_fetch (§11.2): `audio/mpeg`, a total size within the byte cap, an MP3 frame.

@@ -1,0 +1,114 @@
+project readlayer-sourabh-26
+served graph 2026-10-10-folded-5206+g1, 5288 concepts
+
+newcomer (feed 2026-10-15T07:21:52+00:00): 11 rows
+  video   economics  stretch  "The Money Squeeze That's Choking the Economy"
+      named=['Flow variable', 'Take a touch'] read_first=['Economic stocks and flows']
+  video   technology ready    '5 Concepts to Know for Coding with AI Agents'
+      named=['Take a touch', 'Autonomous AI agents', 'AI', 'Computer program'] read_first=[]
+  video   economics  stretch  '2026 Economics Nobel Prize Explained | Robert Hall Michael W'
+      named=['Economics', 'RBI', 'Repo rate', 'Inflation', 'Stock market update'] read_first=['Central bank']
+  video   technology stretch  'Gadgets of the future? | BBC News'
+      named=['Futures contract'] read_first=['Derivative contracts']
+  article economics  ready    'How a Chinese-made toy gets to a US retailer'
+      named=['Take a touch', 'Investment horizon'] read_first=[]
+  article technology stretch  'ASUS ExpertBook laptops get up to ₹21,000 off during Flipkar'
+      named=['Take a touch', 'Activity theory', 'No-cost EMI', 'Welfare', 'AI models'] read_first=['Consumer credit']
+  article economics  ready    'Rupee rises 19 paise to close at 95.17 against U.S. dollar'
+      named=['Indian Rupee', 'Take a touch', 'Activity theory', 'U.S. Dollar', 'RBI', 'Speculation'] read_first=[]
+  article technology familiar 'GTA 6 PC launch tipped for early 2027, months after PS5 and '
+      named=['Personal computer', 'Take a touch'] read_first=[]
+  podcast economics  ready    'Economics Explained | Podcast on Spotify'
+      named=['Economics', 'Activity theory', 'Point of view', 'Economist'] read_first=[]
+  article technology familiar 'Haier eyes 30 to 35% festive growth this season, says CEO N '
+      named=['Take a touch', 'On the up'] read_first=[]
+  article economics  familiar 'How much is the minimum wage?'
+      named=['Minimum wage', 'Wage'] read_first=[]
+
+trader (feed 2026-10-15T07:22:01+00:00): 11 rows
+  article finance    stretch  'Sebi likely to adopt blended pricing framework to curb expir'
+      named=['SEBI', 'Take a touch', 'Expiry days', 'Volatility', 'Derivative contracts', 'Consultation paper', 'Market liquidity', 'Auction'] read_first=['Regulatory framework', 'Industry regulator']
+  article business   ready    'Kumar Mangalam Birla eyes $30 billion investment amid global'
+      named=['Investment (macroeconomics)', 'Knightian uncertainty', 'Take a touch', 'Revenues'] read_first=[]
+  video   finance    stretch  'Bank of America Slides on $1.21 Billion Fine as Chip Stocks '
+      named=['Stock variable', 'Index coverage'] read_first=['Economic stocks and flows']
+  video   business   stretch  'AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, '
+      named=['AI', 'Stock variable', 'Stock market update', 'Take a touch'] read_first=['Economic stocks and flows']
+  video   finance    ready    'Nifty Crash 2026: SIP Band Karein Ya Continue? Ab Kya Karein'
+      named=['Nifty 50', 'Systematic investment plan', 'Ab'] read_first=[]
+  article business   familiar 'Kelly Clarkson and a Brooklyn store clashed on social media.'
+      named=['Give the treatment'] read_first=[]
+  podcast finance    ready    'Australian Finance Podcast'
+      named=['Take a touch', 'Activity theory'] read_first=[]
+  article business   familiar 'Goldman Sachs Leads Rivals in Third-Quarter Share Sale Reven'
+      named=['Revenues', 'Equities', 'Underwriting', 'Take a touch'] read_first=[]
+  article finance    familiar 'How backlash against data centres could shape the US midterm'
+      named=['Data center'] read_first=[]
+  video   business   familiar 'Share Market Crash: FIIs Selling, Crude Oil & Adani Group Dr'
+      named=['foreign portfolio investor (FPI)', 'Crude oil', 'Put down'] read_first=[]
+  article finance    familiar 'How a Chinese-made toy gets to a US retailer'
+      named=['Take a touch', 'Investment horizon'] read_first=[]
+
+policy_student (feed 2026-10-15T07:22:05+00:00): 10 rows
+  article politics   ready    'Paddington: The Musical is coming to Sydney in 2027'
+      named=['Take a touch', 'Activity theory', 'Bank reserves'] read_first=[]
+  article policy     stretch  'Cardiology dept. in Kozhikode MCH in need of critical care'
+      named=['Basis (finance)', 'Take a touch'] read_first=['Spread', 'Basis points']
+  video   policy     stretch  'Was it insider trading? Bloomberg: CFTC staff told to RETRAC'
+      named=['Give the treatment', 'Insider trading', 'Take a touch', 'Activity theory', 'Commodity Futures Trading Commission'] read_first=['Derivative contracts']
+  article politics   familiar 'Student protests in Albania turn violent as demonstrators cl'
+      named=['Take a touch', 'Capital (economics)'] read_first=[]
+  podcast policy     stretch  'The Politics of Policy Analysis - Podcast - Apple Podcasts'
+      named=['Short positions', 'State of the art', 'Take a touch', 'Give the treatment'] read_first=['Leverage']
+  article politics   familiar "Iran-backed Houthis strike Saudi oil company Aramco's headqu"
+      named=['Houthis'] read_first=[]
+  article policy     familiar 'Citizens asked to detail demographic changes in their areas '
+      named=['Take a touch'] read_first=[]
+  video   politics   -        'ഈ റാലി സൂചനയോ| Political Analysis|Debate Malayalam| NEWS IND'
+      named=[] read_first=[]
+  article policy     familiar 'Marco Rubio to skip Delhi, visit Mumbai and Jamnagar next we'
+      named=['Take a touch', 'Oil refinery', 'Sanctions regime', 'Imports'] read_first=[]
+  video   politics   familiar 'BJP’s Political Game Over, Public Frustration Is Growing | S'
+      named=['Game over', 'Journalist', 'Take a touch'] read_first=[]
+
+first pages: {'rows': 32, 'junk rows': 23, 'read-first rows': 10}
+single-word concepts named on first pages (26):
+  newcomer/technology: AI [business] in '5 Concepts to Know for Coding with AI Agents'
+  newcomer/economics: Economics [economics] in '2026 Economics Nobel Prize Explained | Robert Hall'
+  newcomer/economics: RBI [policy] in '2026 Economics Nobel Prize Explained | Robert Hall'
+  newcomer/economics: Inflation [economics] in '2026 Economics Nobel Prize Explained | Robert Hall'
+  newcomer/technology: Welfare [economics] in 'ASUS ExpertBook laptops get up to ₹21,000 off duri'
+  newcomer/economics: RBI [policy] in 'Rupee rises 19 paise to close at 95.17 against U.S'
+  newcomer/economics: Speculation [finance] in 'Rupee rises 19 paise to close at 95.17 against U.S'
+  newcomer/economics: Economics [economics] in 'Economics Explained | Podcast on Spotify'
+  newcomer/economics: Economist [economics] in 'Economics Explained | Podcast on Spotify'
+  newcomer/economics: Wage [economics] in 'How much is the minimum wage?'
+  trader/finance: SEBI [policy] in 'Sebi likely to adopt blended pricing framework to '
+  trader/finance: Volatility [finance] in 'Sebi likely to adopt blended pricing framework to '
+  trader/finance: Auction [business] in 'Sebi likely to adopt blended pricing framework to '
+  trader/business: Investment (macroeconomics) [economics] in 'Kumar Mangalam Birla eyes $30 billion investment a'
+  trader/business: Revenues [business] in 'Kumar Mangalam Birla eyes $30 billion investment a'
+  trader/business: AI [business] in 'AI Stocks Tumble On OpenAI News; GigaCloud Tech, S'
+  trader/finance: Ab [culture] in 'Nifty Crash 2026: SIP Band Karein Ya Continue? Ab '
+  trader/business: Revenues [business] in 'Goldman Sachs Leads Rivals in Third-Quarter Share '
+  trader/business: Equities [finance] in 'Goldman Sachs Leads Rivals in Third-Quarter Share '
+  trader/business: Underwriting [finance] in 'Goldman Sachs Leads Rivals in Third-Quarter Share '
+  trader/business: foreign portfolio investor (FPI) [finance] in 'Share Market Crash: FIIs Selling, Crude Oil & Adan'
+  policy_student/policy: Basis (finance) [finance] in 'Cardiology dept. in Kozhikode MCH in need of criti'
+  policy_student/politics: Capital (economics) [economics] in 'Student protests in Albania turn violent as demons'
+  policy_student/politics: Houthis [policy] in 'Iran-backed Houthis strike Saudi oil company Aramc'
+  policy_student/policy: Imports [economics] in 'Marco Rubio to skip Delhi, visit Mumbai and Jamnag'
+  policy_student/politics: Journalist [culture] in 'BJP’s Political Game Over, Public Frustration Is G'
+
+cached search results passing keep_for, days 2026-10-13..2026-10-15:
+  business    {'video kept': 7, 'video seen': 7}
+  economics   {'podcast kept': 10, 'podcast seen': 10, 'video kept': 5, 'video seen': 5}
+  finance     {'podcast kept': 10, 'podcast seen': 10, 'video kept': 8, 'video seen': 8}
+  policy      {'podcast kept': 10, 'podcast seen': 10, 'video kept': 1, 'video seen': 1}
+  politics    {'podcast kept': 8, 'podcast seen': 8, 'video kept': 6, 'video seen': 6}
+  technology  {'podcast kept': 6, 'podcast seen': 6, 'video kept': 9, 'video seen': 9}
+  newcomer: 0 snapshot videos/podcasts now fail is_relevant
+  trader: 0 snapshot videos/podcasts now fail is_relevant
+  policy_student: 0 snapshot videos/podcasts now fail is_relevant
+
+alias stopwords: not in this code
