@@ -7,7 +7,8 @@ Branch `oct16-seeding-2` (with decision 65; one review, one PR, one API deploy).
 (below). Re-linking the whole store safely needs more than today allows (concurrent growth
 writes, a revert path, shared cache keys); it is deferred and recorded in STATUS §5 with the
 measured counts. **Cut-off**, checked on the clock at 19:00 IST: if this is not merged by then,
-the PR ships decision 65 alone (its code and docs, without this plan's commits) and this follows.
+the PR ships decision 65 alone (its code and docs, without this plan's commits; decision 66's
+rows are taken out of STATUS §10 in that PR) and this follows.
 
 ## What is wrong (measured 2026-10-15, production, read only)
 
@@ -56,11 +57,21 @@ the PR ships decision 65 alone (its code and docs, without this plan's commits) 
   demand old → new (or unlinked), the persona diff (deterministic annotate output per demo doc ×
   persona, old links vs new, as `relink_dry_run.persona_diff` did) and the cache entries L3 would
   delete; saves everything (old and new per demand, graph version) to a local file.
+- The dry run saves its scoped content-id list; `--write` and `--revert` touch only that list.
 - `--write`: per doc, one Firestore transaction that re-reads it, refuses if its demand ids or
   target ids differ from the dry-run snapshot or `growing_until` is in the future, and updates
   only the `demands` field (never `put` of the whole doc). `--revert` applies the saved old values
-  under the same precondition. Production writes: the dry run's printed doc and demand counts.
+  under the same precondition **and** clears the cache again (L3's query and delete: cards made
+  for the new links would otherwise be served on the old ones), with a printed count and
+  Sourabh's yes. Production writes: the dry run's printed doc and demand counts.
+- Firestore access stays in the store layer (CLAUDE.md): `content_repo` gains the transactional
+  demands-only update, `explain_repo` gains find-and-delete by `span_hash`, each with a Firestore
+  version and an in-memory fake; the script calls only these. Hashes come from
+  `ExplainInputs.span_hash` (span and paragraph mode), never a copy of its string.
 - Run after merge and **before** the API deploy, so every instance's catalog loads the new links.
+  The demo feeds were re-seeded on the fixed code today and are final; if they are re-seeded again
+  before recording, the dry run is repeated and only the new docs are written, within the newly
+  printed counts (deletes on Sourabh's yes).
 
 **L3. Retire the cached explanations of re-linked spans** (same script, `--write`, after L2).
 Cache entries store their `span_hash` (span mode: content id, paragraph id, span text; paragraph
@@ -81,10 +92,12 @@ demands disagree.
   "RoDTEP", "401(k)", "bond duration" (multi-word key of Duration (bond)). The refused demand is in
   `pending_labels`; `link_demands` with a fake confirm that picks Personal Independence Payment
   links it there; a refused context-type demand ends unlinked.
-- `test_relink_senses.py`: scope (sense key in, acronym out, held-out out, grown out, multi-word
-  out); `--write` changes only those demands' `target_id` and only the `demands` field; refusal
-  when demands changed since the dry run and when a growth claim is live; `--revert` restores;
-  cost refusal before any call; the cache query deletes only matching `span_hash` entries.
+- `test_relink_senses.py` (fakes only, no emulator, no network): scope (sense key in, acronym
+  out, held-out out, grown out, multi-word out); `--write` changes only those demands'
+  `target_id` and only the `demands` field; refusal when demands changed since the dry run and
+  when a growth claim is live; `--revert` restores and clears the cache again; cost refusal before
+  any call; the cache delete removes only matching `span_hash` entries (span and paragraph mode).
+- `test_content_repo` / `test_explain_repo` (nearest files): the two new store methods and fakes.
 - `test_prereq_fixes` (or `test_graph.py`): the new pair is dropped on load.
 
 ## Measurement (recorded in STATUS §34, with decision 65)
