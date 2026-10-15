@@ -1,0 +1,85 @@
+/* /v2 concept only (docs/plans/landing-v2.md R9): every selector starts with .lp2, so nothing here
+   can restyle the landing at / even after a visit to /v2. Existing tokens only. */
+
+.lp2-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.lp2-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s4);
+}
+@media (max-width: 640px) {
+  .lp2-cols {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lp2-col__head {
+  margin-bottom: var(--s2);
+  font: 500 var(--text-ui-sm) / 1.4 var(--font-ui);
+  color: var(--muted);
+}
+
+.lp2-original {
+  font: 400 17px / var(--leading-body) var(--font-read);
+  color: var(--ink);
+}
+/* Background and underline, so the mark never relies on colour alone. */
+.lp2-clause--on {
+  background: var(--accent-wash);
+  text-decoration: underline;
+  text-decoration-color: var(--accent-line);
+  text-underline-offset: 3px;
+}
+
+.lp2-shape {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lp2-line {
+  display: block;
+  width: 100%;
+  padding: var(--s1) var(--s2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: 400 16px / 1.5 var(--font-read);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.lp2-line:hover,
+.lp2-line--on {
+  background: var(--accent-wash);
+}
+.lp2-line:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.lp2-line__tag,
+.lp2-line__at {
+  margin-right: var(--s2);
+  font: 500 var(--text-ui-sm) / 1 var(--font-ui);
+  white-space: nowrap;
+}
+.lp2-line__tag {
+  color: var(--muted);
+}
+.lp2-line__at {
+  color: var(--accent-ink);
+}
+.lp2-shape--scan .lp2-line__text::before {
+  content: "• ";
+}
+
+.lp2-try {
+  margin-top: var(--s4);
+}

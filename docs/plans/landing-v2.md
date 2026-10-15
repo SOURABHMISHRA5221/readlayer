@@ -47,7 +47,7 @@ discussion. The live landing at `/` is not changed. Branch `landing-v2` from `ma
   "Original" (the one public sentence, R4–R7) and "Your shape". **Every shape line is a clause of
   the sentence or runs of its own words** (ellipsis marks a cut; no new words), with a grey tag
   (¶5 s1). Length picks clauses, Level picks full or trimmed forms, Format lays them out (Read: lines; Scan: bullets, trimmed; Listen / Watch: each line with the time it would
-  start at 150 words a minute, as a mock). Hover, focus or tap a line highlights its sentence in
+  start at 150 words a minute, as a mock). Hover, focus or tap a line highlights its clause in
   Original. Changing a control reflows "Your shape" over 300 ms: lines are keyed by sentence, so
   the same elements move (FLIP); new ones fade in; reduced motion: no animation. No gloss card,
   no word underlines. "Try it on any article" under the demo, inert.

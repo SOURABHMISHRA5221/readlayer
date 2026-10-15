@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 
 import { ThemeToggle } from "../components/ThemeToggle";
 import { DEFAULT_DEMO_PERSONA } from "../landing/demoPersonas";
@@ -27,12 +27,26 @@ type Busy = null | "demo" | "google";
 /** The faces a note card uses: fetched once the landing is up, so opening a note fetches nothing. */
 const CARD_FACES = ["400 16px 'Schibsted Grotesk'", "600 16px 'Schibsted Grotesk'", "700 16px 'Schibsted Grotesk'", "400 16px 'Source Serif 4'", "italic 400 16px 'Source Serif 4'"];
 
+/** /v2: the view-only concept landing (decision 63, docs/plans/landing-v2.md), its own chunk. */
+const LandingV2 = lazy(() => import("../landing/v2/LandingV2"));
+
+export default function LandingRoute({ url }: { url: URL }) {
+  if (url.pathname === "/v2") {
+    return (
+      <Suspense fallback={null}>
+        <LandingV2 />
+      </Suspense>
+    );
+  }
+  return <LandingPage url={url} />;
+}
+
 /**
  * The signed-out front door (decision 41, plan A): what Gloss solves, why the usual options fail,
  * how it works and why to trust it, with a live demo and no network after load. A signed-out
  * deep link shows it too, and opens after sign-in.
  */
-export default function LandingPage({ url }: { url: URL }) {
+function LandingPage({ url }: { url: URL }) {
   const [persona, setPersona] = useState<PersonaKey>(DEFAULT_DEMO_PERSONA);
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState<string | null>(null);
