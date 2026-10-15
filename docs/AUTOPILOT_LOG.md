@@ -2026,3 +2026,20 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 1. Oct 16 items (persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`, media
    snapshots, readiness mix re-run, video, deck). Main bundle ≈ 0.05 KB left: lazy only.
 2. Oct 17: **remove `/v2`** (STATUS §9 row), then gitleaks, submit.
+
+## Oct 16 seeding (started 2026-10-15, branch `oct16-seeding`)
+
+- Sourabh: "resume with the Oct 16 items, starting with the persona re-seed". Tavily: 324 credits
+  left (he gives a new key when they run out).
+- Measured first (read only): fresh templates equal the stored 2026-10-04 ones in concepts, bands,
+  θ and weights; only version labels and seed timestamps differ, so the re-seed resets the 90-day
+  forgetting clock (λ ≈ 0.93 today, ≈ 0.80 by Nov 6 without it).
+- Plan `docs/plans/oct16.md`: plan-reviewer REVISE 9 → REVISE 2 → **APPROVE** (nit taken).
+- **S1 done**: old templates dumped to the session scratchpad; `seed_personas --write` → 3 docs;
+  read back `{persona}@2026-10-10-folded-5206`, 109 / 86 / 115 edges, `last_seen` 2026-10-15.
+  Live instances pick them up at S3 (same-image revision, Sourabh's yes).
+
+### Next steps (resume here, in order)
+1. S2 demo feed re-seed (outlet freshness → dry run → real, same UTC day), then S4, S5, S6
+   (`preingest_feed.py`, test first; must run on UTC Oct 15), S3 restart on Sourabh's yes, S4b,
+   S7–S9 per the plan.
