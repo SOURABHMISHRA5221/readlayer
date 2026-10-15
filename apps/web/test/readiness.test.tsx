@@ -8,7 +8,7 @@ vi.mock("../src/lib/recEvents", () => ({ queueRecEvent: () => undefined }));
 
 import ForYouTab from "../src/components/library/ForYouTab";
 import type { FeedItem } from "../src/lib/feedApi";
-import { READINESS_BASIS, readinessLine } from "../src/lib/readiness";
+import { ARTICLE_BASIS, READINESS_BASIS, readinessLine } from "../src/lib/readiness";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -74,6 +74,19 @@ describe("For you rows", () => {
     expect(whys[0].querySelector(`[title="${READINESS_BASIS}"]`)?.textContent).toBe("A stretch: read up on Bond first");
     expect(row("Rates today").querySelector(".row__why")?.textContent).toBe("Ready for you");
     for (const meta of host.querySelectorAll(".row__meta")) expect(meta.textContent).not.toMatch(/stretch|Ready|familiar/i);
+  });
+
+  it("say where the line comes from: the stored article's ideas or the title (decision 65)", async () => {
+    await mountFeed([
+      feedItem({ id: "e", title: "Stored", readiness: "ready", readiness_basis: "article" }),
+      feedItem({ id: "f", title: "Titled", readiness: "familiar", readiness_basis: "title" }),
+      feedItem({ id: "g", title: "Older API", readiness: "ready" }),
+    ]);
+    const basis = (t: string) => row(t).querySelector(".row__why span")?.getAttribute("title");
+    expect(basis("Stored")).toBe(ARTICLE_BASIS);
+    expect(ARTICLE_BASIS).toBe("Based on the main ideas in the article");
+    expect(basis("Titled")).toBe(READINESS_BASIS);
+    expect(basis("Older API")).toBe(READINESS_BASIS);
   });
 
   it("show nothing new when the API leaves the fields out or names no idea", async () => {

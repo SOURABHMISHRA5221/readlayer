@@ -27,6 +27,8 @@ export interface FeedItem {
   readiness?: Readiness | null;
   /** New prerequisites to read up on first, most basic first, at most 2. */
   read_first?: string[];
+  /** Decision 65: "article" when readiness comes from the stored article's ideas. */
+  readiness_basis?: "article" | "title";
 }
 
 export type Readiness = "familiar" | "ready" | "stretch";

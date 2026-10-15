@@ -6,7 +6,7 @@ import { FEED_STALE } from "../../lib/feedStale";
 import { pendingNote, reaskDelay, snapshotNote, visibleItems, wantsCountry } from "../../lib/feedView";
 import { formatDate } from "../../lib/format";
 import { personaParam, type PersonaKey } from "../../lib/personas";
-import { READINESS_BASIS, readinessLine } from "../../lib/readiness";
+import { readinessBasis, readinessLine } from "../../lib/readiness";
 import { originalLabel } from "../../lib/recLabels";
 import { navigate, withParams } from "../../lib/router";
 import { External } from "../Icons";
@@ -27,7 +27,7 @@ function time(item: FeedItem): string {
 /** The goal line (if any), then readiness from the reader's map (decision 60). */
 function why(item: FeedItem): ReactNode {
   const ready = readinessLine(item);
-  const line = ready && <span title={READINESS_BASIS}>{ready}</span>;
+  const line = ready && <span title={readinessBasis(item)}>{ready}</span>;
   if (!item.goal) return line;
   return (
     <>
