@@ -3,8 +3,8 @@
 Branch `oct16-seeding` (the seeding work found it; one PR for both). Sourabh, 2026-10-15, on the
 wrong For you rows found while gating the re-seeded demo feeds: "fix if you need deadline will
 extend by 4 days minimum but still fix". So the code freeze is lifted **for this fix only**, and
-the submission date moves by ≥ 4 days (exact date from Sourabh; STATUS §9's Oct 16/17 rows,
-including `/v2` removal, gitleaks and submit, move when he gives it). The Oct 16 seeding plan
+the hackathon deadline has ≥ 4 days of slack, but the plan stays: submit by Oct 18 (Sourabh,
+2026-10-15: "we will not change date yet as our plan will be to submit by 18th only"). The Oct 16 seeding plan
 (`docs/plans/oct16.md`) pauses after its S4 gate and resumes on the fixed feeds (§ "Then").
 
 ## What is wrong (measured 2026-10-15 on the three re-seeded `persona_feeds`, served graph

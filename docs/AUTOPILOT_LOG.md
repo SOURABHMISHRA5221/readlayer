@@ -2049,7 +2049,8 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   and a Malayalam-titled video. Asked Sourabh how to handle them (code freeze) before S5/S6.
 
 - Sourabh on the rows: "fix if you need deadline will extend by 4 days minimum but still fix" →
-  **decision 64**: freeze lifted for a real fix; submission moves ≥ 4 days (exact date from him).
+  **decision 64**: freeze lifted for a real fix. Then: "we will not change date yet as our plan
+  will be to submit by 18th only" — the extra days are slack, the target stays Oct 18.
 - Causes traced: stopword aliases (`it`, `to`, `at` → sports/education concepts on nearly every
   row), single-word aliases matched in free text in the wrong sense (stocks, futures, basis,
   short, reserves…), `mostly_latin` passing a Malayalam title, the Guardian world feed carrying a
@@ -2068,7 +2069,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 ### Next steps (resume here, in order)
 0. milestone-reviewer → PR → CI → merge → `make deploy-api` (Sourabh's yes) → live check
    (`GET /v1/feed` per persona: no junk rows, none of the four wrong lines). Then the Oct 16 plan
-   resumes on UTC Oct 16 from S2 (re-seed on the fixed code). Ask Sourabh the new submit date.
+   resumes on UTC Oct 16 from S2 (re-seed on the fixed code). Submit by Oct 18 (unchanged).
 000. (superseded) Feed-quality fix: plan-reviewer → tests first → build → measure → milestone-reviewer → PR →
    deploy-api (Sourabh's yes). Then the Oct 16 plan resumes on UTC Oct 16 from S2 (re-seed).
 00. (done) Sourabh's answer on the feed rows (keep, drop named items from `persona_feeds`, or re-run).
