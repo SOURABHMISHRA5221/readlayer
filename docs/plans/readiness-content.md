@@ -5,7 +5,7 @@ committed with tests). Sourabh, 2026-10-15, after decision 64 left most demo row
 readiness line: "plan fix", then "yes" to the bigger fix with the politics/policy tweak folded in.
 The code freeze is lifted again for this change only. Recording is Oct 16–17, submission by Oct 18.
 
-**Cut-off:** if R1/R2 are not merged by **19:00 IST Oct 15**, run the Oct 16 plan's S3 as planned
+**Cut-off:** checked on the clock at **19:00 IST Oct 15**: if R1/R2 are not merged by then, run the Oct 16 plan's S3 as planned
 (same-image restart) and propose to Sourabh shipping B1/B2 alone and cutting R1/R2.
 
 ## Why rows are blank (measured 2026-10-15 on the re-seeded demo feeds, first pages)
@@ -97,8 +97,8 @@ recorded in STATUS §5 like the M6 leftover.
 
 ## Measurement (production, read only; recorded in STATUS §34)
 
-`make check-gcp` first. `scripts/feed_quality.py` and `readiness_mix.py` use `attach_ideas`
-(old from a `main` worktree with the scripts copied in, new from the branch):
+`make check-gcp` first. `scripts/feed_quality.py` and `readiness_mix.py` use `attach_ideas`; the
+"old" run is the branch's `feed_quality.py --title-only` (ideas off, R2 off), the "new" run without it:
 - Per persona, first-page level mix and blank rows, old vs new; every read-first line on first
   pages listed and read.
 - Selected URLs per persona, old vs new: differences may come only from R2 and each is listed. An
