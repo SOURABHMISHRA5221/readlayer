@@ -2015,3 +2015,6 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   bar wraps; "How we test" unstyled) → all applied; re-run: axe 0 at 1440/390/360 light and real
   dark, bar on one line, reflow animates with motion on. Suggested by review: remove `/v2` on
   Oct 16 after the teammate discussion rather than on submission eve (Sourabh to decide).
+- milestone-reviewer round 2: **FIX** (toggle 8 px past the screen at 360; the 13.5 px font) →
+  fixed (scoped gap/padding, type unchanged, right-edge check added) → round 3 **SHIP** (44442c4).
+  Next: PR → CI → merge → deploy-web on Sourabh's yes → live check.
