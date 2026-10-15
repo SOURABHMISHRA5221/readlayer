@@ -2129,4 +2129,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    (check the `llm call` latencies first); no shell time limit shorter than the run.
 2. Sourabh: the video article (Guardian Polymarket/HSBC proposed) and whether `/v2` comes down
    today. Then S9 facts for the video and deck; video Oct 16–17; submit by Oct 18.
+- Warm finished (Guardian 27/27, RoDTEP 18/18). Sourabh: "no action on v2"; video article my call
+  → Guardian Polymarket/HSBC; recording sheet `docs/recording.md`.
+
+### Next steps (resume here, in order)
+1. Sourabh records the video (Oct 16–17) from `docs/recording.md`; deck with its numbers.
+2. Oct 17–18: remove `/v2` only when Sourabh says; gitleaks over history; submit by Oct 18.
 
