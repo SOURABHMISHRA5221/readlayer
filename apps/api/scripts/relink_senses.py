@@ -1,9 +1,9 @@
 """Re-link the demo docs' one-word sense keys (decision 66, plan docs/plans/sense-links.md L2/L3).
 
     uv run python -m scripts.relink_senses --dry-run           # model calls, no Firestore write
-    uv run python -m scripts.relink_senses --write             # apply the saved new links
-    uv run python -m scripts.relink_senses --write --delete-cache   # ... and retire their cards
-    uv run python -m scripts.relink_senses --revert [--delete-cache]  # put the old links back
+    uv run python -m scripts.relink_senses --write --only ID   # apply a judged doc's new links
+    uv run python -m scripts.relink_senses --write --only ID --delete-cache  # ... retire its cards
+    uv run python -m scripts.relink_senses --revert --only ID [--delete-cache]  # old links back
 
 Docs: warm_demo's DEMO_ARTICLES and the article rows of the demo feeds' first pages, corpus only,
 held-out excluded. A demand is in scope when its link is an exact match of its label or anchor
@@ -171,6 +171,7 @@ async def dry_run() -> int:
 
     entries: list[Entry] = []
     hashes: set[str] = set()
+    per_doc: dict[str, set[str]] = {}
     for cid, demands in scoped.items():
         doc = docs[cid]
         linked, _ = await link_demands(
@@ -189,7 +190,8 @@ async def dry_run() -> int:
             print(f"  {d.anchor.exact!r}: {label(old)} → {label(new)}")
         if changes:
             entries.append(Entry(cid, [(d.id, d.target_id) for d in doc.demands], changes))
-            hashes |= retired_hashes(doc, [d for d in demands if d.id in changes], graph)
+            per_doc[cid] = retired_hashes(doc, [d for d in demands if d.id in changes], graph)
+            hashes |= per_doc[cid]
         spend = embed_cost + sum(m.cost_usd for m in metas)
         if spend > MAX_USD:
             raise SystemExit(f"spend ${spend:.2f} passed ${MAX_USD}; stopping, nothing saved")
@@ -199,7 +201,7 @@ async def dry_run() -> int:
     STATE.parent.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps({
         "graph": graph.version, "made_at": datetime.now(UTC).isoformat(),
-        "entries": [e.__dict__ for e in entries], "span_hashes": sorted(hashes),
+        "entries": [e.__dict__ | {"span_hashes": sorted(per_doc[e.content_id])} for e in entries],
     }, indent=1), encoding="utf-8")  # fmt: skip
     print(f"\nwould write {len(entries)} docs, "
           f"{sum(len(e.changes) for e in entries)} demands; would retire {len(keys)} cached "
@@ -242,21 +244,31 @@ async def persona_diff(
                   f"-{sorted(b[k] for k in b.keys() - a.keys())}")  # fmt: skip
 
 
-async def write_or_revert(use: Use, delete_cache: bool) -> int:
-    from app.store.content_repo import get_content_store
-    from app.store.explain_repo import ExplainRepo
-
-    saved = json.loads(STATE.read_text(encoding="utf-8"))
+def chosen(saved: dict, only: Sequence[str]) -> tuple[list[Entry], list[str]]:  # type: ignore[type-arg]
+    """The saved entries for the docs named in `--only` (content id or its prefix), and their
+    cache hashes. Every name must match: a typo never applies nothing silently."""
+    picked = [e for e in saved["entries"] if any(e["content_id"].startswith(o) for o in only)]
+    missing = [o for o in only if not any(e["content_id"].startswith(o) for e in picked)]
+    if missing:
+        raise SystemExit(f"not in the saved dry run: {missing}")
     entries = [
         Entry(e["content_id"], [tuple(x) for x in e["before"]],  # type: ignore[misc]
               {k: tuple(v) for k, v in e["changes"].items()})  # type: ignore[misc]
-        for e in saved["entries"]
+        for e in picked
     ]  # fmt: skip
+    return entries, sorted({h for e in picked for h in e["span_hashes"]})
+
+
+async def write_or_revert(use: Use, only: Sequence[str], delete_cache: bool) -> int:
+    from app.store.content_repo import get_content_store
+    from app.store.explain_repo import ExplainRepo
+
+    entries, hashes = chosen(json.loads(STATE.read_text(encoding="utf-8")), only)
     verdicts = await apply(get_content_store(), entries, use, datetime.now(UTC))
     for cid, v in verdicts.items():
         print(f"  {cid[:10]} {use}: {v}")
     repo = ExplainRepo(_doc_store())
-    keys = await repo.keys_for_spans(saved["span_hashes"])
+    keys = await repo.keys_for_spans(hashes)
     if delete_cache:
         print(f"retired {await repo.delete_keys(keys)} cached cards")
     else:
@@ -271,7 +283,12 @@ if __name__ == "__main__":
     mode.add_argument("--write", action="store_true")
     mode.add_argument("--revert", action="store_true")
     parser.add_argument("--delete-cache", action="store_true")
+    only_help = "content id (or prefix) to apply; required for --write/--revert"
+    parser.add_argument("--only", action="append", default=[], help=only_help)
     args = parser.parse_args()
     if args.dry_run:
         sys.exit(asyncio.run(dry_run()))
-    sys.exit(asyncio.run(write_or_revert("new" if args.write else "old", args.delete_cache)))
+    if not args.only:
+        parser.error("--write and --revert need --only (the docs judged in the dry run)")
+    use: Use = "new" if args.write else "old"
+    sys.exit(asyncio.run(write_or_revert(use, args.only, args.delete_cache)))

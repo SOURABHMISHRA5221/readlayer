@@ -2114,4 +2114,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    `/v1/feed` latency, PIP notes, GTA line, `DELETE /v1/me` 204) → `warm_demo --shifts` for the
    two articles the 500 cut short. Cut-off check at 19:00 IST.
 3. S7 (Guardian proposed), S9, then video Oct 16–17 and submit by Oct 18.
+- milestone-reviewer round 1: **FIX** (the saved relink file still held the Sebi entry I had
+  recorded as dropped; STATUS header/§9/§7 stale; R2 cache check missing; deviations and blank rows
+  unrecorded) → `--only` required for write/revert (test first), dry run re-run (Sebi now
+  confirmed by the model, file holds PIP only), R2 cache check (3 new, all right sense), §34/§7/§9
+  and header updated.
 

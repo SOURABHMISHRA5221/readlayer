@@ -102,3 +102,14 @@ def test_retired_hashes_are_the_span_and_paragraph_cards_and_only_those_are_dele
     assert sorted(asyncio.run(repo.keys_for_spans(hashes))) == ["k1", "k2"]
     assert asyncio.run(repo.delete_keys(["k1", "k2"])) == 2
     assert [p for p in docs.docs if p.startswith(CACHE)] == [f"{CACHE}/k3"]
+
+
+def test_only_the_chosen_docs_and_their_cache_hashes_are_applied():
+    saved = {"entries": [
+        {"content_id": "pip", "before": [], "changes": {}, "span_hashes": ["h1", "h2"]},
+        {"content_id": "sebi", "before": [], "changes": {}, "span_hashes": ["h3"]},
+    ]}  # fmt: skip
+    entries, hashes = rs.chosen(saved, ["pip"])
+    assert [e.content_id for e in entries] == ["pip"] and hashes == ["h1", "h2"]
+    with pytest.raises(SystemExit):
+        rs.chosen(saved, ["missing"])
