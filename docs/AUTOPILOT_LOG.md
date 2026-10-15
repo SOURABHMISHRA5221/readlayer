@@ -2018,3 +2018,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 - milestone-reviewer round 2: **FIX** (toggle 8 px past the screen at 360; the 13.5 px font) →
   fixed (scoped gap/padding, type unchanged, right-edge check added) → round 3 **SHIP** (44442c4).
   Next: PR → CI → merge → deploy-web on Sourabh's yes → live check.
+- PR #44 merged (19a9af7); Sourabh's "yes" → `make deploy-web` (both sites, `index-Cst0s2J0.js`).
+  Live, signed out: `/` unchanged; `/v2` renders with noindex, axe 0, all clicks inert, 0 API
+  requests. Removal day still Oct 17 unless Sourabh moves it to Oct 16.
+
+### Next steps (resume here, in order)
+1. Oct 16 items (persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`, media
+   snapshots, readiness mix re-run, video, deck). Main bundle ≈ 0.05 KB left: lazy only.
+2. Oct 17: **remove `/v2`** (STATUS §9 row), then gitleaks, submit.
