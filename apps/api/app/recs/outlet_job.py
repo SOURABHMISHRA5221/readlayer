@@ -80,7 +80,8 @@ def topic_items(
         urls = outlet.sections.get(topic, ())
         answered = [u for u in urls if u in parsed]
         if answered:
-            out[outlet.id] = outlet_items(outlet, (e for u in answered for e in parsed[u]), now)
+            entries = (e for u in answered for e in parsed[u])
+            out[outlet.id] = outlet_items(outlet, entries, now, topic)
     return out
 
 

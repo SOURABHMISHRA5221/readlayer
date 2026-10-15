@@ -217,7 +217,8 @@ class TavilyProvider:
 
 
 class YouTubeProvider:
-    """Videos via the YouTube Data API v3: search.list, then videos.list for durations."""
+    """Videos via the YouTube Data API v3: search.list, then videos.list for durations and the
+    declared language (a video declared in another language is dropped, decision 64)."""
 
     name = "youtube"
     formats: frozenset[Format] = frozenset({"video"})
@@ -260,16 +261,20 @@ class YouTubeProvider:
             ids = [i["id"]["videoId"] for i in items]
             details = await client.get(
                 YOUTUBE_VIDEOS_URL,
-                params={"part": "contentDetails", "id": ",".join(ids), "key": self._key},
+                params={"part": "snippet,contentDetails", "id": ",".join(ids), "key": self._key},
             )
             details.raise_for_status()
+        found_details = details.json().get("items") or []
         durations = {
             v.get("id"): parse_iso_duration(v.get("contentDetails", {}).get("duration"))
-            for v in details.json().get("items") or []
+            for v in found_details
         }
+        foreign = {v.get("id") for v in found_details if not declared_english(v.get("snippet"))}
         out = []
         for item in items:
             vid, snip = item["id"]["videoId"], item.get("snippet") or {}
+            if vid in foreign:
+                continue
             thumbs = snip.get("thumbnails") or {}
             thumb = (thumbs.get("medium") or thumbs.get("high") or thumbs.get("default") or {}).get(
                 "url"
@@ -287,6 +292,14 @@ class YouTubeProvider:
                 )
             )
         return out
+
+
+def declared_english(snippet: object) -> bool:
+    """A video's spoken (else metadata) language is English or not declared. Latin-script
+    Hindi titles pass the title check, so this is the only signal for them."""
+    snip = snippet if isinstance(snippet, dict) else {}
+    language = snip.get("defaultAudioLanguage") or snip.get("defaultLanguage")
+    return not language or str(language).lower().startswith("en")
 
 
 def _days_ago(days: int) -> str:

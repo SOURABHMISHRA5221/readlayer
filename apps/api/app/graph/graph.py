@@ -9,10 +9,20 @@ import numpy as np
 from app.graph.build import normalize_label
 from app.graph.models import Concept, ConceptGraphFile
 
+# One-word aliases that are ordinary function words ("to" → Take a touch, "it", "AT" → Activity
+# theory, all seen live) are never indexed: free text is full of them (decision 64). Differs on
+# purpose from reader/onboarding_text.STOP_WORDS, which filters a reader's typed phrases.
+ALIAS_STOPWORDS = frozenset(
+    {"a", "an", "the", "to", "it", "at", "in", "on", "of", "or", "and", "as", "is", "be", "by",
+     "for", "if", "no", "not", "so", "up", "us", "we", "do", "go", "me", "my", "am", "are", "was",
+     "has", "had", "this", "that", "with", "from"}
+)  # fmt: skip
+
 
 def alias_index(concepts: list[Concept]) -> dict[str, str]:
     """Normalised label/alias → concept id. Labels beat aliases; an alias shared by two
-    concepts is ambiguous and left out, so it can only link via embeddings.
+    concepts is ambiguous and left out, so it can only link via embeddings. An alias that is a
+    single stopword is left out too (ALIAS_STOPWORDS).
     """
     index: dict[str, str] = {}
     for c in concepts:
@@ -22,7 +32,7 @@ def alias_index(concepts: list[Concept]) -> dict[str, str]:
     for c in concepts:
         for alias in c.aliases:
             key = normalize_label(alias)
-            if key and key not in labels:
+            if key and key not in labels and key not in ALIAS_STOPWORDS:
                 owners.setdefault(key, set()).add(c.id)
     index.update({k: next(iter(ids)) for k, ids in owners.items() if len(ids) == 1})
     index.pop("", None)

@@ -38,16 +38,17 @@ def reader(**kw):
 
 
 def test_named_concepts_prefers_the_longest_match_and_aliases():
-    got = fr.named_concepts(GRAPH, "VAR overturned the penalty kick after an offside call")
+    text = "VAR overturned the penalty kick after an offside call"
+    got = fr.named_concepts(GRAPH, text, "sports")
     assert [c.id for c in got] == ["c_var", "c_penalty_kick", "c_offside"]
 
 
 def test_relevance_by_topic_word_or_a_concept_of_that_domain():
     no_word = result("West Ham denied as VAR missing in the Championship")
-    assert fr.is_relevant(no_word, "sports", fr.named_concepts(GRAPH, no_word.title))
+    assert fr.is_relevant(no_word, "sports", fr.named_concepts(GRAPH, no_word.title, "sports"))
     assert fr.is_relevant(result("Sports minister resigns"), "sports", ())
     off = result("Inflation eases in September")
-    assert not fr.is_relevant(off, "sports", fr.named_concepts(GRAPH, off.title))
+    assert not fr.is_relevant(off, "sports", fr.named_concepts(GRAPH, off.title, "sports"))
     assert fr.is_relevant(
         result("Tech News This Week: Muse takes on small business"), "technology", ()
     )
@@ -96,12 +97,12 @@ def test_readiness_curve():
 
 def test_rank_counts_new_ideas_boosts_goals_and_explains_why():
     known_only = fr.FeedCandidate(
-        result("Inflation news"), "sports", fr.named_concepts(GRAPH, "Inflation")
+        result("Inflation news"), "sports", fr.named_concepts(GRAPH, "Inflation", "economics")
     )
     fresh = fr.FeedCandidate(result("Offside and VAR"), "sports",
-                             fr.named_concepts(GRAPH, "Offside and VAR"))  # fmt: skip
+                             fr.named_concepts(GRAPH, "Offside and VAR", "sports"))  # fmt: skip
     goal = fr.FeedCandidate(result("Insulin resistance explained"), "sports",
-                            fr.named_concepts(GRAPH, "Insulin resistance"))  # fmt: skip
+                            fr.named_concepts(GRAPH, "Insulin resistance", "health"))  # fmt: skip
     goals = {"c_insulin_resistance": "Insulin resistance"}
     out = fr.rank([known_only, fresh, goal], reader(goal_targets=goals), NOW, GRAPH)
     ranked = {r.candidate.result.title: r for r in out}
@@ -119,7 +120,7 @@ def test_rank_counts_new_ideas_boosts_goals_and_explains_why():
 
 def test_select_applies_format_quotas_per_topic_and_the_cap():
     cands = [fr.FeedCandidate(result(f"Offside {i}", fmt, url=f"https://x.test/{t}/{fmt}/{i}"), t,
-                              fr.named_concepts(GRAPH, "Offside"))
+                              fr.named_concepts(GRAPH, "Offside", "sports"))
              for t in ("sports", "health") for fmt in ("article", "video", "podcast")
              for i in range(5)]  # fmt: skip
     picked = fr.select(fr.rank(cands, reader(interest={"sports": 1.0, "health": 0.5}), NOW, GRAPH),
@@ -131,3 +132,62 @@ def test_select_applies_format_quotas_per_topic_and_the_cap():
         )
     assert len(picked) == 12 <= fr.MAX_ITEMS
     assert len({p.candidate.result.url for p in picked}) == 12
+
+
+# Live shapes (decision 64): one plain word must not name a concept in another sense.
+LIVE = ConceptGraph(ConceptGraphFile(version="t", concepts=[
+    concept("c_stock_variable", "Stock variable", "economics", aliases=["stocks", "stock terms"]),
+    concept("c_stock_market", "Stock market update", "finance", aliases=["Stock market"]),
+    concept("c_futures", "Futures contract", "finance", aliases=["futures"]),
+    concept("c_basis", "Basis (finance)", "finance"),
+    concept("c_rbi", "RBI", "policy", aliases=["Reserve Bank of India", "RBI’s"]),
+    concept("c_repo", "Repo rate", "finance"),
+    concept("c_gdp", "GDP", "economics"),
+    concept("c_ma", "M&A", "business"),
+    concept("c_ebitdar", "EBITDAR", "finance"),
+    concept("c_cafe", "CAFE", "policy"),
+    concept("c_inflation", "Inflation", "economics"),
+    concept("c_spread", "Spread", "finance"),
+    concept("c_take_a_touch", "Take a touch", "sports", aliases=["to"]),
+]))  # fmt: skip
+
+
+def named(text, topic):
+    return [c.id for c in fr.named_concepts(LIVE, text, topic)]
+
+
+def test_single_lowercase_aliases_never_count_in_free_text():
+    assert named("Chip stocks tumble", "finance") == []
+    assert named("Stock market today", "finance") == ["c_stock_market"]
+    assert named("Gadgets of the future", "technology") == []
+    assert named("Futures contract prices", "finance") == ["c_futures"]
+    assert named("on a working arrangement basis", "policy") == []  # a parenthetical label
+    assert named("Back to work", "sports") == []  # the stopword alias is gone
+
+
+def test_caps_names_need_caps_in_the_text_and_cross_domains():
+    assert named("RBI raises the repo rate", "economics") == ["c_rbi", "c_repo"]
+    assert named("Rates at the RBI", "economics") == ["c_rbi"]
+    assert named("rbi notes", "economics") == []
+    assert named("The RBI’s move", "economics") == ["c_rbi"]  # a possessive keeps the caps
+    assert named("M&A deals and GDP growth", "technology") == ["c_ma", "c_gdp"]
+    assert named("EBITDAR margin", "finance") == ["c_ebitdar"]
+    assert named("ebitdar margin", "finance") == []
+    assert named("Cafe owners", "policy") == []
+
+
+def test_plain_single_labels_count_in_their_own_domain_or_the_business_group():
+    assert named("Inflation rises", "economics") == ["c_inflation"]
+    assert named("Inflation rises", "sports") == []
+    assert named("Virus spread slows", "health") == []
+    assert named("Spread widens", "finance") == ["c_spread"]
+    assert named("Spread widens", "policy") == ["c_spread"]  # policy is in the business group
+
+
+def test_latin_titles_allow_accents_symbols_and_one_stray_letter():
+    assert not fr.is_latin_title(
+        "ഈ റാലി സൂചനയോ| Political Analysis|Debate Malayalam| NEWS INDIA MALAYALAM POINT"
+    )
+    assert fr.is_latin_title("Müller's café reopens")
+    assert fr.is_latin_title("ASUS laptops ₹21,000 off 🔴 live")
+    assert fr.is_latin_title("The μ problem in markets")

@@ -305,7 +305,7 @@ async def _library_groups(
                                snippet=d.description or "", thumbnail=d.image,
                                published_at=d.published)  # fmt: skip
             text = f"{d.title} {d.description or ''}"
-            group.append(fr.FeedCandidate(result, dom, fr.named_concepts(graph, text)))
+            group.append(fr.FeedCandidate(result, dom, fr.named_concepts(graph, text, dom)))
         groups.append(group)
     return groups, urls
 

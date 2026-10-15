@@ -4,9 +4,9 @@ score = interest(topic) × format_affinity(format) × readiness × goal_boost ×
 
 - interest: the reader's stored domain interest, normalised so their top topic is 1.0;
 - format_affinity: the existing per-reader format model (`rank.format_affinity`);
-- readiness: how many ideas the item names that are new to this reader (exact label/alias
-  matches over 1–4-word n-grams of its title and snippet): 1–4 new → 1.0, none → 0.6, more
-  than 4 → 0.8^(k−4) (too much at once);
+- readiness: how many ideas the item names that are new to this reader (`named_concepts`:
+  exact label/alias matches over 1–4-word n-grams of its title and snippet, single words only
+  when unambiguous): 1–4 new → 1.0, none → 0.6, more than 4 → 0.8^(k−4) (too much at once);
 - goal_boost: 1.3 when the item names a learning-goal target concept;
 - freshness: `rank.freshness`.
 
@@ -26,9 +26,10 @@ from email.utils import parsedate_to_datetime
 from typing import Literal
 from urllib.parse import urlsplit
 
+from app.graph.build import normalize_label
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
-from app.graph.taxonomy import BY_ID
+from app.graph.taxonomy import BUSINESS_DOMAINS, BY_ID
 from app.reader import model
 from app.reader.state import ReaderState
 from app.recs.models import PODCAST_DOMAINS, Format, WebResult
@@ -88,16 +89,45 @@ class FeedReader:
     goal_targets: Mapping[str, str] = field(default_factory=dict)  # concept id → goal label
 
 
-def named_concepts(graph: ConceptGraph, text: str) -> tuple[Concept, ...]:
+_PLURAL_OR_POSSESSIVE = re.compile(r"['’]?s$")
+
+
+def _is_caps(text: str) -> bool:
+    """Written like an acronym: two or more characters, a letter, no lower-case letter (a
+    trailing plural or possessive "s" aside: "IPOs", "RBI’s")."""
+    core = _PLURAL_OR_POSSESSIVE.sub("", text) if len(text) > 2 else text
+    return (
+        len(core) >= 2 and any(ch.isalpha() for ch in core) and not any(ch.islower() for ch in core)
+    )
+
+
+def _single_word_counts(concept: Concept, token: str, topic: str) -> bool:
+    """One word names a concept only when that is unambiguous (decision 64). A caps-only name
+    (RBI, M&A, EBITDAR) needs the word in caps too, in any domain. Otherwise only the plain
+    label counts (not an alias: "stocks" → Stock variable; not a disambiguated label: "Basis
+    (finance)"), and only in the item's own domain or when both are in the business group."""
+    key = normalize_label(token)
+    names = [n for n in (concept.label, *concept.aliases) if normalize_label(n) == key]
+    if any(_is_caps(n) for n in names):
+        return _is_caps(token)
+    if normalize_label(concept.label) != key or "(" in concept.label:
+        return False
+    return concept.domain == topic or (
+        concept.domain in BUSINESS_DOMAINS and topic in BUSINESS_DOMAINS
+    )
+
+
+def named_concepts(graph: ConceptGraph, text: str, topic: str) -> tuple[Concept, ...]:
     """Graph concepts the text names: exact label/alias match over 1–4-word n-grams, longest
-    first, without overlapping matches. Deterministic."""
+    first, without overlapping matches; a single word only when `_single_word_counts` (the
+    item's `topic` decides the domain rule). Deterministic."""
     words = _WORDS.findall(text)
     found: dict[str, Concept] = {}
     i = 0
     while i < len(words):
         for n in range(min(NGRAM_MAX, len(words) - i), 0, -1):
             concept = graph.lookup(" ".join(words[i : i + n]))
-            if concept is not None:
+            if concept is not None and (n > 1 or _single_word_counts(concept, words[i], topic)):
                 found.setdefault(concept.id, concept)
                 i += n
                 break
@@ -161,22 +191,22 @@ def is_listing_page(url: str, directories: Iterable[str] = ()) -> bool:
     return bool(DIRECTORY_SEGMENTS.intersection(segments)) or (not segments and host in directories)
 
 
-LATIN_SHARE = 0.7
+NON_LATIN_MAX = 1
 
 
-def mostly_latin(text: str) -> bool:
-    """At least 70% of the letters are Latin script: the explanations and the reader are in
-    English, and YouTube's relevanceLanguage is only a hint."""
-    letters = [ch for ch in text if ch.isalpha()]
-    if not letters:
-        return True
-    return sum(ch.isascii() or "\u00c0" <= ch <= "\u024f" for ch in letters) >= LATIN_SHARE * len(
-        letters
+def is_latin_title(text: str) -> bool:
+    """At most one letter outside Latin script (a stray "μ"): the explanations and the reader
+    are in English, YouTube's relevanceLanguage is only a hint, and a mixed title ("ഈ റാലി
+    സൂചനയോ| Political Analysis…") is mostly Latin by count (decision 64). Accents, ₹ and emoji
+    pass (accents are Latin; symbols aren't letters)."""
+    return (
+        sum(ch.isalpha() and not (ch.isascii() or "\u00c0" <= ch <= "\u024f") for ch in text)
+        <= NON_LATIN_MAX
     )
 
 
 def is_feed_page(result: WebResult) -> bool:
-    if not mostly_latin(result.title):
+    if not is_latin_title(result.title):
         return False
     if result.format == "article":
         return looks_like_article(result.url)

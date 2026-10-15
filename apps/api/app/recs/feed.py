@@ -26,6 +26,7 @@ from app.graph.models import Concept
 from app.graph.taxonomy import BUSINESS_DOMAINS, BY_ID, DOMAIN_IDS
 from app.recs import feed_rank as fr
 from app.recs.models import FORMATS, Format, WebResult
+from app.recs.outlet_feed import fits_topic
 from app.recs.outlets import BY_OUTLET, eligible, fallback_domains, side_of
 from app.recs.web_search import WebSearch, host_of, mentions
 from app.store.docstore import DocStore
@@ -93,7 +94,7 @@ def reader_topics(interest: Mapping[str, float]) -> list[str]:
 
 def keep_for(topic: str, graph: ConceptGraph, now: datetime):
     def keep(r: WebResult) -> bool:
-        concepts = fr.named_concepts(graph, f"{r.title} {r.snippet}")
+        concepts = fr.named_concepts(graph, f"{r.title} {r.snippet}", topic)
         return (
             fr.is_feed_page(r) and fr.recent_enough(r, now) and fr.is_relevant(r, topic, concepts)
         )
@@ -184,7 +185,8 @@ def outlet_candidates(
 ) -> dict[str, list[fr.FeedCandidate]]:  # fmt: skip
     """topic → candidates from the outlets this reader is offered (their country's own as local,
     other global outlets as global). The section is the topic, so no topic-word filter; concepts
-    are still named for readiness. A newest collection older than STALE_RUN is logged."""
+    are still named for readiness. Stored items are checked again (`fits_topic`): a list keeps
+    earlier items for days. A newest collection older than STALE_RUN is logged."""
     out: dict[str, list[fr.FeedCandidate]] = {}
     newest = ""
     for topic, entries in lists.items():
@@ -194,7 +196,7 @@ def outlet_candidates(
             outlet = BY_OUTLET.get(entry.outlet_id)
             if outlet is None or eligible(outlet, country) is None:
                 continue
-            group += _candidates(topic, entry.items, graph)
+            group += _candidates(topic, [r for r in entry.items if fits_topic(r, topic)], graph)
         out[topic] = group
     if now is not None and newest and now - datetime.fromisoformat(newest) > STALE_RUN:
         log.warning("outlet entries stale", extra={"newest_run": newest})
@@ -330,7 +332,7 @@ def _candidates(
     topic: str, results: Sequence[WebResult], graph: ConceptGraph
 ) -> list[fr.FeedCandidate]:
     return [
-        fr.FeedCandidate(r, topic, fr.named_concepts(graph, f"{r.title} {r.snippet}"))
+        fr.FeedCandidate(r, topic, fr.named_concepts(graph, f"{r.title} {r.snippet}", topic))
         for r in results
     ]
 
@@ -379,7 +381,7 @@ class SnapshotRepo:
 def snapshot_candidates(snap: Snapshot, graph: ConceptGraph) -> list[fr.FeedCandidate]:
     """Serve-time: no date filter (judging runs for weeks after the snapshot is made)."""
     return [
-        fr.FeedCandidate(r, topic, fr.named_concepts(graph, f"{r.title} {r.snippet}"))
+        fr.FeedCandidate(r, topic, fr.named_concepts(graph, f"{r.title} {r.snippet}", topic))
         for topic, r in snap.items
     ]
 

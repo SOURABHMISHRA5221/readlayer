@@ -16,7 +16,7 @@ from urllib.parse import urlsplit, urlunsplit
 import feedparser
 
 from app.ingest.urls import normalize_url
-from app.recs.feed_rank import HUB_SEGMENTS, mostly_latin
+from app.recs.feed_rank import HUB_SEGMENTS, is_latin_title
 from app.recs.models import WebResult
 from app.recs.outlets import Outlet
 from app.recs.web_search import clip, is_web_url
@@ -120,18 +120,45 @@ def outlet_article(url: str) -> bool:
     return not any(token in parts.path.casefold() for token in MEDIA_DENY)
 
 
+# Sections that aren't news, kept out of news topics (decision 64: the Guardian's world feed
+# carried a /stage/ review into politics). Culture keeps them; sports keeps "sport".
+NON_NEWS_SEGMENTS = frozenset(
+    {"stage", "film", "music", "books", "tv-and-radio", "artanddesign", "lifeandstyle", "fashion",
+     "food", "travel", "games", "crosswords", "entertainment"}
+)  # fmt: skip
+SPORT_SEGMENT = "sport"
+
+
+def in_topic_section(url: str, topic: str) -> bool:
+    segments = {s for s in urlsplit(url).path.casefold().split("/") if s}
+    if topic != "culture" and NON_NEWS_SEGMENTS.intersection(segments):
+        return False
+    return topic == "sports" or SPORT_SEGMENT not in segments
+
+
+def fits_topic(item: WebResult, topic: str) -> bool:
+    """A stored item still offered for the topic: its section and its title's script. Checked
+    when collected and again when read, since `merge` keeps earlier items up to MAX_ITEM_AGE."""
+    return in_topic_section(item.url, topic) and is_latin_title(item.title)
+
+
 def fresh(when: datetime | None, now: datetime) -> bool:
     """Dated within MAX_ITEM_AGE (undated items are dropped: they can't be shown as news)."""
     return when is not None and -CLOCK_SKEW <= now - when <= MAX_ITEM_AGE
 
 
-def outlet_items(outlet: Outlet, entries: Iterable[FeedEntry], now: datetime) -> list[WebResult]:
-    """Entries that are this outlet's fresh, English article pages, as feed results."""
+def outlet_items(
+    outlet: Outlet, entries: Iterable[FeedEntry], now: datetime, topic: str
+) -> list[WebResult]:
+    """Entries that are this outlet's fresh, English article pages in a section that fits the
+    topic, as feed results."""
     out = []
     for e in entries:
         if not on_hosts(e.url, outlet.article_hosts) or not outlet_article(e.url):
             continue
-        if not fresh(e.published, now) or not mostly_latin(e.title):
+        if not fresh(e.published, now) or not is_latin_title(e.title):
+            continue
+        if not in_topic_section(e.url, topic):
             continue
         out.append(
             WebResult(

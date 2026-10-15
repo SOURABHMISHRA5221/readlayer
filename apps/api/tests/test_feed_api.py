@@ -24,6 +24,8 @@ from tests.fakes import auth, consented
 GRAPH = ConceptGraph(ConceptGraphFile(version="t", concepts=[
     Concept(id="c_offside", label="Offside", domain="sports", definition="A rule.",
             base_difficulty=1.0, embedding=[1.0, 0.0]),
+    Concept(id="c_tariff", label="Tariff", domain="economics", definition="A tax on imports.",
+            base_difficulty=1.0, embedding=[0.0, 1.0]),
 ]))  # fmt: skip
 
 
@@ -175,8 +177,8 @@ def test_demo_readers_get_the_snapshot_with_no_search(env):
 def test_the_route_carries_readiness_for_a_demo_snapshot(env):
     """Decision 60: an item naming a map idea gets a level; one naming none gets no line."""
     now = datetime.now(UTC).isoformat()
-    named = WebResult(url="https://www.bbc.co.uk/sport/articles/offside-rule-explained",
-                      title="The offside rule explained", source="BBC", format="article",
+    named = WebResult(url="https://www.bbc.co.uk/news/articles/tariffs-explained",
+                      title="Tariffs explained", source="BBC", format="article",
                       published_at=now)  # fmt: skip
     snap = _snapshot(now)
     snap = feed_mod.Snapshot(snap.persona, now, snap.topics, (*snap.items, ("economics", named)))
@@ -184,7 +186,7 @@ def test_the_route_carries_readiness_for_a_demo_snapshot(env):
     body = TestClient(app, headers=auth("demo3", anonymous=True)).get(
         "/v1/feed?persona=newcomer").json()  # fmt: skip
     items = {i["title"]: i for i in body["items"]}
-    assert items["The offside rule explained"]["readiness"] == "ready"  # new, no prerequisites
+    assert items["Tariffs explained"]["readiness"] == "ready"  # new, no prerequisites
     assert items["Technology latest news today"]["readiness"] is None  # names no idea
     assert all(i["read_first"] == [] for i in items.values())
 
