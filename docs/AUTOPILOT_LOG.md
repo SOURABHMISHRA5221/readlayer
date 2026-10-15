@@ -2085,3 +2085,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   Sourabh), deadline wording.
 - milestone-reviewer round 2: **SHIP** (7c6eacb). Next: push, PR, CI, merge, then `make deploy-api`
   on Sourabh's yes before the UTC Oct 16 re-seed.
+- PR #46: CI green, squash-merged (efc9c33). Sourabh: "yes" → `make deploy-api` → revision
+  `readlayer-api-00032-fls`. Live check (anonymous demo reader, deleted 204): 0 wrong read-first
+  lines across the three personas; policy student 8 of 10 rows with no line (flagged to Sourabh).
+
+### Next steps (resume here, in order)
+1. Sourabh's answer on the blank readiness rows (accept, or a small follow-up such as
+   case-insensitive regulator names).
+2. UTC Oct 16 (after 05:30 IST): Oct 16 plan from S2 on the fixed code (dry run = article floor,
+   ≈ 318 Tavily credits), S4 gate with no-line counts, S5 media, S6 `preingest_feed.py` (test
+   first), S3 same-image restart (Sourabh's yes), S4b, S7–S9. Video Oct 17, submit by Oct 18.
+
