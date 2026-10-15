@@ -229,3 +229,17 @@ def test_a_pre_m2_2_graph_file_with_four_domains_still_loads():
     graph = ConceptGraph(ConceptGraphFile.model_validate_json(old))
     c = graph.get("c_repo_rate")
     assert c is not None and c.kind is None and c.jurisdiction == "global"
+
+
+def test_stopword_aliases_are_not_indexed_but_labels_and_phrases_are():
+    g = ConceptGraph(ConceptGraphFile(version="t", concepts=[
+        concept("c_take_a_touch", "Take a touch", [1, 0, 0], aliases=["to"], domain="sports"),
+        concept("c_give", "Give the treatment", [0, 1, 0], aliases=["it"], domain="sports"),
+        concept("c_activity", "Activity theory", [0, 0, 1], aliases=["AT"], domain="education"),
+        concept("c_to", "To", [1, 1, 0]),  # synthetic: a label is never dropped
+        concept("c_boe", "BoE", [0, 1, 1], aliases=["Bank of England"], domain="finance"),
+    ]))  # fmt: skip
+    assert g.lookup("to").id == "c_to"
+    assert g.lookup("it") is None and g.lookup("AT") is None and g.lookup("at") is None
+    assert g.lookup("Take a touch").id == "c_take_a_touch"
+    assert g.lookup("bank of england").id == "c_boe"

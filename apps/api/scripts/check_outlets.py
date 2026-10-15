@@ -38,8 +38,9 @@ async def words(fetcher: SafeFetcher, url: str) -> int | str:
 
 
 async def check_outlet(fetcher: SafeFetcher, outlet: Outlet, parsed, now) -> list[str]:
-    urls = list(dict.fromkeys(u for us in outlet.sections.values() for u in us))
-    items = outlet_items(outlet, (e for u in urls if u in parsed for e in parsed[u]), now)
+    items = [r for topic, us in outlet.sections.items()
+             for r in outlet_items(outlet, (e for u in us if u in parsed for e in parsed[u]), now,
+                                   topic)]  # fmt: skip
     newest = sorted({r.url: r for r in items}.values(), key=lambda r: r.published_at or "",
                     reverse=True)[:SAMPLE]  # fmt: skip
     counts = [await words(fetcher, r.url) for r in newest]

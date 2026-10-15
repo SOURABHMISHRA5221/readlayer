@@ -29,7 +29,7 @@ PRE = ConceptGraph(ConceptGraphFile(version="t", concepts=[
 
 def item(text, topic="economics"):
     return fr.FeedCandidate(result(text, url=f"https://x.test/{abs(hash(text))}"), topic,
-                            fr.named_concepts(PRE, text))  # fmt: skip
+                            fr.named_concepts(PRE, text, topic))  # fmt: skip
 
 
 def ranked(text, **kw):
@@ -82,7 +82,7 @@ def test_known_ideas_only_are_mostly_familiar():
 
 def test_ranking_scores_are_unchanged():
     c = fr.FeedCandidate(result("Offside and VAR", url="https://x.test/a"), "sports",
-                         fr.named_concepts(GRAPH, "Offside and VAR"))  # fmt: skip
+                         fr.named_concepts(GRAPH, "Offside and VAR", "sports"))  # fmt: skip
     assert fr.rank([c], reader(), NOW, GRAPH)[0].score == 0.85  # pinned before the change
 
 

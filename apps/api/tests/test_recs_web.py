@@ -2,6 +2,7 @@ import json
 from datetime import UTC, datetime, timedelta
 
 import httpx
+import pytest
 
 from app.config import Settings
 from app.recs import web_search as ws
@@ -138,6 +139,25 @@ async def test_youtube_results_are_normalized_with_duration():
         published_at="2026-08-01T00:00:00Z",
     )
     assert ws.parse_iso_duration("PT1H2M3S") == 3723 and ws.parse_iso_duration("P0D") is None
+
+
+@pytest.mark.parametrize(
+    ("languages", "kept"),
+    [({"defaultAudioLanguage": "ml"}, False), ({"defaultAudioLanguage": "hi"}, False),
+     ({"defaultAudioLanguage": "en-GB"}, True), ({"defaultLanguage": "hi"}, False),
+     ({"defaultAudioLanguage": "en", "defaultLanguage": "hi"}, True), ({}, True)],
+)  # fmt: skip
+async def test_videos_spoken_in_another_language_are_dropped(languages, kept):
+    def answer(request):
+        if request.url.path.endswith("/videos"):
+            assert request.url.params["part"] == "snippet,contentDetails"
+            return httpx.Response(200, json={"items": [
+                {"id": "abc", "snippet": languages, "contentDetails": {"duration": "PT5M"}}
+            ]})  # fmt: skip
+        return Recorder()(request)
+
+    yt = ws.YouTubeProvider("yt-test", 5, httpx.MockTransport(answer))
+    assert bool(await yt.search("Economics news explained", "video", news=True)) is kept
 
 
 async def test_feed_videos_ask_for_recent_medium_length_explainers_and_up_next_does_not():

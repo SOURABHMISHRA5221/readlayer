@@ -2026,3 +2026,62 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 1. Oct 16 items (persona re-seed, demo pre-ingest, `seed_demo_feed`, `warm_demo --shifts`, media
    snapshots, readiness mix re-run, video, deck). Main bundle ≈ 0.05 KB left: lazy only.
 2. Oct 17: **remove `/v2`** (STATUS §9 row), then gitleaks, submit.
+
+## Oct 16 seeding (started 2026-10-15, branch `oct16-seeding`)
+
+- Sourabh: "resume with the Oct 16 items, starting with the persona re-seed". Tavily: 324 credits
+  left (he gives a new key when they run out).
+- Measured first (read only): fresh templates equal the stored 2026-10-04 ones in concepts, bands,
+  θ and weights; only version labels and seed timestamps differ, so the re-seed resets the 90-day
+  forgetting clock (λ ≈ 0.93 today, ≈ 0.80 by Nov 6 without it).
+- Plan `docs/plans/oct16.md`: plan-reviewer REVISE 9 → REVISE 2 → **APPROVE** (nit taken).
+- **S1 done**: old templates dumped to the session scratchpad; `seed_personas --write` → 3 docs;
+  read back `{persona}@2026-10-10-folded-5206`, 109 / 86 / 115 edges, `last_seen` 2026-10-15.
+  Live instances pick them up at S3 (same-image revision, Sourabh's yes).
+
+- **S2 done**: outlets collected 00:30 UTC; old feeds dumped to the scratchpad; dry run then real
+  (identical lists, ≥ 6 readable articles per topic); `persona_feeds/*` prepared 07:22 UTC Oct 15.
+- **S4 gate**: newcomer familiar 3 / ready 4 / stretch 4 (stop rule not hit); trader familiar 5 /
+  ready 3 / stretch 3; policy student familiar 5 / ready 1 / stretch 3 / no line 1 (10 rows).
+- First-page rows read: wrong read-first lines from title words ("Economic stocks and flows" on
+  three stock videos, "Derivative contracts" on "Gadgets of the future", "Spread, Basis points" on a
+  Kozhikode cardiology story); policy student also shows "Paddington: The Musical" under politics
+  and a Malayalam-titled video. Asked Sourabh how to handle them (code freeze) before S5/S6.
+
+- Sourabh on the rows: "fix if you need deadline will extend by 4 days minimum but still fix" →
+  **decision 64**: freeze lifted for a real fix. Then: "we will not change date yet as our plan
+  will be to submit by 18th only" — the extra days are slack, the target stays Oct 18.
+- Causes traced: stopword aliases (`it`, `to`, `at` → sports/education concepts on nearly every
+  row), single-word aliases matched in free text in the wrong sense (stocks, futures, basis,
+  short, reserves…), `mostly_latin` passing a Malayalam title, the Guardian world feed carrying a
+  `/stage/` piece. Article notes unaffected (linking looks up model-extracted demands only).
+  Plan `docs/plans/feed-quality.md` (F1–F5) → plan-reviewer.
+
+- Feed-quality plan: plan-reviewer REVISE 8 (stored outlet lists not re-filtered, caps labels
+  matching lower-case words, relevance not measured, media's `mostly_latin` caller…) → APPROVE.
+- Built test first (32 red → green): F1 stopword aliases out of the index, F2 single words only
+  as caps acronyms or own-domain plain labels, F3 `is_latin_title`, F4 YouTube declared language,
+  F5 non-news sections at collection and read time. API 1,200 passed.
+- `scripts/feed_quality.py` before (main worktree) / after: junk-concept rows 23 → 0 of 32,
+  read-first rows 10 → 5 (all sensible), relevance floor held; one trader video drops (accepted).
+  DESIGN §17.1/§17.1a/§17.2/media, STATUS §5/§10/§33 updated.
+
+### Next steps (resume here, in order)
+0. milestone-reviewer → PR → CI → merge → `make deploy-api` (Sourabh's yes) → live check
+   (`GET /v1/feed` per persona: no junk rows, none of the four wrong lines). Then the Oct 16 plan
+   resumes on UTC Oct 16 from S2 (re-seed on the fixed code). Submit by Oct 18 (unchanged).
+000. (superseded) Feed-quality fix: plan-reviewer → tests first → build → measure → milestone-reviewer → PR →
+   deploy-api (Sourabh's yes). Then the Oct 16 plan resumes on UTC Oct 16 from S2 (re-seed).
+00. (done) Sourabh's answer on the feed rows (keep, drop named items from `persona_feeds`, or re-run).
+1. S2 demo feed re-seed (outlet freshness → dry run → real, same UTC day), then S4, S5, S6
+   (`preingest_feed.py`, test first; runs a UTC day before the video), S3 restart on Sourabh's yes, S4b,
+   S7–S9 per the plan.
+- milestone-reviewer round 1: **FIX** 8 → applied: `feed_quality.py` line over 100 (I had run ruff
+  before adding the script; "ruff clean" was wrong when written), SEBI target missed and recorded
+  (Indian press writes "Sebi"; Houthis lost on a politics row), floor claim narrowed to videos and
+  podcasts (article floor = the S2 dry run after deploy), Telugu row "closes when deployed", §9
+  decision 64 row, S2 counts (18 calls: 6 Tavily, 6 YouTube searches; 12 `rec_cache` entries;
+  ≈ 318 credits left), readiness mix before/after (no-line rows 1 → 15 of 32; flagged to
+  Sourabh), deadline wording.
+- milestone-reviewer round 2: **SHIP** (7c6eacb). Next: push, PR, CI, merge, then `make deploy-api`
+  on Sourabh's yes before the UTC Oct 16 re-seed.

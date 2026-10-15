@@ -72,6 +72,7 @@ async def test_a_public_embeddable_english_video_passes():
         ({"contentDetails__duration": "PT1H8M"}, "too_long"),
         ({"snippet__defaultAudioLanguage": "hi"}, "not_english"),
         ({"snippet__title": "मौद्रिक नीति समझाई गई"}, "not_english"),
+        ({"snippet__title": "ഈ റാലി സൂചനയോ| Political Analysis | NEWS INDIA"}, "not_english"),
     ],
 )
 async def test_refusals_one_by_one(changes, code):

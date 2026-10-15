@@ -13,6 +13,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import config
+from app.graph.graph import ConceptGraph
+from app.graph.models import ConceptGraphFile
 from app.graph.taxonomy import DOMAIN_IDS
 from app.ingest.safe_fetch import FetchedPage, FetchError
 from app.main import app
@@ -31,7 +33,7 @@ from app.recs.outlets import (
     side_of,
 )
 from app.store.docstore import get_doc_store
-from app.store.outlet_repo import OutletStore, outlets_path
+from app.store.outlet_repo import OutletList, OutletStore, outlets_path
 from tests.fakes import auth, consented
 from tests.test_feed_api import env, google  # noqa: F401  (fixture)
 
@@ -94,7 +96,9 @@ def test_fallback_domains_are_one_constant_list():
 )  # fmt: skip
 def test_saved_feeds_parse_to_fresh_articles(name, outlet, kept):
     entries = outlet_feed.parse_entries(fixture(name))
-    items = outlet_feed.outlet_items(BY_OUTLET[outlet], entries, NOW)
+    topic = {"business": "business", "economics": "economics", "economy": "economics",
+             "sport": "sports"}[name.split("_")[1]]  # fmt: skip
+    items = outlet_feed.outlet_items(BY_OUTLET[outlet], entries, NOW, topic)
     assert len(entries) == 5 and len(items) == kept
     for r in items:
         assert r.format == "article" and r.source == BY_OUTLET[outlet].name
@@ -129,7 +133,9 @@ def test_media_old_foreign_and_undated_items_are_dropped():
         item("https://www.bbc.co.uk/news/articles/c444", title="Новости рынка сегодня"),
         "<item><title>Undated</title><link>https://www.bbc.co.uk/news/articles/c555</link></item>",
     )
-    items = outlet_feed.outlet_items(BY_OUTLET["bbc"], outlet_feed.parse_entries(body), NOW)
+    items = outlet_feed.outlet_items(
+        BY_OUTLET["bbc"], outlet_feed.parse_entries(body), NOW, "business"
+    )
     assert [r.url for r in items] == ["https://www.bbc.co.uk/news/articles/c111"]
 
 
@@ -143,13 +149,44 @@ def test_descriptions_are_stripped_then_unescaped():
 def test_one_story_in_two_sections_is_kept_once_and_old_items_leave_on_merge():
     def parsed(link):
         entries = outlet_feed.parse_entries(rss(item(link)))
-        return outlet_feed.outlet_items(BY_OUTLET["bbc"], entries, NOW)
+        return outlet_feed.outlet_items(BY_OUTLET["bbc"], entries, NOW, "business")
 
     a = parsed("https://www.bbc.co.uk/news/articles/c1?at_medium=RSS&amp;at_campaign=rss")
     b = parsed("https://www.bbc.co.uk/news/articles/c1#comments")
     merged = outlet_feed.merge(a, b, NOW)
     assert [r.url for r in merged] == ["https://www.bbc.co.uk/news/articles/c1"]
     assert outlet_feed.merge(merged, [], NOW + timedelta(days=4)) == []
+
+
+def test_non_news_sections_stay_out_of_news_topics():
+    body = rss(
+        item("https://www.theguardian.com/world/2026/oct/14/student-protests-tirana"),
+        item("https://www.theguardian.com/stage/2026/oct/15/paddington-the-musical-sydney"),
+        item("https://www.theguardian.com/sport/2026/oct/15/england-squad-named"),
+    )
+    entries = outlet_feed.parse_entries(body)
+
+    def kept(topic):
+        items = outlet_feed.outlet_items(BY_OUTLET["guardian"], entries, NOW, topic)
+        return [urlsplit(r.url).path.split("/")[1] for r in items]
+
+    assert kept("politics") == ["world"]
+    assert kept("culture") == ["world", "stage"]
+    assert kept("sports") == ["world", "sport"]
+
+
+def test_stored_items_are_filtered_again_when_read():
+    def stored(url, title="A story"):
+        return WebResult(url=url, title=title, source="The Guardian", format="article")
+
+    lists = {"politics": [OutletList("guardian", (
+        stored("https://www.theguardian.com/world/2026/oct/14/student-protests-tirana"),
+        stored("https://www.theguardian.com/stage/2026/oct/15/paddington-the-musical-sydney"),
+        stored("https://www.theguardian.com/world/2026/oct/15/rally", "ഈ റാലി സൂചനയോ| Analysis"),
+    ), NOW.isoformat())]}  # fmt: skip
+    graph = ConceptGraph(ConceptGraphFile(version="t", concepts=[]))
+    got = feed_mod.outlet_candidates(lists, "IN", graph)["politics"]
+    assert [c.result.url.rsplit("/", 1)[1] for c in got] == ["student-protests-tirana"]
 
 
 # ---------------------------------------------------------------- the job

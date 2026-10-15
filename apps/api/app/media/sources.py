@@ -14,7 +14,7 @@ from app.config import Settings
 from app.ingest.safe_fetch import FetchError, SafeFetcher, is_transient
 from app.media import mp3
 from app.media.refusals import MediaRefused, MediaUnavailable
-from app.recs.feed_rank import mostly_latin
+from app.recs.feed_rank import is_latin_title
 from app.recs.web_search import YOUTUBE_VIDEOS_URL, parse_iso_duration
 
 log = logging.getLogger("app.media")
@@ -97,7 +97,7 @@ def _check_video(item: dict, settings: Settings) -> MediaInfo:
         raise MediaRefused("too_long")
     title = str(snippet.get("title") or "").strip()[:MAX_TITLE_CHARS]
     language = snippet.get("defaultAudioLanguage") or None
-    if (language and not str(language).lower().startswith("en")) or not mostly_latin(title):
+    if (language and not str(language).lower().startswith("en")) or not is_latin_title(title):
         raise MediaRefused("not_english")
     thumbs = snippet.get("thumbnails") or {}
     thumb = thumbs.get("high") or thumbs.get("medium") or thumbs.get("default") or {}
@@ -165,7 +165,7 @@ def _check_episode(item: dict, settings: Settings) -> MediaInfo:
     if duration > settings.media_max_audio_s:
         raise MediaRefused("too_long")
     title = str(item.get("trackName") or "").strip()[:MAX_TITLE_CHARS]
-    if not mostly_latin(title):
+    if not is_latin_title(title):
         raise MediaRefused("not_english")
     return MediaInfo(
         title=title or "Podcast episode",
