@@ -7,9 +7,12 @@ memory as GET /v1/feed does for a fresh demo reader; per first-page row the name
 readiness and read-first line. Then, per persona topic, how many cached search results of the
 last 3 days (`rec_cache` `feed:`/`feedx:` entries) pass `feed.keep_for`, and how many snapshot
 items would fail `is_relevant`. Runs against whichever code it sits in: copy it into a worktree
-of `main` for the "before" numbers (named_concepts took no topic there). Writes nothing.
+of `main` for decision 64's "before" numbers (named_concepts took no topic there). Decision 65:
+stored articles carry their key ideas; `--title-only` turns that and the policy/politics
+neighbours off (the "before" for decision 65). Writes nothing.
 """
 
+import argparse
 import asyncio
 import inspect
 from collections import Counter
@@ -31,7 +34,7 @@ def single_word(concept) -> bool:
     return " " not in concept.label.strip() or "(" in concept.label
 
 
-async def first_pages(graph, store, now, named) -> None:
+async def first_pages(graph, store, now, named, library) -> None:
     from app.recs import feed_rank as fr
     from app.recs.feed import PERSONA_COUNTRY, SnapshotRepo, side_for
     from app.recs.outlets import LOCAL_SHARE
@@ -56,19 +59,25 @@ async def first_pages(graph, store, now, named) -> None:
             interest=dict.fromkeys(snap.topics, 1.0),
             prior=PERSONA_FORMAT_PRIORS[persona],
         )
+        if library is not None:
+            cands = fr.attach_ideas(cands, library, graph)
         rows = fr.select(fr.rank(cands, reader, now, graph), list(snap.topics),
                          side_for(PERSONA_COUNTRY), LOCAL_SHARE)  # fmt: skip
         print(f"\n{persona} (feed {snap.prepared_at}): {len(rows)} rows")
         for r in rows:
             c = r.candidate
             labels = [x.label for x in c.concepts]
-            print(
-                f"  {c.result.format:7} {c.topic:10} {r.readiness or '-':8} {c.result.title[:60]!r}"
-            )
+            basis = getattr(r, "readiness_basis", "title")[0]
+            level = r.readiness or "-"
+            print(f"  {c.result.format:7} {c.topic:10} {level:8} {basis} {c.result.title[:60]!r}")
+            print(f"      url={c.result.url}")
+            if getattr(c, "ideas", None):
+                print(f"      ideas={[x.label for x in c.ideas]}")
             print(f"      named={labels} read_first={list(r.read_first)}")
             totals["rows"] += 1
             totals["junk rows"] += any(x.id in JUNK for x in c.concepts)
             totals["read-first rows"] += bool(r.read_first)
+            totals[f"{persona} {r.readiness or 'none'}"] += 1
             singles += [f"{persona}/{c.topic}: {x.label} [{x.domain}] in {c.result.title[:50]!r}"
                         for x in c.concepts if single_word(x)]  # fmt: skip
     print(f"\nfirst pages: {dict(totals)}")
@@ -125,7 +134,7 @@ def dropped_aliases(graph) -> None:
                 print(f"  {a!r} → {c.label} [{c.domain}]")
 
 
-async def main() -> int:
+async def main(args: argparse.Namespace) -> int:
     from app.config import get_settings
     from app.graph.loader import get_graph, load_serving_graph
     from app.recs import feed_rank as fr
@@ -137,11 +146,22 @@ async def main() -> int:
     graph, now, store = get_graph(), datetime.now(UTC), get_doc_store()
     print(f"served graph {graph.version}, {len(graph)} concepts")
     named = namer(fr)
-    await first_pages(graph, store, now, named)
+    library = None
+    if hasattr(fr, "attach_ideas"):
+        if args.title_only:
+            fr.DOMAIN_GROUPS = fr.DOMAIN_GROUPS[:1]  # decision 64's rule: business group only
+        else:
+            from app.content import catalog
+
+            library = {d.content_id: d for d in await catalog.all_docs()}
+    print(f"mode: {'title only' if library is None else 'stored articles use key ideas'}")
+    await first_pages(graph, store, now, named, library)
     await relevance(graph, store, now, named)
     dropped_aliases(graph)
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(asyncio.run(main()))
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("--title-only", action="store_true", help="decision 64's rule (no ideas)")
+    raise SystemExit(asyncio.run(main(parser.parse_args())))

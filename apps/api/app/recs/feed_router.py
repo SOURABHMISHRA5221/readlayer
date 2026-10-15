@@ -7,9 +7,11 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from app.config import get_settings
+from app.content import catalog
 from app.context import ReaderContext, reader_context
 from app.graph.loader import get_graph
 from app.graph.taxonomy import BY_ID
+from app.ingest.models import ContentDoc
 from app.media.openable import open_here
 from app.recs import feed_rank as fr
 from app.recs.feed import (
@@ -57,6 +59,8 @@ class FeedItemOut(BaseModel):
     # From the reader's own map (decision 60): None when the item names no graph concept.
     readiness: fr.Readiness | None = None
     read_first: list[str] = []
+    # "article": readiness from the stored article's key ideas (decision 65); else the title.
+    readiness_basis: fr.ReadinessBasis = "title"
     # Opens in Gloss (articles; videos within the media caps) or only at the source.
     open_here: bool = True
 
@@ -123,6 +127,7 @@ async def get_feed(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> Fe
     # "Not interested" (and finished items) stay gone for this reader.
     gone = ("dismissed", "completed")
     candidates = [c for c in candidates if signals.seen.get(item_id(c.result.url)) not in gone]
+    candidates = fr.attach_ideas(candidates, await _library(), graph)
     reader = fr.FeedReader(
         state=ctx.state,
         interest=interest,
@@ -170,6 +175,16 @@ def _log_mix(ranked: list[fr.RankedItem], side: fr.SideOf, country: str | None) 
     )
 
 
+async def _library() -> dict[str, ContentDoc]:
+    """Stored docs by id for decision 65's readiness. The catalog loads once per process (a cold
+    instance streams the contents collection here); if that fails the feed keeps the title rule."""
+    try:
+        return {d.content_id: d for d in await catalog.all_docs()}
+    except Exception:
+        log.exception("feed library unavailable; readiness from titles")
+        return {}
+
+
 def _out(r: fr.RankedItem) -> FeedItemOut:
     res, topic = r.candidate.result, r.candidate.topic
     return FeedItemOut(
@@ -190,4 +205,5 @@ def _out(r: fr.RankedItem) -> FeedItemOut:
         score=r.score,
         readiness=r.readiness,
         read_first=list(r.read_first),
+        readiness_basis=r.readiness_basis,
     )

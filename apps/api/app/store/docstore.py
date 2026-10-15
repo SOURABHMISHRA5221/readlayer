@@ -10,12 +10,16 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import logging
 import random
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any, Protocol, TypeVar
 
+from google.api_core.exceptions import Aborted
 from google.cloud import firestore
+
+log = logging.getLogger(__name__)
 
 T = TypeVar("T")
 Doc = dict[str, Any]
@@ -70,8 +74,11 @@ async def retry_contention[R](
     for n in range(rounds + 1):
         try:
             return await attempt()
-        except ValueError as exc:
-            if "Failed to commit transaction" not in str(exc) or n == rounds:
+        except (ValueError, Aborted) as exc:
+            # Commit-time contention is a ValueError; contention while the body reads surfaces
+            # as Aborted (decision 65: an explain 500 seen live). Each round is a new transaction.
+            contended = isinstance(exc, Aborted) or "Failed to commit transaction" in str(exc)
+            if not contended or n == rounds:
                 raise
             await asyncio.sleep(random.uniform(0.05, 0.2) * (n + 1))
     raise AssertionError("unreachable")
@@ -124,9 +131,16 @@ class FirestoreDocStore:
         return [(s.id, s.to_dict() or {}) async for s in query.stream()]
 
     async def delete_tree(self, path: str) -> int:
-        """Delete a document and every subcollection under it."""
+        """Delete a document and every subcollection under it. Tried once more when it raises:
+        a write that fails against the reader's in-flight writes is re-queued by the library
+        after its BulkWriter closed ("BulkWriter is closed…", seen live, decision 65). The delete
+        is idempotent, and each try gets a new BulkWriter."""
         ref = self._db.document(path)
-        count = await self._db.recursive_delete(ref)
+        try:
+            count = await self._db.recursive_delete(ref)
+        except Exception:
+            log.warning("recursive delete failed; retrying once")
+            count = await self._db.recursive_delete(ref)
         await ref.delete()  # recursive_delete covers subcollections; make sure the doc goes too
         return count
 
