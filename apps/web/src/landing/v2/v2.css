@@ -47,6 +47,7 @@
 .lp2-line {
   display: block;
   width: 100%;
+  min-height: 44px; /* touch target */
   padding: var(--s1) var(--s2);
   border: 0;
   border-radius: var(--radius-sm);

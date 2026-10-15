@@ -78,21 +78,21 @@ async def main() -> None:
                 report[key] = await p.audit()
                 report[key]["robots"] = await p.eval("document.querySelector('meta[name=robots]')?.content || null")
                 (OUT / f"v2-{width}-{'dark' if dark else 'light'}.png").write_bytes(await shot_bytes(p))
-        # The demo: Full → 2 min, then focus the second line; its clause is marked.
+        # The demo: Full → 2 min, then tap the second line; its clause is marked.
         await view(p, base, 1440)
         await p.eval("""(() => { [...document.querySelectorAll('.lp2-controls button')]
           .find(b => b.textContent === '2 min').click(); return 1; })()""")
         await asyncio.sleep(0.6)
-        await p.eval("document.querySelectorAll('.lp2-line')[1].focus(); 1")
+        await p.eval("document.querySelectorAll('.lp2-line')[1].click(); 1")  # a tap pins the mark
         await asyncio.sleep(0.3)
-        report["demo after 2 min + focus"] = await p.eval("""({lines: [...document.querySelectorAll('.lp2-line__text')].map(e => e.textContent),
+        report["demo after 2 min + tap"] = await p.eval("""({lines: [...document.querySelectorAll('.lp2-line__text')].map(e => e.textContent),
           marked: [...document.querySelectorAll('.lp2-clause--on')].map(e => e.dataset.clause)})""")
         rect = await p.eval("""(() => { const r = document.querySelector('.lp2-demo').getBoundingClientRect();
           return {x: r.left, y: r.top + scrollY, w: r.width, h: r.height}; })()""")
         import base64
         r = await p.send("Page.captureScreenshot", format="png", captureBeyondViewport=True,
                          clip={"x": rect["x"], "y": rect["y"], "width": rect["w"], "height": rect["h"], "scale": 1})
-        (OUT / "v2-demo-2min-focus.png").write_bytes(base64.b64decode(r["data"]))
+        (OUT / "v2-demo-2min-tap.png").write_bytes(base64.b64decode(r["data"]))
     finally:
         await ws.close()
         cdp.stop()
