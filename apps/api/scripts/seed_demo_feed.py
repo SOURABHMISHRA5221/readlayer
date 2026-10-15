@@ -76,6 +76,12 @@ def mixed(candidates: list[fr.FeedCandidate]) -> list[WebResult]:
     return list({r.url: r for r in out}.values())
 
 
+def offered_recordings(results: list[WebResult]) -> list[WebResult]:
+    """Cached videos and podcasts were filtered when they were searched; a cache entry made
+    before a filter change (decision 64's title check) is checked again here."""
+    return [r for r in results if fr.is_feed_page(r)]
+
+
 async def build(persona: str, graph: ConceptGraph, search: FeedSearch, fetcher: SafeFetcher):
     topics = PERSONA_TOPICS[persona]
     now = datetime.now(UTC)
@@ -103,7 +109,7 @@ async def build(persona: str, graph: ConceptGraph, search: FeedSearch, fetcher: 
             entry = await web.cached_entry(
                 feed_key(topic, today_utc()), fmt, feed_query(topic, fmt)
             )
-            items += [(topic, r) for r in (entry.results if entry else [])]
+            items += [(topic, r) for r in offered_recordings(entry.results if entry else [])]
     return Snapshot(persona, now.isoformat(timespec="seconds"), topics, tuple(items)), dropped
 
 
