@@ -10,8 +10,7 @@ discussion. The live landing at `/` is not changed. Branch `landing-v2` from `ma
 
 ## Ground rules
 - `/` stays byte-for-byte the same page (same components, same copy); the main bundle does not
-  change (gate: main gzip equal to `main`'s, 149.93 KB; the landing chunk may grow by a lazy
-  import only).
+  change (gate in R2).
 - `/v2` is linked from nowhere (no nav, footer, README, sitemap), sets
   `<meta name="robots" content="noindex, nofollow">` while mounted, and its title is
   "Gloss · Same content. Your shape." Every button and link that would act (Sign in, Reshape
@@ -21,8 +20,7 @@ discussion. The live landing at `/` is not changed. Branch `landing-v2` from `ma
   outbound links stay as they are (footer "as is").
 - Signed-in visitors at `/v2` get the app's normal not-found page (routing for signed-in readers is
   in the main bundle and stays untouched); view it signed out or in a private window.
-- On `/v2` the static first paint is skipped (it is for `/` only), so the current hero can flash
-  while the chunk loads. Accepted for a discussion page.
+- First paint on `/v2`: see R12.
 
 ## Build
 - `pages/LandingPage.tsx`: the default export becomes a two-line router: `/v2` → lazily loaded
@@ -38,19 +36,17 @@ discussion. The live landing at `/` is not changed. Branch `landing-v2` from `ma
   shape, One shape doesn't fit every reader, It learns your shapes, How it works titles, stats row
   with `[X/Y]`, What you can read list, final CTA). Where the prompt changes a heading but gives
   no body (problem cards, How it works steps), the old body is dropped (problem cards keep
-  their pictures and titles) or replaced by the prompt's own sentences (steps: "Choose a length,
-  a level and a format." / "The same sentences, chosen and reordered for your shape." / "Every
-  reshaped sentence is checked against the original." / "The app remembers the lengths, levels,
-  and formats you pick."). Images, fonts, colours and spacing unchanged; stills keep their
+  their pictures and titles) or replaced by sentences taken word for word from the prompt (steps: "Read, listen, watch, or
+  scan." / "Every sentence traces back to the original." / "Every reshaped sentence is checked
+  against the original." / "The app remembers the lengths, levels, and formats you pick, so next
+  time it starts where you like it."). Images, fonts, colours and spacing unchanged; stills keep their
   truthful alt texts even where the new caption doesn't match them.
 - **Reshape demo** (right panel): controls Length (2 min / 5 min / Full), Level (Simple / Standard /
   Expert), Format (Read / Listen / Watch / Scan) with the existing `Segmented`; caption "From The
   Economic Times · reshaped from the original · every line traces to its source"; two columns,
-  "Original" (four real consecutive paragraphs of the demo article, six sentences, from
-  `data/corpus_paragraphs.json`, content `2332418841…`) and "Your shape". **Every shape line is the
-  original sentence or a trimmed run of its own words** (ellipsis marks a cut; no new words), with
-  a grey tag (¶2 s1). Length picks sentences, Level picks full or trimmed versions, Format lays
-  them out (Read: lines; Scan: bullets, trimmed; Listen / Watch: each line with the time it would
+  "Original" (the one public sentence, R4–R7) and "Your shape". **Every shape line is a clause of
+  the sentence or runs of its own words** (ellipsis marks a cut; no new words), with a grey tag
+  (¶5 s1). Length picks clauses, Level picks full or trimmed forms, Format lays them out (Read: lines; Scan: bullets, trimmed; Listen / Watch: each line with the time it would
   start at 150 words a minute, as a mock). Hover, focus or tap a line highlights its sentence in
   Original. Changing a control reflows "Your shape" over 300 ms: lines are keyed by sentence, so
   the same elements move (FLIP); new ones fade in; reduced motion: no animation. No gloss card,
@@ -61,14 +57,11 @@ discussion. The live landing at `/` is not changed. Branch `landing-v2` from `ma
   an action (buttons have no click handler: the module imports nothing from `lib/auth` or
   `lib/router`'s `navigate`, checked on the source); noindex meta present while mounted and gone
   after unmount; `/` still renders the current page (its headline).
-- `shapes.ts`: for every Length × Level × Format, each line's source exists and its text, with
-  ellipses removed, is found word for word in that source sentence; Full + Expert + Read is all
-  six sentences in order; lines are unique per shape.
+- `shapes.ts`: see R4–R6 (strict in-order runs, protected words, tag).
 - Existing landing tests unchanged and passing.
 
 ## Checks and acceptance
-1. `pnpm -r typecheck`, `pnpm -r test`; main gzip unchanged (149.93 KB); landing chunk grows only
-   by the lazy import.
+1. `pnpm -r typecheck`, `pnpm -r test`; the R2 bundle gate.
 2. Local preview: `/` before and after screenshots identical at 1440 and 390; `/v2` at 1440 and
    390, light and dark: axe 0 serious/critical, no horizontal scroll; the demo reflows and
    highlights (a short recording to `docs/evidence/landing-v2/`).
@@ -95,8 +88,8 @@ and ≤ 150.00 KB gzip; `LandingPage`'s code unchanged apart from the router; no
 
 **R3. Inert, tested.** Source scan of `src/landing/v2/*` only: no import of `lib/auth`, `lib/api`,
 any `*Api`, or `navigate`. Behaviour test: `lib/auth` mocked and `fetch` spied; render `/v2`, click
-every button and every `.btn` / `.lp-nav__link`: no auth function called, no fetch, path still
-`/v2`. The only live navigations: the wordmark to `/`, Privacy to `/privacy`, the in-page
+every button and every inert `.btn` span (the live links listed next are left out): no auth
+function called, no fetch, path still `/v2`. The only live navigations: the wordmark to `/`, Privacy to `/privacy`, the in-page
 anchors, and the footer's links, kept as is (footer wins over the inert list; the in-page "Get the
 extension" is inert).
 
@@ -185,3 +178,8 @@ Do not change images, fonts, colors, or spacing.
 Reading notes: the stats row says "Use real numbers only" but no such numbers exist, and the trust
 line says to leave `[X/Y]`; both show `[X/Y]`. "The paragraph in two columns": the original is one
 sentence here (R7), so "Your shape" lines are its clauses and hover marks the clause.
+
+## Round 2 (plan-reviewer REVISE 1; applied above)
+How it works bodies are now sentences taken word for word from the Appendix (no "reordered"); the
+render test checks all four. Stale text above Round 1 folded in. The behaviour test leaves out the
+live links. Line buttons carry `aria-pressed` (already in the draft).
