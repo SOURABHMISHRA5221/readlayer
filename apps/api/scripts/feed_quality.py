@@ -62,8 +62,10 @@ async def first_pages(graph, store, now, named) -> None:
         for r in rows:
             c = r.candidate
             labels = [x.label for x in c.concepts]
-            print(f"  {c.result.format:7} {c.topic:10} {r.readiness or '-':8} "
-                  f"{c.result.title[:60]!r}\n      named={labels} read_first={list(r.read_first)}")  # fmt: skip
+            print(
+                f"  {c.result.format:7} {c.topic:10} {r.readiness or '-':8} {c.result.title[:60]!r}"
+            )
+            print(f"      named={labels} read_first={list(r.read_first)}")
             totals["rows"] += 1
             totals["junk rows"] += any(x.id in JUNK for x in c.concepts)
             totals["read-first rows"] += bool(r.read_first)

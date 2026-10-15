@@ -1075,7 +1075,8 @@ outlets' own section feeds**; the search above is only a restricted fallback.
   topic: `stage`, `film`, `music`, `books`, `travel` and the like only for culture, `sport` only
   for sports (decision 64: the Guardian's world feed carried a theatre piece into politics); URLs
   canonicalised (tracking query and fragment dropped). Section and script are checked again when
-  stored lists are read (`fits_topic`), since a list keeps earlier items for days. One doc per topic, `rec_cache/outlets:<topic>` = `{outlet: {items ≤ 20
+  stored lists are read (`fits_topic`), since a list keeps earlier items for days.
+  One doc per topic, `rec_cache/outlets:<topic>` = `{outlet: {items ≤ 20
   newest, fetched_at}}`, merged per outlet: an outlet that failed keeps its list, and the 3-day
   filter is re-applied to every list each run. 14 writes a run; no reader data, no LLM, no search
   API. A newest run older than 36 h is logged by the feed.

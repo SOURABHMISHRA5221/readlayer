@@ -161,9 +161,12 @@ wrong read-first lines and no junk-concept row; a signed-in feed refresh still r
 ## Then (the Oct 16 plan resumes)
 
 On UTC Oct 16 (today's search results stay cached under the old filter until the day changes):
-`seed_demo_feed` dry run + real (S2 again, ≤ 24 searches, Tavily 324 left), S4 gate (now also:
-read every row; no off-topic outlet item; any non-English video left goes to STATUS §5 as a known
-issue, not into tuning), then S5, S6 (runs a UTC day before the video), S3, S4b, S7–S9. S4b also
+`seed_demo_feed` dry run + real (S2 again, ≤ 24 searches; Tavily ≈ 318 left after the first S2,
+which used 6 credits). The dry run is also the **article floor** check after F5 (≥ 2 readable
+articles per topic; the measurement had no `feedx:` entries, so it counted videos and podcasts
+only). S4 gate (now also: read every row; no off-topic outlet item; any non-English video left goes
+to STATUS §5 as a known issue, not into tuning; **count rows with no readiness line per persona**:
+if a persona's page is still mostly line-less, tell Sourabh, no tuning), then S5, S6 (runs a UTC day before the video), S3, S4b, S7–S9. S4b also
 checks the landing still's line "A stretch: read up on Income distribution first" under the new
 code; if the row no longer gets it, re-shoot the still or record the mismatch in STATUS §5.
 

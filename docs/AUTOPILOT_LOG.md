@@ -2061,7 +2061,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   matching lower-case words, relevance not measured, media's `mostly_latin` caller…) → APPROVE.
 - Built test first (32 red → green): F1 stopword aliases out of the index, F2 single words only
   as caps acronyms or own-domain plain labels, F3 `is_latin_title`, F4 YouTube declared language,
-  F5 non-news sections at collection and read time. API 1,200 passed, ruff clean.
+  F5 non-news sections at collection and read time. API 1,200 passed.
 - `scripts/feed_quality.py` before (main worktree) / after: junk-concept rows 23 → 0 of 32,
   read-first rows 10 → 5 (all sensible), relevance floor held; one trader video drops (accepted).
   DESIGN §17.1/§17.1a/§17.2/media, STATUS §5/§10/§33 updated.
@@ -2074,5 +2074,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    deploy-api (Sourabh's yes). Then the Oct 16 plan resumes on UTC Oct 16 from S2 (re-seed).
 00. (done) Sourabh's answer on the feed rows (keep, drop named items from `persona_feeds`, or re-run).
 1. S2 demo feed re-seed (outlet freshness → dry run → real, same UTC day), then S4, S5, S6
-   (`preingest_feed.py`, test first; must run on UTC Oct 15), S3 restart on Sourabh's yes, S4b,
+   (`preingest_feed.py`, test first; runs a UTC day before the video), S3 restart on Sourabh's yes, S4b,
    S7–S9 per the plan.
+- milestone-reviewer round 1: **FIX** 8 → applied: `feed_quality.py` line over 100 (I had run ruff
+  before adding the script; "ruff clean" was wrong when written), SEBI target missed and recorded
+  (Indian press writes "Sebi"; Houthis lost on a politics row), floor claim narrowed to videos and
+  podcasts (article floor = the S2 dry run after deploy), Telugu row "closes when deployed", §9
+  decision 64 row, S2 counts (18 calls: 6 Tavily, 6 YouTube searches; 12 `rec_cache` entries;
+  ≈ 318 credits left), readiness mix before/after (no-line rows 1 → 15 of 32; flagged to
+  Sourabh), deadline wording.
