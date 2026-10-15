@@ -302,3 +302,42 @@ def test_not_interested_keeps_a_feed_item_away(env):
     assert sent.status_code == 200
     again = c.get("/v1/feed").json()["items"]
     assert gone not in {i["id"] for i in again} and len(again) == len(first) - 1
+
+
+def _stored_tariff_article(now):
+    """Decision 65: a snapshot article whose title names nothing, stored with a linked idea."""
+    from app.content import catalog
+    from app.store.content_repo import get_content_store
+    from tests.test_feed_readiness import stored
+
+    url = "https://www.bbc.co.uk/news/articles/toy-to-retailer"
+    asyncio.run(get_content_store().put(stored(url, [("c_tariff", 0.9)])))
+    catalog.reset()
+    row = WebResult(url=url, title="How a toy gets to a US retailer", source="BBC",
+                    format="article", published_at=now)  # fmt: skip
+    snap = _snapshot(now)
+    snap = feed_mod.Snapshot(snap.persona, now, snap.topics, (*snap.items, ("economics", row)))
+    asyncio.run(feed_mod.SnapshotRepo(get_doc_store()).put(snap))
+
+
+def test_a_stored_article_gets_readiness_from_its_ideas(env):
+    _stored_tariff_article(datetime.now(UTC).isoformat())
+    body = TestClient(app, headers=auth("demo4", anonymous=True)).get(
+        "/v1/feed?persona=newcomer").json()  # fmt: skip
+    items = {i["title"]: i for i in body["items"]}
+    toy = items["How a toy gets to a US retailer"]
+    assert toy["readiness_basis"] == "article" and toy["readiness"] == "ready"
+    assert items["Technology latest news today"]["readiness_basis"] == "title"
+
+
+def test_a_failing_library_falls_back_to_the_title_rule(env, monkeypatch):
+    _stored_tariff_article(datetime.now(UTC).isoformat())
+
+    async def broken():
+        raise RuntimeError("firestore unavailable")
+
+    monkeypatch.setattr(feed_router.catalog, "all_docs", broken)
+    resp = TestClient(app, headers=auth("demo5", anonymous=True)).get("/v1/feed?persona=newcomer")
+    assert resp.status_code == 200
+    toy = {i["title"]: i for i in resp.json()["items"]}["How a toy gets to a US retailer"]
+    assert toy["readiness_basis"] == "title" and toy["readiness"] is None

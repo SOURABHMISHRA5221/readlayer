@@ -1,0 +1,155 @@
+I1015 14:02:03.814036  206956 fork_posix.cc:71] Other threads are currently calling into gRPC, skipping fork() handlers
+project readlayer-sourabh-26
+served graph 2026-10-10-folded-5206+g1, 5322 concepts
+mode: stored articles use key ideas
+
+newcomer (feed 2026-10-15T08:07:13+00:00): 11 rows
+  video   economics  stretch  t '2026 Economics Nobel Prize Explained | Robert Hall Michael W'
+      url=https://www.youtube.com/watch?v=7o4QpiNAoQY
+      named=['Economics', 'RBI', 'Repo rate', 'Inflation', 'Stock market update'] read_first=['Central bank']
+  video   technology ready    t '5 Concepts to Know for Coding with AI Agents'
+      url=https://www.youtube.com/watch?v=hTAWHgQI4xg
+      named=['Autonomous AI agents', 'AI'] read_first=[]
+  article economics  stretch  a 'Stock markets close lower amid elevated crude oil, rising in'
+      url=https://www.thehindu.com/business/Economy/stock-markets-close-lower-amid-elevated-crude-oil-rising-inflation/article71583631.ece
+      ideas=['BSE Sensex', 'Nifty 50', 'Wholesale inflation', 'Brent crude']
+      named=['Stock market update', 'Crude oil', 'Inflation', 'BSE Sensex'] read_first=['Producer Price Index']
+  article technology stretch  t 'ASUS ExpertBook laptops get up to ₹21,000 off during Flipkar'
+      url=https://www.livemint.com/technology/asus-expertbook-laptops-get-up-to-21-000-off-during-flipkart-big-billion-days-sale-2026-11791973849216.html
+      named=['No-cost EMI'] read_first=['Consumer credit']
+  podcast economics  ready    t 'The Economic History Podcast - Podcast - Apple Podcasts'
+      url=https://podcasts.apple.com/us/podcast/the-economic-history-podcast/id1513552663
+      named=['Long run', 'real GDP growth'] read_first=[]
+  video   technology -        t 'Top 10 New Technologies Changing the World'
+      url=https://www.youtube.com/watch?v=LjKP-ezwrKw
+      named=[] read_first=[]
+  video   economics  -        t "The Money Squeeze That's Choking the Economy"
+      url=https://www.youtube.com/watch?v=9eBM5IF_bco
+      named=[] read_first=[]
+  article technology stretch  a 'GTA 6 PC launch tipped for early 2027, months after PS5 and '
+      url=https://www.livemint.com/technology/gta-6-pc-launch-tipped-for-early-2027-months-after-ps5-and-xbox-release-11791972547263.html
+      ideas=['Modder', 'Modding tool']
+      named=['Personal computer'] read_first=['Utility']
+  article economics  familiar a 'How a Chinese-made toy gets to a US retailer'
+      url=https://www.bbc.co.uk/news/articles/c5djvyde0y1jo
+      ideas=['Tariffs', 'Profit margins', 'Public consultation']
+      named=[] read_first=[]
+  article technology ready    a 'Haier eyes 30 to 35% festive growth this season, says CEO N '
+      url=https://www.thehindu.com/sci-tech/technology/haier-eyes-30-to-35-festive-growth-this-season-says-ceo-n-s-satish/article71582810.ece
+      ideas=['Premiumisation', 'Petrochemical']
+      named=[] read_first=[]
+  article economics  ready    a 'How much is the minimum wage?'
+      url=https://www.bbc.co.uk/news/articles/cy7e8mpdxpro
+      ideas=['Minimum wage', 'Real Living Wage']
+      named=['Minimum wage', 'Wage'] read_first=[]
+
+trader (feed 2026-10-15T08:07:22+00:00): 11 rows
+  article finance    familiar a 'Sebi likely to adopt blended pricing framework to curb expir'
+      url=https://www.livemint.com/market/sebi-likely-to-adopt-blended-pricing-framework-to-curb-expiry-day-volatility-in-derivatives-11791958588445.html
+      ideas=['Volume-weighted average price', 'Closing Auction Session', 'Blended pricing framework', 'Limit order']
+      named=['Blended pricing framework', 'Expiry days', 'Volatility', 'Consultation paper', 'Auction'] read_first=[]
+  article business   familiar a 'Kelly Clarkson and a Brooklyn store clashed on social media.'
+      url=https://www.livemint.com/companies/kelly-clarkson-and-a-brooklyn-store-clashed-on-social-media-behind-it-power-dynamics-loomed-11792006293278.html
+      ideas=['Parasocial relationship']
+      named=[] read_first=[]
+  video   finance    stretch  t 'Why Are Banking Stocks Getting Hammered With IRDAI New Insur'
+      url=https://www.youtube.com/watch?v=B4exp3QjwwM
+      named=['IRDAI'] read_first=['Financial regulator']
+  article business   familiar a 'Goldman Sachs Leads Rivals in Third-Quarter Share Sale Reven'
+      url=https://www.livemint.com/companies/goldman-sachs-leads-rivals-in-third-quarter-share-sale-revenue-11792003230852.html
+      ideas=['Underwriting', 'Equity capital markets revenue', 'IPO', 'Convertible bond']
+      named=['Revenues', 'Equities', 'Underwriting'] read_first=[]
+  article finance    ready    a 'How backlash against data centres could shape the US midterm'
+      url=https://www.bbc.co.uk/news/articles/c0rezqpnekro
+      ideas=['Data center', 'Moratoriums', 'AI', 'Sleeper issue']
+      named=['Data center', 'Midterm elections'] read_first=[]
+  article business   familiar a 'Hyundai plans ₹4,000 crore investment in Maharashtra, aims t'
+      url=https://www.livemint.com/companies/news/hyundai-plans-4-000-crore-investment-in-maharashtra-aims-to-double-pune-plant-capacity-by-2030-11791999786904.html
+      ideas=['Localisation', 'Crore', 'Lakh', 'Electric vehicle ecosystem']
+      named=['Crore', 'Lakh'] read_first=[]
+  article finance    ready    a 'How a Chinese-made toy gets to a US retailer'
+      url=https://www.bbc.co.uk/news/articles/c5djvyde0y1jo
+      ideas=['Tariffs', 'Profit margins', 'Public consultation']
+      named=[] read_first=[]
+  video   business   familiar t 'AI Stocks Tumble On OpenAI News; GigaCloud Tech, Snowflake, '
+      url=https://www.youtube.com/watch?v=X14xq3f6VTg
+      named=['AI', 'Stock market update'] read_first=[]
+  video   finance    -        t 'Bank of America Slides on $1.21 Billion Fine as Chip Stocks '
+      url=https://www.youtube.com/watch?v=PZoa93Cyuio
+      named=[] read_first=[]
+  video   business   familiar t 'Share Market Crash: FIIs Selling, Crude Oil & Adani Group Dr'
+      url=https://www.youtube.com/watch?v=M5U6qmcRlKY
+      named=['foreign portfolio investor (FPI)', 'Crude oil'] read_first=[]
+  podcast finance    -        t 'Australian Finance Podcast'
+      url=https://open.spotify.com/show/0KEsqdQgVCL6BKomPoNVOz
+      named=[] read_first=[]
+
+policy_student (feed 2026-10-15T08:07:26+00:00): 9 rows
+  video   policy     stretch  t 'Was it insider trading? Bloomberg: CFTC staff told to RETRAC'
+      url=https://www.youtube.com/watch?v=ulZ2Ww9ZNgo
+      named=['Insider trading', 'Commodity Futures Trading Commission'] read_first=['Derivative contracts']
+  article politics   -        t 'Student protests in Albania turn violent as demonstrators cl'
+      url=https://www.theguardian.com/world/2026/oct/14/student-protests-tirana-albania-police-clashes
+      named=[] read_first=[]
+  article policy     stretch  a 'Stopping Pip for ADHD or autism would not make big savings, '
+      url=https://www.theguardian.com/society/2026/oct/15/pip-ban-adhd-autism-savings-resolution-foundation
+      ideas=['Personal Independence Payment', 'Pip (finance)', 'Attention deficit hyperactivity disorder', 'Department for Work and Pensions']
+      named=[] read_first=['Currency pair']
+  article politics   ready    a "Iran-backed Houthis strike Saudi oil company Aramco's headqu"
+      url=https://www.thehindu.com/news/international/iran-backed-houthis-strike-saudi-oil-company-aramcos-headquarters/article71585469.ece
+      ideas=['Houthis', 'Interceptor missile', 'War of attrition', 'Blockade (military)']
+      named=['Houthis'] read_first=[]
+  article policy     familiar a 'Citizens asked to detail demographic changes in their areas '
+      url=https://www.thehindu.com/news/national/citizens-asked-to-detail-demographic-changes-in-their-areas-through-mha-portal/article71584379.ece
+      ideas=['Aadhaar', 'Ration card']
+      named=[] read_first=[]
+  video   politics   -        t '🔴 Pakistan Politics & Global Geopolitics Explained | Latest '
+      url=https://www.youtube.com/watch?v=qYfEci2kNj4
+      named=[] read_first=[]
+  article policy     ready    a 'Cardiology dept. in Kozhikode MCH in need of critical care'
+      url=https://www.thehindu.com/news/national/kerala/cardiology-dept-in-kozhikode-mch-in-need-of-critical-care/article71583831.ece
+      ideas=['Doctorate of Medicine', 'Echocardiogram', 'Angioplasty', 'Department of Cardiology']
+      named=[] read_first=[]
+  video   politics   familiar t 'BJP’s Political Game Over, Public Frustration Is Growing | S'
+      url=https://www.youtube.com/watch?v=cvgv2AoGDPE
+      named=['Game over'] read_first=[]
+  podcast policy     -        t 'The Politics of Policy Analysis - Podcast - Apple Podcasts'
+      url=https://podcasts.apple.com/dk/podcast/the-politics-of-policy-analysis/id1548022023
+      named=[] read_first=[]
+
+first pages: {'rows': 31, 'junk rows': 0, 'read-first rows': 7, 'newcomer stretch': 4, 'newcomer ready': 4, 'newcomer none': 2, 'newcomer familiar': 1, 'trader familiar': 6, 'trader stretch': 1, 'trader ready': 2, 'trader none': 2, 'policy_student stretch': 2, 'policy_student none': 3, 'policy_student ready': 2, 'policy_student familiar': 2}
+single-word concepts named on first pages (17):
+  newcomer/economics: Economics [economics] in '2026 Economics Nobel Prize Explained | Robert Hall'
+  newcomer/economics: RBI [policy] in '2026 Economics Nobel Prize Explained | Robert Hall'
+  newcomer/economics: Inflation [economics] in '2026 Economics Nobel Prize Explained | Robert Hall'
+  newcomer/technology: AI [business] in '5 Concepts to Know for Coding with AI Agents'
+  newcomer/economics: Inflation [economics] in 'Stock markets close lower amid elevated crude oil,'
+  newcomer/economics: Wage [economics] in 'How much is the minimum wage?'
+  trader/finance: Volatility [finance] in 'Sebi likely to adopt blended pricing framework to '
+  trader/finance: Auction [business] in 'Sebi likely to adopt blended pricing framework to '
+  trader/finance: IRDAI [policy] in 'Why Are Banking Stocks Getting Hammered With IRDAI'
+  trader/business: Revenues [business] in 'Goldman Sachs Leads Rivals in Third-Quarter Share '
+  trader/business: Equities [finance] in 'Goldman Sachs Leads Rivals in Third-Quarter Share '
+  trader/business: Underwriting [finance] in 'Goldman Sachs Leads Rivals in Third-Quarter Share '
+  trader/business: Crore [business] in 'Hyundai plans ₹4,000 crore investment in Maharasht'
+  trader/business: Lakh [economics] in 'Hyundai plans ₹4,000 crore investment in Maharasht'
+  trader/business: AI [business] in 'AI Stocks Tumble On OpenAI News; GigaCloud Tech, S'
+  trader/business: foreign portfolio investor (FPI) [finance] in 'Share Market Crash: FIIs Selling, Crude Oil & Adan'
+  policy_student/politics: Houthis [policy] in 'Iran-backed Houthis strike Saudi oil company Aramc'
+
+cached search results passing keep_for, days 2026-10-13..2026-10-15:
+  business    {'video kept': 6, 'video seen': 7}
+  economics   {'podcast kept': 10, 'podcast seen': 10, 'video kept': 5, 'video seen': 5}
+  finance     {'podcast kept': 10, 'podcast seen': 10, 'video kept': 6, 'video seen': 8}
+  policy      {'podcast kept': 10, 'podcast seen': 10, 'video kept': 1, 'video seen': 1}
+  politics    {'podcast kept': 8, 'podcast seen': 8, 'video kept': 3, 'video seen': 6}
+  technology  {'podcast kept': 6, 'podcast seen': 6, 'video kept': 9, 'video seen': 9}
+  newcomer: 0 snapshot videos/podcasts now fail is_relevant
+  trader: 1 snapshot videos/podcasts now fail is_relevant
+    finance/video: 'Bank of America Slides on $1.21 Billion Fine as Ch'
+  policy_student: 0 snapshot videos/podcasts now fail is_relevant
+
+aliases F1 leaves out of the index (alias, concept, domain):
+  'it' → Give the treatment [sports]
+  'to' → Take a touch [sports]
+  'AT' → Activity theory [education]

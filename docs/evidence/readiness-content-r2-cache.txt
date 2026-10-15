@@ -1,0 +1,4 @@
+R2 check over cached policy/politics results (searches 2026-10-13..2026-10-15 and outlet lists): 191 rows, 3 newly named
+  policy/outlet bbc: Zionism [politics] in "Burnham rules out coalition with Greens after 'Zionism is ra"
+  policy/outlet guardian: Alliance [politics] in 'UK’s ‘incoherent’ approach to China plagued by lack of exper'
+  politics/outlet hindu: Houthis [policy] in "Iran-backed Houthis strike Saudi oil company Aramco's headqu"

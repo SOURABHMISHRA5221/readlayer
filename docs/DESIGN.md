@@ -128,7 +128,11 @@ personas stay curated on the original four.
   concepts best-effort (≤ 1 request/s, 10-minute cap, Gemini confirms the page matches).
 - Embeddings: `MODEL_EMBED` (gemini-embedding-001, 256 dims), no fallback model.
 - **Entity linking** (at ingest and in the build's re-link): exact label/alias match first (any
-  demand type). Otherwise, for concept and term demands only, embed the demand label; concepts
+  demand type), except a one-word key that reaches a sense-labelled concept ("Pip (finance)",
+  "Duration (bond)": a trailing parenthesis with 3+ lower-case letters, not an acronym like
+  "(OMO)") or a sense-parenthesised alias ("Short (finance)"), unless the demand itself names
+  that sense: those go the model's way below (decision 66; "Pip" on a UK benefits article had
+  been linked to the forex pip unchecked). Otherwise, for concept and term demands only, embed the demand label; concepts
   whose label embedding reaches `LINK_THRESHOLD` become candidates (top 5), and `link_confirm`
   (MODEL_QUALITY) picks one or none. The threshold is recalibrated on every build to keep 95% of
   true matches, measured on exact-alias matches whose wording differs from the concept label,
@@ -1107,8 +1111,8 @@ score = interest(topic) × format_affinity(format) × readiness × goal_boost ×
   new → 1.0, none → 0.6, more than 4 → 0.8^(k−4). A **single word** names a concept only when
   unambiguous (decision 64): a caps-only name (RBI, M&A, EBITDAR) needs the word in caps, in any
   domain; otherwise only the plain label counts (no alias: "stocks" ≠ Stock variable; no
-  disambiguated label: "basis" ≠ Basis (finance)), and only in the item's own domain or when both
-  are in the business group. The alias index never holds a one-word stopword alias ("to", "it",
+  disambiguated label: "basis" ≠ Basis (finance)), and only in the item's own domain or a related
+  one (`DOMAIN_GROUPS`: the business group, and policy with politics, decision 65). The alias index never holds a one-word stopword alias ("to", "it",
   "AT": §2's lookup, `ALIAS_STOPWORDS`).
 - goal_boost: 1.3 when the item names a learning-goal target (§18).
 - Selection: per topic up to 3 articles (mixed local/global, §17.1a), 2 videos, 1 podcast (one
@@ -1117,15 +1121,22 @@ score = interest(topic) × format_affinity(format) × readiness × goal_boost ×
   to you · helps your goal: Insulin resistance").
 - Feed impressions use the Up next signal store with relation `feed`; feed dismissals never
   touch relation dismissals.
-- Readiness line (decision 60, For you only): from the same named concepts and the reader's own
-  map, one line under the title. "Mostly familiar": none is new; "Ready for you": 1–4 new and every
+- Readiness line (decision 60, For you only): from the reader's own map, one line under the
+  title. Its ideas (decision 65): for a public library article (a stored corpus doc whose id is
+  `url_hash` of the row's URL; a reader's own `user_ingested` or extension page never counts) the
+  article's **key ideas**, its K = READY_MAX = 4 most salient linked demands in the served graph,
+  one per concept; for every other row the named concepts above. A prerequisite the article
+  itself links is never "read up on" it. The line, its read-first ideas and the `why` count use
+  these ideas; the score (its readiness factor and the goal boost) always uses the title and
+  snippet concepts, so the row order never depends on it. "Mostly familiar": none is new; "Ready for you": 1–4 new and every
   new idea's graph prerequisites are known (the map's rule, p_know ≥ 0.5); "A stretch: read up on X
   and Y first": a new idea has a prerequisite that is itself new and not named by the item (up to
   2, most basic first by `base_difficulty`), or "A stretch: many new ideas at once" for more than 4
   new. An item that names no concept gets no line. A new idea with no prerequisites in the graph
-  counts as ready here but gets no ring on the map. The line says its basis on hover ("Based on the
-  ideas named in the title and summary"); it is three levels, not a number, because a number from
-  title and summary matches would be false precision. Scores are unchanged.
+  counts as ready here but gets no ring on the map. The line says its basis on hover
+  (`readiness_basis`: "Based on the main ideas in the article" or "Based on the ideas named in the
+  title and summary"); it is three levels, not a number, because a number from four ideas or a
+  title match would be false precision. Scores are unchanged.
 
 ### 17.3 Demo snapshots (decision 38)
 Demo readers never trigger a search. `scripts/seed_demo_feed.py` reads the collected outlet

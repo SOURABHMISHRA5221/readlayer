@@ -3,8 +3,9 @@
     uv run python -m scripts.readiness_mix            # after `make check-gcp`
 
 For each demo persona: the production template (`persona_templates/{p}`), its stored feed
-(`persona_feeds/{p}`) and the served graph (Cloud Storage plus `graph_growth`), ranked and
-selected in memory exactly as GET /v1/feed does for a fresh demo reader; prints how many rows
+(`persona_feeds/{p}`), the served graph (Cloud Storage plus `graph_growth`) and the stored library
+(stored articles carry their key ideas, decision 65), ranked and selected in memory exactly as
+GET /v1/feed does for a fresh demo reader; prints how many rows
 land on each level. Writes nothing.
 """
 
@@ -18,6 +19,7 @@ STOP_SHARE = 0.8  # one level on ≥ 80% of the newcomer's rows: tell Sourabh, d
 
 async def main() -> int:
     from app.config import get_settings
+    from app.content import catalog
     from app.graph.loader import get_graph, load_serving_graph
     from app.recs import feed_rank as fr
     from app.recs.feed import PERSONA_COUNTRY, SnapshotRepo, side_for, snapshot_candidates
@@ -29,6 +31,7 @@ async def main() -> int:
 
     await load_serving_graph(get_settings().concepts_uri)
     graph, now, store = get_graph(), datetime.now(UTC), get_doc_store()
+    library = {d.content_id: d for d in await catalog.all_docs()}
     print(f"served graph {graph.version}, {len(graph)} concepts")
     stop = False
     for persona in ("newcomer", "trader", "policy_student"):
@@ -44,7 +47,12 @@ async def main() -> int:
             prior=PERSONA_FORMAT_PRIORS[persona],
         )
         ranked = fr.select(
-            fr.rank(snapshot_candidates(snap, graph), reader, now, graph),
+            fr.rank(
+                fr.attach_ideas(snapshot_candidates(snap, graph), library, graph),
+                reader,
+                now,
+                graph,
+            ),
             topics,
             side_for(PERSONA_COUNTRY),
             LOCAL_SHARE,

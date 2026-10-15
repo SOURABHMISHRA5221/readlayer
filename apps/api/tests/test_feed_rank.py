@@ -191,3 +191,15 @@ def test_latin_titles_allow_accents_symbols_and_one_stray_letter():
     assert fr.is_latin_title("Müller's café reopens")
     assert fr.is_latin_title("ASUS laptops ₹21,000 off 🔴 live")
     assert fr.is_latin_title("The μ problem in markets")
+
+
+def test_policy_and_politics_are_neighbours_for_a_plain_label():
+    g = ConceptGraph(ConceptGraphFile(version="t", concepts=[
+        concept("c_houthis", "Houthis", "policy"), concept("c_election", "Election", "politics"),
+        concept("c_autism", "Autism", "health"),
+    ]))  # fmt: skip
+    ids = lambda text, topic: [c.id for c in fr.named_concepts(g, text, topic)]  # noqa: E731
+    assert ids("Houthis strike Aramco", "politics") == ["c_houthis"]
+    assert ids("Election rules change", "policy") == ["c_election"]
+    assert ids("Houthis strike Aramco", "health") == []
+    assert ids("Autism benefits", "policy") == []

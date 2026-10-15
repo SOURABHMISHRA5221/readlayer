@@ -15,12 +15,13 @@ never changing the score: "familiar" (the item names only known ideas), "ready" 
 graph prerequisites the reader knows: the map's own "ready to learn" rule, `KNOWN_P`), "stretch"
 (more than READY_MAX new ideas, or a new idea with a prerequisite that is itself new: up to
 READ_FIRST_MAX of those, most basic first), or None when the item names no graph concept. Based on
-the ideas named in the title and summary only.
+the ideas named in the title and summary, or, for a public library article, its key ideas
+(decision 65: `attach_ideas`). The score always uses the title and summary.
 """
 
 import re
 from collections.abc import Callable, Iterable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from typing import Literal
@@ -30,6 +31,8 @@ from app.graph.build import normalize_label
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
 from app.graph.taxonomy import BUSINESS_DOMAINS, BY_ID
+from app.ingest.models import ContentDoc, is_corpus
+from app.ingest.urls import url_hash
 from app.reader import model
 from app.reader.state import ReaderState
 from app.recs.models import PODCAST_DOMAINS, Format, WebResult
@@ -61,10 +64,15 @@ _ID_DIGITS = re.compile(r"\d{4,}")
 class FeedCandidate:
     result: WebResult
     topic: str  # taxonomy domain id
-    concepts: tuple[Concept, ...] = ()
+    concepts: tuple[Concept, ...] = ()  # named in title + snippet: the score uses these
+    # A public library article's key ideas (decision 65): the shown readiness uses these when
+    # set and non-empty; `covered` is every idea the article links (never "read up on" them).
+    ideas: tuple[Concept, ...] | None = None
+    covered: frozenset[str] = frozenset()
 
 
 Readiness = Literal["familiar", "ready", "stretch"]
+ReadinessBasis = Literal["article", "title"]
 
 
 @dataclass(frozen=True)
@@ -76,6 +84,7 @@ class RankedItem:
     why: str
     readiness: Readiness | None = None  # shown to the reader, not part of the score
     read_first: tuple[str, ...] = ()  # prerequisites new to the reader, most basic first
+    readiness_basis: ReadinessBasis = "title"
 
 
 @dataclass(frozen=True)
@@ -101,20 +110,29 @@ def _is_caps(text: str) -> bool:
     )
 
 
+# Domains whose plain one-word labels count for each other's items (decision 65 adds politics).
+DOMAIN_GROUPS: tuple[frozenset[str], ...] = (
+    frozenset(BUSINESS_DOMAINS),
+    frozenset({"policy", "politics"}),
+)
+
+
+def _related(domain: str, topic: str) -> bool:
+    return domain == topic or any(domain in g and topic in g for g in DOMAIN_GROUPS)
+
+
 def _single_word_counts(concept: Concept, token: str, topic: str) -> bool:
     """One word names a concept only when that is unambiguous (decision 64). A caps-only name
     (RBI, M&A, EBITDAR) needs the word in caps too, in any domain. Otherwise only the plain
     label counts (not an alias: "stocks" → Stock variable; not a disambiguated label: "Basis
-    (finance)"), and only in the item's own domain or when both are in the business group."""
+    (finance)"), and only in the item's own domain or a related one (DOMAIN_GROUPS)."""
     key = normalize_label(token)
     names = [n for n in (concept.label, *concept.aliases) if normalize_label(n) == key]
     if any(_is_caps(n) for n in names):
         return _is_caps(token)
     if normalize_label(concept.label) != key or "(" in concept.label:
         return False
-    return concept.domain == topic or (
-        concept.domain in BUSINESS_DOMAINS and topic in BUSINESS_DOMAINS
-    )
+    return _related(concept.domain, topic)
 
 
 def named_concepts(graph: ConceptGraph, text: str, topic: str) -> tuple[Concept, ...]:
@@ -290,15 +308,54 @@ def why(topic: str, new: Sequence[str], goal: str | None) -> str:
     return " · ".join(parts)
 
 
+def key_ideas(
+    doc: ContentDoc, graph: ConceptGraph, k: int = READY_MAX
+) -> tuple[tuple[Concept, ...], frozenset[str]]:
+    """A stored article's k most salient linked ideas in the served graph (one per concept, its
+    highest salience; ties by first appearance), and every idea it links. Pure."""
+    best: dict[str, tuple[float, int]] = {}
+    for i, d in enumerate(doc.demands):
+        if d.target_id is None or graph.get(d.target_id) is None:
+            continue
+        seen = best.get(d.target_id)
+        if seen is None or d.salience > seen[0]:
+            best[d.target_id] = (d.salience, seen[1] if seen else i)
+    order = sorted(best, key=lambda cid: (-best[cid][0], best[cid][1]))
+    return tuple(graph.get(cid) for cid in order[:k]), frozenset(best)  # type: ignore[misc]
+
+
+def attach_ideas(
+    candidates: Sequence[FeedCandidate], docs: Mapping[str, ContentDoc], graph: ConceptGraph,
+    k: int = READY_MAX,
+) -> list[FeedCandidate]:  # fmt: skip
+    """Decision 65: an article row whose URL is a stored public library article (content id =
+    `url_hash` of the result's URL, corpus only: a reader's own pages stay theirs) carries its
+    key ideas. Videos, podcasts and unstored or unlinked articles are returned unchanged."""
+    out = []
+    for c in candidates:
+        doc = docs.get(url_hash(c.result.url)) if c.result.format == "article" else None
+        if doc is not None and is_corpus(doc):
+            ideas, covered = key_ideas(doc, graph, k)
+            if ideas:
+                c = replace(c, ideas=ideas, covered=covered)
+        out.append(c)
+    return out
+
+
 def rank(
     candidates: Sequence[FeedCandidate], reader: FeedReader, now: datetime, graph: ConceptGraph
 ) -> list[RankedItem]:
+    """The score uses the title + snippet concepts; what the row shows (new ideas, readiness,
+    read-first) uses the article's key ideas when it has them (decision 65)."""
     top = max((reader.interest.get(c.topic, 0.0) for c in candidates), default=0.0) or 1.0
     out = []
     for c in candidates:
-        fresh = [x for x in c.concepts if is_new(x, reader.state, now)]
+        titled = [x for x in c.concepts if is_new(x, reader.state, now)]
+        shown_from = c.ideas or c.concepts
+        fresh = [x for x in shown_from if is_new(x, reader.state, now)] if c.ideas else titled
         new = tuple(x.label for x in fresh)
-        first = read_first(fresh, frozenset(x.id for x in c.concepts), graph, reader.state, now)
+        covered = frozenset(x.id for x in c.concepts) | c.covered
+        first = read_first(fresh, covered, graph, reader.state, now)
         goal = next((reader.goal_targets[x.id] for x in c.concepts if x.id in reader.goal_targets),
                     None)  # fmt: skip
         interest = (reader.interest.get(c.topic, 0.0) or top) / top
@@ -309,12 +366,14 @@ def rank(
         score = (
             interest
             * affinity
-            * readiness(len(new))
+            * readiness(len(titled))
             * (GOAL_BOOST if goal else 1.0)
             * freshness(c.result.published_at, now)
         )
-        level = readiness_level(len(c.concepts), len(new), first)
-        out.append(RankedItem(c, round(score, 4), new, goal, why(c.topic, new, goal), level, first))
+        level = readiness_level(len(shown_from), len(new), first)
+        basis: ReadinessBasis = "article" if c.ideas else "title"
+        out.append(RankedItem(c, round(score, 4), new, goal, why(c.topic, new, goal), level, first,
+                              basis))  # fmt: skip
     return out
 
 

@@ -243,3 +243,67 @@ def test_stopword_aliases_are_not_indexed_but_labels_and_phrases_are():
     assert g.lookup("it") is None and g.lookup("AT") is None and g.lookup("at") is None
     assert g.lookup("Take a touch").id == "c_take_a_touch"
     assert g.lookup("bank of england").id == "c_boe"
+
+
+# ---------------------------------------------------------------- decision 66: sense keys
+
+SENSE = ConceptGraph(ConceptGraphFile(version="t", concepts=[
+    concept("c_pip_finance", "Pip (finance)", [1, 0, 0], domain="finance"),
+    concept("c_pip_benefit", "Personal Independence Payment", [0.9, 0.1, 0], domain="policy"),
+    concept("c_short_positions", "Short positions", [0, 1, 0], aliases=["Short (finance)"],
+            domain="finance"),
+    concept("c_gst", "GST", [0, 0, 1], aliases=["Goods and Services Tax"]),
+    concept("c_omo", "open market operation (OMO)", [1, 1, 0], aliases=["OMO"], domain="finance"),
+    concept("c_oem", "Manufacturers (OEMs)", [0, 1, 1], domain="business"),  # one-word base
+    concept("c_rodtep", "Remission (RoDTEP)", [1, 0, 1]),  # a mixed-case acronym, not a sense
+    concept("c_401k", "401(k)", [1, 1, 1], domain="finance"),
+    concept("c_duration", "Duration (bond)", [0.5, 0.5, 0], aliases=["bond duration"],
+            domain="finance"),
+    concept("c_exercise", "Exercise (options)", [0, 0.5, 0.5], aliases=["exercised"],
+            domain="finance"),
+    concept("c_covenant", "Restrictive covenant (ethics)", [0.5, 0, 0.5], aliases=["Covenants"]),
+]))  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    ("label", "exact", "target"),
+    [("Pip", "Pip", None), ("short", "short", None), ("duration", "duration", None),
+     ("exercised", "exercised", None), ("Covenants", "Covenants", None),
+     ("Pip (finance)", "Pip (finance)", "c_pip_finance"),
+     ("Goods and Services Tax", "Goods and Services Tax", "c_gst"),
+     ("open market operations", "open market operations", "c_omo"), ("OMO", "OMO", "c_omo"),
+     ("manufacturers", "manufacturers", "c_oem"), ("remission", "remission", "c_rodtep"),
+     ("401(k)", "401(k)", "c_401k"),
+     ("bond duration", "bond duration", "c_duration")],
+)  # fmt: skip
+def test_a_one_word_sense_key_is_never_an_unchecked_match(label, exact, target):
+    from app.graph.linking import alias_target
+
+    assert alias_target(SENSE, demand("d", label, exact)) == target
+
+
+async def test_a_refused_sense_key_goes_to_the_model_and_context_ends_unlinked():
+    async def embed(texts):
+        return [[0.9, 0.1, 0] for _ in texts]
+
+    async def confirm(questions):
+        ids = [c[0] for c in questions[0].candidates]
+        assert "c_pip_finance" in ids and "c_pip_benefit" in ids
+        return {0: "c_pip_benefit"}
+
+    demands = [demand("d0", "Pip"), demand("d1", "Pip", type_="context")]
+    linked, links = await link_demands(
+        SENSE, demands, {"p0": "Stopping Pip would not save much."}, 0.5, embed=embed,
+        confirm=confirm,
+    )  # fmt: skip
+    assert [d.target_id for d in linked] == ["c_pip_benefit", None]
+    assert [lk.method for lk in links] == ["confirmed", "unlinked"]
+
+
+def test_the_modding_tool_loses_its_patent_law_prerequisite():
+    from app.graph.prereq_fixes import without_known_wrong
+
+    tool = concept("c_modding_tool", "Modding tool", [1, 0, 0],
+                   prereqs=["c_computer_program", "c_utility"])  # fmt: skip
+    (fixed,) = without_known_wrong([tool])
+    assert fixed.prerequisites == ["c_computer_program"]
