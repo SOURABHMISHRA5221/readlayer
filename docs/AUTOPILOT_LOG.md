@@ -2039,7 +2039,17 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   read back `{persona}@2026-10-10-folded-5206`, 109 / 86 / 115 edges, `last_seen` 2026-10-15.
   Live instances pick them up at S3 (same-image revision, Sourabh's yes).
 
+- **S2 done**: outlets collected 00:30 UTC; old feeds dumped to the scratchpad; dry run then real
+  (identical lists, ≥ 6 readable articles per topic); `persona_feeds/*` prepared 07:22 UTC Oct 15.
+- **S4 gate**: newcomer familiar 3 / ready 4 / stretch 4 (stop rule not hit); trader familiar 5 /
+  ready 3 / stretch 3; policy student familiar 5 / ready 1 / stretch 3 / no line 1 (10 rows).
+- First-page rows read: wrong read-first lines from title words ("Economic stocks and flows" on
+  three stock videos, "Derivative contracts" on "Gadgets of the future", "Spread, Basis points" on a
+  Kozhikode cardiology story); policy student also shows "Paddington: The Musical" under politics
+  and a Malayalam-titled video. Asked Sourabh how to handle them (code freeze) before S5/S6.
+
 ### Next steps (resume here, in order)
+0. Sourabh's answer on the feed rows (keep, drop named items from `persona_feeds`, or re-run).
 1. S2 demo feed re-seed (outlet freshness → dry run → real, same UTC day), then S4, S5, S6
    (`preingest_feed.py`, test first; must run on UTC Oct 15), S3 restart on Sourabh's yes, S4b,
    S7–S9 per the plan.
