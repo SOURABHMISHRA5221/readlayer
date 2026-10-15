@@ -2048,8 +2048,18 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   Kozhikode cardiology story); policy student also shows "Paddington: The Musical" under politics
   and a Malayalam-titled video. Asked Sourabh how to handle them (code freeze) before S5/S6.
 
+- Sourabh on the rows: "fix if you need deadline will extend by 4 days minimum but still fix" →
+  **decision 64**: freeze lifted for a real fix; submission moves ≥ 4 days (exact date from him).
+- Causes traced: stopword aliases (`it`, `to`, `at` → sports/education concepts on nearly every
+  row), single-word aliases matched in free text in the wrong sense (stocks, futures, basis,
+  short, reserves…), `mostly_latin` passing a Malayalam title, the Guardian world feed carrying a
+  `/stage/` piece. Article notes unaffected (linking looks up model-extracted demands only).
+  Plan `docs/plans/feed-quality.md` (F1–F5) → plan-reviewer.
+
 ### Next steps (resume here, in order)
-0. Sourabh's answer on the feed rows (keep, drop named items from `persona_feeds`, or re-run).
+0. Feed-quality fix: plan-reviewer → tests first → build → measure → milestone-reviewer → PR →
+   deploy-api (Sourabh's yes). Then the Oct 16 plan resumes on UTC Oct 16 from S2 (re-seed).
+00. (done) Sourabh's answer on the feed rows (keep, drop named items from `persona_feeds`, or re-run).
 1. S2 demo feed re-seed (outlet freshness → dry run → real, same UTC day), then S4, S5, S6
    (`preingest_feed.py`, test first; must run on UTC Oct 15), S3 restart on Sourabh's yes, S4b,
    S7–S9 per the plan.
