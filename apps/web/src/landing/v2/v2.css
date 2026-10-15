@@ -86,18 +86,21 @@
 }
 
 /* "Reshape something" is longer than the landing's "Try the demo": on phones keep each bar item on
-   one line (scoped to /v2; the landing at / is untouched). */
+   one line and inside the screen down to 360 px, without changing type (scoped to /v2; / is untouched). */
 @media (max-width: 480px) {
   .lp2 .lp-nav__link,
   .lp2 .lp-nav__cta {
     white-space: nowrap;
   }
+  .lp2 .lp-nav {
+    gap: 0;
+  }
   .lp2 .lp-nav__link {
-    padding: 0 var(--s1);
+    padding: 0 2px;
   }
   .lp2 .lp-nav__cta {
+    margin: 0;
     padding: 0 var(--s2);
-    font-size: 13.5px;
   }
 }
 

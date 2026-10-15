@@ -87,6 +87,10 @@ async def main() -> None:
                 # Every bar item on one line: no taller than its 44 px row.
                 report[key]["bar items taller than 44px"] = await p.eval("""[...document.querySelectorAll('.lp-nav > *')]
                   .filter(e => e.getBoundingClientRect().height > 46).map(e => e.textContent.trim())""")
+                # And inside the screen: no bar item's right edge past the viewport.
+                report[key]["bar items past the right edge"] = await p.eval("""[...document.querySelectorAll('.lp-bar a, .lp-bar button')]
+                  .filter(e => e.getBoundingClientRect().right > document.documentElement.clientWidth)
+                  .map(e => (e.getAttribute('aria-label') || e.textContent.trim()) + ' ' + Math.round(e.getBoundingClientRect().right))""")
                 (OUT / f"v2-{width}-{'dark' if dark else 'light'}.png").write_bytes(await shot_bytes(p))
         # Motion on: choosing 2 min animates the lines that stay (the 300 ms FLIP).
         await view(p, base, 1440, motion=True)

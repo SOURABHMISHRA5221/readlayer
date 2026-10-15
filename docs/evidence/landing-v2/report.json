@@ -7,7 +7,8 @@
     "small": [],
     "robots": "noindex, nofollow",
     "theme": "light",
-    "bar items taller than 44px": []
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
   },
   "/v2 1440 dark": {
     "axe": [],
@@ -15,7 +16,8 @@
     "small": [],
     "robots": "noindex, nofollow",
     "theme": "dark",
-    "bar items taller than 44px": []
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
   },
   "/v2 390 light": {
     "axe": [],
@@ -23,7 +25,8 @@
     "small": [],
     "robots": "noindex, nofollow",
     "theme": "light",
-    "bar items taller than 44px": []
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
   },
   "/v2 390 dark": {
     "axe": [],
@@ -31,7 +34,8 @@
     "small": [],
     "robots": "noindex, nofollow",
     "theme": "dark",
-    "bar items taller than 44px": []
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
   },
   "/v2 360 light": {
     "axe": [],
@@ -39,7 +43,8 @@
     "small": [],
     "robots": "noindex, nofollow",
     "theme": "light",
-    "bar items taller than 44px": []
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
   },
   "/v2 360 dark": {
     "axe": [],
@@ -47,7 +52,8 @@
     "small": [],
     "robots": "noindex, nofollow",
     "theme": "dark",
-    "bar items taller than 44px": []
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
   },
   "reflow animations on 2 min (motion on)": [
     "translate(0px, 60px)",
