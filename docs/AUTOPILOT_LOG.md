@@ -2096,3 +2096,22 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    ≈ 318 Tavily credits), S4 gate with no-line counts, S5 media, S6 `preingest_feed.py` (test
    first), S3 same-image restart (Sourabh's yes), S4b, S7–S9. Video Oct 17, submit by Oct 18.
 
+## Oct 16 items pulled into Oct 15; decisions 65 and 66 (2026-10-15 afternoon)
+
+- Sourabh: "why waste today". S2 re-seeded on the fixed code (cached recordings re-checked, test
+  first), S4 gate, S5 media (5 stored, one analysis timeout), S6 `preingest_feed.py` (16 stored),
+  S8 warm hit a contention 500 and a delete 500 (B1, B2).
+- Blank readiness rows (policy student 7 of 9) → Sourabh "plan fix" → decision 65 (key ideas of
+  stored articles; plan REVISE 11 → APPROVE; built test first; measured: blanks fall on every
+  persona, ranking unchanged). Its read-first lines exposed a "Pip" → Pip (finance) mislink and a
+  patent-law prerequisite → Sourabh "yes" → decision 66 (plan REVISE 13 → 3 → 1 → APPROVE; built
+  test first; dry run: PIP fixed, Sebi derivatives left as is).
+
+### Next steps (resume here, in order)
+1. milestone-reviewer on `oct16-seeding-2` → PR → CI → merge.
+2. `relink_senses --write` (PIP only; no cache deletes needed: 0 cached) → `make deploy-api`
+   (Sourabh's yes) → `make deploy-web` (yes) → live checks (feed mix per persona, first
+   `/v1/feed` latency, PIP notes, GTA line, `DELETE /v1/me` 204) → `warm_demo --shifts` for the
+   two articles the 500 cut short. Cut-off check at 19:00 IST.
+3. S7 (Guardian proposed), S9, then video Oct 16–17 and submit by Oct 18.
+

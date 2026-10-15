@@ -128,7 +128,11 @@ personas stay curated on the original four.
   concepts best-effort (≤ 1 request/s, 10-minute cap, Gemini confirms the page matches).
 - Embeddings: `MODEL_EMBED` (gemini-embedding-001, 256 dims), no fallback model.
 - **Entity linking** (at ingest and in the build's re-link): exact label/alias match first (any
-  demand type). Otherwise, for concept and term demands only, embed the demand label; concepts
+  demand type), except a one-word key that reaches a sense-labelled concept ("Pip (finance)",
+  "Duration (bond)": a trailing parenthesis with 3+ lower-case letters, not an acronym like
+  "(OMO)") or a sense-parenthesised alias ("Short (finance)"), unless the demand itself names
+  that sense: those go the model's way below (decision 66; "Pip" on a UK benefits article had
+  been linked to the forex pip unchecked). Otherwise, for concept and term demands only, embed the demand label; concepts
   whose label embedding reaches `LINK_THRESHOLD` become candidates (top 5), and `link_confirm`
   (MODEL_QUALITY) picks one or none. The threshold is recalibrated on every build to keep 95% of
   true matches, measured on exact-alias matches whose wording differs from the concept label,

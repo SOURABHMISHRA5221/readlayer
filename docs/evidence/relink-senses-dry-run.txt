@@ -1,0 +1,28 @@
+project readlayer-sourabh-26; graph 2026-10-10-folded-5206+g1; 19 demo docs, 2 with sense keys; spent today $0.54
+
+d530bb6b72 'Sebi likely to adopt blended pricing framework to curb expiry-day vola': 1 in scope, 1 change
+  'derivatives segment': Derivative contracts → None
+
+e067b8f765 'Stopping Pip for ADHD or autism would not make big savings, says think': 12 in scope, 12 change
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+  'Pip': Pip (finance) → Personal Independence Payment
+
+persona diff (notes per demo doc, old links → new):
+  d530bb6b72 newcomer       11 → 11  +[] -[]
+  d530bb6b72 trader         1 → 1  +[] -[]
+  d530bb6b72 policy_student 11 → 11  +['Options expiry day'] -['Derivative contracts']
+  e067b8f765 newcomer       4 → 3  +[] -['Pip (finance)']
+  e067b8f765 trader         3 → 3  +[] -[]
+  e067b8f765 policy_student 2 → 1  +[] -['Pip (finance)']
+
+would write 2 docs, 13 demands; would retire 0 cached cards (26 spans/paragraphs); spent $0.0047; saved /Users/sourabhmishra/code/readlayer/data/build_cache/relink_senses.json
