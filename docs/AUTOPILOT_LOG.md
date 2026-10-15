@@ -2083,3 +2083,5 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   decision 64 row, S2 counts (18 calls: 6 Tavily, 6 YouTube searches; 12 `rec_cache` entries;
   ≈ 318 credits left), readiness mix before/after (no-line rows 1 → 15 of 32; flagged to
   Sourabh), deadline wording.
+- milestone-reviewer round 2: **SHIP** (7c6eacb). Next: push, PR, CI, merge, then `make deploy-api`
+  on Sourabh's yes before the UTC Oct 16 re-seed.
