@@ -87,7 +87,9 @@ Firestore: used 0 → 20; used 15 → 5; used ≥ 20 → 0 and nothing posted; 2
 stops before the next URL; a URL in two personas' rows is posted once, newcomer and trader first.
 Written test first; runs in CI with the PR.
 
-**S3. Pick-up restart** (after S5 and S6; one restart covers both). Running API instances cache
+**S3. Pick-up restart** (amended 2026-10-15, decision 65: replaced by the R1/R2/B1/B2 deploy of
+`docs/plans/readiness-content.md`, a new image made after S5 and S6; the same-image restart below
+applies only if that plan's 19:00 IST cut-off is missed) (after S5 and S6; one restart covers both). Running API instances cache
 templates per process (STATUS §5), and recordings written from the laptop by `ingest_media` never
 reach a running instance's in-process catalog (library, Up next, explainer indexes). Templates
 are also re-read whenever growth bumps `graph.version` (`+gN`, `graph/refresh.py`), but that is
