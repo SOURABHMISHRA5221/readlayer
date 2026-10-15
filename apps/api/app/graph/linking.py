@@ -84,11 +84,14 @@ def sense_of(name: str) -> str | None:
 
 
 def _sense_key(concept: Concept, key: str) -> str | None:
-    """The sense a one-word key reaches this concept through, if any (decision 66): its label or
-    an alias that normalises to the key and names a sense."""
+    """The sense a one-word key reaches this concept through, if any (decision 66): a
+    sense-labelled concept's own sense whichever name matched ("exercised" → Exercise (options)),
+    else an alias that normalises to the key and names a sense ("short" → "Short (finance)")."""
     if " " in key:
         return None
-    for name in (concept.label, *concept.aliases):
+    if sense := sense_of(concept.label):
+        return sense
+    for name in concept.aliases:
         if normalize_label(name) == key and (sense := sense_of(name)):
             return sense
     return None

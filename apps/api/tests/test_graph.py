@@ -259,12 +259,16 @@ SENSE = ConceptGraph(ConceptGraphFile(version="t", concepts=[
     concept("c_401k", "401(k)", [1, 1, 1], domain="finance"),
     concept("c_duration", "Duration (bond)", [0.5, 0.5, 0], aliases=["bond duration"],
             domain="finance"),
+    concept("c_exercise", "Exercise (options)", [0, 0.5, 0.5], aliases=["exercised"],
+            domain="finance"),
+    concept("c_covenant", "Restrictive covenant (ethics)", [0.5, 0, 0.5], aliases=["Covenants"]),
 ]))  # fmt: skip
 
 
 @pytest.mark.parametrize(
     ("label", "exact", "target"),
     [("Pip", "Pip", None), ("short", "short", None), ("duration", "duration", None),
+     ("exercised", "exercised", None), ("Covenants", "Covenants", None),
      ("Pip (finance)", "Pip (finance)", "c_pip_finance"),
      ("Goods and Services Tax", "Goods and Services Tax", "c_gst"),
      ("open market operations", "open market operations", "c_omo"), ("OMO", "OMO", "c_omo"),
