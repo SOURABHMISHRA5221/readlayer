@@ -55,6 +55,10 @@ class DocStore(Protocol):
         """Documents of `collection` whose `field` is greater than `after` (one indexed query)."""
         ...
 
+    async def list_where(self, collection: str, field: str, value: Any) -> list[tuple[str, Doc]]:
+        """Documents of `collection` whose `field` equals `value` (one indexed query)."""
+        ...
+
     async def delete_tree(self, path: str) -> int: ...
 
     async def run(self, body: Callable[[Txn], Awaitable[T]]) -> T: ...
@@ -130,6 +134,12 @@ class FirestoreDocStore:
         )
         return [(s.id, s.to_dict() or {}) async for s in query.stream()]
 
+    async def list_where(self, collection: str, field: str, value: Any) -> list[tuple[str, Doc]]:
+        query = self._db.collection(collection).where(
+            filter=firestore.FieldFilter(field, "==", value)
+        )
+        return [(s.id, s.to_dict() or {}) async for s in query.stream()]
+
     async def delete_tree(self, path: str) -> int:
         """Delete a document and every subcollection under it. Tried once more when it raises:
         a write that fails against the reader's in-flight writes is re-queued by the library
@@ -199,6 +209,9 @@ class InMemoryDocStore:
 
     async def list_since(self, collection: str, field: str, after: Any) -> list[tuple[str, Doc]]:
         return [(i, d) for i, d in await self.list(collection) if d.get(field) and d[field] > after]
+
+    async def list_where(self, collection: str, field: str, value: Any) -> list[tuple[str, Doc]]:
+        return [(i, d) for i, d in await self.list(collection) if d.get(field) == value]
 
     async def delete_tree(self, path: str) -> int:
         doomed = [p for p in self.docs if p == path or p.startswith(path + "/")]

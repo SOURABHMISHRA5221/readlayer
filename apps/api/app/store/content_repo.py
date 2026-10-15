@@ -6,7 +6,7 @@ instances, and a run that outlived its claim writes nothing.
 """
 
 import secrets
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from datetime import datetime
 from typing import Any, Literal, Protocol
 
@@ -29,6 +29,23 @@ def _claim(doc: dict[str, Any] | None, now: datetime) -> tuple[Claim, dict[str, 
         return ("busy", None), None
     token = secrets.token_hex(8)
     return ("claimed", token), {"grow_token": token}
+
+
+Relinked = Literal["ok", "missing", "changed", "growing"]
+
+
+def _relink_check(
+    doc: dict[str, Any] | None, expected: Sequence[tuple[str, str | None]], now: datetime
+) -> Relinked:
+    """Decision 66: a demands-only re-link applies only to the snapshot it was planned on and
+    never under a live growth claim (growth writes the whole demands list when it finishes)."""
+    if doc is None:
+        return "missing"
+    until = doc.get("growing_until")
+    if until is not None and until > now:
+        return "growing"
+    current = [(d["id"], d.get("target_id")) for d in doc.get("demands", [])]
+    return "ok" if current == list(expected) else "changed"
 
 
 def _finish_fields(
@@ -59,6 +76,11 @@ class ContentStore(Protocol):
     def iter_all(self) -> AsyncIterator[ContentDoc]: ...
 
     async def claim_growth(self, content_id: str, now: datetime, until: datetime) -> Claim: ...
+
+    async def relink_demands(
+        self, content_id: str, expected: Sequence[tuple[str, str | None]],
+        demands: list[Demand], now: datetime,
+    ) -> Relinked: ...  # fmt: skip
 
     async def finish_growth(
         self,
@@ -121,6 +143,23 @@ class FirestoreContentStore:
 
         return await body(self._db.transaction())
 
+    async def relink_demands(
+        self, content_id: str, expected: Sequence[tuple[str, str | None]],
+        demands: list[Demand], now: datetime,
+    ) -> Relinked:  # fmt: skip
+        """Only the `demands` field, in one transaction, under `_relink_check`."""
+        ref = self._db.collection(COLLECTION).document(content_id)
+
+        @firestore.async_transactional
+        async def body(tx: firestore.AsyncTransaction) -> Relinked:
+            snap = await ref.get(transaction=tx)
+            verdict = _relink_check(snap.to_dict() if snap.exists else None, expected, now)
+            if verdict == "ok":
+                tx.update(ref, {"demands": [d.model_dump() for d in demands]})
+            return verdict
+
+        return await body(self._db.transaction())
+
 
 class InMemoryContentStore:
     """For tests and local runs without Firestore."""
@@ -160,6 +199,16 @@ class InMemoryContentStore:
         fields = _finish_fields(doc.model_dump(), demands, calls, grow_pending, grow_tried)
         self.docs[content_id] = ContentDoc.model_validate(doc.model_dump() | fields)
         return True
+
+    async def relink_demands(
+        self, content_id: str, expected: Sequence[tuple[str, str | None]],
+        demands: list[Demand], now: datetime,
+    ) -> Relinked:  # fmt: skip
+        doc = self.docs.get(content_id)
+        verdict = _relink_check(doc.model_dump() if doc else None, expected, now)
+        if doc is not None and verdict == "ok":
+            self.docs[content_id] = doc.model_copy(update={"demands": demands})
+        return verdict
 
 
 _store: ContentStore | None = None

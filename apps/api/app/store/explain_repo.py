@@ -10,13 +10,14 @@ ops/explain/days/{yyyy-mm-dd} counters: hits, generated, verified_first, verifie
                               definition_fallback, judge_unavailable, capped, reports
 """
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import datetime
 from typing import Any
 
 from app.store.docstore import Doc, DocStore, Txn
 
 CACHE = "explanations"
+DELETE_BATCH = 400  # under Firestore's 500 writes per transaction
 REPORTS = "explanation_reports"
 
 
@@ -38,6 +39,26 @@ class ExplainRepo:
             t.set(_path(CACHE, key), entry)
 
         await self._store.run(body)
+
+    async def keys_for_spans(self, span_hashes: Iterable[str]) -> list[str]:
+        """Cache keys whose entry was made for one of these spans (span or paragraph mode;
+        decision 66 retires the cards of re-linked spans)."""
+        keys: list[str] = []
+        for h in sorted(set(span_hashes)):
+            keys += [k for k, _ in await self._store.list_where(CACHE, "span_hash", h)]
+        return keys
+
+    async def delete_keys(self, keys: Sequence[str]) -> int:
+        """Delete these cache entries, in transactions of at most DELETE_BATCH."""
+        for i in range(0, len(keys), DELETE_BATCH):
+            batch = keys[i : i + DELETE_BATCH]
+
+            async def body(t: Txn, batch: Sequence[str] = batch) -> None:
+                for key in batch:
+                    t.delete(_path(CACHE, key))
+
+            await self._store.run(body)
+        return len(keys)
 
     async def evict_to_review(self, key: str, report_id: str, now: datetime) -> bool:
         """Remove the entry and queue it for review, in one transaction. False if it was
