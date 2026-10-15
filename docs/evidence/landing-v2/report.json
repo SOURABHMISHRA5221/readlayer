@@ -1,0 +1,72 @@
+{
+  "/ first view identical at 1440": true,
+  "/ first view identical at 390": true,
+  "/v2 1440 light": {
+    "axe": [],
+    "hscroll": 0,
+    "small": [],
+    "robots": "noindex, nofollow",
+    "theme": "light",
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
+  },
+  "/v2 1440 dark": {
+    "axe": [],
+    "hscroll": 0,
+    "small": [],
+    "robots": "noindex, nofollow",
+    "theme": "dark",
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
+  },
+  "/v2 390 light": {
+    "axe": [],
+    "hscroll": 0,
+    "small": [],
+    "robots": "noindex, nofollow",
+    "theme": "light",
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
+  },
+  "/v2 390 dark": {
+    "axe": [],
+    "hscroll": 0,
+    "small": [],
+    "robots": "noindex, nofollow",
+    "theme": "dark",
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
+  },
+  "/v2 360 light": {
+    "axe": [],
+    "hscroll": 0,
+    "small": [],
+    "robots": "noindex, nofollow",
+    "theme": "light",
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
+  },
+  "/v2 360 dark": {
+    "axe": [],
+    "hscroll": 0,
+    "small": [],
+    "robots": "noindex, nofollow",
+    "theme": "dark",
+    "bar items taller than 44px": [],
+    "bar items past the right edge": []
+  },
+  "reflow animations on 2 min (motion on)": [
+    "translate(0px, 60px)",
+    "translate(0px, 120px)"
+  ],
+  "demo after 2 min + tap": {
+    "lines": [
+      "A 25 bps hike in October",
+      "is possible amid higher energy prices, food inflation\u2026",
+      "according to Bank of America (BofA)."
+    ],
+    "marked": [
+      "c3"
+    ]
+  }
+}

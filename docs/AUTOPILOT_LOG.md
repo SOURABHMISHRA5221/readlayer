@@ -1993,3 +1993,28 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   white (no doubled text). milestone-reviewer SHIP.
 - Sourabh asked to protect `main` with himself as reviewer; GitHub can't let him approve his own
   PRs (they're opened as him), options explained; he said "ignore branch protection". Dropped.
+
+## Landing v2 concept (2026-10-15, decision 63)
+
+- Teammate's landing feedback ("Same content. Your shape.") pasted by Sourabh. I said it describes
+  features Gloss lacks; he chose a view-only `/v2` "according to whatever the prompt is asking",
+  buttons inert, no concept label ("we will remove /v2 before submission"), extra article text
+  "your call" → none (one public sentence, clauses as lines). Branch protection: "ignore".
+- Plan `docs/plans/landing-v2.md`: plan-reviewer REVISE 12 → REVISE 1 → APPROVE.
+- Built: `landing/v2/` (page, reshape demo with FLIP reflow, shapes, scoped CSS), router lines in
+  `pages/LandingPage.tsx`; 53 new tests; web 258. Main 149.94 KB (deviation recorded, §32).
+  `tools/shots/landing_v2.py`: `/` identical before/after; `/v2` axe 0, no h-scroll, noindex.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer → SHIP → PR → CI → merge → `make check-gcp` → `make deploy-web` from clean
+   `main` (Sourabh's yes) → live: `/` unchanged, `/v2` signed out renders with noindex.
+   Cut-off: not merged and deployed by end of Oct 15 IST → stays on the branch.
+2. Oct 16 items (persona re-seed and the rest). Oct 17: **remove `/v2`** before submitting.
+- milestone-reviewer round 1: **FIX** (dark evidence was light: the app's theme is
+  `readlayer:theme`, not the media query; bundle 149.94–149.95; no recording; Last updated; phone
+  bar wraps; "How we test" unstyled) → all applied; re-run: axe 0 at 1440/390/360 light and real
+  dark, bar on one line, reflow animates with motion on. Suggested by review: remove `/v2` on
+  Oct 16 after the teammate discussion rather than on submission eve (Sourabh to decide).
+- milestone-reviewer round 2: **FIX** (toggle 8 px past the screen at 360; the 13.5 px font) →
+  fixed (scoped gap/padding, type unchanged, right-edge check added) → round 3 **SHIP** (44442c4).
+  Next: PR → CI → merge → deploy-web on Sourabh's yes → live check.
