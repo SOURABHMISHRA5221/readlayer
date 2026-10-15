@@ -2119,4 +2119,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   unrecorded) → `--only` required for write/revert (test first), dry run re-run (Sebi now
   confirmed by the model, file holds PIP only), R2 cache check (3 new, all right sense), §34/§7/§9
   and header updated.
+- PR #48 merged (3e86313). Relink written (PIP, 12 demands, 0 cached). Sourabh "yes" → API
+  `readlayer-api-00033-bdt`, web on both sites. Live: no wrong read-first lines, PIP notes right,
+  `DELETE /v1/me` 204, first feed 7.8 s cold. Warm after deploy slowed by Vertex (≈ 46 s explains,
+  verify timeouts): Guardian 25/27, RoDTEP 14/18 warm.
+
+### Next steps (resume here, in order)
+1. Finish `warm_demo --shifts` for the Guardian and RoDTEP articles when Vertex latency is back
+   (check the `llm call` latencies first); no shell time limit shorter than the run.
+2. Sourabh: the video article (Guardian Polymarket/HSBC proposed) and whether `/v2` comes down
+   today. Then S9 facts for the video and deck; video Oct 16–17; submit by Oct 18.
 
