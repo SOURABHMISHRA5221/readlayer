@@ -1058,7 +1058,15 @@ Wikipedia pages are evergreen (no freshness decay) and never count as same_story
 - **Query = concept label + its graph domain + a format suffix** ("Repo rate policy explained",
   "… podcast episode"). The domain disambiguates labels; nothing about the reader (uid, persona,
   history, the current article) is ever part of a query (tested). Article-basis lookups (the card
-  chips) use the same query shape on the article's key ideas (tested).
+  chips) use the same query shape on the article's key ideas (tested). **One exception (decision 69
+  B2, Sourabh's answer "Go with what u feel is correct"):** the end-of-article story search sends a
+  **library (corpus) article's title**, cleaned, ≤ 120 chars, never for a page a reader brought in
+  (`user_ingested`, `extension`; tested). It is shared content, the same for every reader, keyed
+  `story:{content_id}` per format (article via Tavily news, video via YouTube), searched once ever
+  (stored even when empty), its own `STORY_SEARCH_DAILY_CAP` (40) within the global, YouTube and
+  anonymous caps, never the feed's. Results must not be the article itself (by URL hash) and must
+  name one of its top 3 key ideas or share ≥ 2 distinctive title words; up to 2 lead the end list
+  as "More on this story" (`basis=story`; the card chips stay `basis=article`).
 - Every result is normalized to `{url, title, source, format: article|video|podcast,
   duration_or_read_time (s), snippet, thumbnail, published_at}`, filtered by the domain
   blocklist (`app/recs/blocklist.txt`, subdomains included) and a relevance gate (the title or
