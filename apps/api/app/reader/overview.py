@@ -1,12 +1,14 @@
 """Knowledge map overview across domains (Design pass A5, DESIGN §15.1). Pure: no I/O.
 
-For each domain the reader has evidence in or chose (interest ≥ 0.5), most interest first, at
-most MAX_DOMAINS: up to MAX_SOLID **solid** concepts (current band ≥ heard of, edge with
-forgetting else the prior, by band then doc_freq) and up to MAX_READY **ready to learn** rings
-(not known, at least one prerequisite and all of them known, by doc_freq), where known means
-p ≥ KNOWN_P. Solid takes precedence, so a node is never both. Edges are prerequisite links among
-the nodes: within a domain, plus at most MAX_BRIDGES across domains. When no domain qualifies the
-reader's top-interest domains are used (the business domains if none), so the map is never empty.
+Only what we have evidence for (decision 69 A): a prior guess is never drawn. For each domain the
+reader has evidence in or chose (interest ≥ 0.5), most interest first, up to MAX_SOLID **solid**
+concepts (an edge whose current band, with forgetting, is ≥ heard of; by band then doc_freq) and
+up to MAX_READY **ready to learn** rings (not known by evidence, at least one prerequisite and every
+prerequisite known by evidence, in any domain; by doc_freq), where known means an edge with
+p ≥ KNOWN_P. Solid takes precedence, so a node is never both. Domains with no nodes are dropped
+before the MAX_DOMAINS cap; with no evidence at all the map is empty (the web says so). Edges are
+prerequisite links among the nodes: within a domain, plus at most MAX_BRIDGES across domains.
+`p_know` stays prior-based: the recap's bands (/v1/me/bands) and goals use it.
 """
 
 from collections.abc import Callable, Iterable, Mapping
@@ -15,7 +17,7 @@ from datetime import datetime
 
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
-from app.graph.taxonomy import BUSINESS_DOMAINS, DOMAIN_IDS
+from app.graph.taxonomy import DOMAIN_IDS
 from app.reader import model
 from app.reader.model import BANDS, Band, Edge
 from app.reader.profile import WEEK
@@ -63,15 +65,11 @@ def pick_domains(
 ) -> tuple[str, ...]:
     with_edges = {c.domain for cid in state.edges if (c := graph.get(cid)) is not None}
     chosen = {d for d, v in interest.items() if v >= CHOSEN_INTEREST}
-    ranked = sorted(
+    """Candidates, most interest first; `build` drops the empty ones, then caps."""
+    return tuple(sorted(
         (d for d in DOMAIN_IDS if d in with_edges | chosen),
         key=lambda d: (-interest.get(d, 0.0), DOMAIN_IDS.index(d)),
-    )
-    if ranked:
-        return tuple(ranked[:MAX_DOMAINS])
-    top = sorted((d for d in DOMAIN_IDS if interest.get(d, 0.0) > 0),
-                 key=lambda d: (-interest[d], DOMAIN_IDS.index(d)))  # fmt: skip
-    return tuple(top[:MAX_DOMAINS]) or BUSINESS_DOMAINS
+    ))  # fmt: skip
 
 
 def _rose(edge: Edge | None, now: datetime) -> bool:
@@ -85,16 +83,12 @@ def _rose(edge: Edge | None, now: datetime) -> bool:
 
 
 def _is_ready(
-    c: Concept, solid_ids: set[str], graph: ConceptGraph, p: Callable[[Concept], float]
+    c: Concept, solid_ids: set[str], graph: ConceptGraph, known: Callable[[Concept], bool]
 ) -> bool:
-    """Not known and not already solid, with at least one prerequisite, all of them known."""
+    """Not known and not already solid, with at least one prerequisite, all of them known (by
+    evidence, any domain)."""
     prereqs = graph.prerequisites(c.id)
-    return (
-        c.id not in solid_ids
-        and p(c) < KNOWN_P
-        and bool(prereqs)
-        and all(p(q) >= KNOWN_P for q in prereqs)
-    )
+    return c.id not in solid_ids and not known(c) and bool(prereqs) and all(map(known, prereqs))
 
 
 def build(
@@ -117,20 +111,29 @@ def build(
             p_cache[c.id] = p_know(c, state, now)
         return p_cache[c.id]
 
+    def known(c: Concept) -> bool:
+        return c.id in state.edges and p(c) >= KNOWN_P
+
     nodes: list[OverviewNode] = []
+    kept: list[str] = []
     for d in domains:
+        if len(kept) == MAX_DOMAINS:
+            break
         concepts = by_domain[d]
         top_freq = max((c.doc_freq for c in concepts), default=0) or 1
         solid = sorted(
-            (c for c in concepts if model.band_of(p(c)) != "unaware"),
+            (c for c in concepts if c.id in state.edges and model.band_of(p(c)) != "unaware"),
             key=lambda c: (-BANDS.index(model.band_of(p(c))), -c.doc_freq, c.id),
         )[:MAX_SOLID]
         solid_ids = {c.id for c in solid}
 
         ready = sorted(
-            (c for c in concepts if _is_ready(c, solid_ids, graph, p)),
+            (c for c in concepts if _is_ready(c, solid_ids, graph, known)),
             key=lambda c: (-c.doc_freq, c.id),
         )
+        if not solid and not ready:
+            continue
+        kept.append(d)
         for c, is_ring in [*((c, False) for c in solid), *((c, True) for c in ready[:MAX_READY])]:
             edge = state.edges.get(c.id)
             recent = tuple(
@@ -160,4 +163,4 @@ def build(
             if q.id not in ids:
                 continue
             (within if domain_of[q.id] == n.domain else bridges).append((q.id, n.id))
-    return Overview(domains, tuple(nodes), tuple(within + sorted(bridges)[:MAX_BRIDGES]))
+    return Overview(tuple(kept), tuple(nodes), tuple(within + sorted(bridges)[:MAX_BRIDGES]))

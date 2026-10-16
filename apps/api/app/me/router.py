@@ -52,8 +52,12 @@ def _ref(concept: Concept) -> ConceptRef:
 
 
 def _band(concept: Concept, edge: Edge | None, theta: dict[str, float], now: datetime) -> Band:
+    """The map's band: from evidence only. No edge → "unaware", never a prior guess (decision 69
+    A); the edge's own prior stays its starting point, as in scoring."""
+    if edge is None:
+        return "unaware"
     p0 = model.prior(theta.get(concept.domain, 0.0), concept.base_difficulty)
-    return model.band_of(model.current_p_know(edge, p0, now) if edge else p0)
+    return model.band_of(model.current_p_know(edge, p0, now))
 
 
 # ---------------------------------------------------------------- events
