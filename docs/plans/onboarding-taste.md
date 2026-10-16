@@ -110,6 +110,41 @@ its run is done).
   at a time, answer posts and shows the next, skip calls nothing, done state, hidden on a redo,
   focus after an answer).
 
+- **K4b. The Quick check shows all six at once** (Sourabh, 2026-10-17 after K4 shipped: "on
+  second onboarding page 6 questions should be a single answer all in one go thing not answer one
+  then see next"). PR C, branch `d68-quick-set`.
+  - API: `onboarding.quick_set(graph, interests, θ, asked)` (pure): the terms already answered
+    first (a reader mid-way through the old one-at-a-time flow keeps them, shown as answered),
+    then `next_item` repeated with each pick counted as asked, up to `CALIBRATION_ITEMS` (6) in
+    all — chosen at once from the current θ, no longer adaptive between answers.
+    `GET /v1/calibration/set` → `{done, total: 6, items: [{concept_id, label, domain, answered}]}`;
+    the set is created **in one transaction** that returns an already-stored set unchanged
+    (`ReaderRepo.calibration_set`), so overlapping first asks (StrictMode, a reload, a second tab)
+    see one set; done when every item is answered; `{done: true, items: []}` after finish.
+    `POST /v1/calibration/answer` accepts any unanswered item of the stored set (each once; evidence
+    and Elo unchanged; `calibration_answer` keeps the stored set), or — with no set stored, an old
+    client — the current `next` item as today. `GET /v1/calibration/next` returns the first
+    unanswered set item when a set exists (the live old web keeps working through the deploy).
+    **Edit → Continue** (a first-time re-submit) keeps `asked` but drops the stored set, so the
+    unanswered part is rebuilt from the new topics and θ (never an asked term). Never finishes
+    onboarding. Tests: 6 distinct terms, stable on a second call even after θ moves, any order,
+    a repeat or an outside term 409, done after 6, closed after finish; 2 answered before the set
+    → 6 rows with 4 open, all accepted; Edit with new topics → answered kept, the rest from the new
+    topics, `answers` unchanged; the old sequential `next` gets the first unanswered set item.
+  - Web: the Quick check lists all items, each row the term, its topic and "Know it" / "Heard of
+    it" / "New to me" (`role="group"`, the chosen one `aria-pressed`, answered rows stay focusable
+    with `aria-disabled`); answering any row in any order; "Skip quick check" hides the block;
+    all answered → "Thanks, that's your starting map." Tests: all rows render, answers in any
+    order post the right ids, a row can't be answered twice, done after all, skip calls nothing,
+    hidden on a redo. Harness: `tools/shots/onboarding.py` answers two rows out of order.
+  - Acceptance evidence: the harness (`tools/shots/onboarding.py` answering two rows out of order)
+    with the UI checks on the multi-row block (axe 0, target sizes, no horizontal scroll at 390
+    and 1440, light and dark); before the web deploy, the old sequential web against the new API
+    on the harness (`next` → the first unanswered set item). The Quick check is hidden on a Redo,
+    so Sourabh's own account can't exercise it; a production check would need a fresh Google
+    account on his yes, deleted afterwards (writes: one user doc, ≤ 6 edges, ≤ 14 domain docs).
+  - Ship: API first, then web (the old web keeps working on the new API).
+
 **F. Read, watch, listen.**
 - **F1. Screen 1 question** "How do you like to take things in?" — Read / Watch / Listen, any of
   them; none preselected on a first run, the stored ones preselected on a Redo; Continue needs at

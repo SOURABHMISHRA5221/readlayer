@@ -149,11 +149,44 @@ async def post_onboarding(
 
 
 async def _next(caller: Caller, user: UserProfile):  # type: ignore[no-untyped-def]
+    """The next term: with a stored Quick check set (decision 68 K4b) its first unanswered one,
+    else the adaptive pick (an old client asking one at a time)."""
+    asked = list(user.calibration.get("asked", []))
+    stored = user.calibration.get("set") or []
+    if stored:
+        nxt = next((cid for cid in stored if cid not in asked), None)
+        return (get_graph().get(nxt) if nxt else None), asked
     domains = await _repo().get_domains(caller.uid)
     theta = {d: s.theta for d, s in domains.items()}
-    asked = list(user.calibration.get("asked", []))
     interests = list(user.onboarding.get("interests", []))
     return onboarding.next_item(get_graph(), interests, theta, asked), asked
+
+
+@router.get("/calibration/set")
+async def calibration_set(
+    caller: Annotated[Caller, Depends(current_caller)],
+    user: Annotated[UserProfile, Depends(consented_user)],
+) -> dict[str, Any]:
+    """Decision 68 K4b: the whole Quick check at once, chosen from the current θ and stored, so
+    reloads and Edit → Continue show the same terms."""
+    total = onboarding.CALIBRATION_ITEMS
+    if user.onboarding_done:
+        return {"done": True, "total": total, "items": []}
+    domains = await _repo().get_domains(caller.uid)
+    theta = {d: s.theta for d, s in domains.items()}
+    interests = list(user.onboarding.get("interests", []))
+    graph = get_graph()
+    ids = await _repo().calibration_set(
+        caller.uid,
+        lambda u: onboarding.quick_set(graph, interests, theta, u.calibration.get("asked", [])),
+    )
+    asked = set(user.calibration.get("asked", []))
+    items = [
+        {"concept_id": c.id, "label": c.label, "domain": c.domain, "answered": c.id in asked}
+        for cid in ids
+        if (c := graph.get(cid)) is not None
+    ]
+    return {"done": all(i["answered"] for i in items), "total": total, "items": items}
 
 
 @router.get("/calibration/next")
@@ -185,8 +218,16 @@ async def calibration_answer(
     caller: Annotated[Caller, Depends(current_caller)],
     user: Annotated[UserProfile, Depends(consented_user)],
 ) -> dict[str, Any] | JSONResponse:
-    """Only the item /calibration/next would return now: a client can't spray answers."""
-    item, _ = await _next(caller, user)
+    """Only a term the reader was shown: an unanswered one of the stored Quick check set
+    (decision 68 K4b, any order), or with no set the item /calibration/next would return now. A
+    client can't spray answers."""
+    stored = user.calibration.get("set") or []
+    asked = user.calibration.get("asked", [])
+    if stored:
+        ok = body.concept_id in stored and body.concept_id not in asked
+        item = get_graph().get(body.concept_id) if ok else None
+    else:
+        item, _ = await _next(caller, user)
     if item is None or item.id != body.concept_id or user.onboarding_done:
         return JSONResponse({"error": "not_the_current_item"}, status_code=409)
     now = datetime.now(UTC)

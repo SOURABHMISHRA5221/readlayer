@@ -237,37 +237,45 @@ describe("decision 48", () => {
   });
 });
 
-describe("Quick check (decision 68 K4)", () => {
-  const term = (n: number) => ({ concept_id: `c_t${n}`, label: `Term ${n}`, domain: "economics" });
-  const screen2 = (extra: Record<string, unknown> = {}) => {
-    let asked = 0;
+describe("Quick check (decision 68 K4, K4b: all at once)", () => {
+  const term = (n: number, answered = false) => ({ concept_id: `c_t${n}`, label: `Term ${n}`, domain: "economics", answered });
+  const screen2 = (items = [term(1), term(2), term(3)], extra: Record<string, unknown> = {}) => {
     stubApi({
       "/v1/me/profile": PROFILE("discover", true),
       "/v1/onboarding/discover": { items: [item(1)], pending: false },
-      "/v1/calibration/next": () => (asked >= 2 ? { done: true, asked, total: 2 } : { done: false, asked, total: 2, item: term(asked + 1) }),
-      "/v1/calibration/answer": () => ({ done: ++asked >= 2, asked, total: 2 }),
+      "/v1/calibration/set": { done: false, total: 6, items },
+      "/v1/calibration/answer": { done: false, asked: 1, total: 6 },
       ...extra,
     });
   };
+  const rowButton = (row: number, text: string) =>
+    [...host.querySelectorAll(".quickcheck__row")[row]!.querySelectorAll("button")].find((b) => b.textContent === text);
 
-  it("asks one term at a time below the cards, moves focus on, then says done", async () => {
+  it("lists every term below the cards and takes answers in any order, once each", async () => {
     screen2();
     await mount();
     const block = host.querySelector(".quickcheck")!;
     expect(block.querySelector("h2")?.textContent).toBe("Quick check: do you know these?");
     expect(host.querySelector(".discover")!.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(block.querySelectorAll(".quickcheck__card")).toHaveLength(1);
-    expect(block.querySelector(".quickcheck__label")?.textContent).toBe("Term 1");
-    expect(block.querySelector(".quickcheck__progress")?.textContent).toBe("1 of 2");
-    await click(button("Know it"));
-    expect(calls.find((c) => c.path === "/v1/calibration/answer")!.body).toEqual({ concept_id: "c_t1", answer: "explain" });
-    expect(host.querySelector(".quickcheck__label")?.textContent).toBe("Term 2");
-    expect(document.activeElement?.classList.contains("quickcheck__term")).toBe(true);
-    await click(button("New to me"));
-    expect(calls.filter((c) => c.path === "/v1/calibration/answer").at(-1)!.body).toEqual({ concept_id: "c_t2", answer: "none" });
-    expect(host.querySelector(".quickcheck__done")?.textContent).toBe("Thanks, that's your starting map.");
-    expect(document.activeElement?.classList.contains("quickcheck__done")).toBe(true);
+    expect([...block.querySelectorAll(".quickcheck__label")].map((l) => l.textContent)).toEqual(["Term 1", "Term 2", "Term 3"]);
+    await click(rowButton(2, "New to me"));
+    await click(rowButton(0, "Know it"));
+    await click(rowButton(0, "Heard of it")); // already answered: nothing sent
+    const sent = calls.filter((c) => c.path === "/v1/calibration/answer").map((c) => c.body);
+    expect(sent).toEqual([{ concept_id: "c_t3", answer: "none" }, { concept_id: "c_t1", answer: "explain" }]);
+    expect(rowButton(0, "Know it")!.getAttribute("aria-pressed")).toBe("true");
+    expect(host.querySelector(".quickcheck__done")).toBeNull();
+    await click(rowButton(1, "Heard of it"));
+    expect(host.querySelector(".quickcheck__done")?.textContent).toBe("Thanks, that's your starting map."); // judged from the rows
     expect(calls.some((c) => c.path === "/v1/onboarding/finish" || c.path === "/v1/calibration/skip")).toBe(false);
+  });
+
+  it("shows terms answered earlier as answered", async () => {
+    screen2([term(1, true), term(2)]);
+    await mount();
+    expect(rowButton(0, "Know it")!.getAttribute("aria-disabled")).toBe("true");
+    await click(rowButton(1, "Know it"));
+    expect(host.querySelector(".quickcheck__done")).toBeTruthy();
   });
 
   it("skip only hides the block; it never ends onboarding", async () => {
@@ -278,12 +286,14 @@ describe("Quick check (decision 68 K4)", () => {
     expect(calls.some((c) => ["/v1/calibration/skip", "/v1/onboarding/finish", "/v1/calibration/answer"].includes(c.path))).toBe(false);
   });
 
-  it("is not shown on a Redo", async () => {
-    screen2({ "/v1/me/profile": { ...PROFILE("discover", true), onboarding: { ...PROFILE("discover", true).onboarding, done: true, redo: "discover" } } });
+  it("is not shown with no terms, nor on a Redo", async () => {
+    screen2([]);
     await mount();
-    expect(host.querySelector(".discover")).toBeTruthy();
     expect(host.querySelector(".quickcheck")).toBeNull();
-    expect(calls.some((c) => c.path === "/v1/calibration/next")).toBe(false);
+    screen2([term(1)], { "/v1/me/profile": { ...PROFILE("discover", true), onboarding: { ...PROFILE("discover", true).onboarding, done: true, redo: "discover" } } });
+    await mount();
+    expect(host.querySelector(".quickcheck")).toBeNull();
+    expect(calls.some((c) => c.path === "/v1/calibration/set")).toBe(false);
   });
 });
 

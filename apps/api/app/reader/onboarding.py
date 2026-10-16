@@ -172,6 +172,23 @@ def next_item(
     return None
 
 
+def quick_set(
+    graph: ConceptGraph,
+    interest_domains: Sequence[str],
+    theta: Mapping[str, float],
+    asked: Sequence[str],
+) -> list[str]:
+    """Decision 68 K4b: the whole Quick check at once: the terms already answered, then
+    `next_item` repeated (each pick counted as asked) up to CALIBRATION_ITEMS. Pure."""
+    picked = list(asked)[:CALIBRATION_ITEMS]
+    while len(picked) < CALIBRATION_ITEMS:
+        c = next_item(graph, interest_domains, theta, picked)
+        if c is None:
+            break
+        picked.append(c.id)
+    return picked
+
+
 @dataclass(frozen=True)
 class AnswerOutcome:
     edge: Edge
