@@ -17,7 +17,15 @@ export interface NextUpRefs {
  * are `ready` (decision 68 B): a just-opened link is analysed first, and asking before that gets
  * a 409. Read by the annotator at card-open time, so the refs change without a rebuild.
  */
-export function useNextUp(articleKey: string | null, persona: PersonaKey | null, ready: boolean): NextUpRefs {
+export function useNextUp(
+  articleKey: string | null,
+  persona: PersonaKey | null,
+  ready: boolean,
+  /** Chips arrived (decision 68): lets an already-open card show them. */
+  onArrive?: () => void,
+): NextUpRefs {
+  const arrive = useRef(onArrive);
+  arrive.current = onArrive;
   const items = useRef<RecItem[]>([]);
   const chips = useRef<NextUpChip[]>([]);
   const shown = useRef<Set<string>>(new Set());
@@ -29,6 +37,7 @@ export function useNextUp(articleKey: string | null, persona: PersonaKey | null,
     return loadNextUp(articleKey, persona, (found) => {
       items.current = found;
       chips.current = toChips(found, persona, articleKey);
+      arrive.current?.();
     });
   }, [articleKey, persona, ready]);
   return { items, chips, shown };
