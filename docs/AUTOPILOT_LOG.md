@@ -2240,7 +2240,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   prior guesses; delete checked read-only and fine). Plan `docs/plans/honest-map-speed.md`
   (plan-reviewer REVISE 11 → REVISE 2 → APPROVE). PR 1 `d69-speed` built: hosting headers, warm on
   open, timing logs, eval cache key; `link_confirm` low ran and missed the pre-set rule (14/16 vs
-  15/16) → not shipped, asked Sourabh. API 1303, web 285.
+  15/16); Sourabh overrode it ("yes") → `link_confirm` at low in deploy.env.yaml. API 1303, web 285.
 
 ### Next steps (resume here, in order)
 1. PR 1: milestone-reviewer → PR → CI → merge → `make deploy-api` (yes) → `make deploy-web` (yes)

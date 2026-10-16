@@ -519,8 +519,9 @@ third cheaper but lost one verified card of 25 and raised p95. Served (Sourabh's
 `restate` and `explain` at low, the two judges at the model default. `link_confirm` (decision 69
 D, fresh runs, `evals/results/*d69-*`): low made calls ~4× faster (median 3.5 s vs 14.0 s, p90
 4.0 s vs 89.0 s per eval batch) and variant precision 0.862 vs 0.843, but passed 14/16 regression
-cases vs 15/16 (L04, a paraphrase, left unlinked); the pre-set rule (passes ≥ default's) keeps it
-at the default unless Sourabh overrides. Eval answers are cached per thinking level when one is set.
+cases vs 15/16 (L04, a paraphrase, left unlinked rather than mislinked); the pre-set rule
+(passes ≥ default's) was not met, and Sourabh overrode it ("yes", 2026-10-17): **`link_confirm`
+runs at low**. Eval answers are cached per thinking level when one is set.
 
 **Prefetch (decision 67 L3).** The web host prefetches the top 3 span notes when a page's notes
 arrive; for signed-in consumers only, a span note whose mark comes within one screen of the
