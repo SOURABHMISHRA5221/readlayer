@@ -2230,3 +2230,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 1. PR C: milestone-reviewer → PR → CI → merge → `make deploy-api` (Sourabh's yes) → then
    `make deploy-web` (yes) → live: the WelcomePage chunk serves the six-row Quick check.
 2. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.
+- PR C: milestone-reviewer FIX (docs) → SHIP; #59 merged; API `readlayer-api-00038-56q`, then web
+  (Sourabh's yes). Live bundles carry the six-row Quick check and the `/calibration/set` call.
+
+### Next steps (resume here, in order)
+1. Sourabh: try onboarding with a new Google account (the six-row Quick check) and the chips on a fresh link.
+2. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.
