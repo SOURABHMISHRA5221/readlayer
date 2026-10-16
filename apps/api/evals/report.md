@@ -18,6 +18,8 @@ Targets: every adversarial card rejected; at least 90% of good cards accepted; e
 | 2026-10-10T07:00:17+00:00 | explain-v4-split | restate-v1+verify-v2|explain-v4+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 25/25 (100%) | 0 | 24 / 1 / 0 | 10/10 (100%) | $0.462 |
 | 2026-10-10T16:08:32+00:00 | m7-5-before | restate-v1+verify-v2|explain-v4+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 25/25 (100%) | 0 | 25 / 0 / 0 | 10/10 (100%) | $0.531 |
 | 2026-10-10T16:14:04+00:00 | m7-5-after | restate-v2+verify-v2|explain-v5+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 24/25 (96%) | 0 | 25 / 0 / 0 | 10/10 (100%) | $0.542 |
+| 2026-10-16T14:44:16+00:00 | d67-baseline | restate-v2+verify-v2|explain-v5+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 25/25 (100%) | 0 | 24 / 1 / 0 | 10/10 (100%) | $0.534 |
+| 2026-10-16T14:47:50+00:00 | d67-drafts-low | restate-v2+verify-v2|explain-v5+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 25/25 (100%) | 0 | 24 / 0 / 1 | 10/10 (100%) | $0.412 |
 
 ## Judge comparison
 
@@ -25,31 +27,31 @@ Latest run per judge on prompts `restate-v2+verify-v2|explain-v5+verify-backgrou
 
 | Judge | Adversarial rejected | Missed | Good accepted | Good rejected | Injection safe | Judge $/call | Judge calls / explanation | Judge $/explanation | Judge $/day at the $8 cap's volume | Claims judge p50 / p95 per call | Explanation p50 / p95 |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | none | 24/25 (96%) | G21 | 10/10 (100%) | $0.00193 | 2.83 | $0.00545 | $5.13 | 4.6 s / 8.5 s | 9.5 s / 24.6 s |
+| `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | none | 25/25 (100%) | none | 10/10 (100%) | $0.00190 | 2.80 | $0.00532 | $4.99 | 5.3 s / 10.6 s | 10.4 s / 15.7 s |
 
-## Which layer caught each adversarial card (`20261010T161404_m7-5-after.json`)
+## Which layer caught each adversarial card (`20261016T144416_d67-baseline.json`)
 
 | Case | Perturbation | Deterministic checks | Judge |
 |---|---|---|---|
-| A01 | dropped_hedge | hedge_dropped | judge_not_entailed: In the current environment, debit spreads are preferred over credit spreads. (The source paragraph states that debit spreads 'may be preferred' over credit spreads, but the restatement drops the modal hedge and asserts that they 'are preferred'.) |
-| A02 | dropped_hedge | hedge_dropped | judge_not_entailed: Economists of the Freiwirtschaft school theorize that a demurrage currency eliminates both inflation and deflation. (The source states that Freiwirtschaft economists theorize demurrage currency 'could eliminate' both inflation and deflation, not that it definitely 'eliminates' them; the restatement drops the modal hedge 'could'.) |
-| A03 | dropped_hedge | hedge_dropped | judge_not_entailed: The platform itself does not know who is behind a given bet. (The source uses a hedge, stating that 'the platform itself may not know who is behind a given wager', whereas the claim states definitively that it does not know.) |
-| A04 | dropped_attribution | attribution_dropped | judge_not_entailed: The market had been forming a bullish price pattern. (The source paragraph attributes this statement to Sam Stovall, chief investment strategist at CFRA Research, whereas the claim drops the attribution and states it as a fact.); judge_not_entailed: The price pattern suggested that any positive catalyst could trigger a move higher. (This is part of an opinion stated by Sam Stovall, but the attribution is omitted in the restatement.); judge_not_entailed: A positive catalyst triggering a move higher is exactly what happened. (This is attributed to Sam Stovall in the source text, but the restatement drops the attribution.) |
-| A05 | dropped_attribution | attribution_dropped | judge_not_entailed: Next delivered strong first-half results. (The source quotes equity analyst Aarin Chiekrie stating that Next delivered its results in style, but does not state this directly as an unattributed fact.); judge_not_entailed: Next's sales growth sped up during the first-half period. (This is part of a direct quote from analyst Aarin Chiekrie, and dropping the attribution makes it not entailed by the source text.); judge_not_entailed: Next's sales growth comfortably beat the fashion company's original guidance. (The source attributes the statement that sales growth breezed past original guidance to analyst Aarin Chiekrie rather than asserting it as fact.) |
-| A06 | dropped_attribution | attribution_dropped | pass |
-| A07 | changed_number | number_not_in_source | judge_not_entailed: Airtel Money is growing at about 25% a year. (The source states the growth rate is 'about 20% a year', not 25%.) |
-| A08 | changed_number | number_not_in_source | judge_contradicted: The yield on UK 30-year bonds reached 6% for the first time since 1988. (The source text states the yield hit 6% for the first time since 1998, not 1988.) |
-| A09 | changed_number | pass | judge_contradicted: The move was to raise the current account balance to ¥55 trillion (US$630 billion). (The source states the move increased the balance to a total of ¥50 trillion (US$630 billion), not ¥55 trillion (¥55 trillion was the total for the asset purchase program in October 2011).) |
-| A10 | flipped_negation | negation_dropped | judge_contradicted: When an employee withdraws their EPF balance, their EPS service history gets transferred automatically. (The source paragraph explicitly states that an employee's EPS service history does not automatically get transferred when they withdraw their EPF balance.) |
-| A11 | flipped_negation | negation_dropped | judge_contradicted: These assets count in all of the money supply aggregates. (The source text states explicitly that 'these assets do not count in any of the aggregates'.) |
+| A01 | dropped_hedge | hedge_dropped | judge_not_entailed: In the current environment, debit spreads are preferred over credit spreads. (The source states that debit spreads 'may be preferred over credit spreads', using a hedge that the restatement omits by asserting they 'are preferred'.) |
+| A02 | dropped_hedge | hedge_dropped | judge_not_entailed: Economists of the Freiwirtschaft school theorize that a demurrage currency eliminates both inflation and deflation. (The source paragraph states that Freiwirtschaft economists theorize demurrage currency 'could eliminate' both inflation and deflation, whereas the claim drops the modal hedge ('could') and asserts that it 'eliminates' them.) |
+| A03 | dropped_hedge | hedge_dropped | judge_not_entailed: On platforms such as Polymarket, the platform itself does not know who is behind a given bet. (The source hedges this by stating that the platform itself 'may not know who is behind a given wager', whereas the restatement asserts definitively that it 'does not know'.) |
+| A04 | dropped_attribution | attribution_dropped | judge_not_entailed: The market had been forming a bullish price pattern. (The source paragraph attributes this statement to Sam Stovall rather than presenting it as an established fact, so dropping the attribution makes it not entailed.); judge_not_entailed: The price pattern suggested that any positive catalyst could trigger a move higher. (This interpretation is stated by Sam Stovall in the source, but the restatement drops the attribution and presents it as a direct fact.); judge_not_entailed: A move higher triggered by a positive catalyst is exactly what happened. (This is an assessment made by Sam Stovall in the source, and presenting it without attribution is not entailed.) |
+| A05 | dropped_attribution | attribution_dropped | judge_not_entailed: Next delivered strong first-half results. (The source paragraph attributes this statement to Aarin Chiekrie, an equity analyst at Hargreaves Lansdown, rather than stating it as an unhedged fact; dropping attribution is not entailed.); judge_not_entailed: Next's sales growth sped up during the period. (This is part of a quote attributed to analyst Aarin Chiekrie, but the restatement drops the attribution.); judge_not_entailed: Next's sales growth comfortably beat the fashion company's original guidance. (This assessment is attributed to analyst Aarin Chiekrie in the source text, not stated as direct fact by the author.) |
+| A06 | dropped_attribution | attribution_dropped | judge_not_entailed: A key Republican senator decided to hold out until the department ended its investigation. (The source paragraph states that the senator 'said he would be a holdout', which reports what the senator stated rather than establishing as a fact that he had decided to hold out (dropped attribution).) |
+| A07 | changed_number | number_not_in_source | judge_not_entailed: Airtel Money is growing at about 25% a year. (The source says it is growing at 'about 20% a year', not 25%.) |
+| A08 | changed_number | number_not_in_source | judge_contradicted: The yield on UK 30-year bonds hit 6% for the first time since 1988. (The source states the yield hit 6% for the first time since 1998, not 1988.) |
+| A09 | changed_number | pass | judge_contradicted: The BOJ announced an increase of commercial banks' current account balances to ¥55 trillion (US$630 billion). (The source explicitly states the current account balance was increased to a total of ¥50 trillion (US$630 billion), not ¥55 trillion.) |
+| A10 | flipped_negation | negation_dropped | judge_contradicted: When an employee withdraws their EPF balance, their EPS service history gets transferred automatically. (The source explicitly states that when an employee withdraws their EPF balance, their EPS service history does not automatically get transferred.) |
+| A11 | flipped_negation | negation_dropped | judge_contradicted: These assets count in all of the money supply aggregates. (The source explicitly states that 'these assets do not count in any of the aggregates.') |
 | A12 | flipped_negation | pass | judge_contradicted: Something tangible is gained when a stock is split. (The source explicitly states that 'Nothing tangible will be gained if the stock is split'.) |
-| A13 | opinion_as_fact | hedge_dropped, attribution_dropped | judge_not_entailed: Monetary stimulus is more neutral. (The source states that monetary stimulus is 'often considered more neutral', not that it definitely is.); judge_not_entailed: Fiscal stimulus leads to populism through the dynamics public choice theory describes, or to corruption. (The source hedges that fiscal stimulus 'may lead to populism via public choice theory, or corruption', whereas the claim drops the hedge 'may'.) |
-| A14 | opinion_as_fact | hedge_dropped, attribution_dropped | judge_not_entailed: The market had been forming a bullish price pattern. (The source quotes Sam Stovall stating that the market had been tracing out a bullish formation; presenting this as an objective fact drops the speaker attribution.); judge_not_entailed: Any positive catalyst will trigger a move higher. (The source states that the price pattern suggested any positive catalyst 'could' trigger a move higher, not that it 'will' trigger one. Changing 'could' to 'will' drops the hedge, and the speaker attribution is also omitted.) |
-| A15 | opinion_as_fact | pass | judge_not_entailed: Nscale is listing in New York because the US is the best place in the world to raise money for expensive AI infrastructure projects. (The source states that the listing reflects 'the depth of funding available in the US for expensive AI infrastructure projects', but it does not claim that the US is the best place in the world to raise this money.) |
+| A13 | opinion_as_fact | hedge_dropped, attribution_dropped | judge_not_entailed: Monetary stimulus is more neutral than fiscal stimulus. (The source states that monetary stimulus is 'often considered' more neutral, whereas the claim drops this attribution/hedge and states it as a definitive fact.); judge_not_entailed: Fiscal stimulus leads to populism through public choice theory dynamics, or to corruption. (The source states that fiscal stimulus 'may lead' to populism via public choice theory or corruption; changing 'may lead' to 'leads' drops the modal hedge.) |
+| A14 | opinion_as_fact | hedge_dropped, attribution_dropped | judge_not_entailed: The market had been forming a bullish price pattern. (The source quotes Sam Stovall stating this ('The market had been tracing out a bullish formation...'), but the restatement drops the attribution, stating it as an unhedged fact.); judge_not_entailed: Any positive catalyst will trigger a move higher. (The source states that the price pattern suggested any positive catalyst 'could' trigger a move higher, which does not entail the certainty that it 'will' trigger one, and attribution to Sam Stovall is omitted.) |
+| A15 | opinion_as_fact | pass | judge_not_entailed: The US is the best place in the world to raise money for expensive AI infrastructure projects. (The source mentions 'the depth of funding available in the US for expensive AI infrastructure projects', but it does not claim that the US is the best place in the world to raise money.) |
 
 ## Good cards the verifier rejected (same run)
 
-- **G21**: judge_not_entailed: The justice department's investigation would end up stalling the confirmation of Kevin Warsh as Fed chair. (The source paragraph refers to 'the confirmation of current Fed chair Kevin Warsh', but it does not explicitly state that the confirmation was for the role of Fed chair.)
+None.
 
 ## Background judge (own suite, since explain-v4)
 
@@ -58,6 +60,8 @@ Latest run per judge on prompts `restate-v2+verify-v2|explain-v5+verify-backgrou
 | `20261010T070017_explain-v4-split.json` | restate-v1+verify-v2|explain-v4+verify-background-v1 | 3/3 | 2/2 | – |
 | `20261010T160832_m7-5-before.json` | restate-v1+verify-v2|explain-v4+verify-background-v1 | 3/3 | 2/2 | – |
 | `20261010T161404_m7-5-after.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 3/3 | 2/2 | – |
+| `20261016T144416_d67-baseline.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 3/3 | 2/2 | – |
+| `20261016T144750_d67-drafts-low.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 3/3 | 2/2 | – |
 
 | Case | Issue | Verdict | Reasons |
 |---|---|---|---|
@@ -73,6 +77,8 @@ Latest run per judge on prompts `restate-v2+verify-v2|explain-v5+verify-backgrou
 |---|---|---|---|---|---|
 | `20261010T160832_m7-5-before.json` | restate-v1+verify-v2|explain-v4+verify-background-v1 | 6/7 | O06 | 7 | – |
 | `20261010T161404_m7-5-after.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 6/7 | O06 | 7 | – |
+| `20261016T144416_d67-baseline.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 6/7 | O06 | 7 | – |
+| `20261016T144750_d67-drafts-low.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 6/7 | O06 | 7 | – |
 
 ## Linker (own suite, M2.2)
 
@@ -143,15 +149,15 @@ the M2.1 graph (see freeze_link_cases.py), so v-to-v changes matter more than th
 
 ## Cost
 
-From run `20261010T161404_m7-5-after.json` (judge `vertex_ai/gemini-3.8-flash`):
+From run `20261016T144416_d67-baseline.json` (judge `vertex_ai/gemini-3.8-flash`):
 
 - **Per explanation** (generate + checks + judge, retries included, averaged over 25 real cases): **$0.0085**.
-- `explain`: 42 calls, ≈ 868 tokens in / 456 out per call.
-- `restate`: 45 calls, ≈ 720 tokens in / 379 out per call.
-- `verify`: 90 calls, ≈ 693 tokens in / 589 out per call.
-- `verify_background`: 94 calls, ≈ 477 tokens in / 212 out per call.
+- `explain`: 42 calls, ≈ 868 tokens in / 440 out per call.
+- `restate`: 45 calls, ≈ 721 tokens in / 383 out per call.
+- `verify`: 89 calls, ≈ 693 tokens in / 580 out per call.
+- `verify_background`: 94 calls, ≈ 477 tokens in / 210 out per call.
 - **Prefetch across the demo**: 6 articles × 3 personas × 3 spans = 54 explanations ≈ **$0.46** once; after that they are cache hits ($0).
-- **Daily cap**: $8 covers ≈ 941 new explanations a day (shared with ingestion), before the budget guard serves definitions.
+- **Daily cap**: $8 covers ≈ 937 new explanations a day (shared with ingestion), before the budget guard serves definitions.
 
 ## Changelog (hand-written)
 
@@ -253,3 +259,22 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
      turned into **more**. That default was dropped.
   5. `d48-after-v7-r1`, `d48-after-v7-r2` (**shipped** `profile-edit-v7`: two ops `read_more` /
      `read_less`, the direction is the op's name): 10/10 and 10/10, attacks 5/5.
+
+## Decision 67 L2: a lower thinking level for the drafts (2026-10-16)
+
+Same prompts (`restate-v2+verify-v2|explain-v5+verify-background-v1`), judge
+`gemini-3.8-flash` at its default thinking level in both runs; only `restate` and `explain`
+changed (`--effort restate=low,explain=low`). Runs in sequence, ≈ $0.95 in all.
+
+| Run | Adversarial (judge caught) | Good | Injection | Pipeline first / retry / definition | p50 / p95 | $/explanation |
+|---|---|---|---|---|---|---|
+| `d67-baseline` | 15/15 (15) | 25/25 | 10/10 | 24 / 1 / 0 | 10.4 s / 15.7 s | $0.0085 |
+| `d67-drafts-low` | 15/15 (14) | 25/25 | 10/10 | 24 / 0 / 1 | 8.5 s / 22.9 s | $0.0057 |
+
+Drafts at low: the draft calls halve (explain p50 5.4 → 2.7 s, restate 4.4 → 2.2 s) and a card
+costs a third less, but one good case ended as a definition (rejected twice) and the injection
+case I06 too (safe, no card), and p95 rose. The judge caught 14 vs 15 on the fixed verifier
+cards with the judge unchanged, so that is judge variation, not the drafts; the plan's adoption
+rule counts it anyway. **Not adopted** (plan rule: judge-caught ≥ baseline). Runs that try a
+thinking level are experiments: `report.py` keeps them out of the "latest run" rows the landing
+reads.

@@ -34,6 +34,7 @@ export {
   type SidenoteBox,
 } from "./card";
 export { normalizeWhitespace, resolveInText } from "./anchor";
+export { MARK_CLASS, markId } from "./mark";
 export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";

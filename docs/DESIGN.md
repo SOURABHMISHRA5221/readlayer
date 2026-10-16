@@ -459,6 +459,18 @@ the response's `band` is the band written for, and `can_simpler` / `can_deeper` 
 reader's own band has a step below / above. Shifted cards load only on click (never
 prefetched); `warm_demo --shifts` warms them for the demo articles.
 
+**Thinking level (decision 67 L1–L2).** `LLM_REASONING_EFFORT` (task → low / medium / high)
+sets a structured task's Gemini 3 thinking level over its route's; `transcribe` keeps its own.
+Measured on the safety suite (`evals/changelog.md`): drafts at low were 2 s faster at p50 and a
+third cheaper but lost one verified card of 25 and raised p95, so the served config keeps the
+model default for all four explanation tasks.
+
+**Prefetch (decision 67 L3).** The web host prefetches the top 3 span notes when a page's notes
+arrive; for signed-in consumers only, a span note whose mark comes within one screen of the
+viewport is prefetched too, at most 10 per page in all and 2 at once. Demo consumers keep the
+top 3 (their 40-a-day and the shared 400-a-day caps are for clicks). A prefetch answered with
+`capped: true` is not kept, so a later click asks again.
+
 Since M7.5 (decision 37) `explain` (v5) and `restate` (v2) describe the source as "news on any
 subject", not business and economy news; the judge prompts already said only "news article"
 and are unchanged (verify-v2, verify-background-v1). Before/after safety runs: `evals/report.md`.
@@ -1192,6 +1204,10 @@ Signed-in readers only, after consent, at most 5, stored at `users/{uid}/goals/{
 ## 19. Gloss UI (Design pass, decisions 39 and 40)
 The product is called **Gloss** in the UI, README and deck; the repository, Firebase project,
 URLs, ids, storage keys and API names keep "readlayer". Visual target: `docs/design/mockup.html`.
+**Wording (decision 67):** the UI calls the person a **consumer** (they read, watch and listen) and
+never names the mascot ("Tell Gloss about you"); this document keeps "reader" as the internal
+term, as do code, API fields and prompts. Guarded by `apps/web/test/wording.test.ts` and
+`apps/api/tests/test_wording.py`.
 
 - **Tokens and type.** White paper / #121212 in dark, near-black ink, one teal accent that only
   means "a note for you", `--accent-line` for strokes that must read (≥ 3:1 on paper in both

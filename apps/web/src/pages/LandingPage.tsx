@@ -138,24 +138,24 @@ function Problem() {
         <h2 id="lp-problem-title" className="lp-section__title">
           Everyone reads past something.
         </h2>
-        <p className="lp-problem__intro">Three ways a good article loses its reader.</p>
+        <p className="lp-problem__intro">Three ways a good article loses a consumer.</p>
       </header>
       <ol className="lp-problem__list">
         <li className="lp-problem__item">
           <ProblemArt
             name="jargon"
-            alt="Margo, a page with a worried face, holds an article with three words highlighted in teal and a question mark above."
+            alt="The Gloss mascot, a page with a worried face, holds an article with three words highlighted in teal and a question mark above."
           />
           <h3>Jargon and references</h3>
           <p>
-            Articles assume you know terms like <i>repo rate</i>, <i>PFAS</i> or <i>Powerplay</i>. Most readers skip them
+            Articles assume you know terms like <i>repo rate</i>, <i>PFAS</i> or <i>Powerplay</i>. Most consumers skip them
             and think they understood.
           </p>
         </li>
         <li className="lp-problem__item">
           <ProblemArt
             name="tabs"
-            alt="A dozen browser tabs burst out of a laptop screen while Margo looks on, alarmed."
+            alt="A dozen browser tabs burst out of a laptop screen while the Gloss mascot looks on, alarmed."
           />
           <h3>Looking things up breaks the flow</h3>
           <p>A new tab, a generic definition written for nobody, and your place in the article is gone.</p>
@@ -163,7 +163,7 @@ function Problem() {
         <li className="lp-problem__item">
           <ProblemArt
             name="shredder"
-            alt="A full article page goes into a shredder and only a three-line strip comes out; Margo watches, worried."
+            alt="A full article page goes into a shredder and only a three-line strip comes out; the Gloss mascot watches, worried."
           />
           <h3>Summaries replace the author</h3>
           <p>
@@ -172,7 +172,7 @@ function Problem() {
           </p>
         </li>
       </ol>
-      <p className="lp-problem__close">Every reader gets the same article, but no two readers need the same help.</p>
+      <p className="lp-problem__close">Every consumer gets the same article, but no two consumers need the same help.</p>
     </section>
   );
 }
@@ -249,7 +249,7 @@ function Solution() {
 /** The four steps, each shown by a clip recorded from the live app (decision 44 V4). */
 const STEPS: { title: string; body: string; clip: { name: string; label: string; width: number; height: number } }[] = [
   {
-    title: "Margo learns what you know",
+    title: "Gloss learns what you know",
     body: "Every note you open or mark \u201cKnew this\u201d, and every \u201cKnow this?\u201d you answer, updates your map, right away.",
     clip: { name: "clip-know", label: "answering Know this? turns the term into a note", width: 1440, height: 900 },
   },

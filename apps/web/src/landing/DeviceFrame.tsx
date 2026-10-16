@@ -80,7 +80,7 @@ export function SeeItInAction() {
                 name="shot-reader"
                 width={1440}
                 height={900}
-                alt="The Gloss reader on a laptop: an Economic Times paragraph about a 25 bps rate hike, with the note on Basis points open in the margin, its Background using a software analogy."
+                alt="Gloss on a laptop: an Economic Times paragraph about a 25 bps rate hike, with the note on Basis points open in the margin, its Background using a software analogy."
               />
             </DeviceFrame>
           </div>
@@ -90,7 +90,7 @@ export function SeeItInAction() {
               name="shot-phone"
               width={390}
               height={844}
-              alt="The Gloss reader on a phone: the note on Basis points as a sheet that slides up from the bottom of the article."
+              alt="Gloss on a phone: the note on Basis points as a sheet that slides up from the bottom of the article."
             />
           </DeviceFrame>
         )}

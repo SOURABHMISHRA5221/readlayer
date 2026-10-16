@@ -130,7 +130,7 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
     <section className="welcome__panel" aria-labelledby="welcome-title">
       <MargoSays mood="idle">Pick a few, I'll find the rest.</MargoSays>
       <h1 id="welcome-title" className="welcome__title" ref={heading} tabIndex={-1}>
-        Tell Margo about you
+        Tell Gloss about you
       </h1>
       <div className="welcome__body welcome__stack">
         <ChipGroup

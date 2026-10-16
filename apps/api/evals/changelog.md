@@ -98,3 +98,22 @@ that turns out to be genuinely mislabelled is fixed only with the reason recorde
      turned into **more**. That default was dropped.
   5. `d48-after-v7-r1`, `d48-after-v7-r2` (**shipped** `profile-edit-v7`: two ops `read_more` /
      `read_less`, the direction is the op's name): 10/10 and 10/10, attacks 5/5.
+
+## Decision 67 L2: a lower thinking level for the drafts (2026-10-16)
+
+Same prompts (`restate-v2+verify-v2|explain-v5+verify-background-v1`), judge
+`gemini-3.8-flash` at its default thinking level in both runs; only `restate` and `explain`
+changed (`--effort restate=low,explain=low`). Runs in sequence, ≈ $0.95 in all.
+
+| Run | Adversarial (judge caught) | Good | Injection | Pipeline first / retry / definition | p50 / p95 | $/explanation |
+|---|---|---|---|---|---|---|
+| `d67-baseline` | 15/15 (15) | 25/25 | 10/10 | 24 / 1 / 0 | 10.4 s / 15.7 s | $0.0085 |
+| `d67-drafts-low` | 15/15 (14) | 25/25 | 10/10 | 24 / 0 / 1 | 8.5 s / 22.9 s | $0.0057 |
+
+Drafts at low: the draft calls halve (explain p50 5.4 → 2.7 s, restate 4.4 → 2.2 s) and a card
+costs a third less, but one good case ended as a definition (rejected twice) and the injection
+case I06 too (safe, no card), and p95 rose. The judge caught 14 vs 15 on the fixed verifier
+cards with the judge unchanged, so that is judge variation, not the drafts; the plan's adoption
+rule counts it anyway. **Not adopted** (plan rule: judge-caught ≥ baseline). Runs that try a
+thinking level are experiments: `report.py` keeps them out of the "latest run" rows the landing
+reads.

@@ -14,7 +14,7 @@ const EVIDENCE: Record<string, string> = {
   profile_edit_concept: "From your profile edit",
   profile_edit_domain: "From your profile edit",
   report_wrong: "You reported an explanation",
-  seed: "Part of this sample reader's starting point",
+  seed: "Part of this sample consumer's starting point",
 };
 
 export function evidenceText(type: string, at: string, locale = "en-GB"): string {

@@ -211,7 +211,7 @@ describe("decision 48", () => {
     const redoing = { ...PROFILE("done", true), onboarding: { ...PROFILE("done", true).onboarding, done: true, step: "done", redo: "about", consent_version: "consent-v2" } };
     stubApi({ "/v1/me/profile": redoing, "/v1/onboarding/redo/cancel": { redo: null } });
     await mount();
-    expect(host.querySelector("h1")?.textContent).toBe("Tell Margo about you");
+    expect(host.querySelector("h1")?.textContent).toBe("Tell Gloss about you");
     await click(button("Cancel setup"));
     expect(calls.at(-1)!.path).toBe("/v1/onboarding/redo/cancel");
     expect(location.pathname).toBe("/profile");

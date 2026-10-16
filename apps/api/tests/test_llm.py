@@ -331,3 +331,52 @@ async def test_reasoning_effort_is_sent_only_to_gemini_3(monkeypatch, settings, 
         await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=s)
         assert ("reasoning_effort" in seen[-1]) is sent
     llm.load_prompt.cache_clear()
+
+
+async def _effort_sent(monkeypatch, settings, tmp_path, route_effort, overrides):
+    (tmp_path / "smoke.md").write_text("---\nversion: v-test\n---\n# user\n{{text}}\n")
+    monkeypatch.setattr(llm, "PROMPTS_DIR", tmp_path)
+    llm.load_prompt.cache_clear()
+    monkeypatch.setitem(
+        llm.ROUTES, "smoke", llm.Route("model_quality", None, reasoning_effort=route_effort)
+    )
+    seen: list[dict] = []
+
+    class Resp:
+        usage = None
+        choices = [type("C", (), {"message": type("M", (), {"content": '{"ok": true}'})()})()]
+
+    async def fake(**kwargs):
+        seen.append(kwargs)
+        return Resp()
+
+    monkeypatch.setattr(llm._litellm(), "acompletion", fake)
+
+    class Out(BaseModel):
+        ok: bool
+
+    s = settings.model_copy(
+        update={"model_quality": "vertex_ai/gemini-3.8-flash", "llm_reasoning_effort": overrides}
+    )
+    await llm.run_with_meta("smoke", Out, {"text": "x"}, settings=s)
+    llm.load_prompt.cache_clear()
+    return seen[-1].get("reasoning_effort")
+
+
+async def test_reasoning_effort_override_from_settings(monkeypatch, settings, spend, tmp_path):
+    """Decision 67 L1: LLM_REASONING_EFFORT sets a task's effort, over the route's own."""
+    assert await _effort_sent(monkeypatch, settings, tmp_path, None, {}) is None
+    assert await _effort_sent(monkeypatch, settings, tmp_path, None, {"smoke": "low"}) == "low"
+    assert await _effort_sent(monkeypatch, settings, tmp_path, "low", {"smoke": "high"}) == "high"
+    assert await _effort_sent(monkeypatch, settings, tmp_path, "low", {"explain": "high"}) == "low"
+
+
+def test_reasoning_effort_overrides_are_checked(settings):
+    llm.check_effort_overrides(settings.model_copy(update={"llm_reasoning_effort": {}}))
+    ok = settings.model_copy(update={"llm_reasoning_effort": {"explain": "low", "restate": "low"}})
+    llm.check_effort_overrides(ok)
+    for bad in ({"nope": "low"}, {"transcribe": "high"}):  # transcribe keeps its own route effort
+        with pytest.raises(ValueError):
+            llm.check_effort_overrides(settings.model_copy(update={"llm_reasoning_effort": bad}))
+    with pytest.raises(ValueError):
+        Settings(llm_reasoning_effort={"explain": "extreme"})

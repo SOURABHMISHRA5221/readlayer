@@ -55,7 +55,7 @@ export function OlderExtensionHint({ hostname }: { hostname: string }) {
 
 export default function ConnectPage({ url, isDemo }: { url: URL; isDemo: boolean }) {
   const persona = isDemo ? readerPersona(url, isDemo) ?? DEFAULT_PERSONA : null;
-  const who = persona ? `the ${personaOf(persona).label} demo reader` : "you";
+  const who = persona ? `the ${personaOf(persona).label} demo consumer` : "you";
   const [view, setView] = useState<View>("checking");
 
   const check = useCallback(() => {

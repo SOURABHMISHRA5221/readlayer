@@ -27,7 +27,7 @@ describe("static landing hero", () => {
   it("shows the demo paragraph and both calls to action before any script runs", () => {
     const html = renderToStaticMarkup(createElement(HeroStatic));
     expect(html).toContain(demo.paragraph.text);
-    expect(html).toContain("Try it as a demo reader");
+    expect(html).toContain("Try it as a demo consumer");
     expect(html).toContain("Sign in with Google");
     expect(html).toContain('class="lp lp--static"');
   });

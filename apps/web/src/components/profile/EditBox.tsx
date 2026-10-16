@@ -20,7 +20,7 @@ interface Props {
 }
 
 /**
- * "Describe yourself as a reader" (DESIGN §15.3): preview first, nothing changes until Apply,
+ * "Describe yourself as a consumer" (DESIGN §15.3): preview first, nothing changes until Apply,
  * every applied edit can be undone. For a demo reader it changes only this demo session's copy
  * of the persona, and "Reset" returns it to the original.
  */
@@ -61,11 +61,11 @@ export function EditBox({ persona, personaName, onChanged }: Props) {
   return (
     <section className="editbox" aria-labelledby="editbox-title">
       <h2 id="editbox-title" className="profile__h2">
-        Describe yourself as a reader
+        Describe yourself as a consumer
       </h2>
       {persona && (
         <p className="profile__note">
-          Changes apply to {personaName ?? "this sample reader"} for this demo session only.
+          Changes apply to {personaName ?? "this sample consumer"} for this demo session only.
         </p>
       )}
       <form
@@ -76,7 +76,7 @@ export function EditBox({ persona, personaName, onChanged }: Props) {
         }}
       >
         <label htmlFor="editbox-text" className="visually-hidden">
-          Describe yourself as a reader
+          Describe yourself as a consumer
         </label>
         <textarea
           id="editbox-text"
@@ -203,7 +203,7 @@ export function EditBox({ persona, personaName, onChanged }: Props) {
                 await profileApi.resetDemo(persona);
                 setPreview(null);
                 setEdits([]);
-                setMessage(`${personaName ?? "The sample reader"} is back to the original.`);
+                setMessage(`${personaName ?? "The sample consumer"} is back to the original.`);
                 onChanged();
               })
             }

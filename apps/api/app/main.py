@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import ratelimit
+from app import llm, ratelimit
 from app.auth import get_auth_admin
 from app.config import get_settings
 from app.content.router import router as read_router
@@ -28,6 +28,7 @@ from app.recs.internal_router import router as internal_router
 from app.recs.router import router as recs_router
 
 settings = get_settings()
+llm.check_effort_overrides(settings)  # fail fast on a bad LLM_REASONING_EFFORT
 configure_logging(settings.log_level)
 logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
 log = logging.getLogger("app.http")

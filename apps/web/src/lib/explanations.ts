@@ -31,6 +31,7 @@ export function loadExplanation(
   contentId: string,
   persona: PersonaKey | null,
   annotation: CardAnnotation,
+  prefetch = false,
 ): Promise<Explanation> {
   const key = keyOf(persona, contentId, annotation.id);
   const hit = cache.get(key);
@@ -38,7 +39,11 @@ export function loadExplanation(
   // Paragraph markers are explained by paragraph; spans by their demand id.
   const target =
     annotation.kind === "paragraph" ? { paragraph_id: annotation.paragraph_id } : { demand_id: annotation.id };
-  const pending = api.explain(contentId, target, persona).then(toExplanation);
+  const pending = api.explain(contentId, target, persona).then((r) => {
+    // A capped prefetch isn't kept: a later click asks again (decision 67 L3).
+    if (prefetch && r.capped && cache.get(key) === pending) cache.delete(key);
+    return toExplanation(r);
+  });
   cache.set(key, pending);
   pending.catch(() => cache.delete(key));
   return pending;
@@ -70,7 +75,7 @@ export function prefetchExplanations(
     .filter((a) => a.kind === "span")
     .sort((a, b) => b.score - a.score)
     .slice(0, PREFETCH_TOP);
-  for (const a of top) loadExplanation(contentId, persona, a).catch(() => undefined);
+  for (const a of top) loadExplanation(contentId, persona, a, true).catch(() => undefined);
 }
 
 /** "This is wrong": evict server-side, record report_wrong, and drop our copy. */

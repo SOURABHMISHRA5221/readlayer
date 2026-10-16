@@ -105,7 +105,7 @@ export function AccountMenu() {
             {demo ? (
               <>
                 <strong>Demo session</strong>
-                <span>Sample readers, nothing tied to you.</span>
+                <span>Sample consumers, nothing tied to you.</span>
               </>
             ) : (
               <>
@@ -126,7 +126,7 @@ export function AccountMenu() {
                   navigate(persona ? `/profile?persona=${encodeURIComponent(persona)}` : "/profile");
                 }}
               >
-                {demo ? "This reader's profile" : "Your reading profile"}
+                {demo ? "This consumer's profile" : "Your reading profile"}
               </button>
               <button
                 type="button"

@@ -35,7 +35,7 @@ def _repo() -> ReaderRepo:
 
 async def signed_in_user(caller: Annotated[Caller, Depends(current_caller)]) -> UserProfile:
     if caller.is_anonymous:
-        raise HTTPException(status_code=403, detail="onboarding is for signed-in readers")
+        raise HTTPException(status_code=403, detail="onboarding is for signed-in consumers")
     return await _repo().get_user(caller.uid)
 
 
