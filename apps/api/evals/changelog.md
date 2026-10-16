@@ -126,3 +126,9 @@ Background suite 3/3 and 2/2; pipeline verified first 23, retry 2, definition 0 
 the plan's stop line was a drop of more than 2); p50 12.6 s, p95 28.3 s, $0.0099 per explanation
 (the finance Background runs longer). $0.57. A first attempt from a fresh git worktree had no
 model settings and made no calls ($0); its empty result was deleted.
+
+**2026-10-16, later: served config changed.** Sourabh, on the L2 numbers above: "yes switch it
+on". Production sets `LLM_REASONING_EFFORT` to `restate` and `explain` at low (judges at the
+model default), overriding the plan's adoption rule. `report.py`'s `SERVED_EFFORT` matches
+(`tests/test_deploy_env.py`), so the report treats `d67-drafts-low` as the served run and
+`d67-baseline` as the experiment.
