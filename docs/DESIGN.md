@@ -994,7 +994,7 @@ keeps at most one item per format in the order read, watch, listen (`rank.one_pe
 says "On ‘X’, a key idea here". An article with no linked ideas gets no chips. The chips sit at
 the end of the card's scrolling body (never the pinned footer), one row that scrolls sideways
 when narrow; a click opens like Up next (library in the reader, `open_here` web items brought in,
-else the source in a new tab) and `rec_shown` is sent once per chip per page.
+else the source in a new tab) and `rec_shown` is sent once per chip per page. The chips are asked once the page's notes have loaded (decision 68: a just-opened link is still being analysed before that, and the API answers 409).
 
 ### 16.2 Library candidates (`app/recs/library.py`, pure, no API calls)
 | relation | label | rule |

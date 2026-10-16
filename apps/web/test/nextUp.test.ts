@@ -4,7 +4,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const openWeb = vi.fn();
 const recommendations = vi.fn();
+class FakeApiError extends Error {
+  constructor(
+    readonly kind: string,
+    readonly status: number | null,
+  ) {
+    super(kind);
+  }
+}
 vi.mock("../src/lib/api", () => ({
+  ApiError: FakeApiError,
   api: {
     openWeb: (...a: unknown[]) => openWeb(...a),
     recommendations: (...a: unknown[]) => recommendations(...a),
@@ -104,5 +113,53 @@ describe("loadNextUp", () => {
     expect(got).toEqual([1, 2]);
     stop();
     vi.useRealTimers();
+  });
+});
+
+describe("loadNextUp while the page is analysed (decision 68 B)", () => {
+  it("asks once more after a 409, and not again after a second one", async () => {
+    vi.useFakeTimers();
+    recommendations
+      .mockRejectedValueOnce(new FakeApiError("pending", 409))
+      .mockResolvedValueOnce({ items: [item({})], pending: false });
+    const got: number[] = [];
+    const stop = loadNextUp("doc9", null, (items) => got.push(items.length));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(got).toEqual([]);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(got).toEqual([1]);
+    recommendations.mockReset();
+    recommendations.mockRejectedValue(new FakeApiError("pending", 409));
+    const stop2 = loadNextUp("doc10", null, () => undefined);
+    await vi.advanceTimersByTimeAsync(10000);
+    expect(recommendations).toHaveBeenCalledTimes(2); // the first try and one retry
+    stop();
+    stop2();
+    vi.useRealTimers();
+  });
+});
+
+describe("useNextUp", () => {
+  it("asks only once the notes are ready", async () => {
+    const { act } = await import("react");
+    const { createRoot } = await import("react-dom/client");
+    const { createElement } = await import("react");
+    const { useNextUp } = await import("../src/hooks/useNextUp");
+    recommendations.mockReset();
+    recommendations.mockResolvedValue({ items: [item({})], pending: false });
+    let refs: ReturnType<typeof useNextUp> | null = null;
+    function Probe({ ready }: { ready: boolean }) {
+      refs = useNextUp("doc11", null, ready);
+      return null;
+    }
+    const host = document.createElement("div");
+    const root = createRoot(host);
+    (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+    await act(async () => root.render(createElement(Probe, { ready: false })));
+    expect(recommendations).not.toHaveBeenCalled();
+    await act(async () => root.render(createElement(Probe, { ready: true })));
+    expect(recommendations).toHaveBeenCalledTimes(1);
+    expect(refs!.chips.current.map((c) => c.id)).toEqual(["lib:a"]);
+    await act(async () => root.unmount());
   });
 });
