@@ -169,6 +169,10 @@ async def run_suite(
             # answers from MODEL_FALLBACK (an outage, not the prompt); the build cache re-asks
             # them on the next run, so a rerun replaces only those batches.
             "fallbacks": sum(1 for m in ledger if m.fell_back),
+            "fallbacks_by_task": {
+                t: sum(1 for m in ledger if m.fell_back and m.task == t)
+                for t in sorted({m.task for m in ledger})
+            },
             "calls": len(ledger),
             "link_confirm_effort": settings.llm_reasoning_effort.get("link_confirm", "default"),
             "link_confirm_latency_ms": _latency([m for m in ledger if m.task == "link_confirm"]),

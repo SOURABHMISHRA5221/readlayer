@@ -136,7 +136,6 @@ async def analyse_pending(content_id: str, reserve: Reserver | None = None) -> C
     requesting reader's growth slots (M9 part 1); None for scripts and the corpus."""
     if cached := await _cached(content_id):
         return cached
-    await warm.ready()  # usually done during phase 1; a new instance waits here, off the loop
     settings = get_settings()
     repo = get_pending_repo()
     lease = timedelta(seconds=settings.analyse_timeout_s) + LEASE_MARGIN
@@ -150,6 +149,9 @@ async def analyse_pending(content_id: str, reserve: Reserver | None = None) -> C
     if status == "exhausted":
         raise AnalysisFailed(content_id)
     try:
+        # Usually done during phase 1; a new instance waits here, off the event loop, inside the
+        # lease (its margin covers the import) so busy and missing replies never wait for it.
+        await warm.ready()
         deadline = asyncio.get_running_loop().time() + settings.analyse_timeout_s
         async with asyncio.timeout(settings.analyse_timeout_s):
             doc = await _analyse(pending, deadline, reserve)

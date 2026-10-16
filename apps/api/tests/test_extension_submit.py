@@ -94,6 +94,16 @@ def test_defer_stores_pending_only_then_analyse_completes(store, fetcher, fake_l
     assert store.docs[cid].source == "extension" and len(fake_llm.calls) == 1
 
 
+def test_extension_text_starts_the_warm_up_like_any_new_link(store, fetcher, fake_llm, monkeypatch):
+    """Decision 69 C: notes follow a deferred submit, so phase 1 starts the warm-up here too."""
+    from app import warm
+
+    started: list[int] = []
+    monkeypatch.setattr(warm, "start", lambda: started.append(1))
+    submit(client("e1", anonymous=True), defer=True)
+    assert started == [1]
+
+
 def test_server_redaction_backstop_is_counted_and_applied(store, fetcher, fake_llm):
     leaky = [PARAS[0] + " Write to desk@news.example for tips.", *PARAS[1:]]
     body = submit(client("e1", anonymous=True), leaky).json()
