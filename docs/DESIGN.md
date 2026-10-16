@@ -437,6 +437,22 @@ frame and `explanation_style` (short | normal | detailed, §15.3). Demo personas
 frames: newcomer software, trader cricket, policy student law (`PERSONA_THINKS_IN`); a signed-in
 reader uses their first THINKS_IN choice, else no analogy.
 
+**Analogy frames: Your pick and For you (decision 67 A).** `POST /v1/explain` takes `frame:
+"pick" | "for_you"` (default pick) and every response carries `frames: {pick, for_you, used}`.
+The pick is the THINKS_IN choice above. For you comes from `reader/frames.for_you` (pure): the
+reader's own edges only (forgetting applied, p ≥ 0.5, not the prior), domains with ≥ 3 such
+concepts, ranked by count, mean p, then taxonomy order, the note's own domain excluded (an
+analogy from the same field explains nothing), mapped to a frame: technology → software, health
+→ medicine, education → teaching, law, science; the other domains (economics, finance, business,
+policy, politics, environment, sports, culture, society) are frames by name (`MapFrame`).
+`analogy_domain` and `thinks_in` are `Frame = ThinksIn | MapFrame`, so the explain task's
+structured output accepts a map frame; the prompt text and versions are unchanged (a pytest pins
+them), so cached Backgrounds stay valid. The Background cache key already holds the frame;
+`frame` and `shift` combine under the same caps. The card shows a two-option toggle ("Your pick ·
+Cricket" / "For you · Finance"; "No analogy" when there is no pick) only when the two differ; the
+other frame loads on click and the choice holds for the page (and its prefetch). Measured: the
+Background pipeline with every card in finance kept every safety target (`evals/changelog.md`).
+
 The served card (`app/explain/models.py`, `extra="forbid"` on each part's schema: `Restatement`
 `{author_says}` from `restate`, `BackgroundDraft` `{background, analogy_domain}` from `explain`):
 ```json
@@ -703,6 +719,8 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
 
 ### 11.3 PII handling
 - Article content is public material, not PII, but it is still untrusted input.
+- The For you analogy frame (decision 67) is one word from a fixed list, derived per reader from
+  their own map; only that word reaches the model, never the edges or reading history behind it.
 - Extension activation (as built, M8): only when the reader clicks the toolbar button (`activeTab`,
   no host permissions, no allowlist). Refused before anything is read, and told in the popup:
   non-web schemes; mail, banking, sign-in and private-network URLs (checked in the worker before
@@ -969,6 +987,15 @@ mixing our own corpus with the web. Built in M6.5 with demo personas standing in
 The concepts this reader was shown as new in the article (the span annotations at balanced
 density, highest score first). Every recommendation names the concept that triggered it.
 
+**Card chips (decision 67 N, `basis=article`).** The note card's "Up next" row asks for
+`basis=article`: the triggers are the article's own key ideas (`feed_rank.key_ideas`, its 4 most
+salient linked concepts, the same for everyone), relevance by salience order, and the selection
+keeps at most one item per format in the order read, watch, listen (`rank.one_per_format`); `why`
+says "On ‘X’, a key idea here". An article with no linked ideas gets no chips. The chips sit at
+the end of the card's scrolling body (never the pinned footer), one row that scrolls sideways
+when narrow; a click opens like Up next (library in the reader, `open_here` web items brought in,
+else the source in a new tab) and `rec_shown` is sent once per chip per page.
+
 ### 16.2 Library candidates (`app/recs/library.py`, pure, no API calls)
 | relation | label | rule |
 |---|---|---|
@@ -984,7 +1011,8 @@ Wikipedia pages are evergreen (no freshness decay) and never count as same_story
   videos.list for durations). Keys are server-side secrets, never sent to the client.
 - **Query = concept label + its graph domain + a format suffix** ("Repo rate policy explained",
   "… podcast episode"). The domain disambiguates labels; nothing about the reader (uid, persona,
-  history, the current article) is ever part of a query (tested).
+  history, the current article) is ever part of a query (tested). Article-basis lookups (the card
+  chips) use the same query shape on the article's key ideas (tested).
 - Every result is normalized to `{url, title, source, format: article|video|podcast,
   duration_or_read_time (s), snippet, thumbnail, published_at}`, filtered by the domain
   blocklist (`app/recs/blocklist.txt`, subdomains included) and a relevance gate (the title or

@@ -117,3 +117,12 @@ cards with the judge unchanged, so that is judge variation, not the drafts; the 
 rule counts it anyway. **Not adopted** (plan rule: judge-caught ≥ baseline). Runs that try a
 thinking level are experiments: `report.py` keeps them out of the "latest run" rows the landing
 reads.
+
+## Decision 67 A5: every card in a map frame (2026-10-16)
+
+`--frame finance` (copies of the good and injection cases; files unedited), same prompts and
+judge, default thinking levels: adversarial 15/15 (judge 15), good 25/25, injection 10/10,
+Background suite 3/3 and 2/2; pipeline verified first 23, retry 2, definition 0 (baseline 24 / 1 / 0;
+the plan's stop line was a drop of more than 2); p50 12.6 s, p95 28.3 s, $0.0099 per explanation
+(the finance Background runs longer). $0.57. A first attempt from a fresh git worktree had no
+model settings and made no calls ($0); its empty result was deleted.
