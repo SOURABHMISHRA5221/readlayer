@@ -1,4 +1,4 @@
-import { api } from "./api";
+import { api, type RecFormat } from "./api";
 import type { Country } from "./country";
 import type { PersonaKey } from "./personas";
 import type { Domain } from "./taxonomy";
@@ -32,6 +32,7 @@ export interface Onboarding {
   step: "consent" | "onboarding" | "discover" | "calibration" | "done";
   field?: Field | null;
   interests?: Domain[];
+  formats?: RecFormat[]; // decision 68
   redo?: "about" | "discover" | null; // Redo setup in progress (decision 48)
   consent_version?: string | null;
 }
@@ -194,6 +195,7 @@ export const profileApi = {
     thinks_in: Frame[];
     liked_content_ids?: string[];
     country?: Country; // decision 50
+    formats?: RecFormat[]; // decision 68: read / watch / listen
   }) => api.raw.send<{ saved: boolean; next: string }>("POST", "/v1/onboarding", answers),
   calibrationNext: () => api.raw.get<CalibrationNext>("/v1/calibration/next"),
   calibrationAnswer: (concept_id: string, answer: "explain" | "heard" | "none") =>

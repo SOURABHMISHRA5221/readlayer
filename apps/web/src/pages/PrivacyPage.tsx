@@ -18,8 +18,9 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
       "Your settings: how many notes you want, the explanation style, the analogy worlds you think in, and whether learning is paused.",
       "Your consent: which version you agreed to and when. Nothing about you is recorded before it.",
       "Your start: the field you chose and your topics, including topics we matched from anything you typed. Never the text you typed.",
-      "The country you chose, to mix in news from there. It picks which news outlets count as local for you; it is never sent to the AI or to web search.",
-      "While you set up: the cards we showed you, which you marked “I'd read this” or “Not for me”, and your “Know this?” answers. The list is cleared when you start reading; the answers stay as evidence on your map and topics.",
+      "The country you chose, to mix in news from there. It picks which news outlets count as local for you, and gives a few terms common there (like RBI or SEBI in India) a small head start on your map; it is never sent to the AI or to web search.",
+      "What you do (your field) sets a starting level for that field's topics on your map, and how you like to take things in (read, watch, listen) orders your suggestions. Both are kept with your account.",
+      "While you set up: the cards we showed you and which you marked “I'd read this” or “Not for me” (these shape your feed only), and your Quick check answers about a few terms (these are your own word, so they stay as evidence on your map). The card list is cleared when you start reading.",
     ],
   },
   {

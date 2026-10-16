@@ -148,8 +148,9 @@ describe("useNextUp", () => {
     recommendations.mockReset();
     recommendations.mockResolvedValue({ items: [item({})], pending: false });
     let refs: ReturnType<typeof useNextUp> | null = null;
+    let arrivals = 0;
     function Probe({ ready }: { ready: boolean }) {
-      refs = useNextUp("doc11", null, ready);
+      refs = useNextUp("doc11", null, ready, () => arrivals++);
       return null;
     }
     const host = document.createElement("div");
@@ -159,6 +160,7 @@ describe("useNextUp", () => {
     expect(recommendations).not.toHaveBeenCalled();
     await act(async () => root.render(createElement(Probe, { ready: true })));
     expect(recommendations).toHaveBeenCalledTimes(1);
+    expect(arrivals).toBe(1); // decision 68: an open card is told chips arrived
     expect(refs!.chips.current.map((c) => c.id)).toEqual(["lib:a"]);
     await act(async () => root.unmount());
   });

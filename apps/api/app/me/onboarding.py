@@ -17,6 +17,7 @@ from app.reader import onboarding
 from app.reader.events import ConceptRef
 from app.reader.onboarding import Answer, Level
 from app.reader.state import ThinksIn
+from app.recs.models import Format
 from app.recs.outlets import Country
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
@@ -74,6 +75,8 @@ class OnboardingIn(BaseModel):
         default_factory=list, max_length=onboarding.MAX_LIKED
     )
     country: Country | None = None  # decision 50: "Where do you read from?"
+    # Decision 68 F1: optional (the API deploys first); empty keeps the stored answer.
+    formats: list[Format] = Field(default_factory=list, max_length=3)
 
 
 @router.post("/onboarding")
@@ -97,13 +100,28 @@ async def post_onboarding(
             return onboarding.apply_liked(c, edge, theta, now)
 
         liked[cid] = (ConceptRef(concept.domain, concept.base_difficulty), apply)
+    # Decision 68 K2: a few terms common where the reader reads from (idempotent: once ever).
+    for concept in onboarding.home_terms(graph, body.country or user.country):
+        if concept.id in liked:
+            continue
+
+        def home(edge, theta, c=concept):  # type: ignore[no-untyped-def]
+            return onboarding.apply_home(c, edge, theta, now)
+
+        liked[concept.id] = (ConceptRef(concept.domain, concept.base_difficulty), home)
     answers = {
         "interests": list(dict.fromkeys(body.interests)),
         "comfort": dict(body.comfort),
         "liked_content_ids": [d.content_id for d in docs],
     }
     thinks_in = list(dict.fromkeys(body.thinks_in))
-    theta = onboarding.starting_theta(body.comfort)
+    # Decision 68 K1: the field's domains start at "comfortable" (first-time onboarding only).
+    previous = user.field if not user.onboarding_done else None
+    theta = (
+        onboarding.starting_theta(body.comfort)  # a finished reader's earned θ is never reset
+        if user.onboarding_done
+        else onboarding.first_theta(body.field, previous, body.comfort)
+    )
     if redo:
         # Redo setup (decision 48) deletes nothing: earlier comfort answers and liked articles
         # are kept, frames are kept with the field's frame added, θ isn't reset.
@@ -125,6 +143,7 @@ async def post_onboarding(
         now=now,
         redo=redo,
         country=body.country,
+        formats=list(dict.fromkeys(body.formats)),
     )
     return {"saved": True, "liked_concepts": len(liked), "next": "discover"}
 

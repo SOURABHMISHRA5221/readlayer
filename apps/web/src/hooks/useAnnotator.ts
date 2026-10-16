@@ -79,7 +79,7 @@ export function useAnnotator(
   // Decision 67 L3: notes prefetched on this article, across notes refreshes.
   const prefetchedRef = useRef<{ key: string | null; ids: Set<string> }>({ key: null, ids: new Set() });
   // Decision 67 N3: the card's Up next chips, asked once this page's notes are in (decision 68 B).
-  const nextUp = useNextUp(articleKey, persona, annotations !== null);
+  const nextUp = useNextUp(articleKey, persona, annotations !== null, () => annotatorRef.current?.refreshNextUp());
   // Decision 67 A4: the analogy frame chosen on this page (the annotator remembers it too).
   const frameRef = useRef<FrameChoice>("pick");
   const [resolved, setResolved] = useState<string[] | null>(null);

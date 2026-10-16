@@ -25,6 +25,8 @@ EVIDENCE_WEIGHTS: dict[str, float] = {
     "read_normal_no_hover": 0.3,
     "slowdown": -0.3,
     "liked_article_mention": 0.2,
+    # Decision 68 K2: a term common where the reader reads from, set once at onboarding.
+    "home_country": 0.2,
 }
 # Calibration answers, quizzes and explicit corrections ("I know this" / "I don't").
 STRONG_EVIDENCE = 3.0

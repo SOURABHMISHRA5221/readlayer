@@ -1,6 +1,6 @@
 import { useId, useState, type RefObject } from "react";
 
-import { ApiError } from "../../lib/api";
+import { ApiError, type RecFormat } from "../../lib/api";
 import { signOutUser } from "../../lib/auth";
 import { COUNTRIES, COUNTRY_LABEL, type Country } from "../../lib/country";
 import { domainLabel } from "../../lib/format";
@@ -27,6 +27,8 @@ export interface About {
   field: Field | null;
   /** Decision 50: prefilled from the browser's locale, stored only when Continue saves. */
   country: Country | null;
+  /** Decision 68 F1: read / watch / listen, any; at least one to continue. */
+  formats: RecFormat[];
   topics: Domain[];
   text: string;
   resolvedFor: string | null; // the text the results below belong to
@@ -35,8 +37,15 @@ export interface About {
   unrecognised: string[];
 }
 
+/** Decision 68 F1: the format question's chips. */
+export const FORMAT_CHOICES: { key: RecFormat; label: string }[] = [
+  { key: "article", label: "Read" },
+  { key: "video", label: "Watch" },
+  { key: "podcast", label: "Listen" },
+];
+
 export const EMPTY_ABOUT: About = {
-  field: null, country: null, topics: [], text: "", resolvedFor: null, concepts: [], mapped: [], unrecognised: [],
+  field: null, country: null, formats: [], topics: [], text: "", resolvedFor: null, concepts: [], mapped: [], unrecognised: [],
 }; // prettier-ignore
 
 /** Interests sent to POST /v1/onboarding: chosen topics, mapped topics, resolved concepts' domains. */
@@ -75,7 +84,8 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
   const [error, setError] = useState<string | null>(null);
   const textId = useId();
   const text = about.text.trim();
-  const ready = (consented || agreed) && about.field !== null && (about.topics.length > 0 || text.length > 0);
+  const ready =
+    (consented || agreed) && about.field !== null && about.formats.length > 0 && (about.topics.length > 0 || text.length > 0);
 
   const proceed = async () => {
     setBusy(true);
@@ -106,6 +116,7 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
         interests,
         thinks_in: frameFor(about.field),
         ...(about.country ? { country: about.country } : {}),
+        formats: about.formats,
       });
       onSaved();
     } catch {
@@ -135,7 +146,7 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
       <div className="welcome__body welcome__stack">
         <ChipGroup
           legend="What do you do?"
-          hint="Analogies come from here."
+          hint="Analogies and your starting level come from here."
           options={FIELDS.map((f) => ({ key: f, label: FIELD_LABEL[f] }))}
           selected={about.field ? [about.field] : []}
           onToggle={(f) => onChange({ ...about, field: f })}
@@ -146,6 +157,19 @@ export function AboutScreen({ heading, about, onChange, consented, onConsented, 
           options={COUNTRIES.map((c) => ({ key: c, label: COUNTRY_LABEL[c] }))}
           selected={about.country ? [about.country] : []}
           onToggle={(c) => onChange({ ...about, country: c })}
+        />
+        <ChipGroup
+          legend="How do you like to take things in?"
+          hint="Pick any. Your suggestions lead with these."
+          multiple
+          options={FORMAT_CHOICES}
+          selected={about.formats}
+          onToggle={(f) =>
+            onChange({
+              ...about,
+              formats: about.formats.includes(f) ? about.formats.filter((x) => x !== f) : [...about.formats, f],
+            })
+          }
         />
         <ChipGroup
           legend="What do you want to read about?"

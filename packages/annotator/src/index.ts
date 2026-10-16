@@ -139,6 +139,8 @@ export interface Annotator {
   update(annotations: readonly AnyAnnotation[], options?: UpdateOptions): Promise<UpdateResult>;
   /** Emphasise one annotation's mark (e.g. while its rail chip is hovered); null clears. */
   highlight(id: string | null): void;
+  /** Chips arrived late (decision 68): an open card shows them now, without reopening. */
+  refreshNextUp(): void;
   /** Open an annotation's card, scrolling it into view; `focus` moves focus into the card. */
   open(id: string, options?: { focus?: boolean }): void;
   close(): void;
@@ -716,10 +718,18 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     openCard(id, true, focus, Boolean(inline) && !focus);
   }
 
+  /** Re-read the host's chips for the open card (its own list may have been empty at open). */
+  function refreshNextUp(): void {
+    if (!active || !card.isOpen) return;
+    const chips = card.setNextUp(options.nextUp?.() ?? []);
+    if (chips.length) card.watchNextUp(() => options.onNextUpShown?.(chips));
+  }
+
   return {
     update,
     highlight,
     open,
+    refreshNextUp,
     close: () => close(),
     flush: () => signals.flush(),
     destroy() {

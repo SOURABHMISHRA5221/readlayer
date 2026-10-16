@@ -43,7 +43,7 @@ from app.reader.state import PersonaKey
 from app.recs.feed_rank import key_ideas
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
-from app.recs.rank import PERSONA_FORMAT_PRIORS, RELATION_LABEL, Candidate, one_per_format, select
+from app.recs.rank import RELATION_LABEL, Candidate, one_per_format, prior_for, select
 from app.recs.state import DEFAULT_KEY, RecEventType, Served, get_rec_signals
 from app.recs.web_search import build_query, get_web_search
 from app.scoring.scorer import word_count
@@ -322,12 +322,12 @@ async def recommendations(
     chosen = select(
         candidates,
         await signals.signals(ctx.uid, ctx.rec_key),
-        PERSONA_FORMAT_PRIORS[ctx.rec_key],
+        prior_for(ctx.rec_key, ctx.user.formats),
         now,
         prefer,
     )
     if basis == "article":
-        chosen = one_per_format(chosen)
+        chosen = one_per_format(chosen, ctx.user.formats)
 
     lib_by_key = {(f"lib:{c.content_id}", c.relation): c for c in lib}
     web_by_id = {_web_id(url): v for url, v in web_results.items()}

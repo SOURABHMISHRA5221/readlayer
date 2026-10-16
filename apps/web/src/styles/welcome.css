@@ -296,3 +296,36 @@
 }
 .welcome__bar-end { display: flex; align-items: center; gap: var(--s3); }
 .welcome__bar-end .btn { min-height: 44px; }
+
+/* Decision 68 K4: the Quick check, set apart from the taste cards above it. */
+.quickcheck {
+  margin-top: var(--s5);
+  padding-top: var(--s4);
+  border-top: 1px solid var(--hairline);
+}
+.quickcheck__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--s2); }
+.quickcheck__title { font: 600 1.05rem/1.3 var(--font-ui); margin: 0; }
+.quickcheck__skip {
+  min-height: 44px;
+  padding: 0 var(--s2);
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: 500 0.9rem/1 var(--font-ui);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.quickcheck__card {
+  margin-top: var(--s3);
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.quickcheck__progress { margin: 0; color: var(--muted); font: 500 0.8rem/1 var(--font-ui); }
+.quickcheck__term { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2); margin: var(--s2) 0 var(--s3); outline-offset: 4px; }
+.quickcheck__label { font: 600 1.25rem/1.25 var(--font-read); color: var(--ink); }
+.quickcheck__domain { color: var(--muted); font: 500 0.8rem/1 var(--font-ui); }
+.quickcheck__answers { display: flex; flex-wrap: wrap; gap: var(--s2); }
+.quickcheck__answers .answer { flex: 1 1 8rem; min-height: 44px; }
+.quickcheck__done { margin: var(--s3) 0 0; color: var(--ink-soft); outline-offset: 4px; }

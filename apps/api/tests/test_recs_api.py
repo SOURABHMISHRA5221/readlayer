@@ -250,3 +250,17 @@ def test_article_basis_records_served_items_only_after_consent(env, docs):
     consented(client)
     client.get(url)
     assert [p for p in docs.docs if p.startswith("users/s1/rec_signals/")]
+
+
+def test_a_signed_in_reader_who_chose_listen_gets_the_listen_chip_first(env, docs):
+    """Decision 68 F2: the card chips lead with the reader's chosen format."""
+    from tests.fakes import auth as signed_in
+    from tests.fakes import consented
+
+    client = TestClient(app, headers=signed_in("s2"))
+    consented(client)
+    docs.docs["users/s2"]["formats"] = ["podcast"]
+    url = "/v1/content/main/recommendations?basis=article"
+    client.get(url)
+    items = client.get(url).json()["items"]
+    assert items and items[0]["format"] == "podcast"

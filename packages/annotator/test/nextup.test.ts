@@ -251,3 +251,24 @@ describe("Up next shown only when seen", () => {
     a.destroy();
   });
 });
+
+describe("chips that arrive after the card opened (decision 68)", () => {
+  it("show in the open card on refreshNextUp", async () => {
+    document.body.innerHTML = HTML;
+    let chips: NextUpChip[] = [];
+    const shown: string[][] = [];
+    const a = createAnnotator(document.getElementById("root")!, { nextUp: () => chips, onNextUpShown: (ids) => shown.push(ids) });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
+    expect(card().querySelector<HTMLElement>(".rl-card__next")!.hidden).toBe(true);
+    chips = CHIPS;
+    a.refreshNextUp();
+    expect(card().querySelector<HTMLElement>(".rl-card__next")!.hidden).toBe(false);
+    expect(card().querySelectorAll("a.rl-next")).toHaveLength(3);
+    expect(shown).toEqual([["lib:a", "web:v", "web:p"]]);
+    a.close();
+    a.refreshNextUp(); // no open card: nothing happens
+    a.destroy();
+  });
+});

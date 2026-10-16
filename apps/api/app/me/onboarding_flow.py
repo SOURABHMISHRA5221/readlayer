@@ -16,7 +16,7 @@ taxonomy or concept label from the graph plus a fixed phrase.
 
 import logging
 from collections.abc import Sequence
-from datetime import UTC, datetime
+from datetime import datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -39,7 +39,6 @@ from app.me.topic_match import Embedder, embedding_topic
 from app.privacy.redact import redact
 from app.reader import onboarding
 from app.reader import onboarding_text as ot
-from app.reader.events import ConceptRef
 from app.recs import feed_rank as fr
 from app.recs.feed import (
     concept_spec,
@@ -271,14 +270,24 @@ async def discover(
                                       user.country)
         for t in topics
     ] + [offered(found.get(f"feedx:c:{c.id}", []), user.country) for c in chosen]  # fmt: skip
-    picked = fr.onboarding_mix(groups, now, onboarding.DISCOVER_ITEMS)
+    served = served_order(user.onboarding_offered)  # those cards keep their slots and order
+    key = lambda c: _id(c, {})  # noqa: E731
+    picked = fr.onboarding_mix(groups, now, onboarding.DISCOVER_ITEMS, user.formats, served, key,
+                               pending=gathered.pending)  # fmt: skip
     library: dict[str, str] = {}  # url → content id
     if len(picked) < onboarding.DISCOVER_MIN_ITEMS and not gathered.pending:
         domains = list(dict.fromkeys([*topics, *(c.domain for c in chosen)]))
         extra, library = await _library_groups(domains, graph)
-        picked = fr.onboarding_mix([[c for c in picked], *extra], now, onboarding.DISCOVER_ITEMS)
+        picked = fr.onboarding_mix([[c for c in picked], *extra], now, onboarding.DISCOVER_ITEMS,
+                                   user.formats, served, lambda c: _id(c, library))  # fmt: skip
     items = await _serve(caller.uid, picked, library, [c.id for c in chosen], graph, now)
     return DiscoverOut(items=items, pending=gathered.pending)
+
+
+def served_order(offered: dict[str, dict[str, Any]]) -> list[str]:
+    """Item ids in the order they were served. Firestore doesn't keep a map's key order, so each
+    item stores its position `n` (older items have none: after the rest, by id)."""
+    return sorted(offered, key=lambda k: (offered[k].get("n") is None, offered[k].get("n", 0), k))
 
 
 async def _library_groups(
@@ -323,25 +332,10 @@ async def _serve(
     graph: ConceptGraph,
     now: datetime,
 ) -> list[DiscoverItemOut]:
-    """Remember the items (with their stable Know this? term) and record them as served feed
-    items, so picks are rec signals. Items past MAX_OFFERED_ITEMS aren't shown."""
-    theta = {d: s.theta for d, s in (await _repo().get_domains(uid)).items()}
-    new = [
-        (
-            _id(c, library),
-            c.topic,
-            onboarding.term_order(
-                [
-                    x
-                    for x in c.concepts
-                    if onboarding.as_written(x, f"{c.result.title} {c.result.snippet}")
-                ],
-                c.topic,
-                theta,
-            ),
-        )
-        for c in picked
-    ]
+    """Remember the items and record them as served feed items, so picks are rec signals.
+    Items past MAX_OFFERED_ITEMS aren't shown."""
+    # Decision 68 K3: screen 2 asks no "Know X?": items are remembered with no term.
+    new = [(_id(c, library), c.topic, ()) for c in picked]
     user = await _repo().offer_onboarding(
         uid, lambda offered: onboarding.offer(offered, new, excluded)
     )
@@ -379,10 +373,9 @@ def _item_out(
 
 
 def _term_out(term: Concept | None, user: UserProfile) -> KnowTermOut | None:
-    if term is None:
-        return None
-    known = user.onboarding_answered.get(term.id)
-    return KnowTermOut(concept_id=term.id, label=term.label, known=known)
+    """Decision 68 K3: screen 2 writes no knowledge, so it offers no term, not even one a
+    reader mid-onboarding was offered before (the field stays for old clients)."""
+    return None
 
 
 # ---------------------------------------------------------------- pick, know, finish
@@ -438,23 +431,10 @@ async def know(
     body: KnowIn,
     caller: Annotated[Caller, Depends(current_caller)],
     _: Annotated[UserProfile, Depends(consented_user)],
-) -> dict[str, Any] | JSONResponse:
-    concept = get_graph().get(body.concept_id)
-    if concept is None:
-        return _refuse("unknown")
-    now = datetime.now(UTC)
-
-    def apply(edge, theta):  # type: ignore[no-untyped-def]
-        out = onboarding.apply_answer(concept, edge, theta, onboarding.KNOW_ANSWER[body.known], now)
-        return out.edge, out.theta
-
-    outcome = await _repo().onboarding_know(
-        caller.uid, concept.id, body.known, ConceptRef(concept.domain, concept.base_difficulty),
-        apply, onboarding.MAX_KNOW_ANSWERS,
-    )  # fmt: skip
-    if outcome != "ok":
-        return _refuse(outcome)
-    return {"saved": True}
+) -> dict[str, Any]:
+    """Decision 68 K3: a no-op kept for an old client mid-onboarding (a non-2xx would show it
+    "That answer didn't save"). Screen 2 writes nothing to the map; removed after judging."""
+    return {"saved": False}
 
 
 @router.post("/onboarding/finish")

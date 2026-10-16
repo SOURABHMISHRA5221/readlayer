@@ -50,6 +50,8 @@ export default function WelcomePage() {
         setAbout((cur) => ({
           ...cur,
           field: o.field ?? cur.field,
+          // Decision 68: a redo preselects the stored formats.
+          formats: o.formats?.length ? o.formats : cur.formats,
           topics: o.interests?.length ? o.interests.slice(0, MAX_TOPICS) : cur.topics,
           // A saved country wins; otherwise the browser's locale suggests one (decision 50).
           country: p.settings.country ?? cur.country ?? countryFromLocale(navigator.language),
@@ -108,6 +110,7 @@ export default function WelcomePage() {
           frame={frame}
           onEdit={() => setScreen("about")}
           onFinish={finish}
+          quickCheck={!redo}
         />
       )}
     </Shell>

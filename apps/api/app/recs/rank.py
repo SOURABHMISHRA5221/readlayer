@@ -71,6 +71,22 @@ PERSONA_FORMAT_PRIORS: Mapping[str, FormatPrior] = {
     # Signed-in readers until onboarding (M7) asks: a mild lean to articles, no length pref.
     "default": FormatPrior({"article": 0.6, "video": 0.5, "podcast": 0.45}),
 }
+CHOSEN_FORMAT_MEAN = 0.75
+OTHER_FORMAT_MEAN = 0.4
+
+
+def format_prior(formats: Sequence[str]) -> FormatPrior:
+    """Decision 68 F2: the onboarding answer "read / watch / listen" as a prior."""
+    means = {f: CHOSEN_FORMAT_MEAN if f in formats else OTHER_FORMAT_MEAN for f in FORMATS}
+    return FormatPrior(means)
+
+
+def prior_for(rec_key: str, formats: Sequence[str]) -> FormatPrior:
+    """A demo persona keeps its prior; a signed-in reader who answered uses their formats;
+    anyone else the default."""
+    if rec_key in PERSONA_FORMAT_PRIORS and rec_key != "default":
+        return PERSONA_FORMAT_PRIORS[rec_key]
+    return format_prior(formats) if formats else PERSONA_FORMAT_PRIORS["default"]
 
 
 @dataclass(frozen=True)
@@ -242,11 +258,14 @@ def select(
     return sorted(taken, key=lambda cs: (-cs[1], cs[0].id))
 
 
-def one_per_format(chosen: Sequence[tuple[Candidate, float]]) -> list[tuple[Candidate, float]]:
-    """Card chips (decision 67 N1): the best pick per format, in FORMATS order (read, watch,
-    listen)."""
+def one_per_format(
+    chosen: Sequence[tuple[Candidate, float]], first: Sequence[str] = ()
+) -> list[tuple[Candidate, float]]:
+    """Card chips (decision 67 N1): the best pick per format; the reader's chosen formats first
+    (decision 68 F2), each group in FORMATS order (read, watch, listen)."""
     best: dict[Format, tuple[Candidate, float]] = {}
     for c, s in chosen:
         if c.format not in best or s > best[c.format][1]:
             best[c.format] = (c, s)
-    return [best[f] for f in FORMATS if f in best]
+    order = [f for f in FORMATS if f in first] + [f for f in FORMATS if f not in first]
+    return [best[f] for f in order if f in best]

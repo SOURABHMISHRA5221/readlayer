@@ -2186,3 +2186,29 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    (yes) → harness and Redo checks. **Checkpoint Oct 17 12:00 IST**: not harness-green → ask
    Sourabh to cut (F4 minimums, then F3, then K2).
 3. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.
+- PR A merged (#56) and live (web); live check passed: a fresh Wikipedia link (Catastrophe bond)
+  got notes after ≈ 120 s and its card showed Read / Watch / Listen chips; demo reader deleted 204
+  (`tools/shots/d68_live.py`). Not yet in STATUS §36.
+- Sourabh, late: "keep similar to second screen a know this cards to build a basic knowledge" →
+  "second screen bottom only" → K4 Quick check (plan-reviewer REVISE 5 → APPROVE).
+- PR B built on `d68-onboarding` (worktree `../readlayer-d68`), commits 7f4af5f..e635918: K1–K4,
+  F1–F4, privacy/README/DESIGN, harness script. API 1282 passed, web 276 + quick-check tests.
+
+### Next steps (resume here, in order)
+1. PR B: STATUS §10 decision 68 quotes (incl. the K4 ones), §9, §36 rows (PR A live result, PR B
+   tests, home-term counts on the production graph); `pnpm -r typecheck`, `pnpm -r test`, web build.
+2. R0 on the harness (`make dev-emulator`, then `tools/shots/onboarding.py` and a fresh-account
+   Up next check) from the main folder (it has the local settings), within the plan's cost bound.
+3. milestone-reviewer → PR → CI → merge → `make deploy-api` (Sourabh's yes) → then `make
+   deploy-web` (yes) → harness and Redo checks. Checkpoint Oct 17 12:00 IST (cut F4, F3, K4, K2).
+4. Sourabh's new video script and re-record; `/v2` removal, gitleaks, deck link, submit Oct 18.
+- Resumed: STATUS rows (c4bb021); R0 on the harness (7c702cc): found and fixed screen 2's first
+  poll taking every slot (slots held for missing formats while searches run); a fresh account
+  sees Up next; home terms 12 for India, one entry each, no band move. milestone-reviewer FIX
+  (served order by a stored position, tests, harness numbers, docs) applied.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 2 on `d68-onboarding` → PR → CI → merge → `make deploy-api` (Sourabh's
+   yes) → then `make deploy-web` (yes) → live: a demo account's onboarding is untouched; Sourabh's
+   own Redo setup on his yes (formats; home terms).
+2. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.

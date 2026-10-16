@@ -105,6 +105,8 @@ class UserProfile(BaseModel):
     # Decision 50: the country the reader chose ("Where do you read from?"), only to pick which
     # outlets count as local in For you. Never sent to a model or a search.
     country: Country | None = None
+    # Decision 68 F1: how the reader likes to take things in (read / watch / listen).
+    formats: list[str] = Field(default_factory=list)
 
     @property
     def onboarding_open(self) -> bool:
@@ -571,9 +573,11 @@ class ReaderRepo:
         now: datetime,
         redo: bool = False,
         country: str | None = None,
+        formats: list[str] | None = None,
     ) -> None:
-        """One transaction: answers on users/{uid}, θ and interest per domain, and the liked
-        articles' small nudges (`liked`: concept id → (ref, apply(edge | None, θ) -> Edge)).
+        """One transaction: answers on users/{uid}, θ and interest per domain, and small
+        nudges (`liked`: concept id → (ref, apply(edge | None, θ) -> Edge | None); None writes
+        nothing): the liked articles' concepts and the home terms (decision 68).
         Re-submitting overwrites the answers and θ and restarts calibration."""
         domains = sorted(set(theta) | set(interest) | {r.domain for r, _ in liked.values()})
 
@@ -594,7 +598,8 @@ class ReaderRepo:
             for cid, (ref, apply) in liked.items():
                 current = reads[sub_path(uid, "knows", cid)]
                 edge = apply(edge_from_doc(current) if current else None, new_theta[ref.domain])
-                t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, ref.domain))
+                if edge is not None:  # None: nothing to write (decision 68 home terms)
+                    t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, ref.domain))
             updated = user.model_copy(
                 update={
                     "field": field,
@@ -603,10 +608,12 @@ class ReaderRepo:
                     "rev": user.rev + 1,
                 }
                 | ({"country": country} if country is not None else {})
+                | ({"formats": list(formats)} if formats else {})
                 | (
                     {"onboarding_redo": "discover"}  # done and calibration progress kept
                     if redo
-                    else {"calibration": {"asked": [], "answers": 0}, "onboarding_done": False}
+                    # Decision 68 K4: Edit → Continue keeps the quick check's asked list.
+                    else {"onboarding_done": False}
                 )
             )
             t.set(user_path(uid), updated.model_dump())
@@ -643,7 +650,7 @@ class ReaderRepo:
             updated = user.model_copy(
                 update={
                     "calibration": {"asked": asked, "answers": len(asked)},
-                    "onboarding_done": user.onboarding_done or done,
+                    # Decision 68 K4: only POST /v1/onboarding/finish ends onboarding.
                     "rev": user.rev + 1,
                 }
             )

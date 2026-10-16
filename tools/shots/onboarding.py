@@ -1,4 +1,4 @@
-"""Onboarding in 2 screens (decision 41) on the local harness: screenshots, axe, target sizes,
+"""Onboarding in 2 screens (decisions 41, 68) on the local harness: screenshots, axe, target sizes,
 the timed flow and the feed-order check. Emulators only; ≤ 18 topic + ≤ 2 concept searches.
 
     SHOTS_OUT=docs/evidence/onboarding/after uv run --project apps/api python tools/shots/onboarding.py
@@ -66,6 +66,7 @@ async def main():
         await p.wait_for("#welcome-title")
         t0 = time.monotonic()
         await tick(p, "Software")
+        await tick(p, "Watch")  # decision 68: read / watch / listen
         await tick(p, "Economics")
         await tick(p, "Sports")
         await type_text(p, ".freetext__input", "F1, startups, mergers and acquisitions")
@@ -95,14 +96,16 @@ async def main():
         await asyncio.sleep(0.5)
         kb["space_picks"] = await p.eval("document.querySelector('.discover-card__answers .answer').getAttribute('aria-pressed')")
         kb["focus_kept_after_answer"] = await p.eval("document.activeElement?.matches('.discover-card__answers .answer')")
-        kb["know_focus"] = await tab_to(p, ".discover-card__know .answer")
+        # decision 68 K4: the Quick check below the cards, one term at a time
+        kb["quick_focus"] = await tab_to(p, ".quickcheck__answers .answer")
         await press(p, "Enter")
-        await asyncio.sleep(0.5)
-        kb["enter_answers"] = await p.eval("document.querySelector('.discover-card__know .answer[aria-pressed=true]') !== null")
+        await asyncio.sleep(1.5)
+        kb["quick_focus_moved"] = await p.eval(
+            "document.activeElement?.matches('.quickcheck__term, .quickcheck__done') ?? false")
         kb["start_focus"] = await tab_to(p, ".welcome__actions .btn--primary", 120)
         print("[keyboard screen2]", kb)
 
-        # --- answers: two Not for me on Sports, I'd read on the rest, two Know this?
+        # --- answers: two Not for me on Sports, like the rest; then one quick check answer and skip
         await p.viewport(1440)
         await theme(p, False)
         await p.goto(W + "/welcome", wait=1)
@@ -111,13 +114,15 @@ async def main():
         done = await p.eval("""(async () => { const out = []; let sports = 0;
           for (const card of document.querySelectorAll('.discover-card')) {
             const topic = card.querySelector('.discover-card__topic').textContent;
-            const want = topic === 'Sports' && sports < 2 ? 'Not for me' : "I'd read this";
+            const like = [...card.querySelectorAll('button')].find(b => b.textContent.startsWith("I'd"))?.textContent;
+            const want = topic === 'Sports' && sports < 2 ? 'Not for me' : like;
             if (want === 'Not for me') sports += 1;
             [...card.querySelectorAll('button')].find(b => b.textContent === want)?.click();
             out.push(topic + ':' + want); await new Promise(r => setTimeout(r, 300)); }
-          let k = 0; for (const card of document.querySelectorAll('.discover-card__know')) {
-            if (k++ >= 2) break; [...card.querySelectorAll('button')][k === 1 ? 0 : 1].click();
-            await new Promise(r => setTimeout(r, 300)); }
+          [...document.querySelectorAll('.quickcheck__answers .answer')].find(b => b.textContent === 'Heard of it')?.click();
+          await new Promise(r => setTimeout(r, 1500));
+          [...document.querySelectorAll('button')].find(b => b.textContent === 'Skip quick check')?.click();
+          out.push('formats:' + [...document.querySelectorAll('.discover-card__meta')].map(m => m.textContent.split(' · ').pop()).join('/'));
           return out; })()""")
         await asyncio.sleep(2)
         print("[answers]", done)
