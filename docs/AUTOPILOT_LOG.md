@@ -2220,7 +2220,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 1. Sourabh: try onboarding (Redo setup or a new Google account) and the chips on a fresh link.
 2. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.
 
-- Decision 68 K4b (Sourabh, 2026-10-17: "on second onboarding page 6 questions should be a single
+- Decision 68 K4b (Sourabh, 2026-10-16 night: "on second onboarding page 6 questions should be a single
   answer all in one go thing not answer one then see next") → PR C on `d68-quick-set`: plan
   (plan-reviewer REVISE 4 → APPROVE); `GET /v1/calibration/set` (six terms stored once, answered in
   any order; old sequential web keeps working); the web lists all six rows. API 1295, web 281;

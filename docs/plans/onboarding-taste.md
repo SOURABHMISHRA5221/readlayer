@@ -110,7 +110,7 @@ its run is done).
   at a time, answer posts and shows the next, skip calls nothing, done state, hidden on a redo,
   focus after an answer).
 
-- **K4b. The Quick check shows all six at once** (Sourabh, 2026-10-17 after K4 shipped: "on
+- **K4b. The Quick check shows all six at once** (Sourabh, 2026-10-16 night after K4 shipped: "on
   second onboarding page 6 questions should be a single answer all in one go thing not answer one
   then see next"). PR C, branch `d68-quick-set`.
   - API: `onboarding.quick_set(graph, interests, θ, asked)` (pure): the terms already answered
