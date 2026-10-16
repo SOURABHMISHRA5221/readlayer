@@ -97,13 +97,24 @@ async def post_onboarding(
             return onboarding.apply_liked(c, edge, theta, now)
 
         liked[cid] = (ConceptRef(concept.domain, concept.base_difficulty), apply)
+    # Decision 68 K2: a few terms common where the reader reads from (idempotent: once ever).
+    for concept in onboarding.home_terms(graph, body.country or user.country):
+        if concept.id in liked:
+            continue
+
+        def home(edge, theta, c=concept):  # type: ignore[no-untyped-def]
+            return onboarding.apply_home(c, edge, theta, now)
+
+        liked[concept.id] = (ConceptRef(concept.domain, concept.base_difficulty), home)
     answers = {
         "interests": list(dict.fromkeys(body.interests)),
         "comfort": dict(body.comfort),
         "liked_content_ids": [d.content_id for d in docs],
     }
     thinks_in = list(dict.fromkeys(body.thinks_in))
-    theta = onboarding.starting_theta(body.comfort)
+    # Decision 68 K1: the field's domains start at "comfortable" (first-time onboarding only).
+    previous = user.field if not user.onboarding_done else None
+    theta = onboarding.first_theta(body.field, previous, body.comfort)
     if redo:
         # Redo setup (decision 48) deletes nothing: earlier comfort answers and liked articles
         # are kept, frames are kept with the field's frame added, θ isn't reset.

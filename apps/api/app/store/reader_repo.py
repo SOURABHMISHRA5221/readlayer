@@ -572,8 +572,9 @@ class ReaderRepo:
         redo: bool = False,
         country: str | None = None,
     ) -> None:
-        """One transaction: answers on users/{uid}, θ and interest per domain, and the liked
-        articles' small nudges (`liked`: concept id → (ref, apply(edge | None, θ) -> Edge)).
+        """One transaction: answers on users/{uid}, θ and interest per domain, and small
+        nudges (`liked`: concept id → (ref, apply(edge | None, θ) -> Edge | None); None writes
+        nothing): the liked articles' concepts and the home terms (decision 68).
         Re-submitting overwrites the answers and θ and restarts calibration."""
         domains = sorted(set(theta) | set(interest) | {r.domain for r, _ in liked.values()})
 
@@ -594,7 +595,8 @@ class ReaderRepo:
             for cid, (ref, apply) in liked.items():
                 current = reads[sub_path(uid, "knows", cid)]
                 edge = apply(edge_from_doc(current) if current else None, new_theta[ref.domain])
-                t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, ref.domain))
+                if edge is not None:  # None: nothing to write (decision 68 home terms)
+                    t.set(sub_path(uid, "knows", cid), edge_to_doc(edge, ref.domain))
             updated = user.model_copy(
                 update={
                     "field": field,

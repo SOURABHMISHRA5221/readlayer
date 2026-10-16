@@ -8,7 +8,7 @@ reader's current θ, and each answer is evidence (±) on the concept plus an Elo
 
 import re
 from collections.abc import Iterable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from typing import Any, Literal
 
@@ -58,6 +58,60 @@ def starting_theta(comfort: Mapping[str, Level]) -> dict[str, float]:
 def interests(chosen: Iterable[str]) -> dict[str, float]:
     picked = set(chosen)
     return {d: INTEREST_CHOSEN if d in picked else INTEREST_OTHER for d in DOMAINS}
+
+
+# Decision 68 K1: what the reader does sets a starting level in its field's domains (first-time
+# onboarding only; a redo keeps θ). Design and "other" claim no domain.
+FIELD_THETA: Mapping[str, tuple[str, ...]] = {
+    "software": ("technology",), "finance": ("finance", "economics"), "commerce": ("business",),
+    "law": ("law",), "science": ("science",), "medicine": ("health",), "teaching": ("education",),
+    "design": (), "other": (),
+}  # fmt: skip
+
+
+def first_theta(
+    field: str, previous_field: str | None, comfort: Mapping[str, Level]
+) -> dict[str, float]:
+    """θ for a first-time screen 1: the field's domains at "comfortable"; a field changed before
+    finishing resets the previous field's domains to 0; `comfort`, when sent, wins per domain."""
+    out: dict[str, float] = {}
+    if previous_field and previous_field != field:
+        out |= {d: 0.0 for d in FIELD_THETA.get(previous_field, ())}
+    out |= {d: LEVEL_THETA["comfortable"] for d in FIELD_THETA.get(field, ())}
+    return out | starting_theta(comfort)
+
+
+# Decision 68 K2: a few terms common where the reader reads from start slightly known.
+HOME_TERMS = 25
+HOME_MIN_DOC_FREQ = 3  # rarer "home" concepts are noise (Arthashastra, Panic of 1837)
+HOME_MAX_P = 0.8  # never pushed to "can explain" by a guess
+
+
+def home_terms(graph: ConceptGraph, country: str | None) -> list[Concept]:
+    """The country's most frequent concepts (jurisdiction = country, doc_freq ≥ 3), at most
+    HOME_TERMS; none for "other" or no country."""
+    if not country or country == "other":
+        return []
+    found = [
+        c for c in graph.concepts if c.jurisdiction == country and c.doc_freq >= HOME_MIN_DOC_FREQ
+    ]
+    return sorted(found, key=lambda c: (-c.doc_freq, c.id))[:HOME_TERMS]
+
+
+def apply_home(concept: Concept, edge: Edge | None, theta: float, now: datetime) -> Edge | None:
+    """One small `home_country` step, or None (write nothing): once per concept ever, never to
+    p ≥ HOME_MAX_P (from the reader's edge when there is one, else the prior), and never a band
+    move (it isn't news about the reader, so nothing shows as "moved up")."""
+    if edge is not None and any(e.type == "home_country" for e in edge.evidence):
+        return None
+    p0 = model.prior(theta, concept.base_difficulty)
+    base = edge or model.init_edge(p0, now)
+    new = model.apply_evidence(
+        base, p0, "home_country", model.EVIDENCE_WEIGHTS["home_country"], now
+    )
+    if model.current_p_know(new, p0, now) >= HOME_MAX_P:
+        return None
+    return replace(new, band_prev=base.band_prev, band_changed_at=base.band_changed_at)
 
 
 def liked_concepts(docs: Sequence[ContentDoc]) -> list[str]:

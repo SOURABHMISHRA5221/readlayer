@@ -265,6 +265,7 @@ def test_the_summary_names_only_domains_the_reader_rated_or_reads_in(env):
         "/v1/onboarding", json={**ANSWERS, "comfort": {"finance": "new"}, "liked_content_ids": []}
     )
     profile = g.get("/v1/me/profile").json()
-    assert profile["summary"]["text"].startswith("New to finance.")
+    # Decision 68 K1: the software field starts technology at "comfortable".
+    assert profile["summary"]["text"].startswith("Comfortable in technology, new to finance.")
     rated = {d["domain"]: d["rated"] for d in profile["domains"]}
-    assert rated == {d: d == "finance" for d in DOMAINS}
+    assert rated == {d: d in ("finance", "technology") for d in DOMAINS}
