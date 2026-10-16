@@ -287,8 +287,12 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   business domains if none does); within a domain, among its 150 highest-`doc_freq` concepts
   (seeded and grown concepts have doc_freq 0 and order most basic first), the one with b closest
   to θ, never one already asked (deterministic). Answers: explain +3.0, **heard −1.5**, none −3.0 (`calibration_answer`),
-  and an Elo step with K = 0.3 and outcome explain 1, **heard 0.5**, none 0. Only the current item
-  can be answered; `/calibration/skip` ends onboarding (the web's Quick check never calls it).
+  and an Elo step with K = 0.3 and outcome explain 1, **heard 0.5**, none 0. Since decision 68
+  K4b the six are fixed up front as a stored **set** (`calibration.set`: the terms already asked,
+  then `next_item` repeatedly; built once in a transaction) and any unanswered set item can be
+  answered, in any order; with no set only the current item can (older clients). A re-submitted
+  screen 1 drops the set and keeps `asked`, so only the unanswered part is rebuilt.
+  `/calibration/skip` ends onboarding (the web's Quick check never calls it).
 
 ### Decision 68: knowledge from who you are, taste from what you pick
 - **Screen 1 builds knowledge.** Field → starting θ at "comfortable" (0.5) in its domains
@@ -303,8 +307,10 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
 - **Screen 2 is taste only.** Cards (articles, videos, podcasts, each with its format word and
   length; "I'd read / watch / listen to this") move interest and format affinity, never the map:
   no term is offered and `POST /v1/onboarding/know` is a no-op. Below them, apart, the **Quick
-  check**: the calibration above, 6 items, one card at a time ("Know it" / "Heard of it" /
-  "New to me"), the reader's own word on a term; skipping hides it; it never finishes onboarding
+  check**: the calibration above, 6 items, **all six at once** (K4b, Sourabh: "6 questions should
+  be a single answer all in one go"), one row per term with "Know it" / "Heard of it" / "New to
+  me", answered in any order, each once (`GET /v1/calibration/set`), the reader's own word on a
+  term; skipping hides it; it never finishes onboarding
   (only Finish does); a re-submitted screen 1 keeps its asked list; hidden on a Redo.
 
 ### Onboarding in 2 screens (decision 41; replaces the M7 web steps, the M7 API stays)
@@ -600,7 +606,8 @@ subject to pause). The next open regenerates.
 | POST | /v1/me/consent | `{version}` (signed-in readers): records consent; required before anything is recorded (§11.4) |
 | POST | /v1/onboarding | field, interests, comfort per domain, ≤ 3 frames, ≤ 3 liked library content ids, `country` (decision 50), `formats` (decision 68, optional: empty keeps the stored answer) (§4); needs consent |
 | GET | /v1/calibration/next | next item: concept with b closest to current θ, not yet asked; `{done}` after 6 (decision 68) |
-| POST | /v1/calibration/answer | `{concept_id, answer: explain|heard|none}`: only the current item (409 otherwise) |
+| GET | /v1/calibration/set | decision 68 K4b: the six Quick check terms at once, `{done, total, items: [{concept_id, label, domain, answered}]}`; built and stored once; empty and done after finish |
+| POST | /v1/calibration/answer | `{concept_id, answer: explain|heard|none}`: any unanswered item of the stored set; with no set only the current item (409 otherwise) |
 | POST | /v1/calibration/skip | ends calibration (onboarding done) |
 | POST | /v1/onboarding/resolve | `{text ≤ 120}` → `{concepts, topics: [{phrase_index, phrase, topic, via}], unrecognised}` (§4); 429 past 5/day |
 | POST | /v1/onboarding/discover | `{topics ≤ 6, concepts ≤ 2}` → `{items, pending}`; unknown concept 422; 409 after finish |

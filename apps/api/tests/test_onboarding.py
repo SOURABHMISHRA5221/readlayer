@@ -293,3 +293,115 @@ def test_the_summary_names_only_domains_the_reader_rated_or_reads_in(env):
     assert profile["summary"]["text"].startswith("Comfortable in technology, new to finance.")
     rated = {d["domain"]: d["rated"] for d in profile["domains"]}
     assert rated == {d: d in ("finance", "technology") for d in DOMAINS}
+
+
+# ---------------------------------------------------------------- decision 68 K4b: all six at once
+
+
+def test_the_quick_check_set_is_six_terms_at_once_answered_in_any_order(env, docs):
+    g = consented(google())
+    g.post("/v1/onboarding", json=ANSWERS)
+    first = g.get("/v1/calibration/set").json()
+    ids = [i["concept_id"] for i in first["items"]]
+    assert first["done"] is False and first["total"] == onboarding.CALIBRATION_ITEMS
+    assert len(ids) == onboarding.CALIBRATION_ITEMS == len(set(ids))
+    assert all(i["answered"] is False for i in first["items"])
+    assert g.get("/v1/calibration/set").json()["items"] == first["items"]  # stable
+    for cid in reversed(ids):  # any order
+        body = g.post("/v1/calibration/answer", json={"concept_id": cid, "answer": "heard"})
+        assert body.status_code == 200
+    again = g.post("/v1/calibration/answer", json={"concept_id": ids[0], "answer": "explain"})
+    assert again.status_code == 409  # each once
+    after = g.get("/v1/calibration/set").json()
+    assert after["done"] is True and all(i["answered"] for i in after["items"])
+    assert docs.docs["users/g1"]["onboarding_done"] is False  # never finishes onboarding
+    assert docs.docs["users/g1"]["calibration"]["set"] == ids
+
+
+def test_a_term_outside_the_set_is_refused_and_edit_rebuilds_the_unanswered_part(env, docs):
+    g = consented(google())
+    g.post("/v1/onboarding", json=ANSWERS)  # finance, economics
+    ids = [i["concept_id"] for i in g.get("/v1/calibration/set").json()["items"]]
+    outside = next(c.id for c in GRAPH.concepts if c.id not in ids)
+    bad = g.post("/v1/calibration/answer", json={"concept_id": outside, "answer": "none"})
+    assert bad.status_code == 409
+    assert (
+        g.post("/v1/calibration/answer", json={"concept_id": ids[2], "answer": "none"}).status_code
+        == 200
+    )
+    g.post(
+        "/v1/onboarding", json={**ANSWERS, "interests": ["business", "policy"]}
+    )  # Edit → Continue
+    items = g.get("/v1/calibration/set").json()["items"]
+    assert len(items) == onboarding.CALIBRATION_ITEMS and items[0]["concept_id"] == ids[2]
+    assert items[0]["answered"] is True and not any(i["answered"] for i in items[1:])
+    assert {i["domain"] for i in items[1:]} <= {"business", "policy"}
+    assert not {i["concept_id"] for i in items[1:]} & {ids[2]}
+    assert docs.docs["users/g1"]["calibration"]["answers"] == 1
+    # an old client asking sequentially gets the first unanswered term of the set
+    assert g.get("/v1/calibration/next").json()["item"]["concept_id"] == items[1]["concept_id"]
+
+
+def test_terms_answered_before_the_set_count_toward_six(env, docs):
+    """A reader mid-way through the old one-at-a-time flow: the set keeps those answers."""
+    g = consented(google())
+    g.post("/v1/onboarding", json=ANSWERS)
+    before = []
+    for _ in range(2):
+        cid = g.get("/v1/calibration/next").json()["item"]["concept_id"]
+        g.post("/v1/calibration/answer", json={"concept_id": cid, "answer": "explain"})
+        before.append(cid)
+    body = g.get("/v1/calibration/set").json()
+    assert [i["concept_id"] for i in body["items"]][:2] == before
+    rest = [i["concept_id"] for i in body["items"] if not i["answered"]]
+    assert len(body["items"]) == onboarding.CALIBRATION_ITEMS and len(rest) == 4
+    for cid in rest:
+        assert (
+            g.post(
+                "/v1/calibration/answer", json={"concept_id": cid, "answer": "heard"}
+            ).status_code
+            == 200
+        )
+    assert g.get("/v1/calibration/set").json()["done"] is True
+
+
+def test_an_old_sequential_client_walks_the_stored_set_to_done(env):
+    """The live web during the deploy (API first): next → answer six times, set order."""
+    g = consented(google())
+    g.post("/v1/onboarding", json=ANSWERS)
+    ids = [i["concept_id"] for i in g.get("/v1/calibration/set").json()["items"]]
+    served = []
+    for _ in range(onboarding.CALIBRATION_ITEMS):
+        cid = g.get("/v1/calibration/next").json()["item"]["concept_id"]
+        ok = g.post("/v1/calibration/answer", json={"concept_id": cid, "answer": "heard"})
+        assert ok.status_code == 200
+        served.append(cid)
+    assert served == ids
+    assert g.get("/v1/calibration/next").json()["done"] is True
+    assert g.get("/v1/calibration/set").json()["done"] is True
+
+
+def test_the_set_is_stored_once(env, docs):
+    """Two overlapping first asks (a double mount, a second tab) see one set."""
+    g = consented(google())
+    g.post("/v1/onboarding", json=ANSWERS)
+    a = g.get("/v1/calibration/set").json()["items"]
+    docs.docs["users/g1/domains/finance"]["theta"] = 1.5  # θ moved: a recompute would differ
+    b = g.get("/v1/calibration/set").json()["items"]
+    assert a == b
+
+
+def test_the_set_is_closed_after_finish(env):
+    g = consented(google())
+    g.post("/v1/onboarding", json=ANSWERS)
+    ids = [i["concept_id"] for i in g.get("/v1/calibration/set").json()["items"]]
+    g.post("/v1/onboarding/finish")
+    assert g.get("/v1/calibration/set").json() == {
+        "done": True,
+        "total": onboarding.CALIBRATION_ITEMS,
+        "items": [],
+    }
+    assert (
+        g.post("/v1/calibration/answer", json={"concept_id": ids[0], "answer": "none"}).status_code
+        == 409
+    )

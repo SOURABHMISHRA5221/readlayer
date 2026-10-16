@@ -315,17 +315,24 @@
   text-decoration: underline;
   cursor: pointer;
 }
-.quickcheck__card {
-  margin-top: var(--s3);
-  padding: var(--s3) var(--s4);
+/* Decision 68 K4b: all six rows at once. */
+.quickcheck__list { display: grid; gap: var(--s2); margin: var(--s3) 0 0; padding: 0; list-style: none; }
+.quickcheck__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s2) var(--s3);
+  padding: var(--s2) var(--s3);
   border: 1px solid var(--hairline);
   border-radius: var(--radius);
   background: var(--surface);
 }
-.quickcheck__progress { margin: 0; color: var(--muted); font: 500 0.8rem/1 var(--font-ui); }
-.quickcheck__term { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2); margin: var(--s2) 0 var(--s3); outline-offset: 4px; }
-.quickcheck__label { font: 600 1.25rem/1.25 var(--font-read); color: var(--ink); }
+.quickcheck__row[data-answered="yes"] { background: transparent; }
+.quickcheck__term { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s2); margin: 0; }
+.quickcheck__label { font: 600 1.1rem/1.25 var(--font-read); color: var(--ink); }
 .quickcheck__domain { color: var(--muted); font: 500 0.8rem/1 var(--font-ui); }
-.quickcheck__answers { display: flex; flex-wrap: wrap; gap: var(--s2); }
-.quickcheck__answers .answer { flex: 1 1 8rem; min-height: 44px; }
-.quickcheck__done { margin: var(--s3) 0 0; color: var(--ink-soft); outline-offset: 4px; }
+.quickcheck__answers { display: flex; flex: 1 1 16rem; max-width: 26rem; flex-wrap: wrap; gap: var(--s2); }
+.quickcheck__answers .answer { flex: 1 1 5.5rem; min-height: 44px; padding: 0 var(--s2); }
+.quickcheck__answers .answer[aria-disabled="true"]:not([aria-pressed="true"]) { opacity: 0.55; }
+.quickcheck__done { margin: var(--s3) 0 0; color: var(--ink-soft); }

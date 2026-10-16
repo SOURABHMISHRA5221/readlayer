@@ -96,6 +96,12 @@ export interface CalibrationNext {
   item?: { concept_id: string; label: string; domain: Domain };
 }
 
+export interface CalibrationSet {
+  done: boolean;
+  total: number;
+  items: { concept_id: string; label: string; domain: Domain; answered: boolean }[];
+}
+
 export interface EditPreview {
   edit_id: string;
   persona: PersonaKey | null;
@@ -198,6 +204,8 @@ export const profileApi = {
     formats?: RecFormat[]; // decision 68: read / watch / listen
   }) => api.raw.send<{ saved: boolean; next: string }>("POST", "/v1/onboarding", answers),
   calibrationNext: () => api.raw.get<CalibrationNext>("/v1/calibration/next"),
+  /** Decision 68 K4b: the whole Quick check at once. */
+  calibrationSet: () => api.raw.get<CalibrationSet>("/v1/calibration/set"),
   calibrationAnswer: (concept_id: string, answer: "explain" | "heard" | "none") =>
     api.raw.send<{ done: boolean; asked: number }>("POST", "/v1/calibration/answer", { concept_id, answer }),
   calibrationSkip: () => api.raw.send<{ done: boolean }>("POST", "/v1/calibration/skip", {}),

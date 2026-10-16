@@ -96,12 +96,14 @@ async def main():
         await asyncio.sleep(0.5)
         kb["space_picks"] = await p.eval("document.querySelector('.discover-card__answers .answer').getAttribute('aria-pressed')")
         kb["focus_kept_after_answer"] = await p.eval("document.activeElement?.matches('.discover-card__answers .answer')")
-        # decision 68 K4: the Quick check below the cards, one term at a time
+        # decision 68 K4b: the Quick check below the cards, all terms at once
         kb["quick_focus"] = await tab_to(p, ".quickcheck__answers .answer")
         await press(p, "Enter")
         await asyncio.sleep(1.5)
-        kb["quick_focus_moved"] = await p.eval(
-            "document.activeElement?.matches('.quickcheck__term, .quickcheck__done') ?? false")
+        kb["quick_answer_pressed"] = await p.eval(
+            "document.querySelector('.quickcheck__answers .answer[aria-pressed=true]') !== null")
+        kb["quick_focus_kept"] = await p.eval("document.activeElement?.matches('.quickcheck__answers .answer') ?? false")
+        kb["quick_rows"] = await p.eval("document.querySelectorAll('.quickcheck__row').length")
         kb["start_focus"] = await tab_to(p, ".welcome__actions .btn--primary", 120)
         print("[keyboard screen2]", kb)
 
@@ -119,8 +121,11 @@ async def main():
             if (want === 'Not for me') sports += 1;
             [...card.querySelectorAll('button')].find(b => b.textContent === want)?.click();
             out.push(topic + ':' + want); await new Promise(r => setTimeout(r, 300)); }
-          [...document.querySelectorAll('.quickcheck__answers .answer')].find(b => b.textContent === 'Heard of it')?.click();
-          await new Promise(r => setTimeout(r, 1500));
+          const rows = [...document.querySelectorAll('.quickcheck__row')];
+          for (const [i, label] of [[rows.length - 1, 'New to me'], [1, 'Heard of it']]) {  // out of order
+            [...rows[i].querySelectorAll('button')].find(b => b.textContent === label)?.click();
+            await new Promise(r => setTimeout(r, 800)); }
+          out.push('quick answered:' + document.querySelectorAll('.quickcheck__answers .answer[aria-pressed=true]').length);
           [...document.querySelectorAll('button')].find(b => b.textContent === 'Skip quick check')?.click();
           out.push('formats:' + [...document.querySelectorAll('.discover-card__meta')].map(m => m.textContent.split(' · ').pop()).join('/'));
           return out; })()""")

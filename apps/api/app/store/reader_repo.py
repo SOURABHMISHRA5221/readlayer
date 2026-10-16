@@ -612,13 +612,33 @@ class ReaderRepo:
                 | (
                     {"onboarding_redo": "discover"}  # done and calibration progress kept
                     if redo
-                    # Decision 68 K4: Edit → Continue keeps the quick check's asked list.
-                    else {"onboarding_done": False}
+                    # Decision 68 K4/K4b: Edit → Continue keeps the asked list; the unanswered
+                    # part of the Quick check is rebuilt from the new topics and θ.
+                    else {
+                        "onboarding_done": False,
+                        "calibration": {k: v for k, v in user.calibration.items() if k != "set"},
+                    }
                 )
             )
             t.set(user_path(uid), updated.model_dump())
 
         await self._store.run(body)
+
+    async def calibration_set(self, uid: str, make: Any) -> list[str]:
+        """The stored Quick check set, or `make(user)`'s, stored now (decision 68 K4b)."""
+
+        async def body(t: Txn) -> list[str]:
+            raw = await t.get(user_path(uid))
+            user = UserProfile.model_validate(raw or {})
+            stored = user.calibration.get("set")
+            if stored:
+                return list(stored)
+            chosen = list(make(user))
+            calibration = user.calibration | {"set": chosen}
+            t.set(user_path(uid), user.model_copy(update={"calibration": calibration}).model_dump())
+            return chosen
+
+        return await self._store.run(body)
 
     async def calibration_answer(
         self, uid: str, concept_id: str, ref: ConceptRef, apply: Any, total: int, now: datetime
@@ -649,7 +669,8 @@ class ReaderRepo:
             done = len(asked) >= total
             updated = user.model_copy(
                 update={
-                    "calibration": {"asked": asked, "answers": len(asked)},
+                    # Keeps the stored Quick check set (decision 68 K4b).
+                    "calibration": user.calibration | {"asked": asked, "answers": len(asked)},
                     # Decision 68 K4: only POST /v1/onboarding/finish ends onboarding.
                     "rev": user.rev + 1,
                 }
