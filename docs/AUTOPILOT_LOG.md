@@ -2247,3 +2247,13 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    → live: headers by `curl -I`, a first analysis on a new instance < 2 s before its first model call.
 2. PR 2 `d69-map-story` (A, then B1, B2) per the plan; checkpoint 12:00 IST; last deploy 18:00.
 3. Video re-record after PR 2; `/v2` removal, gitleaks, deck link, submit.
+- Decision 69 PR 1 merged #61 (not deployed: Sourabh wants one deploy with PR 2). PR 2
+  `d69-map-story` built: A (evidence-only map), A2 (topic level only when set or moved, found on the
+  harness), B1/B2 (end list = story + key ideas; story search corpus-only), F (consume, not read;
+  plan-reviewer REVISE 12 → APPROVE), G (screen 2 equal mix of chosen formats). API 1321, web 290.
+  Harness: map evidence-only, "More on this story" leads, Read + Listen → 4/4/1.
+
+### Next steps (resume here, in order)
+1. PR 2: plan-reviewer verdict on A2 + G → milestone-reviewer → PR → CI → merge → `make deploy-api`
+   → `make deploy-web` (one deploy for PRs 1 and 2) → live checks (§37 and plan).
+2. Video re-record with the new wording; `/v2` removal, gitleaks, deck link (tagline, "Open any link"), submit.

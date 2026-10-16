@@ -351,8 +351,9 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   keys `feedx:c:<id>:<day>` (decision 50: restricted to top outlets), articles only, "<concept label> news this week", results must name
   the label or an alias). Up to 9 cards, every topic/concept with results gets one before any
   gets a second, articles first, then fresher (decision 68: the reader's chosen formats first,
-  minimums per format, served cards keep their slots by a stored position `n`, slots held for a
-  missing format while searches run). Fewer than 6 and nothing pending → newest corpus
+  served cards keep their slots by a stored position `n`, slots held for a missing format while
+  searches run; decision 69 G: the chosen formats share the cards equally and take turns, every
+  other format gets 1 — Read + Listen of 9 → 4 / 4 / 1 video; `feed_rank.onboarding_targets`). Fewer than 6 and nothing pending → newest corpus
   articles in those domains. Each card: "I'd read this" / "Not for me" (`pick`: a rec signal
   `rec_clicked`/`rec_dismissed` and ±0.15 interest in the served item's domain, clamped, stored
   as a delta so Edit → Continue re-applies it). **Until decision 68** each card also had at most
@@ -597,7 +598,7 @@ subject to pause). The next open regenerates.
 | POST | /v1/content/{id}/analyse | phase 2 of "Open here" (§3): 200 `{status: ready}` (no LLM call if already analysed), 202 `{status: analysing}` while another request holds the lease, 410 after 3 failed analyses, 504 on the 120 s timeout; no ingest slot (taken in phase 1) |
 | POST | /v1/content/{id}/grow | a reader's stored page that missed concept growth (M9, §2): 200 `{status: none}` (no model call: nothing to grow), `{status: capped}` (no slots left today), `{status: grown, linked}`; 202 `{status: growing}` while another request holds the claim; 503 on the budget. Access as …/analyse (extension pages: their submitters). Never in the scoring path; the client then reloads the notes |
 | POST | /v1/content/{id}/transcribe | a recording's transcript (§21.3): 200 `{status: analysing}` once stored (no model call if it already is), 202 while another request or podcast holds it, 410 after 3 failed attempts, 422 with the refusal code, 503 on a budget or an unavailable source, 504 on the timeout. Then …/analyse as for an article |
-| GET | /v1/content/{id}/recommendations?prefer= | Up next (§16): up to 6 items, `pending` while web lookups run; each item carries `open_here` (§21.4) |
+| GET | /v1/content/{id}/recommendations?prefer=&basis= | Up next (§16): up to 6 items, `pending` while web lookups run; each item carries `open_here` (§21.4). `basis=story` (decision 69 B, the end of the article and the recap): the article's key ideas plus the same story elsewhere ("More on this story", corpus articles only, §16.3); `basis=article` (decision 67): the card chips, one per format; `basis=consumer` (default, the pre-69 web): the reader's new terms |
 | POST | /v1/recs/events | `{events: [{id, type: rec_shown\|rec_clicked\|rec_dismissed\|rec_completed, item_id}]}` → `{applied, ignored}`; idempotent by event id |
 | POST | /v1/recs/open | `{url}` → `{content_id, new, ready}`: phase 1 of ingesting a web recommendation via safe_fetch as `user_ingested` (§3), within the per-user daily cap (429 past it); `ready: false` until POST .../analyse completes. A YouTube or Apple Podcasts episode URL opens a recording instead (§21.2): `kind`, `stage: "transcribe"`, 422 with a refusal code, 429 `media_cap_reached`. POST /v1/content answers a media URL 422 `use_open_here` |
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
@@ -891,16 +892,23 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
    fit sit 3 + 3); 2 across to 960px, 1 to 420px.
 3. **Knowledge map** (Design pass; replaces the Cytoscape/dagre map). An SVG overview of every
    topic first: "You" in the middle, one cluster per topic on a ring (deterministic layout with a
-   fixed number of collision passes, `lib/mapLayout.ts`), solid dots for concepts at heard of or
-   above (filled by band, size by doc frequency, can explain ringed), outline rings for ready to
-   learn (every prerequisite known at p ≥ 0.5), dashed rings for learning-goal targets, nodes that
+   fixed number of collision passes, `lib/mapLayout.ts`), solid dots for concepts **with recorded
+   evidence** at heard of or above (filled by band, size by doc frequency, can explain ringed;
+   decision 69 A: a prior guess is never drawn, no fallback domains, a domain with no nodes takes
+   no slot, an empty map says so), outline rings for ready to learn (every prerequisite known by
+   evidence at p ≥ 0.5, any domain), dashed rings for learning-goal targets, nodes that
    rose this week popping in once (not under reduced motion). Topic buttons (and clicking a
    cluster label) show one topic's subgraph (`?domain=`, ≤ 60 nodes) in the same layout; a goal
    shows its targets (`?goal=`). Keyboard: the SVG is one Tab stop with a label (roving tabindex;
    arrow keys move between nodes, Enter opens the inspector); each node's label says "label,
    band[, ready to learn][, in a goal]"; shapes carry the meaning as well as colour. The
    inspector beside the map shows the definition, "Why we think so" (the last 3 evidence items,
-   or "our estimate" for prior-only nodes) and "I know this" / "I don't". The list view shows the
+   "You know what it builds on" for a ring, "Nothing recorded yet" for a no-evidence node in a
+   topic or goal view, which the legend names) and "I know this" / "I don't". Topic and goal views
+   draw no-evidence nodes as `unaware` (hollow), never a prior band. **Levels (decision 69 A2):**
+   a topic shows a level word (and joins the summary sentence) only when its level was set or
+   moved (a comfort answer, the field, reading, answers, an edit); recorded ideas alone (home
+   terms) don't rate it. The list view shows the
    same nodes by topic (the default below 640 px). **Size (Wide layout, decision 45):** beside
    the inspector (961px up) and in a box of 800px or more the map is laid out for the box
    (`mapSize`: its width in 40px steps up to 1160, height 680 to 780) and drawn at that pixel
