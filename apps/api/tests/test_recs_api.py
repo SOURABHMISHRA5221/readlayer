@@ -291,8 +291,10 @@ def test_story_basis_follows_the_article_and_never_says_new_to_you(env):
                 continue  # their own reasons ("The same story, told by …")
             assert "a key idea here" in item["why"], item
             assert {t["id"] for t in item["triggers"]} <= idea_ids
-        assert any(i["kind"] == "library" and i["relation"] not in ("same_story", "angle")
-                   for i in items)  # a library primer/deeper item gets the key-idea reason too  # fmt: skip
+        # a library primer or deeper item gets the key-idea reason too
+        assert any(
+            i["kind"] == "library" and i["relation"] not in ("same_story", "angle") for i in items
+        )
 
 
 def test_story_basis_is_the_same_ideas_for_every_persona(env):
