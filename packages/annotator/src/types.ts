@@ -56,6 +56,30 @@ export interface Explanation {
   band?: string;
   can_simpler?: boolean;
   can_deeper?: boolean;
+  /** The analogy frames on offer and which one this Background used (decision 67 A3). */
+  frames?: Frames;
+}
+
+/** Decision 67 A: the frame picked in onboarding or the profile, or one from the map. */
+export type FrameChoice = "pick" | "for_you";
+
+export interface Frames {
+  pick: string | null;
+  for_you: string | null;
+  used: FrameChoice;
+}
+
+export type NextUpFormat = "article" | "video" | "podcast";
+
+/** Decision 67 N2: one "Up next" chip in the card, about the article's key ideas. */
+export interface NextUpChip {
+  id: string;
+  format: NextUpFormat;
+  title: string;
+  source: string;
+  /** Where the link goes (keyboard, middle-click); a plain click is handed to the host. */
+  href: string;
+  minutes?: number | null;
 }
 
 /** "What this paragraph is saying" margin marker (DESIGN §6, §9). */

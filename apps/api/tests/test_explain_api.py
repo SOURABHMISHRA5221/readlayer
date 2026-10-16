@@ -414,3 +414,78 @@ def test_a_capped_shift_says_so(client, fake, monkeypatch):
     assert ask(client).json()["capped"] is False
     capped = _shift(client, 1).json()
     assert capped["capped"] is True and capped["background"] is None
+
+
+# Decision 67 A3: "Your pick" / "For you" analogy frames.
+
+
+def _framed(client, frame, shift=0, persona="trader", **target):
+    body = {"content_id": "art", **(target or {"demand_id": "d1"}), "frame": frame, "shift": shift}
+    return client.post(f"/v1/explain?persona={persona}", json=body)
+
+
+@pytest.fixture
+def for_you_finance(monkeypatch):
+    from app.reader import frames
+
+    seen = []
+
+    def fake_for_you(state, graph, exclude_domain, now):
+        seen.append(exclude_domain)
+        return "finance"
+
+    monkeypatch.setattr(frames, "for_you", fake_for_you)
+    return seen
+
+
+def test_every_card_says_which_frames_exist_and_which_it_used(client, fake, for_you_finance):
+    got = ask(client, persona="trader").json()
+    assert got["frames"] == {"pick": "cricket", "for_you": "finance", "used": "pick"}
+    assert got["thinks_in"] == "cricket"
+    assert for_you_finance == ["finance"]  # the note's own domain (c_yield_curve) is excluded
+
+
+def test_for_you_writes_the_background_in_that_frame_and_caches_it_apart(
+    client, fake, docs, for_you_finance
+):
+    pick = ask(client, persona="trader").json()
+    fake.script(
+        "explain", [{"background": "Like a hedge on a position.", "analogy_domain": "finance"}]
+    )
+    fy = _framed(client, "for_you").json()
+    assert fy["frames"]["used"] == "for_you" and fy["thinks_in"] == "finance"
+    assert fy["analogy_domain"] == "finance"  # a map frame survives the label check
+    assert fy["author_says"] == pick["author_says"] and fake.count("restate") == 1
+    explain_vars = [c["vars"] for c in fake.calls if c["task"] == "explain"]
+    assert explain_vars[-1]["thinks_in"] == "finance"
+    assert len(by_part(docs, "background")) == 2  # one per frame
+    again = _framed(client, "for_you").json()
+    assert again["cached"] is True
+
+
+def test_for_you_without_a_for_you_frame_serves_the_pick(client, fake, monkeypatch):
+    from app.reader import frames
+
+    monkeypatch.setattr(frames, "for_you", lambda *a: None)
+    got = _framed(client, "for_you").json()
+    assert got["frames"] == {"pick": "cricket", "for_you": None, "used": "pick"}
+    monkeypatch.setattr(frames, "for_you", lambda *a: "cricket")  # same as the pick
+    assert _framed(client, "for_you").json()["frames"]["used"] == "pick"
+
+
+def test_frame_and_shift_combine_and_frame_is_validated(client, fake, docs, for_you_finance):
+    own = _framed(client, "for_you").json()
+    order = ["unaware", "heard of", "understands", "can explain"]
+    shift = 1 if own["band"] != "can explain" else -1
+    moved = _framed(client, "for_you", shift=shift).json()
+    assert moved["frames"]["used"] == "for_you" and moved["thinks_in"] == "finance"
+    assert order.index(moved["band"]) == order.index(own["band"]) + shift
+    keys = {(d["band"], d.get("thinks_in")) for d in by_part(docs, "background")}
+    assert (own["band"], "finance") in keys and (moved["band"], "finance") in keys
+    assert _framed(client, "mine").status_code == 422
+
+
+def test_paragraph_notes_exclude_their_first_concepts_domain(client, fake, for_you_finance):
+    para = _framed(client, "for_you", paragraph_id="p0")
+    assert para.status_code == 200 and para.json()["frames"]["used"] == "for_you"
+    assert for_you_finance[-1] == "finance"  # the paragraph's first concept, c_yield_curve

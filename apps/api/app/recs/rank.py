@@ -240,3 +240,13 @@ def select(
 
     taken = [cs for chosen in picks.values() for cs in chosen]
     return sorted(taken, key=lambda cs: (-cs[1], cs[0].id))
+
+
+def one_per_format(chosen: Sequence[tuple[Candidate, float]]) -> list[tuple[Candidate, float]]:
+    """Card chips (decision 67 N1): the best pick per format, in FORMATS order (read, watch,
+    listen)."""
+    best: dict[Format, tuple[Candidate, float]] = {}
+    for c, s in chosen:
+        if c.format not in best or s > best[c.format][1]:
+            best[c.format] = (c, s)
+    return [best[f] for f in FORMATS if f in best]

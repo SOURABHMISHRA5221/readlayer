@@ -189,3 +189,17 @@ def test_feed_dismissals_never_touch_up_next_and_seen_maps_stay_bounded():
         apply_event(doc, f"s{i}", "rec_shown", f"feed:{i}")
     assert len(doc.served) == MAX_SERVED
     assert set(doc.shown_counts) <= set(doc.served) and set(doc.seen) <= set(doc.served)
+
+
+def test_one_per_format_keeps_the_best_of_each_in_format_order():
+    """Decision 67 N1: the card's chips, at most one read / watch / listen."""
+    from app.recs.rank import Candidate, one_per_format
+
+    def c(i, fmt):
+        return Candidate(i, "explainer", fmt, 1.0)
+
+    chosen = [(c("v1", "video"), 0.9), (c("a1", "article"), 0.5), (c("v2", "video"), 0.95),
+              (c("a2", "article"), 0.7)]  # fmt: skip
+    picked = one_per_format(chosen)
+    assert [(x.id, s) for x, s in picked] == [("a2", 0.7), ("v2", 0.95)]
+    assert one_per_format([]) == []

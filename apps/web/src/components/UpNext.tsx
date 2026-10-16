@@ -3,9 +3,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorKind, ApiError, opensHere, type RecEventType, type RecFormat, type RecItem } from "../lib/api";
 import { queueRecEvent } from "../lib/recEvents";
 import { sourceMonogram, sourceName } from "../lib/format";
-import { personaParam, type PersonaKey } from "../lib/personas";
+import type { PersonaKey } from "../lib/personas";
+import { recReaderHref } from "../lib/openRec";
 import { originalLabel } from "../lib/recLabels";
-import { navigate, withParams } from "../lib/router";
+import { navigate } from "../lib/router";
 import { ArticleIcon, Close, External, HeadphonesIcon, PlayIcon } from "./Icons";
 
 const POLL_MS = 1500;
@@ -198,12 +199,7 @@ function RecCard({ item, persona, fromId, onDismiss }: RecCardProps) {
     return () => observer.disconnect();
   }, [item.id, persona]);
 
-  const readerHref = (id: string) =>
-    withParams(new URL(`/read/${id}`, window.location.origin), {
-      persona: personaParam(persona),
-      rec: item.id,
-      from: fromId,
-    });
+  const readerHref = (id: string) => recReaderHref(id, persona, item.id, fromId);
 
   const openHere = async () => {
     sendRecEvent(persona, "rec_clicked", item.id);

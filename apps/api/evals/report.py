@@ -93,10 +93,19 @@ def _pipeline_latency(s: dict[str, Any]) -> str:
     return f"{s['pipeline_p50_ms'] / 1000:.1f} s / {s['pipeline_p95_ms'] / 1000:.1f} s"
 
 
+# The served thinking levels (deploy.env.yaml LLM_REASONING_EFFORT; a test keeps them equal).
+SERVED_EFFORT: dict[str, str | None] = {
+    "restate": "low", "explain": "low", "verify": None, "verify_background": None,
+}  # fmt: skip
+
+
 def experimental(r: dict[str, Any]) -> bool:
-    """A run that tried a thinking level (decision 67 L2) measures an experiment, not the
-    served config: listed with every run, never the 'latest' row the landing reads."""
-    return any((r["meta"].get("reasoning_effort") or {}).values())
+    """A run whose thinking levels differ from the served ones, or that forced one analogy
+    frame (decision 67 L2, A5), measures an experiment, not the served config: listed with every
+    run, never the 'latest' row the landing reads."""
+    effort = r["meta"].get("reasoning_effort") or {}
+    served = {t: SERVED_EFFORT.get(t) for t in effort}
+    return bool(r["meta"].get("frame")) or (bool(effort) and effort != served)
 
 
 def _comparison(all_runs: list[dict[str, Any]]) -> list[str]:

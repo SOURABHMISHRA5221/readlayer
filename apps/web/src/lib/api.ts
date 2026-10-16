@@ -162,6 +162,8 @@ export interface ExplanationResponse {
   can_simpler?: boolean;
   can_deeper?: boolean;
   cached: boolean;
+  /** The analogy frames on offer and the one used (decision 67 A3). */
+  frames?: { pick: string | null; for_you: string | null; used: "pick" | "for_you" };
   /** The daily explanation cap was reached: a definition card, not a verdict on the note. */
   capped?: boolean;
 }
@@ -178,7 +180,10 @@ export interface ReaderEvent {
 }
 
 /** What POST /v1/explain explains: a span (demand) or a whole paragraph. */
-export type ExplainTarget = { demand_id: string; shift?: -1 | 1 } | { paragraph_id: string };
+/** `frame: "for_you"`: the Background in a frame from the reader's map (decision 67 A3). */
+export type ExplainTarget =
+  | { demand_id: string; shift?: -1 | 1; frame?: "for_you" }
+  | { paragraph_id: string; frame?: "for_you" };
 
 /** The API's origin in production (Cloud Run); empty locally, where Vite proxies /v1. */
 const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?? "").replace(/\/$/, "");
@@ -252,9 +257,16 @@ export const api = {
     ),
   content: (id: string, signal?: AbortSignal) =>
     get<ContentDetail>(`/v1/content/${encodeURIComponent(id)}`, signal),
-  recommendations: (id: string, persona: PersonaKey | null, prefer: RecFormat | null, signal?: AbortSignal) =>
+  recommendations: (
+    id: string,
+    persona: PersonaKey | null,
+    prefer: RecFormat | null,
+    signal?: AbortSignal,
+    /** "article": the card chips, from the article's key ideas (decision 67 N1). */
+    basis: "consumer" | "article" = "consumer",
+  ) =>
     get<RecsResponse>(
-      `/v1/content/${encodeURIComponent(id)}/recommendations?${prefer ? `prefer=${prefer}` : ""}${personaParam(persona)}`,
+      `/v1/content/${encodeURIComponent(id)}/recommendations?${prefer ? `prefer=${prefer}` : ""}${basis === "article" ? `${prefer ? "&" : ""}basis=article` : ""}${personaParam(persona)}`,
       signal,
     ),
   recEvents: (persona: PersonaKey | null, events: { id: string; type: RecEventType; item_id: string }[]) =>

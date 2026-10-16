@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.reader.state import ThinksIn
+from app.reader.frames import Frame
 
 Mode = Literal["span", "paragraph"]
 
@@ -17,7 +17,7 @@ class Explanation(BaseModel):
 
     background: str = Field(min_length=1, max_length=1000)
     author_says: str = Field(min_length=1, max_length=1500)
-    analogy_domain: ThinksIn | None = None
+    analogy_domain: Frame | None = None
 
 
 class Card(BaseModel):
@@ -26,7 +26,7 @@ class Card(BaseModel):
 
     background: str | None
     author_says: str | None
-    analogy_domain: ThinksIn | None = None
+    analogy_domain: Frame | None = None
 
 
 class Restatement(BaseModel):
@@ -43,7 +43,7 @@ class BackgroundDraft(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     background: str = Field(min_length=1, max_length=1000)
-    analogy_domain: ThinksIn | None = None
+    analogy_domain: Frame | None = None
 
 
 class ClaimVerdict(BaseModel):
