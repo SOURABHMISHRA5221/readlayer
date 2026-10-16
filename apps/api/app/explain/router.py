@@ -23,7 +23,9 @@ from app.explain import service
 from app.explain.inputs import ExplainInputs, paragraph_inputs, span_inputs
 from app.explain.models import Mode
 from app.graph.loader import get_graph
+from app.reader import frames
 from app.reader.events import ConceptRef, ReaderEvent
+from app.reader.frames import Frame
 from app.reader.model import BANDS, Band
 from app.reader.personas import PERSONA_THINKS_IN
 from app.reader.state import THINKS_IN, ExplanationStyle, PersonaKey, ThinksIn
@@ -50,6 +52,8 @@ class ExplainRequest(BaseModel):
     # "Say it simpler" (-1) / "Go deeper" (+1): the Background one band from the reader's own,
     # through the same verified path and cache (keyed by band). Span mode only. Design pass A3.
     shift: Literal[-1, 0, 1] = 0
+    # Decision 67 A3: the Background in the reader's own pick or in a frame from their map.
+    frame: Literal["pick", "for_you"] = "pick"
 
     @model_validator(mode="after")
     def _one_target(self) -> "ExplainRequest":
@@ -58,6 +62,14 @@ class ExplainRequest(BaseModel):
         if self.shift and self.paragraph_id is not None:
             raise ValueError("shift applies to span notes only")
         return self
+
+
+class FramesOut(BaseModel):
+    """Decision 67 A3: the frames on offer for this note and which one the card used."""
+
+    pick: Frame | None
+    for_you: Frame | None
+    used: Literal["pick", "for_you"]
 
 
 class ExplainResponse(BaseModel):
@@ -69,11 +81,12 @@ class ExplainResponse(BaseModel):
     concept_id: str | None
     background: str | None
     author_says: str | None
-    analogy_domain: ThinksIn | None
+    analogy_domain: Frame | None
     band: Band  # the band this Background was written for (the reader's own, or shifted)
     can_simpler: bool  # a band below the reader's own exists (span notes only)
     can_deeper: bool
-    thinks_in: ThinksIn | None
+    thinks_in: Frame | None  # the frame this Background was written in
+    frames: FramesOut
     style: ExplanationStyle
     cached: bool
     capped: bool = (
@@ -104,6 +117,12 @@ def frame_for(ctx: ReaderContext) -> ThinksIn | None:
         return cast(ThinksIn, session[0]) if session else PERSONA_THINKS_IN[ctx.persona]
     frames = [f for f in ctx.user.thinks_in if f in THINKS_IN]
     return cast(ThinksIn, frames[0]) if frames else None
+
+
+def _note_domain(inputs: ExplainInputs) -> str | None:
+    """The note's own field (a span's concept, a paragraph's first): never its for-you frame."""
+    concept = get_graph().get(inputs.concepts[0].concept_id) if inputs.concepts else None
+    return concept.domain if concept else None
 
 
 def shifted(band: Band, shift: int) -> Band:
@@ -164,6 +183,13 @@ async def explain(
     base = await _inputs(body, ctx, datetime.now(UTC))
     own = BANDS.index(base.band)  # the reader's own band; a shift moves only the Background's
     inputs = replace(base, band=shifted(base.band, body.shift)) if body.shift else base
+    for_you = frames.for_you(ctx.state, get_graph(), _note_domain(base), datetime.now(UTC))
+    use_for_you = body.frame == "for_you" and for_you is not None and for_you != base.thinks_in
+    if use_for_you:
+        inputs = replace(inputs, thinks_in=for_you)
+    offered = FramesOut(
+        pick=base.thinks_in, for_you=for_you, used="for_you" if use_for_you else "pick"
+    )
     repo = ExplainRepo(get_doc_store())
     reserve, refund = _quota(ctx, settings)
     served = await service.serve(inputs, repo, reserve=reserve, refund=refund)
@@ -197,6 +223,7 @@ async def explain(
         can_simpler=inputs.mode == "span" and own > 0,
         can_deeper=inputs.mode == "span" and own < len(BANDS) - 1,
         thinks_in=inputs.thinks_in,
+        frames=offered,
         style=inputs.style,
         cached=served.cached,
         capped=served.reason == "capped",

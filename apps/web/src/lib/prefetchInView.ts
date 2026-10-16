@@ -1,4 +1,4 @@
-import { MARK_CLASS, markId, type CardAnnotation } from "@readlayer/annotator";
+import { MARK_CLASS, markId, type CardAnnotation, type FrameChoice } from "@readlayer/annotator";
 
 import { loadExplanation, PREFETCH_TOP } from "./explanations";
 import type { PersonaKey } from "./personas";
@@ -67,6 +67,8 @@ export function prefetchInView(
   annotations: readonly CardAnnotation[],
   /** This article's started ids (the top 3 included), kept by the host across refreshes. */
   seen: Set<string> = new Set(),
+  /** The page's analogy frame (decision 67 A4): prefetch in the one the reader chose. */
+  frame: () => FrameChoice = () => "pick",
 ): () => void {
   if (persona !== null || typeof IntersectionObserver === "undefined") return () => undefined;
   const byId = new Map(annotations.filter((a) => a.kind === "span").map((a) => [a.id, a]));
@@ -77,7 +79,7 @@ export function prefetchInView(
     .map((a) => a.id);
   for (const id of top) seen.add(id); // prefetched on load: they count toward the page's total
   const queue = makePrefetcher(
-    (id) => loadExplanation(contentId, persona, byId.get(id)!, true),
+    (id) => loadExplanation(contentId, persona, byId.get(id)!, true, frame()),
     PREFETCH_MAX,
     PREFETCH_IN_FLIGHT,
     seen,

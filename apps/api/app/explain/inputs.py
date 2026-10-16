@@ -21,8 +21,9 @@ from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
 from app.ingest.models import ContentDoc, Demand, StoredParagraph
 from app.reader import model
+from app.reader.frames import Frame
 from app.reader.model import Band
-from app.reader.state import ExplanationStyle, ReaderState, ThinksIn
+from app.reader.state import ExplanationStyle, ReaderState
 
 PARAGRAPH_LABEL = "What this paragraph is saying"
 MAX_PARAGRAPH_CONCEPTS = 3
@@ -70,7 +71,7 @@ class ExplainInputs:
     paragraph: str
     concepts: tuple[ConceptBrief, ...]  # the span's concept, or the paragraph's top concepts
     band: Band
-    thinks_in: ThinksIn | None
+    thinks_in: Frame | None  # the pick (THINKS_IN) or a map frame (decision 67)
     style: ExplanationStyle
 
     @property
@@ -228,7 +229,7 @@ def span_inputs(
     graph: ConceptGraph,
     state: ReaderState,
     now: datetime,
-    thinks_in: ThinksIn | None,
+    thinks_in: Frame | None,
     style: ExplanationStyle,
 ) -> ExplainInputs | None:
     """None when the demand isn't linked to a graph concept or its paragraph is missing."""
@@ -256,7 +257,7 @@ def paragraph_inputs(
     paragraph_id: str,
     graph: ConceptGraph,
     state: ReaderState,
-    thinks_in: ThinksIn | None,
+    thinks_in: Frame | None,
     style: ExplanationStyle,
 ) -> ExplainInputs | None:
     """A paragraph explainer: its most salient linked concepts give the definitions, and the

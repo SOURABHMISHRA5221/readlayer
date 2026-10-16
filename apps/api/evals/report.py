@@ -94,9 +94,10 @@ def _pipeline_latency(s: dict[str, Any]) -> str:
 
 
 def experimental(r: dict[str, Any]) -> bool:
-    """A run that tried a thinking level (decision 67 L2) measures an experiment, not the
-    served config: listed with every run, never the 'latest' row the landing reads."""
-    return any((r["meta"].get("reasoning_effort") or {}).values())
+    """A run that tried a thinking level or forced one analogy frame (decision 67 L2, A5)
+    measures an experiment, not the served config: listed with every run, never the 'latest'
+    row the landing reads."""
+    return bool(r["meta"].get("frame")) or any((r["meta"].get("reasoning_effort") or {}).values())
 
 
 def _comparison(all_runs: list[dict[str, Any]]) -> list[str]:

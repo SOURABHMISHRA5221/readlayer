@@ -162,6 +162,8 @@ export interface ExplanationResponse {
   can_simpler?: boolean;
   can_deeper?: boolean;
   cached: boolean;
+  /** The analogy frames on offer and the one used (decision 67 A3). */
+  frames?: { pick: string | null; for_you: string | null; used: "pick" | "for_you" };
   /** The daily explanation cap was reached: a definition card, not a verdict on the note. */
   capped?: boolean;
 }
@@ -178,7 +180,10 @@ export interface ReaderEvent {
 }
 
 /** What POST /v1/explain explains: a span (demand) or a whole paragraph. */
-export type ExplainTarget = { demand_id: string; shift?: -1 | 1 } | { paragraph_id: string };
+/** `frame: "for_you"`: the Background in a frame from the reader's map (decision 67 A3). */
+export type ExplainTarget =
+  | { demand_id: string; shift?: -1 | 1; frame?: "for_you" }
+  | { paragraph_id: string; frame?: "for_you" };
 
 /** The API's origin in production (Cloud Run); empty locally, where Vite proxies /v1. */
 const API_BASE = ((import.meta.env.VITE_API_BASE as string | undefined) ?? "").replace(/\/$/, "");

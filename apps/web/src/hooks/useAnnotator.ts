@@ -4,6 +4,7 @@ import {
   type AnnotatorEvent,
   type CardLabels,
   type CardAnnotation,
+  type FrameChoice,
   type NextUpChip,
   type ParagraphMarker,
   type PromptAnnotation,
@@ -16,6 +17,7 @@ import { api, type RecItem } from "../lib/api";
 import { onBeforeFlush, trackEvent } from "../lib/events";
 import {
   loadExplanation,
+  loadFramed,
   loadShifted,
   prefetchExplanations,
   reportExplanation,
@@ -80,6 +82,8 @@ export function useAnnotator(
   const recItemsRef = useRef<RecItem[]>([]);
   const chipsRef = useRef<NextUpChip[]>([]);
   const shownRef = useRef<Set<string>>(new Set());
+  // Decision 67 A4: the analogy frame chosen on this page (the annotator remembers it too).
+  const frameRef = useRef<FrameChoice>("pick");
   const [resolved, setResolved] = useState<string[] | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -122,6 +126,10 @@ export function useAnnotator(
       },
       loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
       loadShifted: (a, shift) => loadShifted(articleKey, personaRef.current, a, shift),
+      loadFramed: (a, frame, shift) => loadFramed(articleKey, personaRef.current, a, frame, shift),
+      onFrameChoice: (frame) => {
+        frameRef.current = frame;
+      },
       sidenote: () => railColumn(el),
       nextUp: () => chipsRef.current,
       onNextUp: (chip) => {
@@ -138,6 +146,7 @@ export function useAnnotator(
       onActive: setActive,
     });
     annotatorRef.current = annotator;
+    frameRef.current = "pick"; // a new annotator starts in the reader's own pick
     const unhook = onBeforeFlush(() => annotator.flush());
     return () => {
       unhook();
@@ -154,7 +163,7 @@ export function useAnnotator(
     const annotator = annotatorRef.current;
     if (!annotator || !annotations) return;
     let cancelled = false;
-    if (articleKey) prefetchExplanations(articleKey, personaRef.current, annotations);
+    if (articleKey) prefetchExplanations(articleKey, personaRef.current, annotations, frameRef.current);
     // The persona is the reader: switching it reloads an open card and resets its actions.
     let stopPrefetch = () => {};
     annotator.update([...annotations, ...(extras ?? [])], { reader: personaRef.current ?? "me" }).then((result) => {
@@ -168,7 +177,8 @@ export function useAnnotator(
       const seen = prefetchedRef.current.ids;
       import("../lib/prefetchInView")
         .then(({ prefetchInView }) => {
-          if (!cancelled) stopPrefetch = prefetchInView(el, articleKey, personaRef.current, annotations, seen);
+          if (cancelled) return;
+          stopPrefetch = prefetchInView(el, articleKey, personaRef.current, annotations, seen, () => frameRef.current);
         })
         .catch(() => undefined); // a stale chunk after a deploy: no prefetch, nothing breaks
     });
