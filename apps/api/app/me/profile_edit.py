@@ -249,7 +249,7 @@ async def reset_demo(
 ) -> dict[str, Any]:
     """Back to the original persona for this demo session (the template is never changed)."""
     if not caller.is_anonymous:
-        raise HTTPException(status_code=403, detail="demo readers only")
+        raise HTTPException(status_code=403, detail="demo consumers only")
     removed = await _repo().reset_demo(caller.uid, body.persona)
     return {"reset": True, "persona": body.persona, "edits_removed": removed}
 

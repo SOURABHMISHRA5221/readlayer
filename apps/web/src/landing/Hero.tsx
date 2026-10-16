@@ -232,7 +232,7 @@ export function HeroCtas({ onDemo = noop, onGoogle = noop, busy = null, error = 
     <div className="lp-ctas">
       <div className="lp-ctas__row">
         <button type="button" className="btn btn--primary lp-cta" onClick={onDemo} disabled={busy !== null}>
-          {busy === "demo" ? "Starting…" : "Try it as a demo reader"}
+          {busy === "demo" ? "Starting…" : "Try it as a demo consumer"}
         </button>
         <button type="button" className="btn lp-cta" onClick={onGoogle} disabled={busy !== null}>
           {busy === "google" ? "Opening Google…" : "Sign in with Google"}

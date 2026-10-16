@@ -48,7 +48,7 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
     items: [
       "A video's page shows its thumbnail from YouTube, so YouTube sees your IP address, browser and the video's id.",
       "The player loads only when you press play, from YouTube, and YouTube is told it is playing on Gloss's site. From then on YouTube gets what any embedded video sends and may set cookies; if you are signed in to YouTube in this browser, it can link the view to your account.",
-      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and listed only for the readers who opened the video; like the video itself, anyone with its link can read it.",
+      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and listed only for the consumers who opened the video; like the video itself, anyone with its link can read it.",
     ],
   },
   {
@@ -56,7 +56,7 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
     title: "Podcasts",
     items: [
       "An episode's audio streams straight from its publisher and nothing is requested until you press play. Then the publisher, and any measurement services its episode link passes through, see your IP address and browser, and your browser tells them you came from Gloss's site (its address, not the page).",
-      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and listed only for the readers who opened the episode; like the episode itself, anyone with its link can read it.",
+      "Transcripts are made by Gemini on Google Cloud from the public recording only, with nothing about you. A transcript is stored once and listed only for the consumers who opened the episode; like the episode itself, anyone with its link can read it.",
     ],
   },
   {
@@ -65,7 +65,7 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
     items: [
       "Nothing until you click it on a page. Then the article's title, text and address, with emails, phone numbers and card numbers removed in your browser first. Never forms, comments or anything you type, and never mail, banking or private pages.",
       "Your sign-in stays in the browser's session storage until the browser closes. Signing out, ending the demo or deleting your data disconnects it.",
-      "An article page you bring in with it is stored once and readable only by the readers who brought it in. It is listed with the pages you brought in, and deleting your data removes that link.",
+      "An article page you bring in with it is stored once and readable only by the consumers who brought it in. It is listed with the pages you brought in, and deleting your data removes that link.",
       "On a YouTube video, Open in Gloss sends only the video's address, without playlist, time or tracking parts. The video then opens as if you had pasted its link: like any video in Gloss, anyone with its link can read its transcript, and only the entry in your library is yours.",
     ],
   },
