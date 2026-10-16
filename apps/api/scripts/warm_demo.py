@@ -6,6 +6,9 @@ One Firebase anonymous (demo) user, deleted in `finally`. For every article and 
 for the top spans' explanations (pass 1: generates what's missing), then asks again (pass 2:
 every one should be a cache hit). Generations cost cents; the restatement is shared across
 personas, so only Backgrounds are per persona. Run after any prompt-version change.
+
+`--for-you` (decision 67 A6) warms the "For you" frame's Backgrounds instead, for the personas
+whose for-you frame differs from their pick (trader, policy student), so a first toggle is warm.
 """
 
 import argparse
@@ -49,15 +52,23 @@ class Pace:
         self.sent += [time.monotonic()] * n
 
 
+FOR_YOU_PERSONAS = ("trader", "policy_student")  # the newcomer's two frames match
+
+
 async def explain(
-    client: httpx.AsyncClient, api: str, cid: str, demand: str, persona: str, shift: int = 0
+    client: httpx.AsyncClient,
+    api: str,
+    cid: str,
+    demand: str,
+    persona: str,
+    shift: int = 0,
+    frame: str = "pick",
 ):
     t = time.perf_counter()
-    resp = await client.post(
-        f"{api}/v1/explain?persona={persona}",
-        json={"content_id": cid, "demand_id": demand, **({"shift": shift} if shift else {})},
-        timeout=150,
-    )
+    body = {"content_id": cid, "demand_id": demand, **({"shift": shift} if shift else {})}
+    if frame == "for_you":
+        body["frame"] = "for_you"
+    resp = await client.post(f"{api}/v1/explain?persona={persona}", json=body, timeout=150)
     resp.raise_for_status()
     body = resp.json()
     return (
@@ -69,7 +80,12 @@ async def explain(
 
 
 async def warm(
-    client: httpx.AsyncClient, api: str, articles: list[str], n: int, shifts: tuple[int, ...] = (0,)
+    client: httpx.AsyncClient,
+    api: str,
+    articles: list[str],
+    n: int,
+    shifts: tuple[int, ...] = (0,),
+    frame: str = "pick",
 ) -> int:
     """Two passes over the articles; returns how many cards the daily cap stopped."""
     pace = Pace()
@@ -78,12 +94,12 @@ async def warm(
             await asyncio.sleep(61)  # demo readers get 30 explain calls a minute
         rows = []
         for cid in articles:
-            for persona in PERSONAS:
+            for persona in personas_for(frame):
                 spans = await top_spans(client, api, cid, persona, n)
                 jobs = [(s, sh) for s in spans for sh in shifts]
                 await pace.wait(len(jobs))
                 results = await asyncio.gather(
-                    *(explain(client, api, cid, s["id"], persona, sh) for s, sh in jobs)
+                    *(explain(client, api, cid, s["id"], persona, sh, frame) for s, sh in jobs)
                 )
                 rows += [
                     (cid[:8], persona, s["id"], *r) for (s, _), r in zip(jobs, results, strict=True)
@@ -99,18 +115,28 @@ async def warm(
     return capped
 
 
+def personas_for(frame: str) -> tuple[str, ...]:
+    return FOR_YOU_PERSONAS if frame == "for_you" else PERSONAS
+
+
 async def dry_run(
-    client: httpx.AsyncClient, api: str, articles: list[str], n: int, shifts: tuple[int, ...] = (0,)
+    client: httpx.AsyncClient,
+    api: str,
+    articles: list[str],
+    n: int,
+    shifts: tuple[int, ...] = (0,),
+    frame: str = "pick",
 ) -> None:
     """List the (article, persona, span) explanations a real run would request; generates
     nothing (annotations only, no POST /v1/explain)."""
     total = 0
     for cid in articles:
-        for persona in PERSONAS:
+        for persona in personas_for(frame):
             for s in await top_spans(client, api, cid, persona, n):
                 total += len(shifts)
                 print(
                     f"  {cid[:8]} {persona:15s} {s['id']:6s} {s.get('label', '')} shifts {shifts}"
+                    f" frame {frame}"
                 )
     print(
         f"dry run: {total} explanation requests for {articles[0][:8]} "
@@ -121,7 +147,12 @@ async def dry_run(
 
 
 async def run(
-    api: str, articles: list[str], n: int, dry: bool = False, shifts: tuple[int, ...] = (0,)
+    api: str,
+    articles: list[str],
+    n: int,
+    dry: bool = False,
+    shifts: tuple[int, ...] = (0,),
+    frame: str = "pick",
 ) -> int:
     """One temporary demo reader per article, so no reader passes the anonymous explain cap
     (3 personas × n spans × len(shifts) ≤ 27 at the defaults); each is deleted in finally."""
@@ -131,9 +162,9 @@ async def run(
             client.headers["Authorization"] = f"Bearer {await sign_in_anonymously(client)}"
             try:
                 if dry:
-                    await dry_run(client, api, [cid], n, shifts)
+                    await dry_run(client, api, [cid], n, shifts, frame)
                 else:
-                    capped += await warm(client, api, [cid], n, shifts)
+                    capped += await warm(client, api, [cid], n, shifts, frame)
             finally:
                 resp = await client.delete(f"{api}/v1/me")
                 print(f"cleanup: DELETE /v1/me → {resp.status_code}")
@@ -151,9 +182,15 @@ def main() -> None:
     parser.add_argument(
         "--shifts", action="store_true", help="also warm the ±1-band Backgrounds (simpler/deeper)"
     )
+    parser.add_argument(
+        "--for-you", action="store_true", help="warm the For you frame (trader, policy student)"
+    )
     args = parser.parse_args()
     shifts = (0, -1, 1) if args.shifts else (0,)
-    capped = asyncio.run(run(args.api.rstrip("/"), args.articles, args.top, args.dry_run, shifts))
+    frame = "for_you" if args.for_you else "pick"
+    capped = asyncio.run(
+        run(args.api.rstrip("/"), args.articles, args.top, args.dry_run, shifts, frame)
+    )
     raise SystemExit(1 if capped else 0)
 
 

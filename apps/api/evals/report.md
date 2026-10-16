@@ -20,6 +20,7 @@ Targets: every adversarial card rejected; at least 90% of good cards accepted; e
 | 2026-10-10T16:14:04+00:00 | m7-5-after | restate-v2+verify-v2|explain-v5+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 24/25 (96%) | 0 | 25 / 0 / 0 | 10/10 (100%) | $0.542 |
 | 2026-10-16T14:44:16+00:00 | d67-baseline | restate-v2+verify-v2|explain-v5+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 25/25 (100%) | 0 | 24 / 1 / 0 | 10/10 (100%) | $0.534 |
 | 2026-10-16T14:47:50+00:00 | d67-drafts-low | restate-v2+verify-v2|explain-v5+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 25/25 (100%) | 0 | 24 / 0 / 1 | 10/10 (100%) | $0.412 |
+| 2026-10-16T15:01:41+00:00 | d67-frame-finance | restate-v2+verify-v2|explain-v5+verify-background-v1 | `vertex_ai/gemini-3.8-flash` | 15/15 (100%) | 25/25 (100%) | 0 | 23 / 2 / 0 | 10/10 (100%) | $0.573 |
 
 ## Judge comparison
 
@@ -62,6 +63,7 @@ None.
 | `20261010T161404_m7-5-after.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 3/3 | 2/2 | – |
 | `20261016T144416_d67-baseline.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 3/3 | 2/2 | – |
 | `20261016T144750_d67-drafts-low.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 3/3 | 2/2 | – |
+| `20261016T150141_d67-frame-finance.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 3/3 | 2/2 | – |
 
 | Case | Issue | Verdict | Reasons |
 |---|---|---|---|
@@ -79,6 +81,7 @@ None.
 | `20261010T161404_m7-5-after.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 6/7 | O06 | 7 | – |
 | `20261016T144416_d67-baseline.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 6/7 | O06 | 7 | – |
 | `20261016T144750_d67-drafts-low.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 6/7 | O06 | 7 | – |
+| `20261016T150141_d67-frame-finance.json` | restate-v2+verify-v2|explain-v5+verify-background-v1 | 6/7 | O06 | 7 | – |
 
 ## Linker (own suite, M2.2)
 
