@@ -2156,3 +2156,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    `make deploy-web` (Sourabh's yes) → live checks (§9 Oct 17 row).
 2. `warm_next_up` dry run → write, `warm_demo --for-you` (Sourabh's yes); Tavily key/reset before Oct 19.
 3. New video script and full re-record (Sourabh); `/v2` removal, gitleaks, submit by Oct 18.
+- PR 2 milestone-reviewer round 2 FIX (four "not adopted" lines) → round 3 SHIP; #52 merged, API
+  `readlayer-api-00035-vdn` (low-thinking drafts) and web live (Sourabh's yes); live check: chips 3
+  per persona, persona frames measured (§35); #53 live record. Warm-ups on his yes (chips cache 111
+  lookups, 12 For you cards); the video script went to a Claude Doc for a teammate's review.
+  Sourabh rotated the Tavily key with `infra/set_tavily_key.sh` → `readlayer-api-00036-4kf` (#54).
+
+### Next steps (resume here, in order)
+1. Sourabh: new video script (teammate review of the script doc), then re-record the whole video on
+   the live site; recount the note numbers on the day; warm any article used.
+2. Oct 17: remove `/v2` (decision 63), gitleaks over history, deck link to the new video, submit by
+   Oct 18. Optional: disable `tavily-api-key` version 1 after the feed job runs on the new key.
