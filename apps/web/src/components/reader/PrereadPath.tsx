@@ -14,7 +14,7 @@ interface PrereadPathProps {
   heading?: string;
 }
 
-export function PrereadPath({ item, persona, heading = "Before you read" }: PrereadPathProps) {
+export function PrereadPath({ item, persona, heading = "Before you read" }: PrereadPathProps) { // wording-ok: article format word (watch / listen siblings)
   const [open, setOpen] = useState<string | null>(null);
   const id = useId();
   const steps = item.steps as Step[];

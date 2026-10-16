@@ -6,7 +6,7 @@
 import { injectStyles, type StyleMode } from "./styles";
 import type { PrereadAnnotation, PrereadStep } from "./types";
 
-export const PREREAD_HEADING = "Before you read";
+export const PREREAD_HEADING = "Before you read"; // wording-ok: article format word (watch / listen siblings)
 const P = "rl-preread";
 
 export interface PrereadOptions {

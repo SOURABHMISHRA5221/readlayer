@@ -20,13 +20,14 @@ Sourabh, 2026-10-16 night, after trying a fresh account on the live site:
 
 Decision 69 lifts the code freeze for this work (STATUS §10 row 69). Five parts, two PRs.
 **PR 1** (`d69-speed`): E (hosting headers), C (warm on open, timing logs), D (linking effort, only
-if its eval passes). **PR 2** (`d69-map-story`): A (map), B (story Up next) as two commits: B1 the
+if its eval passes). **PR 2** (`d69-map-story`): A (map), F (wording, added Oct 17), B (story Up next) as two commits: B1 the
 story basis with key ideas and library same_story/angle, B2 the story web search. Each PR: tests
 first → milestone-reviewer → PR → CI → merge → `make deploy-api` (yes) → then `make deploy-web`
 (yes) → live check.
 
 **Schedule (Oct 17 IST).** PR 1 merged by 08:00. **Checkpoint 12:00**: PR 2 not harness-green → ask
-Sourabh to cut, proposing B2 first (a revert of its commit), then A's per-topic and goal views.
+Sourabh to cut, proposing B2 first (a revert of its commit), then F (its own commit), then A's
+per-topic and goal views.
 **Last feature deploy 18:00**; after it only the `/v2` removal ships (its own web deploy), then
 gitleaks, the deck link and submit. The video is re-recorded after PR 2 is live (the map and Up next
 are in the video line).
@@ -128,7 +129,8 @@ are in the video line).
   recorded yet: read about it, or tell us below." only when `!ready && band === "unaware" &&
   recent.length === 0` (an edge with no evidence after a profile edit keeps today's text); "I know
   this / I don't" stay.
-- Unchanged: scoring and notes still use the prior (DESIGN §5); the profile summary and list;
+- Unchanged: scoring and notes still use the prior (DESIGN §5); the list view (edges only); the
+  profile summary and levels change in A2;
   demo personas (edges from their templates).
 - Tests (API): fresh reader (θ only, no edges) → no nodes; home-term edges → solid in their domains,
   nothing else; a ring only when its prerequisites have evidence, including a prerequisite in
@@ -139,6 +141,21 @@ are in the video line).
   rule (three cases); empty state.
 - Harness: fresh account (Software + India + Sports, Quick check answered) → only home terms, Quick
   check terms and rings; a persona's map; a goal view; axe 0 at 1440/390, light/dark.
+
+### A2. A topic level only when the level was set or moved (added 2026-10-17, found on the harness)
+The d69 harness (fresh account, Software + India + Sports) showed the profile saying "Comfortable in
+business, economics, finance, policy, sports and technology": the 12 India home terms put edges in
+four domains, and `GET /v1/me/profile` counted a domain with any edge as `rated`, so its untouched
+θ 0 read "comfortable" (the summary and the level cards) — the same guess-as-fact as the map. Now
+`rated` = `profile.rated_domains`: a comfort answer, |θ| > 0 (the field, reading's Elo, answers,
+edits), or level-setting evidence in the domain (`profile_edit_domain`, `calibration_answer`,
+`knew_this`, `explain_opened` — an edit from 0.5 to "some" or a "heard of" answer can leave θ at
+exactly 0); home terms, liked mentions, seeds, corrections and named-concept edits alone don't rate
+a domain. The web shows "Not rated yet" with the "N ideas you've shown you know" count, and keeps a
+topic with known ideas in the main grid and the map's topic buttons (`splitDomains`: rated, known >
+0 or chosen). Tests: the rule per evidence kind; home terms alone → unrated, absent from the
+summary; a Quick check answer rates its topic; each demo persona rated exactly where its θ is set;
+the web grouping. Plan-reviewer on A2 and G: REVISE 6 → APPROVE.
 
 ## B. End-of-article Up next follows the article (PR 2, API + web)
 
@@ -169,6 +186,101 @@ are in the video line).
   format; a second view after an empty result → no call; pending while running. Web: the end list
   asks `basis=story`.
 - Harness: open a library article → story items first, then key ideas; no "new to you".
+- The recap ("What this article changed") keeps `basis=consumer`: its picks must teach a "Not
+  really" term, which the story list doesn't target (milestone-reviewer, round 1).
+- A tab loaded before the deploy reloads once when a code file is gone (`lib/staleChunk.ts` on
+  `vite:preloadError`, loop-guarded by sessionStorage): this is the first deploy with no-cache HTML.
+
+## G. Screen 2: an equal mix of the chosen formats (added 2026-10-17)
+
+Sourabh, 2026-10-17: "onboarding second step me bhi full read read read hai we need to change that
+so that the content that is suggested is an equal mix if in the previous step i select podcast and
+reading". Cause: `feed_rank.onboarding_mix` (decision 68 F4) put articles first within each topic
+and guaranteed only 2 of each chosen video/podcast format, so Read + Listen gave ~6 articles, 2
+podcasts, 1 video. Now `onboarding_targets`: every format not chosen gets 1 card; the chosen ones
+(articles when none) share the rest equally (remainder in article → video → podcast order): Read +
+Listen of 9 → 4 articles, 4 podcasts, 1 video; one chosen → 7 + 1 + 1; all three → 3 / 3 / 3. A
+chosen format short of results is made up by the other chosen ones first. New cards take turns by
+chosen format (topics interleaved within each), the other formats after; served cards keep their
+slots and pending searches still hold slots for a short format (as before, but a short chosen
+format now holds up to its larger share: Read + Listen with all podcasts slow shows 4 articles on
+the first poll, and the next poll appends 4 podcasts and 1 video after them, so "take turns" applies
+within one poll). Tests: the shares
+above, the turns, topics interleaved within a format, a short chosen format made up; decision 68's
+served/pending/default tests unchanged and passing. Harness (`tools/shots/d69_mix.py`, Read +
+Listen, three topics): 4 / 4 / 1 in turns. Pure function, no new searches or cost.
+
+## F. "Consume", not "read" (PR 2, its own commit; added 2026-10-17)
+
+Sourabh, 2026-10-17: "on landing and everywhere we mentioning read a lot so change it to
+"consume content" everywhere posible cus or goal is not only read". Rule: where "read" means what
+the consumer does in general, say **consume / consume content**; where that reads badly, a
+format-neutral word (open, learn, explore, based). **Kept**, because "read" is literally right or
+fixed: article format words (Read / Watch / Listen, "I'd read this", "min read", "Read with notes",
+"Read next" on an article, "Read the explainer", "Before you read" — a set with "Before you watch /
+listen", also the annotator's and extension's pre-read); Gloss itself reading a page ("Reading the
+article and preparing your notes…", the extension's "Gloss doesn't read mail…"); the privacy page's
+"words read" count; the readiness idiom "A stretch: read up on X first" (in the landing screenshot
+and README image, no time to recapture before 18:00); the consent text "Gloss may keep what I read
+and answer here" (`consent-v2`, tied to a recorded version); `/read/` URLs and code. The extension
+is unchanged (its strings are about Gloss reading a page; changing it needs a new release); `/v2` is
+skipped (removed before submission). Plan-reviewer round 1: REVISE 12, applied here.
+
+Changes:
+- **Landing** (`LandingPage.tsx`, `Hero.tsx`, `Extension.tsx`, `formatsFull.ts`, `WatchListen.tsx`):
+  "Read anything. Understand all of it." → "Consume anything. Understand all of it." (+ page title);
+  "Read as:" → "View as:"; "Read with Gloss:" → "Open with Gloss:"; "fills in as you read" → "as you
+  consume content"; "the notes thin out as you read more" → "as you consume more"; "Everyone reads
+  past something." → "Everyone misses something."; "Gloss reads with you." → "Gloss follows along
+  with you."; "What you can read" → "What you can open"; "Your reading stays yours" → "What you
+  consume stays yours"; "what you've read" → "what you've consumed"; "a reading level" → "a knowledge
+  level"; "Reading the news somewhere else?" → "Following the news somewhere else?"; "into Read any
+  link" (both) → "into Open any link".
+- **Static HTML** (`apps/web/index.html`): regenerate the pre-rendered hero (`UPDATE_HERO=1` on
+  `test/landingHero.test.ts`); hand-edit `<meta name="description">` and `og:description`
+  ("read anything, understand it your way" → "consume anything, understand it your way").
+- **App**: "Read any link" (top bar, sidebar, button "Read") → "Open any link" / "Open"; library
+  title "Read anything. Understand it your way." → "Consume anything. …"; "Paste any link to read it
+  here." → "to open it here"; "Your reading profile" (title, eyebrow, account menu) → "Your profile";
+  persona picker "Reading as" / "Read as" → "Viewing as" / "View as"; "reading goals" → "goals";
+  goal habit "Read a little every week" → "Learn a little every week"; "Learning is paused, so
+  reading isn't counting." → "so nothing you consume counts"; "reading doesn't / won't change your
+  profile" → "what you consume doesn't / won't …"; "Where do you read from?" → "Where are you
+  based?" (onboarding, profile); "What do you want to read about?" → "What do you want to learn
+  about?"; "Tell me what you'd read." → "Tell me what you'd open."; the "Start reading" button →
+  "Start exploring"; "You can start reading anyway." → "You can start anyway."; the discover card's
+  aria-label "Would you read “…”?" → by format ("Would you watch …", from `FORMAT_VERB`); "fills in /
+  updates as you read" (map, week panel, recap, feed) → "as you consume content"; "Read a few
+  articles and your map fills in." → "Consume a few pieces and your map fills in."; "Sign in again
+  to keep reading." → "to keep going"; "plenty more to read" → "plenty more to consume"; evidence
+  "Common where you read from" → "Common where you're based", "Reading activity" → "Activity";
+  persona blurb "Reads central banks…" → "Follows central banks…"; Connect "Notes on any article you
+  read" → "you open"; progress aria "Reading progress" → "Progress"; map inspector "read about it" →
+  "explore it", "not from reading yet" → "not from anything you've opened yet"; privacy: "Your
+  reading" → "What you consume", "Reading events" → "Activity events", "Reading goals" → "Goals", "a
+  reading level" → "a knowledge level", "cleared when you start reading" → "when you finish setting
+  up", "what else you've read" → "what else you've opened"; the `QuickCheck.tsx` comment.
+- **API**: `ingest/router.py` "Open it in Gloss with Read any link." → "… with Open any link."
+  (shown by the extension); `media/refusals.py` "Live streams can't be read in Gloss." → "can't be
+  opened in Gloss".
+- **README**: line 8 (heading), 65 ("reading profile", "reading goals"), 67 ("Read any link, any
+  format"), 202 ("reading-profile summary"), 40 / 70 / 226 ("reading history" → "what they
+  consume"). Kept: 66 (the readiness quote, kept idiom), 68 "deeper reads", the extension lines,
+  the milestone history, image alts.
+- **Guard** (`test/wording.test.ts`, describe line names decisions 67 and 69 F): whitespace
+  normalised before matching (`value.replace(/\s+/g, " ")`); also bans `\breading\b`, `\bas you
+  read\b`, `\bread anything\b`, `\bread any link\b`, `\bread from\b`, `\breading goals\b`,
+  `\byou(?:'ve|'d)? read\b`; kept lines carry `// wording-ok: <reason>` (`ReaderPage.tsx` "Reading
+  the article…", `preread.ts`'s heading if walked, the consent line, the readiness idiom if hit);
+  a check that `index.html` doesn't match `/read anything/i`.
+- **Tests and harness updated**: `wideLayout.test.tsx` (106, 113, 115, 171), `profileFormat.test.ts`
+  (9), `honestMap.test.tsx`, `welcome.test.tsx` (205), `landingV2.test.tsx` (146),
+  `landingHero.test.ts` (regenerated); harness `click_text("button", "Start reading")` in
+  `tools/shots/d48.py`, `d50.py`, `onboarding.py`, `m8.py` → "Start exploring".
+- **Records**: DESIGN's "Read any link" mentions and a UI wording note; STATUS row 69 note with the
+  quote; `docs/recording.md`; a reminder to update the deck and submission text (tagline, "Open any
+  link").
+- Harness: landing, library, onboarding, profile axe 0 at 1440/390 after the change.
 
 ## Live acceptance after PR 2 (production writes listed)
 - Read-only `GET /v1/me/graph?view=overview` on Sourabh's account: no "Interest rates"; every solid
@@ -180,5 +292,5 @@ are in the video line).
 
 ## Docs and records
 STATUS §10 row 69 (quotes above; the freeze lifted), §9 rows (schedule above), §37 acceptance;
-DESIGN §15.1 (map), §8 (`basis`), §16.3 (story search rule), the effort table; AUTOPILOT_LOG.
+DESIGN §15.1 (map; levels, A2), §8 (`basis`), §16.3 (story search rule), the effort table; AUTOPILOT_LOG.
 Commits `M69: …` per PR.

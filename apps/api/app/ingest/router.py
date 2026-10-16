@@ -161,7 +161,7 @@ async def post_content(
     except FetchError as exc:
         return _error(FETCH_ERROR_STATUS[exc.code], exc.code, exc.message)
     if classify(body.url) is not None:  # both shapes, before any lookup or slot (plan R4)
-        return _error(422, "use_open_here", "Open it in Gloss with Read any link.")
+        return _error(422, "use_open_here", "Open it in Gloss with Open any link.")
     if isinstance(body, SubmittedRequest):
         return await _post_submitted(body, caller, settings)
     known = await is_known(url_hash(body.url))

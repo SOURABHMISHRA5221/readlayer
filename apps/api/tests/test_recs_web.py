@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import UTC, datetime, timedelta
 
@@ -274,3 +275,32 @@ def test_no_providers_without_keys(monkeypatch):
 def test_keys_never_appear_in_settings_repr():
     s = settings(tavily_api_key="tvly-secret", youtube_api_key="yt-secret")
     assert "tvly-secret" not in repr(s) and "yt-secret" not in str(s.model_dump())
+
+
+async def test_concurrent_story_requests_share_one_search():
+    """Decision 69 B2: two readers opening the same article at once make one call per format."""
+    from app import config
+    from app.recs import web_search as ws_mod
+    from app.recs.models import WebResult
+
+    seen: list[str] = []
+
+    class Slow:
+        name = "fake"
+        formats = frozenset({"article"})
+
+        async def search(self, query, fmt, news=False, include_domains=()):
+            seen.append(query)
+            await asyncio.sleep(0.01)
+            return [WebResult(url="https://n.example/1", title="Bond yields jump", source="n",
+                              format="article")]  # fmt: skip
+
+    calls = ws_mod.InMemorySearchCalls()
+    cache = ws_mod.InMemoryRecCache()
+    web = ws_mod.WebSearch({"article": Slow()}, cache, calls, config.get_settings(), frozenset())
+    a = web.refresh_story("c1", "Bond yields jump", "article", lambda r: True)
+    b = web.refresh_story("c1", "Bond yields jump", "article", lambda r: True)
+    assert a is b
+    await asyncio.gather(a, b)
+    assert seen == ["Bond yields jump"]
+    assert (await web.cached_entry(ws_mod.story_key("c1"), "article")) is not None

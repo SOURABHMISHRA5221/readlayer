@@ -45,7 +45,15 @@ from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, libra
 from app.recs.models import FORMATS, Format, Relation, WebResult
 from app.recs.rank import RELATION_LABEL, Candidate, one_per_format, prior_for, select
 from app.recs.state import DEFAULT_KEY, RecEventType, Served, get_rec_signals
-from app.recs.web_search import build_query, get_web_search
+from app.recs.web_search import (
+    STORY_FORMATS,
+    WebSearch,
+    build_query,
+    get_web_search,
+    story_key,
+    story_relevant,
+    title_words,
+)
 from app.scoring.scorer import word_count
 from app.store.content_repo import get_content_store
 from app.store.docstore import get_doc_store
@@ -163,6 +171,9 @@ def _why(relation: Relation, trigger: str | None, detail: str | None, source: st
     return f"Because {c} was new to you" if c else "An explainer on this topic"
 
 
+STORY_RELATIONS = frozenset({"same_story", "angle"})
+
+
 def _key_idea_why(item: RecItem) -> str:
     label = item.triggers[0].label if item.triggers else None
     return f"On {_quote(label)}, a key idea here" if label else "On a key idea here"
@@ -229,6 +240,68 @@ def _web_item(r: WebResult, trigger_id: str, graph: ConceptGraph, score: float) 
     )
 
 
+STORY_LEAD = 2  # story items first at the end of the article (decision 69 B2)
+STORY_RELEVANCE = 1.0
+STORY_LABELS = 3  # the article's top key ideas a story result may name
+
+
+@dataclass(frozen=True)
+class _Story:
+    results: list[WebResult]
+    pending: bool
+
+
+async def _story_results(
+    basis: str, doc: ContentDoc, spans: list["_Trigger"], web: WebSearch, known_urls: set[str],
+    may_search: bool, anonymous: bool,
+) -> _Story:  # fmt: skip
+    """More coverage of this article's story (decision 69 B2): corpus articles only, so the title
+    of a page a reader brought in never leaves (DESIGN §16.3). One search per format ever."""
+    if basis != "story" or not is_corpus(doc) or not doc.title:
+        return _Story([], False)
+    own = {url_hash(u) for u in (doc.url, doc.final_url) if u}
+    labels = [s.label for s in spans[:STORY_LABELS]]
+    words = title_words(doc.title)
+
+    def keep(r: WebResult) -> bool:
+        return url_hash(r.url) not in own and story_relevant(r, labels, words)
+
+    results: list[WebResult] = []
+    pending = False
+    for fmt in STORY_FORMATS:
+        if fmt not in web.formats:
+            continue
+        entry = await web.cached_entry(story_key(doc.content_id), fmt)
+        if entry is None:
+            if may_search:
+                web.refresh_story(doc.content_id, doc.title, fmt, keep, anonymous=anonymous)
+            pending = pending or web.pending(story_key(doc.content_id), fmt)
+            continue
+        results += [r for r in entry.results[:WEB_PER_QUERY] if r.url not in known_urls and keep(r)]
+    return _Story(results, pending)
+
+
+def _story_item(r: WebResult, score: float) -> RecItem:
+    return RecItem(
+        id=_web_id(r.url),
+        kind="web",
+        relation="same_story",
+        relation_label=RELATION_LABEL["same_story"],
+        format=r.format,
+        title=r.title,
+        url=r.url,
+        content_id=None,
+        source=r.source,
+        duration_or_read_time=r.duration_or_read_time,
+        snippet=r.snippet,
+        thumbnail=r.thumbnail,
+        published_at=r.published_at,
+        why="More on this story",
+        triggers=[],
+        score=round(score, 4),
+    )
+
+
 @dataclass(frozen=True)
 class _Trigger:
     concept_id: str
@@ -240,10 +313,10 @@ class _Trigger:
 async def _triggers(
     basis: str, ctx: ReaderContext, doc: ContentDoc, graph: ConceptGraph
 ) -> list[_Trigger]:
-    """ "consumer": the concepts new to this person, highest score first (Up next at the end of
-    the article). "article" (decision 67 N1, the card chips): the article's own key ideas by
-    salience, the same for everyone."""
-    if basis == "article":
+    """ "consumer": the concepts new to this person, highest score first (the old web's end of
+    article list). "article" (decision 67 N1, the card chips) and "story" (decision 69 B, the end
+    of the article): the article's own key ideas by salience, the same for everyone."""
+    if basis in ("article", "story"):
         ideas, _ = key_ideas(doc, graph)
         return [_Trigger(c.id, c.label, c.domain, 1.0 - 0.1 * i) for i, c in enumerate(ideas)]
     spans = (await score_for(ctx, doc, "balanced", datetime.now(UTC))).spans
@@ -255,14 +328,14 @@ async def recommendations(
     content_id: str,
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     prefer: Format | None = None,
-    basis: Literal["consumer", "article"] = "consumer",
+    basis: Literal["consumer", "article", "story"] = "consumer",
 ) -> RecsResponse:
     doc = await doc_or_error(content_id, ctx)
     graph = get_graph()
     theta = ctx.theta
     spans = await _triggers(basis, ctx, doc, graph)
     web = get_web_search()
-    if not spans and basis == "article":  # nothing linked: no chips
+    if not spans and basis in ("article", "story"):  # nothing linked: nothing to follow
         return RecsResponse(
             content_id=content_id, persona=ctx.persona, prefer=prefer, items=[], pending=False,
             web_formats=[f for f in FORMATS if f in web.formats],
@@ -295,6 +368,9 @@ async def recommendations(
                 if prev is None or relevance > prev[2]:
                     web_results[r.url] = (r, span.concept_id, relevance)
 
+    story = await _story_results(basis, doc, spans, web, known_urls, may_search, anonymous)
+    pending = pending or story.pending
+
     candidates = [
         Candidate(
             f"lib:{c.content_id}",
@@ -316,7 +392,11 @@ async def recommendations(
             kind="web",
         )
         for r, _, rel in web_results.values()
-    ]
+    ] + [
+        Candidate(_web_id(r.url), "same_story", r.format, STORY_RELEVANCE, r.published_at,
+                  r.duration_or_read_time, kind="web")
+        for r in story.results
+    ]  # fmt: skip
     signals = get_rec_signals()
     now = datetime.now(UTC)
     chosen = select(
@@ -328,6 +408,10 @@ async def recommendations(
     )
     if basis == "article":
         chosen = one_per_format(chosen, ctx.user.formats)
+    story_by_id = {_web_id(r.url): r for r in story.results}
+    if basis == "story":  # up to STORY_LEAD items of the same story lead, the rest keep their order
+        lead = [c for c in chosen if c[0].id in story_by_id][:STORY_LEAD]
+        chosen = lead + [c for c in chosen if c not in lead]
 
     lib_by_key = {(f"lib:{c.content_id}", c.relation): c for c in lib}
     web_by_id = {_web_id(url): v for url, v in web_results.items()}
@@ -336,14 +420,22 @@ async def recommendations(
         if (lc := lib_by_key.get((cand.id, cand.relation))) is not None:
             items.append(_library_item(lc, index.docs[lc.content_id], graph, s))
         else:
-            r, trigger_id, _ = web_by_id[cand.id]
-            item = _web_item(r, trigger_id, graph, s)
+            if cand.relation == "same_story" and cand.id in story_by_id:
+                item = _story_item(story_by_id[cand.id], s)
+            else:
+                r, trigger_id, _ = web_by_id[cand.id]
+                item = _web_item(r, trigger_id, graph, s)
             here = await open_here(
                 item.url, item.format, item.duration_or_read_time, get_settings(), anonymous
             )
             items.append(item.model_copy(update={"open_here": here}))
     if basis == "article":
         items = [i.model_copy(update={"why": _key_idea_why(i)}) for i in items]
+    elif basis == "story":  # the same story elsewhere keeps its reason; the rest follow a key idea
+        items = [
+            i if i.relation in STORY_RELATIONS else i.model_copy(update={"why": _key_idea_why(i)})
+            for i in items
+        ]
     if ctx.user.may_record:  # nothing recorded for a signed-in reader before consent
         await signals.remember_served(
             ctx.uid, ctx.rec_key, {i.id: Served(i.format, i.relation) for i in items}, now

@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 DemandType = Literal["concept", "term", "context"]
 USER_INGESTED = "user_ingested"
 Source = Literal["fetch", "extension", "user_ingested"]
-# Pages a reader brought in ("Open here", Read any link, the extension). Shared so other readers
+# Pages a reader brought in ("Open here", Open any link, the extension). Shared so other readers
 # of the same URL reuse them, but not public library content: the library and Up next show them
 # only to readers who brought them in (`users/{uid}/ingested`, M7.5). Same name as the M8 plan.
 NOT_CORPUS: frozenset[str] = frozenset({USER_INGESTED, "extension"})

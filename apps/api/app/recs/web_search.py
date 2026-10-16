@@ -3,7 +3,9 @@
 Privacy rule: an outgoing query is built only from concept data: its label, its graph domain
 (to disambiguate, e.g. "separation principle" in finance, not marine engineering) and a
 format suffix (`build_query`). Nothing about the reader (uid, persona, history, the article
-they're on) ever leaves the server, and API keys never reach the client.
+they're on) ever leaves the server, and API keys never reach the client. One exception (decision
+69 B2): the story search sends a library (corpus) article's own title (`story_query`), shared by
+every reader; never the title of a page a reader brought in.
 
 Cost rule: every provider call counts against SEARCH_DAILY_CAP (YouTube search also against
 its own smaller cap). Past the cap we refuse new calls and degrade to whatever is cached,
@@ -81,6 +83,80 @@ def mentions(label: str, text: str) -> bool:
     words |= {stem(w.casefold()) for w in re.findall(r"\b[A-Z]{2,6}s?\b", label)}
     haystack = {stem(w) for w in _WORD.findall(text.casefold())}
     return bool(words & haystack) if words else True
+
+
+# ---------------------------------------------------------------- story search (decision 69 B2)
+
+STORY = "story"  # counter of calls made for the end-of-article story search
+STORY_FORMATS: tuple[Format, ...] = ("article", "video")
+MAX_STORY_CHARS = 120
+_STOP = frozenset(
+    [
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "by",
+        "for",
+        "from",
+        "has",
+        "have",
+        "how",
+        "in",
+        "into",
+        "is",
+        "it",
+        "its",
+        "of",
+        "on",
+        "or",
+        "that",
+        "the",
+        "their",
+        "this",
+        "to",
+        "was",
+        "were",
+        "what",
+        "when",
+        "where",
+        "which",
+        "who",
+        "why",
+        "will",
+        "with",
+        "after",
+        "over",
+        "says",
+        "said",
+        "new",
+    ]
+)
+
+
+def story_key(content_id: str) -> str:
+    return f"story:{content_id}"
+
+
+def story_query(title: str) -> str:
+    """The whole outgoing query: a corpus article's title, cleaned. Never reader data, never a
+    page a reader brought in (DESIGN §16.3)."""
+    return re.sub(r"\s+", " ", _UNSAFE.sub(" ", title)).strip()[:MAX_STORY_CHARS]
+
+
+def title_words(title: str) -> frozenset[str]:
+    return frozenset(w for w in _WORD.findall(title.casefold()) if len(w) > 2 and w not in _STOP)
+
+
+def story_relevant(result: WebResult, labels: Sequence[str], words: frozenset[str]) -> bool:
+    """Names one of the article's top key ideas, or shares at least two distinctive title words."""
+    text = f"{result.title} {result.snippet}"
+    if any(mentions(label, text) for label in labels):
+        return True
+    return len(words & set(_WORD.findall(text.casefold()))) >= 2
 
 
 def cache_key(query: str) -> str:
@@ -637,6 +713,59 @@ class WebSearch:
             "feed search",
             extra={"provider": provider.name, "format": fmt, "key": key, "results": len(clean),
                    "dropped": dropped},
+        )  # fmt: skip
+        return clean
+
+    def refresh_story(
+        self, content_id: str, title: str, fmt: Format, keep: Callable[[WebResult], bool],
+        *, anonymous: bool = False,
+    ) -> asyncio.Task[list[WebResult] | None]:  # fmt: skip
+        """Start (or join) one background story search for a corpus article; never waited on."""
+        key = (story_key(content_id), fmt)
+        task = self._inflight.get(key)
+        if task is None or task.done():
+            task = asyncio.create_task(
+                self.fetch_story(content_id, title, fmt, keep, anonymous=anonymous)
+            )
+            self._inflight[key] = task
+        return task
+
+    async def fetch_story(
+        self, content_id: str, title: str, fmt: Format, keep: Callable[[WebResult], bool],
+        *, anonymous: bool = False,
+    ) -> list[WebResult] | None:  # fmt: skip
+        """One story search: its own cap plus the global, YouTube and anonymous ones (never the
+        feed's), checked and reserved together. Stored even when empty, so it never runs twice;
+        None (nothing stored) when a cap is spent or the provider failed."""
+        provider = self._providers.get(fmt)
+        if provider is None:
+            return None
+        calls = 2 if provider.name == "youtube" else 1
+        try:
+            async with self._reserve_lock:
+                used = await self._calls.count_today(STORY)
+                if used + calls > self._settings.story_search_daily_cap:
+                    log.warning("story search cap reached", extra={"story_today": used})
+                    raise SearchCapReached("daily story search cap reached")
+                await self._check_cap(provider.name, calls, anonymous)
+                await self._calls.add(provider.name, calls, anonymous, extra=STORY)
+        except SearchCapReached:
+            return None
+        query = story_query(title)
+        try:
+            results = await provider.search(query, fmt, news=fmt == "article")
+        except (httpx.HTTPError, ValueError) as exc:
+            log.warning(
+                "story search failed",
+                extra={"provider": provider.name, "format": fmt, "error": type(exc).__name__},
+            )
+            return None
+        clean = [r for r in self._filter(results) if keep(r)]
+        await self._cache.put(story_key(content_id), fmt, clean, cache_key(query))
+        log.info(
+            "story search",
+            extra={"provider": provider.name, "format": fmt, "content_id": content_id,
+                   "results": len(clean), "dropped": len(results) - len(clean)},
         )  # fmt: skip
         return clean
 

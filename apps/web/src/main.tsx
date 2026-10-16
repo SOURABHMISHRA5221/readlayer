@@ -3,6 +3,7 @@ import { createRoot, hydrateRoot } from "react-dom/client";
 
 import { App } from "./App";
 import { bootsToLanding } from "./lib/boot";
+import { reloadOnStaleChunk } from "./lib/staleChunk";
 import "./styles/tokens.css";
 import "./styles/fonts.css";
 import "./styles/global.css";
@@ -11,6 +12,8 @@ import "./styles/reader.css";
 import "./styles/library.css";
 import "./styles/account.css";
 import "./styles/hero.css";
+
+reloadOnStaleChunk();
 
 const root = document.getElementById("root");
 if (!root) throw new Error("missing #root");

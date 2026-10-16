@@ -30,7 +30,7 @@ export const ERROR_COPY: Record<ApiErrorKind, { title: string; body: string }> =
   },
   unauthorized: {
     title: "Your session has ended",
-    body: "Sign in again to keep reading. Your notes and progress are where you left them.",
+    body: "Sign in again to keep going. Your notes and progress are where you left them.",
   },
   server: {
     title: "Something went wrong on our side",

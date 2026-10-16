@@ -222,6 +222,9 @@ def test_graph_summary_and_domain_subgraph(env):
     sub = client.get("/v1/me/graph?domain=finance").json()
     ids = {n["id"] for n in sub["nodes"]}
     assert ids == {"c_curve", "c_yield", "c_bond"}  # the concept plus its prerequisite closure
+    band = {n["id"]: n["band"] for n in sub["nodes"]}
+    assert band["c_curve"] != "unaware"  # recorded: "I knew this"
+    assert band["c_yield"] == band["c_bond"] == "unaware"  # no evidence: no guess (decision 69)
     assert all(e["from"] in ids and e["to"] in ids for e in sub["edges"])
     found = client.get("/v1/me/graph?domain=finance&q=yield").json()
     assert {n["id"] for n in found["nodes"]} >= {"c_yield", "c_bond"}

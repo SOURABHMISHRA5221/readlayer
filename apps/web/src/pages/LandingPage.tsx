@@ -53,7 +53,7 @@ function LandingPage({ url }: { url: URL }) {
   const deepLink = ["reader", "profile", "feed"].includes(matchRoute(url.pathname).name);
 
   useEffect(() => {
-    document.title = "Gloss · Read anything. Understand all of it.";
+    document.title = "Gloss · Consume anything. Understand all of it.";
     rememberReturn(url.pathname);
   }, [url.pathname]);
 
@@ -123,7 +123,7 @@ function LandingPage({ url }: { url: URL }) {
             <DeviceFrame kind="laptop">
               <Clip {...MAP_CLIP} focus={FOCUS[MAP_CLIP.name]} />
             </DeviceFrame>
-            <figcaption>Your map of what you know fills in as you read.</figcaption>
+            <figcaption>Your map of what you know fills in as you consume content.</figcaption>
           </figure>
         </section>
       </Hero>
@@ -136,7 +136,7 @@ function Problem() {
     <section className="lp-section lp-problem" aria-labelledby="lp-problem-title">
       <header className="lp-problem__head">
         <h2 id="lp-problem-title" className="lp-section__title">
-          Everyone reads past something.
+          Everyone misses something.
         </h2>
         <p className="lp-problem__intro">Three ways a good article loses a consumer.</p>
       </header>
@@ -212,7 +212,7 @@ function Solution() {
   return (
     <section className="lp-section lp-solution" aria-labelledby="lp-solution-title">
       <h2 id="lp-solution-title" className="lp-section__title">
-        Gloss reads with you.
+        Gloss follows along with you.
       </h2>
       <p className="lp-section__lede">
         Gloss keeps a private map of what you already know, and uses it to explain only what you're likely to miss, in
@@ -265,7 +265,7 @@ const STEPS: { title: string; body: string; clip: { name: string; label: string;
   },
   {
     title: "Your map grows",
-    body: "What you learn fills in, so the notes thin out as you read more. For you then tells you which picks you're ready for.",
+    body: "What you learn fills in, so the notes thin out as you consume more. For you then tells you which picks you're ready for.",
     clip: { name: "clip-map", label: "the knowledge map fills in three ideas", width: 1440, height: 900 },
   },
 ];
@@ -344,11 +344,11 @@ function Trust() {
           </dd>
         </div>
         <div className="lp-trust__item">
-          <dt>Your reading stays yours</dt>
+          <dt>What you consume stays yours</dt>
           <dd>
             <p>
-              The AI never learns who you are or what you've read: it sees only the paragraph it explains, a reading
-              level and your analogy style. Export or delete everything anytime.
+              The AI never learns who you are or what you've consumed: it sees only the paragraph it explains, a
+              knowledge level and your analogy style. Export or delete everything anytime.
             </p>
           </dd>
         </div>
@@ -361,7 +361,7 @@ function Formats() {
   return (
     <section className="lp-section lp-formats" aria-labelledby="lp-formats-title">
       <h2 id="lp-formats-title" className="lp-section__title">
-        What you can read
+        What you can open
       </h2>
       <ul className="lp-formats__list">
         {FORMATS.map((f) => (

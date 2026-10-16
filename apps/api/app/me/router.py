@@ -52,8 +52,12 @@ def _ref(concept: Concept) -> ConceptRef:
 
 
 def _band(concept: Concept, edge: Edge | None, theta: dict[str, float], now: datetime) -> Band:
+    """The map's band: from evidence only. No edge → "unaware", never a prior guess (decision 69
+    A); the edge's own prior stays its starting point, as in scoring."""
+    if edge is None:
+        return "unaware"
     p0 = model.prior(theta.get(concept.domain, 0.0), concept.base_difficulty)
-    return model.band_of(model.current_p_know(edge, p0, now) if edge else p0)
+    return model.band_of(model.current_p_know(edge, p0, now))
 
 
 # ---------------------------------------------------------------- events
@@ -324,6 +328,11 @@ async def correct_concept(
 # ---------------------------------------------------------------- profile and settings
 
 
+def _domain_of(graph: ConceptGraph, cid: str) -> str | None:
+    c = graph.get(cid)
+    return c.domain if c is not None else None
+
+
 @router.get("/me/profile")
 async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> dict[str, Any]:
     """Deterministic (DESIGN §15.1): no LLM call anywhere on this path."""
@@ -334,13 +343,12 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     knows = dict(ctx.state.edges)
     weekly = await _repo().get_weekly(ctx.uid)
     theta = {d: float(ctx.theta.get(d, 0.0)) for d in DOMAINS}
-    # A domain the reader rated, reads in, or moved: the summary speaks only about those (a
-    # neutral 0 in an untouched domain isn't "comfortable").
-    edge_domains = {c.domain for cid in knows if (c := graph.get(cid)) is not None}
-    rated = {
-        d for d in DOMAINS
-        if d in user.onboarding.get("comfort", {}) or abs(theta[d]) > 1e-9 or d in edge_domains
-    }  # fmt: skip
+    # A domain whose level was set or moved (`profile.rated_domains`): the summary and the level
+    # words speak only about those. A neutral 0 with only recorded ideas (home terms) isn't
+    # "comfortable" (decision 69 A2).
+    rated = profile.rated_domains(
+        theta, user.onboarding.get("comfort", {}), knows, lambda cid: _domain_of(graph, cid)
+    ) & set(DOMAINS)
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
     in_graph = Counter(c.domain for c in graph.concepts)  # the map offers domains with concepts
     # Ideas the reader has shown they know (an edge at "understands" or above), per domain.

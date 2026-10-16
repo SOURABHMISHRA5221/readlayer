@@ -351,8 +351,9 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   keys `feedx:c:<id>:<day>` (decision 50: restricted to top outlets), articles only, "<concept label> news this week", results must name
   the label or an alias). Up to 9 cards, every topic/concept with results gets one before any
   gets a second, articles first, then fresher (decision 68: the reader's chosen formats first,
-  minimums per format, served cards keep their slots by a stored position `n`, slots held for a
-  missing format while searches run). Fewer than 6 and nothing pending → newest corpus
+  served cards keep their slots by a stored position `n`, slots held for a missing format while
+  searches run; decision 69 G: the chosen formats share the cards equally and take turns, every
+  other format gets 1 — Read + Listen of 9 → 4 / 4 / 1 video; `feed_rank.onboarding_targets`). Fewer than 6 and nothing pending → newest corpus
   articles in those domains. Each card: "I'd read this" / "Not for me" (`pick`: a rec signal
   `rec_clicked`/`rec_dismissed` and ±0.15 interest in the served item's domain, clamped, stored
   as a delta so Edit → Continue re-applies it). **Until decision 68** each card also had at most
@@ -597,7 +598,7 @@ subject to pause). The next open regenerates.
 | POST | /v1/content/{id}/analyse | phase 2 of "Open here" (§3): 200 `{status: ready}` (no LLM call if already analysed), 202 `{status: analysing}` while another request holds the lease, 410 after 3 failed analyses, 504 on the 120 s timeout; no ingest slot (taken in phase 1) |
 | POST | /v1/content/{id}/grow | a reader's stored page that missed concept growth (M9, §2): 200 `{status: none}` (no model call: nothing to grow), `{status: capped}` (no slots left today), `{status: grown, linked}`; 202 `{status: growing}` while another request holds the claim; 503 on the budget. Access as …/analyse (extension pages: their submitters). Never in the scoring path; the client then reloads the notes |
 | POST | /v1/content/{id}/transcribe | a recording's transcript (§21.3): 200 `{status: analysing}` once stored (no model call if it already is), 202 while another request or podcast holds it, 410 after 3 failed attempts, 422 with the refusal code, 503 on a budget or an unavailable source, 504 on the timeout. Then …/analyse as for an article |
-| GET | /v1/content/{id}/recommendations?prefer= | Up next (§16): up to 6 items, `pending` while web lookups run; each item carries `open_here` (§21.4) |
+| GET | /v1/content/{id}/recommendations?prefer=&basis= | Up next (§16): up to 6 items, `pending` while web lookups run; each item carries `open_here` (§21.4). `basis=story` (decision 69 B, the end of the article): the article's key ideas plus the same story elsewhere ("More on this story", corpus articles only, §16.3); `basis=article` (decision 67): the card chips, one per format; `basis=consumer` (the API default and the pre-69 web; the recap still asks it, so its picks teach a "Not really" term): the reader's new terms |
 | POST | /v1/recs/events | `{events: [{id, type: rec_shown\|rec_clicked\|rec_dismissed\|rec_completed, item_id}]}` → `{applied, ignored}`; idempotent by event id |
 | POST | /v1/recs/open | `{url}` → `{content_id, new, ready}`: phase 1 of ingesting a web recommendation via safe_fetch as `user_ingested` (§3), within the per-user daily cap (429 past it); `ready: false` until POST .../analyse completes. A YouTube or Apple Podcasts episode URL opens a recording instead (§21.2): `kind`, `stage: "transcribe"`, 422 with a refusal code, 429 `media_cap_reached`. POST /v1/content answers a media URL 422 `use_open_here` |
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
@@ -881,26 +882,36 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
    THINKS_IN domains, and this week's band changes. θ (rounded to one decimal, as the page shows it) maps to words: θ ≥ 1 "advanced",
    0 ≤ θ < 1 "comfortable", −1 ≤ θ < 0 "building", θ < −1 "new to". Example:
    "Comfortable in finance, building in economics. You think in software. 6 concepts moved up a
-   band this week." Only domains the reader rated, reads in or has concepts in are named (M7).
+   band this week." Only domains whose level was set or moved are named (decision 69 A2, `profile.rated_domains`:
+   a comfort answer, θ ≠ 0, or level-setting evidence — a profile edit's level, a Quick check
+   answer, "knew this" / opened explanations; home terms and other recorded ideas alone don't).
    Same inputs always give the same text (unit-tested).
 2. **Domain cards** (Design pass). Per topic: a level word from θ (New to you, Getting there,
    Comfortable, Confident, Advanced) on a 5-step scale with its text, ideas known (edges at
    understands or above), interest in words, and "+N this week" from the week's band rises in
-   that topic. Rated and chosen topics first; the rest behind "Other topics". As many across as
+   that topic. Rated topics, topics with ideas known (an unrated one says "Not rated yet" with its
+   count) and chosen topics first; the rest behind "Other topics" (decision 69 A2). As many across as
    fit (4 at 961px up to 7 at 1680px), rows filled evenly (`cardColumns`: six cards where five
    fit sit 3 + 3); 2 across to 960px, 1 to 420px.
 3. **Knowledge map** (Design pass; replaces the Cytoscape/dagre map). An SVG overview of every
    topic first: "You" in the middle, one cluster per topic on a ring (deterministic layout with a
-   fixed number of collision passes, `lib/mapLayout.ts`), solid dots for concepts at heard of or
-   above (filled by band, size by doc frequency, can explain ringed), outline rings for ready to
-   learn (every prerequisite known at p ≥ 0.5), dashed rings for learning-goal targets, nodes that
+   fixed number of collision passes, `lib/mapLayout.ts`), solid dots for concepts **with recorded
+   evidence** at heard of or above (filled by band, size by doc frequency, can explain ringed;
+   decision 69 A: a prior guess is never drawn, no fallback domains, a domain with no nodes takes
+   no slot, an empty map says so), outline rings for ready to learn (every prerequisite known by
+   evidence at p ≥ 0.5, any domain), dashed rings for learning-goal targets, nodes that
    rose this week popping in once (not under reduced motion). Topic buttons (and clicking a
    cluster label) show one topic's subgraph (`?domain=`, ≤ 60 nodes) in the same layout; a goal
    shows its targets (`?goal=`). Keyboard: the SVG is one Tab stop with a label (roving tabindex;
    arrow keys move between nodes, Enter opens the inspector); each node's label says "label,
    band[, ready to learn][, in a goal]"; shapes carry the meaning as well as colour. The
    inspector beside the map shows the definition, "Why we think so" (the last 3 evidence items,
-   or "our estimate" for prior-only nodes) and "I know this" / "I don't". The list view shows the
+   "You know what it builds on" for a ring, "Nothing recorded yet" for a no-evidence node in a
+   topic or goal view, which the legend names) and "I know this" / "I don't". Topic and goal views
+   draw no-evidence nodes as `unaware` (hollow), never a prior band. **Levels (decision 69 A2):**
+   a topic shows a level word (and joins the summary sentence) only when its level was set or
+   moved (a comfort answer, the field, reading, answers, an edit); recorded ideas alone (home
+   terms) don't rate it. The list view shows the
    same nodes by topic (the default below 640 px). **Size (Wide layout, decision 45):** beside
    the inspector (961px up) and in a box of 800px or more the map is laid out for the box
    (`mapSize`: its width in 40px steps up to 1160, height 680 to 780) and drawn at that pixel
@@ -1058,7 +1069,15 @@ Wikipedia pages are evergreen (no freshness decay) and never count as same_story
 - **Query = concept label + its graph domain + a format suffix** ("Repo rate policy explained",
   "… podcast episode"). The domain disambiguates labels; nothing about the reader (uid, persona,
   history, the current article) is ever part of a query (tested). Article-basis lookups (the card
-  chips) use the same query shape on the article's key ideas (tested).
+  chips) use the same query shape on the article's key ideas (tested). **One exception (decision 69
+  B2, Sourabh's answer "Go with what u feel is correct"):** the end-of-article story search sends a
+  **library (corpus) article's title**, cleaned, ≤ 120 chars, never for a page a reader brought in
+  (`user_ingested`, `extension`; tested). It is shared content, the same for every reader, keyed
+  `story:{content_id}` per format (article via Tavily news, video via YouTube), searched once ever
+  (stored even when empty), its own `STORY_SEARCH_DAILY_CAP` (40) within the global, YouTube and
+  anonymous caps, never the feed's. Results must not be the article itself (by URL hash) and must
+  name one of its top 3 key ideas or share ≥ 2 distinctive title words; up to 2 lead the end list
+  as "More on this story" (`basis=story`; the card chips stay `basis=article`).
 - Every result is normalized to `{url, title, source, format: article|video|podcast,
   duration_or_read_time (s), snippet, thumbnail, published_at}`, filtered by the domain
   blocklist (`app/recs/blocklist.txt`, subdomains included) and a relevance gate (the title or
@@ -1298,12 +1317,17 @@ term, as do code, API fields and prompts. Guarded by `apps/web/test/wording.test
   the logo, the reader's margin header (idle; an occasional blink only before the reader scrolls
   into the article, never while they read or a note is open, none under reduced motion), the notes-loading notice (think), the recap (happy) and empty and error
   states (oops). Never in article text, never on note cards. Always `aria-hidden`.
-- **Top bar**: logo, search, "Read any link" (focuses the sidebar field, else a dialog), the demo
+- **Wording (decisions 67, 69 F)**: the UI says "consumer", never "reader"; where "read" meant what
+  the consumer does in general it says "consume" or a format-neutral word ("Open any link", "Where
+  are you based?", "Start exploring", "Your profile"). Article format words ("I'd read this", "min
+  read", "Before you read"), Gloss reading a page, the "read up on" readiness idiom and the
+  `consent-v2` text keep "read". `test/wording.test.ts` guards it (a kept line says `wording-ok`).
+- **Top bar**: logo, search, "Open any link" (focuses the sidebar field, else a dialog), the demo
   persona chip, theme, account.
 - **Library**: tabs For you (the feed, §17) · Topics (the corpus with topic and source filters) ·
   Saved; single-column rows (source initial and name, "in Topic · format", bold title, serif
   subtitle, time, "N ideas new to you", save where the row has a library id, "show less" on feed
-  rows) and a sidebar with Read any link, goals and topic chips. **Wide layout (decision 45):**
+  rows) and a sidebar with Open any link, goals and topic chips. **Wide layout (decision 45):**
   the top bar, library and profile share one container, 1280px and 1520px from 1440px; rows up
   to 820px wide with a 4:3 thumbnail from 1280px. The sidebar has two groups, tools (Read any
   link, Topics for you) and the reader's own (Your map this week, Your goals): one column up to
@@ -1384,7 +1408,7 @@ term, as do code, API fields and prompts. Guarded by `apps/web/test/wording.test
   with a password or card field; emails, phone, card, Aadhaar and PAN numbers removed on the
   device); the README's four install steps; a link to the pinned release
   `releases/tag/extension-v0.8.2` (0.8.1 until decision 62; the still stays the 0.8.1 popup, which looks the same on an article). No Web Store or other-browser claim. *Watch and listen*
-  (paper): the caps, Read any link, time buttons, the reader's own caveat that the transcript is
+  (paper): the caps, Open any link, time buttons, the reader's own caveat that the transcript is
   made automatically; a laptop still of the Fireship video with the Decompiler note open.
 - **See it in action:** the feed still re-recorded with readiness lines ("Ready for you", "A
   stretch: read up on Income distribution first") and "Open in Gloss". **How it works** step 4
@@ -1504,7 +1528,7 @@ see (R10).
 - **Open in Gloss on YouTube.** On a YouTube video page (the links the API's `media/urls.py`
   accepts; one shared fixture tests both) the popup's main button is "Open in Gloss" instead of
   "Read this page". The worker re-reads the tab's URL, sends only
-  `https://www.youtube.com/watch?v=<id>` to `POST /v1/recs/open` (as Read any link does), and opens
+  `https://www.youtube.com/watch?v=<id>` to `POST /v1/recs/open` (as Open any link does), and opens
   `/read/<id>` (plus `?persona=` for a demo persona other than the default) in a new tab.
   Refusals show the API's words without its "Open original" sentence. Privacy: the video is a
   `user_ingested` doc like a pasted link (only `extension` docs are private), so anyone with its

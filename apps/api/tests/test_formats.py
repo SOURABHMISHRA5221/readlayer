@@ -82,3 +82,65 @@ def test_screen_2_holds_slots_for_missing_formats_while_searches_run():
     assert [c.result.url for c in again][:8] == served and again[8].result.url == "a1"
     done = fr.onboarding_mix(early, NOW, 9, formats=["video"], pending=False)
     assert len(done) == 9  # searches finished with no article: the slot is used
+
+
+# Decision 69 G (Sourabh: screen 2 was "full read read read"): the chosen formats share the
+# cards equally, every other format still gets one, and the chosen formats take turns.
+
+
+def _plenty(topic):
+    return ([cand(f"{topic}-a{i}", topic, "article", day=9 - i) for i in range(6)]
+            + [cand(f"{topic}-p{i}", topic, "podcast", day=8 - i) for i in range(4)]
+            + [cand(f"{topic}-v{i}", topic, "video", day=7 - i) for i in range(4)])  # fmt: skip
+
+
+def test_screen_2_shares_cards_equally_between_the_chosen_formats():
+    groups = [_plenty("sports"), _plenty("economics"), _plenty("business")]
+    got = fr.onboarding_mix(groups, NOW, 9, formats=["article", "podcast"])
+    fmts = [c.result.format for c in got]
+    assert (fmts.count("article"), fmts.count("podcast"), fmts.count("video")) == (4, 4, 1)
+    assert fmts[:8] == ["article", "podcast"] * 4  # they take turns; the other format comes last
+    one = [c.result.format for c in fr.onboarding_mix(groups, NOW, 9, formats=["podcast"])]
+    assert (one.count("podcast"), one.count("article"), one.count("video")) == (7, 1, 1)
+    all_three = fr.onboarding_mix(groups, NOW, 9, formats=["article", "video", "podcast"])
+    every = [c.result.format for c in all_three]
+    assert (every.count("article"), every.count("video"), every.count("podcast")) == (3, 3, 3)
+    articles = [c.topic for c in got if c.result.format == "article"][:3]
+    assert len(set(articles)) == 3  # topics still interleave within a format
+
+
+def test_a_short_chosen_format_is_made_up_by_the_other_chosen_one():
+    groups = [[*(cand(f"a{i}", "law") for i in range(9)), cand("p1", "law", "podcast"),
+               cand("v1", "law", "video")]]  # fmt: skip
+    got = [
+        c.result.format for c in fr.onboarding_mix(groups, NOW, 9, formats=["article", "podcast"])
+    ]
+    assert got.count("podcast") == 1 and got.count("video") == 1 and got.count("article") == 7
+
+
+def test_screen_2_targets():
+    assert fr.onboarding_targets(["video", "podcast"], 9) == (
+        ["video", "podcast"],
+        {"video": 4, "podcast": 4, "article": 1},
+    )
+    assert fr.onboarding_targets([], 9) == (["article"], {"article": 7, "video": 1, "podcast": 1})
+    assert fr.onboarding_targets(["article", "video", "podcast"], 3)[1] == {
+        "article": 1,
+        "video": 1,
+        "podcast": 1,
+    }
+
+
+def test_screen_2_pending_holds_the_short_chosen_format_then_fills_it():
+    """Read + Listen, podcasts slow: the first poll shows the 4 articles and holds 4 podcast slots
+    and the video's; the next poll keeps those 4 first and adds 4 podcasts and 1 video."""
+    articles = [[cand(f"{t}-a{i}", t) for i in range(4)] for t in ("sports", "law")]
+    first = fr.onboarding_mix(articles, NOW, 9, formats=["article", "podcast"], pending=True)
+    assert [c.result.format for c in first] == ["article"] * 4
+    served = [c.result.url for c in first]
+    later = [g + [cand(f"{g[0].topic}-p{i}", g[0].topic, "podcast") for i in range(3)]
+             + [cand(f"{g[0].topic}-v", g[0].topic, "video")] for g in articles]  # fmt: skip
+    again = fr.onboarding_mix(later, NOW, 9, formats=["article", "podcast"], served=served)
+    fmts = [c.result.format for c in again]
+    assert [c.result.url for c in again][:4] == served
+    assert fmts[4:].count("podcast") == 4 and fmts[4:].count("video") == 1 and len(again) == 9

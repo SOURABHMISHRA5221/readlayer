@@ -1,0 +1,169 @@
+{
+ "landing_hero": "Consume anything. Understand all of it.",
+ "landing": {
+  "1440-light": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": []
+  },
+  "1440-dark": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": []
+  },
+  "390-light": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": []
+  },
+  "390-dark": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": []
+  }
+ },
+ "onboarding": 200,
+ "finish": 200,
+ "map": {
+  "domains": [
+   "sports",
+   "economics",
+   "finance",
+   "business",
+   "policy"
+  ],
+  "solid": 13,
+  "rings": 7,
+  "solid_without_evidence": [],
+  "evidence_types": [
+   "calibration_answer",
+   "home_country"
+  ]
+ },
+ "summary": "Comfortable in sports and technology, building in science. You think in software. 1 concept moved up a band this week.",
+ "rated": [
+  "science",
+  "sports",
+  "technology"
+ ],
+ "known_unrated": [
+  "business",
+  "economics",
+  "finance",
+  "policy"
+ ],
+ "profile": {
+  "1440-light": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": [
+    "INPUT 20x20"
+   ]
+  },
+  "1440-dark": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": [
+    "INPUT 20x20"
+   ]
+  },
+  "390-light": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": [
+    "INPUT 15x20"
+   ]
+  },
+  "390-dark": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": [
+    "INPUT 15x20"
+   ]
+  }
+ },
+ "topic_legend": [
+  "Nothing recorded yet",
+  "Ready to learn",
+  "Heard of",
+  "Understands",
+  "Can explain",
+  "In a goal"
+ ],
+ "article": "628d6fd2aa9fd3b5a99cedb64c70aa93",
+ "upnext": {
+  "count": 6,
+  "first_two": [
+   "More on this story",
+   "On ‘Global financial crisis’, a key idea here"
+  ],
+  "story": 1,
+  "key_idea": 5,
+  "new_to_you": 0,
+  "other": []
+ },
+ "library": {
+  "1440-light": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": [
+    "Open in Gloss: Uterine Fibroids Explained: Symptoms, Science, and Solutions 114x26",
+    "Watch on YouTube: Uterin 134x18",
+    "Sports on TV for Tuesday 468x28"
+   ]
+  },
+  "1440-dark": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": [
+    "Open in Gloss: Uterine Fibroids Explained: Symptoms, Science, and Solutions 114x26",
+    "Watch on YouTube: Uterin 134x18",
+    "Sports on TV for Tuesday 468x28"
+   ]
+  },
+  "390-light": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": [
+    "Open in Gloss: Uterine Fibroids Explained: Symptoms, Science, and Solutions 114x26",
+    "Watch on YouTube: Uterin 134x18",
+    "Open in Gloss: HIV Explained: The Science of U=U, Treatment & Prevention | MEDbite 114x26"
+   ]
+  },
+  "390-dark": {
+   "ready": true,
+   "axe": [],
+   "hscroll": 0,
+   "small": [
+    "Open in Gloss: Uterine Fibroids Explained: Symptoms, Science, and Solutions 114x26",
+    "Watch on YouTube: Uterin 134x18",
+    "Open in Gloss: HIV Explained: The Science of U=U, Treatment & Prevention | MEDbite 114x26"
+   ]
+  }
+ },
+ "delete": 204,
+ "newcomer_summary": "Building in business, finance and policy, new to economics. You think in software.",
+ "newcomer_rated": [
+  "business",
+  "economics",
+  "finance",
+  "policy"
+ ],
+ "newcomer_map": {
+  "solid": 32,
+  "rings": 16,
+  "solid_without_evidence": []
+ },
+ "cleanup": 204
+}

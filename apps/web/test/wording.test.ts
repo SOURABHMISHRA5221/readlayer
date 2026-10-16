@@ -1,4 +1,6 @@
 // Decision 67 (R4): the UI says "consumer", never "reader", and the mascot isn't named "Margo".
+// Decision 69 F: where "read" means what the consumer does in general, the UI says "consume" (or a
+// format-neutral word); article format words ("I'd read this", "min read") stay.
 // Walks the web app (except the /v2 concept) and the annotator with the TypeScript compiler API
 // and flags user-visible text. Skipped by node kind: className values, import/export specifiers,
 // property-name keys, type literals and comments. String literals with no whitespace are code
@@ -12,7 +14,14 @@ import { describe, expect, it } from "vitest";
 const ROOT = join(__dirname, "..", "..", "..");
 const DIRS = [join(ROOT, "apps/web/src"), join(ROOT, "packages/annotator/src")];
 const SKIP_DIRS = [join(ROOT, "apps/web/src/landing/v2")];
-const BANNED = /\breaders?\b|\bMargo\b/i;
+const BANNED = new RegExp(
+  [
+    "\\breaders?\\b", "\\bMargo\\b", // decision 67
+    "\\breading\\b", "\\bas you read\\b", "\\bread anything\\b", "\\bread any link\\b",
+    "\\bread from\\b", "\\breading goals\\b", "\\byou(?:'ve|'d)? read\\b", // decision 69 F
+  ].join("|"),
+  "i",
+);
 const VISIBLE_ATTRS = new Set(["alt", "aria-label", "title", "placeholder"]);
 
 function files(dir: string): string[] {
@@ -65,7 +74,7 @@ function findings(path: string): string[] {
         if ((attr && VISIBLE_ATTRS.has(attr)) || /\s/.test(raw)) value = raw;
       }
     }
-    if (value && BANNED.test(value)) {
+    if (value && BANNED.test(value.replace(/\s+/g, " "))) {
       const line = sf.getLineAndCharacterOfPosition(node.getStart()).line;
       if (!/\/\/\s*wording-ok:/.test(lines[line] ?? "")) {
         out.push(`${relative(ROOT, path)}:${line + 1}: ${value.trim().slice(0, 90)}`);
@@ -77,9 +86,14 @@ function findings(path: string): string[] {
   return out;
 }
 
-describe("UI wording (decision 67)", () => {
-  it('says "consumer" and never names Margo in visible text', () => {
+describe("UI wording (decisions 67 and 69 F)", () => {
+  it('says "consumer", "consume" where "read" was general, and never names Margo in visible text', () => {
     const all = DIRS.flatMap(files).flatMap(findings);
     expect(all).toEqual([]);
+  });
+
+  it("the static landing page and its link previews don't say read anything", () => {
+    const html = readFileSync(join(ROOT, "apps/web/index.html"), "utf8");
+    expect(html).not.toMatch(/read anything/i);
   });
 });

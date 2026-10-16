@@ -118,7 +118,7 @@ async def main():
         await theme(p, False)
         await p.goto(W + "/welcome", wait=2)
         await p.wait_for(".discover-card:not(.discover-card--ghost)", 40)
-        await p.click_text("button", "Start reading", 3)
+        await p.click_text("button", "Start exploring", 3)
         prof = (await p.api("", "GET", "/v1/me/profile"))["body"]
         user = prof["onboarding"]
         print("[redo done] path", await p.eval("location.pathname"), "| onboarding", user,

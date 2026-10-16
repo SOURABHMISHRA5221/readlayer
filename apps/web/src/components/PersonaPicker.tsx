@@ -81,13 +81,13 @@ export function PersonaPicker({ value, onChange, compact = false }: PersonaPicke
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listId}
-        aria-label={`Reading as ${current.label}`}
+        aria-label={`Viewing as ${current.label}`}
         onClick={() => (open ? setOpen(false) : show())}
         onKeyDown={onButtonKey}
       >
         <Avatar persona={current.key} initials={current.initials} />
         <span className="persona__name">
-          <span className="visually-hidden">Reading as </span>
+          <span className="visually-hidden">Viewing as </span>
           <span className="persona__name-full">{current.label}</span>
           <span className="persona__name-short" aria-hidden="true">
             {current.short}
@@ -102,7 +102,7 @@ export function PersonaPicker({ value, onChange, compact = false }: PersonaPicke
           className="persona__menu"
           role="listbox"
           tabIndex={-1}
-          aria-label="Read as"
+          aria-label="View as"
           aria-activedescendant={`${listId}-${focusIndex}`}
           onKeyDown={onListKey}
         >

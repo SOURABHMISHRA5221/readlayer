@@ -202,7 +202,7 @@ describe("WelcomePage screen 2", () => {
     expect(calls.filter((c) => c.path === "/v1/onboarding/pick")).toHaveLength(5);
     expect(calls.some((c) => c.path === "/v1/onboarding/know")).toBe(false);
     expect(button("Edit your picks")).toBeTruthy();
-    await click(button("Start reading"));
+    await click(button("Start exploring"));
     expect(calls.at(-1)!.path).toBe("/v1/onboarding/finish");
   });
 });

@@ -35,7 +35,7 @@ export default function ProfilePage({ url }: { url: URL }) {
   );
 
   useEffect(() => {
-    document.title = "Your reading profile · Gloss";
+    document.title = "Your profile · Gloss";
   }, []);
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function ProfilePage({ url }: { url: URL }) {
     <div className="profile">
       <TopBar url={url} />
       <main className="profile__main" id="main">
-        <p className="eyebrow">{name ? `${name} · demo` : "Your reading profile"}</p>
+        <p className="eyebrow">{name ? `${name} · demo` : "Your profile"}</p>
         <h1 className="profile__title">{name ? `What Gloss thinks ${name} knows` : "What Gloss thinks you know"}</h1>
         {failed && (
           <StateView title="Your profile didn't load" role="alert">
@@ -77,7 +77,7 @@ export default function ProfilePage({ url }: { url: URL }) {
           <>
             {profile.summary.learning_paused && (
               <p className="profile__banner" role="status">
-                Learning is paused: reading doesn't change your profile until you resume it below.
+                Learning is paused: what you consume doesn't change your profile until you resume it below.
               </p>
             )}
             <section className="summary" aria-labelledby="summary-title">
@@ -119,10 +119,11 @@ export default function ProfilePage({ url }: { url: URL }) {
 
 type DomainRow = Profile["domains"][number];
 
-/** Rated domains and the reader's chosen interests come first; with neither, the four core
- *  domains. The rest of the 14 sit behind "Other domains" so the page stays short. */
-function splitDomains(rows: DomainRow[]): [DomainRow[], DomainRow[]] {
-  const mine = rows.filter((d) => d.rated || d.interest >= 0.5);
+/** Rated domains, domains with ideas the reader has shown they know (decision 69 A2: shown as
+ *  "Not rated yet" with their count) and the reader's chosen interests come first; with none, the
+ *  four core domains. The rest of the 14 sit behind "Other domains" so the page stays short. */
+export function splitDomains(rows: DomainRow[]): [DomainRow[], DomainRow[]] {
+  const mine = rows.filter((d) => d.rated || (d.known ?? 0) > 0 || d.interest >= 0.5);
   const primary = mine.length ? mine : rows.filter((d) => BUSINESS_DOMAINS.includes(d.domain));
   return [primary, rows.filter((d) => !primary.includes(d))];
 }
@@ -328,7 +329,7 @@ function Preferences({ profile, onChanged, disabled }: { profile: Profile; onCha
         onChange={(v) => void set({ density: v })}
       />
       <Segmented
-        label="Where do you read from?"
+        label="Where are you based?"
         options={COUNTRIES.map((c) => ({ key: c, label: COUNTRY_LABEL[c] }))}
         value={profile.settings.country ?? null}
         onChange={(v) => void set({ country: v })}
@@ -410,7 +411,7 @@ function DataControls({ demo, canRedo, paused, onChanged }: DataControlsProps) {
               }
             }}
           />
-          <span>Pause learning (reading won't change your profile)</span>
+          <span>Pause learning (what you consume won't change your profile)</span>
         </label>
       )}
       {canRedo && (

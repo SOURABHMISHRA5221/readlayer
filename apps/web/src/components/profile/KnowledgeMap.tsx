@@ -146,9 +146,9 @@ export function KnowledgeMap({ persona, domains, refreshKey, onChanged, goal = n
           </>
         )}
       </div>
-      <Legend />
+      <Legend scoped={goal != null || scope.kind === "domain"} />
       {failed && <p className="profile__note" role="status">The map didn't load. Try again in a moment.</p>}
-      {nodes && nodes.length === 0 && <p className="profile__note">Read a few articles and your map fills in.</p>}
+      {nodes && nodes.length === 0 && <p className="profile__note">Consume a few pieces and your map fills in.</p>}
       {nodes && nodes.length > 0 && (
         <div className="kmap__grid">
           {view === "map" ? (
@@ -170,9 +170,11 @@ export function KnowledgeMap({ persona, domains, refreshKey, onChanged, goal = n
   );
 }
 
-function Legend() {
+/** `scoped`: a topic's or a goal's view, which also draws ideas with nothing recorded yet. */
+export function Legend({ scoped }: { scoped: boolean }) {
   return (
     <ul className="kmap__legend" aria-label="Legend">
+      {scoped && <li><span className="lg lg--none" aria-hidden="true" /> Nothing recorded yet</li>}
       <li><span className="lg lg--ready" aria-hidden="true" /> Ready to learn</li>
       <li><span className="lg lg--heard" aria-hidden="true" /> Heard of</li>
       <li><span className="lg lg--understands" aria-hidden="true" /> Understands</li>
@@ -363,6 +365,13 @@ function NodeList({ nodes, domains, selected, onSelect }: { nodes: MapNode[]; do
   );
 }
 
+/** Why a node with no recent evidence is drawn (decision 69 A: the map never shows a guess). */
+export function inspectorNote(node: Pick<MapNode, "ready" | "band" | "domain">): string {
+  if (node.ready) return "You know what it builds on, so it's next.";
+  if (node.band === "unaware") return "Nothing recorded yet: explore it, or tell us below.";
+  return `Set from your profile, not from anything you've opened yet, in ${domainLabel(node.domain)}.`;
+}
+
 function Inspector({ node, onCorrect }: { node: MapNode | null; onCorrect: (n: MapNode, known: boolean) => Promise<void> }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -401,9 +410,7 @@ function Inspector({ node, onCorrect }: { node: MapNode | null; onCorrect: (n: M
           ))}
         </ul>
       ) : (
-        <p className="profile__note">
-          {node.ready ? "You know what it builds on, so it's next." : `No reading on this yet: it's our estimate from your level in ${domainLabel(node.domain)}.`}
-        </p>
+        <p className="profile__note">{inspectorNote(node)}</p>
       )}
       {error && (
         <p className="welcome__error" role="alert">

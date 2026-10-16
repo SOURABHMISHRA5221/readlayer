@@ -43,7 +43,7 @@ export function ReadAnyLink({ persona, hideLabel = false, id }: Props) {
   return (
     <form className="anylink" id={id} onSubmit={submit} aria-describedby={hintId}>
       <label className={hideLabel ? "visually-hidden" : "anylink__label"} htmlFor={`${hintId}-url`}>
-        Read any link
+        Open any link
       </label>
       <div className="anylink__row">
         <input
@@ -60,7 +60,7 @@ export function ReadAnyLink({ persona, hideLabel = false, id }: Props) {
           disabled={state.status === "busy"}
         />
         <button className="btn anylink__go" type="submit" disabled={state.status === "busy" || !url.trim()}>
-          {state.status === "busy" ? "Opening…" : "Read"}
+          {state.status === "busy" ? "Opening…" : "Open"}
         </button>
       </div>
       <p id={hintId} className={`anylink__hint${state.status === "error" ? " anylink__hint--error" : ""}`} aria-live="polite">

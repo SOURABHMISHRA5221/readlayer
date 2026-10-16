@@ -18,7 +18,7 @@ export function WatchAndListen() {
           Gloss with a transcript and the same notes, explained for you.
         </p>
         <p className="lp-watch__more">
-          Paste a YouTube link or an Apple Podcasts episode link into Read any link. Tap a time in the transcript to
+          Paste a YouTube link or an Apple Podcasts episode link into Open any link. Tap a time in the transcript to
           play from there. Longer ones open where they play.
         </p>
         <p className="lp-watch__fine">

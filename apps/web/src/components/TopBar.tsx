@@ -13,9 +13,9 @@ import { Wordmark } from "./Wordmark";
 type SearchProps = { value: string; onChange: (v: string) => void };
 
 /**
- * Gloss top bar (Design pass C4): logo, search, "Read any link", the demo persona chip, theme
+ * Gloss top bar (Design pass C4): logo, search, "Open any link", the demo persona chip, theme
  * and account. On the library the search filters in place; elsewhere it opens the Topics tab.
- * "Read any link" focuses the sidebar field when the page has one, else opens a small dialog.
+ * "Open any link" focuses the sidebar field when the page has one, else opens a small dialog.
  */
 export function TopBar({ url, search, children }: { url: URL; search?: SearchProps; children?: ReactNode }) {
   const persona = readerPersona(url, useIsDemo());
@@ -69,7 +69,7 @@ export function TopBar({ url, search, children }: { url: URL; search?: SearchPro
         {children}
         <button type="button" className="topbar__link" onClick={openAnyLink}>
           <LinkIcon />
-          <span className="topbar__link-text">Read any link</span>
+          <span className="topbar__link-text">Open any link</span>
         </button>
         {persona && <PersonaPicker value={persona} onChange={setPersona} />}
         <ThemeToggle />
@@ -78,7 +78,7 @@ export function TopBar({ url, search, children }: { url: URL; search?: SearchPro
       <dialog ref={dialog} className="sheet" aria-labelledby="anylink-dialog-title">
         <div className="sheet__head">
           <h2 id="anylink-dialog-title" className="sheet__title">
-            Read any link
+            Open any link
           </h2>
           <button type="button" className="icon-btn" aria-label="Close" onClick={() => dialog.current?.close()}>
             <Close />

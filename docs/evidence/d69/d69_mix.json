@@ -1,0 +1,33 @@
+{
+ "onboarding": 200,
+ "after_s": 0.0,
+ "pending": false,
+ "order": [
+  "article",
+  "podcast",
+  "article",
+  "podcast",
+  "article",
+  "podcast",
+  "article",
+  "podcast",
+  "video"
+ ],
+ "counts": {
+  "article": 4,
+  "podcast": 4,
+  "video": 1
+ },
+ "topics": [
+  "economics",
+  "business",
+  "sports",
+  "business",
+  "economics",
+  "business",
+  "sports",
+  "business",
+  "economics"
+ ],
+ "delete": 204
+}

@@ -18,7 +18,7 @@ export interface Format {
 
 export const FORMATS: readonly Format[] = [
   { what: "Articles", chip: "Articles", notes: true, detail: "From your For you feed and the library." },
-  { what: "Any link you paste", chip: "Any link", notes: true, detail: "Paste it into Read any link." },
+  { what: "Any link you paste", chip: "Any link", notes: true, detail: "Paste it into Open any link." },
   {
     what: "YouTube videos",
     chip: "Short videos",

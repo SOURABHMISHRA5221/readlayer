@@ -14,7 +14,7 @@ const ANSWERS: { key: Answer; label: string }[] = [
 /**
  * Decision 68 K4/K4b: screen 2's "Quick check", apart from the taste cards above it. All six
  * terms at once, each answered in any order; the answer is the reader's own word about a term, so
- * it builds the starting map. Skipping only hides the block: Start reading ends onboarding.
+ * it builds the starting map. Skipping only hides the block: Start exploring ends onboarding.
  */
 export function QuickCheck() {
   const [set, setSet] = useState<CalibrationSet | null>(null);

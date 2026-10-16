@@ -264,3 +264,138 @@ def test_a_signed_in_reader_who_chose_listen_gets_the_listen_chip_first(env, doc
     client.get(url)
     items = client.get(url).json()["items"]
     assert items and items[0]["format"] == "podcast"
+
+
+# Decision 69 B1: the end-of-article list follows the article (key ideas, the same story
+# elsewhere), never the reader's new terms.
+
+
+def _story_recs(client, persona="newcomer", content="main"):
+    url = f"/v1/content/{content}/recommendations?basis=story&persona={persona}"
+    client.get(url)
+    return client.get(url).json()
+
+
+def test_story_basis_follows_the_article_and_never_says_new_to_you(env):
+    from app.recs.feed_rank import key_ideas
+
+    client, _, _, store = env
+    ideas, _ = key_ideas(store.docs["main"], GRAPH)
+    idea_ids = {c.id for c in ideas}
+    for persona in ("newcomer", "trader", "policy_student"):
+        items = _story_recs(client, persona)["items"]
+        assert items and len(items) > 3  # a full list, not the chips' one per format
+        for item in items:
+            assert "new to you" not in item["why"]
+            if item["relation"] in ("same_story", "angle"):
+                continue  # their own reasons ("The same story, told by …")
+            assert "a key idea here" in item["why"], item
+            assert {t["id"] for t in item["triggers"]} <= idea_ids
+        # a library primer or deeper item gets the key-idea reason too
+        assert any(
+            i["kind"] == "library" and i["relation"] not in ("same_story", "angle") for i in items
+        )
+
+
+def test_story_basis_is_the_same_ideas_for_every_persona(env):
+    client, *_ = env
+    a, b = (_story_recs(client, p)["items"] for p in ("newcomer", "trader"))
+    ideas = [{t["id"] for i in items for t in i["triggers"]} for items in (a, b)]
+    assert ideas[0] and ideas[0] & ideas[1]  # the article's ideas; formats differ per persona
+
+
+def test_the_consumer_basis_is_unchanged_for_the_old_web(env):
+    client, *_ = env
+    get_recs(client)
+    items = get_recs(client)["items"]
+    assert any("new to you" in i["why"] for i in items)  # the live old web keeps its list
+
+
+# Decision 69 B2: more coverage of the same story, for corpus articles only.
+
+
+def _story_queries(provider, store, content="main"):
+    title = ws.story_query(store.docs[content].title)
+    return [q for q in provider.queries if q == title]
+
+
+def test_story_items_lead_with_more_on_this_story(env):
+    client, provider, calls, store = env
+    first = client.get("/v1/content/main/recommendations?basis=story&persona=newcomer").json()
+    assert first["pending"] is True
+    items = _story_recs(client)["items"]
+    lead = [i for i in items[: recs_router.STORY_LEAD] if i["relation"] == "same_story"]
+    assert lead and all(i["why"] == "More on this story" and i["kind"] == "web" for i in lead)
+    assert {i["format"] for i in items if i["why"] == "More on this story"} <= {"article", "video"}
+    assert len(_story_queries(provider, store)) == 2  # article + video, never podcast
+    assert calls.extra.get(ws.STORY) == 2  # one per format (the fake isn't YouTube's 2 units)
+    assert calls.feed == 0  # never the For you feed's share
+    assert calls.anonymous >= 2  # an anonymous (demo) reader's story search counts there
+
+
+def test_a_story_is_searched_once_ever_even_when_empty(env, monkeypatch):
+    client, provider, _, store = env
+    real = provider.search
+
+    async def nothing_for_the_story(query, fmt, news=False, include_domains=()):
+        if query == ws.story_query(store.docs["main"].title):
+            provider.queries.append(query)
+            return []
+        return await real(query, fmt, news, include_domains)
+
+    monkeypatch.setattr(provider, "search", nothing_for_the_story)
+    _story_recs(client)
+    _story_recs(client, "trader")
+    assert len(_story_queries(provider, store)) == 2  # stored empty: no second search
+
+
+def test_pages_a_reader_brought_in_never_send_their_title(env):
+    client, provider, _, store = env
+    for source in ("user_ingested", "extension"):
+        cid = f"own-{source}"
+        store.docs[cid] = store.docs["main"].model_copy(
+            update={"content_id": cid, "source": source}
+        )
+        read_router.reset_catalog()
+        recs_router._index = None
+    for source in ("user_ingested", "extension"):
+        url = f"/v1/content/own-{source}/recommendations?basis=story&persona=newcomer"
+        client.get(url)
+        assert all(
+            i["why"] != "More on this story" for i in client.get(url).json().get("items", [])
+        )
+    assert _story_queries(provider, store) == []
+
+
+def test_a_spent_story_cap_leaves_the_key_ideas(env, monkeypatch):
+    client, provider, _, store = env
+    settings = config.get_settings().model_copy(update={"story_search_daily_cap": 0})
+    monkeypatch.setattr(ws.get_web_search(), "_settings", settings)
+    items = _story_recs(client)["items"]
+    assert items and all(i["why"] != "More on this story" for i in items)
+    assert _story_queries(provider, store) == []
+
+
+def test_the_story_filter_drops_the_article_itself_and_unrelated_hits():
+    labels, words = ["Bond yield"], ws.title_words("Bond yields jump as the Fed signals more hikes")
+    hit = WebResult(url="https://news.example/a", title="Fed hikes push yields up", source="x",
+                    format="article")  # fmt: skip
+    other = hit.model_copy(update={"title": "Ten pasta recipes", "url": "https://food.example/b"})
+    assert ws.story_relevant(hit, labels, words)
+    assert not ws.story_relevant(other, labels, words)
+
+
+def test_the_story_route_drops_the_articles_own_url(env, monkeypatch):
+    client, provider, _, store = env
+    doc = store.docs["main"]
+    real = provider.search
+
+    async def itself_first(query, fmt, news=False, include_domains=()):
+        out = await real(query, fmt, news, include_domains)
+        if query == ws.story_query(doc.title) and fmt == "article":
+            return [out[0].model_copy(update={"url": doc.final_url or doc.url}), *out]
+        return out
+
+    monkeypatch.setattr(provider, "search", itself_first)
+    urls = {i["url"] for i in _story_recs(client)["items"]}
+    assert (doc.final_url or doc.url) not in urls

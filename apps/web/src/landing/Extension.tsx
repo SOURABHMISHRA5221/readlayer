@@ -17,7 +17,7 @@ export function GlossInBrowser() {
           Gloss in your browser
         </h2>
         <p className="lp-section__lede">
-          Reading the news somewhere else? The Gloss extension for Chrome puts the same notes on the page you're on.
+          Following the news somewhere else? The Gloss extension for Chrome puts the same notes on the page you're on.
         </p>
         <ul className="lp-ext__claims">
           <li>It has no access to any site until you click it, and then only to that tab.</li>

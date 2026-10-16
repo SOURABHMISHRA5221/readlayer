@@ -7,7 +7,7 @@ MESSAGES: dict[str, str] = {
     "apple_link_only": "Gloss opens podcast episodes from their Apple Podcasts link.",
     "not_public": "This video isn't public, so Gloss can't read it.",
     "not_embeddable": "This video can't be played outside YouTube.",
-    "live": "Live streams can't be read in Gloss.",
+    "live": "Live streams can't be opened in Gloss.",
     "too_long": "Too long for Gloss for now: videos up to 10 minutes, podcasts up to 12.",
     "not_english": "Gloss reads English recordings only for now.",
     "no_speech": "Gloss couldn't find enough speech in this recording.",

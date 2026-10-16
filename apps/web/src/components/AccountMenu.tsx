@@ -126,7 +126,7 @@ export function AccountMenu() {
                   navigate(persona ? `/profile?persona=${encodeURIComponent(persona)}` : "/profile");
                 }}
               >
-                {demo ? "This consumer's profile" : "Your reading profile"}
+                {demo ? "This consumer's profile" : "Your profile"}
               </button>
               <button
                 type="button"

@@ -103,16 +103,16 @@ describe("library sidebar on a wide screen", () => {
   it("has no map block and asks for no map while the sidebar is stacked (960px and under)", async () => {
     stub(960);
     await mount();
-    expect(headings()).toEqual(["Read any link", "Topics for you", "Your goals"]);
+    expect(headings()).toEqual(["Open any link", "Topics for you", "Your goals"]);
     expect(graphCalls()).toEqual([]);
   });
 
   it("orders its blocks tools first, then the reader's map and goals, in two groups", async () => {
     stub(1280);
     await mount();
-    expect(headings()).toEqual(["Read any link", "Topics for you", "Your map this week", "Your goals"]);
+    expect(headings()).toEqual(["Open any link", "Topics for you", "Your map this week", "Your goals"]);
     const groups = [...host.querySelectorAll(".side__col")].map((c) => [...c.querySelectorAll("h2")].map((h) => h.textContent));
-    expect(groups).toEqual([["Read any link", "Topics for you"], ["Your map this week", "Your goals"]]);
+    expect(groups).toEqual([["Open any link", "Topics for you"], ["Your map this week", "Your goals"]]);
     expect(graphCalls()).toEqual(["/v1/me/graph?view=overview"]);
     expect(host.querySelectorAll(".weekmap__tile")).toHaveLength(2);
     expect(paths.filter((p) => p.startsWith("/v1/me/profile"))).toEqual(["/v1/me/profile"]);
@@ -165,9 +165,9 @@ describe("library sidebar on a wide screen", () => {
     expect(host.querySelector(".weekmap__link")?.getAttribute("href")).toBe("/profile?persona=trader#kmap-title");
   });
 
-  it("tells a new reader the map fills in as they read", async () => {
+  it("tells a new consumer the map fills in as they consume content", async () => {
     stub(1280, { view: "overview", domains: [], nodes: [], edges: [] });
     await mount();
-    expect(host.querySelector(".side__block--week")?.textContent).toContain("Your map fills in as you read.");
+    expect(host.querySelector(".side__block--week")?.textContent).toContain("Your map fills in as you consume content.");
   });
 });

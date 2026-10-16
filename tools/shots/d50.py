@@ -96,7 +96,7 @@ async def main():
         discover = await p.eval("[...document.querySelectorAll('.discover-card a[href]')].map(a => a.href)")
         print("[screen 2] country", profile["settings"]["country"], "| card hosts",
               sorted({urlsplit(u).hostname for u in discover}))
-        await p.click_text("button", "Start reading", 3)
+        await p.click_text("button", "Start exploring", 3)
 
         # --- For you: registry outlets, 60/40
         await p.wait_for(".feedtab .rows li", 40)
@@ -145,7 +145,7 @@ async def main():
             await p.eval("document.querySelector('.consent__check input').click(); 1")
         await p.click_text("button", "Continue", 2)
         await p.wait_for(".discover-card:not(.discover-card--ghost)", 60)
-        await p.click_text("button", "Start reading", 3)
+        await p.click_text("button", "Start exploring", 3)
         await p.wait_for(".feedtab .rows li", 40)
         await asyncio.sleep(2)
         rows = await p.eval("[...document.querySelectorAll('.feedtab .rows li')].map(li => li.textContent)")

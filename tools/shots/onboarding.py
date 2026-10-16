@@ -136,7 +136,7 @@ async def main():
         await p.viewport(390)
         print("[screen2 readback 390]", await p.shot("screen2-readback-390-light", full=True))
         await p.viewport(1440)
-        await p.click_text("button", "Start reading", 3)
+        await p.click_text("button", "Start exploring", 3)
         t_feed = time.monotonic() - t0
         print(f"[feed] path={await p.eval('location.pathname')} total {t_feed:.1f}s (scripted)")
         feed = (await p.api("", "GET", "/v1/feed"))["body"]

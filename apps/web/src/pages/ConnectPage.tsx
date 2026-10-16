@@ -85,7 +85,7 @@ export default function ConnectPage({ url, isDemo }: { url: URL; isDemo: boolean
       <TopBar url={url} />
       <main className="connect__main" id="main">
         <p className="eyebrow">The Gloss extension</p>
-        <h1 className="connect__title">Notes on any article you read</h1>
+        <h1 className="connect__title">Notes on any article you open</h1>
         <p className="connect__lede">
           Click Gloss in your browser's toolbar on a news article and the notes you'd get here appear on that page,
           pitched to what you know. Nothing runs until you click.
