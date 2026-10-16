@@ -20,7 +20,7 @@ Sourabh, 2026-10-16 night, after trying a fresh account on the live site:
 
 Decision 69 lifts the code freeze for this work (STATUS §10 row 69). Five parts, two PRs.
 **PR 1** (`d69-speed`): E (hosting headers), C (warm on open, timing logs), D (linking effort, only
-if its eval passes). **PR 2** (`d69-map-story`): A (map), B (story Up next) as two commits: B1 the
+if its eval passes). **PR 2** (`d69-map-story`): A (map), F (wording, added Oct 17), B (story Up next) as two commits: B1 the
 story basis with key ideas and library same_story/angle, B2 the story web search. Each PR: tests
 first → milestone-reviewer → PR → CI → merge → `make deploy-api` (yes) → then `make deploy-web`
 (yes) → live check.
@@ -169,6 +169,52 @@ are in the video line).
   format; a second view after an empty result → no call; pending while running. Web: the end list
   asks `basis=story`.
 - Harness: open a library article → story items first, then key ideas; no "new to you".
+
+## F. "Consume", not "read" (PR 2, web + landing + README; added 2026-10-17)
+
+Sourabh, 2026-10-17: "on landing and everywhere we mentioning read a lot so change it to
+"consume content" everywhere posible cus or goal is not only read". Rule: where "read" means what
+the consumer does in general, say **consume / consume content**; where that would read badly, a
+format-neutral word (open, view, explore, based). **Kept**, because "read" is literally right:
+article format words (Read / Watch / Listen, "I'd read this", "min read", "Read with notes", "Read
+next" on an article, "Read the explainer"), Gloss itself reading a page ("Reading the article and
+preparing your notes…", the extension's "Gloss doesn't read mail…"), the privacy page's "words
+read" count, `/read/` URLs and code. The extension is unchanged this time (its strings are about
+Gloss reading the page; changing it needs a new release) and the `/v2` concept is skipped (removed
+before submission).
+
+Changes (web `apps/web/src`, annotator heading, README):
+- Landing: hero "Read anything. Understand all of it." → "Consume anything. Understand all of it."
+  (and the page title); "Read as:" → "View as:"; "Read with Gloss:" → "Open with Gloss:"; "fills in
+  as you read" → "as you consume content"; "the notes thin out as you read more" → "as you consume
+  more"; "Your reading stays yours" → "What you consume stays yours"; "what you've read" → "what
+  you've consumed"; "a reading level" → "a knowledge level"; extension block "Reading the news
+  somewhere else?" → "Following the news somewhere else?"; formats "Paste it into Read any link." →
+  "Open any link".
+- App: "Read any link" (top bar, sidebar) → "Open any link", its button "Read" → "Open";
+  library title "Read anything. Understand it your way." → "Consume anything. …"; "Paste any link
+  to read it here." → "to open it here"; "Your reading profile" (title, eyebrow, account menu) →
+  "Your consumer profile"; persona picker "Reading as" / "Read as" → "Viewing as" / "View as";
+  "reading goals" → "goals"; goal habit "Read a little every week" → "Consume a little every week";
+  "Learning is paused, so reading isn't counting." / "reading doesn't (won't) change your profile"
+  → "what you consume …"; "Where do you read from?" → "Where are you based?" (onboarding and
+  profile); "What do you want to read about?" → "Which topics do you want to consume?"; "Tell me
+  what you'd read." → "Tell me what you'd consume."; "fills in as you read" / "updates as you read"
+  (map, week panel, recap, feed) → "as you consume content"; "Read a few articles and your map
+  fills in." → "Consume a few pieces and your map fills in."; "You can start reading anyway." → "You
+  can start anyway."; "Sign in again to keep reading." → "to keep going"; "plenty more to read" →
+  "plenty more to consume"; "Before you read" (pre-read path, annotator heading) → "Before you
+  start"; "A stretch: read up on X first" → "brush up on X first"; evidence "Common where you read
+  from" → "Common where you're based", "Reading activity" → "Activity"; persona blurb "Reads central
+  banks…" → "Follows central banks…"; "Notes on any article you read" → "you open"; progress bar
+  aria "Reading progress" → "Progress"; privacy: "Your reading" → "What you consume", "Reading
+  events" → "Activity events", "Reading goals" → "Goals", "a reading level" → "a knowledge level"
+  (also in the map's inspector: "Nothing recorded yet: read about it" → "explore it").
+- README: the same rule for its general prose (its pictures keep the old wording until recaptured).
+- Guard: `test/wording.test.ts` also bans `\breading\b`, "as you read", "read anything", "read any
+  link", "read from" and "reading goals" (same walker; a kept line carries `// wording-ok: <reason>`).
+  Existing tests that assert old strings are updated. Harness: landing, library, onboarding, profile
+  axe 0 at 1440/390 after the change (labels changed length).
 
 ## Live acceptance after PR 2 (production writes listed)
 - Read-only `GET /v1/me/graph?view=overview` on Sourabh's account: no "Interest rates"; every solid
