@@ -2212,3 +2212,11 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    yes) → then `make deploy-web` (yes) → live: a demo account's onboarding is untouched; Sourabh's
    own Redo setup on his yes (formats; home terms).
 2. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.
+- PR B: milestone-reviewer FIX → FIX (format marker) → SHIP; also an open card now picks up late
+  chips. #57 merged; API `readlayer-api-00037-d4g`, then web (Sourabh's yes; the deploy guard held
+  the web until the API build finished). Live text checked.
+
+### Next steps (resume here, in order)
+1. Sourabh: try onboarding (Redo setup or a new Google account) and the chips on a fresh link.
+2. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.
+
