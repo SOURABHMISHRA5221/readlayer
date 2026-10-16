@@ -93,7 +93,14 @@ def _pipeline_latency(s: dict[str, Any]) -> str:
     return f"{s['pipeline_p50_ms'] / 1000:.1f} s / {s['pipeline_p95_ms'] / 1000:.1f} s"
 
 
+def experimental(r: dict[str, Any]) -> bool:
+    """A run that tried a thinking level (decision 67 L2) measures an experiment, not the
+    served config: listed with every run, never the 'latest' row the landing reads."""
+    return any((r["meta"].get("reasoning_effort") or {}).values())
+
+
 def _comparison(all_runs: list[dict[str, Any]]) -> list[str]:
+    all_runs = [r for r in all_runs if not experimental(r)] or all_runs
     latest: dict[str, dict[str, Any]] = {}
     for r in all_runs:
         if r["meta"]["prompt_version"] == all_runs[-1]["meta"]["prompt_version"]:
@@ -285,7 +292,7 @@ def write_report() -> None:
     all_runs = runs()
     if not all_runs:
         return
-    latest = all_runs[-1]
+    latest = next((r for r in reversed(all_runs) if not experimental(r)), all_runs[-1])
     baseline_judge = next(
         (r for r in reversed(all_runs) if r["meta"]["judge_model"] == r["meta"]["explain_model"]),
         latest,

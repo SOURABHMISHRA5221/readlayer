@@ -1332,3 +1332,12 @@ Plans `docs/plans/readiness-content.md` (plan-reviewer REVISE 11 → APPROVE) an
 | S8 warm after the deploy (`warm_demo --shifts`, Guardian and RoDTEP) | All cards verified, none capped; pass 2 hits: Guardian 25 / 27, RoDTEP 14 / 18 (the rest still generating when asked). Vertex MODEL_QUALITY was slow from ≈ 09:30 UTC (explain median ≈ 46 s, verify up to 61 s, 8 `verify_background` timeouts with no fallback, 7 explain fallbacks); a third run was stopped by my 590 s limit before its cleanup, leaving one more anonymous test reader (§5). Finish warming when Vertex recovers, before recording |
 | S8 finished, S7 chosen (2026-10-15 ≈ 09:50 UTC) | `warm_demo --shifts` again: Guardian 27 / 27 hits on both passes (≤ 0.3 s), RoDTEP pass 2 18 / 18; all verified; both test readers deleted (204). Video article (Sourabh: "go on how u want"): the Guardian Polymarket/HSBC article (newcomer 10 notes, trader 4), compared with the 16 stored first-page articles (Mint Sebi 11 / 0 kept as the "expert sees almost nothing" shot). Recording sheet `docs/recording.md`. `/v2` untouched (Sourabh: "no action on v2") |
 
+## 35. Decision 67 acceptance (2026-10-16; consumer wording, faster cards, chips, analogy toggle)
+
+| Check | Result |
+|---|---|
+| R (wording) | Web copy and API display text say "consumer"; "Tell Gloss about you", "Gloss learns what you know"; mascot alt texts say "the Gloss mascot"; landing snapshot regenerated. Guards: `apps/web/test/wording.test.ts` (TypeScript AST over web `src/` except `/v2` and the annotator) and `apps/api/tests/test_wording.py` (prompt text listed as model-only) |
+| L1 | `LLM_REASONING_EFFORT` (task → level) overrides a route's thinking level, checked at startup (unknown tasks and `transcribe` refused); `evals.run --effort task=level,...` replaces the untried all-tasks flag |
+| L2 (evals, `apps/api/evals/changelog.md`) | Baseline 15/15 (judge 15), 25/25, 10/10, pipeline 24 / 1 / 0, p50 10.4 s, p95 15.7 s, $0.0085. Drafts low: 15/15 (judge 14), 25/25, 10/10, 24 / 0 / 1, p50 8.5 s, p95 22.9 s, $0.0057. **Not adopted** by the plan's rule (judge-caught 14 < 15, with the judge unchanged: judge variation); `LLM_REASONING_EFFORT` stays unset. The landing's numbers move 24/25 → 25/25 good accepted (today's baseline run of the served config) |
+| L3 | Signed-in consumers prefetch notes within a screen of the viewport, ≤ 10 a page, 2 at once; demo consumers keep the top 3; capped prefetches not kept (`apps/web/test/prefetch.test.ts`) |
+
