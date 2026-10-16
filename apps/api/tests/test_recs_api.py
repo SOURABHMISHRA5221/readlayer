@@ -193,11 +193,12 @@ def _article_recs(client, persona="newcomer", content="main"):
 def test_article_basis_is_key_ideas_one_per_format(env):
     from app.recs.feed_rank import key_ideas
     from app.recs.models import FORMATS
+    from app.recs.router import WEB_TRIGGERS
+    from app.recs.web_search import build_query
 
     client, provider, _, store = env
     ideas, _ = key_ideas(store.docs["main"], GRAPH)
     idea_ids = {c.id for c in ideas}
-    labels = {c.label for c in ideas}
     seen_triggers = []
     for persona in ("newcomer", "trader", "policy_student"):
         body = _article_recs(client, persona)
@@ -210,8 +211,9 @@ def test_article_basis_is_key_ideas_one_per_format(env):
             assert trig and trig <= idea_ids
             assert "a key idea here" in item["why"]
         seen_triggers.append({t["id"] for i in items for t in i["triggers"]})
-    assert all(q.split(" ")[0] in " ".join(labels) for q in provider.queries)
-    assert all(q.endswith(("explained", "podcast episode")) for q in provider.queries)
+    # DESIGN §16.3: label + domain + format suffix only, on the article's own key ideas
+    expected = {build_query(c.label, f, c.domain) for c in ideas[:WEB_TRIGGERS] for f in FORMATS}
+    assert provider.queries and set(provider.queries) <= expected
 
 
 def test_article_basis_is_the_same_for_every_persona(env):
@@ -234,3 +236,17 @@ def test_basis_is_validated(env):
     client, *_ = env
     url = "/v1/content/main/recommendations?basis=words"
     assert client.get(url).status_code == 422
+
+
+def test_article_basis_records_served_items_only_after_consent(env, docs):
+    from tests.fakes import auth as signed_in
+    from tests.fakes import consented
+
+    client = TestClient(app, headers=signed_in("s1"))
+    url = "/v1/content/main/recommendations?basis=article"
+    client.get(url)
+    assert client.get(url).json()["items"]
+    assert not [p for p in docs.docs if p.startswith("users/s1/rec_signals/")]
+    consented(client)
+    client.get(url)
+    assert [p for p in docs.docs if p.startswith("users/s1/rec_signals/")]

@@ -183,3 +183,71 @@ describe("analogy frame toggle", () => {
     a.destroy();
   });
 });
+
+describe("Up next shown only when seen", () => {
+  it("waits for the chip row to be visible in the card body, once per opening", async () => {
+    const watchers: { el: Element; root: Element | null; fire: () => void }[] = [];
+    class FakeObserver {
+      private cb: IntersectionObserverCallback;
+      private root: Element | null;
+      constructor(cb: IntersectionObserverCallback, opts?: IntersectionObserverInit) {
+        this.cb = cb;
+        this.root = (opts?.root as Element) ?? null;
+      }
+      observe(el: Element) {
+        const fire = () => this.cb([{ isIntersecting: true } as IntersectionObserverEntry], this as unknown as IntersectionObserver);
+        watchers.push({ el, root: this.root, fire });
+      }
+      unobserve() {}
+      disconnect() {}
+      takeRecords() {
+        return [];
+      }
+    }
+    const view = window as unknown as { IntersectionObserver?: unknown };
+    const saved = view.IntersectionObserver;
+    view.IntersectionObserver = FakeObserver;
+    document.body.innerHTML = HTML;
+    const shown: string[][] = [];
+    const a = createAnnotator(document.getElementById("root")!, { nextUp: () => CHIPS, onNextUpShown: (ids) => shown.push(ids) });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
+    expect(shown).toEqual([]); // opened, not yet seen
+    const chipRow = watchers.find((w) => w.el.classList.contains("rl-card__next"))!;
+    expect(chipRow.root!.classList.contains("rl-card__body")).toBe(true);
+    chipRow.fire();
+    expect(shown).toEqual([["lib:a", "web:v", "web:p"]]);
+    a.destroy();
+    view.IntersectionObserver = saved;
+  });
+
+  it("inline cards (a landing demo) never show chips", async () => {
+    document.body.innerHTML = `${HTML}<div id="slot"></div>`;
+    const a = createAnnotator(document.getElementById("root")!, {
+      nextUp: () => CHIPS,
+      inline: document.getElementById("slot")!,
+      loadExplanation: async () => framed("pick", "cricket", null),
+    });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
+    expect(card().querySelector<HTMLElement>(".rl-card__next")!.hidden).toBe(true);
+    a.destroy();
+  });
+
+  it("chips are real links, reachable by keyboard in the card's tab order", async () => {
+    document.body.innerHTML = HTML;
+    const a = createAnnotator(document.getElementById("root")!, { nextUp: () => CHIPS });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc", { focus: true });
+    await tick();
+    const links = Array.from(card().querySelectorAll<HTMLAnchorElement>("a.rl-next"));
+    expect(links.every((l) => l.tabIndex === 0 && l.getAttribute("href"))).toBe(true);
+    // Shift+Tab from the card wraps to the last focusable: the last chip.
+    card().focus();
+    card().dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
+    expect(document.activeElement).toBe(links[links.length - 1]);
+    a.destroy();
+  });
+});

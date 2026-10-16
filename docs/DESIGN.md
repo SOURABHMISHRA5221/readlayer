@@ -478,8 +478,8 @@ prefetched); `warm_demo --shifts` warms them for the demo articles.
 **Thinking level (decision 67 L1–L2).** `LLM_REASONING_EFFORT` (task → low / medium / high)
 sets a structured task's Gemini 3 thinking level over its route's; `transcribe` keeps its own.
 Measured on the safety suite (`evals/changelog.md`): drafts at low were 2 s faster at p50 and a
-third cheaper but lost one verified card of 25 and raised p95, so the served config keeps the
-model default for all four explanation tasks.
+third cheaper but lost one verified card of 25 and raised p95. Served (Sourabh's call, 2026-10-16):
+`restate` and `explain` at low, the two judges at the model default.
 
 **Prefetch (decision 67 L3).** The web host prefetches the top 3 span notes when a page's notes
 arrive; for signed-in consumers only, a span note whose mark comes within one screen of the

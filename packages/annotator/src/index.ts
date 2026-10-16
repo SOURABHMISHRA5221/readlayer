@@ -81,7 +81,8 @@ export interface AnnotatorOptions {
   nextUp?: () => readonly NextUpChip[];
   /** A chip was clicked (its link's default is prevented). */
   onNextUp?: (chip: NextUpChip) => void;
-  /** Chips a card rendered, by id, each time a card shows them (the host dedupes per page). */
+  /** Chips seen in a card (the row was mostly visible), by id, once per opening; the host
+   * dedupes per page. */
   onNextUpShown?: (ids: string[]) => void;
   /**
    * Card actions. "full" (the default: reader and extension) shows Knew this / Helpful / This is
@@ -315,10 +316,11 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       card.setQuiet(quiet);
       card.fill(annotation, pressed.get(id) ?? new Set());
       const chips = card.setNextUp(options.nextUp?.() ?? []);
-      if (chips.length) options.onNextUpShown?.(chips);
       if (!pressed.get(id)?.has("report_wrong")) loadInto(annotation);
       const { mode, box } = placement();
       card.show(mark, mode, box, pinned);
+      // rec_shown when the chip row is actually seen (DESIGN §16.4–16.6), not on open.
+      if (chips.length) card.watchNextUp(() => options.onNextUpShown?.(chips));
       mark.setAttribute("aria-expanded", "true");
       emit(event("explain_opened", annotation));
       options.onActive?.(id);

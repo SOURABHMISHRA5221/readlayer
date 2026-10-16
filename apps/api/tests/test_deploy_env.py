@@ -42,3 +42,18 @@ def test_both_hosting_entries_serve_the_same_build():
     assert sorted(h["target"] for h in hosting) == sorted(mapped)
     bodies = [{k: v for k, v in h.items() if k != "target"} for h in hosting]
     assert all(b == bodies[0] for b in bodies)
+
+
+def test_served_thinking_levels_are_valid_and_match_the_eval_report():
+    """Decision 67 L2: what production sets is a valid override, and the eval report treats
+    exactly that as the served config (not an experiment)."""
+    import yaml
+
+    from app import llm
+    from app.config import Settings
+    from evals.report import SERVED_EFFORT
+
+    env = yaml.safe_load((ROOT / "apps/api/deploy.env.yaml").read_text())
+    effort = json.loads(env["LLM_REASONING_EFFORT"])
+    llm.check_effort_overrides(Settings(llm_reasoning_effort=effort))
+    assert effort == {t: v for t, v in SERVED_EFFORT.items() if v}

@@ -1,5 +1,5 @@
-"""Decision 67 L2: experiment runs (a thinking level or a forced frame) never stand for the
-served config anywhere in the eval report."""
+"""Decision 67 L2/A5: experiment runs (thinking levels other than the served ones, or a forced
+frame) never stand for the served config anywhere in the eval report."""
 
 import shutil
 from pathlib import Path
@@ -7,12 +7,12 @@ from pathlib import Path
 from evals import report
 
 RESULTS = Path(report.__file__).parent / "results"
-BASELINE = "20261016T144416_d67-baseline.json"
-EXPERIMENT = "20261016T144750_d67-drafts-low.json"
+SERVED = "20261016T144750_d67-drafts-low.json"  # the served levels since Sourabh's yes
+EXPERIMENTS = ("20261016T144416_d67-baseline.json", "20261016T150141_d67-frame-finance.json")
 
 
-def test_report_sections_use_the_served_baseline_not_the_later_experiment(tmp_path, monkeypatch):
-    for name in (BASELINE, EXPERIMENT):
+def test_report_sections_use_the_served_run_not_experiments(tmp_path, monkeypatch):
+    for name in (SERVED, *EXPERIMENTS):
         shutil.copy(RESULTS / name, tmp_path / name)
     monkeypatch.setattr(report, "RESULTS", tmp_path)
     monkeypatch.setattr(report, "REPORT", tmp_path / "report.md")
@@ -24,13 +24,25 @@ def test_report_sections_use_the_served_baseline_not_the_later_experiment(tmp_pa
     def section(title: str) -> str:
         return next(v for k, v in sections.items() if k.startswith(title))
 
-    assert f"(`{BASELINE}`)" in section("Which layer caught each adversarial card")
+    assert f"(`{SERVED}`)" in section("Which layer caught each adversarial card")
     for title in (
         "Which layer caught",
         "Good cards the verifier rejected",
         "Injection cases",
         "Cost",
     ):
-        assert EXPERIMENT not in section(title)
-    assert "rejected_twice" not in section("Injection cases")  # I06 was verified on the retry
-    assert "$0.0085" in section("Cost") and "$0.0057" not in section("Cost")
+        assert not any(e in section(title) for e in EXPERIMENTS)
+    assert "$0.0057" in section("Cost") and "$0.0099" not in section("Cost")
+    assert "8.5 s / 22.9 s" in section("Judge comparison")
+
+
+def test_experimental_compares_with_the_served_levels():
+    def run(effort, frame=None):
+        return {"meta": {"reasoning_effort": effort, "frame": frame}}
+
+    served = {"restate": "low", "explain": "low", "verify": None, "verify_background": None}
+    default = dict.fromkeys(served)
+    assert not report.experimental(run(served))
+    assert report.experimental(run(default))
+    assert report.experimental(run(served, frame="finance"))
+    assert not report.experimental(run({}))  # runs recorded before levels were saved

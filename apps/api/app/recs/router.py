@@ -237,7 +237,9 @@ class _Trigger:
     weight: float
 
 
-async def _triggers(basis: str, ctx: ReaderContext, doc: ContentDoc, graph: ConceptGraph):
+async def _triggers(
+    basis: str, ctx: ReaderContext, doc: ContentDoc, graph: ConceptGraph
+) -> list[_Trigger]:
     """ "consumer": the concepts new to this person, highest score first (Up next at the end of
     the article). "article" (decision 67 N1, the card chips): the article's own key ideas by
     salience, the same for everyone."""

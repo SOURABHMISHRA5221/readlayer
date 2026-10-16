@@ -127,6 +127,7 @@ export class Card {
   private readonly nextRow: HTMLUListElement;
   private readonly chipsAllowed: boolean;
   private readonly onNextUp?: (chip: NextUpChip) => void;
+  private stopNextWatch: (() => void) | null = null;
   private shift: -1 | 0 | 1 = 0;
   private kind: string = "span";
   private sidenote: SidenoteBox | null = null;
@@ -336,6 +337,8 @@ export class Card {
 
   /** Fill the Up next row; returns the ids shown (none when not allowed or empty). */
   setNextUp(chips: readonly NextUpChip[]): string[] {
+    this.stopNextWatch?.();
+    this.stopNextWatch = null;
     const shown = this.chipsAllowed ? chips.slice(0, 3) : [];
     this.next.hidden = shown.length === 0;
     this.nextRow.replaceChildren(
@@ -362,6 +365,33 @@ export class Card {
       }),
     );
     return shown.map((c) => c.id);
+  }
+
+  /**
+   * `seen` once, when the chip row is first mostly visible inside the card body (it sits at the
+   * end of a scrolling body, often below the fold on a phone). Without IntersectionObserver it
+   * runs at once. Stopped when the card hides or its chips change.
+   */
+  watchNextUp(seen: () => void): void {
+    this.stopNextWatch?.();
+    this.stopNextWatch = null;
+    if (this.next.hidden) return;
+    const Observer = this.doc.defaultView?.IntersectionObserver;
+    if (!Observer) {
+      seen();
+      return;
+    }
+    const observer = new Observer(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        observer.disconnect();
+        this.stopNextWatch = null;
+        seen();
+      },
+      { root: this.body, threshold: 0.6 },
+    );
+    observer.observe(this.next);
+    this.stopNextWatch = () => observer.disconnect();
   }
 
   /** The two-option frame toggle, or nothing (decision 67 A4). */
@@ -547,6 +577,8 @@ export class Card {
   }
 
   hide(): void {
+    this.stopNextWatch?.();
+    this.stopNextWatch = null;
     this.stopAutoUpdate?.();
     this.stopAutoUpdate = null;
     this.anchor = null;

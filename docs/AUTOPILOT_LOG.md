@@ -2136,3 +2136,23 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 1. Sourabh records the video (Oct 16–17) from `docs/recording.md`; deck with its numbers.
 2. Oct 17–18: remove `/v2` only when Sourabh says; gitleaks over history; submit by Oct 18.
 
+
+## Decision 67: consumer wording, faster cards, card chips, analogy toggle (2026-10-16 evening)
+
+- Sourabh, after the video: "change reader word with consumer, Margo -> Gloss", a teammate's
+  read / watch / listen chips "based on Article content not the words", the analogy as "chips/
+  and for u ... toggle", and latency; then "yes lets fix them all". Plan `docs/plans/consumer-card.md`
+  (plan-reviewer REVISE 10 → REVISE 1 → APPROVE), two PRs, checkpoint 23:00 IST.
+- PR 1 (R + L): milestone-reviewer FIX (report rows from an experiment, bundle 150.37 KB, STATUS)
+  → SHIP; #51 merged; API `readlayer-api-00034-qxx` and web live (Sourabh's yes at the prompts).
+  L2 measured: drafts at low faster and cheaper, one card fewer verified → not adopted by the
+  plan's rule; Sourabh: "yes switch it on" (ships with PR 2's API).
+- PR 2 (N + A): built with tests first per part; A5 finance-frame eval within the stop line;
+  milestone-reviewer round 1 FIX (rec_shown on visibility, tests, STATUS, evidence) applied.
+- Sourabh: "we will do re recording of all once everyfix is done with new script".
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 2 on `d67-chips-frames` → PR → CI → merge → `make deploy-api` and
+   `make deploy-web` (Sourabh's yes) → live checks (§9 Oct 17 row).
+2. `warm_next_up` dry run → write, `warm_demo --for-you` (Sourabh's yes); Tavily key/reset before Oct 19.
+3. New video script and full re-record (Sourabh); `/v2` removal, gitleaks, submit by Oct 18.

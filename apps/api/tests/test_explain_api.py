@@ -473,14 +473,19 @@ def test_for_you_without_a_for_you_frame_serves_the_pick(client, fake, monkeypat
     assert _framed(client, "for_you").json()["frames"]["used"] == "pick"
 
 
-def test_frame_and_shift_combine_and_frame_is_validated(client, fake, for_you_finance):
+def test_frame_and_shift_combine_and_frame_is_validated(client, fake, docs, for_you_finance):
     own = _framed(client, "for_you").json()
-    deeper = _framed(client, "for_you", shift=1).json()
-    assert (
-        deeper["frames"]["used"] == "for_you"
-        and deeper["band"] != own["band"]
-        or own["band"] == "can explain"
-    )
+    order = ["unaware", "heard of", "understands", "can explain"]
+    shift = 1 if own["band"] != "can explain" else -1
+    moved = _framed(client, "for_you", shift=shift).json()
+    assert moved["frames"]["used"] == "for_you" and moved["thinks_in"] == "finance"
+    assert order.index(moved["band"]) == order.index(own["band"]) + shift
+    keys = {(d["band"], d.get("thinks_in")) for d in by_part(docs, "background")}
+    assert (own["band"], "finance") in keys and (moved["band"], "finance") in keys
     assert _framed(client, "mine").status_code == 422
+
+
+def test_paragraph_notes_exclude_their_first_concepts_domain(client, fake, for_you_finance):
     para = _framed(client, "for_you", paragraph_id="p0")
     assert para.status_code == 200 and para.json()["frames"]["used"] == "for_you"
+    assert for_you_finance[-1] == "finance"  # the paragraph's first concept, c_yield_curve
