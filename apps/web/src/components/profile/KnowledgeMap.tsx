@@ -148,7 +148,7 @@ export function KnowledgeMap({ persona, domains, refreshKey, onChanged, goal = n
       </div>
       <Legend scoped={goal != null || scope.kind === "domain"} />
       {failed && <p className="profile__note" role="status">The map didn't load. Try again in a moment.</p>}
-      {nodes && nodes.length === 0 && <p className="profile__note">Read a few articles and your map fills in.</p>}
+      {nodes && nodes.length === 0 && <p className="profile__note">Consume a few pieces and your map fills in.</p>}
       {nodes && nodes.length > 0 && (
         <div className="kmap__grid">
           {view === "map" ? (
@@ -368,8 +368,8 @@ function NodeList({ nodes, domains, selected, onSelect }: { nodes: MapNode[]; do
 /** Why a node with no recent evidence is drawn (decision 69 A: the map never shows a guess). */
 export function inspectorNote(node: Pick<MapNode, "ready" | "band" | "domain">): string {
   if (node.ready) return "You know what it builds on, so it's next.";
-  if (node.band === "unaware") return "Nothing recorded yet: read about it, or tell us below.";
-  return `Set from your profile, not from reading yet, in ${domainLabel(node.domain)}.`;
+  if (node.band === "unaware") return "Nothing recorded yet: explore it, or tell us below.";
+  return `Set from your profile, not from anything you've opened yet, in ${domainLabel(node.domain)}.`;
 }
 
 function Inspector({ node, onCorrect }: { node: MapNode | null; onCorrect: (n: MapNode, known: boolean) => Promise<void> }) {

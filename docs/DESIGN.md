@@ -1306,12 +1306,17 @@ term, as do code, API fields and prompts. Guarded by `apps/web/test/wording.test
   the logo, the reader's margin header (idle; an occasional blink only before the reader scrolls
   into the article, never while they read or a note is open, none under reduced motion), the notes-loading notice (think), the recap (happy) and empty and error
   states (oops). Never in article text, never on note cards. Always `aria-hidden`.
-- **Top bar**: logo, search, "Read any link" (focuses the sidebar field, else a dialog), the demo
+- **Wording (decisions 67, 69 F)**: the UI says "consumer", never "reader"; where "read" meant what
+  the consumer does in general it says "consume" or a format-neutral word ("Open any link", "Where
+  are you based?", "Start exploring", "Your profile"). Article format words ("I'd read this", "min
+  read", "Before you read"), Gloss reading a page, the "read up on" readiness idiom and the
+  `consent-v2` text keep "read". `test/wording.test.ts` guards it (a kept line says `wording-ok`).
+- **Top bar**: logo, search, "Open any link" (focuses the sidebar field, else a dialog), the demo
   persona chip, theme, account.
 - **Library**: tabs For you (the feed, §17) · Topics (the corpus with topic and source filters) ·
   Saved; single-column rows (source initial and name, "in Topic · format", bold title, serif
   subtitle, time, "N ideas new to you", save where the row has a library id, "show less" on feed
-  rows) and a sidebar with Read any link, goals and topic chips. **Wide layout (decision 45):**
+  rows) and a sidebar with Open any link, goals and topic chips. **Wide layout (decision 45):**
   the top bar, library and profile share one container, 1280px and 1520px from 1440px; rows up
   to 820px wide with a 4:3 thumbnail from 1280px. The sidebar has two groups, tools (Read any
   link, Topics for you) and the reader's own (Your map this week, Your goals): one column up to
@@ -1392,7 +1397,7 @@ term, as do code, API fields and prompts. Guarded by `apps/web/test/wording.test
   with a password or card field; emails, phone, card, Aadhaar and PAN numbers removed on the
   device); the README's four install steps; a link to the pinned release
   `releases/tag/extension-v0.8.2` (0.8.1 until decision 62; the still stays the 0.8.1 popup, which looks the same on an article). No Web Store or other-browser claim. *Watch and listen*
-  (paper): the caps, Read any link, time buttons, the reader's own caveat that the transcript is
+  (paper): the caps, Open any link, time buttons, the reader's own caveat that the transcript is
   made automatically; a laptop still of the Fireship video with the Decompiler note open.
 - **See it in action:** the feed still re-recorded with readiness lines ("Ready for you", "A
   stretch: read up on Income distribution first") and "Open in Gloss". **How it works** step 4
@@ -1512,7 +1517,7 @@ see (R10).
 - **Open in Gloss on YouTube.** On a YouTube video page (the links the API's `media/urls.py`
   accepts; one shared fixture tests both) the popup's main button is "Open in Gloss" instead of
   "Read this page". The worker re-reads the tab's URL, sends only
-  `https://www.youtube.com/watch?v=<id>` to `POST /v1/recs/open` (as Read any link does), and opens
+  `https://www.youtube.com/watch?v=<id>` to `POST /v1/recs/open` (as Open any link does), and opens
   `/read/<id>` (plus `?persona=` for a demo persona other than the default) in a new tab.
   Refusals show the API's words without its "Open original" sentence. Privacy: the video is a
   `user_ingested` doc like a pasted link (only `extension` docs are private), so anyone with its

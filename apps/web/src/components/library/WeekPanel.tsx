@@ -41,7 +41,7 @@ export default function WeekPanel({ persona }: { persona: PersonaKey | null }) {
       </p>
     );
   }
-  if (!tiles.length) return <p className="side__note">Your map fills in as you read.</p>;
+  if (!tiles.length) return <p className="side__note">Your map fills in as you consume content.</p>;
   return (
     <div className="weekmap">
       <ul className="weekmap__tiles">

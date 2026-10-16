@@ -42,7 +42,7 @@ export function Sidebar({
     <aside className="side" aria-label="Your tools">
       <div className="side__col">
         <section className="side__block">
-          <h2 className="side__h">Read any link</h2>
+          <h2 className="side__h">Open any link</h2>
           <ReadAnyLink persona={persona} hideLabel id="anylink-side" />
         </section>
         {topics.length > 0 && (
@@ -78,7 +78,7 @@ export function Sidebar({
         <section className="side__block">
           <h2 className="side__h">Your goals</h2>
           {demo ? (
-            <p className="side__note">Sign in with Google to set reading goals.</p>
+            <p className="side__note">Sign in with Google to set goals.</p>
           ) : goals === null ? (
             <p className="side__note">Loading…</p>
           ) : goals.length === 0 ? (

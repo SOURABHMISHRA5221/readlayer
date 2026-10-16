@@ -21,7 +21,7 @@ export const PERSONAS = [
     label: "Policy student",
     short: "Policy",
     initials: "PS",
-    blurb: "Reads central banks and budgets for fun; markets jargon is new.",
+    blurb: "Follows central banks and budgets for fun; markets jargon is new.",
     strengths: ["Policy", "Economics"],
   },
 ] as const;

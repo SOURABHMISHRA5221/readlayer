@@ -25,7 +25,7 @@ describe("honest map", () => {
 
   it("never calls a node a guess from the reader's level", () => {
     expect(inspectorNote({ ready: true, band: "unaware", domain: "finance" })).toMatch(/builds on/);
-    expect(inspectorNote({ ready: false, band: "unaware", domain: "finance" })).toBe("Nothing recorded yet: read about it, or tell us below.");
+    expect(inspectorNote({ ready: false, band: "unaware", domain: "finance" })).toBe("Nothing recorded yet: explore it, or tell us below.");
     const edited = inspectorNote({ ready: false, band: "understands", domain: "finance" });
     expect(edited).toMatch(/profile/);
     for (const n of ["unaware", "understands"] as const) {

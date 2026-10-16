@@ -41,7 +41,7 @@ export function DemoFrame({ persona, onPersona, paragraphRef, noteRef, staticNot
   return (
     <figure className="lp-demo">
       <div className="lp-demo__toggle">
-        <Segmented label="Read as:" options={DEMO_PERSONAS} value={persona} onChange={onPersona} />
+        <Segmented label="View as:" options={DEMO_PERSONAS} value={persona} onChange={onPersona} />
       </div>
       <div className="lp-demo__sheet">
         <p className="lp-demo__source">From {site} · real paragraph, real notes; the words are unchanged</p>
@@ -137,7 +137,7 @@ function Proof({ where }: { where: "wide" | "narrow" }) {
 function ReadWith() {
   return (
     <div className="lp-readwith">
-      <span className="lp-readwith__label">Read with Gloss:</span>
+      <span className="lp-readwith__label">Open with Gloss:</span>
       <ul className="lp-readwith__chips">
         {CHIPS.map((c) => (
           <li key={c.label} className={`lp-chip${c.notes ? " lp-chip--notes" : ""}`}>
@@ -203,7 +203,7 @@ export function Hero({ themeToggle, demo, ctas, notice, children, footer, action
           <div className="lp-hero__copy">
             {notice}
             <h1 id="lp-hero-title" className="lp-hero__title">
-              Read anything. <span className="lp-hero__mark">Understand all of it.</span>
+              Consume anything. <span className="lp-hero__mark">Understand all of it.</span>
             </h1>
             <p className="lp-hero__sub">
               Gloss explains the parts you'd miss, in words you already know, without changing a word of the original.

@@ -143,7 +143,7 @@ describe("/v2 concept landing", () => {
   it("/ still renders the current landing, unchanged", async () => {
     window.history.replaceState(null, "", "/");
     await render(<LandingRoute url={new URL("http://localhost/")} />);
-    expect(text()).toContain("Read anything.");
+    expect(text()).toContain("Consume anything.");
     expect(text()).toContain("Try the demo");
     expect(text()).not.toContain("Your shape");
     expect(document.head.querySelector('meta[name="robots"]')).toBeNull();

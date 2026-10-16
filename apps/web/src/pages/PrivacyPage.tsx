@@ -20,7 +20,7 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
       "Your start: the field you chose and your topics, including topics we matched from anything you typed. Never the text you typed.",
       "The country you chose, to mix in news from there. It picks which news outlets count as local for you, and gives a few terms common there (like RBI or SEBI in India) a small head start on your map; it is never sent to the AI or to web search.",
       "What you do (your field) sets a starting level for that field's topics on your map, and how you like to take things in (read, watch, listen) orders your suggestions. Both are kept with your account.",
-      "While you set up: the cards we showed you and which you marked “I'd read this” or “Not for me” (these shape your feed only), and your Quick check answers about a few terms (these are your own word, so they stay as evidence on your map). The card list is cleared when you start reading.",
+      "While you set up: the cards we showed you and which you marked “I'd read this” or “Not for me” (these shape your feed only), and your Quick check answers about a few terms (these are your own word, so they stay as evidence on your map). The card list is cleared when you finish setting up.",
     ],
   },
   {
@@ -28,18 +28,18 @@ const GROUPS: { id: string; title: string; items: string[] }[] = [
     title: "What the notes learn",
     items: [
       "Your knowledge map: for each idea, how likely you are to know it and the evidence that moved it.",
-      "For each topic, a reading level and how interested you are.",
+      "For each topic, a knowledge level and how interested you are.",
       "Changes you asked for on your profile: what changed, never the words you typed.",
     ],
   },
   {
     id: "pv-reading",
-    title: "Your reading",
+    title: "What you consume",
     items: [
-      "Reading events: notes you opened, skipped or marked, and time spent on paragraphs (as word counts, never the text). Deleted automatically after 90 days.",
+      "Activity events: notes you opened, skipped or marked, and time spent on paragraphs (as word counts, never the text). Deleted automatically after 90 days.",
       "Weekly totals: words read, notes shown and the articles they came from.",
       "What you opened or dismissed in your feed, your saved articles and the pages you brought in.",
-      "Reading goals: their type, numbers and target topics, never the goal as you wrote it.",
+      "Goals: their type, numbers and target topics, never the goal as you wrote it.",
       "Daily counters that keep usage within limits (links added, videos opened, explanations made, edits, goals, onboarding matches).",
     ],
   },
@@ -107,8 +107,8 @@ export default function PrivacyPage() {
           <h2 id="pv-ai">What the AI sees</h2>
           <ul>
             <li>
-              Only the paragraph it explains, a reading level and your analogy style. Never who you are or what else you've
-              read.
+              Only the paragraph it explains, a knowledge level and your analogy style. Never who you are or what else you've
+              opened.
             </li>
             <li>
               Anything you type at the start is matched to topics by our model and isn't stored. Before that, emails and

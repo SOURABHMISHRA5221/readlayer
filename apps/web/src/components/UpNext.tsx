@@ -129,7 +129,7 @@ export function UpNext({ contentId, persona }: { contentId: string; persona: Per
       {load.status === "loading" && <UpNextSkeleton />}
       {load.status === "error" && (
         <p className="upnext__note" role="status">
-          Suggestions aren't available right now. The library has plenty more to read.
+          Suggestions aren't available right now. The library has plenty more to consume.
         </p>
       )}
       {load.status === "ready" && items.length === 0 && !load.pending && (

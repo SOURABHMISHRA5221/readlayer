@@ -29,7 +29,7 @@ export function ProgressBar({ target }: { target: RefObject<HTMLElement | null> 
     };
   }, [target]);
   return (
-    <div className="progress" role="progressbar" aria-label="Reading progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={0}>
+    <div className="progress" role="progressbar" aria-label="Progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={0}>
       <div className="progress__fill" ref={bar} />
     </div>
   );

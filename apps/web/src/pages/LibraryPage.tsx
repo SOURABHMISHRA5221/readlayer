@@ -39,7 +39,7 @@ export function LibraryPage({ url }: { url: URL }) {
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
-    document.title = "Gloss · Read anything. Understand it your way.";
+    document.title = "Gloss · Consume anything. Understand it your way.";
   }, []);
 
   const go = useCallback(
@@ -248,7 +248,7 @@ export function LibraryPage({ url }: { url: URL }) {
                       )
                     }
                   >
-                    {filtered ? "Try a broader word, another topic, or all sources." : "Paste any link to read it here."}
+                    {filtered ? "Try a broader word, another topic, or all sources." : "Paste any link to open it here."}
                   </StateView>
                 )}
                 <ul className="rows">

@@ -6,7 +6,7 @@ describe("profile wording", () => {
   it("turns evidence into plain language with a date", () => {
     expect(evidenceText("explain_opened", "2026-10-03T10:00:00Z")).toBe("You opened an explanation · 3 Oct");
     expect(evidenceText("seed", "2026-10-01T10:00:00Z")).toMatch(/^Part of this sample consumer's starting point/);
-    expect(evidenceText("something_new", "2026-10-01T10:00:00Z")).toMatch(/^Reading activity/);
+    expect(evidenceText("something_new", "2026-10-01T10:00:00Z")).toMatch(/^Activity/);
   });
 
   it("maps ability onto a fixed −2..2 scale and words", () => {

@@ -80,10 +80,10 @@ export function Recap({ contentId, persona, before, labels, answers }: Props) {
       </div>
       <p className="recap__lede" aria-live="polite">
         {rows === null
-          ? "Your map updates as you read."
+          ? "Your map updates as you consume content."
           : nothing
             ? "Nothing moved on your map this time. Open a note or answer a Know this? and it will."
-            : "Your map updated as you read. Undo anything that looks wrong."}
+            : "Your map updated as you consumed this. Undo anything that looks wrong."}
       </p>
       {(moves.length > 0 || unknown.length > 0) && (
         <ul className="recap__moves">

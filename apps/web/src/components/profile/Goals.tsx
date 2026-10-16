@@ -45,10 +45,10 @@ export function Goals({ demo, refreshKey, onGoals, onShowOnMap }: Props) {
   return (
     <section className="goals" aria-labelledby="goals-title">
       <h2 id="goals-title" className="profile__h2">
-        Reading goals
+        Goals
       </h2>
       {demo ? (
-        <p className="profile__note">Sign in with Google to set reading goals.</p>
+        <p className="profile__note">Sign in with Google to set goals.</p>
       ) : (
         <>
           {failed && <p className="profile__note" role="status">Your goals didn't load. Try again in a moment.</p>}
@@ -64,7 +64,7 @@ export function Goals({ demo, refreshKey, onGoals, onShowOnMap }: Props) {
                     <span className="goals__value">{progressText(g)}</span>
                   </div>
                   <progress className="goals__bar" max={1} value={g.fraction} aria-label={`${g.label}: ${progressText(g)}`} />
-                  {g.paused && <p className="profile__note">Learning is paused, so reading isn't counting.</p>}
+                  {g.paused && <p className="profile__note">Learning is paused, so nothing you consume counts.</p>}
                   <div className="goals__actions">
                     {g.type === "learning" && (
                       <button type="button" className="btn btn--sm" onClick={() => onShowOnMap(g)}>
@@ -152,7 +152,7 @@ function AddGoal({ onAdded }: { onAdded: () => void }) {
   return (
     <div className="goals__add">
       <form className="goals__form" onSubmit={addHabit}>
-        <span className="goals__form-title">Read a little every week</span>
+        <span className="goals__form-title">Learn a little every week</span>
         <label htmlFor={`${id}-n`} className="visually-hidden">How many</label>
         <input id={`${id}-n`} className="goals__num" type="number" min={1} max={600} value={perWeek}
           onChange={(e) => setPerWeek(Number(e.target.value))} />

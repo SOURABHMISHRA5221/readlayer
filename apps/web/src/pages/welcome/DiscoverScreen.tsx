@@ -52,7 +52,7 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
         if (ctrl.signal.aborted) return;
         setPending(false);
         setItems((cur) => cur ?? []);
-        setError("We couldn't load results. You can start reading anyway.");
+        setError("We couldn't load results. You can start anyway.");
       }
     };
     void ask();
@@ -92,7 +92,7 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
       <MargoSays mood={loading ? "think" : line ? "happy" : "idle"}>
         {loading
           ? "Looking around the web for you…"
-          : line ?? `Tell me what you'd read. ${READBACK_AFTER - Math.min(count, READBACK_AFTER)} more answers and I'll sum you up.`}
+          : line ?? `Tell me what you'd open. ${READBACK_AFTER - Math.min(count, READBACK_AFTER)} more answers and I'll sum you up.`}
       </MargoSays>
       <h1 id="welcome-title" className="welcome__title" ref={heading} tabIndex={-1}>
         Here's what's out there for you
@@ -113,7 +113,7 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
             ))}
           </ul>
         ) : items.length === 0 ? (
-          <p className="welcome__lede">Nothing new turned up just now. Your feed will fill in as you read.</p>
+          <p className="welcome__lede">Nothing new turned up just now. Your feed will fill in as you consume content.</p>
         ) : (
           <ul className="discover">
             {items.map((item) => (
@@ -137,7 +137,7 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
           </button>
         )}
         <button type="button" className="btn btn--primary" disabled={finishing} onClick={() => void finish()}>
-          Start reading
+          Start exploring
         </button>
       </div>
     </section>
@@ -197,7 +197,7 @@ function Card({ item, answers, onPick }: CardProps) {
         </a>
       </h2>
       {item.snippet && <p className="discover-card__snippet">{item.snippet}</p>}
-      <div className="discover-card__answers" role="group" aria-label={`Would you read “${item.title}”?`}>
+      <div className="discover-card__answers" role="group" aria-label={`Would you ${FORMAT_VERB[item.format].toLowerCase()} “${item.title}”?`}>
         <button type="button" className="answer" aria-pressed={liked === true} aria-disabled={liked !== undefined} onClick={() => liked === undefined && onPick(item, true)}>
           {LIKE_LABEL[item.format]}
         </button>

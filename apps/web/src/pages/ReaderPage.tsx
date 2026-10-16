@@ -359,7 +359,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
             {analysis.status === "running" && (
               <PreparingNotice
                 since={analysis.since}
-                text={media ? "Reading the transcript and preparing your notes…" : "Reading the article and preparing your notes…"}
+                text={media ? "Reading the transcript and preparing your notes…" : "Reading the article and preparing your notes…"} // wording-ok: Gloss itself reads the page
               />
             )}
             {analysis.status === "failed" && (

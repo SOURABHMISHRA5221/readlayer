@@ -5,7 +5,7 @@
   <img src="docs/images/wordmark-light.png" alt="Gloss" width="200">
 </picture>
 
-### Read anything. Understand it your way.
+### Consume anything. Understand it your way.
 
 <sub>Gloss was called ReadLayer until the Design pass; the repository, the API and internal ids keep the old name.</sub>
 
@@ -37,7 +37,7 @@ Every article, video and podcast is made once, for an imagined average reader. R
 
 - **Content is immutable.**
 - **No LLM on the per-reader scoring path.**
-- **Privacy by default:** no reader identity or reading history goes to models or search.
+- **Privacy by default:** no identity or record of what you consume goes to models or search.
 - **Restraint over noise.**
 
 <!-- The stills below are the landing page's own (apps/web/public/landing/). If the landing renames
@@ -62,12 +62,12 @@ Every article, video and podcast is made once, for an imagined average reader. R
 | **Notes in your own frame** | Each note has two labelled parts: **Background**, using analogies from the reader's own field, and **What the author is saying**, a restatement that keeps the source's hedges, attribution, numbers and negations. Both pass a faithfulness check before they're shown. |
 | **Paragraph notes and pre-read** | A paragraph that assumes a lot gets a marker with a short explainer; a page that leans on ideas the reader lacks opens with a pre-read of what to know first. "Know this?" prompts check a single term. |
 | **Reader knowledge graph** | Each reader has a graph of what they know: Beta-distributed confidence per concept, ability per domain, and forgetting with a 90-day half-life. "Knew this" removes a note on the next load and nudges related concepts; "This is wrong" removes a bad explanation for everyone. |
-| **Onboarding and reading profile** | Two short screens: your field and the topics you follow (in your own words too, if you like), then real articles, videos and podcasts to like or skip (taste only), plus an optional quick check on a few terms; your field and country set a starting level, and read / watch / listen orders your suggestions. The profile shows your knowledge map, which you can correct in plain words ("I know options trading well"; you see the change before it applies), plus reading goals and a weekly view. |
+| **Onboarding and profile** | Two short screens: your field and the topics you follow (in your own words too, if you like), then real articles, videos and podcasts to like or skip (taste only), plus an optional quick check on a few terms; your field and country set a starting level, and read / watch / listen orders your suggestions. The profile shows your knowledge map, which you can correct in plain words ("I know options trading well"; you see the change before it applies), plus goals and a weekly view. |
 | **For you, with readiness** | A feed picked for your topics from top outlets, refreshed twice a day (demo readers see a prepared snapshot), with a line per pick from your own map: "Mostly familiar", "Ready for you", or "A stretch: read up on X first". |
-| **Read any link, any format** | Paste an article, a YouTube video (up to 10 minutes) or an Apple Podcasts episode (up to 12): it opens with notes. Videos and podcasts get a transcript with a time button on each paragraph. Longer ones open where they play. |
+| **Open any link, any format** | Paste an article, a YouTube video (up to 10 minutes) or an Apple Podcasts episode (up to 12): it opens with notes. Videos and podcasts get a transcript with a time button on each paragraph. Longer ones open where they play. |
 | **Up next** | What to read, watch or listen to next: library articles (the same story elsewhere, primers for a weak prerequisite, deeper reads), plus web articles and podcasts (Tavily) and videos (YouTube Data API). |
 | **Chrome extension** | The same notes on any news page, at your click only; on a YouTube video it opens the video in Gloss. See [Install the extension](#install-the-extension). |
-| **Privacy and data rights** | No user identifiers or reading history ever reach a model or a search provider. Export everything we hold, or delete it along with the account, from the account menu. |
+| **Privacy and data rights** | No user identifiers or record of what people consume ever reach a model or a search provider. Export everything we hold, or delete it along with the account, from the account menu. |
 | **Accessibility** | Keyboard-reachable notes with ARIA roles and a focus trap, a sheet on phones, light and dark themes, and axe finds no serious or critical issues on the library, reader and profile (after the redesign, Oct 11). |
 
 ## Screenshots
@@ -199,7 +199,7 @@ Every model call goes through one module, [`app/llm.py`](apps/api/app/llm.py), b
 
 <sub>The landing page's illustrations were made once, offline, with an image model (`landing_art`); no image model runs in the product.</sub>
 
-**Where we deliberately use no model:** the per-reader scoring path behind every page view, the library and feed lists, recommendation ranking, readiness lines and the reading-profile summary. These are deterministic, so they are fast, cheap and testable, and the same input always gives the same result.
+**Where we deliberately use no model:** the per-reader scoring path behind every page view, the library and feed lists, recommendation ranking, readiness lines and the profile summary. These are deterministic, so they are fast, cheap and testable, and the same input always gives the same result.
 
 ## Evaluation
 
@@ -223,7 +223,7 @@ Each number comes from [docs/STATUS.md](docs/STATUS.md) or a report in [`apps/ap
 - **The author's words are never changed.** Notes are an overlay anchored to exact quotes in the text; nothing is rewritten or summarised, and each note is labelled as an explanation, not the author's words.
 - **Every explanation is verified.** It must pass deterministic checks (numbers, hedges, attribution and negations preserved) and a Gemini entailment judge before it is shown or cached; otherwise the note falls back to the plain definition. A reader's "This is wrong" removes it from the cache.
 - **Page text is untrusted.** It goes to models inside delimiters, models get no tools, and every response is validated against a schema.
-- **No personal data in prompts or searches.** Models get page and concept content and, for profile edits, goals and onboarding, the reader's own words with emails, phone and card numbers removed first; never user ids, emails or reading history. Search providers get concept and topic labels (and fixed phrases), never anything the reader typed; a pasted video or podcast link is looked up by its id. This is covered by tests. Logs carry a pseudonymous hash instead of a user id.
+- **No personal data in prompts or searches.** Models get page and concept content and, for profile edits, goals and onboarding, the reader's own words with emails, phone and card numbers removed first; never user ids, emails or what they consume. Search providers get concept and topic labels (and fixed phrases) and, for the end-of-article story, a library article's own title (never a page a reader brought in), never anything the reader typed; a pasted video or podcast link is looked up by its id. This is covered by tests. Logs carry a pseudonymous hash instead of a user id.
 - **Transcripts** are made from the public recording only, with nothing about the reader. They are made automatically and can contain errors; the recording is the source.
 - **Your data, your call.** Export everything we hold as JSON, or delete it together with the account. Raw interaction events expire after 90 days, and Firestore rules deny all direct client access.
 - **Safe fetching.** Every user-supplied URL goes through `safe_fetch`. It allows only http and https on ports 80 and 443, rejects private, loopback, link-local and metadata addresses and re-checks them after every redirect, enforces a 10-second timeout and a 3 MB cap, and respects robots.txt.

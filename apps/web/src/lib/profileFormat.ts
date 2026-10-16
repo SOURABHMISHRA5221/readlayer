@@ -11,7 +11,7 @@ const EVIDENCE: Record<string, string> = {
   correction: "You corrected it yourself",
   calibration_answer: "You answered a quick check",
   liked_article_mention: "It was in an article you liked",
-  home_country: "Common where you read from",
+  home_country: "Common where you're based",
   profile_edit_concept: "From your profile edit",
   profile_edit_domain: "From your profile edit",
   report_wrong: "You reported an explanation",
@@ -19,7 +19,7 @@ const EVIDENCE: Record<string, string> = {
 };
 
 export function evidenceText(type: string, at: string, locale = "en-GB"): string {
-  const what = EVIDENCE[type] ?? "Reading activity";
+  const what = EVIDENCE[type] ?? "Activity";
   const when = new Date(at).toLocaleDateString(locale, { day: "numeric", month: "short" });
   return `${what} · ${when}`;
 }

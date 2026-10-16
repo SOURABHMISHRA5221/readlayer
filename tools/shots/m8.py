@@ -395,7 +395,7 @@ async def finish_onboarding(h: Harness) -> None:
     await h.p.click_text("button", "Continue", 1)
     await h.p.wait_for(".discover-card:not(.discover-card--ghost)", 90)
     await asyncio.sleep(1)
-    await h.p.click_text("button", "Start reading", 4)
+    await h.p.click_text("button", "Start exploring", 4)
 
 
 async def main() -> None:
