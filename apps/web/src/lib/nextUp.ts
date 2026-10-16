@@ -1,12 +1,14 @@
 import type { NextUpChip } from "@readlayer/annotator";
 
-import { api, type RecItem } from "./api";
+import { api, ApiError, type RecItem } from "./api";
 import type { PersonaKey } from "./personas";
 import { recHref } from "./openRec";
 
 /** Decision 67 N3: the card's "Up next" chips come from the article's key ideas. */
 export const NEXT_UP_POLL_MS = 1500;
 export const NEXT_UP_MAX_POLLS = 8;
+/** A 409 (the page still being analysed) is asked once more after this (decision 68 B). */
+export const NEXT_UP_PENDING_RETRY_MS = 3000;
 
 export function toChips(items: readonly RecItem[], persona: PersonaKey | null, fromId: string): NextUpChip[] {
   return items.slice(0, 3).map((item) => ({
@@ -30,6 +32,7 @@ export function loadNextUp(
 ): () => void {
   const ctrl = new AbortController();
   let polls = 0;
+  let retried = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const once = () => {
     api
@@ -38,7 +41,13 @@ export function loadNextUp(
         onItems(data.items);
         if (data.pending && polls++ < NEXT_UP_MAX_POLLS) timer = setTimeout(once, NEXT_UP_POLL_MS);
       })
-      .catch(() => undefined); // no chips: the card simply has none
+      .catch((error: unknown) => {
+        // Still being analysed: one more try; anything else means no chips for this page.
+        if (error instanceof ApiError && error.kind === "pending" && !retried && !ctrl.signal.aborted) {
+          retried = true;
+          timer = setTimeout(once, NEXT_UP_PENDING_RETRY_MS);
+        }
+      });
   };
   once();
   return () => {
