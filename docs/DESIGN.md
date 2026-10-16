@@ -200,6 +200,13 @@ personas stay curated on the original four.
   request from the reader page, so the article shows in seconds; POST /v1/content and the scripts
   run both back to back through the same pending doc and lease. A URL that is pending counts as
   known everywhere: no second fetch and no second ingest slot.
+- **Warm on open (decision 69 C).** LiteLLM and spaCy load lazily (startup stays lean, min
+  instances 1 only during judging). Phase 1 (`fetch_and_extract`, `store_submitted`) starts
+  `app/warm.py` in a thread without waiting, so the imports overlap the fetch; `analyse_pending`
+  awaits it in a thread inside its lease (the 30 s margin covers it). Run once per process, no model call. Measured before:
+  the first analysis on an instance waited 11–17 s before its first model call, later ones
+  < 0.5 s. `content ingested` logs `parse_ms`, `extract_ms`, `link_ms`, `grow_ms`; `llm embed`
+  logs `latency_ms` and `attempts`.
 - **Growth on a stored page (M9, §2).** `contents/` carries `grow_pending` (true when the caps cut
   growth short; absent on pages stored before M9), `grow_tried` (normalised labels already tried)
   and, while a reopen grows it, `grow_token` and `growing_until` (a random token, no reader data).
@@ -509,7 +516,14 @@ prefetched); `warm_demo --shifts` warms them for the demo articles.
 sets a structured task's Gemini 3 thinking level over its route's; `transcribe` keeps its own.
 Measured on the safety suite (`evals/changelog.md`): drafts at low were 2 s faster at p50 and a
 third cheaper but lost one verified card of 25 and raised p95. Served (Sourabh's call, 2026-10-16):
-`restate` and `explain` at low, the two judges at the model default.
+`restate` and `explain` at low, the two judges at the model default. `link_confirm` (decision 69
+D, fresh runs, `evals/results/*d69-*`): low made calls ~4× faster (median 3.5 s vs 14.0 s, p90
+4.0 s vs 89.0 s per eval batch; the default run had 3 of 22 calls fall back after timeouts, low
+none) and variant precision 0.862 vs 0.843, but passed 14/16 regression cases vs 15/16 (L04, a
+paraphrase, left unlinked rather than mislinked); the pre-set rule
+(passes ≥ default's) was not met, and Sourabh overrode it ("yes", 2026-10-17): **`link_confirm`
+runs at low** — for article linking, growth, goals, profile edits, onboarding terms and the
+jurisdiction backfill; goals and onboarding checked at both levels (`evals/resolve_effort.py`: 21/21 agreement in the saved run, 18/20 in an earlier unsaved one; STATUS §37). Eval answers are cached per thinking level when one is set.
 
 **Prefetch (decision 67 L3).** The web host prefetches the top 3 span notes when a page's notes
 arrive; for signed-in consumers only, a span note whose mark comes within one screen of the
@@ -1475,6 +1489,11 @@ see (R10).
   project (`firebase.json` targets `gloss` and `app`, identical config); `make deploy-web` deploys
   both. CORS allows both sites on both domains and the extension, nothing else (a test reads
   `.firebaserc` and `deploy.env.yaml`). Sign-in state is per address.
+- **Fresh after a deploy (decision 69 E).** Pages, `/index.html` and `/theme-init.js` are served
+  `Cache-Control: no-cache` (revalidated on every load); Vite's hashed `/assets/**` are
+  `immutable` for a year; `/fonts/**` keep theirs. The SPA rewrite is `^/[^.]*$` (routes have no
+  dot), so a missing old chunk is a 404, never `index.html`. Hosting regexes are RE2 (no
+  lookaround); `test/hosting.test.ts` guards both.
 - **Sign-in names Gloss.** On `glossreader.web.app` the Firebase `authDomain` is that host, so the
   popup runs through its own `/__/auth/handler` and Google's chooser names it (`lib/sites.ts`
   `authDomainFor`); every other host keeps the built `authDomain`.

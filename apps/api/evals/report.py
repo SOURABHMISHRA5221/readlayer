@@ -96,6 +96,7 @@ def _pipeline_latency(s: dict[str, Any]) -> str:
 # The served thinking levels (deploy.env.yaml LLM_REASONING_EFFORT; a test keeps them equal).
 SERVED_EFFORT: dict[str, str | None] = {
     "restate": "low", "explain": "low", "verify": None, "verify_background": None,
+    "link_confirm": "low",  # decision 69 D, Sourabh's call over the eval rule
 }  # fmt: skip
 
 

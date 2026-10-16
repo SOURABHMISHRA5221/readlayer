@@ -1,8 +1,8 @@
 """On-disk cache for the concept build, so a crash or rerun doesn't pay for the same calls twice.
 
-LLM outputs are keyed by (task, prompt version, prompt vars); embeddings by (model, dim, task
-type, text). Cached LLM entries keep their original cost so the report can show the full build
-cost, not just this run's.
+LLM outputs are keyed by (task, prompt version, prompt vars, and the thinking level when set);
+embeddings by (model, dim, task type, text). Cached LLM entries keep their original cost so the
+report can show the full build cost, not just this run's.
 """
 
 import hashlib
@@ -50,10 +50,18 @@ class BuildCache:
 
     # ---------------------------------------------------------------- LLM
 
-    @staticmethod
-    def _llm_key(task: str, prompt_vars: dict[str, Any]) -> str:
+    def _llm_key(self, task: str, prompt_vars: dict[str, Any]) -> str:
+        """The thinking level joins the key only when one is set (decision 69 D), so answers
+        cached at the default stay valid and a low-effort eval never replays them."""
         version = llm.load_prompt(task).version
-        return _key(task, version, json.dumps(prompt_vars, sort_keys=True))
+        parts = [task, version, json.dumps(prompt_vars, sort_keys=True)]
+        route = llm.ROUTES.get(task)
+        effort = self.settings.llm_reasoning_effort.get(
+            task, route.reasoning_effort if route else None
+        )
+        if effort:
+            parts.append(f"effort={effort}")
+        return _key(*parts)
 
     def has(self, task: str, prompt_vars: dict[str, Any]) -> bool:
         """True when this exact call is cached with a non-fallback answer (it will cost $0)."""

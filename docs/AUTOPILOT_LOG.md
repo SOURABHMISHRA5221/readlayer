@@ -2236,3 +2236,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 ### Next steps (resume here, in order)
 1. Sourabh: try onboarding with a new Google account (the six-row Quick check) and the chips on a fresh link.
 2. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.
+- Decision 69 (Sourabh's fresh-account findings: slow first notes, Up next on new terms, a map of
+  prior guesses; delete checked read-only and fine). Plan `docs/plans/honest-map-speed.md`
+  (plan-reviewer REVISE 11 → REVISE 2 → APPROVE). PR 1 `d69-speed` built: hosting headers, warm on
+  open, timing logs, eval cache key; `link_confirm` low ran and missed the pre-set rule (14/16 vs
+  15/16); Sourabh overrode it ("yes") → `link_confirm` at low in deploy.env.yaml. API 1303, web 285.
+
+### Next steps (resume here, in order)
+1. PR 1: milestone-reviewer → PR → CI → merge → `make deploy-api` (yes) → `make deploy-web` (yes)
+   → live: headers by `curl -I`, a first analysis on a new instance < 2 s before its first model call.
+2. PR 2 `d69-map-story` (A, then B1, B2) per the plan; checkpoint 12:00 IST; last deploy 18:00.
+3. Video re-record after PR 2; `/v2` removal, gitleaks, deck link, submit.

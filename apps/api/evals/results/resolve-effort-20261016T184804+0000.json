@@ -1,0 +1,141 @@
+{
+ "time": "2026-10-16T18:48:04+00:00",
+ "graph": "2026-10-04",
+ "default": {
+  "effort": "default",
+  "picks": {
+   "bond yields": "c_bond_yields",
+   "venture capital": "c_venture_capital",
+   "central bank independence": "c_central_bank_independence",
+   "supply chain resilience": "c_supply_chain_resilience",
+   "quantitative easing": "c_quantitative_easing",
+   "price to earnings ratio": "c_price_to_earnings_ratio",
+   "fiscal deficit": "c_fiscal_deficit",
+   "credit scores": "c_credit_score",
+   "mergers and acquisitions": "c_m_a",
+   "monetary policy transmission": "c_monetary_policy_transmission",
+   "index funds": "c_index_fund",
+   "how inflation works": "c_inflation",
+   "startup funding rounds": "c_funding_round",
+   "interest rate cuts": "c_interest_rates",
+   "trade tariffs": "c_tariffs",
+   "gdp growth": "c_real_gdp_growth",
+   "mutual funds": "c_mutual_funds",
+   "unemployment": "c_unemployment_rate",
+   "airline mergers": "c_merger",
+   "inflation in india": "c_inflation",
+   "court cases": "c_litigation"
+  },
+  "calls": [
+   {
+    "task": "link_confirm",
+    "model": "vertex_ai/gemini-3.8-flash",
+    "prompt_version": "link_confirm-v3",
+    "tokens_in": 2684,
+    "tokens_out": 240,
+    "cost_usd": 0.002913,
+    "latency_ms": 9613.3,
+    "fell_back": false,
+    "attempts": 1
+   },
+   {
+    "task": "link_confirm",
+    "model": "vertex_ai/gemini-3.8-flash",
+    "prompt_version": "link_confirm-v3",
+    "tokens_in": 1770,
+    "tokens_out": 726,
+    "cost_usd": 0.00405,
+    "latency_ms": 6961.4,
+    "fell_back": false,
+    "attempts": 1
+   },
+   {
+    "task": "link_confirm",
+    "model": "vertex_ai/gemini-3.8-flash",
+    "prompt_version": "link_confirm-v3",
+    "tokens_in": 2875,
+    "tokens_out": 1908,
+    "cost_usd": 0.00931125,
+    "latency_ms": 15318.5,
+    "fell_back": false,
+    "attempts": 1
+   }
+  ],
+  "cost_usd": 0.0163
+ },
+ "low": {
+  "effort": "low",
+  "picks": {
+   "bond yields": "c_bond_yields",
+   "venture capital": "c_venture_capital",
+   "central bank independence": "c_central_bank_independence",
+   "supply chain resilience": "c_supply_chain_resilience",
+   "quantitative easing": "c_quantitative_easing",
+   "price to earnings ratio": "c_price_to_earnings_ratio",
+   "fiscal deficit": "c_fiscal_deficit",
+   "credit scores": "c_credit_score",
+   "mergers and acquisitions": "c_m_a",
+   "monetary policy transmission": "c_monetary_policy_transmission",
+   "index funds": "c_index_fund",
+   "how inflation works": "c_inflation",
+   "startup funding rounds": "c_funding_round",
+   "interest rate cuts": "c_interest_rates",
+   "trade tariffs": "c_tariffs",
+   "gdp growth": "c_real_gdp_growth",
+   "mutual funds": "c_mutual_funds",
+   "unemployment": "c_unemployment_rate",
+   "airline mergers": "c_merger",
+   "inflation in india": "c_inflation",
+   "gst rules": "c_gst",
+   "court cases": "c_litigation"
+  },
+  "calls": [
+   {
+    "task": "link_confirm",
+    "model": "vertex_ai/gemini-3.8-flash",
+    "prompt_version": "link_confirm-v3",
+    "tokens_in": 2684,
+    "tokens_out": 240,
+    "cost_usd": 0.002913,
+    "latency_ms": 3420.1,
+    "fell_back": false,
+    "attempts": 1
+   },
+   {
+    "task": "link_confirm",
+    "model": "vertex_ai/gemini-3.8-flash",
+    "prompt_version": "link_confirm-v3",
+    "tokens_in": 1770,
+    "tokens_out": 193,
+    "cost_usd": 0.00205125,
+    "latency_ms": 2498.0,
+    "fell_back": false,
+    "attempts": 1
+   },
+   {
+    "task": "link_confirm",
+    "model": "vertex_ai/gemini-3.8-flash",
+    "prompt_version": "link_confirm-v3",
+    "tokens_in": 2875,
+    "tokens_out": 245,
+    "cost_usd": 0.003075,
+    "latency_ms": 3217.3,
+    "fell_back": false,
+    "attempts": 1
+   }
+  ],
+  "cost_usd": 0.008
+ },
+ "agreement": {
+  "agree": 21,
+  "of": 21,
+  "share": 1.0
+ },
+ "differences": {
+  "gst rules": [
+   null,
+   "c_gst"
+  ]
+ },
+ "passed": true
+}

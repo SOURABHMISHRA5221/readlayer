@@ -1,0 +1,270 @@
+{
+ "meta": {
+  "time": "2026-10-16T18:35:05+00:00",
+  "graph": "2026-10-04",
+  "prompts": {
+   "link_confirm": "link_confirm-v3",
+   "link_merge": "link_merge-v2"
+  },
+  "link_threshold": 0.865,
+  "cost_usd": 0.1134,
+  "cost_cached_usd": 0.0,
+  "fallbacks": 3,
+  "calls": 22,
+  "link_confirm_effort": "default",
+  "link_confirm_latency_ms": {
+   "median": 13971.3,
+   "p90": 88957.3,
+   "max": 138311.4
+  },
+  "label": "d69-default"
+ },
+ "link_confirm": [
+  {
+   "id": "L01",
+   "pick": "c_chancellor_of_the_exchequer",
+   "expect": [
+    "c_chancellor_of_the_exchequer"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L02",
+   "pick": "c_chancellor_of_the_exchequer",
+   "expect": [
+    "c_chancellor_of_the_exchequer"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L03",
+   "pick": null,
+   "expect": [],
+   "passed": true
+  },
+  {
+   "id": "L04",
+   "pick": "c_market_access",
+   "expect": [
+    "c_preferential_tariffs",
+    "c_market_access"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L05",
+   "pick": null,
+   "expect": [
+    "c_ftse_russell"
+   ],
+   "passed": false
+  },
+  {
+   "id": "L06",
+   "pick": "c_ftse_russell",
+   "expect": [
+    "c_ftse_russell"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L07",
+   "pick": "c_energy_levy",
+   "expect": [
+    "c_energy_levy"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L08",
+   "pick": "c_repo_rate",
+   "expect": [
+    "c_repo_rate"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L09",
+   "pick": "c_bond_yields",
+   "expect": [
+    "c_bond_yields"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L10",
+   "pick": "c_inflation",
+   "expect": [
+    "c_inflation"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L11",
+   "pick": "c_gst",
+   "expect": [
+    "c_gst"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L12",
+   "pick": "c_s_p_500",
+   "expect": [
+    "c_s_p_500"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L13",
+   "pick": "c_duck_cricket",
+   "expect": [
+    "c_duck_cricket"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L14",
+   "pick": "c_leg_before_wicket",
+   "expect": [
+    "c_leg_before_wicket"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L15",
+   "pick": "c_hypertension",
+   "expect": [
+    "c_hypertension"
+   ],
+   "passed": true
+  },
+  {
+   "id": "L16",
+   "pick": null,
+   "expect": [],
+   "passed": true
+  }
+ ],
+ "variants": {
+  "correct": 75,
+  "wrong": 14,
+  "none": 61,
+  "n": 150,
+  "missing": 0,
+  "precision": 0.8427
+ },
+ "merges": {
+  "n": 100,
+  "agree_with_m2": 74,
+  "answers": [
+   false,
+   true,
+   true,
+   false,
+   false,
+   false,
+   true,
+   false,
+   true,
+   true,
+   true,
+   true,
+   true,
+   false,
+   true,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   true,
+   false,
+   true,
+   true,
+   true,
+   false,
+   false,
+   true,
+   true,
+   false,
+   true,
+   true,
+   true,
+   false,
+   false,
+   false,
+   false,
+   true,
+   true,
+   false,
+   false,
+   false,
+   true,
+   true,
+   true,
+   false,
+   true,
+   false,
+   true,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   true,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false,
+   false
+  ]
+ },
+ "summary": {
+  "link_confirm_passed": 15,
+  "link_confirm_total": 16,
+  "variant_precision": 0.8427,
+  "merge_agreement": 74,
+  "merge_total": 100
+ }
+}

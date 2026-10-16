@@ -80,6 +80,15 @@ def _isolate(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture(autouse=True)
+def _no_warm_up(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Opening a link warms LiteLLM and spaCy in a thread (decision 69 C); only
+    tests/test_warm.py runs the real one, so ingest tests never import them early."""
+    from app import warm
+
+    monkeypatch.setattr(warm, "warm", lambda: None)
+
+
+@pytest.fixture(autouse=True)
 def docs() -> InMemoryDocStore:
     """Per-user state in memory and a fake Firebase token verifier for every test."""
     store = InMemoryDocStore()

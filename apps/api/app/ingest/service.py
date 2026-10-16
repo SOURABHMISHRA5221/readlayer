@@ -17,7 +17,7 @@ import time
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
-from app import llm
+from app import llm, warm
 from app.config import get_settings
 from app.graph.heldout import is_heldout
 from app.graph.linking import link_demands
@@ -94,6 +94,7 @@ async def store_submitted(content_id: str, url: str, title: str, texts: list[str
     """Phase 1 for extension text (no fetch, no LLM): the pending doc under its `ext:` id, or the
     one another request stored first."""
     host = fetch.validate_url(url).host
+    warm.start()  # notes follow: load LiteLLM and spaCy now, off the reader's wait (decision 69)
     return await _store_pending(
         content_id, url, normalize_url(url), title.strip() or host, host, texts, "extension"
     )  # fmt: skip
@@ -103,6 +104,7 @@ async def fetch_and_extract(url: str, source: Source = "fetch") -> PendingDoc:
     """Phase 1: safe_fetch, extraction and paragraph ids; no LLM call. Stores the pending doc
     (or returns the one another request stored first)."""
     fetch.validate_url(url)
+    warm.start()  # overlaps the fetch; analysis waits for it (decision 69)
     started = time.perf_counter()
     page = await fetch.safe_fetch(url)
     fetched = time.perf_counter()
@@ -147,6 +149,9 @@ async def analyse_pending(content_id: str, reserve: Reserver | None = None) -> C
     if status == "exhausted":
         raise AnalysisFailed(content_id)
     try:
+        # Usually done during phase 1; a new instance waits here, off the event loop, inside the
+        # lease (its margin covers the import) so busy and missing replies never wait for it.
+        await warm.ready()
         deadline = asyncio.get_running_loop().time() + settings.analyse_timeout_s
         async with asyncio.timeout(settings.analyse_timeout_s):
             doc = await _analyse(pending, deadline, reserve)
@@ -267,8 +272,11 @@ async def _analyse(
     pending: PendingDoc, deadline: float = float("inf"), reserve: Reserver | None = None
 ) -> ContentDoc:
     paragraphs = _paragraphs(pending)
+    t0 = time.perf_counter()
     parse_scores = await asyncio.to_thread(lambda: [parse_structure(p.text) for p in paragraphs])
+    t1 = time.perf_counter()
     result = await extract_demands(paragraphs)
+    t2 = time.perf_counter()
     demands, _ = await link_demands(
         get_graph(),
         result.demands,
@@ -277,7 +285,9 @@ async def _analyse(
         site=pending.site,
         url=pending.final_url,
     )
+    t3 = time.perf_counter()
     grown = await _grow(pending, demands, paragraphs, deadline, reserve)
+    t4 = time.perf_counter()
     demands = grown.demands
     doc = ContentDoc(
         content_id=pending.content_id,
@@ -319,6 +329,11 @@ async def _analyse(
             "demands_dropped": result.dropped,
             "cost_usd": round(sum(c.cost_usd for c in result.calls), 6),
             "models": sorted({c.model for c in result.calls}),
+            # Stage times, to find where a slow first analysis waits (decision 69 C).
+            "parse_ms": round((t1 - t0) * 1000),
+            "extract_ms": round((t2 - t1) * 1000),
+            "link_ms": round((t3 - t2) * 1000),
+            "grow_ms": round((t4 - t3) * 1000),
         },
     )
     return doc
