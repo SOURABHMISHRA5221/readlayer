@@ -310,10 +310,12 @@ async def embed(
     vectors: list[list[float]] = []
     tokens = 0
     cost = 0.0
+    attempts = [0]
+    began = time.perf_counter()
     for start in range(0, len(texts), EMBED_BATCH):
         batch = texts[start : start + EMBED_BATCH]
         try:
-            response = await _embed_call(model, batch, task_type, settings)
+            response = await _embed_call(model, batch, task_type, settings, attempts)
         except Exception as exc:
             fields = {"task": "embed", "model": model, "error_class": type(exc).__name__}
             if classify_error(exc) == "retry":
@@ -329,12 +331,21 @@ async def embed(
         vectors.extend(_normalise([d["embedding"] for d in response.data]))
     log.info(
         "llm embed",
-        extra={"model": model, "texts": len(texts), "tokens": tokens, "cost_usd": round(cost, 8)},
+        extra={
+            "model": model,
+            "texts": len(texts),
+            "tokens": tokens,
+            "cost_usd": round(cost, 8),
+            "latency_ms": round((time.perf_counter() - began) * 1000, 1),
+            "attempts": attempts[0],
+        },
     )
     return EmbedResult(vectors, model, tokens, round(cost, 8))
 
 
-async def _embed_call(model: str, batch: list[str], task_type: str, settings: Settings) -> Any:
+async def _embed_call(
+    model: str, batch: list[str], task_type: str, settings: Settings, attempts: list[int]
+) -> Any:
     kwargs: dict[str, Any] = {
         "model": model,
         "input": batch,
@@ -354,6 +365,7 @@ async def _embed_call(model: str, batch: list[str], task_type: str, settings: Se
         reraise=True,
     ):
         with attempt:
+            attempts[0] += 1
             return await _litellm().aembedding(**kwargs)
     raise LLMUnavailable("unreachable")
 

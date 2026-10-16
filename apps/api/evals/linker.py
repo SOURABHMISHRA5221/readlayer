@@ -146,9 +146,12 @@ async def run_merges(cache: BuildCache, ledger: list) -> dict[str, Any]:
     }
 
 
-async def run_suite(graph_path: Path = CONCEPTS_FILE) -> dict[str, Any]:
+async def run_suite(
+    graph_path: Path = CONCEPTS_FILE, cache_dir: Path = CACHE_DIR
+) -> dict[str, Any]:
+    """`cache_dir`: a fresh folder makes every answer a new model call (decision 69 D)."""
     settings = get_settings()
-    cache = BuildCache(CACHE_DIR, settings)
+    cache = BuildCache(cache_dir, settings)
     ledger: list = []
     raw = await asyncio.to_thread(graph_path.read_bytes)
     graph = ConceptGraph(ConceptGraphFile.model_validate_json(raw))
@@ -167,6 +170,8 @@ async def run_suite(graph_path: Path = CONCEPTS_FILE) -> dict[str, Any]:
             # them on the next run, so a rerun replaces only those batches.
             "fallbacks": sum(1 for m in ledger if m.fell_back),
             "calls": len(ledger),
+            "link_confirm_effort": settings.llm_reasoning_effort.get("link_confirm", "default"),
+            "link_confirm_latency_ms": _latency([m for m in ledger if m.task == "link_confirm"]),
         },
         "link_confirm": confirm,
         "variants": variants,
@@ -179,6 +184,13 @@ async def run_suite(graph_path: Path = CONCEPTS_FILE) -> dict[str, Any]:
             "merge_total": merges["n"],
         },
     }
+
+
+def _latency(metas: list) -> dict[str, float]:
+    ms = sorted(m.latency_ms for m in metas)
+    if not ms:
+        return {}
+    return {"median": ms[len(ms) // 2], "p90": ms[int(0.9 * (len(ms) - 1))], "max": ms[-1]}
 
 
 def save(results: dict[str, Any], label: str) -> Path:

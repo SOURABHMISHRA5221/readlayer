@@ -430,6 +430,7 @@ def main() -> int:
     parser.add_argument("--judge", help="judge model id for this run (overrides MODEL_JUDGE)")
     parser.add_argument("--label", default="run", help="name saved with the run")
     parser.add_argument("--no-pipeline", action="store_true", help="verifier cases only")
+    parser.add_argument("--cache-dir", help="linker: a fresh build cache folder (no replays)")
     parser.add_argument("--frame", choices=FRAMES, help="analogy frame for every generated card")
     parser.add_argument(
         "--effort", type=parse_effort, help="thinking level per task: restate=low,explain=low"
@@ -441,7 +442,8 @@ def main() -> int:
     if args.suite == "linker":
         from evals import linker
 
-        lk = asyncio.run(linker.run_suite())
+        kw = {"cache_dir": Path(args.cache_dir)} if args.cache_dir else {}
+        lk = asyncio.run(linker.run_suite(**kw))
         path = linker.save(lk, args.label)
         for c in lk["link_confirm"]:
             verdict = "PASS" if c["passed"] else "FAIL"
