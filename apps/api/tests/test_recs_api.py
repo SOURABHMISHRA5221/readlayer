@@ -264,3 +264,46 @@ def test_a_signed_in_reader_who_chose_listen_gets_the_listen_chip_first(env, doc
     client.get(url)
     items = client.get(url).json()["items"]
     assert items and items[0]["format"] == "podcast"
+
+
+# Decision 69 B1: the end-of-article list follows the article (key ideas, the same story
+# elsewhere), never the reader's new terms.
+
+
+def _story_recs(client, persona="newcomer", content="main"):
+    url = f"/v1/content/{content}/recommendations?basis=story&persona={persona}"
+    client.get(url)
+    return client.get(url).json()
+
+
+def test_story_basis_follows_the_article_and_never_says_new_to_you(env):
+    from app.recs.feed_rank import key_ideas
+
+    client, _, _, store = env
+    ideas, _ = key_ideas(store.docs["main"], GRAPH)
+    idea_ids = {c.id for c in ideas}
+    for persona in ("newcomer", "trader", "policy_student"):
+        items = _story_recs(client, persona)["items"]
+        assert items and len(items) > 3  # a full list, not the chips' one per format
+        for item in items:
+            assert "new to you" not in item["why"]
+            if item["relation"] in ("same_story", "angle"):
+                continue  # their own reasons ("The same story, told by …")
+            assert "a key idea here" in item["why"], item
+            assert {t["id"] for t in item["triggers"]} <= idea_ids
+        assert any(i["kind"] == "library" and i["relation"] not in ("same_story", "angle")
+                   for i in items)  # a library primer/deeper item gets the key-idea reason too  # fmt: skip
+
+
+def test_story_basis_is_the_same_ideas_for_every_persona(env):
+    client, *_ = env
+    a, b = (_story_recs(client, p)["items"] for p in ("newcomer", "trader"))
+    ideas = [{t["id"] for i in items for t in i["triggers"]} for items in (a, b)]
+    assert ideas[0] and ideas[0] == ideas[1]
+
+
+def test_the_consumer_basis_is_unchanged_for_the_old_web(env):
+    client, *_ = env
+    get_recs(client)
+    items = get_recs(client)["items"]
+    assert any("new to you" in i["why"] for i in items)  # the live old web keeps its list

@@ -163,6 +163,9 @@ def _why(relation: Relation, trigger: str | None, detail: str | None, source: st
     return f"Because {c} was new to you" if c else "An explainer on this topic"
 
 
+STORY_RELATIONS = frozenset({"same_story", "angle"})
+
+
 def _key_idea_why(item: RecItem) -> str:
     label = item.triggers[0].label if item.triggers else None
     return f"On {_quote(label)}, a key idea here" if label else "On a key idea here"
@@ -240,10 +243,10 @@ class _Trigger:
 async def _triggers(
     basis: str, ctx: ReaderContext, doc: ContentDoc, graph: ConceptGraph
 ) -> list[_Trigger]:
-    """ "consumer": the concepts new to this person, highest score first (Up next at the end of
-    the article). "article" (decision 67 N1, the card chips): the article's own key ideas by
-    salience, the same for everyone."""
-    if basis == "article":
+    """ "consumer": the concepts new to this person, highest score first (the old web's end of
+    article list). "article" (decision 67 N1, the card chips) and "story" (decision 69 B, the end
+    of the article): the article's own key ideas by salience, the same for everyone."""
+    if basis in ("article", "story"):
         ideas, _ = key_ideas(doc, graph)
         return [_Trigger(c.id, c.label, c.domain, 1.0 - 0.1 * i) for i, c in enumerate(ideas)]
     spans = (await score_for(ctx, doc, "balanced", datetime.now(UTC))).spans
@@ -255,14 +258,14 @@ async def recommendations(
     content_id: str,
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     prefer: Format | None = None,
-    basis: Literal["consumer", "article"] = "consumer",
+    basis: Literal["consumer", "article", "story"] = "consumer",
 ) -> RecsResponse:
     doc = await doc_or_error(content_id, ctx)
     graph = get_graph()
     theta = ctx.theta
     spans = await _triggers(basis, ctx, doc, graph)
     web = get_web_search()
-    if not spans and basis == "article":  # nothing linked: no chips
+    if not spans and basis in ("article", "story"):  # nothing linked: nothing to follow
         return RecsResponse(
             content_id=content_id, persona=ctx.persona, prefer=prefer, items=[], pending=False,
             web_formats=[f for f in FORMATS if f in web.formats],
@@ -344,6 +347,11 @@ async def recommendations(
             items.append(item.model_copy(update={"open_here": here}))
     if basis == "article":
         items = [i.model_copy(update={"why": _key_idea_why(i)}) for i in items]
+    elif basis == "story":  # the same story elsewhere keeps its reason; the rest follow a key idea
+        items = [
+            i if i.relation in STORY_RELATIONS else i.model_copy(update={"why": _key_idea_why(i)})
+            for i in items
+        ]
     if ctx.user.may_record:  # nothing recorded for a signed-in reader before consent
         await signals.remember_served(
             ctx.uid, ctx.rec_key, {i.id: Served(i.format, i.relation) for i in items}, now

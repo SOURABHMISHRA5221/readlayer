@@ -262,11 +262,12 @@ export const api = {
     persona: PersonaKey | null,
     prefer: RecFormat | null,
     signal?: AbortSignal,
-    /** "article": the card chips, from the article's key ideas (decision 67 N1). */
-    basis: "consumer" | "article" = "consumer",
+    /** "article": the card chips, from the article's key ideas (decision 67 N1). "story": the end
+     * of the article, the same story elsewhere and the key ideas (decision 69 B). */
+    basis: "article" | "story" = "story",
   ) =>
     get<RecsResponse>(
-      `/v1/content/${encodeURIComponent(id)}/recommendations?${prefer ? `prefer=${prefer}` : ""}${basis === "article" ? `${prefer ? "&" : ""}basis=article` : ""}${personaParam(persona)}`,
+      `/v1/content/${encodeURIComponent(id)}/recommendations?${prefer ? `prefer=${prefer}&` : ""}basis=${basis}${personaParam(persona)}`,
       signal,
     ),
   recEvents: (persona: PersonaKey | null, events: { id: string; type: RecEventType; item_id: string }[]) =>
