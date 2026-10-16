@@ -313,8 +313,10 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   consent checkbox (`consent-v2`; v1 stays valid). Order on Continue: consent → (text) `POST
   /v1/onboarding/resolve`, the screen stays to show matches ("F1 → Sports" with a select to change
   or drop it, removable concept chips, "Didn't recognise: …") → `POST /v1/onboarding` with
-  interests = chosen topics ∪ mapped topics ∪ resolved concepts' domains. θ stays neutral (no
-  comfort step); interest 1.0 chosen, 0.3 otherwise, plus screen-2 picks (below).
+  interests = chosen topics ∪ mapped topics ∪ resolved concepts' domains. ~~θ stays neutral~~
+  Superseded by decision 68 (above): the field sets a starting θ, the country a few home terms, and
+  a read / watch / listen question is added; interest 1.0 chosen, 0.3 otherwise, plus screen-2
+  picks (below).
 - **Free text** (decision 42, §11.3): redacted, split on commas into ≤ 5 pieces of ≤ 40 chars;
   per piece: exact concept label/alias whole, then its " and "/"&" parts; then the topic alias
   list `ONBOARDING_TOPIC_ALIASES` (109 casefolded phrases covering all 14 topics: F1, IPL,
@@ -335,16 +337,19 @@ While `learning_paused` is set, no evidence from events is applied (§15.1).
   chosen topics (≤ 6) and resolved concepts (≤ 2): shared day-keyed searches (§17.1; concept
   keys `feedx:c:<id>:<day>` (decision 50: restricted to top outlets), articles only, "<concept label> news this week", results must name
   the label or an alias). Up to 9 cards, every topic/concept with results gets one before any
-  gets a second, articles first, then fresher. Fewer than 6 and nothing pending → newest corpus
+  gets a second, articles first, then fresher (decision 68: the reader's chosen formats first,
+  minimums per format, served cards keep their slots by a stored position `n`, slots held for a
+  missing format while searches run). Fewer than 6 and nothing pending → newest corpus
   articles in those domains. Each card: "I'd read this" / "Not for me" (`pick`: a rec signal
   `rec_clicked`/`rec_dismissed` and ±0.15 interest in the served item's domain, clamped, stored
-  as a delta so Edit → Continue re-applies it) and at most one "Know this?" term (`know`: the
-  calibration evidence, Yes = explain +3.0, Not really = none −3.0, and the onboarding Elo
-  step). The term is fixed the first time the item is served: among the graph concepts its title
+  as a delta so Edit → Continue re-applies it). **Until decision 68** each card also had at most
+  one "Know this?" term (`know`: the calibration evidence and the onboarding Elo step); since
+  decision 68 no term is offered, `know` is a no-op and the Quick check below the cards asks
+  instead. The term used to be fixed the first time the item is served: among the graph concepts its title
   and snippet name, **only of the item's own topic**, corpus concepts (doc_freq > 0) first, then
   b closest to θ; never a resolved concept or one already offered; ≤ 12 terms, ≤ 27 items, ≤ 9
   picks, ≤ 9 answers, each once. After 5 answers Margo reads back one deterministic sentence
-  (likes minus skips per topic, known and new terms, the frame). "Start reading" →
+  (likes minus skips per topic and the frame; since decision 68 no known or new terms). "Start reading" →
   `POST /v1/onboarding/finish` (done; offered, answered and picks cleared) → For you. A reload
   resumes on screen 2 (step `discover`).
 
@@ -358,8 +363,9 @@ rewritten from the new choices plus picks. Screen 2's routes (and the repo trans
 while `onboarding_done` is false **or** a redo is in progress. `finish` and
 `POST /v1/onboarding/redo/cancel` end it. The consent checkbox shows again when the stored
 consent version isn't the current one (`consent-v2`). A finished reader opening /welcome outside
-a redo is sent home. "Know this?" acronym terms ("OCT") count only where the item's text writes
-them in capitals.
+a redo is sent home. (Until decision 68, "Know this?" acronym terms ("OCT") counted only where the
+item's text writes them in capitals; screen 2 offers no terms now, and the Quick check is hidden on
+a redo, keeping θ and the formats answer.)
 
 ### Domain ability (Elo-style)
 On every graded outcome (calibration, knew_this, explain_opened):
@@ -592,14 +598,14 @@ subject to pause). The next open regenerates.
 | POST | /v1/me/profile/edits/{id}/apply | apply a previewed edit |
 | POST | /v1/me/profile/edits/{id}/undo | undo an applied edit |
 | POST | /v1/me/consent | `{version}` (signed-in readers): records consent; required before anything is recorded (§11.4) |
-| POST | /v1/onboarding | field, interests, comfort per domain, ≤ 3 frames, ≤ 3 liked library content ids (§4); needs consent |
+| POST | /v1/onboarding | field, interests, comfort per domain, ≤ 3 frames, ≤ 3 liked library content ids, `country` (decision 50), `formats` (decision 68, optional: empty keeps the stored answer) (§4); needs consent |
 | GET | /v1/calibration/next | next item: concept with b closest to current θ, not yet asked; `{done}` after 6 (decision 68) |
 | POST | /v1/calibration/answer | `{concept_id, answer: explain|heard|none}`: only the current item (409 otherwise) |
 | POST | /v1/calibration/skip | ends calibration (onboarding done) |
 | POST | /v1/onboarding/resolve | `{text ≤ 120}` → `{concepts, topics: [{phrase_index, phrase, topic, via}], unrecognised}` (§4); 429 past 5/day |
 | POST | /v1/onboarding/discover | `{topics ≤ 6, concepts ≤ 2}` → `{items, pending}`; unknown concept 422; 409 after finish |
 | POST | /v1/onboarding/pick | `{item_id, liked}`: a served item only (404), once (409), ≤ 9 |
-| POST | /v1/onboarding/know | `{concept_id, known}`: an offered term only (404), once (409), ≤ 9, 409 after finish |
+| POST | /v1/onboarding/know | decision 68: a 200 no-op `{"saved": false}` (screen 2 writes no knowledge), kept for old clients until after judging |
 | POST | /v1/onboarding/finish | onboarding done; the offered/answered/pick lists are cleared |
 | GET | /v1/me/profile/edits | the last 10 applied/undone edits (expired pending ones are deleted) |
 | GET | /v1/feed?persona= | For you (§17): `{topics, items[{id, topic, topic_label, format, title, url, source, snippet, thumbnail, duration_or_read_time, published_at, new_concepts, goal, why, score}], pending, snapshot, prepared_at, country}`; demo readers get their persona's pre-seeded snapshot (`snapshot: true`) and trigger no search; items carry `open_here` (§21.4) |

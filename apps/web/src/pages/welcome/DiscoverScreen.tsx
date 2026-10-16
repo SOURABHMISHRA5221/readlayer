@@ -167,8 +167,6 @@ interface CardProps {
   onPick: (item: DiscoverItem, liked: boolean) => void;
 }
 
-/** Answered buttons stay focusable (aria-disabled, not disabled): a keyboard reader keeps
- * their place in the list instead of being thrown back to the top of the page. */
 /** Decision 68 F4: what each card is, at a glance ("Watch · 6 min"). */
 const FORMAT_VERB: Record<DiscoverItem["format"], string> = { article: "Read", video: "Watch", podcast: "Listen" };
 const LIKE_LABEL: Record<DiscoverItem["format"], string> = {
@@ -182,6 +180,8 @@ export function formatWord(item: Pick<DiscoverItem, "format" | "duration_or_read
   return s ? `${FORMAT_VERB[item.format]} · ${Math.max(1, Math.round(s / 60))} min` : FORMAT_VERB[item.format];
 }
 
+/** Answered buttons stay focusable (aria-disabled, not disabled): a keyboard reader keeps
+ * their place in the list instead of being thrown back to the top of the page. */
 function Card({ item, answers, onPick }: CardProps) {
   const liked = answers.picks[item.id];
   const href = item.kind === "library" && item.content_id ? `/read/${item.content_id}` : item.url;

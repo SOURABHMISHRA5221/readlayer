@@ -286,3 +286,14 @@ describe("Quick check (decision 68 K4)", () => {
     expect(calls.some((c) => c.path === "/v1/calibration/next")).toBe(false);
   });
 });
+
+describe("formats on a Redo (decision 68 F1)", () => {
+  it("preselects the stored formats", async () => {
+    const base = PROFILE("onboarding", true);
+    stubApi({ "/v1/me/profile": { ...base, onboarding: { ...base.onboarding, done: true, redo: "about", formats: ["video", "podcast"] } } });
+    await mount();
+    expect(chip("Watch")?.checked).toBe(true);
+    expect(chip("Listen")?.checked).toBe(true);
+    expect(chip("Read")?.checked).toBe(false);
+  });
+});

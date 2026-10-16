@@ -2202,3 +2202,13 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 3. milestone-reviewer → PR → CI → merge → `make deploy-api` (Sourabh's yes) → then `make
    deploy-web` (yes) → harness and Redo checks. Checkpoint Oct 17 12:00 IST (cut F4, F3, K4, K2).
 4. Sourabh's new video script and re-record; `/v2` removal, gitleaks, deck link, submit Oct 18.
+- Resumed: STATUS rows (c4bb021); R0 on the harness (7c702cc): found and fixed screen 2's first
+  poll taking every slot (slots held for missing formats while searches run); a fresh account
+  sees Up next; home terms 12 for India, one entry each, no band move. milestone-reviewer FIX
+  (served order by a stored position, tests, harness numbers, docs) applied.
+
+### Next steps (resume here, in order)
+1. milestone-reviewer round 2 on `d68-onboarding` → PR → CI → merge → `make deploy-api` (Sourabh's
+   yes) → then `make deploy-web` (yes) → live: a demo account's onboarding is untouched; Sourabh's
+   own Redo setup on his yes (formats; home terms).
+2. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.

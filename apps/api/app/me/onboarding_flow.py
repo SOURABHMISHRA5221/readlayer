@@ -270,7 +270,7 @@ async def discover(
                                       user.country)
         for t in topics
     ] + [offered(found.get(f"feedx:c:{c.id}", []), user.country) for c in chosen]  # fmt: skip
-    served = list(user.onboarding_offered)  # in served order: those cards keep their slots
+    served = served_order(user.onboarding_offered)  # those cards keep their slots and order
     key = lambda c: _id(c, {})  # noqa: E731
     picked = fr.onboarding_mix(groups, now, onboarding.DISCOVER_ITEMS, user.formats, served, key,
                                pending=gathered.pending)  # fmt: skip
@@ -282,6 +282,12 @@ async def discover(
                                    user.formats, served, lambda c: _id(c, library))  # fmt: skip
     items = await _serve(caller.uid, picked, library, [c.id for c in chosen], graph, now)
     return DiscoverOut(items=items, pending=gathered.pending)
+
+
+def served_order(offered: dict[str, dict[str, Any]]) -> list[str]:
+    """Item ids in the order they were served. Firestore doesn't keep a map's key order, so each
+    item stores its position `n` (older items have none: after the rest, by id)."""
+    return sorted(offered, key=lambda k: (offered[k].get("n") is None, offered[k].get("n", 0), k))
 
 
 async def _library_groups(

@@ -219,9 +219,9 @@ def test_offer_keeps_terms_stable_excludes_resolved_and_caps():
     items = [("a", "economics", ["c1", "c2"]), ("b", "economics", ["c1", "c2"]),
              ("c", "economics", ["c1", "c2"])]  # fmt: skip
     got = onboarding.offer({}, items, excluded=["c2"])
-    assert got == {"a": {"topic": "economics", "concept": "c1"},
-                   "b": {"topic": "economics", "concept": None},
-                   "c": {"topic": "economics", "concept": None}}  # fmt: skip
+    assert got == {"a": {"topic": "economics", "concept": "c1", "n": 0},
+                   "b": {"topic": "economics", "concept": None, "n": 1},
+                   "c": {"topic": "economics", "concept": None, "n": 2}}  # fmt: skip (n: d68)
     again = onboarding.offer(got, [("a", "economics", ["c9"])], excluded=[])
     assert again["a"]["concept"] == "c1"  # stable across re-asks
     many = [(f"i{n}", "sports", [f"t{n}"]) for n in range(40)]

@@ -1,6 +1,7 @@
 """Decision 68 R0 on the local harness: a fresh signed-in account (Auth-emulator "Google")
 onboards with Software + India + Watch, opens a library article and reports what a new reader
-gets: the end-of-article Up next, the card chips (order), the map's home terms and θ.
+gets: the end-of-article Up next, the card chips (order), the map's home terms (count, entries,
+bands, no band move), θ, "moved up this week", and the feed's formats per topic.
 
     make dev-emulator   # in another terminal
     uv run --project apps/api python tools/shots/d68_fresh.py
@@ -38,6 +39,27 @@ async def main() -> None:
         prof = (await p.api("", "GET", "/v1/me/profile"))["body"]
         out["formats"] = prof["onboarding"].get("formats")
         out["theta"] = {d["domain"]: round(d["theta"], 2) for d in prof["domains"] if abs(d["theta"]) > 1e-6}
+        out["moved_up_this_week"] = prof["summary"].get("moved_up_this_week")
+        export = (await p.api("", "GET", "/v1/me/export"))["body"]
+        knows = export.get("knows") or {}
+        knows = knows.values() if isinstance(knows, dict) else knows
+        home = [k for k in knows if any(e.get("type") == "home_country" for e in k.get("evidence", []))]
+        out["home_edges"] = len(home)
+        out["home_entries_each"] = sorted({sum(e.get("type") == "home_country" for e in k["evidence"]) for k in home})
+        out["home_bands"] = {b: sum(k.get("band") == b for k in home) for b in ("unaware", "heard of", "understands", "can explain")}
+        out["home_band_moves"] = sum(bool(k.get("band_changed_at")) for k in home)
+        out["edges_total"] = sum(1 for _ in (export.get("knows") or {}))
+        feed = (await p.api("", "GET", "/v1/feed"))["body"]
+        for _ in range(10):
+            if not feed.get("pending"):
+                break
+            await asyncio.sleep(3)
+            feed = (await p.api("", "GET", "/v1/feed"))["body"]
+        per_topic = {}
+        for i in feed.get("items", []):
+            per_topic.setdefault(i["topic"], {}).setdefault(i["format"], 0)
+            per_topic[i["topic"]][i["format"]] += 1
+        out["feed_formats_per_topic"] = per_topic
         lib = (await p.api("", "GET", "/v1/content"))["body"]
         cid = next(i["id"] for i in lib if i.get("kind", "article") == "article")
         await p.goto(f"{W}/read/{cid}", wait=3)

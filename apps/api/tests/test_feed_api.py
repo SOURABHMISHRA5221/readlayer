@@ -341,3 +341,27 @@ def test_a_failing_library_falls_back_to_the_title_rule(env, monkeypatch):
     assert resp.status_code == 200
     toy = {i["title"]: i for i in resp.json()["items"]}["How a toy gets to a US retailer"]
     assert toy["readiness_basis"] == "title" and toy["readiness"] is None
+
+
+def test_a_reader_who_chose_watch_gets_the_video_quota_and_prior(env, monkeypatch, docs):
+    """Decision 68 F2/F3: formats from onboarding reach the live feed's ranking and quotas."""
+    from app.recs import feed_rank as fr
+
+    seen = {}
+    real_select, real_rank = fr.select, fr.rank
+
+    def spy_select(ranked, topics, side=None, share=0.6, quotas=fr.QUOTAS):
+        seen["quotas"] = dict(quotas)
+        return real_select(ranked, topics, side, share, quotas)
+
+    def spy_rank(candidates, reader, now, graph):
+        seen["prior"] = dict(reader.prior.means)
+        return real_rank(candidates, reader, now, graph)
+
+    monkeypatch.setattr(fr, "select", spy_select)
+    monkeypatch.setattr(fr, "rank", spy_rank)
+    c = google("gw", {"sports": 1.0})
+    docs.docs["users/gw"]["formats"] = ["video"]
+    assert c.get("/v1/feed").status_code == 200
+    assert seen["quotas"] == {"article": 2, "video": 3, "podcast": 1}
+    assert seen["prior"]["video"] == 0.75 and seen["prior"]["article"] == 0.4

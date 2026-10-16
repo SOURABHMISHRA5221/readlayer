@@ -117,7 +117,11 @@ async def post_onboarding(
     thinks_in = list(dict.fromkeys(body.thinks_in))
     # Decision 68 K1: the field's domains start at "comfortable" (first-time onboarding only).
     previous = user.field if not user.onboarding_done else None
-    theta = onboarding.first_theta(body.field, previous, body.comfort)
+    theta = (
+        onboarding.starting_theta(body.comfort)  # a finished reader's earned θ is never reset
+        if user.onboarding_done
+        else onboarding.first_theta(body.field, previous, body.comfort)
+    )
     if redo:
         # Redo setup (decision 48) deletes nothing: earlier comfort answers and liked articles
         # are kept, frames are kept with the field's frame added, θ isn't reset.

@@ -250,7 +250,7 @@ def offer(
             term = next((c for c in candidates if c not in skip and c not in taken), None)
         if term is not None:
             taken.add(term)
-        out[item] = {"topic": topic, "concept": term}
+        out[item] = {"topic": topic, "concept": term, "n": len(out)}  # served position (d68)
     return out
 
 

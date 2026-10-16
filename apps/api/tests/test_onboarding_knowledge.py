@@ -148,3 +148,39 @@ def test_no_country_or_other_writes_no_home_terms(env, docs):
     g = consented(TestClient(app, headers=auth("g1")))
     g.post("/v1/onboarding", json=answers(country="other"))
     assert home_entries(docs) == {}
+
+
+def test_formats_are_stored_returned_deduplicated_and_kept(env, docs):
+    """Decision 68 F1: optional at the API; empty keeps the stored answer; a redo keeps it."""
+    g = consented(TestClient(app, headers=auth("g1")))
+    g.post("/v1/onboarding", json=answers(formats=["video", "video", "podcast"]))
+    assert docs.docs["users/g1"]["formats"] == ["video", "podcast"]
+    assert g.get("/v1/me/profile").json()["onboarding"]["formats"] == ["video", "podcast"]
+    g.post("/v1/onboarding", json=answers())  # an old client sends none: kept
+    assert docs.docs["users/g1"]["formats"] == ["video", "podcast"]
+    g.post("/v1/onboarding/finish")
+    g.post("/v1/onboarding/redo")
+    g.post("/v1/onboarding", json=answers())
+    assert docs.docs["users/g1"]["formats"] == ["video", "podcast"]
+    g.post("/v1/onboarding", json=answers(formats=["article"]))
+    assert docs.docs["users/g1"]["formats"] == ["article"]
+    assert g.post("/v1/onboarding", json=answers(formats=["audio"])).status_code == 422
+
+
+def test_served_order_survives_a_shuffled_map():
+    """Firestore doesn't keep a map's key order: cards keep theirs by the stored position."""
+    from app.me.onboarding_flow import served_order
+
+    offered = {"z": {"n": 0}, "a": {"n": 2}, "m": {"n": 1}, "old": {}}
+    assert served_order(offered) == ["z", "m", "a", "old"]
+    stored = onboarding.offer({}, [("x", "economics", ()), ("b", "economics", ())], [])
+    assert served_order(dict(reversed(list(stored.items())))) == ["x", "b"]
+
+
+def test_a_finished_reader_outside_a_redo_keeps_earned_theta(env, docs):
+    g = consented(TestClient(app, headers=auth("g1")))
+    g.post("/v1/onboarding", json=answers())
+    g.post("/v1/onboarding/finish")
+    docs.docs["users/g1/domains/technology"]["theta"] = 1.3
+    g.post("/v1/onboarding", json=answers())  # a stale tab
+    assert docs.docs["users/g1/domains/technology"]["theta"] == 1.3
