@@ -63,3 +63,22 @@ def test_screen_2_keeps_served_cards_in_place_when_videos_arrive_late():
     again = fr.onboarding_mix(later, NOW, 3, formats=["video"], served=served)
     assert [c.result.url for c in again][: len(served)] == served
     assert {c.result.url for c in again} == {"a1", "a2", "v1"}
+
+
+def test_screen_2_holds_slots_for_missing_formats_while_searches_run():
+    """Harness R0: the first poll had only videos and podcasts; served cards then filled all 9
+    and articles never got a card. While pending, unmet minimums keep their slots free."""
+    early = [
+        [cand(f"v{i}", "economics", "video") for i in range(8)]
+        + [cand("p1", "economics", "podcast")]
+    ]
+    first = fr.onboarding_mix(early, NOW, 9, formats=["video"], pending=True)
+    assert len(first) == 8 and not any(
+        c.result.format == "article" for c in first
+    )  # 1 kept for an article
+    served = [c.result.url for c in first]
+    late = [early[0] + [cand("a1", "economics")]]
+    again = fr.onboarding_mix(late, NOW, 9, formats=["video"], served=served, pending=False)
+    assert [c.result.url for c in again][:8] == served and again[8].result.url == "a1"
+    done = fr.onboarding_mix(early, NOW, 9, formats=["video"], pending=False)
+    assert len(done) == 9  # searches finished with no article: the slot is used

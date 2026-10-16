@@ -272,7 +272,8 @@ async def discover(
     ] + [offered(found.get(f"feedx:c:{c.id}", []), user.country) for c in chosen]  # fmt: skip
     served = list(user.onboarding_offered)  # in served order: those cards keep their slots
     key = lambda c: _id(c, {})  # noqa: E731
-    picked = fr.onboarding_mix(groups, now, onboarding.DISCOVER_ITEMS, user.formats, served, key)
+    picked = fr.onboarding_mix(groups, now, onboarding.DISCOVER_ITEMS, user.formats, served, key,
+                               pending=gathered.pending)  # fmt: skip
     library: dict[str, str] = {}  # url → content id
     if len(picked) < onboarding.DISCOVER_MIN_ITEMS and not gathered.pending:
         domains = list(dict.fromkeys([*topics, *(c.domain for c in chosen)]))

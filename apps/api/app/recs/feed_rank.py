@@ -488,7 +488,7 @@ def select(
 def onboarding_mix(
     groups: Sequence[Sequence[FeedCandidate]], now: datetime, limit: int,
     formats: Sequence[str] = (), served: Sequence[str] = (),
-    key: Callable[[FeedCandidate], str] = lambda c: c.result.url,
+    key: Callable[[FeedCandidate], str] = lambda c: c.result.url, pending: bool = False,
 ) -> list[FeedCandidate]:  # fmt: skip
     """Onboarding's screen 2 (decisions 41, 68 F4): one group per chosen topic or concept, in the
     reader's order. Within a group the reader's chosen formats first (articles first when none),
@@ -496,7 +496,8 @@ def onboarding_mix(
     any gets a second; one per URL. Items already `served` (by `key`) keep their slots, in served
     order, so a later poll never pushes out a card the reader may have answered. Then at least 2
     of each chosen video/podcast format and 1 of every other format, when there are any; the rest
-    in interleaved order. Pure."""
+    in interleaved order. While searches are `pending`, a format short of its minimum keeps its
+    slots free for a later poll (else the first poll's fast formats would take every slot). Pure."""
     first = set(formats) or {"article"}
     ordered = [
         sorted(g, key=lambda c: (c.result.format not in first, c.result.format != "article",
@@ -525,6 +526,10 @@ def onboarding_mix(
                 taken.add(id(c))
                 have += 1
     kept = len([k for k in served if k in by_key][:limit])
-    rest = [c for c in pool if id(c) not in taken][: max(0, limit - len(out))]
+    unmet = sum(
+        max(0, need - sum(c.result.format == f for c in out)) for f, need in minimum.items()
+    )
+    room = max(0, limit - len(out) - (unmet if pending else 0))
+    rest = [c for c in pool if id(c) not in taken][:room]
     position = {id(c): i for i, c in enumerate(pool)}
     return out[:kept] + sorted([*out[kept:], *rest], key=lambda c: position[id(c)])
