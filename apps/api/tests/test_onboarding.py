@@ -181,7 +181,7 @@ def test_onboarding_sets_theta_interest_frames_and_liked_nudges(env, docs):
     assert profile["onboarding"]["step"] == "discover" and profile["thinks_in"] == ["software"]
 
 
-def test_calibration_eight_answers_then_done(env, docs):
+def test_calibration_six_answers_then_done_without_finishing(env, docs):
     g = consented(google())
     g.post("/v1/onboarding", json=ANSWERS)
     for i in range(onboarding.CALIBRATION_ITEMS):
@@ -201,11 +201,34 @@ def test_calibration_eight_answers_then_done(env, docs):
         assert docs.docs[f"users/g1/knows/{cid}"]["evidence"][-1]["type"] == "calibration_answer"
     assert body["done"] is True
     assert g.get("/v1/calibration/next").json()["done"] is True
+    # Decision 68 K4: the quick check never finishes onboarding; only Finish does.
+    assert docs.docs["users/g1"]["onboarding_done"] is False
+    assert g.get("/v1/me/profile").json()["onboarding"]["step"] == "discover"
+    assert g.post("/v1/onboarding/finish").json() == {"done": True}
     assert g.get("/v1/me/profile").json()["onboarding"] == {
         "consented": True, "done": True, "step": "done", "field": "software",
         "interests": ["finance", "economics"], "redo": None, "consent_version": "consent-v1",
         "formats": [],
     }  # fmt: skip
+    # after a real finish the calibration routes refuse
+    assert g.get("/v1/calibration/next").json()["done"] is True
+    late = g.post("/v1/calibration/answer", json={"concept_id": cid, "answer": "explain"})
+    assert late.status_code == 409
+
+
+def test_a_resubmitted_screen_1_never_asks_a_term_twice(env, docs):
+    """Decision 68 K4: Edit → Continue keeps the asked list and the answer count."""
+    g = consented(google())
+    g.post("/v1/onboarding", json=ANSWERS)
+    asked = []
+    for _ in range(2):
+        cid = g.get("/v1/calibration/next").json()["item"]["concept_id"]
+        g.post("/v1/calibration/answer", json={"concept_id": cid, "answer": "explain"})
+        asked.append(cid)
+    g.post("/v1/onboarding", json=ANSWERS)  # Edit → Continue
+    nxt = g.get("/v1/calibration/next").json()
+    assert nxt["asked"] == 2 and nxt["item"]["concept_id"] not in asked
+    assert docs.docs["users/g1"]["calibration"]["answers"] == 2
 
 
 def test_skip_finishes_onboarding_with_what_was_answered(env):

@@ -5,6 +5,7 @@ import { onboardingApi, type DiscoverItem } from "../../lib/onboardingApi";
 import type { Domain } from "../../lib/profileApi";
 import { readback, READBACK_AFTER } from "../../lib/readback";
 import { MargoSays } from "./parts";
+import { QuickCheck } from "./QuickCheck";
 
 export const POLL_MS = 2500;
 export const MAX_POLLS = 10;
@@ -18,6 +19,8 @@ interface Props {
   frame: string | null;
   onEdit: () => void;
   onFinish: () => void;
+  /** Decision 68 K4: the Quick check below the cards (not on a Redo: onboarding stays done). */
+  quickCheck?: boolean;
 }
 
 /** The reader's answers on this screen; the server's copy seeds it, local taps win. */
@@ -25,7 +28,7 @@ interface Answers {
   picks: Record<string, boolean>; // item id → liked
 }
 
-export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFinish }: Props) {
+export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFinish, quickCheck = true }: Props) {
   const [items, setItems] = useState<DiscoverItem[] | null>(null);
   const [pending, setPending] = useState(true);
   const [answers, setAnswers] = useState<Answers>({ picks: {} });
@@ -120,6 +123,7 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
             ))}
           </ul>
         )}
+        {quickCheck && <QuickCheck />}
       </div>
       {error && (
         <p className="welcome__error" role="alert">

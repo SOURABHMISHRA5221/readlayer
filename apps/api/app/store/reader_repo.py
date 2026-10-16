@@ -612,7 +612,8 @@ class ReaderRepo:
                 | (
                     {"onboarding_redo": "discover"}  # done and calibration progress kept
                     if redo
-                    else {"calibration": {"asked": [], "answers": 0}, "onboarding_done": False}
+                    # Decision 68 K4: Edit → Continue keeps the quick check's asked list.
+                    else {"onboarding_done": False}
                 )
             )
             t.set(user_path(uid), updated.model_dump())
@@ -649,7 +650,7 @@ class ReaderRepo:
             updated = user.model_copy(
                 update={
                     "calibration": {"asked": asked, "answers": len(asked)},
-                    "onboarding_done": user.onboarding_done or done,
+                    # Decision 68 K4: only POST /v1/onboarding/finish ends onboarding.
                     "rev": user.rev + 1,
                 }
             )

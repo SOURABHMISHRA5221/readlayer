@@ -110,6 +110,7 @@ export default function WelcomePage() {
           frame={frame}
           onEdit={() => setScreen("about")}
           onFinish={finish}
+          quickCheck={!redo}
         />
       )}
     </Shell>

@@ -236,3 +236,53 @@ describe("decision 48", () => {
     expect(location.pathname).toBe("/");
   });
 });
+
+describe("Quick check (decision 68 K4)", () => {
+  const term = (n: number) => ({ concept_id: `c_t${n}`, label: `Term ${n}`, domain: "economics" });
+  const screen2 = (extra: Record<string, unknown> = {}) => {
+    let asked = 0;
+    stubApi({
+      "/v1/me/profile": PROFILE("discover", true),
+      "/v1/onboarding/discover": { items: [item(1)], pending: false },
+      "/v1/calibration/next": () => (asked >= 2 ? { done: true, asked, total: 2 } : { done: false, asked, total: 2, item: term(asked + 1) }),
+      "/v1/calibration/answer": () => ({ done: ++asked >= 2, asked, total: 2 }),
+      ...extra,
+    });
+  };
+
+  it("asks one term at a time below the cards, moves focus on, then says done", async () => {
+    screen2();
+    await mount();
+    const block = host.querySelector(".quickcheck")!;
+    expect(block.querySelector("h2")?.textContent).toBe("Quick check: do you know these?");
+    expect(host.querySelector(".discover")!.compareDocumentPosition(block) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(block.querySelectorAll(".quickcheck__card")).toHaveLength(1);
+    expect(block.querySelector(".quickcheck__label")?.textContent).toBe("Term 1");
+    expect(block.querySelector(".quickcheck__progress")?.textContent).toBe("1 of 2");
+    await click(button("Know it"));
+    expect(calls.find((c) => c.path === "/v1/calibration/answer")!.body).toEqual({ concept_id: "c_t1", answer: "explain" });
+    expect(host.querySelector(".quickcheck__label")?.textContent).toBe("Term 2");
+    expect(document.activeElement?.classList.contains("quickcheck__term")).toBe(true);
+    await click(button("New to me"));
+    expect(calls.filter((c) => c.path === "/v1/calibration/answer").at(-1)!.body).toEqual({ concept_id: "c_t2", answer: "none" });
+    expect(host.querySelector(".quickcheck__done")?.textContent).toBe("Thanks, that's your starting map.");
+    expect(document.activeElement?.classList.contains("quickcheck__done")).toBe(true);
+    expect(calls.some((c) => c.path === "/v1/onboarding/finish" || c.path === "/v1/calibration/skip")).toBe(false);
+  });
+
+  it("skip only hides the block; it never ends onboarding", async () => {
+    screen2();
+    await mount();
+    await click(button("Skip quick check"));
+    expect(host.querySelector(".quickcheck")).toBeNull();
+    expect(calls.some((c) => ["/v1/calibration/skip", "/v1/onboarding/finish", "/v1/calibration/answer"].includes(c.path))).toBe(false);
+  });
+
+  it("is not shown on a Redo", async () => {
+    screen2({ "/v1/me/profile": { ...PROFILE("discover", true), onboarding: { ...PROFILE("discover", true).onboarding, done: true, redo: "discover" } } });
+    await mount();
+    expect(host.querySelector(".discover")).toBeTruthy();
+    expect(host.querySelector(".quickcheck")).toBeNull();
+    expect(calls.some((c) => c.path === "/v1/calibration/next")).toBe(false);
+  });
+});

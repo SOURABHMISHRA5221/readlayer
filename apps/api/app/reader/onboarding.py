@@ -39,7 +39,7 @@ MAX_LIKED = 3
 LIKED_MIN_SALIENCE = 0.7
 LIKED_MAX_CONCEPTS = 15
 
-CALIBRATION_ITEMS = 8
+CALIBRATION_ITEMS = 6  # decision 68 K4: screen 2's Quick check
 POOL_SIZE = 150  # the most frequent concepts per domain: terms a news reader meets
 # A domain needs this many concepts before calibration offers it (glossary-seeded domains
 # qualify; a domain that only has a few grown concepts doesn't). M2.2.

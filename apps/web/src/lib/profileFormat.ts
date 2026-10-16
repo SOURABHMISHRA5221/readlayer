@@ -11,6 +11,7 @@ const EVIDENCE: Record<string, string> = {
   correction: "You corrected it yourself",
   calibration_answer: "You answered a quick check",
   liked_article_mention: "It was in an article you liked",
+  home_country: "Common where you read from",
   profile_edit_concept: "From your profile edit",
   profile_edit_domain: "From your profile edit",
   report_wrong: "You reported an explanation",
