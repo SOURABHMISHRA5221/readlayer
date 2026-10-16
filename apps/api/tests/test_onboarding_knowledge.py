@@ -184,3 +184,19 @@ def test_a_finished_reader_outside_a_redo_keeps_earned_theta(env, docs):
     docs.docs["users/g1/domains/technology"]["theta"] = 1.3
     g.post("/v1/onboarding", json=answers())  # a stale tab
     assert docs.docs["users/g1/domains/technology"]["theta"] == 1.3
+
+
+def test_home_terms_alone_give_a_topic_no_level(env, docs):
+    """Decision 69 A2: a few recorded country terms in a topic don't make its untouched level
+    (θ 0) "comfortable"; the topic shows its ideas but no level word."""
+    g = consented(TestClient(app, headers=auth("g1")))
+    g.post("/v1/onboarding", json=answers())
+    profile = g.get("/v1/me/profile").json()
+    graph = get_graph()
+    home = {graph.get(cid).domain for cid in home_entries(docs)} - {"technology"}
+    assert home  # the fixture's home terms sit outside the field's domain
+    rated = {d["domain"]: d["rated"] for d in profile["domains"]}
+    assert rated["technology"] is True  # the field set its level
+    assert not any(rated[d] for d in home)
+    text = profile["summary"]["text"]
+    assert all(d not in text for d in home), text

@@ -338,13 +338,12 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     knows = dict(ctx.state.edges)
     weekly = await _repo().get_weekly(ctx.uid)
     theta = {d: float(ctx.theta.get(d, 0.0)) for d in DOMAINS}
-    # A domain the reader rated, reads in, or moved: the summary speaks only about those (a
-    # neutral 0 in an untouched domain isn't "comfortable").
-    edge_domains = {c.domain for cid in knows if (c := graph.get(cid)) is not None}
+    # A domain whose level was set or moved (a comfort answer, the field, reading, answers): the
+    # summary and the level words speak only about those. A neutral 0 in an untouched domain isn't
+    # "comfortable", even when a few ideas there are recorded (home terms, decision 69 A2).
     rated = {
-        d for d in DOMAINS
-        if d in user.onboarding.get("comfort", {}) or abs(theta[d]) > 1e-9 or d in edge_domains
-    }  # fmt: skip
+        d for d in DOMAINS if d in user.onboarding.get("comfort", {}) or abs(theta[d]) > 1e-9
+    }
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
     in_graph = Counter(c.domain for c in graph.concepts)  # the map offers domains with concepts
     # Ideas the reader has shown they know (an edge at "understands" or above), per domain.

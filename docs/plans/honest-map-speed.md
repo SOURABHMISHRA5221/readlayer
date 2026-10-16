@@ -141,6 +141,16 @@ are in the video line).
 - Harness: fresh account (Software + India + Sports, Quick check answered) → only home terms, Quick
   check terms and rings; a persona's map; a goal view; axe 0 at 1440/390, light/dark.
 
+### A2. A topic level only when the level was set or moved (added 2026-10-17, found on the harness)
+The d69 harness (fresh account, Software + India + Sports) showed the profile saying "Comfortable in
+business, economics, finance, policy, sports and technology": the 12 India home terms put edges in
+four domains, and `GET /v1/me/profile` counted a domain with any edge as `rated`, so its untouched
+θ 0 read "comfortable" (the summary and the level cards) — the same guess-as-fact as the map. Now
+`rated` = a comfort answer or |θ| > 0 (the field, reading's Elo, Quick check answers, profile
+edits); recorded ideas alone don't rate a domain. The web already shows "Not rated yet" and keeps
+the "N ideas you've shown you know" count. Test: home terms alone → those domains unrated and absent
+from the summary; the field's domain rated. Demo personas are unaffected (their θ is set).
+
 ## B. End-of-article Up next follows the article (PR 2, API + web)
 
 - New `basis="story"` on `GET /v1/content/{id}/recommendations`; the web's end-of-article list
