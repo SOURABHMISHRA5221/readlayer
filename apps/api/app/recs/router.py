@@ -10,9 +10,10 @@ trigger none, so concepts without a cache entry give them library items only.
 
 import hashlib
 import logging
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -281,6 +282,24 @@ async def _story_results(
     return _Story(results, pending)
 
 
+def _lead_with_story(
+    chosen: list[tuple[Candidate, float]], candidates: list[Candidate], story_ids: Mapping[str, Any]
+) -> list[tuple[Candidate, float]]:
+    """Up to STORY_LEAD story items lead, included even when `select` left them out: a same-story
+    item scores below a key-idea explainer, so ranking alone dropped them all (live check,
+    2026-10-17). They take the places of the lowest-ranked items; the list doesn't grow."""
+    picked = [c for c in chosen if c[0].id in story_ids and c[0].relation == "same_story"]
+    taken = {c[0].id for c in chosen}
+    floor = min((s for _, s in chosen), default=STORY_RELEVANCE)
+    extra = [(c, floor) for c in candidates
+             if c.relation == "same_story" and c.id in story_ids and c.id not in taken]  # fmt: skip
+    lead = (picked + extra)[:STORY_LEAD]
+    lead_ids = {c.id for c, _ in lead}
+    rest = [c for c in chosen if c[0].id not in lead_ids]
+    size = max(len(chosen), len(lead))
+    return lead + rest[: size - len(lead)]
+
+
 def _story_item(r: WebResult, score: float) -> RecItem:
     return RecItem(
         id=_web_id(r.url),
@@ -409,9 +428,8 @@ async def recommendations(
     if basis == "article":
         chosen = one_per_format(chosen, ctx.user.formats)
     story_by_id = {_web_id(r.url): r for r in story.results}
-    if basis == "story":  # up to STORY_LEAD items of the same story lead, the rest keep their order
-        lead = [c for c in chosen if c[0].id in story_by_id][:STORY_LEAD]
-        chosen = lead + [c for c in chosen if c not in lead]
+    if basis == "story":
+        chosen = _lead_with_story(chosen, candidates, story_by_id)
 
     lib_by_key = {(f"lib:{c.content_id}", c.relation): c for c in lib}
     web_by_id = {_web_id(url): v for url, v in web_results.items()}

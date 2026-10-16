@@ -399,3 +399,16 @@ def test_the_story_route_drops_the_articles_own_url(env, monkeypatch):
     monkeypatch.setattr(provider, "search", itself_first)
     urls = {i["url"] for i in _story_recs(client)["items"]}
     assert (doc.final_url or doc.url) not in urls
+
+
+def test_story_items_lead_even_when_the_ranking_would_leave_them_out(env, monkeypatch):
+    """Live check (2026-10-17): five stored story results, none shown, because `select` keeps
+    the six best scores and a same-story item scores below a key-idea explainer. Up to
+    STORY_LEAD story items are now included and lead, whatever their score."""
+    client, *_ = env
+    monkeypatch.setattr(recs_router, "STORY_RELEVANCE", 1e-6)  # outscored by everything else
+    items = _story_recs(client)["items"]
+    lead = items[: recs_router.STORY_LEAD]
+    assert [i["why"] for i in lead] == ["More on this story"] * recs_router.STORY_LEAD
+    assert len(items) <= 6
+    assert all("a key idea here" in i["why"] for i in items[recs_router.STORY_LEAD :])
