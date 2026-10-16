@@ -13,7 +13,13 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import { answerAndRefresh } from "../lib/answers";
 import { api } from "../lib/api";
 import { onBeforeFlush, trackEvent } from "../lib/events";
-import { loadExplanation, loadShifted, prefetchExplanations, reportExplanation } from "../lib/explanations";
+import {
+  loadExplanation,
+  loadShifted,
+  prefetchExplanations,
+  prefetchInView,
+  reportExplanation,
+} from "../lib/explanations";
 import type { PersonaKey } from "../lib/personas";
 
 const WIDE_PX = 1200; // the margin rail appears here (reader.css)
@@ -131,13 +137,18 @@ export function useAnnotator(
     let cancelled = false;
     if (articleKey) prefetchExplanations(articleKey, personaRef.current, annotations);
     // The persona is the reader: switching it reloads an open card and resets its actions.
+    let stopPrefetch = () => {};
     annotator.update([...annotations, ...(extras ?? [])], { reader: personaRef.current ?? "me" }).then((result) => {
       if (cancelled) return;
       setResolved(result.resolved);
       if (result.unresolved.length) console.warn("[readlayer] anchors not found", result.unresolved);
+      // Marks exist now: notes near the viewport warm up (signed-in only, decision 67 L3).
+      const el = root.current;
+      if (articleKey && el) stopPrefetch = prefetchInView(el, articleKey, personaRef.current, annotations);
     });
     return () => {
       cancelled = true;
+      stopPrefetch();
     };
   }, [annotations, extras, articleKey]);
 

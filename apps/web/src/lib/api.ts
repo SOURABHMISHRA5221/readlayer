@@ -162,6 +162,8 @@ export interface ExplanationResponse {
   can_simpler?: boolean;
   can_deeper?: boolean;
   cached: boolean;
+  /** The daily explanation cap was reached: a definition card, not a verdict on the note. */
+  capped?: boolean;
 }
 
 export interface ReaderEvent {

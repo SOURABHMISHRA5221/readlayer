@@ -87,3 +87,17 @@ def test_set_interest_scoring_uses_the_deterministic_matcher_only():
     unknown = [{"op": "set_interest", "topic": "zz unknown thing", "direction": "more"}]
     assert ev.judge(cases["P11"], unknown)  # no embedding fallback in scoring
     assert "forbidden op set_interest" in ev.judge(cases["X05"], ok)
+
+
+def test_effort_flag_parses_per_task_levels():
+    """Decision 67 L1: `--effort restate=low,explain=low` → the LLM_REASONING_EFFORT mapping."""
+    import argparse
+
+    import pytest
+
+    from evals.run import parse_effort
+
+    assert parse_effort("restate=low, explain=medium") == {"restate": "low", "explain": "medium"}
+    for bad in ("explain=fast", "=low", "explain"):
+        with pytest.raises(argparse.ArgumentTypeError):
+            parse_effort(bad)

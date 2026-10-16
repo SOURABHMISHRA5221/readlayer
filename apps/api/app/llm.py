@@ -137,6 +137,19 @@ ROUTES: dict[str, Route] = {
 }
 
 
+# transcribe() keeps its route's effort: a lower one could drop speech (Media plan).
+NO_EFFORT_OVERRIDE = frozenset({"transcribe"})
+
+
+def check_effort_overrides(settings: Settings) -> None:
+    """LLM_REASONING_EFFORT may name only structured-call tasks (decision 67 L1)."""
+    bad = sorted(
+        t for t in settings.llm_reasoning_effort if t not in ROUTES or t in NO_EFFORT_OVERRIDE
+    )
+    if bad:
+        raise ValueError(f"LLM_REASONING_EFFORT names unknown or excluded tasks: {bad}")
+
+
 @dataclass(frozen=True)
 class Prompt:
     task: str
@@ -243,7 +256,7 @@ async def run_with_meta[T: BaseModel](
         {"role": "user", "content": render(prompt.user, prompt_vars)},
     ]
     chain = _model_chain(route, settings)
-    effort = route.reasoning_effort
+    effort = settings.llm_reasoning_effort.get(task, route.reasoning_effort)
     if route.timeout_s:
         settings = settings.model_copy(update={"llm_timeout_s": route.timeout_s})
     ledger = _Ledger()

@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     llm_daily_budget_usd: float = 8.0
     llm_timeout_s: float = 20.0
     llm_max_retries: int = 2
+    # Decision 67 L1: Gemini 3 thinking level per task (task -> low/medium/high), over the
+    # route's own; checked against llm.ROUTES at startup (llm.check_effort_overrides).
+    llm_reasoning_effort: dict[str, Literal["low", "medium", "high"]] = Field(default_factory=dict)
     # Per-token (input, output) USD prices for models missing from LiteLLM's price map.
     model_price_overrides: dict[str, tuple[float, float]] = Field(default_factory=dict)
     # Per-token USD price of audio input, for models whose LiteLLM entry has none (LiteLLM 1.104
