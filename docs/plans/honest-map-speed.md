@@ -181,6 +181,22 @@ from the summary; the field's domain rated. Demo personas are unaffected (their 
   asks `basis=story`.
 - Harness: open a library article → story items first, then key ideas; no "new to you".
 
+## G. Screen 2: an equal mix of the chosen formats (added 2026-10-17)
+
+Sourabh, 2026-10-17: "onboarding second step me bhi full read read read hai we need to change that
+so that the content that is suggested is an equal mix if in the previous step i select podcast and
+reading". Cause: `feed_rank.onboarding_mix` (decision 68 F4) put articles first within each topic
+and guaranteed only 2 of each chosen video/podcast format, so Read + Listen gave ~6 articles, 2
+podcasts, 1 video. Now `onboarding_targets`: every format not chosen gets 1 card; the chosen ones
+(articles when none) share the rest equally (remainder in article → video → podcast order): Read +
+Listen of 9 → 4 articles, 4 podcasts, 1 video; one chosen → 7 + 1 + 1; all three → 3 / 3 / 3. A
+chosen format short of results is made up by the other chosen ones first. New cards take turns by
+chosen format (topics interleaved within each), the other formats after; served cards keep their
+slots and pending searches still hold slots for a short format (both as before). Tests: the shares
+above, the turns, topics interleaved within a format, a short chosen format made up; decision 68's
+served/pending/default tests unchanged and passing. Harness (`tools/shots/d69_mix.py`, Read +
+Listen, three topics): 4 / 4 / 1 in turns. Pure function, no new searches or cost.
+
 ## F. "Consume", not "read" (PR 2, its own commit; added 2026-10-17)
 
 Sourabh, 2026-10-17: "on landing and everywhere we mentioning read a lot so change it to

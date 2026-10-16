@@ -82,3 +82,37 @@ def test_screen_2_holds_slots_for_missing_formats_while_searches_run():
     assert [c.result.url for c in again][:8] == served and again[8].result.url == "a1"
     done = fr.onboarding_mix(early, NOW, 9, formats=["video"], pending=False)
     assert len(done) == 9  # searches finished with no article: the slot is used
+
+
+# Decision 69 G (Sourabh: screen 2 was "full read read read"): the chosen formats share the
+# cards equally, every other format still gets one, and the chosen formats take turns.
+
+
+def _plenty(topic):
+    return ([cand(f"{topic}-a{i}", topic, "article", day=9 - i) for i in range(6)]
+            + [cand(f"{topic}-p{i}", topic, "podcast", day=8 - i) for i in range(4)]
+            + [cand(f"{topic}-v{i}", topic, "video", day=7 - i) for i in range(4)])  # fmt: skip
+
+
+def test_screen_2_shares_cards_equally_between_the_chosen_formats():
+    groups = [_plenty("sports"), _plenty("economics"), _plenty("business")]
+    got = fr.onboarding_mix(groups, NOW, 9, formats=["article", "podcast"])
+    fmts = [c.result.format for c in got]
+    assert (fmts.count("article"), fmts.count("podcast"), fmts.count("video")) == (4, 4, 1)
+    assert fmts[:8] == ["article", "podcast"] * 4  # they take turns; the other format comes last
+    one = [c.result.format for c in fr.onboarding_mix(groups, NOW, 9, formats=["podcast"])]
+    assert (one.count("podcast"), one.count("article"), one.count("video")) == (7, 1, 1)
+    all_three = fr.onboarding_mix(groups, NOW, 9, formats=["article", "video", "podcast"])
+    every = [c.result.format for c in all_three]
+    assert (every.count("article"), every.count("video"), every.count("podcast")) == (3, 3, 3)
+    articles = [c.topic for c in got if c.result.format == "article"][:3]
+    assert len(set(articles)) == 3  # topics still interleave within a format
+
+
+def test_a_short_chosen_format_is_made_up_by_the_other_chosen_one():
+    groups = [[*(cand(f"a{i}", "law") for i in range(9)), cand("p1", "law", "podcast"),
+               cand("v1", "law", "video")]]  # fmt: skip
+    got = [
+        c.result.format for c in fr.onboarding_mix(groups, NOW, 9, formats=["article", "podcast"])
+    ]
+    assert got.count("podcast") == 1 and got.count("video") == 1 and got.count("article") == 7

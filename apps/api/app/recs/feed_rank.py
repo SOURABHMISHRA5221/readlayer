@@ -485,25 +485,40 @@ def select(
     return _interleave(per_topic)
 
 
+FORMAT_ORDER: tuple[str, ...] = ("article", "video", "podcast")
+
+
+def onboarding_targets(formats: Sequence[str], limit: int) -> tuple[list[str], dict[str, int]]:
+    """Decision 69 G: every format not chosen gets 1 card; the chosen ones (articles when none)
+    share the rest equally, the remainder in FORMAT_ORDER. Article + podcast of 9 → 4 / 4 / 1."""
+    chosen = [f for f in FORMAT_ORDER if f in formats] or ["article"]
+    others = [f for f in FORMAT_ORDER if f not in chosen]
+    base, extra = divmod(max(0, limit - len(others)), len(chosen))
+    targets = {f: base + (1 if i < extra else 0) for i, f in enumerate(chosen)}
+    return chosen, targets | dict.fromkeys(others, 1)
+
+
 def onboarding_mix(
     groups: Sequence[Sequence[FeedCandidate]], now: datetime, limit: int,
     formats: Sequence[str] = (), served: Sequence[str] = (),
     key: Callable[[FeedCandidate], str] = lambda c: c.result.url, pending: bool = False,
 ) -> list[FeedCandidate]:  # fmt: skip
-    """Onboarding's screen 2 (decisions 41, 68 F4): one group per chosen topic or concept, in the
-    reader's order. Within a group the reader's chosen formats first (articles first when none),
+    """Onboarding's screen 2 (decisions 41, 68 F4, 69 G): one group per chosen topic or concept,
+    in the reader's order. Within a group the reader's chosen formats first (articles when none),
     then fresher (ties by URL); groups interleaved so every one with results gets a card before
     any gets a second; one per URL. Items already `served` (by `key`) keep their slots, in served
-    order, so a later poll never pushes out a card the reader may have answered. Then at least 2
-    of each chosen video/podcast format and 1 of every other format, when there are any; the rest
-    in interleaved order. While searches are `pending`, a format short of its minimum keeps its
-    slots free for a later poll (else the first poll's fast formats would take every slot). Pure."""
-    first = set(formats) or {"article"}
-    ordered = [
-        sorted(g, key=lambda c: (c.result.format not in first, c.result.format != "article",
-                                 -freshness(c.result.published_at, now), c.result.url))
-        for g in groups
-    ]  # fmt: skip
+    order, so a later poll never pushes out a card the reader may have answered. Then each format
+    up to its target (`onboarding_targets`: the chosen formats share the cards equally, every
+    other format gets 1), a chosen format short of results made up by the other chosen ones first.
+    While searches are `pending`, a format short of its target keeps its slots free for a later
+    poll. New cards take turns by chosen format (topics interleaved within each), the other
+    formats after. Pure."""
+    chosen, targets = onboarding_targets(formats, limit)
+
+    def rank_in_group(c: FeedCandidate) -> tuple[bool, float, str]:
+        return c.result.format not in chosen, -freshness(c.result.published_at, now), c.result.url
+
+    ordered = [sorted(g, key=rank_in_group) for g in groups]
     pool: list[FeedCandidate] = []
     seen: set[str] = set()
     for layer in range(max((len(g) for g in ordered), default=0)):
@@ -513,23 +528,35 @@ def onboarding_mix(
                 pool.append(g[layer])
     by_key = {key(c): c for c in pool}
     out = [by_key[k] for k in served if k in by_key][:limit]
+    kept = len(out)
     taken = {id(c) for c in out}
-    minimum = {f: (2 if f in formats and f != "article" else 0 if f in formats else 1)
-               for f in ("article", "video", "podcast")}  # fmt: skip
-    for fmt, need in minimum.items():
+    for fmt in [*chosen, *(f for f in FORMAT_ORDER if f not in chosen)]:
         have = sum(c.result.format == fmt for c in out)
         for c in pool:
-            if have >= need or len(out) >= limit:
+            if have >= targets[fmt] or len(out) >= limit:
                 break
             if id(c) not in taken and c.result.format == fmt:
                 out.append(c)
                 taken.add(id(c))
                 have += 1
-    kept = len([k for k in served if k in by_key][:limit])
-    unmet = sum(
-        max(0, need - sum(c.result.format == f for c in out)) for f, need in minimum.items()
-    )
+    unmet = sum(max(0, t - sum(c.result.format == f for c in out)) for f, t in targets.items())
     room = max(0, limit - len(out) - (unmet if pending else 0))
-    rest = [c for c in pool if id(c) not in taken][:room]
     position = {id(c): i for i, c in enumerate(pool)}
-    return out[:kept] + sorted([*out[kept:], *rest], key=lambda c: position[id(c)])
+    spare = sorted((c for c in pool if id(c) not in taken),
+                   key=lambda c: (c.result.format not in chosen, position[id(c)]))  # fmt: skip
+    return out[:kept] + _take_turns([*out[kept:], *spare[:room]], chosen, position)
+
+
+def _take_turns(
+    cards: Sequence[FeedCandidate], chosen: Sequence[str], position: Mapping[int, int]
+) -> list[FeedCandidate]:
+    """The chosen formats in turn (each in pool order), then the other formats in pool order."""
+    by_fmt = {f: sorted((c for c in cards if c.result.format == f), key=lambda c: position[id(c)])
+              for f in chosen}  # fmt: skip
+    turns: list[FeedCandidate] = []
+    for layer in range(max((len(v) for v in by_fmt.values()), default=0)):
+        turns += [v[layer] for v in by_fmt.values() if layer < len(v)]
+    rest = sorted(
+        (c for c in cards if c.result.format not in chosen), key=lambda c: position[id(c)]
+    )
+    return turns + rest
