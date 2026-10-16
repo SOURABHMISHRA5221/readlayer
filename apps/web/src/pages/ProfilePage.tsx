@@ -119,10 +119,11 @@ export default function ProfilePage({ url }: { url: URL }) {
 
 type DomainRow = Profile["domains"][number];
 
-/** Rated domains and the reader's chosen interests come first; with neither, the four core
- *  domains. The rest of the 14 sit behind "Other domains" so the page stays short. */
-function splitDomains(rows: DomainRow[]): [DomainRow[], DomainRow[]] {
-  const mine = rows.filter((d) => d.rated || d.interest >= 0.5);
+/** Rated domains, domains with ideas the reader has shown they know (decision 69 A2: shown as
+ *  "Not rated yet" with their count) and the reader's chosen interests come first; with none, the
+ *  four core domains. The rest of the 14 sit behind "Other domains" so the page stays short. */
+export function splitDomains(rows: DomainRow[]): [DomainRow[], DomainRow[]] {
+  const mine = rows.filter((d) => d.rated || (d.known ?? 0) > 0 || d.interest >= 0.5);
   const primary = mine.length ? mine : rows.filter((d) => BUSINESS_DOMAINS.includes(d.domain));
   return [primary, rows.filter((d) => !primary.includes(d))];
 }

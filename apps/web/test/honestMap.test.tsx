@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import { describe, expect, it } from "vitest";
 
 import { Legend, inspectorNote } from "../src/components/profile/KnowledgeMap";
+import { splitDomains } from "../src/pages/ProfilePage";
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -31,5 +32,16 @@ describe("honest map", () => {
     for (const n of ["unaware", "understands"] as const) {
       expect(inspectorNote({ ready: false, band: n, domain: "finance" })).not.toMatch(/estimate from your level/);
     }
+  });
+});
+
+describe("profile topics (decision 69 A2)", () => {
+  const row = (domain: string, rated: boolean, known: number, interest = 0.3) =>
+    ({ domain, theta: 0, interest, rated, concepts: 50, known }) as Parameters<typeof splitDomains>[0][number];
+
+  it("keeps a topic with recorded ideas in the main grid even when it has no level yet", () => {
+    const [main, other] = splitDomains([row("technology", true, 0), row("policy", false, 6), row("law", false, 0)]);
+    expect(main.map((d) => d.domain)).toEqual(["technology", "policy"]);
+    expect(other.map((d) => d.domain)).toEqual(["law"]);
   });
 });

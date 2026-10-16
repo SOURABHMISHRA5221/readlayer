@@ -200,3 +200,23 @@ def test_home_terms_alone_give_a_topic_no_level(env, docs):
     assert not any(rated[d] for d in home)
     text = profile["summary"]["text"]
     assert all(d not in text for d in home), text
+
+
+def test_a_quick_check_answer_rates_its_topic_even_if_theta_stays_at_zero(env, docs):
+    g = consented(TestClient(app, headers=auth("g1")))
+    g.post("/v1/onboarding", json=answers())
+    item = g.get("/v1/calibration/set").json()["items"][0]
+    answer = {"concept_id": item["concept_id"], "answer": "heard"}
+    assert g.post("/v1/calibration/answer", json=answer).status_code == 200
+    rated = {d["domain"]: d["rated"] for d in g.get("/v1/me/profile").json()["domains"]}
+    assert rated[item["domain"]] is True
+
+
+def test_demo_personas_are_rated_exactly_where_their_level_is_set(env):
+    from app.reader.personas import PERSONAS
+
+    anon = TestClient(app, headers=auth("demo-a2", anonymous=True))
+    for key, spec in PERSONAS.items():
+        body = anon.get(f"/v1/me/profile?persona={key}").json()
+        rated = {d["domain"] for d in body["domains"] if d["rated"]}
+        assert rated == {d for d, t in spec.theta.items() if abs(t) > 1e-9}, key

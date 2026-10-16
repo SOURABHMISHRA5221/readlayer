@@ -2,7 +2,7 @@
 and the annotation trend. Pure, and never an LLM call: same inputs give the same text.
 """
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -13,6 +13,29 @@ LEVELS = ("advanced", "comfortable", "building", "new to")
 PHRASE = {"advanced": "advanced in", "comfortable": "comfortable in", "building": "building in",
           "new to": "new to"}  # fmt: skip
 WEEK = timedelta(days=7)
+# Evidence that sets or moves a topic's level (decision 69 A2): a profile edit's level, a Quick
+# check answer, and the reading events that take an Elo step. Home terms, liked-article mentions,
+# persona seeds, corrections and named-concept edits record ideas only, never a level.
+LEVEL_EVIDENCE = frozenset(
+    {"profile_edit_domain", "calibration_answer", "knew_this", "explain_opened"}
+)
+
+
+def rated_domains(
+    theta: Mapping[str, float],
+    comfort: Iterable[str],
+    edges: Mapping[str, Edge],
+    domain_of: Callable[[str], str | None],
+) -> set[str]:
+    """Topics whose level was set or moved: a comfort answer, θ off its neutral 0, or level-setting
+    evidence (which can leave θ at exactly 0: an edit from 0.5 to "some", a "heard of" answer on a
+    term as hard as θ). A neutral 0 with only recorded ideas isn't "comfortable" (decision 69
+    A2)."""
+    rated = {d for d, t in theta.items() if abs(t) > 1e-9} | set(comfort)
+    for cid, edge in edges.items():
+        if any(e.type in LEVEL_EVIDENCE for e in edge.evidence) and (d := domain_of(cid)):
+            rated.add(d)
+    return rated
 
 
 def theta_word(theta: float) -> str:

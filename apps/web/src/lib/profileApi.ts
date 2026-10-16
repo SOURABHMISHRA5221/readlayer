@@ -39,7 +39,8 @@ export interface Onboarding {
 
 export interface Profile {
   summary: { text: string; top_domain: string | null; moved_up_this_week: number; learning_paused: boolean };
-  /** `rated`: the reader rated, reads in, or has concepts in this domain. */
+  /** `rated`: the domain's level was set or moved (a comfort answer, the field, reading, answers,
+   * an edit; decision 69 A2). Recorded ideas alone (`known`) don't rate it. */
   domains: { domain: Domain; theta: number; interest: number; rated: boolean; concepts: number; known?: number }[];
   thinks_in: Frame[];
   week: {

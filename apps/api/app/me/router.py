@@ -328,6 +328,11 @@ async def correct_concept(
 # ---------------------------------------------------------------- profile and settings
 
 
+def _domain_of(graph: ConceptGraph, cid: str) -> str | None:
+    c = graph.get(cid)
+    return c.domain if c is not None else None
+
+
 @router.get("/me/profile")
 async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> dict[str, Any]:
     """Deterministic (DESIGN §15.1): no LLM call anywhere on this path."""
@@ -338,10 +343,12 @@ async def get_profile(ctx: Annotated[ReaderContext, Depends(reader_context)]) ->
     knows = dict(ctx.state.edges)
     weekly = await _repo().get_weekly(ctx.uid)
     theta = {d: float(ctx.theta.get(d, 0.0)) for d in DOMAINS}
-    # A domain whose level was set or moved (a comfort answer, the field, reading, answers): the
-    # summary and the level words speak only about those. A neutral 0 in an untouched domain isn't
-    # "comfortable", even when a few ideas there are recorded (home terms, decision 69 A2).
-    rated = {d for d in DOMAINS if d in user.onboarding.get("comfort", {}) or abs(theta[d]) > 1e-9}
+    # A domain whose level was set or moved (`profile.rated_domains`): the summary and the level
+    # words speak only about those. A neutral 0 with only recorded ideas (home terms) isn't
+    # "comfortable" (decision 69 A2).
+    rated = profile.rated_domains(
+        theta, user.onboarding.get("comfort", {}), knows, lambda cid: _domain_of(graph, cid)
+    ) & set(DOMAINS)
     moves = [m for m in profile.moved_up_this_week(knows, now) if graph.get(m.concept_id)]
     in_graph = Counter(c.domain for c in graph.concepts)  # the map offers domains with concepts
     # Ideas the reader has shown they know (an edge at "understands" or above), per domain.

@@ -882,12 +882,15 @@ the reader model in §4; only the optional profile edit (§15.3) calls an LLM.
    THINKS_IN domains, and this week's band changes. θ (rounded to one decimal, as the page shows it) maps to words: θ ≥ 1 "advanced",
    0 ≤ θ < 1 "comfortable", −1 ≤ θ < 0 "building", θ < −1 "new to". Example:
    "Comfortable in finance, building in economics. You think in software. 6 concepts moved up a
-   band this week." Only domains the reader rated, reads in or has concepts in are named (M7).
+   band this week." Only domains whose level was set or moved are named (decision 69 A2, `profile.rated_domains`:
+   a comfort answer, θ ≠ 0, or level-setting evidence — a profile edit's level, a Quick check
+   answer, "knew this" / opened explanations; home terms and other recorded ideas alone don't).
    Same inputs always give the same text (unit-tested).
 2. **Domain cards** (Design pass). Per topic: a level word from θ (New to you, Getting there,
    Comfortable, Confident, Advanced) on a 5-step scale with its text, ideas known (edges at
    understands or above), interest in words, and "+N this week" from the week's band rises in
-   that topic. Rated and chosen topics first; the rest behind "Other topics". As many across as
+   that topic. Rated topics, topics with ideas known (an unrated one says "Not rated yet" with its
+   count) and chosen topics first; the rest behind "Other topics" (decision 69 A2). As many across as
    fit (4 at 961px up to 7 at 1680px), rows filled evenly (`cardColumns`: six cards where five
    fit sit 3 + 3); 2 across to 960px, 1 to 420px.
 3. **Knowledge map** (Design pass; replaces the Cytoscape/dagre map). An SVG overview of every

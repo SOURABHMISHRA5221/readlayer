@@ -116,3 +116,31 @@ def test_a_short_chosen_format_is_made_up_by_the_other_chosen_one():
         c.result.format for c in fr.onboarding_mix(groups, NOW, 9, formats=["article", "podcast"])
     ]
     assert got.count("podcast") == 1 and got.count("video") == 1 and got.count("article") == 7
+
+
+def test_screen_2_targets():
+    assert fr.onboarding_targets(["video", "podcast"], 9) == (
+        ["video", "podcast"],
+        {"video": 4, "podcast": 4, "article": 1},
+    )
+    assert fr.onboarding_targets([], 9) == (["article"], {"article": 7, "video": 1, "podcast": 1})
+    assert fr.onboarding_targets(["article", "video", "podcast"], 3)[1] == {
+        "article": 1,
+        "video": 1,
+        "podcast": 1,
+    }
+
+
+def test_screen_2_pending_holds_the_short_chosen_format_then_fills_it():
+    """Read + Listen, podcasts slow: the first poll shows the 4 articles and holds 4 podcast slots
+    and the video's; the next poll keeps those 4 first and adds 4 podcasts and 1 video."""
+    articles = [[cand(f"{t}-a{i}", t) for i in range(4)] for t in ("sports", "law")]
+    first = fr.onboarding_mix(articles, NOW, 9, formats=["article", "podcast"], pending=True)
+    assert [c.result.format for c in first] == ["article"] * 4
+    served = [c.result.url for c in first]
+    later = [g + [cand(f"{g[0].topic}-p{i}", g[0].topic, "podcast") for i in range(3)]
+             + [cand(f"{g[0].topic}-v", g[0].topic, "video")] for g in articles]  # fmt: skip
+    again = fr.onboarding_mix(later, NOW, 9, formats=["article", "podcast"], served=served)
+    fmts = [c.result.format for c in again]
+    assert [c.result.url for c in again][:4] == served
+    assert fmts[4:].count("podcast") == 4 and fmts[4:].count("video") == 1 and len(again) == 9

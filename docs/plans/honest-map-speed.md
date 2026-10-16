@@ -129,7 +129,8 @@ are in the video line).
   recorded yet: read about it, or tell us below." only when `!ready && band === "unaware" &&
   recent.length === 0` (an edge with no evidence after a profile edit keeps today's text); "I know
   this / I don't" stay.
-- Unchanged: scoring and notes still use the prior (DESIGN §5); the profile summary and list;
+- Unchanged: scoring and notes still use the prior (DESIGN §5); the list view (edges only); the
+  profile summary and levels change in A2;
   demo personas (edges from their templates).
 - Tests (API): fresh reader (θ only, no edges) → no nodes; home-term edges → solid in their domains,
   nothing else; a ring only when its prerequisites have evidence, including a prerequisite in
@@ -146,10 +147,15 @@ The d69 harness (fresh account, Software + India + Sports) showed the profile sa
 business, economics, finance, policy, sports and technology": the 12 India home terms put edges in
 four domains, and `GET /v1/me/profile` counted a domain with any edge as `rated`, so its untouched
 θ 0 read "comfortable" (the summary and the level cards) — the same guess-as-fact as the map. Now
-`rated` = a comfort answer or |θ| > 0 (the field, reading's Elo, Quick check answers, profile
-edits); recorded ideas alone don't rate a domain. The web already shows "Not rated yet" and keeps
-the "N ideas you've shown you know" count. Test: home terms alone → those domains unrated and absent
-from the summary; the field's domain rated. Demo personas are unaffected (their θ is set).
+`rated` = `profile.rated_domains`: a comfort answer, |θ| > 0 (the field, reading's Elo, answers,
+edits), or level-setting evidence in the domain (`profile_edit_domain`, `calibration_answer`,
+`knew_this`, `explain_opened` — an edit from 0.5 to "some" or a "heard of" answer can leave θ at
+exactly 0); home terms, liked mentions, seeds, corrections and named-concept edits alone don't rate
+a domain. The web shows "Not rated yet" with the "N ideas you've shown you know" count, and keeps a
+topic with known ideas in the main grid and the map's topic buttons (`splitDomains`: rated, known >
+0 or chosen). Tests: the rule per evidence kind; home terms alone → unrated, absent from the
+summary; a Quick check answer rates its topic; each demo persona rated exactly where its θ is set;
+the web grouping. Plan-reviewer on A2: REVISE 6 (incl. G) → applied.
 
 ## B. End-of-article Up next follows the article (PR 2, API + web)
 
@@ -192,7 +198,10 @@ podcasts, 1 video. Now `onboarding_targets`: every format not chosen gets 1 card
 Listen of 9 → 4 articles, 4 podcasts, 1 video; one chosen → 7 + 1 + 1; all three → 3 / 3 / 3. A
 chosen format short of results is made up by the other chosen ones first. New cards take turns by
 chosen format (topics interleaved within each), the other formats after; served cards keep their
-slots and pending searches still hold slots for a short format (both as before). Tests: the shares
+slots and pending searches still hold slots for a short format (as before, but a short chosen
+format now holds up to its larger share: Read + Listen with all podcasts slow shows 4 articles on
+the first poll, and the next poll appends 4 podcasts and 1 video after them, so "take turns" applies
+within one poll). Tests: the shares
 above, the turns, topics interleaved within a format, a short chosen format made up; decision 68's
 served/pending/default tests unchanged and passing. Harness (`tools/shots/d69_mix.py`, Read +
 Listen, three topics): 4 / 4 / 1 in turns. Pure function, no new searches or cost.
@@ -279,5 +288,5 @@ Changes:
 
 ## Docs and records
 STATUS §10 row 69 (quotes above; the freeze lifted), §9 rows (schedule above), §37 acceptance;
-DESIGN §15.1 (map), §8 (`basis`), §16.3 (story search rule), the effort table; AUTOPILOT_LOG.
+DESIGN §15.1 (map; levels, A2), §8 (`basis`), §16.3 (story search rule), the effort table; AUTOPILOT_LOG.
 Commits `M69: …` per PR.

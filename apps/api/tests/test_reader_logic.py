@@ -322,3 +322,28 @@ def test_article_helpful_is_recorded_without_evidence():
     )
     assert out.applied == ("h1",) and out.ignored == ("h2",)
     assert out.edges == {} and out.theta == {}  # no knows or θ change
+
+
+# Decision 69 A2: a topic is rated only when its level was set or moved.
+
+
+def _edge_with(kind: str) -> Edge:
+    now = datetime(2026, 10, 17, tzinfo=UTC)
+    return Edge(alpha=1.0, beta=1.0, last_seen=now, band="heard of",
+                evidence=(model.Evidence(kind, 1.0, now),))  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    ("kind", "rated"),
+    [("profile_edit_domain", True), ("calibration_answer", True), ("knew_this", True),
+     ("explain_opened", True), ("home_country", False), ("liked_article_mention", False),
+     ("seed", False), ("correction", False), ("profile_edit_concept", False)],
+)  # fmt: skip
+def test_a_level_needs_level_setting_evidence_or_a_moved_theta(kind, rated):
+    got = profile.rated_domains({"finance": 0.0}, [], {"c1": _edge_with(kind)}, lambda _: "finance")
+    assert ("finance" in got) is rated
+
+
+def test_a_moved_theta_or_a_comfort_answer_rates_a_topic_without_edges():
+    got = profile.rated_domains({"finance": 0.0, "law": 0.4, "policy": 0.0}, ["policy"], {}, str)
+    assert got == {"law", "policy"}

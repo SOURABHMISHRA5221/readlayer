@@ -283,7 +283,7 @@ def test_map_nodes_carry_their_last_evidence_items(env):
     assert len(recent) <= 3
 
 
-def test_the_summary_names_only_domains_the_reader_rated_or_reads_in(env):
+def test_the_summary_names_only_domains_whose_level_was_set(env):
     g = consented(google())
     g.post(
         "/v1/onboarding", json={**ANSWERS, "comfort": {"finance": "new"}, "liked_content_ids": []}

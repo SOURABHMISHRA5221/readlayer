@@ -76,6 +76,11 @@ async def main() -> None:
             "solid_without_evidence": [n["label"] for n in solid if not n["recent"]],
             "evidence_types": sorted({e["type"] for n in solid for e in n["recent"]}),
         }
+        prof = (await p.api("", "GET", "/v1/me/profile"))["body"]
+        out["summary"] = prof["summary"]["text"]  # A2: only topics whose level was set or moved
+        out["rated"] = sorted(d["domain"] for d in prof["domains"] if d["rated"])
+        out["known_unrated"] = sorted(d["domain"] for d in prof["domains"]
+                                      if not d["rated"] and d.get("known", 0) > 0)  # fmt: skip
         out["profile"] = await audit_all(p, "profile", "/profile", ".kmap")
         await p.viewport(1440)
         await p.goto(W + "/profile", wait=2)
@@ -111,8 +116,20 @@ async def main() -> None:
 
         # F: wording in the signed-in library
         out["library"] = await audit_all(p, "library", "/", ".topbar")
-    finally:
         out["delete"] = (await p.api("", "DELETE", "/v1/me"))["status"]
+
+        # A2 on a demo persona: its summary still names every topic its level is set in
+        await p.viewport(1440)
+        await p.reset_auth(W)
+        await p.goto(W + "/", wait=3)
+        await p.wait_for(".lp-nav__cta", 30)
+        await p.eval("document.querySelector('.lp-nav__cta').click(); 1")
+        await asyncio.sleep(6)
+        demo = (await p.api("", "GET", "/v1/me/profile?persona=newcomer"))["body"]
+        out["newcomer_summary"] = demo["summary"]["text"]
+        out["newcomer_rated"] = sorted(d["domain"] for d in demo["domains"] if d["rated"])
+    finally:
+        out["cleanup"] = (await p.api("", "DELETE", "/v1/me"))["status"]
         print(json.dumps(out, indent=1))
         await ws.close()
         cdp.stop()
