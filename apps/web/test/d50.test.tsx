@@ -91,6 +91,7 @@ describe("country on screen 1", () => {
     expect(calls.map((c) => c.path)).toEqual(["/v1/me/profile"]); // nothing stored yet
     await click(chip("Somewhere else"));
     expect(chip("Somewhere else")?.checked).toBe(true);
+    await click(chip("Read")); // decision 68: a format is needed to continue
     await click(button("Continue"));
     const saved = calls.find((c) => c.path === "/v1/onboarding")!.body as Record<string, unknown>;
     expect(saved.country).toBe("other");

@@ -21,11 +21,10 @@ const PROFILE = (step: string, consented = false) => ({
   onboarding: { consented, done: false, step, field: consented ? "software" : null, interests: consented ? ["economics"] : [] },
 }); // prettier-ignore
 
-const item = (n: number, term?: string): DiscoverItem => ({
+const item = (n: number, format: DiscoverItem["format"] = "article", seconds: number | null = null): DiscoverItem => ({
   id: `feed:${n}`, kind: "web", content_id: null, topic: "economics", topic_label: "Economics",
-  format: "article", title: `Story ${n}`, url: `https://x.test/${n}`, source: "x.test", snippet: "",
-  thumbnail: null, duration_or_read_time: null, published_at: null,
-  know: term ? { concept_id: `c_${term}`, label: term, known: null } : null, liked: null,
+  format, title: `Story ${n}`, url: `https://x.test/${n}`, source: "x.test", snippet: "",
+  thumbnail: null, duration_or_read_time: seconds, published_at: null, know: null, liked: null,
 }); // prettier-ignore
 
 interface Call {
@@ -86,17 +85,16 @@ afterEach(() => {
 
 describe("readback", () => {
   it("is one deterministic sentence from the answers and frame", () => {
-    const input = { liked: ["Economics", "Sports", "Economics"], skipped: ["Law"], known: ["Inflation"], unknown: ["Bond"], frame: "software" };
+    // Decision 68 K3: taste only, no claim about what the reader knows.
+    const input = { liked: ["Economics", "Sports", "Economics"], skipped: ["Law"], frame: "software" };
     const line = readback(input);
-    expect(line).toBe(
-      "So: more Economics and Sports, less Law. You know Inflation, and Bond is new to you, so I'll explain new ideas with software analogies.",
-    );
+    expect(line).toBe("So: more Economics and Sports, less Law. I'll explain new ideas with software analogies.");
     expect(readback(input)).toBe(line);
-    expect(readback({ liked: [], skipped: [], known: [], unknown: ["A", "B"], frame: null })).toBe(
-      "So: a mix of everything you picked. A and B are new to you, so I'll explain new ideas in plain words.",
+    expect(readback({ liked: [], skipped: [], frame: null })).toBe(
+      "So: a mix of everything you picked. I'll explain new ideas in plain words.",
     );
     expect(listing(["a", "b", "c"])).toBe("a, b and c");
-    const mixed = readback({ liked: ["Sports", "Law"], skipped: ["Sports", "Sports"], known: [], unknown: [], frame: null });
+    const mixed = readback({ liked: ["Sports", "Law"], skipped: ["Sports", "Sports"], frame: null });
     expect(mixed.startsWith("So: more Law, less Sports.")).toBe(true);
   });
 });
@@ -116,15 +114,20 @@ describe("screen 1 helpers", () => {
 });
 
 describe("WelcomePage screen 1", () => {
-  it("keeps Continue disabled until a field, a topic and consent", async () => {
+  it("keeps Continue disabled until a field, a format, a topic and consent", async () => {
     stubApi({ "/v1/me/profile": PROFILE("consent") });
     await mount();
     const next = () => button("Continue")!;
     expect(next().disabled).toBe(true);
     await click(chip("Software"));
     await click(chip("Economics"));
-    expect(next().disabled).toBe(true);
     await click(host.querySelector(".consent__check input"));
+    expect(next().disabled).toBe(true); // decision 68: read / watch / listen, at least one
+    await click(chip("Listen"));
+    expect(next().disabled).toBe(false);
+    await click(chip("Listen"));
+    expect(next().disabled).toBe(true);
+    await click(chip("Watch"));
     expect(next().disabled).toBe(false);
     expect(host.querySelector<HTMLAnchorElement>(".consent__link")?.getAttribute("href")).toBe("/privacy");
     expect(calls.map((c) => c.path)).toEqual(["/v1/me/profile"]); // nothing sent before Continue
@@ -145,6 +148,7 @@ describe("WelcomePage screen 1", () => {
     const href = location.href;
     await mount();
     await click(chip("Software"));
+    await click(chip("Watch"));
     await click(host.querySelector(".consent__check input"));
     await type(host.querySelector<HTMLInputElement>(".freetext__input")!, "F1, bonds, zz");
     expect(localStorage.length + sessionStorage.length).toBe(0);
@@ -157,7 +161,7 @@ describe("WelcomePage screen 1", () => {
     await click(button("Continue")); // stays on screen 1 until the second Continue
     const saved = calls.find((c) => c.path === "/v1/onboarding")!.body as Record<string, unknown>;
     // jsdom's navigator.language is en-US: the prefilled country is saved with Continue (decision 50).
-    expect(saved).toEqual({ field: "software", interests: ["sports", "finance"], thinks_in: ["software"], country: "US" });
+    expect(saved).toEqual({ field: "software", interests: ["sports", "finance"], thinks_in: ["software"], country: "US", formats: ["video"] });
     for (const c of calls.filter((c) => c.path !== "/v1/onboarding/resolve")) {
       expect(JSON.stringify(c.body ?? "")).not.toMatch(/F1|bonds|zz/);
     }
@@ -167,28 +171,36 @@ describe("WelcomePage screen 1", () => {
 });
 
 describe("WelcomePage screen 2", () => {
-  it("resumes on screen 2, records picks and Know this?, then reads back after 5 answers", async () => {
+  it("resumes on screen 2, records picks (no Know this?), shows formats, then reads back after 5 answers", async () => {
     stubApi({
       "/v1/me/profile": PROFILE("discover", true),
-      "/v1/onboarding/discover": { items: [item(1, "Inflation"), item(2, "Bond"), item(3), item(4)], pending: false },
+      "/v1/onboarding/discover": {
+        items: [item(1), item(2, "video", 360), item(3, "podcast", 1440), item(4), item(5)],
+        pending: false,
+      },
       "/v1/onboarding/pick": { saved: true },
-      "/v1/onboarding/know": { saved: true },
       "/v1/onboarding/finish": { done: true },
     });
     await mount();
     expect(host.querySelector("h1")?.textContent).toBe("Here's what's out there for you");
     expect(calls.find((c) => c.path === "/v1/onboarding/discover")!.body).toEqual({ topics: ["economics"], concepts: [] });
     const cards = [...host.querySelectorAll(".discover-card")];
-    expect(cards).toHaveLength(4);
-    for (const card of cards.slice(0, 3)) await click([...card.querySelectorAll("button")].find((b) => b.textContent === "I'd read this"));
-    await click([...cards[0]!.querySelectorAll("button")].find((b) => b.textContent === "Yes"));
+    expect(cards).toHaveLength(5);
+    expect(host.querySelector(".discover-card__know")).toBeNull(); // decision 68: screen 2 is taste only
+    expect(cards[1]!.querySelector(".discover-card__meta")?.textContent).toContain("Watch · 6 min");
+    expect(cards[2]!.querySelector(".discover-card__meta")?.textContent).toContain("Listen · 24 min");
+    const like = (card: Element) => [...card.querySelectorAll("button")].find((b) => b.textContent?.startsWith("I'd"))!;
+    expect(cards.map((c) => like(c).textContent)).toEqual([
+      "I'd read this", "I'd watch this", "I'd listen to this", "I'd read this", "I'd read this",
+    ]); // prettier-ignore
+    for (const card of cards.slice(0, 4)) await click(like(card));
     expect(host.querySelector(".welcome__says")?.textContent).not.toMatch(/^So:/);
-    await click([...cards[1]!.querySelectorAll("button")].find((b) => b.textContent === "Not really"));
+    await click(like(cards[4]!));
     expect(host.querySelector(".welcome__says")?.textContent).toBe(
-      "So: more Economics. You know Inflation, and Bond is new to you, so I'll explain new ideas with software analogies.",
+      "So: more Economics. I'll explain new ideas with software analogies.",
     );
-    expect(calls.filter((c) => c.path === "/v1/onboarding/pick")).toHaveLength(3);
-    expect(calls.find((c) => c.path === "/v1/onboarding/know")!.body).toEqual({ concept_id: "c_Inflation", known: true });
+    expect(calls.filter((c) => c.path === "/v1/onboarding/pick")).toHaveLength(5);
+    expect(calls.some((c) => c.path === "/v1/onboarding/know")).toBe(false);
     expect(button("Edit your picks")).toBeTruthy();
     await click(button("Start reading"));
     expect(calls.at(-1)!.path).toBe("/v1/onboarding/finish");

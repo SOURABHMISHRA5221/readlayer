@@ -30,7 +30,7 @@ from app.recs.feed import (
 )
 from app.recs.models import Format
 from app.recs.outlets import LOCAL_SHARE
-from app.recs.rank import PERSONA_FORMAT_PRIORS
+from app.recs.rank import prior_for
 from app.recs.state import Served, get_rec_signals
 from app.recs.web_search import get_web_search
 from app.store.docstore import get_doc_store
@@ -131,12 +131,13 @@ async def get_feed(ctx: Annotated[ReaderContext, Depends(reader_context)]) -> Fe
     reader = fr.FeedReader(
         state=ctx.state,
         interest=interest,
-        prior=PERSONA_FORMAT_PRIORS[ctx.rec_key],
+        prior=prior_for(ctx.rec_key, ctx.user.formats),
         stats=signals.formats,
         goal_targets=await goal_targets(ctx),
     )
     side = side_for(country)
-    ranked = fr.select(fr.rank(candidates, reader, now, graph), topics, side, LOCAL_SHARE)
+    quotas = fr.quotas_for(ctx.user.formats) if ctx.persona is None else fr.QUOTAS
+    ranked = fr.select(fr.rank(candidates, reader, now, graph), topics, side, LOCAL_SHARE, quotas)
     _log_mix(ranked, side, country)
     settings, anonymous = get_settings(), ctx.caller.is_anonymous
     items = [

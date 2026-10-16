@@ -13,7 +13,7 @@ this is live.
 **Two PRs.** PR A = **B** (chips on fresh links; it affects the "Read any link" step for every
 reader), branch `d68-chips-ready`, shipped first. PR B = **R0 + K + F**, branch `d68-onboarding`.
 **Checkpoint Oct 17 12:00 IST:** PR B not harness-green → ask Sourabh to cut, proposing F4's
-minimum-per-format rule first, then F3, then K2.
+minimum-per-format rule first, then F3, then K4, then K2.
 
 ## What is wrong today (read from the code and production logs, 2026-10-16)
 
@@ -86,6 +86,30 @@ its run is done).
   knowledge evidence (DESIGN §6: Know this? prompts, Knew this, Helpful, opening a note). Tests:
   discover returns `know: null`; a know call changes no edge and no θ; a pick writes no edge.
 
+- **K4. A separate "Quick check" at the bottom of screen 2** (Sourabh, 2026-10-16 late: "keep
+  similar to second screen a know this cards to build a basic knowledge" → "second screen bottom
+  only"). Under the taste cards, clearly apart from them: a heading "Quick check: do you know
+  these?" and **one term card at a time** from the existing adaptive calibration
+  (`GET /v1/calibration/next`, `POST /v1/calibration/answer`; terms from the chosen topics,
+  closest to the reader's θ, which K1 has set): the term, its topic, and "Know it" / "Heard of it" /
+  "New to me" (`explain` / `heard` / `none`: the reader's own word, strong `calibration_answer`
+  evidence and an onboarding-strength Elo step, DESIGN §4/§6, unchanged). `CALIBRATION_ITEMS`
+  8 → 6 (`tests/test_onboarding.py` loops follow the constant, so the change shows there).
+  "Skip quick check" only hides the block (it never calls `/calibration/skip`, which finishes
+  onboarding). **Only `POST /v1/onboarding/finish` ends onboarding:** `calibration_answer` no
+  longer sets `onboarding_done` on the last answer (today it does, which would close screen 2 under
+  the reader: discover and pick → 409); its `done` is about the quick check alone. **No term twice:**
+  a first-time re-submit of screen 1 (Edit → Continue) keeps `calibration.asked` and the answer
+  count (a redo already does), so the check resumes or shows done. **Hidden on a Redo** (onboarding
+  stays done there and the calibration routes refuse; the web knows from the redo step). Progress
+  "2 of 6"; done → "Thanks — that's your starting map"; after an answer, focus moves to the next
+  card or the done line. Note: K1's field switch resets the old field's domains to 0, which also
+  drops any Elo moves quick-check answers made there (minor; the edges stay).
+  Tests: API (answer 6, then pick and discover still 200, finish then clears the lists; POST,
+  answer 2, POST again → `next` never returns an asked term and `answers` stays 2); web (one card
+  at a time, answer posts and shows the next, skip calls nothing, done state, hidden on a redo,
+  focus after an answer).
+
 **F. Read, watch, listen.**
 - **F1. Screen 1 question** "How do you like to take things in?" — Read / Watch / Listen, any of
   them; none preselected on a first run, the stored ones preselected on a Redo; Continue needs at
@@ -111,7 +135,7 @@ its run is done).
   chosen first.
 
 **Harness and UI checks.** `tools/shots/onboarding.py` updated (no `.discover-card__know` clicks; a
-format step). §19-style checks for the format question and the card format words: axe 0, target
+format step; the Quick check: one card answered, then skipped). §19-style checks for the format question, the card format words and the Quick check (its three answer buttons' target sizes): axe 0, target
 sizes, no horizontal scroll at 390 and 1440 px, light and dark.
 
 ## Tests first (PR B)
@@ -128,7 +152,7 @@ wording guard still passes.
 
 ## Docs
 
-DESIGN §4 (onboarding screens), §5/§6 (θ from field, `home_country` evidence, no knowledge from
+DESIGN §4 (onboarding screens; the calibration bullet: 6 items, now inside screen 2's Quick check, never finishing onboarding), §5/§6 (θ from field, `home_country` evidence, no knowledge from
 screen 2), §11.4 and `PrivacyPage.tsx` (country now also picks a few home terms; field sets a
 starting level; formats held; the "Know this? answers … stay as evidence" line updated), §16.1 (B),
 §16.4 (format prior), §17.2 (feed quotas and prior); README line 65 (no "Know this?" on screen 2);

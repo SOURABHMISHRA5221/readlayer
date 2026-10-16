@@ -23,13 +23,12 @@ interface Props {
 /** The reader's answers on this screen; the server's copy seeds it, local taps win. */
 interface Answers {
   picks: Record<string, boolean>; // item id → liked
-  known: Record<string, boolean>; // concept id → known
 }
 
 export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFinish }: Props) {
   const [items, setItems] = useState<DiscoverItem[] | null>(null);
   const [pending, setPending] = useState(true);
-  const [answers, setAnswers] = useState<Answers>({ picks: {}, known: {} });
+  const [answers, setAnswers] = useState<Answers>({ picks: {} });
   const [error, setError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
 
@@ -65,11 +64,6 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
       () => setAnswers((cur) => ({ ...cur, picks: { ...cur.picks, [item.id]: liked } })),
       () => onboardingApi.pick(item.id, liked),
     );
-  const know = (conceptId: string, known: boolean) =>
-    save(
-      () => setAnswers((cur) => ({ ...cur, known: { ...cur.known, [conceptId]: known } })),
-      () => onboardingApi.know(conceptId, known),
-    );
   const save = (apply: () => void, call: () => Promise<unknown>) => {
     apply();
     setError(null);
@@ -86,7 +80,7 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
     }
   };
 
-  const count = Object.keys(answers.picks).length + Object.keys(answers.known).length;
+  const count = Object.keys(answers.picks).length;
   const loading = items === null || (pending && items.length === 0);
   const line = count >= READBACK_AFTER && items ? readback(readbackInput(items, answers, frame)) : null;
 
@@ -121,7 +115,7 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
           <ul className="discover">
             {items.map((item) => (
               <li key={item.id}>
-                <Card item={item} answers={answers} onPick={pick} onKnow={know} />
+                <Card item={item} answers={answers} onPick={pick} />
               </li>
             ))}
           </ul>
@@ -148,22 +142,17 @@ export function DiscoverScreen({ heading, topics, concepts, frame, onEdit, onFin
 
 function seeded(cur: Answers, items: DiscoverItem[]): Answers {
   const picks = { ...cur.picks };
-  const known = { ...cur.known };
   for (const i of items) {
     if (i.liked !== null && !(i.id in picks)) picks[i.id] = i.liked;
-    if (i.know?.known != null && !(i.know.concept_id in known)) known[i.know.concept_id] = i.know.known;
   }
-  return { picks, known };
+  return { picks };
 }
 
 export function readbackInput(items: DiscoverItem[], answers: Answers, frame: string | null) {
   const label = (i: DiscoverItem) => domainLabel(i.topic) ?? i.topic_label;
-  const terms = new Map(items.flatMap((i) => (i.know ? [[i.know.concept_id, i.know.label] as const] : [])));
   return {
     liked: items.filter((i) => answers.picks[i.id] === true).map(label),
     skipped: items.filter((i) => answers.picks[i.id] === false).map(label),
-    known: Object.entries(answers.known).flatMap(([id, k]) => (k && terms.has(id) ? [terms.get(id)!] : [])),
-    unknown: Object.entries(answers.known).flatMap(([id, k]) => (!k && terms.has(id) ? [terms.get(id)!] : [])),
     frame,
   };
 }
@@ -172,21 +161,31 @@ interface CardProps {
   item: DiscoverItem;
   answers: Answers;
   onPick: (item: DiscoverItem, liked: boolean) => void;
-  onKnow: (conceptId: string, known: boolean) => void;
 }
 
 /** Answered buttons stay focusable (aria-disabled, not disabled): a keyboard reader keeps
  * their place in the list instead of being thrown back to the top of the page. */
-function Card({ item, answers, onPick, onKnow }: CardProps) {
+/** Decision 68 F4: what each card is, at a glance ("Watch · 6 min"). */
+const FORMAT_VERB: Record<DiscoverItem["format"], string> = { article: "Read", video: "Watch", podcast: "Listen" };
+const LIKE_LABEL: Record<DiscoverItem["format"], string> = {
+  article: "I'd read this",
+  video: "I'd watch this",
+  podcast: "I'd listen to this",
+};
+
+export function formatWord(item: Pick<DiscoverItem, "format" | "duration_or_read_time">): string {
+  const s = item.duration_or_read_time;
+  return s ? `${FORMAT_VERB[item.format]} · ${Math.max(1, Math.round(s / 60))} min` : FORMAT_VERB[item.format];
+}
+
+function Card({ item, answers, onPick }: CardProps) {
   const liked = answers.picks[item.id];
   const href = item.kind === "library" && item.content_id ? `/read/${item.content_id}` : item.url;
-  const term = item.know;
-  const known = term ? answers.known[term.concept_id] : undefined;
   return (
     <article className="discover-card" data-picked={liked === undefined ? undefined : liked ? "yes" : "no"}>
       <p className="discover-card__meta">
         <span className="discover-card__topic">{item.topic_label}</span> · {item.source}
-        {item.format !== "article" && ` · ${item.format}`}
+        {` · ${formatWord(item)}`}
       </p>
       <h2 className="discover-card__title">
         <a href={href} target="_blank" rel="noopener noreferrer">
@@ -196,25 +195,12 @@ function Card({ item, answers, onPick, onKnow }: CardProps) {
       {item.snippet && <p className="discover-card__snippet">{item.snippet}</p>}
       <div className="discover-card__answers" role="group" aria-label={`Would you read “${item.title}”?`}>
         <button type="button" className="answer" aria-pressed={liked === true} aria-disabled={liked !== undefined} onClick={() => liked === undefined && onPick(item, true)}>
-          I'd read this
+          {LIKE_LABEL[item.format]}
         </button>
         <button type="button" className="answer" aria-pressed={liked === false} aria-disabled={liked !== undefined} onClick={() => liked === undefined && onPick(item, false)}>
           Not for me
         </button>
       </div>
-      {term && (
-        <div className="discover-card__know" role="group" aria-label={`Do you know ${term.label}?`}>
-          <span className="discover-card__ask">
-            Know <mark className="discover-card__term">{term.label}</mark>?
-          </span>
-          <button type="button" className="answer answer--small" aria-pressed={known === true} aria-disabled={known !== undefined} onClick={() => known === undefined && onKnow(term.concept_id, true)}>
-            Yes
-          </button>
-          <button type="button" className="answer answer--small" aria-pressed={known === false} aria-disabled={known !== undefined} onClick={() => known === undefined && onKnow(term.concept_id, false)}>
-            Not really
-          </button>
-        </div>
-      )}
     </article>
   );
 }

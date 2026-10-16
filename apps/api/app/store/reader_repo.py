@@ -105,6 +105,8 @@ class UserProfile(BaseModel):
     # Decision 50: the country the reader chose ("Where do you read from?"), only to pick which
     # outlets count as local in For you. Never sent to a model or a search.
     country: Country | None = None
+    # Decision 68 F1: how the reader likes to take things in (read / watch / listen).
+    formats: list[str] = Field(default_factory=list)
 
     @property
     def onboarding_open(self) -> bool:
@@ -571,6 +573,7 @@ class ReaderRepo:
         now: datetime,
         redo: bool = False,
         country: str | None = None,
+        formats: list[str] | None = None,
     ) -> None:
         """One transaction: answers on users/{uid}, θ and interest per domain, and small
         nudges (`liked`: concept id → (ref, apply(edge | None, θ) -> Edge | None); None writes
@@ -605,6 +608,7 @@ class ReaderRepo:
                     "rev": user.rev + 1,
                 }
                 | ({"country": country} if country is not None else {})
+                | ({"formats": list(formats)} if formats else {})
                 | (
                     {"onboarding_redo": "discover"}  # done and calibration progress kept
                     if redo

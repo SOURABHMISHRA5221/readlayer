@@ -45,6 +45,19 @@ TOO_MUCH_DECAY = 0.8
 GOAL_BOOST = 1.3
 MAX_ITEMS = 24
 QUOTAS: Mapping[Format, int] = {"article": 3, "video": 2, "podcast": 1}
+CHOSEN_QUOTAS: Mapping[Format, int] = {"article": 3, "video": 3, "podcast": 2}
+OTHER_QUOTAS: Mapping[Format, int] = {"article": 2, "video": 1, "podcast": 1}
+
+
+def quotas_for(formats: Iterable[str]) -> Mapping[Format, int]:
+    """Decision 68 F3: per topic, a chosen format gets more slots and an unchosen one fewer;
+    all three or none → QUOTAS. Pure."""
+    chosen = set(formats)
+    if not chosen or chosen >= {"article", "video", "podcast"}:
+        return QUOTAS
+    return {f: CHOSEN_QUOTAS[f] if f in chosen else OTHER_QUOTAS[f] for f in QUOTAS}
+
+
 NGRAM_MAX = 4
 ARTICLE_MAX_AGE = timedelta(days=14)
 _WORDS = re.compile(r"[\w'’&-]+", re.UNICODE)
@@ -415,7 +428,7 @@ def _interleave(per_topic: Sequence[Sequence[RankedItem]]) -> list[RankedItem]:
 
 def select(
     ranked: Sequence[RankedItem], topics: Sequence[str], side: SideOf | None = None,
-    share: float = 0.6,
+    share: float = 0.6, quotas: Mapping[Format, int] = QUOTAS,
 ) -> list[RankedItem]:  # fmt: skip
     """Per topic: up to 3 articles, 2 videos, 1 podcast (best first, one per URL; a URL filed
     under two topics belongs to the earlier one); then the topics' picks interleaved by score,
@@ -448,13 +461,13 @@ def select(
                       *p.get("article:global", [])])  # fmt: skip
 
     first = [
-        _best(articles(p)[: QUOTAS["article"]]
-              + [r for f in ("video", "podcast") for r in p.get(f, [])[: QUOTAS[f]]])
+        _best(articles(p)[: quotas["article"]]
+              + [r for f in ("video", "podcast") for r in p.get(f, [])[: quotas[f]]])
         for p in pools
     ]  # fmt: skip
     kept = {id(r) for r in _interleave(first)}
     keep = [
-        {f: sum(id(r) in kept and r.candidate.result.format == f for r in picks) for f in QUOTAS}
+        {f: sum(id(r) in kept and r.candidate.result.format == f for r in picks) for f in quotas}
         for picks in first
     ]
     if side is None:
@@ -473,22 +486,45 @@ def select(
 
 
 def onboarding_mix(
-    groups: Sequence[Sequence[FeedCandidate]], now: datetime, limit: int
-) -> list[FeedCandidate]:
-    """Onboarding's screen 2 (decision 41): one group per chosen topic or concept, in the
-    reader's order. Within a group articles first, then fresher first (ties by URL); the groups
-    are interleaved so every one with results gets a card before any gets a second. One per URL.
-    """
+    groups: Sequence[Sequence[FeedCandidate]], now: datetime, limit: int,
+    formats: Sequence[str] = (), served: Sequence[str] = (),
+    key: Callable[[FeedCandidate], str] = lambda c: c.result.url,
+) -> list[FeedCandidate]:  # fmt: skip
+    """Onboarding's screen 2 (decisions 41, 68 F4): one group per chosen topic or concept, in the
+    reader's order. Within a group the reader's chosen formats first (articles first when none),
+    then fresher (ties by URL); groups interleaved so every one with results gets a card before
+    any gets a second; one per URL. Items already `served` (by `key`) keep their slots, in served
+    order, so a later poll never pushes out a card the reader may have answered. Then at least 2
+    of each chosen video/podcast format and 1 of every other format, when there are any; the rest
+    in interleaved order. Pure."""
+    first = set(formats) or {"article"}
     ordered = [
-        sorted(g, key=lambda c: (c.result.format != "article",
+        sorted(g, key=lambda c: (c.result.format not in first, c.result.format != "article",
                                  -freshness(c.result.published_at, now), c.result.url))
         for g in groups
     ]  # fmt: skip
-    out: list[FeedCandidate] = []
+    pool: list[FeedCandidate] = []
     seen: set[str] = set()
     for layer in range(max((len(g) for g in ordered), default=0)):
         for g in ordered:
-            if layer < len(g) and g[layer].result.url not in seen and len(out) < limit:
+            if layer < len(g) and g[layer].result.url not in seen:
                 seen.add(g[layer].result.url)
-                out.append(g[layer])
-    return out
+                pool.append(g[layer])
+    by_key = {key(c): c for c in pool}
+    out = [by_key[k] for k in served if k in by_key][:limit]
+    taken = {id(c) for c in out}
+    minimum = {f: (2 if f in formats and f != "article" else 0 if f in formats else 1)
+               for f in ("article", "video", "podcast")}  # fmt: skip
+    for fmt, need in minimum.items():
+        have = sum(c.result.format == fmt for c in out)
+        for c in pool:
+            if have >= need or len(out) >= limit:
+                break
+            if id(c) not in taken and c.result.format == fmt:
+                out.append(c)
+                taken.add(id(c))
+                have += 1
+    kept = len([k for k in served if k in by_key][:limit])
+    rest = [c for c in pool if id(c) not in taken][: max(0, limit - len(out))]
+    position = {id(c): i for i, c in enumerate(pool)}
+    return out[:kept] + sorted([*out[kept:], *rest], key=lambda c: position[id(c)])

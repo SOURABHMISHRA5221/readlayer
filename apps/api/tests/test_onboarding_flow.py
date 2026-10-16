@@ -20,7 +20,7 @@ from app.graph.models import Concept, ConceptGraphFile
 from app.graph.taxonomy import DOMAIN_IDS
 from app.main import app
 from app.me import topic_match
-from app.reader import model, onboarding
+from app.reader import onboarding
 from app.reader import onboarding_text as ot
 from app.recs import feed as feed_mod
 from app.recs import feed_rank as fr
@@ -255,7 +255,8 @@ def test_mix_gives_every_group_a_card_first_articles_first():
     a = [cand("a-video", "sports", "video"), cand("a1", "sports"), cand("a2", "sports")]
     b = [cand("b1", "law")]
     got = fr.onboarding_mix([a, b], datetime.now(UTC), 3)
-    assert [c.result.url for c in got] == ["a1", "b1", "a2"]
+    # decision 68 F4: with no format answer, one video still gets a card when there is one
+    assert [c.result.url for c in got] == ["a1", "b1", "a-video"]
 
 
 # ---------------------------------------------------------------- resolve
@@ -404,21 +405,19 @@ def test_discover_falls_back_to_library_items(env):
                                                                        "lib1")]  # fmt: skip
 
 
-def test_served_items_are_recorded_and_terms_are_stable(env, docs):
+def test_served_items_are_recorded_and_screen_2_offers_no_term(env, docs):
+    """Decision 68 K3: screen 2 is taste only: no "Know X?" on any card."""
     c = google()
     onboard(c)
     first = c.post(
         "/v1/onboarding/discover", json={"topics": ["economics", "sports"], "concepts": ["c_bond"]}
     ).json()
-    again = c.post(
-        "/v1/onboarding/discover", json={"topics": ["economics", "sports"], "concepts": ["c_bond"]}
-    ).json()
-    terms = {i["id"]: i["know"] and i["know"]["concept_id"] for i in first["items"]}
-    assert terms == {i["id"]: i["know"] and i["know"]["concept_id"] for i in again["items"]}
-    # c_bond was resolved and sent: never offered; c_inflation goes to one item only
-    assert [t for t in terms.values() if t] == ["c_inflation"]
+    assert first["items"] and all(i["know"] is None for i in first["items"])
+    offered = docs.docs["users/g1"]["onboarding_offered"]
+    assert all(v["concept"] is None for v in offered.values())
     served = docs.docs["users/g1/rec_signals/default"]["served"]
-    assert set(terms) <= set(served) and {v["relation"] for v in served.values()} == {"feed"}
+    assert {i["id"] for i in first["items"]} <= set(served)
+    assert {v["relation"] for v in served.values()} == {"feed"}
 
 
 # ---------------------------------------------------------------- pick, know, finish
@@ -463,33 +462,23 @@ def test_pick_guards(env, monkeypatch):
     assert after[0]["liked"] is True  # resume shows the answer
 
 
-def test_know_offered_only_once_and_same_as_calibration(env, docs):
+def test_screen_2_writes_no_knowledge(env, docs):
+    """Decision 68 K3: neither a pick nor the old know call touches an edge or θ."""
     c = google()
     onboard(c)
+    before_domains = {k: dict(v) for k, v in docs.docs.items() if "/domains/" in k}
     items = _discover(c)
-    term = next(i["know"] for i in items if i["know"])
-    assert c.post("/v1/onboarding/know",
-                  json={"concept_id": "c_ma", "known": True}).status_code == 404  # fmt: skip
-    theta0 = docs.docs["users/g1/domains/economics"].get("theta", 0.0)
     assert (
-        c.post(
-            "/v1/onboarding/know", json={"concept_id": term["concept_id"], "known": False}
-        ).status_code
+        c.post("/v1/onboarding/pick", json={"item_id": items[0]["id"], "liked": True}).status_code
         == 200
     )
-    assert (
-        c.post(
-            "/v1/onboarding/know", json={"concept_id": term["concept_id"], "known": True}
-        ).status_code
-        == 409
-    )
-    concept = GRAPH.get(term["concept_id"])
-    stored = docs.docs[f"users/g1/knows/{concept.id}"]
-    expected = onboarding.apply_answer(concept, None, theta0, "none", datetime.now(UTC))
-    assert stored["band"] == expected.edge.band
-    assert stored["alpha"] == pytest.approx(expected.edge.alpha)
-    assert docs.docs["users/g1/domains/economics"]["theta"] == pytest.approx(expected.theta)
-    assert model.band_of(model.p_know(expected.edge)) == stored["band"]
+    resp = c.post("/v1/onboarding/know", json={"concept_id": "c_inflation", "known": True})
+    assert resp.status_code == 200 and resp.json() == {"saved": False}
+    assert not [k for k in docs.docs if k.startswith("users/g1/knows/")]
+    after = {k: v.get("theta") for k, v in docs.docs.items() if "/domains/" in k}
+    assert {k: v.get("theta") for k, v in before_domains.items()} == {
+        k: after[k] for k in before_domains
+    }
 
 
 def test_finish_clears_the_lists_and_refuses_more(env, docs):
@@ -507,7 +496,7 @@ def test_finish_clears_the_lists_and_refuses_more(env, docs):
     assert c.get("/v1/me/profile").json()["onboarding"]["step"] == "done"
     assert c.post("/v1/onboarding/discover", json={"topics": ["law"]}).status_code == 409
     term = {"concept_id": "c_inflation", "known": True}
-    assert c.post("/v1/onboarding/know", json=term).json() == {"error": "onboarding_done"}
+    assert c.post("/v1/onboarding/know", json=term).json() == {"saved": False}  # a no-op now
 
 
 def test_finish_needs_screen_1_saved(env):
