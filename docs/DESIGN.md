@@ -523,7 +523,7 @@ none) and variant precision 0.862 vs 0.843, but passed 14/16 regression cases vs
 paraphrase, left unlinked rather than mislinked); the pre-set rule
 (passes ≥ default's) was not met, and Sourabh overrode it ("yes", 2026-10-17): **`link_confirm`
 runs at low** — for article linking, growth, goals, profile edits, onboarding terms and the
-jurisdiction backfill; goals and onboarding checked at both levels (90 % agreement, STATUS §37). Eval answers are cached per thinking level when one is set.
+jurisdiction backfill; goals and onboarding checked at both levels (`evals/resolve_effort.py`: 21/21 agreement in the saved run, 18/20 in an earlier unsaved one; STATUS §37). Eval answers are cached per thinking level when one is set.
 
 **Prefetch (decision 67 L3).** The web host prefetches the top 3 span notes when a page's notes
 arrive; for signed-in consumers only, a span note whose mark comes within one screen of the
