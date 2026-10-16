@@ -6,7 +6,6 @@ import { useSession } from "./lib/auth";
 import { bootsToLanding } from "./lib/boot";
 import { profileApi } from "./lib/profileApi";
 import { LibraryPage } from "./pages/LibraryPage";
-import { ReaderPage } from "./pages/ReaderPage";
 import {
   matchRoute,
   navigate,
@@ -17,13 +16,16 @@ import {
   useUrl,
 } from "./lib/router";
 
-// Route chunks: the main bundle doesn't carry onboarding or the profile page (M7), nor the
-// landing and privacy pages (only HeroStatic, the landing's first paint, is in it).
+// Route chunks: the main bundle doesn't carry onboarding or the profile page (M7), the reader
+// (decision 67), nor the landing and privacy pages (only HeroStatic, the landing's first paint, is in it).
 const WelcomePage = lazy(() => import("./pages/WelcomePage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const ConnectPage = lazy(() => import("./pages/ConnectPage"));
+// The reader and its annotator (decision 67): the landing never needs them, and the main bundle
+// stays inside its budget.
+const ReaderPage = lazy(() => import("./pages/ReaderPage").then((m) => ({ default: m.ReaderPage })));
 
 /** A signed-in (Google) reader goes through consent and onboarding first; demo readers never. */
 function useOnboardingDone(uid: string | null, isDemo: boolean): boolean | null {
@@ -128,7 +130,12 @@ function SignedIn({ url, uid, isDemo }: { url: URL; uid: string; isDemo: boolean
       </Suspense>
     );
   if (route.name === "library" || route.name === "feed") return <LibraryPage url={url} />;
-  if (route.name === "reader") return <ReaderPage id={route.id} url={url} />;
+  if (route.name === "reader")
+    return (
+      <Suspense fallback={loading}>
+        <ReaderPage id={route.id} url={url} />
+      </Suspense>
+    );
   return (
     <main className="reader__state">
       <StateView

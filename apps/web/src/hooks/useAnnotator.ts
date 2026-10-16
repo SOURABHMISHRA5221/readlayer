@@ -17,7 +17,6 @@ import {
   loadExplanation,
   loadShifted,
   prefetchExplanations,
-  prefetchInView,
   reportExplanation,
 } from "../lib/explanations";
 import type { PersonaKey } from "../lib/personas";
@@ -71,6 +70,8 @@ export function useAnnotator(
   personaRef.current = persona;
   const refreshRef = useRef(refreshNotes);
   refreshRef.current = refreshNotes;
+  // Decision 67 L3: notes prefetched on this article, across notes refreshes.
+  const prefetchedRef = useRef<{ key: string | null; ids: Set<string> }>({ key: null, ids: new Set() });
   const [resolved, setResolved] = useState<string[] | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -144,7 +145,12 @@ export function useAnnotator(
       if (result.unresolved.length) console.warn("[readlayer] anchors not found", result.unresolved);
       // Marks exist now: notes near the viewport warm up (signed-in only, decision 67 L3).
       const el = root.current;
-      if (articleKey && el) stopPrefetch = prefetchInView(el, articleKey, personaRef.current, annotations);
+      if (!articleKey || !el || personaRef.current !== null) return;
+      if (prefetchedRef.current.key !== articleKey) prefetchedRef.current = { key: articleKey, ids: new Set() };
+      const seen = prefetchedRef.current.ids;
+      void import("../lib/prefetchInView").then(({ prefetchInView }) => {
+        if (!cancelled) stopPrefetch = prefetchInView(el, articleKey, personaRef.current, annotations, seen);
+      });
     });
     return () => {
       cancelled = true;

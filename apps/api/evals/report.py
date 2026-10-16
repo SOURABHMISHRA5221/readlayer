@@ -292,9 +292,10 @@ def write_report() -> None:
     all_runs = runs()
     if not all_runs:
         return
-    latest = next((r for r in reversed(all_runs) if not experimental(r)), all_runs[-1])
+    served = [r for r in all_runs if not experimental(r)] or all_runs
+    latest = served[-1]
     baseline_judge = next(
-        (r for r in reversed(all_runs) if r["meta"]["judge_model"] == r["meta"]["explain_model"]),
+        (r for r in reversed(served) if r["meta"]["judge_model"] == r["meta"]["explain_model"]),
         latest,
     )
     changelog = CHANGELOG.read_text(encoding="utf-8") if CHANGELOG.exists() else ""

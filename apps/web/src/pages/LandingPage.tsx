@@ -138,7 +138,7 @@ function Problem() {
         <h2 id="lp-problem-title" className="lp-section__title">
           Everyone reads past something.
         </h2>
-        <p className="lp-problem__intro">Three ways a good article loses its consumer.</p>
+        <p className="lp-problem__intro">Three ways a good article loses a consumer.</p>
       </header>
       <ol className="lp-problem__list">
         <li className="lp-problem__item">
