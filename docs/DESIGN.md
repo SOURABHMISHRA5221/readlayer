@@ -1077,7 +1077,10 @@ Wikipedia pages are evergreen (no freshness decay) and never count as same_story
   (stored even when empty), its own `STORY_SEARCH_DAILY_CAP` (40) within the global, YouTube and
   anonymous caps, never the feed's. Results must not be the article itself (by URL hash) and must
   name one of its top 3 key ideas or share ≥ 2 distinctive title words; up to 2 lead the end list
-  as "More on this story" (`basis=story`; the card chips stay `basis=article`).
+  as "More on this story", included even when the ranking would leave them out (`basis=story`;
+  the card chips stay `basis=article`). The rest of that list spreads over the article's ideas
+  (decision 69 B3): each idea's n-th item counts 0.5^n before ranking, and at most 2 items follow
+  any one idea.
 - Every result is normalized to `{url, title, source, format: article|video|podcast,
   duration_or_read_time (s), snippet, thumbnail, published_at}`, filtered by the domain
   blocklist (`app/recs/blocklist.txt`, subdomains included) and a relevance gate (the title or

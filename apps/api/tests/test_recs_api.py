@@ -411,4 +411,34 @@ def test_story_items_lead_even_when_the_ranking_would_leave_them_out(env, monkey
     lead = items[: recs_router.STORY_LEAD]
     assert [i["why"] for i in lead] == ["More on this story"] * recs_router.STORY_LEAD
     assert len(items) <= 6
-    assert all("a key idea here" in i["why"] for i in items[recs_router.STORY_LEAD :])
+    rest = items[recs_router.STORY_LEAD :]
+    assert all(
+        "a key idea here" in i["why"] or i["relation"] in ("same_story", "angle") for i in rest
+    )
+
+
+def test_the_story_list_spreads_over_the_articles_ideas(env, monkeypatch):
+    """Sourabh, 2026-10-17 (a strangulation-law article): "the bottom articles still focusing on
+    single word": with three results per idea the top idea took every slot. Each idea's n-th
+    item now counts SPREAD**n, so the next ideas get places (no new searches)."""
+    from collections import Counter
+
+    from app.recs.feed_rank import key_ideas
+
+    client, provider, _, store = env
+    real = provider.search
+
+    async def three_each(query, fmt, news=False, include_domains=()):
+        one = (await real(query, fmt, news, include_domains))[0]
+        return [one.model_copy(update={"url": f"{one.url}-{i}"}) for i in range(3)]
+
+    monkeypatch.setattr(provider, "search", three_each)
+    monkeypatch.setattr(recs_router, "STORY_FORMATS", ())  # like a page a reader brought in
+    ideas, _ = key_ideas(store.docs["main"], GRAPH)
+    assert len(ideas) >= 2
+    items = _story_recs(client)["items"]
+    per_idea = Counter(
+        i["triggers"][0]["id"] for i in items if i["relation"] != "same_story" and i["triggers"]
+    )
+    assert len(per_idea) >= 2, per_idea  # more than one of the article's ideas
+    assert max(per_idea.values()) <= 2, per_idea

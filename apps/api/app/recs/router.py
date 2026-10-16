@@ -10,7 +10,7 @@ trigger none, so concepts without a cache entry give them library items only.
 
 import hashlib
 import logging
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
@@ -282,6 +282,49 @@ async def _story_results(
     return _Story(results, pending)
 
 
+SPREAD = 0.5  # basis=story: each idea's n-th item counts SPREAD**n (decision 69 B3)
+
+
+def _spread(items: list[tuple[str, str | None, float]]) -> dict[str, float]:
+    """(key, idea, relevance) → relevance × SPREAD**(items of the same idea ranked above it), so
+    the end of the article follows several of its ideas, not just the top one (Sourabh: "the
+    bottom articles still focusing on single word"). Items with no idea keep their relevance."""
+    out: dict[str, float] = {}
+    seen: dict[str, int] = {}
+    for key, idea, rel in sorted(items, key=lambda t: (-t[2], t[0])):
+        n = seen.get(idea, 0) if idea else 0
+        out[key] = rel * SPREAD**n
+        if idea:
+            seen[idea] = n + 1
+    return out
+
+
+PER_IDEA = 2
+
+
+def _cap_per_idea(
+    chosen: list[tuple[Candidate, float]],
+    candidates: list[Candidate],
+    idea_of: Mapping[str, str],
+    reselect: Callable[[list[Candidate]], list[tuple[Candidate, float]]],
+) -> list[tuple[Candidate, float]]:
+    """While one idea has more than PER_IDEA picks, set its weakest pick aside and rank again, so
+    the next best item of another idea (any format) takes the place. Bounded by the candidates."""
+    banned: set[str] = set()
+    for _ in range(len(candidates)):
+        count: dict[str, list[tuple[Candidate, float]]] = {}
+        for cs in chosen:
+            if (idea := idea_of.get(cs[0].id)) is not None:
+                count.setdefault(idea, []).append(cs)
+        over = [v for v in count.values() if len(v) > PER_IDEA]
+        if not over:
+            return chosen
+        weakest = min(over[0], key=lambda cs: (cs[1], cs[0].id))
+        banned.add(weakest[0].id)
+        chosen = reselect([c for c in candidates if c.id not in banned])
+    return chosen
+
+
 def _lead_with_story(
     chosen: list[tuple[Candidate, float]], candidates: list[Candidate], story_ids: Mapping[str, Any]
 ) -> list[tuple[Candidate, float]]:
@@ -390,12 +433,21 @@ async def recommendations(
     story = await _story_results(basis, doc, spans, web, known_urls, may_search, anonymous)
     pending = pending or story.pending
 
+    weight = (
+        _spread(
+            [(f"lib:{c.content_id}|{c.relation}", c.trigger_ids[0] if c.trigger_ids else None,
+              c.relevance) for c in lib]
+            + [(_web_id(r.url), tid, rel) for r, tid, rel in web_results.values()]
+        )
+        if basis == "story"
+        else {}
+    )  # fmt: skip
     candidates = [
         Candidate(
             f"lib:{c.content_id}",
             c.relation,
             "article",
-            c.relevance,
+            weight.get(f"lib:{c.content_id}|{c.relation}", c.relevance),
             _published(index.docs[c.content_id]),
             _read_time(index.docs[c.content_id]),
         )
@@ -405,7 +457,7 @@ async def recommendations(
             _web_id(r.url),
             "explainer",
             r.format,
-            rel,
+            weight.get(_web_id(r.url), rel),
             r.published_at,
             r.duration_or_read_time,
             kind="web",
@@ -418,13 +470,17 @@ async def recommendations(
     ]  # fmt: skip
     signals = get_rec_signals()
     now = datetime.now(UTC)
-    chosen = select(
-        candidates,
-        await signals.signals(ctx.uid, ctx.rec_key),
-        prior_for(ctx.rec_key, ctx.user.formats),
-        now,
-        prefer,
-    )
+    reader_signals = await signals.signals(ctx.uid, ctx.rec_key)
+    prior = prior_for(ctx.rec_key, ctx.user.formats)
+    chosen = select(candidates, reader_signals, prior, now, prefer)
+    if basis == "story":  # at most PER_IDEA items follow any one idea (decision 69 B3)
+        idea_of = {f"lib:{c.content_id}": c.trigger_ids[0] for c in lib if c.trigger_ids}
+        idea_of |= {_web_id(r.url): tid for r, tid, _ in web_results.values()}
+
+        def again(cs: list[Candidate]) -> list[tuple[Candidate, float]]:
+            return select(cs, reader_signals, prior, now, prefer)
+
+        chosen = _cap_per_idea(chosen, candidates, idea_of, again)
     if basis == "article":
         chosen = one_per_format(chosen, ctx.user.formats)
     story_by_id = {_web_id(r.url): r for r in story.results}

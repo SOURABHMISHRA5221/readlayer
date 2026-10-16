@@ -191,6 +191,18 @@ the web grouping. Plan-reviewer on A2 and G: REVISE 6 → APPROVE.
 - A tab loaded before the deploy reloads once when a code file is gone (`lib/staleChunk.ts` on
   `vite:preloadError`, loop-guarded by sessionStorage): this is the first deploy with no-cache HTML.
 
+## B3. The end list follows several of the article's ideas (added 2026-10-17, after the deploy)
+
+Sourabh, on a live article (a strangulation-law story he opened through "Open here", so no story
+search): "see the bottom articles still focusing on single word" — all six items said "On
+‘Non-fatal strangulation’, a key idea here". Three ideas are searched, but relevance falls only
+12 % per rank and 10 % per idea, so the top idea's results took every slot. On `basis=story` now:
+each idea's n-th item counts `SPREAD`**n (0.5) before ranking, and after ranking at most
+`PER_IDEA` (2) items follow any one idea (its weakest extra pick is set aside and the list ranked
+again, so another idea's next best item, any format, takes the place). No new searches. Also from
+the live check: up to `STORY_LEAD` story items are included and lead even when outscored.
+Tests: three results per idea → ≥ 2 ideas, ≤ 2 items each; story items lead when outscored.
+
 ## G. Screen 2: an equal mix of the chosen formats (added 2026-10-17)
 
 Sourabh, 2026-10-17: "onboarding second step me bhi full read read read hai we need to change that
