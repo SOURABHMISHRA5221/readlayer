@@ -25,7 +25,17 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const ConnectPage = lazy(() => import("./pages/ConnectPage"));
 // The reader and its annotator (decision 67): the landing never needs them, and the main bundle
 // stays inside its budget.
-const ReaderPage = lazy(() => import("./pages/ReaderPage").then((m) => ({ default: m.ReaderPage })));
+const loadReader = () => import("./pages/ReaderPage");
+const ReaderPage = lazy(() => loadReader().then((m) => ({ default: m.ReaderPage })));
+
+/** Fetch the reader chunk while the library is idle, so the first article opens at once. */
+function useReaderPreload(active: boolean): void {
+  useEffect(() => {
+    if (!active) return;
+    const idle = window.requestIdleCallback ?? ((cb: () => void) => window.setTimeout(cb, 1500));
+    idle(() => void loadReader().catch(() => undefined));
+  }, [active]);
+}
 
 /** A signed-in (Google) reader goes through consent and onboarding first; demo readers never. */
 function useOnboardingDone(uid: string | null, isDemo: boolean): boolean | null {
@@ -98,6 +108,7 @@ export function App() {
 function SignedIn({ url, uid, isDemo }: { url: URL; uid: string; isDemo: boolean }) {
   const route = matchRoute(url.pathname);
   const done = useOnboardingDone(uid, isDemo);
+  useReaderPreload(done === true && (route.name === "library" || route.name === "feed"));
   useEffect(() => {
     const to = onboardingRedirect(done, route.name);
     if (!to) return;

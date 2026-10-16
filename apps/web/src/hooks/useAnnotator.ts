@@ -148,9 +148,11 @@ export function useAnnotator(
       if (!articleKey || !el || personaRef.current !== null) return;
       if (prefetchedRef.current.key !== articleKey) prefetchedRef.current = { key: articleKey, ids: new Set() };
       const seen = prefetchedRef.current.ids;
-      void import("../lib/prefetchInView").then(({ prefetchInView }) => {
-        if (!cancelled) stopPrefetch = prefetchInView(el, articleKey, personaRef.current, annotations, seen);
-      });
+      import("../lib/prefetchInView")
+        .then(({ prefetchInView }) => {
+          if (!cancelled) stopPrefetch = prefetchInView(el, articleKey, personaRef.current, annotations, seen);
+        })
+        .catch(() => undefined); // a stale chunk after a deploy: no prefetch, nothing breaks
     });
     return () => {
       cancelled = true;
