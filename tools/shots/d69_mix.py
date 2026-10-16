@@ -10,8 +10,10 @@ Emulators only; the account is deleted at the end. Search calls are real (capped
 
 import asyncio
 import json
+import os
 import sys
 import time
+from pathlib import Path
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
@@ -56,6 +58,8 @@ async def main() -> None:
     finally:
         out["delete"] = (await p.api("", "DELETE", "/v1/me"))["status"]
         print(json.dumps(out, indent=1))
+        dest = Path(os.environ.get("SHOTS_OUT", "docs/evidence/d69")) / "d69_mix.json"
+        dest.write_text(json.dumps(out, indent=1) + "\n")
         await ws.close()
         cdp.stop()
 

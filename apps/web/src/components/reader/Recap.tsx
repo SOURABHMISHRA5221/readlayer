@@ -54,7 +54,7 @@ export function Recap({ contentId, persona, before, labels, answers }: Props) {
     if (!unknown.length) return;
     const ctrl = new AbortController();
     api
-      .recommendations(contentId, persona, null, ctrl.signal)
+      .recommendations(contentId, persona, null, ctrl.signal, "consumer") // the "Not really" terms
       .then((r) => setRecs(nextReads(r.items, new Set(unknown.map(([id]) => id)))))
       .catch(() => undefined);
     return () => ctrl.abort();

@@ -16,8 +16,10 @@ Emulators only; the account is deleted at the end. Model and search calls are re
 
 import asyncio
 import json
+import os
 import sys
 import time
+from pathlib import Path
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
@@ -83,6 +85,7 @@ async def main() -> None:
                                       if not d["rated"] and d.get("known", 0) > 0)  # fmt: skip
         out["profile"] = await audit_all(p, "profile", "/profile", ".kmap")
         await p.viewport(1440)
+        await p.eval("localStorage.setItem('readlayer:theme', 'light'); 1")  # audit_all ends dark
         await p.goto(W + "/profile", wait=2)
         await p.wait_for(".kmap__legend", 30)
         await p.eval("[...document.querySelectorAll('.kmap .filter')].find(b => b.textContent.trim() === 'Sports')?.click(); 1")
@@ -128,9 +131,15 @@ async def main() -> None:
         demo = (await p.api("", "GET", "/v1/me/profile?persona=newcomer"))["body"]
         out["newcomer_summary"] = demo["summary"]["text"]
         out["newcomer_rated"] = sorted(d["domain"] for d in demo["domains"] if d["rated"])
+        demo_map = (await p.api("", "GET", "/v1/me/graph?view=overview&persona=newcomer"))["body"]
+        demo_solid = [n for n in demo_map["nodes"] if not n["ready"]]
+        out["newcomer_map"] = {"solid": len(demo_solid), "rings": len(demo_map["nodes"]) - len(demo_solid),
+                               "solid_without_evidence": [n["label"] for n in demo_solid if not n["recent"]]}  # fmt: skip
     finally:
         out["cleanup"] = (await p.api("", "DELETE", "/v1/me"))["status"]
         print(json.dumps(out, indent=1))
+        dest = Path(os.environ.get("SHOTS_OUT", "docs/evidence/d69")) / "d69.json"
+        dest.write_text(json.dumps(out, indent=1, ensure_ascii=False) + "\n")
         await ws.close()
         cdp.stop()
 

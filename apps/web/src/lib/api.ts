@@ -262,9 +262,10 @@ export const api = {
     persona: PersonaKey | null,
     prefer: RecFormat | null,
     signal?: AbortSignal,
-    /** "article": the card chips, from the article's key ideas (decision 67 N1). "story": the end
-     * of the article, the same story elsewhere and the key ideas (decision 69 B). */
-    basis: "article" | "story" = "story",
+    /** "story" (default): the end of the article, the same story elsewhere and the key ideas
+     * (decision 69 B). "article": the card chips, from the key ideas (decision 67 N1). "consumer":
+     * the terms new to this person (the recap's "teaches X" picks). */
+    basis: "story" | "article" | "consumer" = "story",
   ) =>
     get<RecsResponse>(
       `/v1/content/${encodeURIComponent(id)}/recommendations?${prefer ? `prefer=${prefer}&` : ""}basis=${basis}${personaParam(persona)}`,

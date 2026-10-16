@@ -186,6 +186,10 @@ the web grouping. Plan-reviewer on A2: REVISE 6 (incl. G) → applied.
   format; a second view after an empty result → no call; pending while running. Web: the end list
   asks `basis=story`.
 - Harness: open a library article → story items first, then key ideas; no "new to you".
+- The recap ("What this article changed") keeps `basis=consumer`: its picks must teach a "Not
+  really" term, which the story list doesn't target (milestone-reviewer, round 1).
+- A tab loaded before the deploy reloads once when a code file is gone (`lib/staleChunk.ts` on
+  `vite:preloadError`, loop-guarded by sessionStorage): this is the first deploy with no-cache HTML.
 
 ## G. Screen 2: an equal mix of the chosen formats (added 2026-10-17)
 

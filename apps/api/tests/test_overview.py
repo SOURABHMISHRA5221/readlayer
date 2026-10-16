@@ -2,7 +2,9 @@
 
 from dataclasses import replace
 from datetime import timedelta
+from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.graph.graph import ConceptGraph
@@ -132,3 +134,23 @@ def test_routes_overview_and_bands():
         assert order.index(after["c_bond"]) > order.index(first["c_bond"])  # a correction moves it
     finally:
         set_graph(previous)
+
+
+GRAPH_FILE = Path(__file__).parents[3] / "data" / "concepts.json"
+
+
+@pytest.mark.skipif(not GRAPH_FILE.exists(), reason="the concept graph file is git-ignored")
+def test_every_persona_keeps_an_evidence_only_map_on_the_real_graph():
+    """Decision 69 A: the demo personas' maps stay full once guesses are gone (≥ 12 solid)."""
+    from app.reader.personas import PERSONAS, build_template
+    from app.reader.state import ReaderState
+
+    real = ConceptGraph(ConceptGraphFile.model_validate_json(GRAPH_FILE.read_bytes()))
+    for key, spec in PERSONAS.items():
+        t = build_template(key, spec, real, NOW)
+        domains = {c.domain for cid in t.edges if (c := real.get(cid)) is not None}
+        got = ov.build(real, ReaderState(theta=t.theta, edges=t.edges), dict.fromkeys(domains, 1.0),
+                       [], NOW)  # fmt: skip
+        solid = [n for n in got.nodes if not n.ready]
+        assert len(solid) >= 12, (key, len(solid))
+        assert all(n.id in t.edges for n in solid), key

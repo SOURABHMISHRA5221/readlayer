@@ -63,9 +63,9 @@ def p_know(concept: Concept, state: ReaderState, now: datetime) -> float:
 def pick_domains(
     graph: ConceptGraph, state: ReaderState, interest: Mapping[str, float]
 ) -> tuple[str, ...]:
+    """Candidates, most interest first; `build` drops the empty ones, then caps."""
     with_edges = {c.domain for cid in state.edges if (c := graph.get(cid)) is not None}
     chosen = {d for d, v in interest.items() if v >= CHOSEN_INTEREST}
-    """Candidates, most interest first; `build` drops the empty ones, then caps."""
     return tuple(sorted(
         (d for d in DOMAIN_IDS if d in with_edges | chosen),
         key=lambda d: (-interest.get(d, 0.0), DOMAIN_IDS.index(d)),

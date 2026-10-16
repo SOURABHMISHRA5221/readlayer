@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../src/lib/auth", () => ({ idToken: async () => "token" }));
@@ -32,5 +33,10 @@ describe("recommendations basis", () => {
     const urls = asked();
     await api.recommendations("c1", null, null, undefined, "article");
     expect(urls).toEqual(["/v1/content/c1/recommendations?basis=article"]);
+  });
+
+  it("the recap asks for the person's new terms, so its picks still teach a 'Not really' term", () => {
+    const recap = readFileSync(new URL("../src/components/reader/Recap.tsx", import.meta.url), "utf8");
+    expect(recap).toMatch(/\.recommendations\([^)]*"consumer"\)/);
   });
 });
