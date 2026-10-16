@@ -15,12 +15,23 @@ import {
   size,
 } from "@floating-ui/dom";
 
-import type { AnnotationDebug, AnnotatorEventType, CardAnnotation, Explanation } from "./types";
+import type {
+  AnnotationDebug,
+  AnnotatorEventType,
+  CardAnnotation,
+  Explanation,
+  FrameChoice,
+  Frames,
+  NextUpChip,
+  NextUpFormat,
+} from "./types";
 
 export const CARD_LABEL = "Explanation — not the author's words";
 export const BACKGROUND_LABEL = "Background";
 export const AUTHOR_LABEL = "What the author is saying";
 export const DEFINITION_LABEL = "Definition";
+export const NEXT_UP_LABEL = "Up next";
+const NEXT_VERB: Record<NextUpFormat, string> = { article: "Read", video: "Watch", podcast: "Listen" };
 const REPORTED_TEXT = "Thanks. We've removed this explanation and will review it.";
 const LOADING_TEXT = "Writing an explanation and checking it against the article…";
 // A paragraph has no glossary definition to fall back on.
@@ -58,6 +69,10 @@ export interface CardHandlers {
   demo?: { label: string; onClick: () => void };
   /** Overrides for the restatement's heading and the footer line (a transcript: "speaker"). */
   labels?: CardLabels;
+  /** The other analogy frame was chosen (decision 67 A4). */
+  onFrame?: (frame: FrameChoice) => void;
+  /** An "Up next" chip was clicked (decision 67 N2). */
+  onNextUp?: (chip: NextUpChip) => void;
 }
 
 export interface CardLabels {
@@ -102,6 +117,16 @@ export class Card {
   private readonly simpler: HTMLButtonElement;
   private readonly deeper: HTMLButtonElement;
   private shiftEnabled = false;
+  // Decision 67: the frame toggle and the Up next chips.
+  private framesEnabled = false;
+  private frameChoice: FrameChoice = "pick";
+  private lastFrames: Frames | null = null;
+  private readonly frameGroup: HTMLDivElement;
+  private readonly frameOptions: [HTMLButtonElement, HTMLButtonElement];
+  private readonly next: HTMLDivElement;
+  private readonly nextRow: HTMLUListElement;
+  private readonly chipsAllowed: boolean;
+  private readonly onNextUp?: (chip: NextUpChip) => void;
   private shift: -1 | 0 | 1 = 0;
   private kind: string = "span";
   private sidenote: SidenoteBox | null = null;
@@ -190,6 +215,31 @@ export class Card {
     const bg = section(doc, `${C}__bg`, BACKGROUND_LABEL, this.background, 0, this.frame);
     this.bgLabel = bg.querySelector(`.${C}__section-label`)!;
     this.bgSection = bg;
+    // "Your pick · X" / "For you · Y": a two-option radio group under the Background's label.
+    this.frameGroup = el(doc, "div", "rl-frame");
+    this.frameGroup.setAttribute("role", "radiogroup");
+    this.frameGroup.setAttribute("aria-label", "Analogy");
+    this.frameGroup.hidden = true;
+    const options = (["pick", "for_you"] as const).map((choice) => {
+      const b = el(doc, "button", "rl-frame__option");
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.dataset.frame = choice;
+      b.addEventListener("click", () => {
+        if (b.getAttribute("aria-checked") !== "true") handlers.onFrame?.(choice);
+      });
+      b.addEventListener("keydown", (e) => {
+        if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(e.key)) return;
+        e.preventDefault();
+        const other = choice === "pick" ? this.frameOptions[1] : this.frameOptions[0];
+        other.focus();
+        handlers.onFrame?.(other.dataset.frame as FrameChoice);
+      });
+      return b;
+    });
+    this.frameOptions = [options[0]!, options[1]!];
+    this.frameGroup.append(...this.frameOptions);
+    bg.querySelector(`.${C}__section-head`)!.after(this.frameGroup);
     this.says = section(doc, `${C}__says`, handlers.labels?.author ?? AUTHOR_LABEL, this.authorSays, 1);
     const says = this.says;
     const note = el(doc, "p", `${C}__loading-note`);
@@ -236,9 +286,22 @@ export class Card {
     label.textContent = handlers.labels?.card ?? CARD_LABEL;
     footer.append(actions, label);
 
+    // Up next (decision 67 N2): at the end of the scrolling body, not the pinned footer, so it
+    // never squeezes the phone sheet. Never on demo or inline cards.
+    this.chipsAllowed = !handlers.demo && !inline;
+    this.onNextUp = handlers.onNextUp;
+    this.next = el(doc, "div", `${C}__next`);
+    const nextLabel = el(doc, "p", `${C}__next-label`);
+    nextLabel.textContent = NEXT_UP_LABEL;
+    nextLabel.id = `${id}-next`;
+    this.nextRow = el(doc, "ul", `${C}__next-row`);
+    this.nextRow.setAttribute("aria-labelledby", nextLabel.id);
+    this.next.append(nextLabel, this.nextRow);
+    this.next.hidden = true;
+
     // The body scrolls when the card is taller than the room it has; the actions stay pinned.
     this.body = el(doc, "div", `${C}__body`);
-    this.body.append(this.domain, this.title, this.pitch, this.prereqs, this.explain, this.status, this.debug);
+    this.body.append(this.domain, this.title, this.pitch, this.prereqs, this.explain, this.status, this.debug, this.next);
     this.body.addEventListener("scroll", () => this.markOverflow(), { passive: true });
     this.el.append(handle, this.arrowEl, this.body, footer);
     if (inline) inline.append(this.el);
@@ -255,7 +318,66 @@ export class Card {
 
   focusables(): HTMLElement[] {
     const depth = this.depth.hidden ? [] : [this.simpler, this.deeper];
-    return [...depth, ...this.buttons].filter((b) => !b.disabled && !b.hidden);
+    const frame = this.frameGroup.hidden ? [] : this.frameOptions.filter((b) => b.tabIndex === 0);
+    const chips = this.next.hidden ? [] : Array.from(this.nextRow.querySelectorAll<HTMLElement>("a"));
+    return [...frame, ...depth, ...this.buttons, ...chips].filter(
+      (b) => !(b as HTMLButtonElement).disabled && !b.hidden,
+    );
+  }
+
+  /** The host can load the other analogy frame (AnnotatorOptions.loadFramed). */
+  enableFrames(on: boolean): void {
+    this.framesEnabled = on;
+  }
+
+  setFrameChoice(choice: FrameChoice): void {
+    this.frameChoice = choice;
+  }
+
+  /** Fill the Up next row; returns the ids shown (none when not allowed or empty). */
+  setNextUp(chips: readonly NextUpChip[]): string[] {
+    const shown = this.chipsAllowed ? chips.slice(0, 3) : [];
+    this.next.hidden = shown.length === 0;
+    this.nextRow.replaceChildren(
+      ...shown.map((chip) => {
+        const li = el(this.doc, "li", "");
+        const a = el(this.doc, "a", "rl-next");
+        a.href = chip.href;
+        if (/^https?:/.test(chip.href)) Object.assign(a, { target: "_blank", rel: "noopener noreferrer" });
+        a.dataset.format = chip.format;
+        const verb = el(this.doc, "span", "rl-next__verb");
+        verb.textContent = NEXT_VERB[chip.format];
+        const title = el(this.doc, "span", "rl-next__title");
+        title.textContent = chip.title;
+        const meta = el(this.doc, "span", "rl-next__meta");
+        meta.textContent = chip.minutes ? `${chip.source} · ${chip.minutes} min` : chip.source;
+        a.append(verb, title, meta);
+        a.addEventListener("click", (e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return; // new tab: the link's own
+          e.preventDefault();
+          this.onNextUp?.(chip);
+        });
+        li.append(a);
+        return li;
+      }),
+    );
+    return shown.map((c) => c.id);
+  }
+
+  /** The two-option frame toggle, or nothing (decision 67 A4). */
+  private fillFrames(frames: Frames | null, checked: FrameChoice): boolean {
+    const on = Boolean(this.framesEnabled && frames?.for_you && frames.for_you !== frames.pick);
+    this.frameGroup.hidden = !on;
+    if (!on || !frames) return false;
+    const [pick, forYou] = this.frameOptions;
+    pick.textContent = frames.pick ? `Your pick · ${capitalise(frames.pick)}` : "No analogy";
+    forYou.textContent = `For you · ${capitalise(frames.for_you!)}`;
+    for (const b of this.frameOptions) {
+      const isChecked = b.dataset.frame === checked;
+      b.setAttribute("aria-checked", String(isChecked));
+      b.tabIndex = isChecked ? 0 : -1;
+    }
+    return true;
   }
 
   /** The host can load other bands (AnnotatorOptions.loadShifted). */
@@ -272,6 +394,7 @@ export class Card {
     this.el.dataset.kind = a.kind;
     this.kind = a.kind;
     this.shift = 0;
+    this.lastFrames = null; // another note: its frames arrive with its explanation
     this.knew.hidden = a.kind === "paragraph";
     this.domain.textContent = a.domain ?? "";
     this.domain.hidden = !a.domain;
@@ -322,7 +445,10 @@ export class Card {
     this.says.hidden = !(verified || loading);
     this.authorSays.textContent = verified ? (state.author_says ?? "") : "";
     if (!loading) this.fillPitch(verified ? state : null); // keep the buttons under focus while loading
-    const frame = background && verified ? state.analogy_domain : null;
+    if (verified) this.lastFrames = state.frames ?? null;
+    const frames = verified && background ? (state.frames ?? null) : loading ? this.lastFrames : null;
+    const toggled = this.fillFrames(frames, loading || !frames ? this.frameChoice : frames.used);
+    const frame = background && verified && !toggled ? state.analogy_domain : null;
     this.frame.textContent = frame ? `Analogy · ${frame}` : "";
     this.frame.hidden = !frame;
     const empty = !verified && !loading && state !== "reported" && !this.definitionText;
@@ -563,6 +689,10 @@ export class Card {
     handle.addEventListener("pointerup", end);
     handle.addEventListener("pointercancel", end);
   }
+}
+
+function capitalise(word: string): string {
+  return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
 function section(

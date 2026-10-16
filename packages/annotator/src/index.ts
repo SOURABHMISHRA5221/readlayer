@@ -12,12 +12,14 @@ import { createMarker, paragraphCard, PMARK_CLASS } from "./paragraph";
 import { Signals } from "./signals";
 import { injectStyles, type StyleMode } from "./styles";
 import type {
+  Anchor,
   AnnotatorEvent,
   AnnotatorEventType,
   AnyAnnotation,
   CardAnnotation,
-  Anchor,
   Explanation,
+  FrameChoice,
+  NextUpChip,
   ParagraphMarker,
   PromptAnnotation,
 } from "./types";
@@ -67,6 +69,20 @@ export interface AnnotatorOptions {
    * Optional: without it the card has no depth buttons (the extension's default).
    */
   loadShifted?: (annotation: CardAnnotation, shift: -1 | 1) => Promise<Explanation>;
+  /**
+   * The Background in the other analogy frame (decision 67 A4): "for_you" from the reader's
+   * map, "pick" their own choice. Optional: without it the card shows no frame toggle. Once
+   * chosen, later cards on the page open in that frame (with `shift`, simpler/deeper keep it).
+   */
+  loadFramed?: (annotation: CardAnnotation, frame: FrameChoice, shift: -1 | 0 | 1) => Promise<Explanation>;
+  /** The reader switched the frame for this page (the host may prefetch in it). */
+  onFrameChoice?: (frame: FrameChoice) => void;
+  /** "Up next" chips for the open card (decision 67 N2), read when a card opens. */
+  nextUp?: () => readonly NextUpChip[];
+  /** A chip was clicked (its link's default is prevented). */
+  onNextUp?: (chip: NextUpChip) => void;
+  /** Chips a card rendered, by id, each time a card shows them (the host dedupes per page). */
+  onNextUpShown?: (ids: string[]) => void;
   /**
    * Card actions. "full" (the default: reader and extension) shows Knew this / Helpful / This is
    * wrong; "demo" shows one call to action instead and records nothing (the landing page).
@@ -193,6 +209,9 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   let loadToken = 0;
   const shown = new Map<string, Explanation>();
   let reader: string | undefined;
+  // Decision 67 A4: the analogy frame chosen on this page, and the open card's shift.
+  let frameChoice: FrameChoice = "pick";
+  let shiftNow: -1 | 0 | 1 = 0;
   // Sidenotes sit away from their mark, so a hover-opened one waits longer before closing.
   const SIDENOTE_CLOSE_MS = 700;
 
@@ -221,10 +240,18 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       if (!target) return;
       loadInto(target.annotation, shift);
     },
+    onFrame: (frame) => {
+      frameChoice = frame;
+      options.onFrameChoice?.(frame);
+      const target = active && lookup(active.id);
+      if (target) loadInto(target.annotation, shiftNow);
+    },
+    onNextUp: (chip) => options.onNextUp?.(chip),
     labels: options.labels,
     demo: options.actions === "demo" ? options.demoAction ?? { label: "Try it on any article", onClick: () => undefined } : undefined,
   }, inline);
   card.enableShift(Boolean(options.loadShifted));
+  card.enableFrames(Boolean(options.loadFramed));
 
   /** What a card shows and what it hangs from: a span's first segment or a paragraph marker. */
   function lookup(id: string): { annotation: CardAnnotation; anchor: HTMLElement } | null {
@@ -287,6 +314,8 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     if (changed || !card.isOpen) {
       card.setQuiet(quiet);
       card.fill(annotation, pressed.get(id) ?? new Set());
+      const chips = card.setNextUp(options.nextUp?.() ?? []);
+      if (chips.length) options.onNextUpShown?.(chips);
       if (!pressed.get(id)?.has("report_wrong")) loadInto(annotation);
       const { mode, box } = placement();
       card.show(mark, mode, box, pinned);
@@ -307,9 +336,16 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
 
   function loadInto(annotation: CardAnnotation, shift: -1 | 0 | 1 = 0): void {
     const shifted = options.loadShifted;
+    const framed = options.loadFramed;
     const load: ((a: CardAnnotation) => Promise<Explanation>) | undefined =
-      shift && shifted ? (a) => shifted(a, shift as -1 | 1) : options.loadExplanation;
+      frameChoice === "for_you" && framed
+        ? (a) => framed(a, "for_you", shift)
+        : shift && shifted
+          ? (a) => shifted(a, shift as -1 | 1)
+          : options.loadExplanation;
     if (!load) return;
+    shiftNow = shift;
+    card.setFrameChoice(frameChoice);
     const token = ++loadToken;
     const settle = (result: Explanation | null) => {
       if (token !== loadToken || active?.id !== annotation.id) return;

@@ -252,9 +252,16 @@ export const api = {
     ),
   content: (id: string, signal?: AbortSignal) =>
     get<ContentDetail>(`/v1/content/${encodeURIComponent(id)}`, signal),
-  recommendations: (id: string, persona: PersonaKey | null, prefer: RecFormat | null, signal?: AbortSignal) =>
+  recommendations: (
+    id: string,
+    persona: PersonaKey | null,
+    prefer: RecFormat | null,
+    signal?: AbortSignal,
+    /** "article": the card chips, from the article's key ideas (decision 67 N1). */
+    basis: "consumer" | "article" = "consumer",
+  ) =>
     get<RecsResponse>(
-      `/v1/content/${encodeURIComponent(id)}/recommendations?${prefer ? `prefer=${prefer}` : ""}${personaParam(persona)}`,
+      `/v1/content/${encodeURIComponent(id)}/recommendations?${prefer ? `prefer=${prefer}` : ""}${basis === "article" ? `${prefer ? "&" : ""}basis=article` : ""}${personaParam(persona)}`,
       signal,
     ),
   recEvents: (persona: PersonaKey | null, events: { id: string; type: RecEventType; item_id: string }[]) =>

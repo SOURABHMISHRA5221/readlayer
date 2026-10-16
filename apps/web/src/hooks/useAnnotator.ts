@@ -4,6 +4,7 @@ import {
   type AnnotatorEvent,
   type CardLabels,
   type CardAnnotation,
+  type NextUpChip,
   type ParagraphMarker,
   type PromptAnnotation,
   type SidenoteBox,
@@ -11,7 +12,7 @@ import {
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 
 import { answerAndRefresh } from "../lib/answers";
-import { api } from "../lib/api";
+import { api, type RecItem } from "../lib/api";
 import { onBeforeFlush, trackEvent } from "../lib/events";
 import {
   loadExplanation,
@@ -19,6 +20,9 @@ import {
   prefetchExplanations,
   reportExplanation,
 } from "../lib/explanations";
+import { loadNextUp, shownOnce, toChips } from "../lib/nextUp";
+import { openRec } from "../lib/openRec";
+import { queueRecEvent } from "../lib/recEvents";
 import type { PersonaKey } from "../lib/personas";
 
 const WIDE_PX = 1200; // the margin rail appears here (reader.css)
@@ -72,6 +76,10 @@ export function useAnnotator(
   refreshRef.current = refreshNotes;
   // Decision 67 L3: notes prefetched on this article, across notes refreshes.
   const prefetchedRef = useRef<{ key: string | null; ids: Set<string> }>({ key: null, ids: new Set() });
+  // Decision 67 N3: the card's Up next chips (article-basis items), per page.
+  const recItemsRef = useRef<RecItem[]>([]);
+  const chipsRef = useRef<NextUpChip[]>([]);
+  const shownRef = useRef<Set<string>>(new Set());
   const [resolved, setResolved] = useState<string[] | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -115,6 +123,16 @@ export function useAnnotator(
       loadExplanation: (a) => loadExplanation(articleKey, personaRef.current, a),
       loadShifted: (a, shift) => loadShifted(articleKey, personaRef.current, a, shift),
       sidenote: () => railColumn(el),
+      nextUp: () => chipsRef.current,
+      onNextUp: (chip) => {
+        const item = recItemsRef.current.find((i) => i.id === chip.id);
+        if (!item) return;
+        queueRecEvent(personaRef.current, "rec_clicked", item.id);
+        void openRec(item, personaRef.current, articleKey);
+      },
+      onNextUpShown: (ids) => {
+        for (const id of shownOnce(shownRef.current, ids)) queueRecEvent(personaRef.current, "rec_shown", id);
+      },
       labels,
       onHover: setHovered,
       onActive: setActive,
@@ -159,6 +177,17 @@ export function useAnnotator(
       stopPrefetch();
     };
   }, [annotations, extras, articleKey]);
+
+  useEffect(() => {
+    recItemsRef.current = [];
+    chipsRef.current = [];
+    shownRef.current = new Set();
+    if (!articleKey) return;
+    return loadNextUp(articleKey, persona, (items) => {
+      recItemsRef.current = items;
+      chipsRef.current = toChips(items, persona, articleKey);
+    });
+  }, [articleKey, persona]);
 
   const highlight = useCallback((id: string | null) => annotatorRef.current?.highlight(id), []);
   const open = useCallback((id: string, focus = false) => annotatorRef.current?.open(id, { focus }), []);

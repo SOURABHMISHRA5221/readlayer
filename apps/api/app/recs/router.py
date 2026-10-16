@@ -10,6 +10,7 @@ trigger none, so concepts without a cache entry give them library items only.
 
 import hashlib
 import logging
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 
@@ -39,9 +40,10 @@ from app.ingest.urls import url_hash
 from app.media import urls as media_urls
 from app.media.openable import open_here
 from app.reader.state import PersonaKey
+from app.recs.feed_rank import key_ideas
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
-from app.recs.rank import PERSONA_FORMAT_PRIORS, RELATION_LABEL, Candidate, select
+from app.recs.rank import PERSONA_FORMAT_PRIORS, RELATION_LABEL, Candidate, one_per_format, select
 from app.recs.state import DEFAULT_KEY, RecEventType, Served, get_rec_signals
 from app.recs.web_search import build_query, get_web_search
 from app.scoring.scorer import word_count
@@ -161,6 +163,11 @@ def _why(relation: Relation, trigger: str | None, detail: str | None, source: st
     return f"Because {c} was new to you" if c else "An explainer on this topic"
 
 
+def _key_idea_why(item: RecItem) -> str:
+    label = item.triggers[0].label if item.triggers else None
+    return f"On {_quote(label)}, a key idea here" if label else "On a key idea here"
+
+
 def _published(doc: ContentDoc) -> str | None:
     """Encyclopedia pages are evergreen: no freshness decay for them."""
     return None if is_wikipedia(doc) else doc.published
@@ -222,30 +229,55 @@ def _web_item(r: WebResult, trigger_id: str, graph: ConceptGraph, score: float) 
     )
 
 
+@dataclass(frozen=True)
+class _Trigger:
+    concept_id: str
+    label: str
+    domain: str
+    weight: float
+
+
+async def _triggers(basis: str, ctx: ReaderContext, doc: ContentDoc, graph: ConceptGraph):
+    """ "consumer": the concepts new to this person, highest score first (Up next at the end of
+    the article). "article" (decision 67 N1, the card chips): the article's own key ideas by
+    salience, the same for everyone."""
+    if basis == "article":
+        ideas, _ = key_ideas(doc, graph)
+        return [_Trigger(c.id, c.label, c.domain, 1.0 - 0.1 * i) for i, c in enumerate(ideas)]
+    spans = (await score_for(ctx, doc, "balanced", datetime.now(UTC))).spans
+    return [_Trigger(s.concept_id, s.label, s.domain, s.score) for s in spans]
+
+
 @router.get("/content/{content_id}/recommendations", response_model=RecsResponse)
 async def recommendations(
     content_id: str,
     ctx: Annotated[ReaderContext, Depends(reader_context)],
     prefer: Format | None = None,
+    basis: Literal["consumer", "article"] = "consumer",
 ) -> RecsResponse:
     doc = await doc_or_error(content_id, ctx)
     graph = get_graph()
     theta = ctx.theta
-    spans = (await score_for(ctx, doc, "balanced", datetime.now(UTC))).spans
-    triggers = [s.concept_id for s in spans]  # highest score first
+    spans = await _triggers(basis, ctx, doc, graph)
+    web = get_web_search()
+    if not spans and basis == "article":  # nothing linked: no chips
+        return RecsResponse(
+            content_id=content_id, persona=ctx.persona, prefer=prefer, items=[], pending=False,
+            web_formats=[f for f in FORMATS if f in web.formats],
+        )  # fmt: skip
+    triggers = [s.concept_id for s in spans]
 
     index = await _library_index()
     hidden = hidden_ids(index.docs.values(), ctx)  # per request, after the shared index
     lib = library_candidates(index, doc, graph, theta, triggers, hidden)
 
-    web = get_web_search()
     known_urls = {d.final_url or d.url for cid, d in index.docs.items() if cid not in hidden}
     web_results: dict[str, tuple[WebResult, str, float]] = {}
     pending = False
     anonymous = ctx.caller.is_anonymous
     may_search = not anonymous or await web.anonymous_allowance_left()
     top = spans[:WEB_TRIGGERS]
-    best = top[0].score if top else 1.0
+    best = top[0].weight if top else 1.0
     for span in top:
         for fmt in sorted(web.formats):
             query = build_query(span.label, fmt, span.domain)
@@ -256,7 +288,7 @@ async def recommendations(
             for rank, r in enumerate(results[:WEB_PER_QUERY]):
                 if r.url in known_urls:
                     continue
-                relevance = (span.score / best) * (1 - WEB_RANK_DECAY * rank)
+                relevance = (span.weight / best) * (1 - WEB_RANK_DECAY * rank)
                 prev = web_results.get(r.url)
                 if prev is None or relevance > prev[2]:
                     web_results[r.url] = (r, span.concept_id, relevance)
@@ -292,6 +324,8 @@ async def recommendations(
         now,
         prefer,
     )
+    if basis == "article":
+        chosen = one_per_format(chosen)
 
     lib_by_key = {(f"lib:{c.content_id}", c.relation): c for c in lib}
     web_by_id = {_web_id(url): v for url, v in web_results.items()}
@@ -306,6 +340,8 @@ async def recommendations(
                 item.url, item.format, item.duration_or_read_time, get_settings(), anonymous
             )
             items.append(item.model_copy(update={"open_here": here}))
+    if basis == "article":
+        items = [i.model_copy(update={"why": _key_idea_why(i)}) for i in items]
     if ctx.user.may_record:  # nothing recorded for a signed-in reader before consent
         await signals.remember_served(
             ctx.uid, ctx.rec_key, {i.id: Served(i.format, i.relation) for i in items}, now

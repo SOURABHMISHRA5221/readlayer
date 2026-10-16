@@ -179,3 +179,58 @@ def test_open_ingests_within_the_daily_cap(env, monkeypatch):
     assert capped.status_code == 429 and capped.json()["error"] == "ingest_cap_reached"
     unsafe = client.post("/v1/recs/open", json={"url": "http://127.0.0.1/admin"})
     assert unsafe.status_code == 400
+
+
+# Decision 67 N1: card chips come from the article's key ideas, one item per format.
+
+
+def _article_recs(client, persona="newcomer", content="main"):
+    url = f"/v1/content/{content}/recommendations?basis=article&persona={persona}"
+    client.get(url)  # first view starts the web lookups
+    return client.get(url).json()
+
+
+def test_article_basis_is_key_ideas_one_per_format(env):
+    from app.recs.feed_rank import key_ideas
+    from app.recs.models import FORMATS
+
+    client, provider, _, store = env
+    ideas, _ = key_ideas(store.docs["main"], GRAPH)
+    idea_ids = {c.id for c in ideas}
+    labels = {c.label for c in ideas}
+    seen_triggers = []
+    for persona in ("newcomer", "trader", "policy_student"):
+        body = _article_recs(client, persona)
+        items = body["items"]
+        formats = [i["format"] for i in items]
+        assert 1 <= len(items) <= 3 and len(set(formats)) == len(formats)
+        assert formats == [f for f in FORMATS if f in formats]  # article, video, podcast order
+        for item in items:
+            trig = {t["id"] for t in item["triggers"]}
+            assert trig and trig <= idea_ids
+            assert "a key idea here" in item["why"]
+        seen_triggers.append({t["id"] for i in items for t in i["triggers"]})
+    assert all(q.split(" ")[0] in " ".join(labels) for q in provider.queries)
+    assert all(q.endswith(("explained", "podcast episode")) for q in provider.queries)
+
+
+def test_article_basis_is_the_same_for_every_persona(env):
+    client, *_ = env
+    lookups = [_article_recs(client, p) for p in ("newcomer", "trader")]
+    ideas = [sorted({t["id"] for i in b["items"] for t in i["triggers"]}) for b in lookups]
+    assert ideas[0] and set(ideas[0]) & set(ideas[1])
+
+
+def test_article_basis_without_linked_ideas_is_empty(env):
+    client, _, _, store = env
+    bare = store.docs["main"].model_copy(update={"content_id": "bare", "demands": []})
+    store.docs["bare"] = bare
+    read_router.reset_catalog()
+    recs_router._index = None
+    assert _article_recs(client, content="bare")["items"] == []
+
+
+def test_basis_is_validated(env):
+    client, *_ = env
+    url = "/v1/content/main/recommendations?basis=words"
+    assert client.get(url).status_code == 422

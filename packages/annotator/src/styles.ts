@@ -179,6 +179,46 @@ const CSS = `
 .rl-card__depth { display: flex; flex-wrap: wrap; gap: 6px; }
 .rl-btn.rl-btn--demo { padding: 0 16px; font-weight: 600; margin-left: 0; background: var(--rl-ink, #1c1c1c); color: var(--rl-paper, #fff); }
 .rl-btn--depth { min-height: 44px; margin-left: 0; padding: 0 14px; border-color: var(--rl-hairline, #ececec); font-size: 13px; }
+/* Decision 67 A4: the analogy frame toggle, a two-option segmented control under the label. */
+.rl-frame { display: inline-flex; flex-wrap: wrap; gap: 2px; margin: 6px 0 2px; padding: 2px; border-radius: 999px; background: var(--rl-surface, #fffdf9); }
+.rl-frame[hidden] { display: none; }
+.rl-frame__option {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--rl-muted, #5f5f5f);
+  font: 500 12px/1.2 var(--rl-font-ui, system-ui, sans-serif);
+  cursor: pointer;
+}
+.rl-frame__option[aria-checked="true"] { background: var(--rl-accent, #1f5f5b); color: var(--rl-on-accent, #fff); }
+.rl-frame__option:focus-visible { outline: 2px solid var(--rl-accent, #1f5f5b); outline-offset: 2px; }
+/* Decision 67 N2: Up next, at the end of the body; one row that scrolls sideways when narrow. */
+.rl-card__next { margin-top: 14px; }
+.rl-card__next[hidden] { display: none; }
+.rl-card__next-label { font: 500 12px/1 var(--rl-font-ui, system-ui, sans-serif); color: var(--rl-muted, #6b675f); }
+.rl-card__next-row { display: flex; gap: 8px; margin: 8px 0 0; padding: 0 0 4px; list-style: none; overflow-x: auto; scroll-snap-type: x proximity; }
+.rl-card__next-row > li { flex: 1 1 0; min-width: 150px; scroll-snap-align: start; }
+.rl-next {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  height: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--rl-hairline, #e7e1d6);
+  border-radius: calc(var(--rl-radius, 10px) - 2px);
+  color: var(--rl-ink, #1c1b19);
+  text-decoration: none;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+.rl-next:hover { border-color: var(--rl-accent-line, var(--rl-accent, #1f5f5b)); background: var(--rl-accent-wash, #e6f0ee); }
+.rl-next:focus-visible { outline: 2px solid var(--rl-accent, #1f5f5b); outline-offset: 2px; }
+.rl-next__verb { font: 600 11px/1 var(--rl-font-ui, system-ui, sans-serif); letter-spacing: 0.02em; color: var(--rl-accent, #1f5f5b); }
+.rl-next__title { font: 500 13px/1.3 var(--rl-font-ui, system-ui, sans-serif); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rl-next__meta { font: 400 11px/1.3 var(--rl-font-ui, system-ui, sans-serif); color: var(--rl-muted, #6b675f); }
+@media (prefers-reduced-motion: reduce) { .rl-next { transition: none; } }
 .rl-card__explain[data-state="loading"] .rl-card__says .rl-card__text,
 .rl-card__explain[data-state="ready"] .rl-card__skeleton { display: none; }
 .rl-card__section[hidden] { display: none; }

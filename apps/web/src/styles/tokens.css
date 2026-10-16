@@ -96,6 +96,7 @@
   --rl-radius: var(--radius);
   --rl-shadow: var(--shadow-float);
   --rl-focus: var(--accent);
+  --rl-on-accent: var(--on-accent);
   --rl-font-ui: var(--font-ui);
   --rl-font-read: var(--font-read);
   --rl-accent-line: var(--accent-line);
