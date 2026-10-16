@@ -202,7 +202,8 @@ def test_home_terms_alone_give_a_topic_no_level(env, docs):
     assert all(d not in text for d in home), text
 
 
-def test_a_quick_check_answer_rates_its_topic_even_if_theta_stays_at_zero(env, docs):
+def test_a_quick_check_answer_rates_its_topic(env, docs):
+    """Exactly-zero θ after an answer is pinned by test_reader_logic's per-kind test."""
     g = consented(TestClient(app, headers=auth("g1")))
     g.post("/v1/onboarding", json=answers())
     item = g.get("/v1/calibration/set").json()["items"][0]

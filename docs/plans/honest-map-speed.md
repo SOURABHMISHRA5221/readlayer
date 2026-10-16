@@ -155,7 +155,7 @@ a domain. The web shows "Not rated yet" with the "N ideas you've shown you know"
 topic with known ideas in the main grid and the map's topic buttons (`splitDomains`: rated, known >
 0 or chosen). Tests: the rule per evidence kind; home terms alone → unrated, absent from the
 summary; a Quick check answer rates its topic; each demo persona rated exactly where its θ is set;
-the web grouping. Plan-reviewer on A2: REVISE 6 (incl. G) → applied.
+the web grouping. Plan-reviewer on A2 and G: REVISE 6 → APPROVE.
 
 ## B. End-of-article Up next follows the article (PR 2, API + web)
 
