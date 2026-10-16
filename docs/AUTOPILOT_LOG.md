@@ -2167,3 +2167,22 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    the live site; recount the note numbers on the day; warm any article used.
 2. Oct 17: remove `/v2` (decision 63), gitleaks over history, deck link to the new video, submit by
    Oct 18. Optional: disable `tavily-api-key` version 1 after the feed job runs on the new key.
+
+## Decision 68: onboarding knowledge and formats (2026-10-16 night)
+
+- Sourabh: "our onboarding is misleading our Map" (screen 2's "Know X?" writes knowledge from a
+  tap; "What they do and where they are from builds knowledge"), a read / watch / listen question
+  for the chips and Up next, video and audio tiles on screen 2, and chips / Up next "not seen for
+  new sign in". Then "On screen two decision do what u feel is best". Production logs: chips got
+  409 on just-opened links. Plan `docs/plans/onboarding-taste.md` (plan-reviewer REVISE 13 → APPROVE).
+- PR A (`d68-chips-ready`): chips asked once the notes are in, a 409 retried once;
+  milestone-reviewer FIX (docs only) applied.
+
+### Next steps (resume here, in order)
+1. PR A: PR → CI → merge → `make deploy-web` (Sourabh's yes) → live check (one pasted link as a
+   demo reader, deleted after).
+2. PR B (`d68-onboarding`, worktree `../readlayer-d68`): R0 on the harness first, then K + F tests
+   first → milestone-reviewer → PR → CI → merge → `make deploy-api` (yes) → then `make deploy-web`
+   (yes) → harness and Redo checks. **Checkpoint Oct 17 12:00 IST**: not harness-green → ask
+   Sourabh to cut (F4 minimums, then F3, then K2).
+3. Sourabh's new video script and re-record; Oct 17: `/v2` removal, gitleaks, deck link, submit.
