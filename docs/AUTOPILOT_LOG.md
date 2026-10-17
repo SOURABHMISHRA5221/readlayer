@@ -2273,7 +2273,7 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   label on `d69-for-you`; milestone-reviewer FIX (extension pages; a vacuous test) applied.
 
 ### Next steps (resume here, in order)
-1. plan-reviewer on B4 → milestone-reviewer round 2 → PR → CI → merge → `make deploy-api` →
+1. (plan-reviewer on B4: APPROVE; milestone-reviewer: SHIP) → PR → CI → merge → `make deploy-api` →
    `make deploy-web` → live: Sourabh's page shows "More on this story"; the toggle says "For you".
 2. Last feature deploy 18:00 IST; `/v2` removal, gitleaks, deck link, submit; video re-record.
 
