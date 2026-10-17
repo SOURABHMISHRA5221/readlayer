@@ -200,9 +200,10 @@ personas stay curated on the original four.
   request from the reader page, so the article shows in seconds; POST /v1/content and the scripts
   run both back to back through the same pending doc and lease. A URL that is pending counts as
   known everywhere: no second fetch and no second ingest slot.
-- **Warm on open (decision 69 C).** LiteLLM and spaCy load lazily (startup stays lean, min
-  instances 1 only during judging). Phase 1 (`fetch_and_extract`, `store_submitted`) starts
-  `app/warm.py` in a thread without waiting, so the imports overlap the fetch; `analyse_pending`
+- **Warm on open and at startup (decision 69 C, C2).** LiteLLM and spaCy load lazily at import
+  (importing the app stays light). Startup (`lifespan`, after the startup log, not awaited) and
+  phase 1 (`fetch_and_extract`, `store_submitted`) start `app/warm.py` in a thread without
+  waiting, so the imports overlap the fetch; `analyse_pending`
   awaits it in a thread inside its lease (the 30 s margin covers it). Run once per process, no model call. Measured before:
   the first analysis on an instance waited 11–17 s before its first model call, later ones
   < 0.5 s. `content ingested` logs `parse_ms`, `extract_ms`, `link_ms`, `grow_ms`; `llm embed`

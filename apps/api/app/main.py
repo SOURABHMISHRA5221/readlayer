@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, Depends, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
-from app import llm, ratelimit
+from app import llm, ratelimit, warm
 from app.auth import get_auth_admin
 from app.config import get_settings
 from app.content.router import router as read_router
@@ -50,6 +50,10 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
             "cors_origins": settings.cors_origin_list,
         },
     )
+    # LiteLLM and spaCy in a thread, not waited on (decision 69 C2): startup stays as fast, and a
+    # new server usually has them loaded before anyone opens a link. Phase 1 and analysis still
+    # start / wait for the same run-once warm-up.
+    warm.start()
     yield
 
 

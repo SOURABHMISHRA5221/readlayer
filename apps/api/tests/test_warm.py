@@ -78,9 +78,10 @@ def test_a_failed_warm_up_is_logged_and_swallowed(monkeypatch, caplog):
     warm.reset()
 
 
-def test_opening_a_link_and_analysing_start_it_and_startup_does_not(
-    monkeypatch, store, fetcher, fake_llm
-):
+def test_startup_opening_a_link_and_analysing_all_start_it(monkeypatch, store, fetcher, fake_llm):
+    """Decision 69 C2 (Sourabh, "yes", after the live check measured ≈ 7.5 s): startup starts the
+    warm-up in its thread too, without waiting, so a server usually has it done before anyone
+    opens a link."""
     asked: list[str] = []
 
     async def ready() -> None:
@@ -89,7 +90,8 @@ def test_opening_a_link_and_analysing_start_it_and_startup_does_not(
     monkeypatch.setattr(warm, "start", lambda: asked.append("start"))
     monkeypatch.setattr(warm, "ready", ready)
     with TestClient(app):  # runs the lifespan
-        assert asked == []
+        assert asked == ["start"]
+    asked.clear()
     c = client()
     assert c.post("/v1/recs/open", json={"url": URL}).status_code == 200
     assert asked == ["start"]  # phase 1 starts it and doesn't wait

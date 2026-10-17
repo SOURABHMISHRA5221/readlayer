@@ -2,9 +2,9 @@
 
 LiteLLM (the first model call) and spaCy (the first parse) load lazily so cold starts stay short
 (STATUS §5). The first analysis on an instance used to pay both inside the reader's wait: 11–17 s
-before its first model call. Opening a link now starts them in a thread while phase 1 fetches the
-page (the request holds the CPU), and analysis waits for them off the event loop. Never at startup.
-No model call, no spend.
+before its first model call. Startup starts them in a thread without waiting (decision 69 C2: on
+link open alone the live wait was still ≈ 7.5 s), opening a link starts them too, and analysis
+waits for them off the event loop. Run once per process. No model call, no spend.
 """
 
 import asyncio
@@ -13,7 +13,6 @@ import threading
 import time
 
 from app import llm
-from app.ingest import features
 
 log = logging.getLogger("app.warm")
 
@@ -30,6 +29,8 @@ def real_warm() -> None:
             return
         start = time.perf_counter()
         try:
+            from app.ingest import features  # here, not at import: importing the app stays light
+
             llm._litellm()
             features._nlp()
         except Exception as exc:  # the first model call or parse then loads it, as before

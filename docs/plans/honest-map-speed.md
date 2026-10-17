@@ -97,6 +97,16 @@ are in the video line).
   and its analysis, like any Read any link; the reader deleted). The embedding gap gets its own fix
   only once the new logs show its cause (not in this decision).
 
+### C2. Warm at startup too (added 2026-10-17, after the live check)
+Live: on link open alone a new instance still waited ≈ 7.5 s before its first model call (warm-up
+9.1 s on one CPU, longer than phase 1). Asked: start it when a server starts, in the background,
+cost a few seconds of CPU contention on a brand-new server's first page loads — Sourabh: "yes".
+`lifespan` calls `warm.start()` after the startup log, not awaited, so `startup_ms` is unchanged;
+phase 1 and analysis keep starting / awaiting the same run-once warm-up. `app.warm` imports the
+parser inside the function so importing the app stays light (`test_lazy_imports`). Test: startup,
+opening a link and analysing all start it. Acceptance (live): the next first analysis on a new
+instance waits < 2 s before its first model call, and `startup_ms` stays near 1.1–1.5 s.
+
 ## D. Linking with low thinking, if the eval holds (PR 1, config)
 
 - Fix first: `BuildCache._llm_key` keys answers by task, prompt version and prompt vars — not
