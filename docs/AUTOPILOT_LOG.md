@@ -2267,4 +2267,13 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 ### Next steps (resume here, in order)
 1. PR → green CI → merge → `make deploy-api` → live checks (§9 row).
 2. Last feature deploy 18:00 IST; then `/v2` removal, gitleaks, deck link, submit; video re-record.
+- #63 merged; API `readlayer-api-00040-rxz`. Live: story items lead and spread over ideas (passed);
+  C2 not met (idle warm-up stalls; Sourabh: leave it). Sourabh's article links one idea only. B4
+  ("i want more on this story thing", pages opened from our own suggestions) and the "For you"
+  label on `d69-for-you`; milestone-reviewer FIX (extension pages; a vacuous test) applied.
+
+### Next steps (resume here, in order)
+1. plan-reviewer on B4 → milestone-reviewer round 2 → PR → CI → merge → `make deploy-api` →
+   `make deploy-web` → live: Sourabh's page shows "More on this story"; the toggle says "For you".
+2. Last feature deploy 18:00 IST; `/v2` removal, gitleaks, deck link, submit; video re-record.
 

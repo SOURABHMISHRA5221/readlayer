@@ -27,7 +27,7 @@ from app.context import ReaderContext, hidden_ids, reader_context, scope_persona
 from app.graph.graph import ConceptGraph
 from app.graph.loader import get_graph
 from app.ingest import quota
-from app.ingest.models import NOT_CORPUS, ContentDoc, is_corpus
+from app.ingest.models import NOT_CORPUS, USER_INGESTED, ContentDoc, is_corpus
 from app.ingest.router import (
     FETCH_ERROR_STATUS,
     INGEST_ERRORS,
@@ -262,10 +262,13 @@ class _Story:
 
 
 def was_suggested(doc: ContentDoc, signals: ReaderSignals) -> bool:
-    """A page a reader brought in that this reader was shown as a suggestion (Up next and chips
-    "web:", For you and screen 2 "feed:" ids, both hashes of the result's own link): the link
-    came from our own search results (decision 69 B4). A pasted link never matches; a link that
-    normalisation changed doesn't either, so the rule fails towards privacy."""
+    """A page brought in through Open here / Open any link (`user_ingested`, never extension
+    text) whose link this reader was shown as a suggestion (Up next and chips "web:", For you
+    and screen 2 "feed:" ids, both hashes of the result's own link): the link came from our own
+    search results (decision 69 B4). A link this reader was never shown never matches, nor does
+    one that normalisation changed, so the rule fails towards privacy."""
+    if doc.source != USER_INGESTED:
+        return False
     links = {u for u in (doc.url, doc.final_url) if u}
     return any(_web_id(u) in signals.served or feed_item_id(u) in signals.served for u in links)
 

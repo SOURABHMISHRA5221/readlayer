@@ -143,8 +143,9 @@ def story_key(content_id: str) -> str:
 
 
 def story_query(title: str) -> str:
-    """The whole outgoing query: a corpus article's title, cleaned. Never reader data, never a
-    page a reader brought in (DESIGN §16.3)."""
+    """The whole outgoing query: the title, cleaned, of a corpus article or of a page brought in
+    from our own suggestions (decision 69 B4). Never reader data, never extension text, never a
+    link the reader was never shown (DESIGN §16.3)."""
     return re.sub(r"\s+", " ", _UNSAFE.sub(" ", title)).strip()[:MAX_STORY_CHARS]
 
 

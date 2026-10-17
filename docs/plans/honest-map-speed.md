@@ -244,11 +244,14 @@ their title: Sourabh "Do second one fix ignore first i want more on this story t
 a warm-on-visit request, dropped). Rule (`router.was_suggested`): a `user_ingested` page gets the
 story search when this reader was served its link as a suggestion: `web:`+sha1(link) (Up next,
 chips) or `feed:`+sha1(link) (For you, screen 2) is in their `rec_signals` served items
-(`ReaderSignals.served`). A pasted link (Open any link) never matches; extension pages never;
-a normalised link that no longer hashes the same fails towards privacy. Caps, once-ever caching and
+(`ReaderSignals.served`), and only for `user_ingested` pages (never extension text). A link this
+reader was never shown never matches (pasting a link they were shown does); a normalised link that
+no longer hashes the same fails towards privacy. Story results of a brought-in page show only to
+readers served its link. Caps, once-ever caching and
 the relevance filter as B2. Tests: a page shown in For you then opened → its title searched,
-"More on this story" leads; the same page pasted → no title query and a real key-idea list (the old
-"brought in" test now opens the page so it isn't a vacuous 404). Live: Sourabh's page (opened from
+"More on this story" leads; an Up next (`web:`) link too; the same page never shown → no title
+query and a real key-idea list; an extension page with a suggested link → no query; the old
+"brought in" test now makes both pages readable (it had passed on a 404) (milestone-reviewer FIX). Live: Sourabh's page (opened from
 his For you / screen 2) shows "More on this story" for him; ≤ 2 story searches.
 
 ## G. Screen 2: an equal mix of the chosen formats (added 2026-10-17)
