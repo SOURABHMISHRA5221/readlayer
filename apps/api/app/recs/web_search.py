@@ -4,8 +4,9 @@ Privacy rule: an outgoing query is built only from concept data: its label, its 
 (to disambiguate, e.g. "separation principle" in finance, not marine engineering) and a
 format suffix (`build_query`). Nothing about the reader (uid, persona, history, the article
 they're on) ever leaves the server, and API keys never reach the client. One exception (decision
-69 B2): the story search sends a library (corpus) article's own title (`story_query`), shared by
-every reader; never the title of a page a reader brought in.
+69 B2, B4): the story search sends the title (`story_query`) of a library (corpus) article, or of
+a page a reader brought in from our own suggestions (its link came from these providers' results);
+never the title of a pasted link.
 
 Cost rule: every provider call counts against SEARCH_DAILY_CAP (YouTube search also against
 its own smaller cap). Past the cap we refuse new calls and degrade to whatever is cached,

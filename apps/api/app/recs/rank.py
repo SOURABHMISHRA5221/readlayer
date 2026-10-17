@@ -103,6 +103,8 @@ class ReaderSignals:
     relation_dismissals: Mapping[Relation, int] = field(default_factory=dict)
     seen: Mapping[str, SeenState] = field(default_factory=dict)
     shown_counts: Mapping[str, int] = field(default_factory=dict)
+    # Item ids served to this reader (Up next "web:", For you and screen 2 "feed:", "lib:").
+    served: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)

@@ -517,3 +517,56 @@ def test_ideas_are_counted_per_relation_and_same_story_follows_none():
     weight = recs_router._spread(items + [(("web:e1", "explainer"), "c_a", 1.0),
                                           (("web:e2", "explainer"), "c_a", 0.95)])  # fmt: skip
     assert weight[("lib:d2", "same_story")] == 0.7  # never halved behind c_a's explainers
+
+
+# Decision 69 B4 (Sourabh: "i want more on this story thing", for pages opened from our own
+# suggestions): a page a reader brought in gets the story search when this reader was shown its
+# link as a suggestion (Up next, chips, For you, screen 2): the link came from our own search
+# results. A pasted link never matches.
+
+
+OWN_URL = "https://news.example/own-story"
+
+
+def _brought_in(client, store, source="user_ingested"):
+    """A page this reader brought in: stored under its URL hash, then opened (so it's theirs)."""
+    cid = url_hash(OWN_URL)
+    doc = store.docs["main"].model_copy(update={"content_id": cid, "source": source,
+                                                "url": OWN_URL, "final_url": OWN_URL})  # fmt: skip
+    store.docs[cid] = doc
+    read_router.reset_catalog()
+    recs_router._index = None
+    assert client.post("/v1/recs/open", json={"url": OWN_URL}).json()["new"] is False
+    return doc
+
+
+def _story_for(client, cid):
+    url = f"/v1/content/{cid}/recommendations?basis=story&persona=newcomer"
+    client.get(url)
+    got = client.get(url)
+    assert got.status_code == 200, got.text
+    return got.json()
+
+
+def test_a_suggested_page_a_reader_brought_in_gets_more_on_this_story(env):
+    import asyncio
+    from datetime import UTC, datetime
+
+    from app.recs.feed import item_id
+    from app.recs.state import Served, get_rec_signals
+
+    client, provider, _, store = env
+    doc = _brought_in(client, store)
+    served = {item_id(OWN_URL): Served("article", "feed")}  # it was shown in For you
+    asyncio.run(get_rec_signals().remember_served("demo", "newcomer", served, datetime.now(UTC)))
+    body = _story_for(client, doc.content_id)
+    assert ws.story_query(doc.title) in provider.queries
+    assert [i["why"] for i in body["items"]][:1] == ["More on this story"]
+
+
+def test_a_pasted_page_still_never_sends_its_title(env):
+    client, provider, _, store = env
+    doc = _brought_in(client, store)
+    body = _story_for(client, doc.content_id)
+    assert body["items"]  # a real list (key ideas), not a refusal
+    assert ws.story_query(doc.title) not in provider.queries

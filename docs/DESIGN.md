@@ -1071,9 +1071,13 @@ Wikipedia pages are evergreen (no freshness decay) and never count as same_story
   "… podcast episode"). The domain disambiguates labels; nothing about the reader (uid, persona,
   history, the current article) is ever part of a query (tested). Article-basis lookups (the card
   chips) use the same query shape on the article's key ideas (tested). **One exception (decision 69
-  B2, Sourabh's answer "Go with what u feel is correct"):** the end-of-article story search sends a
-  **library (corpus) article's title**, cleaned, ≤ 120 chars, never for a page a reader brought in
-  (`user_ingested`, `extension`; tested). It is shared content, the same for every reader, keyed
+  B2, Sourabh's answer "Go with what u feel is correct"; B4, "i want more on this story thing"):**
+  the end-of-article story search sends the title, cleaned, ≤ 120 chars, of a **library (corpus)
+  article**, or of a page a reader brought in that **this reader was shown as a suggestion** (its
+  "web:" / "feed:" id, a hash of the result's own link, is in their served items: Up next, chips,
+  For you, screen 2 — the link came from our own search results). Never for a pasted link or an
+  extension page (tested); a link normalisation changed doesn't match, so the rule fails towards
+  privacy. It is shared content, the same for every reader, keyed
   `story:{content_id}` per format (article via Tavily news, video via YouTube), searched once ever
   (stored even when empty), its own `STORY_SEARCH_DAILY_CAP` (40) within the global, YouTube and
   anonymous caps, never the feed's. Results must not be the article itself (by URL hash) and must

@@ -236,6 +236,21 @@ ideas; Sourabh's strangulation-law page re-opened by the demo reader by its URL 
 no fetch, no ingest slot) shows 6 items, ≥ 2 distinct ideas, ≤ 2 per idea. Writes: the demo
 reader's ingested list and served map.
 
+## B4. More on this story for pages opened from our suggestions (added 2026-10-17)
+
+After the B3 live check (Sourabh's strangulation-law page links one idea, so its end list can only
+follow that idea), asked whether pages opened from our own suggestions may get the story search on
+their title: Sourabh "Do second one fix ignore first i want more on this story thing" (the first,
+a warm-on-visit request, dropped). Rule (`router.was_suggested`): a `user_ingested` page gets the
+story search when this reader was served its link as a suggestion: `web:`+sha1(link) (Up next,
+chips) or `feed:`+sha1(link) (For you, screen 2) is in their `rec_signals` served items
+(`ReaderSignals.served`). A pasted link (Open any link) never matches; extension pages never;
+a normalised link that no longer hashes the same fails towards privacy. Caps, once-ever caching and
+the relevance filter as B2. Tests: a page shown in For you then opened → its title searched,
+"More on this story" leads; the same page pasted → no title query and a real key-idea list (the old
+"brought in" test now opens the page so it isn't a vacuous 404). Live: Sourabh's page (opened from
+his For you / screen 2) shows "More on this story" for him; ≤ 2 story searches.
+
 ## G. Screen 2: an equal mix of the chosen formats (added 2026-10-17)
 
 Sourabh, 2026-10-17: "onboarding second step me bhi full read read read hai we need to change that

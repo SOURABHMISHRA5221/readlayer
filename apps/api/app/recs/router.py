@@ -41,10 +41,19 @@ from app.ingest.urls import url_hash
 from app.media import urls as media_urls
 from app.media.openable import open_here
 from app.reader.state import PersonaKey
+from app.recs.feed import item_id as feed_item_id
 from app.recs.feed_rank import key_ideas
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
-from app.recs.rank import RELATION_LABEL, Candidate, one_per_format, prior_for, score, select
+from app.recs.rank import (
+    RELATION_LABEL,
+    Candidate,
+    ReaderSignals,
+    one_per_format,
+    prior_for,
+    score,
+    select,
+)
 from app.recs.state import DEFAULT_KEY, RecEventType, Served, get_rec_signals
 from app.recs.web_search import (
     STORY_FORMATS,
@@ -252,13 +261,24 @@ class _Story:
     pending: bool
 
 
+def was_suggested(doc: ContentDoc, signals: ReaderSignals) -> bool:
+    """A page a reader brought in that this reader was shown as a suggestion (Up next and chips
+    "web:", For you and screen 2 "feed:" ids, both hashes of the result's own link): the link
+    came from our own search results (decision 69 B4). A pasted link never matches; a link that
+    normalisation changed doesn't either, so the rule fails towards privacy."""
+    links = {u for u in (doc.url, doc.final_url) if u}
+    return any(_web_id(u) in signals.served or feed_item_id(u) in signals.served for u in links)
+
+
 async def _story_results(
     basis: str, doc: ContentDoc, spans: list["_Trigger"], web: WebSearch, known_urls: set[str],
-    may_search: bool, anonymous: bool,
+    may_search: bool, anonymous: bool, signals: ReaderSignals,
 ) -> _Story:  # fmt: skip
-    """More coverage of this article's story (decision 69 B2): corpus articles only, so the title
-    of a page a reader brought in never leaves (DESIGN §16.3). One search per format ever."""
-    if basis != "story" or not is_corpus(doc) or not doc.title:
+    """More coverage of this article's story (decision 69 B2, B4): library (corpus) articles, and
+    pages a reader brought in from our own suggestions; the title of a pasted page never leaves
+    (DESIGN §16.3). One search per format ever."""
+    allowed = is_corpus(doc) or was_suggested(doc, signals)
+    if basis != "story" or not allowed or not doc.title:
         return _Story([], False)
     own = {url_hash(u) for u in (doc.url, doc.final_url) if u}
     labels = [s.label for s in spans[:STORY_LABELS]]
@@ -459,7 +479,11 @@ async def recommendations(
                 if prev is None or relevance > prev[2]:
                     web_results[r.url] = (r, span.concept_id, relevance)
 
-    story = await _story_results(basis, doc, spans, web, known_urls, may_search, anonymous)
+    signals = get_rec_signals()
+    reader_signals = await signals.signals(ctx.uid, ctx.rec_key)
+    story = await _story_results(
+        basis, doc, spans, web, known_urls, may_search, anonymous, reader_signals
+    )
     pending = pending or story.pending
 
     ideas = _idea_items(lib, web_results) if basis == "story" else []
@@ -490,9 +514,7 @@ async def recommendations(
                   r.duration_or_read_time, kind="web")
         for r in story.results
     ]  # fmt: skip
-    signals = get_rec_signals()
     now = datetime.now(UTC)
-    reader_signals = await signals.signals(ctx.uid, ctx.rec_key)
     prior = prior_for(ctx.rec_key, ctx.user.formats)
     chosen = select(candidates, reader_signals, prior, now, prefer)
     if basis == "story":  # at most PER_IDEA items follow any one idea (decision 69 B3)
