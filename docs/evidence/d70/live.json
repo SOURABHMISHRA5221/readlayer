@@ -1,0 +1,78 @@
+{
+  "live": true,
+  "wide": {
+    "head": "6 notes for you",
+    "items": [
+      [
+        "paragraph",
+        "Paragraph 5, what it's saying"
+      ],
+      [
+        "span",
+        "Financial Conduct Authority, new to you"
+      ],
+      [
+        "paragraph",
+        "Paragraph 7, what it's saying"
+      ],
+      [
+        "span",
+        "Credit default swap, new to you"
+      ],
+      [
+        "span",
+        "Moral hazard, new to you"
+      ],
+      [
+        "span",
+        "European Securities and Markets Authority, new to you"
+      ]
+    ],
+    "marks": 4,
+    "pmarks": 2,
+    "spine": "6 notes",
+    "drawer": null
+  },
+  "paragraph_card": true,
+  "card_before": {
+    "title": "Financial Conduct Authority",
+    "toggle": null,
+    "label": "Your pick · Cricket",
+    "background": "BackgroundYour pick · CricketThe Financial Conduct Authority is the UK's financial watchdog, responsible for overseeing firms and markets to protect consumers a"
+  },
+  "phone": {
+    "head": null,
+    "items": [],
+    "marks": 4,
+    "pmarks": 2,
+    "spine": null,
+    "drawer": "6notes for you"
+  },
+  "drawer_open": [
+    [
+      "paragraph",
+      "Paragraph 5"
+    ],
+    [
+      "span",
+      "Financial Conduct Authority"
+    ],
+    [
+      "paragraph",
+      "Paragraph 7"
+    ],
+    [
+      "span",
+      "Credit default swap"
+    ],
+    [
+      "span",
+      "Moral hazard"
+    ],
+    [
+      "span",
+      "European Securities and Markets Authority"
+    ]
+  ],
+  "cleanup": 204
+}

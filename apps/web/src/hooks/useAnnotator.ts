@@ -7,6 +7,7 @@ import {
   type FrameChoice,
   type ParagraphMarker,
   type PromptAnnotation,
+  type SelectionAsk,
   type SidenoteBox,
 } from "@readlayer/annotator";
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
@@ -22,6 +23,7 @@ import {
   reportExplanation,
 } from "../lib/explanations";
 import { shownOnce } from "../lib/nextUp";
+import { afterPlaced, paragraphFallback, planAsk, type AskPlan } from "../lib/selectionLookup";
 import { openRec } from "../lib/openRec";
 import { queueRecEvent } from "../lib/recEvents";
 import { useNextUp } from "./useNextUp";
@@ -54,7 +56,11 @@ export interface AnnotatorHandle {
   open: (id: string, focus?: boolean) => void;
   /** "Know this?" answers this page view: concept id → { label, known } (for the recap). */
   answers: ReadonlyMap<string, { label: string; known: boolean }>;
+  /** Notes the reader added by selecting text this view (decision 70): words and ¶ markers. */
+  asked: { spans: CardAnnotation[]; markers: ParagraphMarker[] };
 }
+
+const NO_ASKED: AnnotatorHandle["asked"] = { spans: [], markers: [] };
 
 /**
  * One annotator per rendered article (keyed by `articleKey`). Annotation changes go through
@@ -89,6 +95,50 @@ export function useAnnotator(
   const [hovered, setHovered] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [answers, setAnswers] = useState<ReadonlyMap<string, { label: string; known: boolean }>>(new Map());
+  // Decision 70: notes added by "Explain" on a selection, for this article and reader only.
+  const [asked, setAsked] = useState<{ key: string; notes: AnnotatorHandle["asked"] }>({ key: "", notes: NO_ASKED });
+  const askedKey = `${articleKey ?? ""}|${persona ?? ""}`;
+  const notesNow = asked.key === askedKey ? asked.notes : NO_ASKED;
+  const keyRef = useRef(askedKey);
+  keyRef.current = askedKey;
+  // Only notes actually placed on the page: opening one that failed to place would do nothing.
+  const pageRef = useRef({ spans: [] as CardAnnotation[], markers: [] as ParagraphMarker[] });
+  const placed = new Set([...(resolved ?? []), ...(paragraphs ?? [])]);
+  pageRef.current = {
+    spans: [...(annotations ?? []), ...notesNow.spans].filter((a) => placed.has(a.id)),
+    markers: [...(extras ?? []).filter((x): x is ParagraphMarker => x.kind === "paragraph"), ...notesNow.markers].filter(
+      (m) => placed.has(m.id),
+    ),
+  };
+  const pendingOpen = useRef<{ id: string; paragraphId: string; key: string } | null>(null);
+  const applyPlan = useCallback(
+    (plan: AskPlan, paragraphId: string) => {
+      const add = plan.add;
+      if (!add) {
+        annotatorRef.current?.open(plan.open, { focus: true });
+        return;
+      }
+      pendingOpen.current = { id: plan.open, paragraphId, key: askedKey };
+      setAsked((prev) => {
+        const base = prev.key === askedKey ? prev.notes : NO_ASKED;
+        const notes = add.kind === "paragraph"
+          ? { ...base, markers: [...base.markers, add as ParagraphMarker] }
+          : { ...base, spans: [...base.spans, add as CardAnnotation] };
+        return { key: askedKey, notes };
+      });
+    },
+    [askedKey],
+  );
+  const applyRef = useRef(applyPlan);
+  applyRef.current = applyPlan;
+  const askRef = useRef<(ask: SelectionAsk) => void>(() => undefined);
+  askRef.current = (ask) => {
+    if (!articleKey) return;
+    const key = askedKey;
+    void planAsk(ask, pageRef.current, (a) => api.lookup(articleKey, a, personaRef.current)).then((plan) => {
+      if (keyRef.current === key) applyRef.current(plan, ask.paragraph_id); // not after a switch
+    });
+  };
 
   useEffect(() => {
     const el = root.current;
@@ -143,6 +193,7 @@ export function useAnnotator(
         for (const id of shownOnce(nextUp.shown.current, ids)) queueRecEvent(personaRef.current, "rec_shown", id);
       },
       labels,
+      onSelectionExplain: (ask) => askRef.current(ask),
       onHover: setHovered,
       onActive: setActive,
     });
@@ -168,10 +219,35 @@ export function useAnnotator(
     if (articleKey) prefetchExplanations(articleKey, personaRef.current, annotations, frameRef.current);
     // The persona is the reader: switching it reloads an open card and resets its actions.
     let stopPrefetch = () => {};
-    annotator.update([...annotations, ...(extras ?? [])], { reader: personaRef.current ?? "me" }).then((result) => {
+    const ids = new Set(annotations.map((a) => a.id));
+    const extraIds = new Set((extras ?? []).map((a) => a.id));
+    const all = [
+      ...annotations,
+      ...notesNow.spans.filter((a) => !ids.has(a.id)),
+      ...(extras ?? []),
+      ...notesNow.markers.filter((m) => !extraIds.has(m.id)),
+    ];
+    annotator.update(all, { reader: personaRef.current ?? "me" }).then((result) => {
       if (cancelled) return;
       setResolved(result.resolved);
       setParagraphs(result.paragraphs);
+      const pending = pendingOpen.current;
+      if (pending && pending.key !== keyRef.current) pendingOpen.current = null; // another article or reader
+      else if (pending) {
+        const next = afterPlaced(pending.id, result);
+        if (next === "open") {
+          pendingOpen.current = null;
+          annotator.open(pending.id, { focus: true });
+        } else if (next === "fallback") {
+          // It overlaps another mark: drop it and answer with the paragraph's card.
+          pendingOpen.current = null;
+          setAsked((prev) => ({
+            ...prev,
+            notes: { ...prev.notes, spans: prev.notes.spans.filter((s) => s.id !== pending.id) },
+          }));
+          applyRef.current(paragraphFallback(pending.paragraphId, pageRef.current.markers), pending.paragraphId);
+        }
+      }
       if (result.unresolved.length) console.warn("[readlayer] anchors not found", result.unresolved);
       // Marks exist now: notes near the viewport warm up (signed-in only, decision 67 L3).
       const el = root.current;
@@ -189,10 +265,10 @@ export function useAnnotator(
       cancelled = true;
       stopPrefetch();
     };
-  }, [annotations, extras, articleKey]);
+  }, [annotations, extras, articleKey, notesNow]);
 
   const highlight = useCallback((id: string | null) => annotatorRef.current?.highlight(id), []);
   const open = useCallback((id: string, focus = false) => annotatorRef.current?.open(id, { focus }), []);
 
-  return { resolved, paragraphs, hovered, active, highlight, open, answers };
+  return { resolved, paragraphs, hovered, active, highlight, open, answers, asked: notesNow };
 }

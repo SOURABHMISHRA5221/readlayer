@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from app.content.summary import article_domain
+from app.explain.inputs import locate
 from app.graph.graph import ConceptGraph
 from app.graph.models import Concept
 from app.ingest.models import Anchor, ContentDoc, Demand, is_corpus
@@ -375,6 +376,38 @@ def annotate(
         preread=preread,
         prompt=prompt,
     )
+
+
+def lookup(
+    doc: ContentDoc,
+    graph: ConceptGraph,
+    state: ReaderState,
+    now: datetime,
+    inputs: ScoringInputs,
+    paragraph_id: str,
+    start: int,
+    end: int,
+) -> SpanAnnotation | None:
+    """Decision 70: the term a reader selected, by position in its paragraph (never by text, so
+    "on" never matches "inflation" elsewhere). Any extracted term with a concept, shown or not;
+    preferred: inside the selection, then longest, then score, then reading order."""
+    para = next((p for p in doc.paragraphs if p.id == paragraph_id), None)
+    if para is None:
+        return None
+    hits = []
+    for s in score_demands(doc, graph, state, now, inputs):
+        if s.concept is None or s.demand.paragraph_id != paragraph_id:
+            continue
+        at = locate(para.text, s.demand.anchor.exact, s.demand.anchor.prefix)
+        if at < 0:
+            continue
+        stop = at + len(s.demand.anchor.exact)
+        if at < end and start < stop:
+            inside = start <= at and stop <= end
+            hits.append(((not inside, -(stop - at), -s.score, s.order), s))
+    if not hits:
+        return None
+    return _span(min(hits, key=lambda h: h[0])[1], graph, state, now)
 
 
 def _span(s: Scored, graph: ConceptGraph, state: ReaderState, now: datetime) -> SpanAnnotation:
