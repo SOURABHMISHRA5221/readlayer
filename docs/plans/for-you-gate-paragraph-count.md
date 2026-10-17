@@ -199,7 +199,8 @@ lists them with the rest.
 3. A page with ¶ markers: margin heading counts them, items open their card; bundle stays in budget.
 4. Live (after both deploys): first read Sourabh's `engaged` size (read-only). Below 10: no toggle,
    "Your pick · <his pick>"; 10 or more: the toggle (or "Your pick" alone if for-you equals his
-   pick). A page with ¶ markers says the right count.
+   pick). A page with ¶ markers says the right count; screenshots of the drawer **open** at 390 px
+   (the ¶ chip, its hover) and the margin list at 1440 px scrolled to the body.
 5. Live, persona (what judges see): the trader on the Guardian article (`99a2cb53…`) shows no
    radiogroup and reads "Your pick · Cricket"; the margin says 6 notes. One demo reader, deleted
    after; no other production writes.

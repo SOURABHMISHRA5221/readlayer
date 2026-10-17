@@ -201,6 +201,12 @@ svg {
 .chip[data-linked="true"] .chip__dot {
   background: var(--accent);
 }
+/* A ¶ chip keeps its glyph bare on hover and when linked (decision 70). */
+.chip[data-kind="paragraph"]:hover .chip__dot,
+.chip[data-kind="paragraph"][data-linked="true"] .chip__dot {
+  background: none;
+  color: var(--accent);
+}
 .chip[aria-current="true"] {
   border-color: var(--accent);
   color: var(--accent);
