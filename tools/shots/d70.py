@@ -22,8 +22,10 @@ from datetime import UTC, datetime
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
 
-W = "http://localhost:5173"
-API = ""  # the web dev server proxies /v1 to the harness API
+# D70_LIVE=1: the live site and API, no events (the read-only part of the plan's live check).
+LIVE = bool(os.environ.get("D70_LIVE"))
+W = "https://glossreader.web.app" if LIVE else "http://localhost:5173"
+API = "https://readlayer-api-751104670850.asia-south1.run.app" if LIVE else ""  # local: Vite proxies /v1
 GUARDIAN = "99a2cb53f16256bd275bafd180364134"
 CARD_READY = "document.querySelector('.rl-card__frame:not([hidden]), .rl-frame:not([hidden])')"
 
@@ -80,7 +82,7 @@ async def offered(p) -> dict:
 async def main() -> None:
     cdp.launch()
     p, ws = await cdp.open_page()
-    out: dict = {}
+    out: dict = {"live": LIVE}
     try:
         await p.viewport(1440)
         await cdp.Page.reset_auth(p, W)
@@ -102,7 +104,21 @@ async def main() -> None:
         await p.shot("d70-card-before-1440")
 
         out["phone"] = await open_reader(p, 390)
-        await p.shot("d70-drawer-390")
+        await p.eval("document.querySelector('.drawer__toggle').click(); 1")
+        await asyncio.sleep(1)
+        out["drawer_open"] = await p.eval(
+            "[...document.querySelectorAll('.drawer__list .chip')].map(c => [c.dataset.kind, c.textContent.trim()])"
+        )
+        await p.eval("document.querySelector('.drawer .chip[data-kind=paragraph]')?.dispatchEvent(new PointerEvent('pointerenter')); 1")
+        await p.shot("d70-drawer-open-390")
+        if LIVE:
+            await p.viewport(1440)
+            await p.goto(f"{W}/read/{GUARDIAN}?persona=trader", wait=2)
+            await p.wait_for(".rail__item", 60)
+            await p.eval("document.querySelector('.rail').scrollIntoView({block: 'start'}); window.scrollBy(0, 420); 1")
+            await asyncio.sleep(1.5)
+            await p.shot("d70-margin-list-1440")
+            return
 
         out["offered_before"] = await offered(p)
         lib = (await p.api(API, "GET", "/v1/content?persona=trader"))["body"]
@@ -129,7 +145,7 @@ async def main() -> None:
         finally:
             await ws.close()
             cdp.stop()
-    print(json.dumps(out, indent=2, ensure_ascii=False))
+            print(json.dumps(out, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
