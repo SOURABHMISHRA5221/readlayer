@@ -216,7 +216,7 @@ export class Card {
     const bg = section(doc, `${C}__bg`, BACKGROUND_LABEL, this.background, 0, this.frame);
     this.bgLabel = bg.querySelector(`.${C}__section-label`)!;
     this.bgSection = bg;
-    // "Your pick · X" / "For you · Y": a two-option radio group under the Background's label.
+    // "Your pick · X" / "For you": a two-option radio group under the Background's label.
     this.frameGroup = el(doc, "div", "rl-frame");
     this.frameGroup.setAttribute("role", "radiogroup");
     this.frameGroup.setAttribute("aria-label", "Analogy");
@@ -401,7 +401,7 @@ export class Card {
     if (!on || !frames) return false;
     const [pick, forYou] = this.frameOptions;
     pick.textContent = frames.pick ? `Your pick · ${capitalise(frames.pick)}` : "No analogy";
-    forYou.textContent = `For you · ${capitalise(frames.for_you!)}`;
+    forYou.textContent = "For you"; // Sourabh, 2026-10-17: the frame's name isn't shown
     for (const b of this.frameOptions) {
       const isChecked = b.dataset.frame === checked;
       b.setAttribute("aria-checked", String(isChecked));

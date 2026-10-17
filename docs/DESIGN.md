@@ -488,7 +488,8 @@ policy, politics, environment, sports, culture, society) are frames by name (`Ma
 structured output accepts a map frame; the prompt text and versions are unchanged (a pytest pins
 them), so cached Backgrounds stay valid. The Background cache key already holds the frame;
 `frame` and `shift` combine under the same caps. The card shows a two-option toggle ("Your pick ·
-Cricket" / "For you · Finance"; "No analogy" when there is no pick) only when the two differ; the
+Cricket" / "For you" — the for-you frame isn't named, Sourabh 2026-10-17; "No analogy" when there
+is no pick) only when the two differ; the
 other frame loads on click and the choice holds for the page (and its prefetch). Measured: the
 Background pipeline with every card in finance kept every safety target (`evals/changelog.md`).
 
