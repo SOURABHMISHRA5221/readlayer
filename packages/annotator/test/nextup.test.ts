@@ -179,6 +179,35 @@ describe("analogy frame toggle", () => {
     a.open("yc");
     await tick();
     expect(card().querySelector<HTMLElement>(".rl-frame")!.hidden).toBe(true);
+    expect(card().querySelector(".rl-card__frame")!.textContent).toBe("Your pick · Cricket");
+    a.destroy();
+  });
+
+  it("before For you is offered (decision 70) the card names the pick, with no toggle", async () => {
+    document.body.innerHTML = HTML;
+    const a = createAnnotator(document.getElementById("root")!, {
+      loadExplanation: async () => framed("pick", "software", null),
+      loadFramed: async (_x, frame) => framed(frame, "software", null),
+    });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
+    expect(card().querySelector<HTMLElement>(".rl-frame")!.hidden).toBe(true);
+    expect(card().querySelector('[role="radiogroup"]:not([hidden])')).toBeNull();
+    const label = card().querySelector<HTMLElement>(".rl-card__frame")!;
+    expect(label.hidden).toBe(false);
+    expect(label.textContent).toBe("Your pick · Software");
+    a.destroy();
+  });
+
+  it("without frames (the extension, the landing demo) the label stays Analogy · X", async () => {
+    document.body.innerHTML = HTML;
+    const a = createAnnotator(document.getElementById("root")!, {
+      loadExplanation: async () => ({ ...framed("pick", "cricket", null), frames: undefined }),
+    });
+    await a.update([span("yc", "yield curve")]);
+    a.open("yc");
+    await tick();
     expect(card().querySelector(".rl-card__frame")!.textContent).toBe("Analogy · cricket");
     a.destroy();
   });

@@ -9,7 +9,17 @@ from app.graph.models import ConceptGraphFile
 from app.graph.taxonomy import DOMAIN_IDS
 from app.reader import frames
 from app.reader.state import THINKS_IN
-from tests.test_scorer import NOW, concept, edge, state
+from tests.test_scorer import NOW, concept, edge
+from tests.test_scorer import state as scorer_state
+
+
+def engaged(n: int) -> dict:
+    return {f"content_{i}": NOW for i in range(n)}
+
+
+def state(**kw):
+    """A reader past decision 70's gate unless the test says otherwise."""
+    return scorer_state(**{"engaged": engaged(frames.MIN_ARTICLES), **kw})
 
 
 def _graph() -> ConceptGraph:
@@ -55,6 +65,16 @@ def test_ties_by_mean_p_then_taxonomy_order_and_mapping():
     even = state(edges={**known("c_finance_0", "c_finance_1", "c_finance_2"),
                         **known("c_economics_0", "c_economics_1", "c_economics_2")})  # fmt: skip
     assert frames.for_you(even, GRAPH, None, NOW) == "economics"  # taxonomy order
+
+
+def test_for_you_needs_ten_engaged_articles():
+    """Decision 70: the first map is mostly onboarding guesses, so no "for you" frame until the
+    reader has engaged with 10 pieces."""
+    edges = known("c_finance_0", "c_finance_1", "c_finance_2")
+    assert frames.MIN_ARTICLES == 10
+    assert frames.for_you(state(edges=edges, engaged=engaged(9)), GRAPH, None, NOW) is None
+    assert frames.for_you(state(edges=edges, engaged=engaged(10)), GRAPH, None, NOW) == "finance"
+    assert frames.for_you(state(edges=edges, engaged={}), GRAPH, None, NOW) is None
 
 
 def test_unknown_concepts_in_edges_are_skipped():

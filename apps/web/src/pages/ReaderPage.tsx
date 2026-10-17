@@ -1,4 +1,4 @@
-import type { CardAnnotation, CardLabels } from "@readlayer/annotator";
+import type { CardAnnotation, CardLabels, ParagraphMarker } from "@readlayer/annotator";
 import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ArticleImage } from "../components/ArticleImage";
@@ -26,6 +26,7 @@ import {
   type ContentDetail,
 } from "../lib/api";
 import { clock, domainLabel, formatByline, formatDate, minutes, readingMinutes, sourceName } from "../lib/format";
+import { pageNotes } from "../lib/pageNotes";
 import { GROW_CAPPED, GROW_RUNNING, growUntilDone } from "../lib/grow";
 import { useIsDemo } from "../lib/auth";
 import { DEFAULT_DENSITY, parseDensity, personaParam, readerPersona } from "../lib/personas";
@@ -275,6 +276,11 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
     const byId = new Map(annotations.map((a) => [a.id, a]));
     return handle.resolved.flatMap((rid) => byId.get(rid) ?? []);
   }, [annotations, handle.resolved]);
+  // Decision 70: the margin, drawer and spine count the ¶ paragraph notes with the words.
+  const notesOnPage = useMemo<CardAnnotation[]>(() => {
+    const markers = (notesData?.extras ?? []).filter((x): x is ParagraphMarker => x.kind === "paragraph");
+    return pageNotes(marked, handle.paragraphs ?? [], markers, article?.paragraphs ?? []);
+  }, [marked, handle.paragraphs, notesData, article]);
 
   const setParam = (key: string, value: string, fallback: string) =>
     navigate(withParams(url, { [key]: value === fallback ? null : value }), { replace: true });
@@ -392,7 +398,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
                       article={articleRef}
                       paragraphs={article.paragraphs}
                       wordCount={article.word_count}
-                      notes={annotations && handle.resolved ? marked : null}
+                      notes={annotations && handle.resolved ? notesOnPage : null}
                       hovered={handle.hovered}
                       active={handle.active}
                     />
@@ -406,7 +412,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
               ) : (
                 <ArticleBody key={article.id} ref={articleRef} paragraphs={article.paragraphs} />
               )}
-              {wide && annotations && handle.resolved && <ConceptRail items={marked} body={bodyRef} {...link} />}
+              {wide && annotations && handle.resolved && <ConceptRail items={notesOnPage} body={bodyRef} {...link} />}
             </div>
             {annotations && handle.resolved && (
               <div ref={endRef} className="reader__end">
@@ -417,7 +423,7 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
           </div>
         )}
       </main>
-      {!wide && <ConceptDrawer items={marked} hidden={endVisible} {...link} />}
+      {!wide && <ConceptDrawer items={notesOnPage} hidden={endVisible} {...link} />}
     </>
   );
 }

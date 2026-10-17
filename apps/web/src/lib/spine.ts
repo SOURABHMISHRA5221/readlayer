@@ -7,13 +7,13 @@ import type { CardAnnotation } from "@readlayer/annotator";
 
 import { readingMinutes } from "./format";
 
-export type SpineNote = Pick<CardAnnotation, "id" | "anchor" | "paragraph_id" | "level">;
+export type SpineNote = Pick<CardAnnotation, "id" | "anchor" | "paragraph_id" | "level"> & { kind?: CardAnnotation["kind"] };
 
 export interface SpineTick {
   id: string;
   /** 0..1 down the article. */
   at: number;
-  level: "new" | "refresher";
+  level: "new" | "refresher" | "paragraph";
 }
 
 // Anchors are numbered over the paragraphs joined by a blank line (app/ingest/extract.py).
@@ -36,9 +36,14 @@ export function spineTicks(notes: readonly SpineNote[], paragraphs: readonly { i
     .flatMap((note): SpineTick[] => {
       const start = note.anchor.start ?? inParagraph(note, starts, texts);
       if (start === undefined) return [];
-      return [{ id: note.id, at: Math.min(1, Math.max(0, start / total)), level: note.level === "refresher" ? "refresher" : "new" }];
+      return [{ id: note.id, at: Math.min(1, Math.max(0, start / total)), level: tickLevel(note) }];
     })
     .sort((a, b) => a.at - b.at);
+}
+
+function tickLevel(note: SpineNote): SpineTick["level"] {
+  if (note.kind === "paragraph") return "paragraph"; // decision 70: ¶ notes are on the track too
+  return note.level === "refresher" ? "refresher" : "new";
 }
 
 function inParagraph(note: SpineNote, starts: ReadonlyMap<string, number>, texts: ReadonlyMap<string, string>): number | undefined {

@@ -184,6 +184,8 @@ svg {
   background: color-mix(in srgb, var(--accent) 55%, transparent);
   transition: background-color var(--dur-fast) var(--ease);
 }
+.chip[data-kind="paragraph"] .chip__dot { width: auto; height: auto; border-radius: 0; background: none; color: var(--muted); font: 600 12px/1 var(--font-read); }
+.chip[data-kind="paragraph"] .chip__dot::before { content: "¶"; }
 .chip__text {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -198,6 +200,12 @@ svg {
 .chip:hover .chip__dot,
 .chip[data-linked="true"] .chip__dot {
   background: var(--accent);
+}
+/* A ¶ chip keeps its glyph bare on hover and when linked (decision 70). */
+.chip[data-kind="paragraph"]:hover .chip__dot,
+.chip[data-kind="paragraph"][data-linked="true"] .chip__dot {
+  background: none;
+  color: var(--accent);
 }
 .chip[aria-current="true"] {
   border-color: var(--accent);

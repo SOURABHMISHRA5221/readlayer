@@ -395,3 +395,22 @@ describe("explanations", () => {
     expect(card().querySelector(".rl-card__body .rl-card__footer")).toBeNull();
   });
 });
+
+describe("placed paragraph notes (decision 70)", () => {
+  const marker = (paragraph_id: string) => ({
+    id: `para:${paragraph_id}`, kind: "paragraph" as const, paragraph_id, score: 0.5,
+  });  // prettier-ignore
+
+  it("update() lists placed ¶ markers in document order, without the missing ones", async () => {
+    document.body.innerHTML = HTML;
+    const root = document.getElementById("root") as HTMLElement;
+    const annotator = createAnnotator(root);
+    const result = await annotator.update([
+      marker("p1"), annotation("yc", "yield curve", "p0"), marker("p0"), marker("p9"),
+    ]);  // prettier-ignore
+    expect(result.resolved).toEqual(["yc"]);
+    expect(result.paragraphs).toEqual(["para:p0", "para:p1"]);
+    expect(result.unresolved).toEqual(["para:p9"]);
+    annotator.destroy();
+  });
+});

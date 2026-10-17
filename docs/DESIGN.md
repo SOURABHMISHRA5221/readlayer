@@ -490,7 +490,14 @@ them), so cached Backgrounds stay valid. The Background cache key already holds 
 `frame` and `shift` combine under the same caps. The card shows a two-option toggle ("Your pick ·
 Cricket" / "For you" — the for-you frame isn't named, Sourabh 2026-10-17; "No analogy" when there
 is no pick) only when the two differ; the
-other frame loads on click and the choice holds for the page (and its prefetch). Measured: the
+other frame loads on click and the choice holds for the page (and its prefetch). **Decision 70:**
+For you is offered only once the reader has engaged with `MIN_ARTICLES` = 10 contents
+(`len(state.engaged)`: any applied event with a content id — paragraph dwell, Helpful, a look-up,
+a concept event; the stored map keeps the newest 50, so it never drops back). Before that the map
+is mostly onboarding answers and guesses ("first inference is not good", Sourabh 2026-10-17).
+Demo personas follow the same rule (each demo session has its own `engaged`). Without a toggle,
+a card whose Background used an analogy in the pick reads "Your pick · Software"; hosts that send
+no `frames` (extension, landing demo) keep "Analogy · X". Measured: the
 Background pipeline with every card in finance kept every safety target (`evals/changelog.md`).
 
 The served card (`app/explain/models.py`, `extra="forbid"` on each part's schema: `Restatement`
@@ -1369,7 +1376,9 @@ term, as do code, API fields and prompts. Guarded by `apps/web/test/wording.test
   For me / More, Helpful, save, copy link, open original) and a reading-progress line; "Before you
   read" as a path (the known prerequisite where it starts, ticked; the article's key idea last; a
   step shows its definition or links to an explainer); the margin lists "N notes for you" with
-  Margo until a note opens there as a sidenote; **"What this article changed"** at the end: the
+  Margo until a note opens there as a sidenote (decision 70: the count and list include the placed
+  ¶ paragraph notes, "Paragraph N, what it's saying", in document order; the drawer and the
+  left-rail spine count them too, the spine with a hollow square tick); **"What this article changed"** at the end: the
   bands that moved since the notes loaded (`POST /v1/me/bands` at load and at the end, after
   flushing events), each with Undo (the opposite correction, so the row then shows the resulting
   band), the "Not really" answers as one row each ("Next on your path", never also a band move),

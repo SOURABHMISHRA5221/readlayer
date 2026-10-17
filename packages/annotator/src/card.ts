@@ -479,7 +479,9 @@ export class Card {
     const frames = verified && background ? (state.frames ?? null) : loading ? this.lastFrames : null;
     const toggled = this.fillFrames(frames, loading || !frames ? this.frameChoice : frames.used);
     const frame = background && verified && !toggled ? state.analogy_domain : null;
-    this.frame.textContent = frame ? `Analogy · ${frame}` : "";
+    // Decision 70: until For you is offered, the card names the reader's own pick.
+    const pick = verified && state.frames?.used === "pick" ? state.frames.pick : null;
+    this.frame.textContent = frame ? (pick ? `Your pick · ${capitalise(pick)}` : `Analogy · ${frame}`) : "";
     this.frame.hidden = !frame;
     const empty = !verified && !loading && state !== "reported" && !this.definitionText;
     this.status.textContent =

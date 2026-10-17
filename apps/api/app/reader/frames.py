@@ -2,8 +2,9 @@
 
 A frame is the field an analogy may come from. The reader's own pick is one of THINKS_IN
 (onboarding or the profile); "for you" is a field from their knowledge map: the domain where the
-reading they actually did (their edges, forgetting applied) shows the most known concepts. Only
-the frame word ever reaches a model (DESIGN §11).
+reading they actually did (their edges, forgetting applied) shows the most known concepts, offered
+only once they have engaged with MIN_ARTICLES pieces (decision 70: before that the map is mostly
+onboarding guesses). Only the frame word ever reaches a model (DESIGN §11).
 """
 
 from collections.abc import Mapping
@@ -33,6 +34,7 @@ DOMAIN_FRAME: Mapping[str, Frame] = {
 
 KNOWN_P = 0.5  # the map's and reading goals' "known" (DESIGN §15.1, §18)
 MIN_KNOWN = 3
+MIN_ARTICLES = 10  # distinct contents in `engaged` before a "for you" frame is offered
 
 
 def for_you(
@@ -40,7 +42,9 @@ def for_you(
 ) -> Frame | None:
     """The strongest domain by known concepts in the reader's edges (not the prior), ranked by
     count, then mean p, then taxonomy order; the note's own domain excluded; None if no domain
-    has MIN_KNOWN."""
+    has MIN_KNOWN, or the reader has engaged with fewer than MIN_ARTICLES contents."""
+    if len(state.engaged) < MIN_ARTICLES:
+        return None
     known: dict[str, list[float]] = {}
     for cid, edge in state.edges.items():
         c = graph.get(cid)

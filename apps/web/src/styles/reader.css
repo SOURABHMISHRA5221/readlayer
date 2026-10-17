@@ -94,6 +94,8 @@
   transition: scale var(--dur-fast) var(--ease);
 }
 .spine__tick[data-level="refresher"] { background: var(--paper); box-shadow: inset 0 0 0 1.6px var(--accent-line); }
+/* Decision 70: a ¶ paragraph note, a hollow square in the ink, not the accent (no mark on the page). */
+.spine__tick[data-level="paragraph"] { border-radius: 1.5px; background: var(--paper); box-shadow: inset 0 0 0 1.6px var(--muted); }
 .spine__tick[data-linked] { scale: 1.7; background: var(--accent-ink); box-shadow: none; }
 @media (prefers-reduced-motion: reduce) { .spine__tick { transition: none; } }
 
@@ -288,6 +290,9 @@
 .rail__item:hover, .rail__item[data-linked="true"] { color: var(--ink); }
 .rail__dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
 .rail__item[data-level="refresher"] .rail__dot { background: transparent; box-shadow: inset 0 0 0 2px var(--accent-line); }
+/* Decision 70: ¶ notes are listed with their glyph, as in the article's margin. */
+.rail__item[data-kind="paragraph"] .rail__dot { width: auto; height: auto; border-radius: 0; background: none; box-shadow: none; color: var(--muted); font: 600 13px/1 var(--font-read); }
+.rail__item[data-kind="paragraph"] .rail__dot::before { content: "¶"; }
 
 /* "What this article changed" */
 .reader__end { margin-top: var(--s16); }

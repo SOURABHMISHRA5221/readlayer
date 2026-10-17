@@ -1,0 +1,135 @@
+{
+  "wide": {
+    "head": "6 notes for you",
+    "items": [
+      [
+        "paragraph",
+        "Paragraph 5, what it's saying"
+      ],
+      [
+        "span",
+        "Financial Conduct Authority, new to you"
+      ],
+      [
+        "paragraph",
+        "Paragraph 7, what it's saying"
+      ],
+      [
+        "span",
+        "Credit default swap, new to you"
+      ],
+      [
+        "span",
+        "Moral hazard, new to you"
+      ],
+      [
+        "span",
+        "European Securities and Markets Authority, new to you"
+      ]
+    ],
+    "marks": 4,
+    "pmarks": 2,
+    "spine": "6 notes",
+    "drawer": null
+  },
+  "paragraph_card": true,
+  "card_before": {
+    "title": "Financial Conduct Authority",
+    "toggle": null,
+    "label": "Your pick · Cricket",
+    "background": "BackgroundYour pick · CricketThe Financial Conduct Authority is the UK body that oversees financial firms and markets. Much like cricket umpires enforcing the l"
+  },
+  "phone": {
+    "head": null,
+    "items": [],
+    "marks": 4,
+    "pmarks": 2,
+    "spine": null,
+    "drawer": "6notes for you"
+  },
+  "offered_before": {
+    "Financial Conduct Authority": [
+      "policy",
+      null
+    ],
+    "European Securities and Markets Authority": [
+      "policy",
+      null
+    ],
+    "Moral hazard": [
+      "economics",
+      null
+    ],
+    "Credit default swap": [
+      "finance",
+      null
+    ]
+  },
+  "events": {
+    "applied": true,
+    "events_applied": 10,
+    "events_ignored": 0
+  },
+  "engaged_sent": 10,
+  "offered_after": {
+    "Financial Conduct Authority": [
+      "policy",
+      "finance"
+    ],
+    "European Securities and Markets Authority": [
+      "policy",
+      "finance"
+    ],
+    "Moral hazard": [
+      "economics",
+      "finance"
+    ],
+    "Credit default swap": [
+      "finance",
+      "business"
+    ]
+  },
+  "wide_after": {
+    "head": "6 notes for you",
+    "items": [
+      [
+        "paragraph",
+        "Paragraph 5, what it's saying"
+      ],
+      [
+        "span",
+        "Financial Conduct Authority, new to you"
+      ],
+      [
+        "paragraph",
+        "Paragraph 7, what it's saying"
+      ],
+      [
+        "span",
+        "Credit default swap, new to you"
+      ],
+      [
+        "span",
+        "Moral hazard, new to you"
+      ],
+      [
+        "span",
+        "European Securities and Markets Authority, new to you"
+      ]
+    ],
+    "marks": 4,
+    "pmarks": 2,
+    "spine": "6 notes",
+    "drawer": null
+  },
+  "card_after": {
+    "title": "Financial Conduct Authority",
+    "toggle": [
+      "Your pick · Cricket",
+      "For you"
+    ],
+    "label": null,
+    "background": "BackgroundYour pick · CricketFor youThe Financial Conduct Authority is an official UK watchdog that oversees financial businesses to ensure they operate honestl"
+  },
+  "cleanup": 204
+}
