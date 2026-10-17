@@ -3,6 +3,7 @@ import type {
   ParagraphMarker,
   PrereadAnnotation,
   PromptAnnotation,
+  SelectionAsk,
 } from "@readlayer/annotator";
 
 import { idToken } from "./auth";
@@ -326,6 +327,12 @@ export const api = {
       `/v1/content/${encodeURIComponent(id)}/annotations?density=${density}${personaParam(persona)}${debug ? "&debug=1" : ""}${refresh ? "&refresh=1" : ""}`,
       signal,
     ).then(splitAnnotations),
+  /** Decision 70: the term under a selection (paragraph offsets only, never the text), or null. */
+  lookup: (contentId: string, ask: SelectionAsk, persona: PersonaKey | null) =>
+    post<{ annotation: CardAnnotation | null }>(
+      `/v1/content/${encodeURIComponent(contentId)}/lookup${personaQuery(persona)}`,
+      ask,
+    ).then((r) => r.annotation),
   explain: (contentId: string, target: ExplainTarget, persona: PersonaKey | null) =>
     post<ExplanationResponse>(`/v1/explain${personaQuery(persona)}`, {
       content_id: contentId,

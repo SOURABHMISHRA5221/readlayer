@@ -273,14 +273,15 @@ export function ReaderPage({ id, url }: { id: string; url: URL }) {
 
   const marked = useMemo<CardAnnotation[]>(() => {
     if (!annotations || !handle.resolved) return [];
-    const byId = new Map(annotations.map((a) => [a.id, a]));
+    // Decision 70: notes added by "Explain" on a selection count like the rest.
+    const byId = new Map([...annotations, ...handle.asked.spans].map((a) => [a.id, a]));
     return handle.resolved.flatMap((rid) => byId.get(rid) ?? []);
-  }, [annotations, handle.resolved]);
+  }, [annotations, handle.resolved, handle.asked]);
   // Decision 70: the margin, drawer and spine count the ¶ paragraph notes with the words.
   const notesOnPage = useMemo<CardAnnotation[]>(() => {
     const markers = (notesData?.extras ?? []).filter((x): x is ParagraphMarker => x.kind === "paragraph");
-    return pageNotes(marked, handle.paragraphs ?? [], markers, article?.paragraphs ?? []);
-  }, [marked, handle.paragraphs, notesData, article]);
+    return pageNotes(marked, handle.paragraphs ?? [], [...markers, ...handle.asked.markers], article?.paragraphs ?? []);
+  }, [marked, handle.paragraphs, handle.asked, notesData, article]);
 
   const setParam = (key: string, value: string, fallback: string) =>
     navigate(withParams(url, { [key]: value === fallback ? null : value }), { replace: true });

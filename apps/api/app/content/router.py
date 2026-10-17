@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app import ratelimit
 from app.auth import Caller, current_caller
@@ -34,6 +34,9 @@ from app.store.pending_repo import MAX_ATTEMPTS, get_pending_repo
 from app.store.reader_repo import ReaderRepo
 
 log = logging.getLogger(__name__)
+
+ID_PATTERN = r"^[A-Za-z0-9_-]+$"
+MIN_SELECTION, MAX_SELECTION = 2, 120  # characters a reader may select to ask about (decision 70)
 router = APIRouter()
 
 MAX_QUERY_CHARS = 200
@@ -448,6 +451,51 @@ async def get_annotations(
         count=len(result.spans),
         annotations=items,
     )
+
+
+class LookupRequest(BaseModel):
+    """A selection as offsets in its paragraph's text, never the text itself: request logs keep
+    URLs and bodies out of article text (DESIGN §8, decision 70)."""
+
+    model_config = ConfigDict(extra="forbid")
+    paragraph_id: str = Field(min_length=1, max_length=32, pattern=ID_PATTERN)
+    start: int = Field(ge=0)
+    end: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def _length(self) -> "LookupRequest":
+        if not MIN_SELECTION <= self.end - self.start <= MAX_SELECTION:
+            raise ValueError(f"select {MIN_SELECTION}-{MAX_SELECTION} characters")
+        return self
+
+
+class LookupResponse(BaseModel):
+    annotation: AnnotationOut | None  # None: the host opens the paragraph's card instead
+
+
+@router.post(
+    "/content/{content_id}/lookup",
+    response_model=LookupResponse,
+    dependencies=[Depends(ratelimit.annotations)],
+)
+async def lookup(
+    content_id: str,
+    body: LookupRequest,
+    ctx: Annotated[ReaderContext, Depends(reader_context)],
+) -> LookupResponse:
+    """Decision 70: the extracted term a reader selected (shown or not), for its card through
+    `/v1/explain`. Pure scoring; nothing recorded and no model call."""
+    doc = await doc_or_error(content_id, ctx)
+    para = next((p for p in doc.paragraphs if p.id == body.paragraph_id), None)
+    if para is None:
+        raise HTTPException(status_code=404, detail="paragraph not found")
+    if body.end > len(para.text):
+        raise HTTPException(status_code=422, detail="selection outside the paragraph")
+    now = datetime.now(UTC)
+    inputs = await _inputs(ctx, doc, now)
+    hit = scorer.lookup(doc, get_graph(), ctx.state, now, inputs, para.id, body.start, body.end)
+    log.info("lookup", extra={"paragraph_id": para.id, "hit": hit is not None})
+    return LookupResponse(annotation=_annotation_out(hit, False) if hit else None)
 
 
 def _paragraph_out(m: scorer.ParagraphMarker) -> ParagraphMarkerOut:

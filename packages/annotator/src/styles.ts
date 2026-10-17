@@ -498,13 +498,23 @@ const CSS = `
 .rl-card[data-mode="sheet"] .rl-card__body { margin: 0 -20px; padding: 0 20px; }
 .rl-card[data-mode="sheet"] .rl-btn { min-height: 44px; }
 .rl-card[data-mode="sheet"] .rl-btn--icon { width: 44px; }
+/* Decision 70: "Explain" on a selection, just under it; fixed, so the text never reflows. */
+.rl-select {
+  position: fixed; z-index: 2147482999; min-height: 32px; padding: 0 14px; border: 0; border-radius: 999px;
+  background: var(--rl-accent, #1f5f5b); color: var(--rl-on-accent, #fff); cursor: pointer;
+  font: 600 13px/32px var(--rl-font-ui, system-ui, sans-serif); text-indent: 0; letter-spacing: 0;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18); animation: rl-fade-in 120ms ease-out;
+}
+.rl-select:hover { filter: brightness(1.08); }
+.rl-select:focus-visible { outline: 2px solid var(--rl-focus, var(--rl-accent, #1f5f5b)); outline-offset: 2px; }
+.rl-select:active { transform: translateY(1px); }
 @keyframes rl-card-in { from { opacity: 0; transform: translateY(4px); } }
 @keyframes rl-sheet-in { from { transform: translateY(100%); } }
 @keyframes rl-fade-in { from { opacity: 0; } }
 @keyframes rl-shimmer { to { background-position: -200% 0; } }
 @keyframes rl-text-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .rl-mark, .rl-card, .rl-scrim, .rl-btn, .rl-card__skeleton-line, .rl-card__text, .rl-pmark, .rl-ask__btn {
+  .rl-mark, .rl-card, .rl-scrim, .rl-btn, .rl-card__skeleton-line, .rl-card__text, .rl-pmark, .rl-ask__btn, .rl-select {
     transition: none; animation: none !important;
   }
 }

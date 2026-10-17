@@ -9,6 +9,7 @@ import { createAsk, type AnswerFn, type Ask } from "./ask";
 import { Card, SHEET_QUERY, type CardLabels, type CardMode, type SidenoteBox } from "./card";
 import { MARK_CLASS, markId, unwrap, wrapRange } from "./mark";
 import { createMarker, paragraphCard, PMARK_CLASS } from "./paragraph";
+import { watchSelection, type SelectionAsk } from "./select";
 import { Signals } from "./signals";
 import { injectStyles, type StyleMode } from "./styles";
 import type {
@@ -39,6 +40,7 @@ export { normalizeWhitespace, resolveInText } from "./anchor";
 export { MARK_CLASS, markId } from "./mark";
 export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
 export { PARAGRAPH_TITLE, paragraphCard } from "./paragraph";
+export { SELECT_CLASS, type SelectionAsk } from "./select";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
 export { ANNOTATOR_CSS, type StyleMode } from "./styles";
@@ -110,6 +112,11 @@ export interface AnnotatorOptions {
   styles?: StyleMode;
   /** Attribute naming a paragraph element, used to scope anchor search. */
   paragraphAttribute?: string;
+  /**
+   * Decision 70: a selection inside one paragraph gets an "Explain" button; pressing it hands
+   * the host paragraph offsets (never the text). Off unless set.
+   */
+  onSelectionExplain?: (ask: SelectionAsk) => void;
   hoverDelayMs?: number;
   closeDelayMs?: number;
   /** Fade-out time for removed marks; 0 under prefers-reduced-motion. */
@@ -269,6 +276,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
   }
   const primary = (id: string) => lookup(id)?.anchor;
 
+  const selection = options.onSelectionExplain ? watchSelection(root, attr, options.onSelectionExplain) : null;
   const signals = new Signals(root, {
     paragraphAttribute: attr,
     emit: (e) => emit(e),
@@ -327,6 +335,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
       if (chips.length) card.watchNextUp(() => options.onNextUpShown?.(chips));
       mark.setAttribute("aria-expanded", "true");
       emit(event("explain_opened", annotation));
+      selection?.hide();
       options.onActive?.(id);
     }
     if (focus || card.el.dataset.mode === "sheet") card.el.focus({ preventScroll: true });
@@ -740,6 +749,7 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
     destroy() {
       generation++;
       close();
+      selection?.destroy();
       signals.destroy();
       root.removeEventListener("pointerover", onPointerOver);
       root.removeEventListener("pointerout", onPointerOut);
