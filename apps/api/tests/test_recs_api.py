@@ -442,3 +442,36 @@ def test_the_story_list_spreads_over_the_articles_ideas(env, monkeypatch):
     )
     assert len(per_idea) >= 2, per_idea  # more than one of the article's ideas
     assert max(per_idea.values()) <= 2, per_idea
+
+
+def test_a_dismissed_story_item_stays_gone(env, monkeypatch):
+    """milestone-reviewer: `_lead_with_story` added story items without the reader's signals, so
+    a dismissed (or finished) "More on this story" card came back on the next load."""
+    client, *_ = env
+    monkeypatch.setattr(recs_router, "STORY_RELEVANCE", 1e-6)  # forces the lead path
+    first = _story_recs(client)["items"]
+    story = [i for i in first if i["why"] == "More on this story"]
+    assert story
+    resp = client.post("/v1/recs/events", json={"persona": "newcomer", "events": [
+        {"id": "d1", "type": "rec_dismissed", "item_id": story[0]["id"]}]})  # fmt: skip
+    assert resp.json()["applied"] == 1
+    after = client.get("/v1/content/main/recommendations?basis=story&persona=newcomer").json()
+    assert story[0]["id"] not in [i["id"] for i in after["items"]]
+
+
+def test_spread_halves_each_ideas_next_item_and_the_cap_reranks():
+    from app.recs.rank import Candidate
+
+    got = recs_router._spread([("a1", "x", 1.0), ("a2", "x", 0.9), ("a3", "x", 0.8),
+                               ("b1", "y", 0.7), ("n", None, 0.6)])  # fmt: skip
+    assert got == {"a1": 1.0, "a2": 0.45, "a3": 0.2, "b1": 0.7, "n": 0.6}
+
+    cands = [Candidate(i, "explainer", "article", 1.0) for i in ("a1", "a2", "a3", "b1")]
+    idea = {"a1": "x", "a2": "x", "a3": "x", "b1": "y"}
+    ranked = {"a1": 0.9, "a2": 0.8, "a3": 0.7, "b1": 0.1}
+
+    def reselect(cs):
+        return sorted(((c, ranked[c.id]) for c in cs), key=lambda cs: -cs[1])[:3]
+
+    out = recs_router._cap_per_idea(reselect(cands), cands, idea, reselect)
+    assert [c.id for c, _ in out] == ["a1", "a2", "b1"]  # a3 set aside, idea y takes its place

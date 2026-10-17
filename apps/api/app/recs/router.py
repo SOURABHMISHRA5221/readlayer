@@ -44,7 +44,7 @@ from app.reader.state import PersonaKey
 from app.recs.feed_rank import key_ideas
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
-from app.recs.rank import RELATION_LABEL, Candidate, one_per_format, prior_for, select
+from app.recs.rank import RELATION_LABEL, Candidate, one_per_format, prior_for, score, select
 from app.recs.state import DEFAULT_KEY, RecEventType, Served, get_rec_signals
 from app.recs.web_search import (
     STORY_FORMATS,
@@ -326,16 +326,21 @@ def _cap_per_idea(
 
 
 def _lead_with_story(
-    chosen: list[tuple[Candidate, float]], candidates: list[Candidate], story_ids: Mapping[str, Any]
+    chosen: list[tuple[Candidate, float]],
+    candidates: list[Candidate],
+    story_ids: Mapping[str, Any],
+    alive: Callable[[Candidate], bool],
 ) -> list[tuple[Candidate, float]]:
     """Up to STORY_LEAD story items lead, included even when `select` left them out: a same-story
     item scores below a key-idea explainer, so ranking alone dropped them all (live check,
-    2026-10-17). They take the places of the lowest-ranked items; the list doesn't grow."""
+    2026-10-17). Never one the reader dismissed or finished (`alive`, the score `select` uses).
+    They take the places of the lowest-ranked items; the list doesn't grow."""
     picked = [c for c in chosen if c[0].id in story_ids and c[0].relation == "same_story"]
     taken = {c[0].id for c in chosen}
     floor = min((s for _, s in chosen), default=STORY_RELEVANCE)
     extra = [(c, floor) for c in candidates
-             if c.relation == "same_story" and c.id in story_ids and c.id not in taken]  # fmt: skip
+             if c.relation == "same_story" and c.id in story_ids and c.id not in taken
+             and alive(c)]  # fmt: skip
     lead = (picked + extra)[:STORY_LEAD]
     lead_ids = {c.id for c, _ in lead}
     rest = [c for c in chosen if c[0].id not in lead_ids]
@@ -485,7 +490,10 @@ async def recommendations(
         chosen = one_per_format(chosen, ctx.user.formats)
     story_by_id = {_web_id(r.url): r for r in story.results}
     if basis == "story":
-        chosen = _lead_with_story(chosen, candidates, story_by_id)
+        chosen = _lead_with_story(
+            chosen, candidates, story_by_id,
+            lambda c: score(c, reader_signals, prior, now, prefer) > 0,  # never a dismissed one
+        )  # fmt: skip
 
     lib_by_key = {(f"lib:{c.content_id}", c.relation): c for c in lib}
     web_by_id = {_web_id(url): v for url, v in web_results.items()}
