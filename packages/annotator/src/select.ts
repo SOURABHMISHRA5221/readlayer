@@ -1,6 +1,6 @@
 /**
  * "Explain" on a selection (decision 70): a reader selects a word or phrase inside one paragraph
- * and gets a button; pressing it hands the host the selection as offsets in the paragraph's
+ * and gets a button (it follows the selection on scroll); pressing it hands the host the selection as offsets in the paragraph's
  * article text (our controls skipped, as anchors are), never the text itself.
  */
 
@@ -94,7 +94,15 @@ export function watchSelection(
   const onKeyDown = (e: KeyboardEvent): void => {
     if (e.key === "Escape") hide();
   };
-  const onScroll = (): void => hide();
+  // Scrolling keeps the selection: the button follows it (hidden if it scrolled out of the paragraph).
+  let frame = 0;
+  const onScroll = (): void => {
+    if (!button || frame) return;
+    frame = view?.requestAnimationFrame(() => {
+      frame = 0;
+      check();
+    }) ?? 0;
+  };
 
   doc.addEventListener("pointerup", onRelease);
   doc.addEventListener("keyup", onRelease);
@@ -106,6 +114,7 @@ export function watchSelection(
     hide,
     destroy() {
       clearTimeout(settle);
+      if (frame) view?.cancelAnimationFrame(frame);
       hide();
       doc.removeEventListener("pointerup", onRelease);
       doc.removeEventListener("keyup", onRelease);

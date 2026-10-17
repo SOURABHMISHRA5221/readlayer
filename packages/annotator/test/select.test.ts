@@ -126,6 +126,17 @@ describe("Explain a selection", () => {
     a.destroy();
   });
 
+  it("follows the selection on scroll instead of vanishing", async () => {
+    document.body.innerHTML = HTML;
+    const a = createAnnotator(document.getElementById("root")!, { onSelectionExplain: () => undefined });
+    await a.update([]);
+    select("p0", "yield curve");
+    window.dispatchEvent(new Event("scroll"));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(button()).not.toBeNull();
+    a.destroy();
+  });
+
   it("is off unless the host asks for it", async () => {
     document.body.innerHTML = HTML;
     const a = createAnnotator(document.getElementById("root")!);
