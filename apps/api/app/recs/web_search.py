@@ -5,8 +5,8 @@ Privacy rule: an outgoing query is built only from concept data: its label, its 
 format suffix (`build_query`). Nothing about the reader (uid, persona, history, the article
 they're on) ever leaves the server, and API keys never reach the client. One exception (decision
 69 B2, B4): the story search sends the title (`story_query`) of a library (corpus) article, or of
-a page a reader brought in from our own suggestions (its link came from these providers' results);
-never the title of a pasted link.
+a page a reader brought in from Gloss's own suggestions (search results or the outlet lists, not
+the reader); never the title of a link this reader wasn't shown, never extension text.
 
 Cost rule: every provider call counts against SEARCH_DAILY_CAP (YouTube search also against
 its own smaller cap). Past the cap we refuse new calls and degrade to whatever is cached,
@@ -718,11 +718,17 @@ class WebSearch:
         )  # fmt: skip
         return clean
 
+    async def story_share_left(self) -> bool:
+        """Brought-in pages may start story searches only within half the day's story cap, so
+        library articles keep the rest (decision 69 B4)."""
+        return await self._calls.count_today(STORY) < self._settings.story_search_daily_cap // 2
+
     def refresh_story(
         self, content_id: str, title: str, fmt: Format, keep: Callable[[WebResult], bool],
         *, anonymous: bool = False,
     ) -> asyncio.Task[list[WebResult] | None]:  # fmt: skip
-        """Start (or join) one background story search for a corpus article; never waited on."""
+        """Start (or join) one background story search for a corpus article or a suggested
+        brought-in page (B4); never waited on."""
         key = (story_key(content_id), fmt)
         task = self._inflight.get(key)
         if task is None or task.done():

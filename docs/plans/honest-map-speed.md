@@ -240,19 +240,37 @@ reader's ingested list and served map.
 
 After the B3 live check (Sourabh's strangulation-law page links one idea, so its end list can only
 follow that idea), asked whether pages opened from our own suggestions may get the story search on
-their title: Sourabh "Do second one fix ignore first i want more on this story thing" (the first,
-a warm-on-visit request, dropped). Rule (`router.was_suggested`): a `user_ingested` page gets the
-story search when this reader was served its link as a suggestion: `web:`+sha1(link) (Up next,
-chips) or `feed:`+sha1(link) (For you, screen 2) is in their `rec_signals` served items
-(`ReaderSignals.served`), and only for `user_ingested` pages (never extension text). A link this
-reader was never shown never matches (pasting a link they were shown does); a normalised link that
-no longer hashes the same fails towards privacy. Story results of a brought-in page show only to
-readers served its link. Caps, once-ever caching and
-the relevance filter as B2. Tests: a page shown in For you then opened → its title searched,
-"More on this story" leads; an Up next (`web:`) link too; the same page never shown → no title
-query and a real key-idea list; an extension page with a suggested link → no query; the old
-"brought in" test now makes both pages readable (it had passed on a 404) (milestone-reviewer FIX). Live: Sourabh's page (opened from
-his For you / screen 2) shows "More on this story" for him; ≤ 2 story searches.
+their title while pasted links stay private: Sourabh "Do second one fix ignore first i want more on
+this story thing" (the first, a warm-on-visit request, dropped). Rule (`router.was_suggested`): an
+**article** (not a video or podcast) brought in through Open here / Open any link
+(`user_ingested`, never extension text) gets the story search when this reader was served its link
+as a suggestion: `web:`+sha1(link) (Up next, chips) or `feed:`+sha1(link) (For you, screen 2) is in
+their `rec_signals` served items (`ReaderSignals.served`, their `rec_key`). The link came from
+Gloss's own suggestions (search results or the outlet lists), not from the reader. **One widening
+over "pasted links stay private"**: a link this reader was shown and then pasted into Open any link
+also matches (privacy-wise the same as opening it from the suggestion); a link they were never
+shown never matches, nor one normalisation changed. Its story results show only to readers served
+its link; another reader or demo persona sees key ideas only. Limits: a brought-in page starts a
+search only while the day's story calls are under half the 40 cap (library articles keep the
+rest), and only with a real title (not the site name or link extraction falls back to); a demo
+reader brings in ≤ 3 new pages a day (`anon_ingest_daily_cap`), stored pages are searched once
+ever each. Served ids age out past the newest 300. Caching and the relevance filter as B2.
+Tests: a page shown in For you then opened → its title searched, "More on this story" leads; an
+Up next (`web:`) link too; the same page never shown → no title query and a real key-idea list; an
+extension page with a suggested link → no query; another persona not served it → no story, no
+query; a redirect (`final_url` was the suggestion) matches; a video/extension/`lib:`-only set →
+False; at half the cap a suggested page makes no query while a library article still does; a
+fallback title → no query; the old "brought in" test now makes both pages readable (it had passed
+on a 404) (milestone-reviewer FIX; plan-reviewer REVISE 8).
+Live (after `make deploy-api`): (i) before, read-only: Sourabh's `rec_signals/default` holds the
+`feed:` id of his strangulation-law page (checked 2026-10-17: yes) — record its position in the
+newest 300; (ii) `ops/search` story count before and after ≤ +3; (iii) agent-run: a demo reader
+fetches For you (its items are served), opens one article item through `/v1/recs/open`, then
+`basis=story` → "More on this story" leads (or, if the filter keeps nothing, record "searched, none
+relevant" with the stored count), ≤ 2 `rec_cache` `story:{cid}` docs; the never-shown fresh link
+`d69_live.py` opens gets no story search (counter unchanged, no `story:` doc). Writes: ≤ 2
+`rec_cache` story docs per page, possibly 1 new article and its analysis, the demo reader
+(deleted). Spend ≤ 1 Tavily credit and 2 YouTube units per page, plus one analysis (≈ $0.02–0.06).
 
 ## G. Screen 2: an equal mix of the chosen formats (added 2026-10-17)
 

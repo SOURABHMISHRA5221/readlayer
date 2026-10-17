@@ -75,6 +75,22 @@ async def main() -> None:
             if own["status"] == 200:
                 out["own_story"] = await story_list(p, ob["content_id"])
 
+        # B4: an article from this reader's For you, opened through Open here
+        feed = (await p.api(API, "GET", "/v1/feed?persona=newcomer"))["body"] or {}
+        pick = next((i for i in feed.get("items", []) if i.get("format") == "article"
+                     and i.get("kind") != "library" and i.get("open_here")), None)  # fmt: skip
+        if pick:
+            opened = await p.api(API, "POST", "/v1/recs/open", {"url": pick["url"]})
+            ob = opened["body"] or {}
+            out["suggested_open"] = {"status": opened["status"], "new": ob.get("new"),
+                                     "title": (pick.get("title") or "")[:70]}  # fmt: skip
+            if opened["status"] == 200 and not ob.get("ready"):
+                await p.api(API, "POST", f"/v1/content/{ob['content_id']}/analyse")
+            if opened["status"] == 200:
+                out["suggested_story"] = await story_list(p, ob["content_id"])
+        else:
+            out["suggested_open"] = "no openable article in For you"
+
         # 2. the newcomer's map
         ov = (await p.api(API, "GET", "/v1/me/graph?view=overview&persona=newcomer"))["body"]
         solid = [n for n in ov["nodes"] if not n["ready"]]
@@ -93,6 +109,8 @@ async def main() -> None:
             done = await p.api(API, "POST", f"/v1/content/{o['content_id']}/analyse")
             out["analyse"] = {"status": done["status"], "s": round(time.monotonic() - t1, 1),
                               "content_id": o["content_id"]}  # fmt: skip
+            # never shown to this reader: no story search for it
+            out["fresh_story"] = await story_list(p, o["content_id"])
     finally:
         out["cleanup"] = (await p.api(API, "DELETE", "/v1/me"))["status"]
         print(json.dumps(out, indent=1, ensure_ascii=False))
