@@ -2276,4 +2276,10 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 1. (plan-reviewer on B4: APPROVE; milestone-reviewer: SHIP) → PR → CI → merge → `make deploy-api` →
    `make deploy-web` → live: Sourabh's page shows "More on this story"; the toggle says "For you".
 2. Last feature deploy 18:00 IST; `/v2` removal, gitleaks, deck link, submit; video re-record.
+- #64 merged; API `readlayer-api-00041-jxm`, web. Live: "For you" label; B4 rule matched (story
+  search ran for a suggested page; Tavily timed out twice, not stored); never-shown links no search.
+
+### Next steps (resume here, in order)
+1. Sourabh: open his strangulation-law page → "More on this story" (if Tavily answers).
+2. `/v2` removal, gitleaks, deck link (tagline, "Open any link"), submit; video re-record.
 
