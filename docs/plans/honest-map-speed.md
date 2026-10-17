@@ -265,9 +265,12 @@ on a 404) (milestone-reviewer FIX; plan-reviewer REVISE 8).
 Live (after `make deploy-api`): (i) before, read-only: Sourabh's `rec_signals/default` holds the
 `feed:` id of his strangulation-law page (checked 2026-10-17: yes) — record its position in the
 newest 300; (ii) `ops/search` story count before and after ≤ +3; (iii) agent-run: a demo reader
-fetches For you (its items are served), opens one article item through `/v1/recs/open`, then
-`basis=story` → "More on this story" leads (or, if the filter keeps nothing, record "searched, none
-relevant" with the stored count), ≤ 2 `rec_cache` `story:{cid}` docs; the never-shown fresh link
+fetches For you (its items are served) and opens one article that isn't stored yet (`readiness_basis`
+≠ "article"), or else a web article from the Guardian article's end list it was just served; it
+counts only when `/v1/recs/open` answers `new: true` (a stored For you article is a library doc,
+the old rule) and the path is recorded; then `basis=story` → "More on this story" leads (or, if the
+filter keeps nothing, record "searched, none relevant" with the stored count), ≤ 2 `rec_cache`
+`story:{cid}` docs; the demo reader's second ingest slot of 3 that day; the never-shown fresh link
 `d69_live.py` opens gets no story search (counter unchanged, no `story:` doc). Writes: ≤ 2
 `rec_cache` story docs per page, possibly 1 new article and its analysis, the demo reader
 (deleted). Spend ≤ 1 Tavily credit and 2 YouTube units per page, plus one analysis (≈ $0.02–0.06).

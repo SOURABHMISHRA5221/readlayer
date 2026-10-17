@@ -273,8 +273,9 @@ def was_suggested(doc: ContentDoc, signals: ReaderSignals) -> bool:
     """A page brought in through Open here / Open any link (`user_ingested`, never extension
     text) whose link this reader was shown as a suggestion (Up next and chips "web:", For you
     and screen 2 "feed:" ids, both hashes of the result's own link): the link came from Gloss's
-    own suggestions (search results or the outlet lists), not from the reader (decision 69 B4). A link this reader was never shown never matches, nor does
-    one that normalisation changed, so the rule fails towards privacy."""
+    own suggestions (search results or the outlet lists), not from the reader (decision 69 B4).
+    A link this reader was never shown never matches, nor does one that normalisation changed,
+    so the rule fails towards privacy."""
     if doc.source != USER_INGESTED or doc.media is not None:  # articles only
         return False
     links = {u for u in (doc.url, doc.final_url) if u}
@@ -285,9 +286,9 @@ async def _story_results(
     basis: str, doc: ContentDoc, spans: list["_Trigger"], web: WebSearch, known_urls: set[str],
     may_search: bool, anonymous: bool, signals: ReaderSignals,
 ) -> _Story:  # fmt: skip
-    """More coverage of this article's story (decision 69 B2, B4): library (corpus) articles, and
-    pages a reader brought in from our own suggestions; the title of a pasted page never leaves
-    (DESIGN §16.3). One search per format ever."""
+    """More coverage of this article's story (decision 69 B2, B4): library (corpus) articles,
+    and pages a reader brought in from our own suggestions; the title of a link this reader wasn't
+    shown never leaves (DESIGN §16.3). One search per format ever."""
     corpus = is_corpus(doc)
     allowed = corpus or (was_suggested(doc, signals) and _real_title(doc))
     if basis != "story" or not allowed or not doc.title:

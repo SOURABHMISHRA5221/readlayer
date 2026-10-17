@@ -29,6 +29,11 @@ OWN = sys.argv[2] if len(sys.argv) > 2 else ""
 
 
 async def story_list(p, cid: str) -> dict:
+    summary, _ = await story_items(p, cid)
+    return summary
+
+
+async def story_items(p, cid: str) -> tuple[dict, list[dict]]:
     url = f"/v1/content/{cid}/recommendations?basis=story&persona=newcomer"
     body: dict = {}
     for _ in range(12):
@@ -48,7 +53,7 @@ async def story_list(p, cid: str) -> dict:
         "story": sum(w == "More on this story" for w in whys),
         "new_to_you": sum("new to you" in w for w in whys),
         "per_idea": ideas,
-    }
+    }, items
 
 
 async def main() -> None:
@@ -67,7 +72,7 @@ async def main() -> None:
         lib = (await p.api(API, "GET", "/v1/content?persona=newcomer"))["body"]
         art = next(i for i in lib if "Polymarket" in (i.get("title") or ""))
         out["article"] = {"id": art["id"], "title": art["title"][:80]}
-        out["story"] = await story_list(p, art["id"])
+        out["story"], end_items = await story_items(p, art["id"])
         if OWN:  # B3 on a reader's own page, re-opened by its URL
             own = await p.api(API, "POST", "/v1/recs/open", {"url": OWN})
             ob = own["body"] or {}
@@ -75,21 +80,35 @@ async def main() -> None:
             if own["status"] == 200:
                 out["own_story"] = await story_list(p, ob["content_id"])
 
-        # B4: an article from this reader's For you, opened through Open here
+        # B4: a page this reader was shown, not stored yet, opened through Open here. A stored
+        # For you article is a library doc (the old rule), so only a `new: true` open counts.
         feed = (await p.api(API, "GET", "/v1/feed?persona=newcomer"))["body"] or {}
-        pick = next((i for i in feed.get("items", []) if i.get("format") == "article"
-                     and i.get("kind") != "library" and i.get("open_here")), None)  # fmt: skip
-        if pick:
-            opened = await p.api(API, "POST", "/v1/recs/open", {"url": pick["url"]})
+        cands = [
+            ("for_you", i["url"], i.get("title"))
+            for i in feed.get("items", [])
+            if i.get("format") == "article"
+            and i.get("readiness_basis") != "article"
+            and i.get("open_here")
+        ]
+        cands += [  # web articles from step 1's end list: served to this reader just now
+            ("up_next", i["url"], i.get("title"))
+            for i in end_items
+            if i.get("kind") == "web" and i.get("format") == "article" and i.get("open_here")
+        ]
+        out["suggested"] = "no unstored openable article was shown"
+        for path, link, title in cands:
+            opened = await p.api(API, "POST", "/v1/recs/open", {"url": link})
             ob = opened["body"] or {}
-            out["suggested_open"] = {"status": opened["status"], "new": ob.get("new"),
-                                     "title": (pick.get("title") or "")[:70]}  # fmt: skip
-            if opened["status"] == 200 and not ob.get("ready"):
-                await p.api(API, "POST", f"/v1/content/{ob['content_id']}/analyse")
-            if opened["status"] == 200:
-                out["suggested_story"] = await story_list(p, ob["content_id"])
-        else:
-            out["suggested_open"] = "no openable article in For you"
+            if opened["status"] != 200 or not ob.get("new"):
+                continue  # stored already (likely a library doc): not B4 evidence
+            await p.api(API, "POST", f"/v1/content/{ob['content_id']}/analyse")
+            out["suggested"] = {
+                "path": path,
+                "title": (title or "")[:70],
+                "content_id": ob["content_id"],
+                "story": await story_list(p, ob["content_id"]),
+            }
+            break
 
         # 2. the newcomer's map
         ov = (await p.api(API, "GET", "/v1/me/graph?view=overview&persona=newcomer"))["body"]
