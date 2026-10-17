@@ -2298,4 +2298,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    → live (`D70_LIVE=1 tools/shots/d70_select.py`). Dropped and recorded if not merged by 23:00 IST.
 2. Sourabh's own account (read-only engaged count, his yes) and the two videos' counts.
 3. `/v2` removal, gitleaks, deck link, submit; video re-record.
+- PR B #67 merged, API `readlayer-api-00043-qjz` + web; live selection check passed (§38).
+
+### Next steps (resume here, in order)
+1. Sourabh's own account (read-only engaged count, his yes) and the two videos' counts.
+2. `/v2` removal, gitleaks, deck link, submit; video re-record.
 
