@@ -324,10 +324,10 @@ and `select_corpus()` now also drops `user_ingested` docs even if a URL is liste
 | Low | **Decision 68:** `POST /v1/onboarding/know` is kept as a 200 no-op (`{"saved": false}`) for a client mid-onboarding during the deploy; remove after judging with the `onboarding_answered` field. A brand-new account's first card could open before its chip lookups finished (R0): **fixed in PR B**: chips that arrive later appear in the open card (`Annotator.refreshNextUp`, tests); Up next fills in as lookups finish |
 | Medium | **Decision 67: the demo video no longer matches the live wording** (it shows "Tell Margo about you" and "reader" copy). **Sourabh, 2026-10-16: "we will do re recording of all once everyfix is done with new script"**: the whole video is re-recorded with a new script after decision 67's fixes are live; `docs/recording.md` is rewritten then |
 | Low | **Decision 67: in-view prefetch spends a signed-in consumer's own cap.** Up to 10 uncached cards per new page come out of the 100-a-day explain cap; a judge signed in with Google who opens ≈ 10 new articles reaches the cap (cards then show the definition). Demo consumers are unaffected (top 3 only) |
-
----
 | Medium | **Warm on open missed its target** (decision 69 C): live ≈ 7.5 s before a new instance's first model call (target < 2 s; was 11–17 s): the warm-up takes ≈ 9 s on one CPU, longer than phase 1. C2 (warm at startup too) pending its live check. C2 shares the one CPU with a new instance's first requests (request-based CPU, cpu-boost on): the cold first `/v1/feed` (7.8 s, above) may get slower |
 | Medium | **Live end list shows no story items until `d69-story-lead` deploys** (ranking dropped them; fixed there, with B3's spread over ideas). Pages a reader brought in ("Open here", Open any link) never get a story search by design (§16.3), only key ideas |
+
+---
 
 ## 6. Config (names only, never values)
 

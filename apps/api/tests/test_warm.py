@@ -126,13 +126,16 @@ def test_startup_never_waits_for_the_warm_up(monkeypatch):
     """C2: the warm-up runs in its thread; the app serves while it is still going."""
     release = threading.Event()
     started = threading.Event()
+    finished = threading.Event()
 
     def slow() -> None:
         started.set()
         release.wait(5)
+        finished.set()
 
     monkeypatch.setattr(warm, "warm", slow)
     with TestClient(app) as c:
         assert started.wait(5)  # it began…
-        assert c.get("/health").status_code == 200  # …and the app answers before it ends
+        assert c.get("/health").status_code == 200
+        assert not finished.is_set()  # …and the app answered while it was still running
         release.set()

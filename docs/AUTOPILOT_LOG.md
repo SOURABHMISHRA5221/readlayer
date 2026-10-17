@@ -2262,10 +2262,9 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
   Sourabh: "see the bottom articles still focusing on single word" → B3. Follow-ups on
   `d69-story-lead`: story items lead (never a dismissed one), B3 spread over ideas (≤ 2 per idea),
   C2 warm at startup (Sourabh "yes", also to deploying). milestone-reviewer FIX applied; plan-reviewer
-  on B3 + C2 running.
+  on B3 + C2: REVISE 8 → APPROVE; milestone-reviewer round 2: FIX (docs) → applied.
 
 ### Next steps (resume here, in order)
-1. plan-reviewer verdict on B3 + C2 → milestone-reviewer round 2 → PR → CI → merge →
-   `make deploy-api` → live checks (§9 row).
+1. PR → green CI → merge → `make deploy-api` → live checks (§9 row).
 2. Last feature deploy 18:00 IST; then `/v2` removal, gitleaks, deck link, submit; video re-record.
 
