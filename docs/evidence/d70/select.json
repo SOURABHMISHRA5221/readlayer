@@ -1,0 +1,50 @@
+{
+  "live": false,
+  "count_before": "6 notes for you",
+  "term_select": {
+    "button": true,
+    "inParagraph": true,
+    "tag": "BUTTON",
+    "onScreen": true
+  },
+  "term_card": {
+    "mode": "sidenote",
+    "text": "financeInsider tradingYou know this well, so it goes straight to the detailBuilds onSecurities lawEquitiesBackgroundYour pick · CricketLike placing bets with advance knowledge of a fixed over, trading on privileged non-p",
+    "verified": true
+  },
+  "count_after": "7 notes for you",
+  "plain_select": {
+    "button": true,
+    "inParagraph": true,
+    "tag": "BUTTON",
+    "onScreen": true
+  },
+  "plain_card": {
+    "mode": "sidenote",
+    "text": "What this paragraph is sayingYou know this well, so it goes straight to the detailBuilds onBackgroundYour pick · CricketIn prediction markets, insider trading and artificial volume distort probability pricing and corrupt",
+    "verified": true
+  },
+  "key_select": {
+    "button": true,
+    "inParagraph": true,
+    "tag": "BUTTON",
+    "onScreen": true
+  },
+  "key_card": {
+    "mode": "sidenote",
+    "text": "financeMarket manipulationYou understand this, so it's a one-line refresherBuilds onSupply and demandBackgroundYour pick · CricketBeyond standard trading risks, manipulation distorts prices through deceptive volume or co",
+    "verified": true
+  },
+  "phone_select": {
+    "button": true,
+    "inParagraph": true,
+    "tag": "BUTTON",
+    "onScreen": true
+  },
+  "phone_card": {
+    "mode": "sheet",
+    "text": "financeInsider tradingYou understand this, so it's a one-line refresherBuilds onSecurities lawEquitiesBackgroundYour pick · CricketBeyond traditional equities, the principle applies to any speculative market where partic",
+    "verified": true
+  },
+  "cleanup": 204
+}

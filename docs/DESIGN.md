@@ -613,6 +613,7 @@ subject to pause). The next open regenerates.
 | GET | /v1/me/export | everything we hold about the caller, as JSON |
 | DELETE | /v1/me | delete all of the caller's data and their Auth user |
 | GET | /v1/content/{id}/annotations | ranked, budgeted annotations for the caller |
+| POST | /v1/content/{id}/lookup | decision 70, "Explain" on a selection: `{paragraph_id, start, end}` (offsets in the paragraph's text, 2–120 characters; never the text, extra fields refused) → `{annotation}`: the extracted term (any demand with a concept, shown or not) whose position overlaps the selection, preferring one inside it, then the longest, then score, then reading order; `null` → the host opens the paragraph's card. Pure scoring: nothing recorded, no model call; the log carries the paragraph id and hit/miss. 404 unknown paragraph, 422 out of bounds |
 | POST | /v1/explain | `{content_id, demand_id?, paragraph_id?, shift?: -1\|1}` → `{id, kind: verified\|definition, mode, label, definition, background, author_says, analogy_domain, band, can_simpler, can_deeper, thinks_in, style, cached, capped, prompt_version}` (§7; `shift` = "Say it simpler" / "Go deeper", span notes only, 422 with a paragraph) |
 | POST | /v1/explain/{id}/report | `{event_id, content_id, concept_id?}` → `{evicted, event_applied}`: "This is wrong" (§7) |
 | POST | /v1/events | `{events: [{id, type, at, concept_id?, content_id?, paragraph_id?, words?, ms?}], persona?}` (types include `article_helpful` `{content_id}`: the action bar's Helpful, stored, no evidence) → `{applied, events_applied, events_ignored}`; sync, idempotent by event id (stored at `users/{uid}/events/{id}` with `expire_at` for the 90-day TTL); `applied: false` and no writes while learning is paused |
@@ -696,7 +697,9 @@ base_difficulty}` when `?debug=1` and `ENV=dev`.
   report_wrong, annotation_dismissed (a **span** card opened deliberately, by click, tap or
   keyboard, and closed without an action; hover peeks and paragraph cards never count),
   text_searched (copy or right-click with a selection: the overlapped mark's concept, or the
-  paragraph only when it has no marks; never the text), paragraph_dwell (IntersectionObserver at
+  paragraph only when it has no marks; never the text; decision 70's "Explain" on a selection
+  sends paragraph offsets to `/lookup`, never the text, and records nothing itself — the card it
+  opens records `explain_opened` as usual), paragraph_dwell (IntersectionObserver at
   50% visibility while the page is visible; stretches under 1 s dropped; `words` on a
   paragraph's first dwell per page view, 0 after, so re-reading doesn't inflate words read).
 - **Extension mounting (M8).** The content script runs only after the reader's click. It tags the
@@ -1378,7 +1381,12 @@ term, as do code, API fields and prompts. Guarded by `apps/web/test/wording.test
   step shows its definition or links to an explainer); the margin lists "N notes for you" with
   Margo until a note opens there as a sidenote (decision 70: the count and list include the placed
   ¶ paragraph notes, "Paragraph N, what it's saying", in document order; the drawer and the
-  left-rail spine count them too, the spine with a hollow square tick); **"What this article changed"** at the end: the
+  left-rail spine count them too, the spine with a hollow square tick); **"Explain" on a selection** (decision 70):
+  selecting 2–120 characters inside one paragraph shows an Explain button under the selection (it
+  follows on scroll; a debounced `selectionchange` covers touch handles); pressing it asks
+  `/lookup` with paragraph offsets and opens that term's card (the existing mark if its concept is
+  already marked, else the term is added as a note for this view and counted), or the paragraph's
+  card when no term matches, the lookup fails, or the term overlaps another mark; web only; **"What this article changed"** at the end: the
   bands that moved since the notes loaded (`POST /v1/me/bands` at load and at the end, after
   flushing events), each with Undo (the opposite correction, so the row then shows the resulting
   band), the "Not really" answers as one row each ("Next on your path", never also a band move),

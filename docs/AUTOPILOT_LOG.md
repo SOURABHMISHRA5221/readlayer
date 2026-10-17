@@ -2290,4 +2290,12 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
    → `make deploy-web` (Sourabh's yes) → live (plan acceptance 4–6).
 2. PR B `d70-select` (Fix 3) from clean `main`; dropped and recorded if not merged by 23:00 IST.
 3. `/v2` removal, gitleaks, deck link, submit; video re-record.
+- PR A #66 merged, API `readlayer-api-00042-mlv` + web; live check passed as the trader (§38). PR B
+  (explain a selection) built on `d70-select` (worktree), tests first, harness passed (§38).
+
+### Next steps (resume here, in order)
+1. PR B: milestone-reviewer → PR → CI → merge → `make deploy-api` → `make deploy-web` (Sourabh's yes)
+   → live (`D70_LIVE=1 tools/shots/d70_select.py`). Dropped and recorded if not merged by 23:00 IST.
+2. Sourabh's own account (read-only engaged count, his yes) and the two videos' counts.
+3. `/v2` removal, gitleaks, deck link, submit; video re-record.
 
