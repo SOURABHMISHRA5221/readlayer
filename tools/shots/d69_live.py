@@ -20,11 +20,35 @@ import time
 
 sys.path.insert(0, __file__.rsplit("/", 1)[0])
 import cdp  # noqa: E402
-
 from live_site import WEB  # noqa: E402
 
 API = "https://readlayer-api-751104670850.asia-south1.run.app"
 FRESH = sys.argv[1] if len(sys.argv) > 1 else "https://en.wikipedia.org/wiki/Shrinkflation"
+# B3 (decision 69 follow-ups): a page a reader brought in, re-opened by URL (stored: no fetch)
+OWN = sys.argv[2] if len(sys.argv) > 2 else ""
+
+
+async def story_list(p, cid: str) -> dict:
+    url = f"/v1/content/{cid}/recommendations?basis=story&persona=newcomer"
+    body: dict = {}
+    for _ in range(12):
+        body = (await p.api(API, "GET", url))["body"]
+        if not body.get("pending"):
+            break
+        await asyncio.sleep(2)
+    items = body.get("items", [])
+    ideas: dict[str, int] = {}
+    for i in items:
+        if i["relation"] != "same_story" and i.get("triggers"):
+            ideas[i["triggers"][0]["label"]] = ideas.get(i["triggers"][0]["label"], 0) + 1
+    whys = [i["why"] for i in items]
+    return {
+        "count": len(items),
+        "first_two": whys[:2],
+        "story": sum(w == "More on this story" for w in whys),
+        "new_to_you": sum("new to you" in w for w in whys),
+        "per_idea": ideas,
+    }
 
 
 async def main() -> None:
@@ -43,29 +67,20 @@ async def main() -> None:
         lib = (await p.api(API, "GET", "/v1/content?persona=newcomer"))["body"]
         art = next(i for i in lib if "Polymarket" in (i.get("title") or ""))
         out["article"] = {"id": art["id"], "title": art["title"][:80]}
-        url = f"/v1/content/{art['id']}/recommendations?basis=story&persona=newcomer"
-        body: dict = {}
-        for _ in range(12):
-            body = (await p.api(API, "GET", url))["body"]
-            if not body.get("pending"):
-                break
-            await asyncio.sleep(2)
-        whys = [i["why"] for i in body.get("items", [])]
-        out["story"] = {
-            "pending": body.get("pending"),
-            "count": len(whys),
-            "first_two": whys[:2],
-            "story": sum(w == "More on this story" for w in whys),
-            "key_idea": sum("a key idea here" in w for w in whys),
-            "new_to_you": sum("new to you" in w for w in whys),
-            "formats": [i["format"] for i in body.get("items", [])],
-        }
+        out["story"] = await story_list(p, art["id"])
+        if OWN:  # B3 on a reader's own page, re-opened by its URL
+            own = await p.api(API, "POST", "/v1/recs/open", {"url": OWN})
+            ob = own["body"] or {}
+            out["own_open"] = {"status": own["status"], "new": ob.get("new")}
+            if own["status"] == 200:
+                out["own_story"] = await story_list(p, ob["content_id"])
 
         # 2. the newcomer's map
         ov = (await p.api(API, "GET", "/v1/me/graph?view=overview&persona=newcomer"))["body"]
         solid = [n for n in ov["nodes"] if not n["ready"]]
-        out["newcomer_map"] = {"solid": len(solid), "rings": len(ov["nodes"]) - len(solid),
-                               "solid_without_evidence": [n["label"] for n in solid if not n["recent"]]}  # fmt: skip
+        bare = [n["label"] for n in solid if not n["recent"]]
+        rings = len(ov["nodes"]) - len(solid)
+        out["newcomer_map"] = {"solid": len(solid), "rings": rings, "solid_without_evidence": bare}
 
         # 3. a fresh link: phase 1, then the analysis
         t0 = time.monotonic()
