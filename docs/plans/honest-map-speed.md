@@ -228,7 +228,8 @@ no idea (neither spread nor capped). No new searches. Also from the live check: 
 story items are included and lead even when outscored, never one the reader dismissed or finished.
 Tests: three results per idea → ≥ 2 ideas, ≤ 2 items each; story items lead when outscored; a
 dismissed story item stays gone; `_spread` and `_cap_per_idea` units incl. one idea → no shrink,
-5 + 1 → 6 with the second idea; per-relation ideas and same_story untouched (plan-reviewer REVISE 8).
+5 + 1 → 6 with the second idea; per-relation ideas and same_story untouched (plan-reviewer REVISE 8
+→ APPROVE).
 Live (after `make deploy-api`, demo reader, deleted after; `ops/search` count unchanged — cached):
 the Guardian video article (99a2cb53…) shows 2 "More on this story" first, then items on ≥ 2
 ideas; Sourabh's strangulation-law page re-opened by the demo reader by its URL (the doc exists:
