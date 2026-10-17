@@ -462,12 +462,15 @@ def test_a_dismissed_story_item_stays_gone(env, monkeypatch):
 def test_spread_halves_each_ideas_next_item_and_the_cap_reranks():
     from app.recs.rank import Candidate
 
-    got = recs_router._spread([("a1", "x", 1.0), ("a2", "x", 0.9), ("a3", "x", 0.8),
-                               ("b1", "y", 0.7), ("n", None, 0.6)])  # fmt: skip
-    assert got == {"a1": 1.0, "a2": 0.45, "a3": 0.2, "b1": 0.7, "n": 0.6}
+    def k(i):
+        return (i, "explainer")
+
+    got = recs_router._spread([(k("a1"), "x", 1.0), (k("a2"), "x", 0.9), (k("a3"), "x", 0.8),
+                               (k("b1"), "y", 0.7), (k("n"), None, 0.6)])  # fmt: skip
+    assert got == {k("a1"): 1.0, k("a2"): 0.45, k("a3"): 0.2, k("b1"): 0.7, k("n"): 0.6}
 
     cands = [Candidate(i, "explainer", "article", 1.0) for i in ("a1", "a2", "a3", "b1")]
-    idea = {"a1": "x", "a2": "x", "a3": "x", "b1": "y"}
+    idea = {k("a1"): "x", k("a2"): "x", k("a3"): "x", k("b1"): "y"}
     ranked = {"a1": 0.9, "a2": 0.8, "a3": 0.7, "b1": 0.1}
 
     def reselect(cs):
@@ -475,3 +478,42 @@ def test_spread_halves_each_ideas_next_item_and_the_cap_reranks():
 
     out = recs_router._cap_per_idea(reselect(cands), cands, idea, reselect)
     assert [c.id for c, _ in out] == ["a1", "a2", "b1"]  # a3 set aside, idea y takes its place
+
+
+def _top(n, scores):
+    def reselect(cs):
+        return sorted(((c, scores[c.id]) for c in cs), key=lambda cs: (-cs[1], cs[0].id))[:n]
+
+    return reselect
+
+
+def test_the_cap_never_shrinks_the_list():
+    """plan-reviewer: one linked idea (a pasted page has no story items) must keep its list."""
+    from app.recs.rank import Candidate
+
+    only_x = [Candidate(f"x{i}", "explainer", "article", 1.0) for i in range(4)]
+    idea = {(c.id, "explainer"): "x" for c in only_x}
+    pick = _top(6, {c.id: 1.0 - i / 10 for i, c in enumerate(only_x)})
+    assert len(recs_router._cap_per_idea(pick(only_x), only_x, idea, pick)) == 4
+
+    mixed = [*(Candidate(f"x{i}", "explainer", "article", 1.0) for i in range(5)),
+             Candidate("y0", "explainer", "video", 1.0)]  # fmt: skip
+    idea = {(c.id, "explainer"): c.id[0] for c in mixed}
+    pick = _top(6, {**{f"x{i}": 1.0 - i / 10 for i in range(5)}, "y0": 0.05})
+    out = recs_router._cap_per_idea(pick(mixed), mixed, idea, pick)
+    assert len(out) == 6 and "y0" in {c.id for c, _ in out}
+
+
+def test_ideas_are_counted_per_relation_and_same_story_follows_none():
+    from app.recs.library import LibraryCandidate
+
+    lib = [LibraryCandidate("d1", "primer", 0.9, ("c_a",)),
+           LibraryCandidate("d1", "angle", 0.8, ("c_b",)),
+           LibraryCandidate("d2", "same_story", 0.7, ("c_a",))]  # fmt: skip
+    items = recs_router._idea_items(lib, {})
+    idea = {key: i for key, i, _ in items}
+    assert idea[("lib:d1", "primer")] == "c_a" and idea[("lib:d1", "angle")] == "c_b"
+    assert idea[("lib:d2", "same_story")] is None
+    weight = recs_router._spread(items + [(("web:e1", "explainer"), "c_a", 1.0),
+                                          (("web:e2", "explainer"), "c_a", 0.95)])  # fmt: skip
+    assert weight[("lib:d2", "same_story")] == 0.7  # never halved behind c_a's explainers

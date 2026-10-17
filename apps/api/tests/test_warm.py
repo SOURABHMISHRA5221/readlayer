@@ -1,4 +1,5 @@
-"""Decision 69 C: the heavy lazy imports warm when a link is opened, never at startup."""
+"""Decision 69 C and C2: the heavy lazy imports warm in a thread at startup and when a link is
+opened, never blocking either."""
 
 import logging
 import threading
@@ -119,3 +120,19 @@ def test_the_ingest_log_has_its_stage_times(store, fetcher, fake_llm, caplog):
     assert len(logged) == 1
     for field in ("parse_ms", "extract_ms", "link_ms", "grow_ms"):
         assert getattr(logged[0], field) >= 0, field
+
+
+def test_startup_never_waits_for_the_warm_up(monkeypatch):
+    """C2: the warm-up runs in its thread; the app serves while it is still going."""
+    release = threading.Event()
+    started = threading.Event()
+
+    def slow() -> None:
+        started.set()
+        release.wait(5)
+
+    monkeypatch.setattr(warm, "warm", slow)
+    with TestClient(app) as c:
+        assert started.wait(5)  # it began…
+        assert c.get("/health").status_code == 200  # …and the app answers before it ends
+        release.set()
