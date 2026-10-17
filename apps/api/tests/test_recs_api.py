@@ -399,3 +399,121 @@ def test_the_story_route_drops_the_articles_own_url(env, monkeypatch):
     monkeypatch.setattr(provider, "search", itself_first)
     urls = {i["url"] for i in _story_recs(client)["items"]}
     assert (doc.final_url or doc.url) not in urls
+
+
+def test_story_items_lead_even_when_the_ranking_would_leave_them_out(env, monkeypatch):
+    """Live check (2026-10-17): five stored story results, none shown, because `select` keeps
+    the six best scores and a same-story item scores below a key-idea explainer. Up to
+    STORY_LEAD story items are now included and lead, whatever their score."""
+    client, *_ = env
+    monkeypatch.setattr(recs_router, "STORY_RELEVANCE", 1e-6)  # outscored by everything else
+    items = _story_recs(client)["items"]
+    lead = items[: recs_router.STORY_LEAD]
+    assert [i["why"] for i in lead] == ["More on this story"] * recs_router.STORY_LEAD
+    assert len(items) <= 6
+    rest = items[recs_router.STORY_LEAD :]
+    assert all(
+        "a key idea here" in i["why"] or i["relation"] in ("same_story", "angle") for i in rest
+    )
+
+
+def test_the_story_list_spreads_over_the_articles_ideas(env, monkeypatch):
+    """Sourabh, 2026-10-17 (a strangulation-law article): "the bottom articles still focusing on
+    single word": with three results per idea the top idea took every slot. Each idea's n-th
+    item now counts SPREAD**n, so the next ideas get places (no new searches)."""
+    from collections import Counter
+
+    from app.recs.feed_rank import key_ideas
+
+    client, provider, _, store = env
+    real = provider.search
+
+    async def three_each(query, fmt, news=False, include_domains=()):
+        one = (await real(query, fmt, news, include_domains))[0]
+        return [one.model_copy(update={"url": f"{one.url}-{i}"}) for i in range(3)]
+
+    monkeypatch.setattr(provider, "search", three_each)
+    monkeypatch.setattr(recs_router, "STORY_FORMATS", ())  # like a page a reader brought in
+    ideas, _ = key_ideas(store.docs["main"], GRAPH)
+    assert len(ideas) >= 2
+    items = _story_recs(client)["items"]
+    per_idea = Counter(
+        i["triggers"][0]["id"] for i in items if i["relation"] != "same_story" and i["triggers"]
+    )
+    assert len(per_idea) >= 2, per_idea  # more than one of the article's ideas
+    assert max(per_idea.values()) <= 2, per_idea
+
+
+def test_a_dismissed_story_item_stays_gone(env, monkeypatch):
+    """milestone-reviewer: `_lead_with_story` added story items without the reader's signals, so
+    a dismissed (or finished) "More on this story" card came back on the next load."""
+    client, *_ = env
+    monkeypatch.setattr(recs_router, "STORY_RELEVANCE", 1e-6)  # forces the lead path
+    first = _story_recs(client)["items"]
+    story = [i for i in first if i["why"] == "More on this story"]
+    assert story
+    resp = client.post("/v1/recs/events", json={"persona": "newcomer", "events": [
+        {"id": "d1", "type": "rec_dismissed", "item_id": story[0]["id"]}]})  # fmt: skip
+    assert resp.json()["applied"] == 1
+    after = client.get("/v1/content/main/recommendations?basis=story&persona=newcomer").json()
+    assert story[0]["id"] not in [i["id"] for i in after["items"]]
+
+
+def test_spread_halves_each_ideas_next_item_and_the_cap_reranks():
+    from app.recs.rank import Candidate
+
+    def k(i):
+        return (i, "explainer")
+
+    got = recs_router._spread([(k("a1"), "x", 1.0), (k("a2"), "x", 0.9), (k("a3"), "x", 0.8),
+                               (k("b1"), "y", 0.7), (k("n"), None, 0.6)])  # fmt: skip
+    assert got == {k("a1"): 1.0, k("a2"): 0.45, k("a3"): 0.2, k("b1"): 0.7, k("n"): 0.6}
+
+    cands = [Candidate(i, "explainer", "article", 1.0) for i in ("a1", "a2", "a3", "b1")]
+    idea = {k("a1"): "x", k("a2"): "x", k("a3"): "x", k("b1"): "y"}
+    ranked = {"a1": 0.9, "a2": 0.8, "a3": 0.7, "b1": 0.1}
+
+    def reselect(cs):
+        return sorted(((c, ranked[c.id]) for c in cs), key=lambda cs: -cs[1])[:3]
+
+    out = recs_router._cap_per_idea(reselect(cands), cands, idea, reselect)
+    assert [c.id for c, _ in out] == ["a1", "a2", "b1"]  # a3 set aside, idea y takes its place
+
+
+def _top(n, scores):
+    def reselect(cs):
+        return sorted(((c, scores[c.id]) for c in cs), key=lambda cs: (-cs[1], cs[0].id))[:n]
+
+    return reselect
+
+
+def test_the_cap_never_shrinks_the_list():
+    """plan-reviewer: one linked idea (a pasted page has no story items) must keep its list."""
+    from app.recs.rank import Candidate
+
+    only_x = [Candidate(f"x{i}", "explainer", "article", 1.0) for i in range(4)]
+    idea = {(c.id, "explainer"): "x" for c in only_x}
+    pick = _top(6, {c.id: 1.0 - i / 10 for i, c in enumerate(only_x)})
+    assert len(recs_router._cap_per_idea(pick(only_x), only_x, idea, pick)) == 4
+
+    mixed = [*(Candidate(f"x{i}", "explainer", "article", 1.0) for i in range(5)),
+             Candidate("y0", "explainer", "video", 1.0)]  # fmt: skip
+    idea = {(c.id, "explainer"): c.id[0] for c in mixed}
+    pick = _top(6, {**{f"x{i}": 1.0 - i / 10 for i in range(5)}, "y0": 0.05})
+    out = recs_router._cap_per_idea(pick(mixed), mixed, idea, pick)
+    assert len(out) == 6 and "y0" in {c.id for c, _ in out}
+
+
+def test_ideas_are_counted_per_relation_and_same_story_follows_none():
+    from app.recs.library import LibraryCandidate
+
+    lib = [LibraryCandidate("d1", "primer", 0.9, ("c_a",)),
+           LibraryCandidate("d1", "angle", 0.8, ("c_b",)),
+           LibraryCandidate("d2", "same_story", 0.7, ("c_a",))]  # fmt: skip
+    items = recs_router._idea_items(lib, {})
+    idea = {key: i for key, i, _ in items}
+    assert idea[("lib:d1", "primer")] == "c_a" and idea[("lib:d1", "angle")] == "c_b"
+    assert idea[("lib:d2", "same_story")] is None
+    weight = recs_router._spread(items + [(("web:e1", "explainer"), "c_a", 1.0),
+                                          (("web:e2", "explainer"), "c_a", 0.95)])  # fmt: skip
+    assert weight[("lib:d2", "same_story")] == 0.7  # never halved behind c_a's explainers

@@ -200,9 +200,10 @@ personas stay curated on the original four.
   request from the reader page, so the article shows in seconds; POST /v1/content and the scripts
   run both back to back through the same pending doc and lease. A URL that is pending counts as
   known everywhere: no second fetch and no second ingest slot.
-- **Warm on open (decision 69 C).** LiteLLM and spaCy load lazily (startup stays lean, min
-  instances 1 only during judging). Phase 1 (`fetch_and_extract`, `store_submitted`) starts
-  `app/warm.py` in a thread without waiting, so the imports overlap the fetch; `analyse_pending`
+- **Warm on open and at startup (decision 69 C, C2).** LiteLLM and spaCy load lazily at import
+  (importing the app stays light). Startup (`lifespan`, after the startup log, not awaited) and
+  phase 1 (`fetch_and_extract`, `store_submitted`) start `app/warm.py` in a thread without
+  waiting, so the imports overlap the fetch; `analyse_pending`
   awaits it in a thread inside its lease (the 30 s margin covers it). Run once per process, no model call. Measured before:
   the first analysis on an instance waited 11–17 s before its first model call, later ones
   < 0.5 s. `content ingested` logs `parse_ms`, `extract_ms`, `link_ms`, `grow_ms`; `llm embed`
@@ -1077,7 +1078,10 @@ Wikipedia pages are evergreen (no freshness decay) and never count as same_story
   (stored even when empty), its own `STORY_SEARCH_DAILY_CAP` (40) within the global, YouTube and
   anonymous caps, never the feed's. Results must not be the article itself (by URL hash) and must
   name one of its top 3 key ideas or share ≥ 2 distinctive title words; up to 2 lead the end list
-  as "More on this story" (`basis=story`; the card chips stay `basis=article`).
+  as "More on this story", included even when the ranking would leave them out (`basis=story`;
+  the card chips stay `basis=article`). The rest of that list spreads over the article's ideas
+  (decision 69 B3): each idea's n-th item counts 0.5^n before ranking, and at most 2 items follow
+  any one idea.
 - Every result is normalized to `{url, title, source, format: article|video|podcast,
   duration_or_read_time (s), snippet, thumbnail, published_at}`, filtered by the domain
   blocklist (`app/recs/blocklist.txt`, subdomains included) and a relevance gate (the title or

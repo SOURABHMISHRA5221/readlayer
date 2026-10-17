@@ -1,4 +1,5 @@
-"""Decision 69 C: the heavy lazy imports warm when a link is opened, never at startup."""
+"""Decision 69 C and C2: the heavy lazy imports warm in a thread at startup and when a link is
+opened, never blocking either."""
 
 import logging
 import threading
@@ -78,9 +79,10 @@ def test_a_failed_warm_up_is_logged_and_swallowed(monkeypatch, caplog):
     warm.reset()
 
 
-def test_opening_a_link_and_analysing_start_it_and_startup_does_not(
-    monkeypatch, store, fetcher, fake_llm
-):
+def test_startup_opening_a_link_and_analysing_all_start_it(monkeypatch, store, fetcher, fake_llm):
+    """Decision 69 C2 (Sourabh, "yes", after the live check measured ≈ 7.5 s): startup starts the
+    warm-up in its thread too, without waiting, so a server usually has it done before anyone
+    opens a link."""
     asked: list[str] = []
 
     async def ready() -> None:
@@ -89,7 +91,8 @@ def test_opening_a_link_and_analysing_start_it_and_startup_does_not(
     monkeypatch.setattr(warm, "start", lambda: asked.append("start"))
     monkeypatch.setattr(warm, "ready", ready)
     with TestClient(app):  # runs the lifespan
-        assert asked == []
+        assert asked == ["start"]
+    asked.clear()
     c = client()
     assert c.post("/v1/recs/open", json={"url": URL}).status_code == 200
     assert asked == ["start"]  # phase 1 starts it and doesn't wait
@@ -117,3 +120,22 @@ def test_the_ingest_log_has_its_stage_times(store, fetcher, fake_llm, caplog):
     assert len(logged) == 1
     for field in ("parse_ms", "extract_ms", "link_ms", "grow_ms"):
         assert getattr(logged[0], field) >= 0, field
+
+
+def test_startup_never_waits_for_the_warm_up(monkeypatch):
+    """C2: the warm-up runs in its thread; the app serves while it is still going."""
+    release = threading.Event()
+    started = threading.Event()
+    finished = threading.Event()
+
+    def slow() -> None:
+        started.set()
+        release.wait(5)
+        finished.set()
+
+    monkeypatch.setattr(warm, "warm", slow)
+    with TestClient(app) as c:
+        assert started.wait(5)  # it began…
+        assert c.get("/health").status_code == 200
+        assert not finished.is_set()  # …and the app answered while it was still running
+        release.set()

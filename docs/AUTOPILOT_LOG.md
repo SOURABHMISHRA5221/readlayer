@@ -2257,3 +2257,14 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 1. PR 2: (plan-reviewer A2 + G: REVISE 6 → APPROVE) → milestone-reviewer (round 1 FIX applied) → PR → CI → merge → `make deploy-api`
    → `make deploy-web` (one deploy for PRs 1 and 2) → live checks (§37 and plan).
 2. Video re-record with the new wording; `/v2` removal, gitleaks, deck link (tagline, "Open any link"), submit.
+- Decision 69 deployed together (#61 + #62): API `readlayer-api-00039-qrf`, web. Live: hosting,
+  startup, map, wording OK; warm on open ≈ 7.5 s (missed < 2 s); story items didn't show (ranking).
+  Sourabh: "see the bottom articles still focusing on single word" → B3. Follow-ups on
+  `d69-story-lead`: story items lead (never a dismissed one), B3 spread over ideas (≤ 2 per idea),
+  C2 warm at startup (Sourabh "yes", also to deploying). milestone-reviewer FIX applied; plan-reviewer
+  on B3 + C2: REVISE 8 → APPROVE; milestone-reviewer round 2: FIX (docs) → applied.
+
+### Next steps (resume here, in order)
+1. PR → green CI → merge → `make deploy-api` → live checks (§9 row).
+2. Last feature deploy 18:00 IST; then `/v2` removal, gitleaks, deck link, submit; video re-record.
+

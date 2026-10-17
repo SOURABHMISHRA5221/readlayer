@@ -97,6 +97,27 @@ are in the video line).
   and its analysis, like any Read any link; the reader deleted). The embedding gap gets its own fix
   only once the new logs show its cause (not in this decision).
 
+### C2. Warm at startup too (added 2026-10-17, after the live check)
+Live: on link open alone a new instance still waited ≈ 7.5 s before its first model call (warm-up
+9.1 s on one CPU, longer than phase 1). Asked: start it when a server starts, in the background,
+cost a few seconds of CPU contention on a brand-new server's first page loads — Sourabh: "yes".
+`lifespan` calls `warm.start()` after the startup log, not awaited, so `startup_ms` is unchanged;
+phase 1 and analysis keep starting / awaiting the same run-once warm-up. `app.warm` imports the
+parser inside the function so importing the app stays light (`test_lazy_imports`). Test: startup,
+opening a link and analysing all start it; startup never waits for it (the app answers while a
+blocked warm-up runs). Cloud Run CPU is request-based (no `cpu-throttling: false`; `--cpu-boost`
+on): the warm thread advances during startup's boost and while requests are in flight, so on an
+idle instance (judging's one min instance) it may stall and the first link could still wait as in
+C. Acceptance (live, the idle case: new revision, one `/health`, ≥ 2 min with no requests, then a
+demo reader and one fresh link via `d69_live.py` with a URL whose `url_hash` isn't stored): record
+"warm-up done" and `warm_ms` against "startup", "rec opened" and the first model call; target < 2 s
+before the first model call. Cost bounds, checked on the new revision's first requests: cold
+`/health` ≤ 6.6 s (6.0 s + 10 %) and the first `/v1/feed` ≤ 10.8 s (7.8 s + 3 s, "a few
+seconds"); either over → revert the C2 commit (self-contained) and record it. Wait still > 2 s →
+a known limit in STATUS §5 (instance-based CPU is a billing change, Sourabh's call, not here).
+Writes: 1 article, its analysis and concept growth within the per-article slots, 1 demo reader
+(deleted); spend ≈ the 00039 run ($0.023).
+
 ## D. Linking with low thinking, if the eval holds (PR 1, config)
 
 - Fix first: `BuildCache._llm_key` keys answers by task, prompt version and prompt vars — not
@@ -190,6 +211,30 @@ the web grouping. Plan-reviewer on A2 and G: REVISE 6 → APPROVE.
   really" term, which the story list doesn't target (milestone-reviewer, round 1).
 - A tab loaded before the deploy reloads once when a code file is gone (`lib/staleChunk.ts` on
   `vite:preloadError`, loop-guarded by sessionStorage): this is the first deploy with no-cache HTML.
+
+## B3. The end list follows several of the article's ideas (added 2026-10-17, after the deploy)
+
+Sourabh, on a live article (a strangulation-law story he opened through "Open here", so no story
+search): "see the bottom articles still focusing on single word" — all six items said "On
+‘Non-fatal strangulation’, a key idea here". Three ideas are searched, but relevance falls only
+12 % per rank and 10 % per idea, so the top idea's results took every slot. On `basis=story` now:
+each idea's n-th item counts `SPREAD`**n (0.5) before ranking, and after ranking at most
+`PER_IDEA` (2) items follow any one idea (its weakest extra pick is set aside and the list ranked
+again, so another idea's next best item, any format, takes the place). An idea keeps more than 2
+only when nothing else can fill the list: the list never shrinks (a pasted page with one linked
+idea keeps its 6). Ideas are counted per (item, relation), so a library doc that is a primer for A
+and an angle for B counts under the idea its shown reason names; a library same_story item follows
+no idea (neither spread nor capped). No new searches. Also from the live check: up to `STORY_LEAD`
+story items are included and lead even when outscored, never one the reader dismissed or finished.
+Tests: three results per idea → ≥ 2 ideas, ≤ 2 items each; story items lead when outscored; a
+dismissed story item stays gone; `_spread` and `_cap_per_idea` units incl. one idea → no shrink,
+5 + 1 → 6 with the second idea; per-relation ideas and same_story untouched (plan-reviewer REVISE 8
+→ APPROVE).
+Live (after `make deploy-api`, demo reader, deleted after; `ops/search` count unchanged — cached):
+the Guardian video article (99a2cb53…) shows 2 "More on this story" first, then items on ≥ 2
+ideas; Sourabh's strangulation-law page re-opened by the demo reader by its URL (the doc exists:
+no fetch, no ingest slot) shows 6 items, ≥ 2 distinct ideas, ≤ 2 per idea. Writes: the demo
+reader's ingested list and served map.
 
 ## G. Screen 2: an equal mix of the chosen formats (added 2026-10-17)
 

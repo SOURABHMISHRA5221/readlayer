@@ -10,9 +10,10 @@ trigger none, so concepts without a cache entry give them library items only.
 
 import hashlib
 import logging
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
@@ -43,7 +44,7 @@ from app.reader.state import PersonaKey
 from app.recs.feed_rank import key_ideas
 from app.recs.library import LibraryCandidate, LibraryIndex, is_wikipedia, library_candidates
 from app.recs.models import FORMATS, Format, Relation, WebResult
-from app.recs.rank import RELATION_LABEL, Candidate, one_per_format, prior_for, select
+from app.recs.rank import RELATION_LABEL, Candidate, one_per_format, prior_for, score, select
 from app.recs.state import DEFAULT_KEY, RecEventType, Served, get_rec_signals
 from app.recs.web_search import (
     STORY_FORMATS,
@@ -281,6 +282,96 @@ async def _story_results(
     return _Story(results, pending)
 
 
+SPREAD = 0.5  # basis=story: each idea's n-th item counts SPREAD**n (decision 69 B3)
+
+
+Key = tuple[str, str]  # (candidate id, relation): a library doc can be a primer and an angle
+
+
+def _idea_items(
+    lib: Sequence[LibraryCandidate], web_results: Mapping[str, tuple[WebResult, str, float]]
+) -> list[tuple[Key, str | None, float]]:
+    """Every story-basis candidate with the idea it follows (decision 69 B3): a library item's
+    first trigger (the idea its "On ‘X’" reason names), a key-idea search result's idea. A library
+    same_story item follows no idea (its reason names the source, and its triggers are just the
+    shared ones in alphabetical order), so it is neither spread nor capped."""
+    items: list[tuple[Key, str | None, float]] = [
+        ((f"lib:{c.content_id}", c.relation),
+         c.trigger_ids[0] if c.trigger_ids and c.relation != "same_story" else None, c.relevance)
+        for c in lib
+    ]  # fmt: skip
+    items += [((_web_id(r.url), "explainer"), tid, rel) for r, tid, rel in web_results.values()]
+    return items
+
+
+def _spread(items: list[tuple[Key, str | None, float]]) -> dict[Key, float]:
+    """(key, idea, relevance) → relevance × SPREAD**(items of the same idea ranked above it), so
+    the end of the article follows several of its ideas, not just the top one (Sourabh: "the
+    bottom articles still focusing on single word"). Items with no idea keep their relevance."""
+    out: dict[Key, float] = {}
+    seen: dict[str, int] = {}
+    for key, idea, rel in sorted(items, key=lambda t: (-t[2], t[0])):
+        n = seen.get(idea, 0) if idea else 0
+        out[key] = rel * SPREAD**n
+        if idea:
+            seen[idea] = n + 1
+    return out
+
+
+PER_IDEA = 2
+
+
+def _cap_per_idea(
+    chosen: list[tuple[Candidate, float]],
+    candidates: list[Candidate],
+    idea_of: Mapping[Key, str],
+    reselect: Callable[[list[Candidate]], list[tuple[Candidate, float]]],
+) -> list[tuple[Candidate, float]]:
+    """While one idea has more than PER_IDEA picks, set its weakest pick aside and rank again, so
+    the next best item of another idea (any format) takes the place. An idea keeps more than
+    PER_IDEA only when nothing else can fill the list: the list never shrinks (a page with one
+    linked idea keeps its six items). Bounded by the candidates."""
+    banned: set[str] = set()
+    for _ in range(len(candidates)):
+        count: dict[str, list[tuple[Candidate, float]]] = {}
+        for cs in chosen:
+            if (idea := idea_of.get((cs[0].id, cs[0].relation))) is not None:
+                count.setdefault(idea, []).append(cs)
+        over = [v for v in count.values() if len(v) > PER_IDEA]
+        if not over:
+            return chosen
+        weakest = min(over[0], key=lambda cs: (cs[1], cs[0].id))
+        again = reselect([c for c in candidates if c.id not in banned | {weakest[0].id}])
+        if len(again) < len(chosen):
+            return chosen  # nothing else to fill the place
+        banned.add(weakest[0].id)
+        chosen = again
+    return chosen
+
+
+def _lead_with_story(
+    chosen: list[tuple[Candidate, float]],
+    candidates: list[Candidate],
+    story_ids: Mapping[str, Any],
+    alive: Callable[[Candidate], bool],
+) -> list[tuple[Candidate, float]]:
+    """Up to STORY_LEAD story items lead, included even when `select` left them out: a same-story
+    item scores below a key-idea explainer, so ranking alone dropped them all (live check,
+    2026-10-17). Never one the reader dismissed or finished (`alive`, the score `select` uses).
+    They take the places of the lowest-ranked items; the list doesn't grow."""
+    picked = [c for c in chosen if c[0].id in story_ids and c[0].relation == "same_story"]
+    taken = {c[0].id for c in chosen}
+    floor = min((s for _, s in chosen), default=STORY_RELEVANCE)
+    extra = [(c, floor) for c in candidates
+             if c.relation == "same_story" and c.id in story_ids and c.id not in taken
+             and alive(c)]  # fmt: skip
+    lead = (picked + extra)[:STORY_LEAD]
+    lead_ids = {c.id for c, _ in lead}
+    rest = [c for c in chosen if c[0].id not in lead_ids]
+    size = max(len(chosen), len(lead))
+    return lead + rest[: size - len(lead)]
+
+
 def _story_item(r: WebResult, score: float) -> RecItem:
     return RecItem(
         id=_web_id(r.url),
@@ -371,12 +462,14 @@ async def recommendations(
     story = await _story_results(basis, doc, spans, web, known_urls, may_search, anonymous)
     pending = pending or story.pending
 
+    ideas = _idea_items(lib, web_results) if basis == "story" else []
+    weight = _spread(ideas)
     candidates = [
         Candidate(
             f"lib:{c.content_id}",
             c.relation,
             "article",
-            c.relevance,
+            weight.get((f"lib:{c.content_id}", c.relation), c.relevance),
             _published(index.docs[c.content_id]),
             _read_time(index.docs[c.content_id]),
         )
@@ -386,7 +479,7 @@ async def recommendations(
             _web_id(r.url),
             "explainer",
             r.format,
-            rel,
+            weight.get((_web_id(r.url), "explainer"), rel),
             r.published_at,
             r.duration_or_read_time,
             kind="web",
@@ -399,19 +492,24 @@ async def recommendations(
     ]  # fmt: skip
     signals = get_rec_signals()
     now = datetime.now(UTC)
-    chosen = select(
-        candidates,
-        await signals.signals(ctx.uid, ctx.rec_key),
-        prior_for(ctx.rec_key, ctx.user.formats),
-        now,
-        prefer,
-    )
+    reader_signals = await signals.signals(ctx.uid, ctx.rec_key)
+    prior = prior_for(ctx.rec_key, ctx.user.formats)
+    chosen = select(candidates, reader_signals, prior, now, prefer)
+    if basis == "story":  # at most PER_IDEA items follow any one idea (decision 69 B3)
+        idea_of = {key: idea for key, idea, _ in ideas if idea is not None}
+
+        def again(cs: list[Candidate]) -> list[tuple[Candidate, float]]:
+            return select(cs, reader_signals, prior, now, prefer)
+
+        chosen = _cap_per_idea(chosen, candidates, idea_of, again)
     if basis == "article":
         chosen = one_per_format(chosen, ctx.user.formats)
     story_by_id = {_web_id(r.url): r for r in story.results}
-    if basis == "story":  # up to STORY_LEAD items of the same story lead, the rest keep their order
-        lead = [c for c in chosen if c[0].id in story_by_id][:STORY_LEAD]
-        chosen = lead + [c for c in chosen if c not in lead]
+    if basis == "story":
+        chosen = _lead_with_story(
+            chosen, candidates, story_by_id,
+            lambda c: score(c, reader_signals, prior, now, prefer) > 0,  # never a dismissed one
+        )  # fmt: skip
 
     lib_by_key = {(f"lib:{c.content_id}", c.relation): c for c in lib}
     web_by_id = {_web_id(url): v for url, v in web_results.items()}
