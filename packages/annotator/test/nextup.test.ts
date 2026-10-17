@@ -104,7 +104,7 @@ describe("analogy frame toggle", () => {
     a.open("yc");
     await tick();
     const options = () => Array.from(card().querySelectorAll<HTMLButtonElement>(".rl-frame__option"));
-    expect(options().map((o) => o.textContent)).toEqual(["Your pick · Cricket", "For you · Finance"]);
+    expect(options().map((o) => o.textContent)).toEqual(["Your pick · Cricket", "For you"]);
     expect(options().map((o) => o.getAttribute("aria-checked"))).toEqual(["true", "false"]);
     expect(card().querySelector(".rl-frame")!.getAttribute("role")).toBe("radiogroup");
     expect(card().querySelector<HTMLElement>(".rl-card__frame")!.hidden).toBe(true);
@@ -163,7 +163,7 @@ describe("analogy frame toggle", () => {
       if (pick === null) {
         expect(Array.from(group.querySelectorAll("button")).map((b) => b.textContent)).toEqual([
           "No analogy",
-          "For you · Finance",
+          "For you",
         ]);
       }
       a.destroy();

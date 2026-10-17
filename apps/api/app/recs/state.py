@@ -67,7 +67,7 @@ class RecSignalsDoc:
     def signals(self) -> ReaderSignals:
         return ReaderSignals(
             dict(self.formats), dict(self.relation_dismissals), dict(self.seen),
-            dict(self.shown_counts),
+            dict(self.shown_counts), frozenset(self.served),
         )  # fmt: skip
 
 

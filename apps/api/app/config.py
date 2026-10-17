@@ -101,7 +101,8 @@ class Settings(BaseSettings):
     search_daily_cap: int = 300  # outgoing search calls per UTC day, all providers
     # For you feed (M7.5): its own share of those calls, so it can never starve Up next.
     feed_search_daily_cap: int = 60
-    # End-of-article story search (decision 69 B2): corpus articles only, ≤ 2 searches per article
+    # End-of-article story search (decision 69 B2, B4): corpus articles and suggested brought-in
+    # pages (those within half of it), ≤ 2 searches per article
     # ever (article + video), its own share so judges opening articles can't starve the feed.
     story_search_daily_cap: int = 40
     # Outlet collection job (decision 50): POST /v1/internal/feeds/collect accepts only a Google

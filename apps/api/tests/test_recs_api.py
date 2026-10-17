@@ -350,19 +350,29 @@ def test_a_story_is_searched_once_ever_even_when_empty(env, monkeypatch):
 
 
 def test_pages_a_reader_brought_in_never_send_their_title(env):
+    """Readable to this reader (in their `ingested`), never shown to them as a suggestion: no
+    story search for either kind (a real 200 list, not a 404)."""
+    import asyncio
+
+    from app.store.docstore import get_doc_store
+    from app.store.reader_repo import ReaderRepo
+
     client, provider, _, store = env
     for source in ("user_ingested", "extension"):
         cid = f"own-{source}"
         store.docs[cid] = store.docs["main"].model_copy(
             update={"content_id": cid, "source": source}
         )
-        read_router.reset_catalog()
-        recs_router._index = None
+        asyncio.run(ReaderRepo(get_doc_store()).add_ingested("demo", cid, "2026-10-17T00:00:00"))
+    read_router.reset_catalog()
+    recs_router._index = None
     for source in ("user_ingested", "extension"):
         url = f"/v1/content/own-{source}/recommendations?basis=story&persona=newcomer"
         client.get(url)
-        assert all(
-            i["why"] != "More on this story" for i in client.get(url).json().get("items", [])
+        got = client.get(url)
+        assert got.status_code == 200, (source, got.text)
+        assert got.json()["items"] and all(
+            i["why"] != "More on this story" for i in got.json()["items"]
         )
     assert _story_queries(provider, store) == []
 
@@ -517,3 +527,165 @@ def test_ideas_are_counted_per_relation_and_same_story_follows_none():
     weight = recs_router._spread(items + [(("web:e1", "explainer"), "c_a", 1.0),
                                           (("web:e2", "explainer"), "c_a", 0.95)])  # fmt: skip
     assert weight[("lib:d2", "same_story")] == 0.7  # never halved behind c_a's explainers
+
+
+# Decision 69 B4 (Sourabh: "i want more on this story thing", for pages opened from our own
+# suggestions): a page a reader brought in gets the story search when this reader was shown its
+# link as a suggestion (Up next, chips, For you, screen 2): the link came from Gloss's own
+# suggestions (search results or the outlet lists), not from the reader. A link this reader was
+# never shown never matches.
+
+
+OWN_URL = "https://news.example/own-story"
+
+
+def _brought_in(client, store, source="user_ingested"):
+    """A page this reader brought in: stored under its URL hash, then opened (so it's theirs)."""
+    cid = url_hash(OWN_URL)
+    doc = store.docs["main"].model_copy(update={"content_id": cid, "source": source,
+                                                "url": OWN_URL, "final_url": OWN_URL})  # fmt: skip
+    store.docs[cid] = doc
+    read_router.reset_catalog()
+    recs_router._index = None
+    assert client.post("/v1/recs/open", json={"url": OWN_URL}).json()["new"] is False
+    return doc
+
+
+def _story_for(client, cid):
+    url = f"/v1/content/{cid}/recommendations?basis=story&persona=newcomer"
+    client.get(url)
+    got = client.get(url)
+    assert got.status_code == 200, got.text
+    return got.json()
+
+
+def test_a_suggested_page_a_reader_brought_in_gets_more_on_this_story(env):
+    import asyncio
+    from datetime import UTC, datetime
+
+    from app.recs.feed import item_id
+    from app.recs.state import Served, get_rec_signals
+
+    client, provider, _, store = env
+    doc = _brought_in(client, store)
+    served = {item_id(OWN_URL): Served("article", "feed")}  # it was shown in For you
+    asyncio.run(get_rec_signals().remember_served("demo", "newcomer", served, datetime.now(UTC)))
+    body = _story_for(client, doc.content_id)
+    assert ws.story_query(doc.title) in provider.queries
+    assert [i["why"] for i in body["items"]][:1] == ["More on this story"]
+
+
+def test_a_pasted_page_still_never_sends_its_title(env):
+    client, provider, _, store = env
+    doc = _brought_in(client, store)
+    body = _story_for(client, doc.content_id)
+    assert body["items"]  # a real list (key ideas), not a refusal
+    assert ws.story_query(doc.title) not in provider.queries
+
+
+def test_an_extension_page_never_sends_its_title_even_when_its_link_was_suggested(env):
+    """milestone-reviewer: extension text is the reader's own page; B4 is for pages brought in
+    through Open here (user_ingested) only."""
+    import asyncio
+    from datetime import UTC, datetime
+
+    from app.recs.feed import item_id
+    from app.recs.state import Served, get_rec_signals
+    from app.store.docstore import get_doc_store
+    from app.store.reader_repo import ReaderRepo
+
+    client, provider, _, store = env
+    doc = store.docs["main"].model_copy(update={"content_id": "ext-1", "source": "extension",
+                                                "url": OWN_URL, "final_url": OWN_URL})  # fmt: skip
+    store.docs["ext-1"] = doc
+    read_router.reset_catalog()
+    recs_router._index = None
+    asyncio.run(ReaderRepo(get_doc_store()).add_ingested("demo", "ext-1", "2026-10-17T00:00:00"))
+    served = {item_id(OWN_URL): Served("article", "feed")}
+    asyncio.run(get_rec_signals().remember_served("demo", "newcomer", served, datetime.now(UTC)))
+    body = _story_for(client, "ext-1")
+    assert ws.story_query(doc.title) not in provider.queries
+    assert all(i["why"] != "More on this story" for i in body["items"])
+
+
+def test_a_page_opened_from_up_next_counts_as_suggested(env):
+    import asyncio
+    from datetime import UTC, datetime
+
+    from app.recs.state import Served, get_rec_signals
+
+    client, provider, _, store = env
+    doc = _brought_in(client, store)
+    served = {recs_router._web_id(OWN_URL): Served("article", "explainer")}  # an Up next card
+    asyncio.run(get_rec_signals().remember_served("demo", "newcomer", served, datetime.now(UTC)))
+    _story_for(client, doc.content_id)
+    assert ws.story_query(doc.title) in provider.queries
+
+
+def _serve(key, ids):
+    import asyncio
+    from datetime import UTC, datetime
+
+    from app.recs.state import Served, get_rec_signals
+
+    asyncio.run(get_rec_signals().remember_served(
+        "demo", key, {i: Served("article", "feed") for i in ids}, datetime.now(UTC)))  # fmt: skip
+
+
+def test_brought_in_pages_use_only_half_the_story_cap(env):
+    """plan-reviewer: a judge clicking through suggestions mustn't spend the day's story searches;
+    library articles keep the other half."""
+    from app.recs.feed import item_id
+
+    client, provider, calls, store = env
+    doc = _brought_in(client, store)
+    _serve("newcomer", [item_id(OWN_URL)])
+    calls.extra[ws.STORY] = config.get_settings().story_search_daily_cap // 2
+    _story_for(client, doc.content_id)
+    assert ws.story_query(doc.title) not in provider.queries
+    _story_recs(client)  # the library article still may search
+    assert ws.story_query(store.docs["main"].title) in provider.queries
+
+
+def test_a_page_without_a_real_title_is_never_searched(env):
+    from app.recs.feed import item_id
+
+    client, provider, _, store = env
+    doc = _brought_in(client, store)
+    store.docs[doc.content_id] = doc.model_copy(update={"title": doc.site or "news.example"})
+    read_router.reset_catalog()
+    recs_router._index = None
+    _serve("newcomer", [item_id(OWN_URL)])
+    _story_for(client, doc.content_id)
+    assert not any(q == ws.story_query(doc.site or "news.example") for q in provider.queries)
+
+
+def test_another_persona_not_served_the_link_sees_no_story(env):
+    from app.recs.feed import item_id
+
+    client, provider, _, store = env
+    doc = _brought_in(client, store)
+    _serve("newcomer", [item_id(OWN_URL)])
+    _story_for(client, doc.content_id)  # newcomer: searched and stored
+    queries = len(provider.queries)
+    url = f"/v1/content/{doc.content_id}/recommendations?basis=story&persona=trader"
+    client.get(url)
+    body = client.get(url).json()
+    assert all(i["why"] != "More on this story" for i in body["items"])
+    assert ws.story_query(doc.title) not in provider.queries[queries:]
+
+
+def test_was_suggested_rule():
+    from app.recs.feed import item_id
+    from app.recs.rank import ReaderSignals
+    from tests.test_recs_library import DOCS as LIB
+
+    base = LIB[0].model_copy(update={"source": "user_ingested", "url": "https://a.example/short",
+                                     "final_url": OWN_URL, "media": None})  # fmt: skip
+    s = ReaderSignals(served=frozenset({item_id(OWN_URL)}))
+    assert recs_router.was_suggested(base, s)  # the redirect target was the suggestion
+    assert recs_router.was_suggested(base.model_copy(update={"url": OWN_URL, "final_url": ""}), s)
+    assert not recs_router.was_suggested(base, ReaderSignals(served=frozenset({"lib:x"})))
+    assert not recs_router.was_suggested(base.model_copy(update={"source": "extension"}), s)
+    media = {"kind": "youtube", "video_id": "v", "duration_s": 60}
+    assert not recs_router.was_suggested(base.model_copy(update={"media": media}), s)  # articles

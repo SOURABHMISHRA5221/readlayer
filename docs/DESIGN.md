@@ -488,7 +488,8 @@ policy, politics, environment, sports, culture, society) are frames by name (`Ma
 structured output accepts a map frame; the prompt text and versions are unchanged (a pytest pins
 them), so cached Backgrounds stay valid. The Background cache key already holds the frame;
 `frame` and `shift` combine under the same caps. The card shows a two-option toggle ("Your pick ·
-Cricket" / "For you · Finance"; "No analogy" when there is no pick) only when the two differ; the
+Cricket" / "For you" — the for-you frame isn't named, Sourabh 2026-10-17; "No analogy" when there
+is no pick) only when the two differ; the
 other frame loads on click and the choice holds for the page (and its prefetch). Measured: the
 Background pipeline with every card in finance kept every safety target (`evals/changelog.md`).
 
@@ -1071,9 +1072,20 @@ Wikipedia pages are evergreen (no freshness decay) and never count as same_story
   "… podcast episode"). The domain disambiguates labels; nothing about the reader (uid, persona,
   history, the current article) is ever part of a query (tested). Article-basis lookups (the card
   chips) use the same query shape on the article's key ideas (tested). **One exception (decision 69
-  B2, Sourabh's answer "Go with what u feel is correct"):** the end-of-article story search sends a
-  **library (corpus) article's title**, cleaned, ≤ 120 chars, never for a page a reader brought in
-  (`user_ingested`, `extension`; tested). It is shared content, the same for every reader, keyed
+  B2, Sourabh's answer "Go with what u feel is correct"; B4, "i want more on this story thing"):**
+  the end-of-article story search sends the title, cleaned, ≤ 120 chars, of a **library (corpus)
+  article**, or of a page a reader brought in that **this reader was shown as a suggestion** (its
+  "web:" / "feed:" id, a hash of the result's own link, is in their served items: Up next, chips,
+  For you, screen 2 — the link came from Gloss's own suggestions, search results or the outlet
+  lists, not from the reader); only articles (not videos or podcasts) brought in through
+  Open here / Open any link (`user_ingested`), never extension text. A link this reader was never
+  shown never matches (pasting a link they were shown does); a link normalisation changed doesn't
+  match either, so the rule fails towards privacy (tested). A library article's story results are
+  shared by every reader; a brought-in page's are shown only to readers served its link (other
+  readers, and other demo personas, see its key ideas only). Served ids age out past the newest
+  300, and with them the page's story items. A brought-in page may start a search only while the
+  day's story calls are under half the cap (library articles keep the rest) and only with a real
+  title (not the site name or link extraction falls back to). Results are stored per page, keyed
   `story:{content_id}` per format (article via Tavily news, video via YouTube), searched once ever
   (stored even when empty), its own `STORY_SEARCH_DAILY_CAP` (40) within the global, YouTube and
   anonymous caps, never the feed's. Results must not be the article itself (by URL hash) and must
