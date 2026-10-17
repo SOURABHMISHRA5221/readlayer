@@ -91,6 +91,7 @@ async def main() -> None:
         out["count_before"] = await p.eval(COUNT_JS)
 
         out["term_select"] = await p.eval(f"{SELECT_JS}('insider trading')")
+        await asyncio.sleep(0.4)  # past the 120 ms fade-in
         await p.shot("d70-select-button-1440")
         await p.eval("document.querySelector('.rl-select').click(); 1")
         out["term_card"] = await card(p, "Insider")
@@ -118,6 +119,7 @@ async def main() -> None:
         await p.wait_for(".rl-pmark", 60)
         await asyncio.sleep(1.5)
         out["phone_select"] = await p.eval(f"{SELECT_JS}('insider trading')")
+        await asyncio.sleep(0.4)
         await p.shot("d70-select-button-390")
         await p.eval("document.querySelector('.rl-select').click(); 1")
         out["phone_card"] = await card(p, "Insider")

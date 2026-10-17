@@ -34,3 +34,12 @@ export function paragraphFallback(paragraphId: string, markers: readonly Paragra
   if (markers.some((m) => m.id === id)) return { open: id };
   return { add: { id, kind: "paragraph", paragraph_id: paragraphId, score: 0 }, open: id };
 }
+
+/** After an update: open the asked note once placed; fall back when it couldn't be (decision 70). */
+export function afterPlaced(
+  pendingId: string,
+  result: { resolved: readonly string[]; paragraphs: readonly string[]; unresolved: readonly string[] },
+): "open" | "fallback" | "wait" {
+  if (result.resolved.includes(pendingId) || result.paragraphs.includes(pendingId)) return "open";
+  return result.unresolved.includes(pendingId) ? "fallback" : "wait";
+}

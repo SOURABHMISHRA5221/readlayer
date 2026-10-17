@@ -500,7 +500,7 @@ const CSS = `
 .rl-card[data-mode="sheet"] .rl-btn--icon { width: 44px; }
 /* Decision 70: "Explain" on a selection, just under it; fixed, so the text never reflows. */
 .rl-select {
-  position: fixed; z-index: 2147482999; min-height: 32px; padding: 0 14px; border: 0; border-radius: 999px;
+  position: fixed; z-index: 2147482998; min-height: 32px; padding: 0 14px; border: 0; border-radius: 999px;
   background: var(--rl-accent, #1f5f5b); color: var(--rl-on-accent, #fff); cursor: pointer;
   font: 600 13px/32px var(--rl-font-ui, system-ui, sans-serif); text-indent: 0; letter-spacing: 0;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18); animation: rl-fade-in 120ms ease-out;

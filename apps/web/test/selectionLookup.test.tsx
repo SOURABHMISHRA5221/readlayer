@@ -2,7 +2,7 @@
 import type { CardAnnotation, ParagraphMarker } from "@readlayer/annotator";
 import { describe, expect, it } from "vitest";
 
-import { planAsk, paragraphFallback } from "../src/lib/selectionLookup";
+import { afterPlaced, planAsk, paragraphFallback } from "../src/lib/selectionLookup";
 
 const span = (id: string, concept_id: string, paragraph_id = "p1"): CardAnnotation => ({
   id, kind: "span", anchor: { exact: id, prefix: "", suffix: "" }, paragraph_id, score: 0.5,
@@ -48,3 +48,14 @@ describe("paragraphFallback", () => {
     expect(paragraphFallback("p5", page.markers)).toEqual({ open: "para:p5" });
   });
 });
+
+describe("afterPlaced", () => {
+  const result = { resolved: ["fca"], paragraphs: ["para:p5"], unresolved: ["insider"] };
+  it("opens a placed word or ¶, falls back for one that couldn't be placed, else waits", () => {
+    expect(afterPlaced("fca", result)).toBe("open");
+    expect(afterPlaced("para:p5", result)).toBe("open");
+    expect(afterPlaced("insider", result)).toBe("fallback");
+    expect(afterPlaced("later", result)).toBe("wait");
+  });
+});
+

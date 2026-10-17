@@ -23,7 +23,7 @@ import {
   reportExplanation,
 } from "../lib/explanations";
 import { shownOnce } from "../lib/nextUp";
-import { paragraphFallback, planAsk, type AskPlan } from "../lib/selectionLookup";
+import { afterPlaced, paragraphFallback, planAsk, type AskPlan } from "../lib/selectionLookup";
 import { openRec } from "../lib/openRec";
 import { queueRecEvent } from "../lib/recEvents";
 import { useNextUp } from "./useNextUp";
@@ -99,12 +99,18 @@ export function useAnnotator(
   const [asked, setAsked] = useState<{ key: string; notes: AnnotatorHandle["asked"] }>({ key: "", notes: NO_ASKED });
   const askedKey = `${articleKey ?? ""}|${persona ?? ""}`;
   const notesNow = asked.key === askedKey ? asked.notes : NO_ASKED;
+  const keyRef = useRef(askedKey);
+  keyRef.current = askedKey;
+  // Only notes actually placed on the page: opening one that failed to place would do nothing.
   const pageRef = useRef({ spans: [] as CardAnnotation[], markers: [] as ParagraphMarker[] });
+  const placed = new Set([...(resolved ?? []), ...(paragraphs ?? [])]);
   pageRef.current = {
-    spans: [...(annotations ?? []), ...notesNow.spans],
-    markers: [...(extras ?? []).filter((x): x is ParagraphMarker => x.kind === "paragraph"), ...notesNow.markers],
+    spans: [...(annotations ?? []), ...notesNow.spans].filter((a) => placed.has(a.id)),
+    markers: [...(extras ?? []).filter((x): x is ParagraphMarker => x.kind === "paragraph"), ...notesNow.markers].filter(
+      (m) => placed.has(m.id),
+    ),
   };
-  const pendingOpen = useRef<{ id: string; paragraphId: string } | null>(null);
+  const pendingOpen = useRef<{ id: string; paragraphId: string; key: string } | null>(null);
   const applyPlan = useCallback(
     (plan: AskPlan, paragraphId: string) => {
       const add = plan.add;
@@ -112,7 +118,7 @@ export function useAnnotator(
         annotatorRef.current?.open(plan.open, { focus: true });
         return;
       }
-      pendingOpen.current = { id: plan.open, paragraphId };
+      pendingOpen.current = { id: plan.open, paragraphId, key: askedKey };
       setAsked((prev) => {
         const base = prev.key === askedKey ? prev.notes : NO_ASKED;
         const notes = add.kind === "paragraph"
@@ -128,9 +134,10 @@ export function useAnnotator(
   const askRef = useRef<(ask: SelectionAsk) => void>(() => undefined);
   askRef.current = (ask) => {
     if (!articleKey) return;
-    void planAsk(ask, pageRef.current, (a) => api.lookup(articleKey, a, personaRef.current)).then((plan) =>
-      applyPlan(plan, ask.paragraph_id),
-    );
+    const key = askedKey;
+    void planAsk(ask, pageRef.current, (a) => api.lookup(articleKey, a, personaRef.current)).then((plan) => {
+      if (keyRef.current === key) applyRef.current(plan, ask.paragraph_id); // not after a switch
+    });
   };
 
   useEffect(() => {
@@ -225,11 +232,13 @@ export function useAnnotator(
       setResolved(result.resolved);
       setParagraphs(result.paragraphs);
       const pending = pendingOpen.current;
-      if (pending) {
-        if (result.resolved.includes(pending.id) || result.paragraphs.includes(pending.id)) {
+      if (pending && pending.key !== keyRef.current) pendingOpen.current = null; // another article or reader
+      else if (pending) {
+        const next = afterPlaced(pending.id, result);
+        if (next === "open") {
           pendingOpen.current = null;
           annotator.open(pending.id, { focus: true });
-        } else if (result.unresolved.includes(pending.id)) {
+        } else if (next === "fallback") {
           // It overlaps another mark: drop it and answer with the paragraph's card.
           pendingOpen.current = null;
           setAsked((prev) => ({
