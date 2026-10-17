@@ -1,0 +1,50 @@
+{
+  "live": true,
+  "count_before": "6 notes for you",
+  "term_select": {
+    "button": true,
+    "inParagraph": true,
+    "tag": "BUTTON",
+    "onScreen": true
+  },
+  "term_card": {
+    "mode": "sidenote",
+    "text": "financeInsider tradingYou know this well, so it goes straight to the detailBuilds onSecurities lawEquitiesBackgroundYour pick · CricketWhen participants wager using material, non-public information, it destroys market in",
+    "verified": true
+  },
+  "count_after": "7 notes for you",
+  "plain_select": {
+    "button": true,
+    "inParagraph": true,
+    "tag": "BUTTON",
+    "onScreen": true
+  },
+  "plain_card": {
+    "mode": "sidenote",
+    "text": "What this paragraph is sayingYou know this well, so it goes straight to the detailBuilds onBackgroundYour pick · CricketIn prediction and speculative venues, non-public intelligence and artificial volume distort the pric",
+    "verified": true
+  },
+  "key_select": {
+    "button": true,
+    "inParagraph": true,
+    "tag": "BUTTON",
+    "onScreen": true
+  },
+  "key_card": {
+    "mode": "sidenote",
+    "text": "financeMarket manipulationYou understand this, so it's a one-line refresherBuilds onSupply and demandBackgroundYour pick · CricketIn betting and prediction markets, bad actors distort perceived odds by executing deceptiv",
+    "verified": true
+  },
+  "phone_select": {
+    "button": true,
+    "inParagraph": true,
+    "tag": "BUTTON",
+    "onScreen": true
+  },
+  "phone_card": {
+    "mode": "sheet",
+    "text": "financeInsider tradingYou understand this, so it's a one-line refresherBuilds onSecurities lawEquitiesBackgroundYour pick · CricketBeyond traditional stock markets, exploiting non-public information undermines any wageri",
+    "verified": true
+  },
+  "cleanup": 204
+}
