@@ -261,7 +261,7 @@ extension page with a suggested link → no query; another persona not served it
 query; a redirect (`final_url` was the suggestion) matches; a video/extension/`lib:`-only set →
 False; at half the cap a suggested page makes no query while a library article still does; a
 fallback title → no query; the old "brought in" test now makes both pages readable (it had passed
-on a 404) (milestone-reviewer FIX; plan-reviewer REVISE 8).
+on a 404) (milestone-reviewer FIX; plan-reviewer REVISE 8 → REVISE 2 → APPROVE).
 Live (after `make deploy-api`): (i) before, read-only: Sourabh's `rec_signals/default` holds the
 `feed:` id of his strangulation-law page (checked 2026-10-17: yes) — record its position in the
 newest 300; (ii) `ops/search` story count before and after ≤ +3; (iii) agent-run: a demo reader
