@@ -38,7 +38,7 @@ export {
 export { normalizeWhitespace, resolveInText } from "./anchor";
 export { MARK_CLASS, markId } from "./mark";
 export { ASK_DONE, ASK_QUESTION, type AnswerFn } from "./ask";
-export { PARAGRAPH_TITLE } from "./paragraph";
+export { PARAGRAPH_TITLE, paragraphCard } from "./paragraph";
 export { PREREAD_HEADING, renderPreread, type PrereadHandle, type PrereadOptions } from "./preread";
 
 export { ANNOTATOR_CSS, type StyleMode } from "./styles";
@@ -121,6 +121,8 @@ export interface AnnotatorOptions {
 export interface UpdateResult {
   /** Span annotation ids that are marked, in document order. */
   resolved: string[];
+  /** Paragraph marker ids that are placed, in document order (decision 70: hosts count them). */
+  paragraphs: string[];
   /** Spans, prompts and markers that couldn't be placed (not found or overlapping). The
    * pre-read is the host's to render and never listed. */
   unresolved: string[];
@@ -625,11 +627,14 @@ export function createAnnotator(root: HTMLElement, options: AnnotatorOptions = {
 
   function snapshot(annotations: readonly AnyAnnotation[]): UpdateResult {
     const resolved = [...entries.values()].sort((x, y) => x.start - y.start).map((e) => e.annotation.id);
-    const placed = new Set([...resolved, ...markers.keys(), ...prompts.keys()]);
+    const paragraphs = [...markers.entries()]
+      .sort(([, x], [, y]) => (x.button.compareDocumentPosition(y.button) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1))
+      .map(([id]) => id);
+    const placed = new Set([...resolved, ...paragraphs, ...prompts.keys()]);
     const unresolved = annotations
       .filter((a) => a.kind !== "preread" && !placed.has(a.id))
       .map((a) => a.id);
-    return { resolved, unresolved };
+    return { resolved, paragraphs, unresolved };
   }
 
   /** Paragraph markers: keep those still wanted, add new ones at the start of their paragraph. */

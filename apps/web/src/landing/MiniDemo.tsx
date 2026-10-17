@@ -39,7 +39,7 @@ export function MiniDemo({ persona, onPersona, onTry }: MiniDemoProps) {
     const instance = createAnnotator(root, {
       actions: "demo",
       inline: host,
-      demoAction: { label: "Try it on any article", onClick: () => onTryRef.current() },
+      demoAction: { label: "Try it on any content", onClick: () => onTryRef.current() },
       loadExplanation: async (a) => {
         const explanation = demoExplanation(personaRef.current, a.id);
         if (!explanation) throw new Error("no demo explanation");

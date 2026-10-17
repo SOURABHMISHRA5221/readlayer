@@ -15,9 +15,9 @@ Prepared 2026-10-15 from the live state (API `readlayer-api-00033-bdt`, demo fee
 
 | Shot | What to open | What it shows |
 |---|---|---|
-| Same article, two readers | Guardian, "UK urged to act as Polymarket takes bets on whether HSBC and Lloyds…" (a library demo article) as the newcomer, then as the trader | Newcomer 10 notes (blockchain, crypto wallets, insider trading, market integrity…); trader 4 (credit default swap, ESMA, FCA, moral hazard). "Say it simpler" is warmed for its top cards |
-| An expert sees almost nothing | Mint, "Sebi likely to adopt blended pricing framework to curb expiry-day volatility…" (For you, trader) | Newcomer 11 notes, trader 0: notes thin out as the reader knows more |
-| A video, two readers | Business Standard, "NSE vs BSE: Which exchange makes a better investment case?" (4 min, stored) | Newcomer 5 notes, trader 0. DW "Why this Nobel Prize matters for your money" is the backup (4 vs 2) |
+| Same article, two readers | Guardian, "UK urged to act as Polymarket takes bets on whether HSBC and Lloyds…" (a library demo article) as the newcomer, then as the trader | Newcomer 16 notes (10 words: blockchain, crypto wallets, insider trading, market integrity…; and 6 ¶ paragraph notes); trader 6 (4 words: credit default swap, ESMA, FCA, moral hazard; 2 ¶). Counts include ¶ notes since decision 70. "Say it simpler" is warmed for its top cards |
+| An expert sees almost nothing | Mint, "Sebi likely to adopt blended pricing framework to curb expiry-day volatility…" (For you, trader) | Newcomer 16 notes (11 words, 5 ¶), trader 2 (1 word, 1 ¶; measured Oct 17 evening): notes thin out as the reader knows more |
+| A video, two readers | Business Standard, "NSE vs BSE: Which exchange makes a better investment case?" (4 min, stored) | Newcomer 5 notes, trader 0 (before decision 70; re-read after its deploy, counts now include ¶ notes). DW "Why this Nobel Prize matters for your money" is the backup (4 vs 2) |
 | For you readiness | Newcomer's For you | Lines like "Ready for you" and "A stretch: read up on Producer Price Index first"; hover shows "Based on the main ideas in the article" on stored articles |
 
 ## Keep out of the shots

@@ -16,6 +16,8 @@ interface ConceptLinkProps {
 
 const LEVEL_TEXT = { new: "new to you", refresher: "a quick refresher" } as const;
 const levelOf = (a: CardAnnotation) => ((a as { level?: string }).level === "refresher" ? "refresher" : "new");
+/** A ¶ paragraph note (decision 70) or a marked word: how the margin names it. */
+const itemText = (a: CardAnnotation) => (a.kind === "paragraph" ? `${a.label}, what it's saying` : `${a.label}, ${LEVEL_TEXT[levelOf(a)]}`);
 
 /**
  * Margin (≥1200px): "N notes for you" as a short contents list, with Margo, until a note
@@ -40,6 +42,7 @@ export function ConceptRail({ items, body, ...link }: ConceptLinkProps & { body?
                 type="button"
                 className="rail__item"
                 data-level={levelOf(a)}
+                data-kind={a.kind}
                 data-linked={link.hovered === a.id}
                 onPointerEnter={() => link.onHighlight(a.id)}
                 onPointerLeave={() => link.onHighlight(null)}
@@ -48,7 +51,7 @@ export function ConceptRail({ items, body, ...link }: ConceptLinkProps & { body?
                 onClick={(e) => link.onOpen(a.id, e.detail === 0)}
               >
                 <span className="rail__dot" aria-hidden="true" />
-                {a.label}, {LEVEL_TEXT[levelOf(a)]}
+                {itemText(a)}
               </button>
             </li>
           ))}
@@ -69,6 +72,7 @@ export function ConceptChip({
     <button
       type="button"
       className="chip"
+      data-kind={annotation.kind}
       data-linked={hovered === annotation.id}
       aria-current={active === annotation.id}
       onPointerEnter={() => onHighlight(annotation.id)}

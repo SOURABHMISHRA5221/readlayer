@@ -489,3 +489,31 @@ def test_paragraph_notes_exclude_their_first_concepts_domain(client, fake, for_y
     para = _framed(client, "for_you", paragraph_id="p0")
     assert para.status_code == 200 and para.json()["frames"]["used"] == "for_you"
     assert for_you_finance[-1] == "finance"  # the paragraph's first concept, c_yield_curve
+
+
+@pytest.mark.parametrize(("articles", "offered"), [(9, None), (10, "economics")])
+def test_for_you_is_offered_only_after_ten_engaged_articles(
+    client, fake, monkeypatch, articles, offered
+):
+    """Decision 70, through the route with the real `for_you`: a qualifying map is not enough
+    until the reader has engaged with 10 pieces."""
+    from dataclasses import replace
+
+    from app.reader import frames
+    from app.reader.model import init_edge
+    from app.store.reader_repo import ReaderRepo
+
+    monkeypatch.setattr(frames, "MIN_KNOWN", 1)  # the test graph has two economics concepts
+    real = ReaderRepo.load_state
+    now = datetime.now(UTC)
+
+    async def load_state(self, uid, persona):
+        state, user, domains = await real(self, uid, persona)
+        edges = {"c_inflation": init_edge(0.95, now)}
+        engaged = {f"content_{i}": now for i in range(articles)}
+        return replace(state, edges=edges, engaged=engaged), user, domains
+
+    monkeypatch.setattr(ReaderRepo, "load_state", load_state)
+    got = ask(client, persona="trader").json()
+    assert got["frames"]["for_you"] == offered
+    assert got["frames"]["used"] == "pick"

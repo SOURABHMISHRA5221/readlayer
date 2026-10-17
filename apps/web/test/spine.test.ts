@@ -103,3 +103,11 @@ describe("reading progress (the top line)", () => {
     expect(readingProgress(top, height, viewport)).toBeCloseTo(want, 6);
   });
 });
+
+describe("¶ notes on the spine (decision 70)", () => {
+  it("a ¶ note ticks at its paragraph's start, drawn as a paragraph tick", () => {
+    const para: SpineNote = { id: "para:p2", kind: "paragraph", paragraph_id: "p2", anchor: { exact: "", prefix: "", suffix: "" } };
+    const ticks = spineTicks([para], paragraphs);
+    expect(ticks).toEqual([{ id: "para:p2", at: 42 / TOTAL, level: "paragraph" }]);
+  });
+});

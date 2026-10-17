@@ -46,6 +46,8 @@ function railColumn(root: HTMLElement): SidenoteBox | null {
 export interface AnnotatorHandle {
   /** Ids of annotations currently marked, in document order; null until the first update. */
   resolved: string[] | null;
+  /** Placed ¶ paragraph marker ids, in document order (decision 70); null until the first update. */
+  paragraphs: string[] | null;
   hovered: string | null;
   active: string | null;
   highlight: (id: string | null) => void;
@@ -83,6 +85,7 @@ export function useAnnotator(
   // Decision 67 A4: the analogy frame chosen on this page (the annotator remembers it too).
   const frameRef = useRef<FrameChoice>("pick");
   const [resolved, setResolved] = useState<string[] | null>(null);
+  const [paragraphs, setParagraphs] = useState<string[] | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [answers, setAnswers] = useState<ReadonlyMap<string, { label: string; known: boolean }>>(new Map());
@@ -151,6 +154,7 @@ export function useAnnotator(
       annotator.destroy();
       annotatorRef.current = null;
       setResolved(null);
+      setParagraphs(null);
       setHovered(null);
       setActive(null);
       setAnswers(new Map());
@@ -167,6 +171,7 @@ export function useAnnotator(
     annotator.update([...annotations, ...(extras ?? [])], { reader: personaRef.current ?? "me" }).then((result) => {
       if (cancelled) return;
       setResolved(result.resolved);
+      setParagraphs(result.paragraphs);
       if (result.unresolved.length) console.warn("[readlayer] anchors not found", result.unresolved);
       // Marks exist now: notes near the viewport warm up (signed-in only, decision 67 L3).
       const el = root.current;
@@ -189,5 +194,5 @@ export function useAnnotator(
   const highlight = useCallback((id: string | null) => annotatorRef.current?.highlight(id), []);
   const open = useCallback((id: string, focus = false) => annotatorRef.current?.open(id, { focus }), []);
 
-  return { resolved, hovered, active, highlight, open, answers };
+  return { resolved, paragraphs, hovered, active, highlight, open, answers };
 }

@@ -2282,4 +2282,15 @@ changed, live URLs and numbers. Newest entries at the bottom of each milestone.
 ### Next steps (resume here, in order)
 1. Sourabh: open his strangulation-law page → "More on this story" (if Tavily answers).
 2. `/v2` removal, gitleaks, deck link (tagline, "Open any link"), submit; video re-record.
+- Decision 70 (Sourabh, Oct 17 evening): "For you" only after 10 engaged articles (no toggle before,
+  the card names the pick), ¶ notes counted and listed, landing "article" → "content" (generic uses);
+  and explain a selection (cheap version: match an extracted term, else the paragraph card).
+  plan-reviewer REVISE ×3 → APPROVE; selection split to PR B with a 23:00 IST cut-off. PR A tests
+  first, harness passed (§38).
+
+### Next steps (resume here, in order)
+1. PR A `d70-small-fixes`: milestone-reviewer → PR → CI → merge → from clean `main`: `make deploy-api`
+   → `make deploy-web` (Sourabh's yes) → live (plan acceptance 4–6).
+2. PR B `d70-select` (Fix 3) from clean `main`; dropped and recorded if not merged by 23:00 IST.
+3. `/v2` removal, gitleaks, deck link, submit; video re-record.
 

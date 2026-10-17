@@ -92,7 +92,7 @@ function DemoNoteStatic({ ref }: { ref?: Ref<HTMLDivElement> }) {
         </div>
       </div>
       <div className="lp-note-static__foot">
-        <span className="lp-note-static__btn">Try it on any article</span>
+        <span className="lp-note-static__btn">Try it on any content</span>
         <span className="lp-note-static__card-label">Explanation — not the author's words</span>
       </div>
     </div>
@@ -103,7 +103,7 @@ function DemoNoteStatic({ ref }: { ref?: Ref<HTMLDivElement> }) {
 const VALUES: { mood: MargoMood; lead: string; rest: string }[] = [
   { mood: "think", lead: "Notes only on what you'd miss.", rest: "Gloss knows what you already know, and skips it." },
   { mood: "happy", lead: "Explained in your world.", rest: "Software, cricket, law: analogies from what you understand." },
-  { mood: "idle", lead: "Never changes the original.", rest: "Every note is checked against the article before you see it." },
+  { mood: "idle", lead: "Never changes the original.", rest: "Every note is checked against the content before you see it." },
 ];
 
 function Values() {
