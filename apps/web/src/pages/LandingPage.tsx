@@ -115,7 +115,7 @@ function LandingPage({ url }: { url: URL }) {
           <div className="lp-final__copy">
             <MargoHero mood="happy" className="lp-final__margo" />
             <h2 id="lp-final-title" className="lp-final__title">
-              Your next article, explained for you.
+              Any content, explained for you.
             </h2>
             <HeroCtas onDemo={demo} onGoogle={google} busy={busy} />
           </div>
@@ -138,7 +138,7 @@ function Problem() {
         <h2 id="lp-problem-title" className="lp-section__title">
           Everyone misses something.
         </h2>
-        <p className="lp-problem__intro">Three ways a good article loses a consumer.</p>
+        <p className="lp-problem__intro">Three ways good content loses a consumer.</p>
       </header>
       <ol className="lp-problem__list">
         <li className="lp-problem__item">
@@ -148,7 +148,7 @@ function Problem() {
           />
           <h3>Jargon and references</h3>
           <p>
-            Articles assume you know terms like <i>repo rate</i>, <i>PFAS</i> or <i>Powerplay</i>. Most consumers skip them
+            Most content assumes you know terms like <i>repo rate</i>, <i>PFAS</i> or <i>Powerplay</i>. Most consumers skip them
             and think they understood.
           </p>
         </li>
@@ -158,7 +158,7 @@ function Problem() {
             alt="A dozen browser tabs burst out of a laptop screen while the Gloss mascot looks on, alarmed."
           />
           <h3>Looking things up breaks the flow</h3>
-          <p>A new tab, a generic definition written for nobody, and your place in the article is gone.</p>
+          <p>A new tab, a generic definition written for nobody, and your place in the content is gone.</p>
         </li>
         <li className="lp-problem__item">
           <ProblemArt
@@ -167,12 +167,12 @@ function Problem() {
           />
           <h3>Summaries replace the author</h3>
           <p>
-            AI summaries rewrite the article. You lose the author's words, hedges and numbers, and can't tell what was
+            AI summaries rewrite the content. You lose the author's words, hedges and numbers, and can't tell what was
             invented.
           </p>
         </li>
       </ol>
-      <p className="lp-problem__close">Every consumer gets the same article, but no two consumers need the same help.</p>
+      <p className="lp-problem__close">Every consumer gets the same content, but no two consumers need the same help.</p>
     </section>
   );
 }
@@ -240,7 +240,7 @@ function Solution() {
             );
           })}
         </div>
-        <figcaption className="lp-side__caption">Same article. Different help.</figcaption>
+        <figcaption className="lp-side__caption">Same content. Different help.</figcaption>
       </figure>
     </section>
   );
@@ -255,7 +255,7 @@ const STEPS: { title: string; body: string; clip: { name: string; label: string;
   },
   {
     title: "Finds what you'd miss",
-    body: "Every term and idea in the article is scored against your map. Plain maths, no AI guessing.",
+    body: "Every term and idea in the content is scored against your map. Plain maths, no AI guessing.",
     clip: { name: "clip-note", label: "tapping a highlighted term opens its note", width: 1440, height: 900 },
   },
   {
