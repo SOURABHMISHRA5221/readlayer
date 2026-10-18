@@ -129,10 +129,11 @@ deploy-guard: check-gcp
 	if [ -n "$$busy" ]; then printf "deploy refused:$$busy\n"; exit 1; fi; \
 	echo "deploy guard: nothing in flight"
 
+# Judging period (from Oct 18): one warm instance, no cold starts. Back to 0 after judging.
 deploy-api: deploy-guard
 	gcloud run deploy $(SERVICE) --source apps/api --region $(REGION) \
 		--service-account $(SA) --allow-unauthenticated \
-		--min-instances 0 --max-instances 3 --cpu 1 --memory 1Gi --cpu-boost \
+		--min-instances 1 --max-instances 3 --cpu 1 --memory 1Gi --cpu-boost \
 		--env-vars-file apps/api/deploy.env.yaml \
 		--set-secrets $(SECRETS)
 
