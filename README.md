@@ -15,7 +15,7 @@
 [![Cloud Run](https://img.shields.io/badge/Cloud%20Run-asia--south1-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
 [![License: MIT](https://img.shields.io/badge/license-MIT-2f6f61)](LICENSE)
 
-[**Live demo**](https://glossreader.web.app) · [Chrome extension](#install-the-extension) · [How it works](#how-it-works) · [Architecture](#architecture) · [Evaluation](#evaluation)
+[**Live demo**](https://glossreader.web.app) · [**Demo video**](https://youtu.be/49zoxUwdK1k) · [Chrome extension](#install-the-extension) · [How it works](#how-it-works) · [Architecture](#architecture) · [Evaluation](#evaluation)
 
 </div>
 
@@ -178,7 +178,7 @@ flowchart TB
 | **Vertex AI** | Gemini for extraction, linking, explanations, verification and transcripts; Gemma as a pay-per-token fallback; Gemini embeddings for concept linking. |
 | **Firestore** | Page demand profiles, transcripts, per-reader graphs and events (raw events expire after 90 days), the LLM spend ledger and usage caps. Clients have no direct access. |
 | **Cloud Storage** | The concept graph file, loaded into memory when the API starts. |
-| **Firebase Auth and Hosting** | Google sign-in and anonymous demo sessions; hosting for the web app at [glossreader.web.app](https://glossreader.web.app) (the earlier address, readlayer-sourabh-26.web.app, serves the same build). |
+| **Firebase Auth and Hosting** | Google sign-in and anonymous demo sessions; hosting for the web app at [glossreader.web.app](https://glossreader.web.app). |
 | **Secret Manager** | The log-pseudonymisation salt and the search API keys. |
 | **Cloud Build** | Builds the API image from source on each deploy. |
 
@@ -210,7 +210,7 @@ Each number comes from [docs/STATUS.md](docs/STATUS.md) or a report in [`apps/ap
 | Faithfulness and safety ([report](apps/api/evals/report.md)) | Run of Oct 10 on the live prompts (restate-v2, explain-v5, verify-v2, verify-background-v1), judge Gemini 3.8 Flash: **15/15** adversarial notes rejected (dropped hedges, dropped attribution, changed numbers, flipped negations, opinion as fact); **24/25** good notes accepted (one rejected); **10/10** prompt-injection cases safe; Background suite 3/3 rejected and 2/2 accepted; non-business notes 6/7 (outside the targets) |
 | Concept graph | **5,206** concepts in 14 domains (the business core plus politics, law, technology, science, health, environment, sports, culture, education, society): 3,327 from the article corpus plus 1,874 from Wikipedia glossaries, merged; **5,281** served on Oct 14 after growing online from new pages; no cycles |
 | Library | **323** library pages analysed, each ingested once and shared by every reader ([ops report](apps/api/evals/ops_report.md)) |
-| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60%, set for the frozen graph: missed); with online growth, as in production, 89% / 66%, which includes concepts grown from the measured articles themselves, so never the headline. Grown concepts judged correct by the build agent (Sourabh's audit pending): 87% (first sample), 97% (after tightening, overlapping the first), 90% on a fresh sample of 30 grown live ([report](apps/api/evals/heldout_report.md)) |
+| Linking on unseen articles | 30 held-out articles: frozen graph links 64% of business and 13% of non-business concept mentions (targets 75% / 60%, set for the frozen graph: missed); with online growth, as in production, 89% / 66%, which includes concepts grown from the measured articles themselves, so never the headline. Grown concepts judged correct by the build agent (human audit pending): 87% (first sample), 97% (after tightening, overlapping the first), 90% on a fresh sample of 30 grown live ([report](apps/api/evals/heldout_report.md)) |
 | Readers see different notes | Measured Oct 5 on the 310 corpus articles: the trader and the policy student get identical underlines on **8 of 310** (mean overlap 0.15) |
 | Scoring latency, p95 | **0.19 ms** for a 1,200-word article (local test); 1.6 ms on Cloud Run (the API's own rolling window, Oct 14); budget 150 ms |
 | Annotations endpoint, p95 on Cloud Run | **478 ms** (median 98 ms) over 213 requests, Oct 8–14, from the request logs; includes cold starts, since the service scales to zero ([ops report](apps/api/evals/ops_report.md)) |
@@ -341,16 +341,9 @@ readlayer/
 - [x] Media: short YouTube videos and Apple Podcasts episodes with transcripts and notes
 - [x] M9: growth and quality fixes, cost / cache / latency report, monitoring dashboard, hardening
 - [x] Readiness lines on For you
-- [ ] Demo video and deck
+- [x] Demo video ([watch on YouTube](https://youtu.be/49zoxUwdK1k)) and deck
 
 **Limits, honestly.** Built and evaluated on English; videos and podcasts must be English (others are refused). Videos are capped at 10 minutes and podcast episodes at 12; longer ones open where they play. Linking on unseen articles missed its targets, which were set for the frozen graph (64% and 13% against 75% and 60%); with online growth, as in production, it reaches 89% and 66%, but that figure includes concepts grown from the measured articles themselves, so it is not the headline (see Evaluation). The grown-concept precision figures were judged by the build agent and await a human audit.
-
-## Team
-
-| Name | Role | Links |
-|---|---|---|
-| _Team member 1: full name_ | _Role_ | _GitHub · LinkedIn_ |
-| _Team member 2: full name_ | _Role_ | _GitHub · LinkedIn_ |
 
 ## License
 
